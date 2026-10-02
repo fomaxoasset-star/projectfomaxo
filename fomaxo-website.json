@@ -1,0 +1,520 @@
+{
+  "site": {
+    "name": "FOMAXO",
+    "domain": "https://fomaxo.com",
+    "tagline": "The Art of Modern Luxury",
+    "meaning": "For Outstanding Minds, Acquiring Xtraordinary Opulence",
+    "founded": "Dubai, UAE",
+    "currency": "AED",
+    "hosting": {
+      "provider": "Hostinger",
+      "plan": "Business Web Hosting",
+      "datacenter": "Mumbai",
+      "ssl": true,
+      "forceHttps": true
+    },
+    "repository": "https://github.com/fomaxoasset-star/projectfomaxo",
+    "autoDeploy": "main branch → fomaxo.com"
+  },
+  "pages": [
+    {
+      "path": "/",
+      "url": "https://fomaxo.com/#/"
+    },
+    {
+      "path": "/fragrances",
+      "url": "https://fomaxo.com/#/fragrances"
+    },
+    {
+      "path": "/product/:id",
+      "url": "https://fomaxo.com/#/product/:id"
+    },
+    {
+      "path": "/collections",
+      "url": "https://fomaxo.com/#/collections"
+    },
+    {
+      "path": "/collections/elite",
+      "url": "https://fomaxo.com/#/collections/elite"
+    },
+    {
+      "path": "/personal-care",
+      "url": "https://fomaxo.com/#/personal-care"
+    },
+    {
+      "path": "/about",
+      "url": "https://fomaxo.com/#/about"
+    },
+    {
+      "path": "/contact",
+      "url": "https://fomaxo.com/#/contact"
+    },
+    {
+      "path": "/partnership",
+      "url": "https://fomaxo.com/#/partnership"
+    },
+    {
+      "path": "/thank-you",
+      "url": "https://fomaxo.com/#/thank-you"
+    }
+  ],
+  "products": [
+    {
+      "id": "king",
+      "name": "King",
+      "kind": "fragrance",
+      "family": "Parfum · Unisex",
+      "tier": "elite",
+      "tag": "Elite",
+      "short": "FOMAXO’s signature parfum — a masterpiece in a bottle with real gold accents.",
+      "description": [
+        "Introducing King by FOMAXO. King redefines luxury for people who value the finer things in life as FOMAXO’s signature fragrance.",
+        "King is a masterpiece designed for the most demanding enthusiasts, and is more than just a fragrance. It is a classic complement to any stylish collection and comes in a gorgeous bottle with real gold accents."
+      ],
+      "sizes": [
+        100
+      ],
+      "prices": {
+        "100": 5000
+      },
+      "notes": {
+        "key": "Almond · Rose · Amber Wood"
+      },
+      "images": [
+        "assets/img/king-1.webp",
+        "assets/img/king-2.webp",
+        "assets/img/king-3.webp",
+        "assets/img/king-4.webp",
+        "assets/img/king-5.webp"
+      ],
+      "url": "https://fomaxo.com/#/product/king"
+    },
+    {
+      "id": "gold",
+      "name": "Gold",
+      "kind": "fragrance",
+      "family": "Eau de Parfum",
+      "tier": "signature",
+      "tag": "Signature",
+      "short": "Arabic heritage meets French style — strong, seductive and unmistakably luxurious.",
+      "description": [
+        "Introducing Gold by FOMAXO — an extraordinary fusion of Arabic heritage and French style, designed to make you fall in love with the essence of the Arab world.",
+        "Created for individuals who value the more luxurious things in life, this lavish fragrance begins with a hint of pepper and the vibrant spark of bergamot, making for an alluring and energising opening. Experience luxury redefined: a strong and seductive Arabic scent that awakens your senses."
+      ],
+      "sizes": [
+        100
+      ],
+      "prices": {
+        "100": 90
+      },
+      "compareAt": {
+        "100": 150
+      },
+      "notes": {
+        "top": "Bergamot · Pepper",
+        "heart": "Agarwood · Rosemary",
+        "base": "Leather · Vetiver · Musk"
+      },
+      "images": [
+        "assets/img/gold-1.webp",
+        "assets/img/gold-2.webp",
+        "assets/img/gold-3.webp"
+      ],
+      "url": "https://fomaxo.com/#/product/gold"
+    },
+    {
+      "id": "oldmoney",
+      "name": "Old Money",
+      "kind": "fragrance",
+      "family": "Eau de Parfum · Unisex",
+      "tier": "prestige",
+      "tag": "Prestige",
+      "short": "An elegant unisex fragrance for those who value tradition and refinement.",
+      "description": [
+        "FOMAXO Old Money is an elegant unisex fragrance designed for those who value tradition and refinement.",
+        "This exquisite scent begins with vibrant notes of lemon, bergamot and iris, transitioning into a harmonious middle of star anise, olive blossom and guaiac wood. It settles into a deep, luxurious base of ambergris, tonka bean and sandalwood, leaving a lasting aura of subtle grandeur.",
+        "Ideal for any occasion, Old Money celebrates heritage, grace and polished self-assurance."
+      ],
+      "sizes": [
+        10,
+        50,
+        100
+      ],
+      "prices": {
+        "10": 40,
+        "50": 90,
+        "100": 150
+      },
+      "compareAt": {
+        "10": 80,
+        "50": 150,
+        "100": 300
+      },
+      "notes": {
+        "top": "Lemon · Bergamot · Vervain",
+        "heart": "Star Anise · Olive Blossom · Guaiac Wood",
+        "base": "Ambergris · Leather · Sandalwood"
+      },
+      "images": [
+        "assets/img/oldmoney-1.webp",
+        "assets/img/oldmoney-2.webp",
+        "assets/img/oldmoney-3.webp",
+        "assets/img/oldmoney-4.webp"
+      ],
+      "url": "https://fomaxo.com/#/product/oldmoney"
+    },
+    {
+      "id": "royalcandy",
+      "name": "Royal Candy",
+      "kind": "fragrance",
+      "family": "Eau de Parfum",
+      "tier": "prestige",
+      "tag": "Prestige",
+      "short": "A deliciously bold treat for the senses, fit for modern royalty.",
+      "description": [
+        "FOMAXO Royal Candy is a deliciously bold Eau de Parfum, freshly launched in the UAE.",
+        "Opening with zesty tangerine and sage, this fragrance transitions into a heart full of candy and caramel bliss. The finish? A comforting embrace of rosewood and sandalwood. A treat for the senses, fit for modern royalty."
+      ],
+      "sizes": [
+        10,
+        50,
+        100
+      ],
+      "prices": {
+        "10": 40,
+        "50": 90,
+        "100": 150
+      },
+      "compareAt": {
+        "10": 80,
+        "50": 150,
+        "100": 300
+      },
+      "notes": {
+        "top": "Green Tangerine · Lemon · Sage",
+        "heart": "Candy · Gardenia · Cinnamon · Praline",
+        "base": "Black Amber · Rosewood · Musk"
+      },
+      "images": [
+        "assets/img/royalcandy-1.webp",
+        "assets/img/royalcandy-2.webp"
+      ],
+      "url": "https://fomaxo.com/#/product/royalcandy"
+    },
+    {
+      "id": "dollar",
+      "name": "Dollar",
+      "kind": "fragrance",
+      "family": "Eau de Parfum",
+      "tier": "signature",
+      "tag": "Signature",
+      "short": "The ultimate fragrance for the winter season — fresh and confident all day long.",
+      "description": [
+        "Introducing Dollar by FOMAXO — the ultimate fragrance for the winter season.",
+        "Experience the invigorating blend of lemon, mint, black currant, pink pepper, apple, cedar, ginger, sandalwood and patchouli. With our innovative Smart Scent Technology, Dollar lasts longer than any other perfume in the market. Stay fresh and confident all day long."
+      ],
+      "sizes": [
+        100
+      ],
+      "prices": {
+        "100": 90
+      },
+      "compareAt": {
+        "100": 150
+      },
+      "notes": {
+        "top": "Lemon · Mint · Black Currant",
+        "heart": "Apple · Incense · Cedar",
+        "base": "Patchouli · Jasmine · Sandalwood"
+      },
+      "images": [
+        "assets/img/dollar-1.webp",
+        "assets/img/dollar-2.webp",
+        "assets/img/dollar-3.webp",
+        "assets/img/dollar-4.webp",
+        "assets/img/dollar-5.webp"
+      ],
+      "url": "https://fomaxo.com/#/product/dollar"
+    },
+    {
+      "id": "matchacoco",
+      "name": "Matcha Coco",
+      "kind": "fragrance",
+      "family": "Eau de Parfum",
+      "tier": "prestige",
+      "tag": "Prestige",
+      "short": "Crisp matcha and creamy coconut — a sense of serenity and tropical escape.",
+      "description": [
+        "Immerse yourself in the exotic blend of matcha tea and creamy coconut with the FOMAXO Matcha Coco Eau de Parfum.",
+        "This luxurious perfume combines crisp matcha, luscious coconut and a hint of sandalwood, crafted to evoke a sense of serenity and tropical escape. Perfect for daily wear, its unique scent will leave a lasting impression."
+      ],
+      "sizes": [
+        10,
+        50,
+        100
+      ],
+      "prices": {
+        "10": 40,
+        "50": 90,
+        "100": 150
+      },
+      "compareAt": {
+        "10": 80,
+        "50": 150,
+        "100": 300
+      },
+      "notes": {
+        "top": "Matcha Tea · Rose · Cinnamon",
+        "heart": "Orange Blossom · Lily of the Valley · Tea Rose",
+        "base": "Coconut · Vanilla · Amber"
+      },
+      "images": [
+        "assets/img/matchacoco-1.webp",
+        "assets/img/matchacoco-2.webp",
+        "assets/img/matchacoco-3.webp"
+      ],
+      "url": "https://fomaxo.com/#/product/matchacoco"
+    },
+    {
+      "id": "passionsin",
+      "name": "Passion Sin",
+      "kind": "fragrance",
+      "family": "Eau de Parfum",
+      "tier": "prestige",
+      "tag": "Prestige",
+      "short": "Bold and seductive, with a warm, magnetic trail that lingers long after dark.",
+      "description": [
+        "Passion Sin by FOMAXO is a bold, seductive fragrance that blends juicy passion fruit, crisp lemon and apple in the top notes for an irresistible first impression.",
+        "A heart of litchi, patchouli and bergamot unfolds into a sensual base of juniper berry, vetiver and cedar, leaving a warm, magnetic trail that lingers long after dark."
+      ],
+      "sizes": [
+        10,
+        50,
+        100
+      ],
+      "prices": {
+        "10": 40,
+        "50": 90,
+        "100": 150
+      },
+      "compareAt": {
+        "10": 80,
+        "50": 150,
+        "100": 300
+      },
+      "notes": {
+        "top": "Passion Fruit · Lemon · Apple",
+        "heart": "Litchi · Patchouli · Bergamot",
+        "base": "Juniper Berry · Vetiver · Cedar"
+      },
+      "images": [
+        "assets/img/passionsin-1.webp",
+        "assets/img/passionsin-2.webp",
+        "assets/img/passionsin-3.webp"
+      ],
+      "url": "https://fomaxo.com/#/product/passionsin"
+    },
+    {
+      "id": "discovery",
+      "name": "Discovery Set",
+      "kind": "set",
+      "family": "2ml Eau de Parfum Vials",
+      "tier": null,
+      "tag": "Start here",
+      "short": "Choose 3 or 5 FOMAXO fragrances in 2ml vials and experience the collection at home.",
+      "description": [
+        "Build your own Discovery Set: choose a set of 3 for AED 30 or a set of 5 for AED 50, then pick the FOMAXO fragrances you want to try in 2ml vials.",
+        "Small 2ml vials packaged as a discovery set — the easiest way to experience multiple FOMAXO fragrances before committing to a full-size 50ml or 100ml bottle.",
+        "Try before you buy: an affordable way to test different scents at home and find your perfect match. Pocket-friendly mini bottles, ideal for travel, presented in a sleek luxury mini-box that makes the set beautifully giftable too."
+      ],
+      "sizes": [
+        3,
+        5
+      ],
+      "prices": {
+        "3": 30,
+        "5": 50
+      },
+      "excludeFromSet": [
+        "king"
+      ],
+      "images": [
+        "assets/img/discovery-1.webp",
+        "assets/img/discovery-2.webp",
+        "assets/img/discovery-3.webp"
+      ],
+      "url": "https://fomaxo.com/#/product/discovery"
+    }
+  ],
+  "collections": [
+    {
+      "id": "elite",
+      "name": "Elite",
+      "kicker": "The pinnacle",
+      "sizes": "100ml"
+    },
+    {
+      "id": "signature",
+      "name": "Signature",
+      "kicker": "The icons",
+      "sizes": "100ml"
+    },
+    {
+      "id": "prestige",
+      "name": "Prestige",
+      "kicker": "Everyday luxury",
+      "sizes": "100ml · 50ml · 10ml"
+    }
+  ],
+  "eliteMembership": {
+    "basis": "Total FOMAXO spending per year — no application, invitation or fee",
+    "levels": [
+      {
+        "name": "Black",
+        "spendPerYearAED": 4000,
+        "description": "Entry into the FOMAXO world. Minimal, sleek and mysterious.",
+        "benefits": [
+          "10% member discount on products",
+          "Access to members-only newsletter",
+          "Invitation to private fragrance previews"
+        ]
+      },
+      {
+        "name": "Gold",
+        "spendPerYearAED": 7500,
+        "description": "Wealth, prestige and elevated taste.",
+        "benefits": [
+          "25% member discount",
+          "Early access to limited editions",
+          "Private “Scent Initiation Kit”",
+          "Invitation to exclusive launch events"
+        ]
+      },
+      {
+        "name": "Elite",
+        "spendPerYearAED": 15000,
+        "description": "Power, status and insider access.",
+        "benefits": [
+          "40% member discount",
+          "Personalised fragrance engraving",
+          "Invitations to private soirées & premium events",
+          "Priority access to limited drops"
+        ]
+      },
+      {
+        "name": "Imperial",
+        "spendPerYearAED": 30000,
+        "description": "Ultimate luxury. Reserved for FOMAXO’s highest-spending members.",
+        "benefits": [
+          "All Elite benefits",
+          "Personal fragrance concierge",
+          "Access to secret collections & private events",
+          "Opportunity to create your own signature perfume"
+        ]
+      }
+    ]
+  },
+  "checkout": {
+    "whatsapp": "+971543146334",
+    "email": "fomaxoasset@gmail.com",
+    "cardPayments": {
+      "provider": "Stripe",
+      "endpoint": "checkout.php",
+      "keyFile": "stripe-config.php (one level above public_html, never in GitHub)"
+    },
+    "delivery": "Free · anywhere in UAE"
+  },
+  "shipping": [
+    "Free delivery anywhere in the UAE on every order."
+  ],
+  "contact": {
+    "email": "fomaxoasset@gmail.com",
+    "phones": [
+      {
+        "label": "UAE",
+        "number": "+971 54 314 6334"
+      },
+      {
+        "label": "India",
+        "number": "+971 56 158 9232"
+      }
+    ],
+    "instagram": "fomaxoperfumes",
+    "website": "www.fomaxo.com"
+  },
+  "social": [
+    {
+      "id": "whatsapp",
+      "label": "WhatsApp",
+      "url": "https://wa.me/971543146334"
+    },
+    {
+      "id": "instagram",
+      "label": "Instagram",
+      "url": "https://instagram.com/fomaxoperfumes"
+    },
+    {
+      "id": "tiktok",
+      "label": "TikTok",
+      "url": "https://www.tiktok.com/search?q=fomaxo"
+    },
+    {
+      "id": "youtube",
+      "label": "YouTube",
+      "url": "https://www.youtube.com/results?search_query=fomaxo"
+    },
+    {
+      "id": "facebook",
+      "label": "Facebook",
+      "url": "https://www.facebook.com/search/top?q=fomaxo"
+    },
+    {
+      "id": "linkedin",
+      "label": "LinkedIn",
+      "url": "https://www.linkedin.com/search/results/all/?keywords=fomaxo"
+    },
+    {
+      "id": "x",
+      "label": "X",
+      "url": "https://x.com/search?q=fomaxo"
+    },
+    {
+      "id": "snapchat",
+      "label": "Snapchat",
+      "url": "https://www.snapchat.com/explore/fomaxo"
+    },
+    {
+      "id": "pinterest",
+      "label": "Pinterest",
+      "url": "https://www.pinterest.com/search/pins/?q=fomaxo"
+    }
+  ],
+  "personalCare": {
+    "products": []
+  },
+  "design": {
+    "fonts": {
+      "brand": "FOMAXO (logo, hero, Elite levels, product names)",
+      "headings": "Cormorant Garamond (upright, no italics)",
+      "body": "Jost"
+    },
+    "colors": {
+      "black": "#050505",
+      "gold": "#d7aa69",
+      "goldLight": "#f0d3a0",
+      "ivory": "#f2ebdd",
+      "lightBackground": "#f6f0e4",
+      "lightText": "#1b1712"
+    },
+    "modes": [
+      "dark",
+      "light (follows device on first visit)"
+    ],
+    "rules": [
+      "No italics",
+      "Numbers/prices font unchanged",
+      "High contrast in both modes",
+      "Mobile-first, no overlap 360px→desktop"
+    ]
+  }
+}
