@@ -1640,7 +1640,7 @@ function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.co
 // multi-buy discount: counts every unit in the bag except the Discovery Set and King (keep in sync with checkout.php)
 const QTY_DISCOUNT_SKIP = ['discovery', 'king'];
 const QTY_DISCOUNT_MAX = 10;   // highest discount in %
-function qtyPct(n){ return n < 3 ? 0 : n < 5 ? 1 : Math.min(QTY_DISCOUNT_MAX, 1.5 + (n - 5) * 0.5); }
+function qtyPct(n){ return n < 5 ? 0 : Math.min(QTY_DISCOUNT_MAX, 1 + (n - 5) * 0.5); }
 function qtyDiscount(lines){
   let units = 0, base = 0;
   for (const l of lines){ if (QTY_DISCOUNT_SKIP.includes(l.id)) continue; const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) continue; units += l.qty; base += Number(v) * l.qty; }
