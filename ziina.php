@@ -97,7 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
   // first time we see it paid → record it and send the emails (only once)
   if ($status === 'completed' && $rec && empty($rec['paid'])) {
     $paidFils = (int)($pi['amount'] ?? 0);
-    $rec['paid'] = date('Y-m-d H:i'); file_put_contents($file, json_encode($rec), LOCK_EX);
+    $rec['paid'] = date('Y-m-d H:i');
+    require_once __DIR__ . '/reviews-lib.php';   // private "review your order" link → Verified Purchaser reviews
+    if (!empty($rec['pids'])) $rec['review'] = fomaxo_review_link($rec['no'], $rec['pids']);
+    file_put_contents($file, json_encode($rec), LOCK_EX);
     $c = $rec['cust']; $total = fomaxo_aed($rec['totalFils']);
     $note = $paidFils && $paidFils !== (int)$rec['totalFils'] ? ' (AMOUNT MISMATCH: paid ' . fomaxo_aed($paidFils) . ')' : '';
     fomaxo_log_order([date('Y-m-d H:i'), $rec['no'], 'Ziina — PAID' . $note, $total, $c['name'], $c['phone'], $c['email'], $c['emirate'], $c['address'], $c['note'], implode(' | ', $rec['summary'])]);
@@ -107,9 +110,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
           . "TOTAL PAID: $total\nDelivery: Free\n\nName: {$c['name']}\nPhone: {$c['phone']}\n" . ($c['email'] !== '' ? "Email: {$c['email']}\n" : '') . "Address: {$c['address']}, {$c['emirate']}, UAE\n" . ($c['note'] ? "Note: {$c['note']}\n" : '');
     @mail($STORE_EMAIL, '=?UTF-8?B?' . base64_encode("New paid order {$rec['no']} — $total") . '?=', $body, "From: $from\r\n" . ($c['email'] !== '' ? "Reply-To: {$c['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
     $cb = "Thank you for your order, {$c['name']}.\n\nOrder number: {$rec['no']}\n\n" . implode("\n", $rec['rows']) . "\n\nTotal paid: $total\nDelivery: Free, to {$c['address']}, {$c['emirate']}\n\n"
-        . "We will call or WhatsApp you on {$c['phone']} to arrange your delivery.\n\nFOMAXO\nhttps://$host";
+        . "We will call or WhatsApp you on {$c['phone']} to arrange your delivery.\n\n"
+        . (!empty($rec['review']) ? "Once your order arrives, we would love your honest review (it will show Verified Purchaser):\nhttps://$host/#/review?t={$rec['review']}\n\n" : '')
+        . "FOMAXO\nhttps://$host";
     if ($c['email'] !== '') @mail($c['email'], '=?UTF-8?B?' . base64_encode("Your FOMAXO order {$rec['no']}") . '?=', $cb, "From: $from\r\nReply-To: $STORE_EMAIL\r\nContent-Type: text/plain; charset=UTF-8");
   }
+  if ($status === 'completed' && !empty($rec['review'])) $out['review'] = $rec['review'];
   echo json_encode($out); exit;
 }
 
@@ -154,7 +160,8 @@ if ($order['discountFils']) $rows[] = "Multi-buy {$order['pct']}% off: -" . foma
 
 $pid = preg_replace('/[^A-Za-z0-9_\-]/', '', $pi['id']);
 @file_put_contents(ziina_dir() . "/$pid.json", json_encode(['no' => $no, 'created' => date('Y-m-d H:i'), 'totalFils' => $order['totalFils'],
-  'summary' => $order['summary'], 'rows' => $rows, 'cust' => $cust, 'test' => $testMode]), LOCK_EX);
+  'summary' => $order['summary'], 'rows' => $rows, 'cust' => $cust, 'test' => $testMode,
+  'pids' => array_values(array_unique(array_map(fn($l) => (string)($l['id'] ?? ''), (array)($in['lines'] ?? []))))]), LOCK_EX);
 fomaxo_log_order([date('Y-m-d H:i'), $no, 'Ziina — awaiting payment' . ($testMode ? ' (TEST)' : ''), fomaxo_aed($order['totalFils']), $cust['name'], $cust['phone'], $cust['email'],
                   $cust['emirate'], $cust['address'], $cust['note'], implode(' | ', $order['summary'])]);
 

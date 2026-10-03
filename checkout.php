@@ -162,7 +162,9 @@ if ($pay === 'cod') {
   $mailed = @mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
                   "From: FOMAXO Orders <orders@$host>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
   if (!$saved && !$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or order via WhatsApp.'); }
-  echo json_encode(['order' => $no, 'total' => number_format($totalFils / 100, 2, '.', '')]);
+  require_once __DIR__ . '/reviews-lib.php';   // private "review your order" link → Verified Purchaser reviews
+  $review = fomaxo_review_link($no, array_map(fn($l) => $l['id'] ?? '', $lines));
+  echo json_encode(['order' => $no, 'total' => number_format($totalFils / 100, 2, '.', ''), 'review' => $review]);
   exit;
 }
 
