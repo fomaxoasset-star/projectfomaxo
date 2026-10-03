@@ -1332,6 +1332,22 @@ html[data-mode="light"] .cur-link .cur-ring{border-color:#000;background:rgba(0,
 .dr-foot .qd-row,.dr-foot .qd-row .price{color:#5fc48c}
 html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-row .price{color:#1e7a47}
 .dr-foot .total-row .price{font-size:32px;color:var(--gold)}
+/* compact bag footer: leaves more room for bag items */
+.dr-foot{padding:14px 22px calc(14px + env(safe-area-inset-bottom));gap:8px}
+.dr-foot .sub-row+.sub-row{margin-top:0}
+.dr-foot .qd-nudge{gap:10px;margin:0;padding:8px 12px;font-size:12.5px;line-height:1.4}
+.dr-foot .qd-nudge svg{width:18px;height:18px}
+.qd-nudge .qd-note{margin-top:3px;font-size:11px}
+.dr-foot .mini-pick{flex-direction:row;align-items:center;gap:10px}
+.dr-foot .mini-pick label{flex:none;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:inherit}
+.dr-foot .mini-pick select{flex:1;min-width:0;width:auto;padding:5px 8px;font-size:13px}
+.dr-foot .mini-pick .price{flex:none;font-size:13px;letter-spacing:.16em}
+.dr-foot .total-row{padding-top:8px}
+.dr-foot .total-row .price{font-size:24px}
+.dr-foot .btn{min-height:44px}
+.dr-foot .pay-note{font-size:11px;margin:-4px 0 0}
+.dr-foot .dr-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dr-foot .dr-pair .btn{padding:0 10px;font-size:11px;letter-spacing:.12em}
 </style>
 </head>
 <body>
@@ -1722,12 +1738,11 @@ function renderCart(){
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
   const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
-  const mini = dc.mini ? `<div class="mini-pick"><div class="sub-row qd-row"><span>Free 10ml mini</span><span class="price">FREE</span></div><label for="miniSel">Choose your free 10ml mini</label><select id="miniSel">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>` : '';
+  const mini = dc.mini ? `<div class="mini-pick qd-row"><label for="miniSel">Free 10ml mini</label><select id="miniSel" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select><span class="price">FREE</span></div>` : '';
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
   foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
-    ${S.checkout.stripe ? `<button class="btn block" id="payCard">${ICON.lock || ''}Pay securely by card</button><p class="pay-note">Visa · Mastercard · Apple Pay · Google Pay — secured by Stripe</p><button class="btn line block" id="doCheckout">Order via WhatsApp</button>` : `<button class="btn block" id="doCheckout">${S.checkout.mode === 'whatsapp' ? 'Checkout via WhatsApp' : 'Checkout'}</button>`}
-    <a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
+    ${S.checkout.stripe ? `<button class="btn block" id="payCard">${ICON.lock || ''}Pay securely by card</button><p class="pay-note">Visa · Mastercard · Apple Pay · Google Pay — secured by Stripe</p><div class="dr-pair"><button class="btn line block" id="doCheckout">Order via WhatsApp</button><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a></div>` : `<button class="btn block" id="doCheckout">${S.checkout.mode === 'whatsapp' ? 'Checkout via WhatsApp' : 'Checkout'}</button><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`}`;
   $('#doCheckout').onclick = () => checkout(cart);
   const pc = $('#payCard'); if (pc) pc.onclick = () => payByCard(cart, pc);
   const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} };
