@@ -115,7 +115,7 @@ $afterFils = $subFils - $discFils;               // total after the multi-buy di
 
 /* minimum order: checked here too, so it can't be bypassed */
 if ($afterFils < $MIN_ORDER * 100) fail(400, 'Minimum order ' . aed_short($MIN_ORDER * 100) . ' · add ' . aed_short($MIN_ORDER * 100 - $afterFils) . ' more.');
-if ($pay === 'cod' && $afterFils < $COD_MIN * 100) fail(400, 'Cash on delivery is available for orders above ' . aed_short($COD_MIN * 100) . ' · add ' . aed_short($COD_MIN * 100 - $afterFils) . ' more.');
+if ($pay === 'cod' && $afterFils < $COD_MIN * 100) fail(400, 'Cash on delivery is available for orders above ' . aed_short($COD_MIN * 100) . '. Add ' . aed_short($COD_MIN * 100 - $afterFils) . ' more to activate cash on delivery.');
 
 /* FREE 10ml mini: the customer's pick if it comes in 10ml, otherwise the first scent that does */
 $miniName = null;
