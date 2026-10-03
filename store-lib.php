@@ -62,7 +62,8 @@ function fomaxo_price_order($in) {
 
   $gift = null;
   if ($count >= $MINI_AT && !$hasMini) {
-    $gid = is_string($in['gift'] ?? null) ? $in['gift'] : '';
+    $gid = $in['mini'] ?? $in['gift'] ?? '';   // the free mini the customer picked in the bag
+    $gid = is_string($gid) ? $gid : '';
     if (!isset($CATALOG[$gid]['prices']['10'])) { $gid = ''; foreach ($CATALOG as $cid => $c) { if (isset($c['prices']['10'])) { $gid = $cid; break; } } }
     if ($gid !== '') { $gift = $CATALOG[$gid]['name']; $summary[] = "FREE 10ml $gift mini"; }
   }
@@ -70,20 +71,30 @@ function fomaxo_price_order($in) {
           'fullFils' => $fullFils, 'discountFils' => $fullFils - $netFils, 'totalFils' => $netFils];
 }
 
-/* Delivery details sent from the bag. Returns ['error'=>...] or clean details. Used by every payment type. */
+/* Delivery details from the checkout page. Returns ['error'=>...] or clean details. Used by every payment type.
+   Address comes in separate boxes (villa/building no, room no optional, street, area); email is optional. */
 $EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
 function fomaxo_customer($in) {
   global $EMIRATES;
   $c = is_array($in['customer'] ?? null) ? $in['customer'] : [];
-  $t = fn($k, $max) => trim(mb_substr(preg_replace('/\s+/u', ' ', (string)($c[$k] ?? '')), 0, $max));
-  $out = ['name' => $t('name', 80), 'phone' => $t('phone', 25), 'email' => $t('email', 120),
-          'emirate' => $t('emirate', 30), 'address' => $t('address', 300), 'note' => $t('note', 300)];
+  $t = fn($k, $max) => trim(mb_substr(preg_replace('/[\x00-\x1F\x7F\s]+/u', ' ', is_string($c[$k] ?? null) ? $c[$k] : ''), 0, $max));
+  /* capital first letter of every word (the rest is kept as typed) — matches the checkout page */
+  $caps = fn($v) => preg_replace_callback('/(^|[\s\-\/(])(\p{Ll})/u', fn($m) => $m[1] . mb_strtoupper($m[2]), $v);
+  $out = ['name' => $t('name', 80), 'phone' => $t('phone', 25), 'email' => $t('email', 120), 'emirate' => $t('emirate', 30),
+          'building' => $t('building', 40), 'room' => $t('room', 20), 'street' => $t('street', 100), 'area' => $t('area', 80),
+          'address' => $t('address', 300), 'note' => $t('note', 300)];
+  foreach (['name', 'building', 'room', 'street', 'area', 'address', 'note'] as $k) $out[$k] = $caps($out[$k]);
   if (mb_strlen($out['name']) < 2) return ['error' => 'Please enter your full name.'];
   $digits = preg_replace('/\D/', '', $out['phone']);
-  if (strlen($digits) < 9 || strlen($digits) > 15) return ['error' => 'Please enter a valid mobile number.'];
-  if (!filter_var($out['email'], FILTER_VALIDATE_EMAIL)) return ['error' => 'Please enter a valid email address.'];
+  if (strlen($digits) < 7 || strlen($digits) > 15) return ['error' => 'Please enter a valid mobile number.'];
+  if ($out['email'] !== '' && !filter_var($out['email'], FILTER_VALIDATE_EMAIL)) return ['error' => 'Please enter a valid email address.'];
   if (!in_array($out['emirate'], $EMIRATES, true)) return ['error' => 'Please choose your emirate.'];
-  if (mb_strlen($out['address']) < 6) return ['error' => 'Please enter your full delivery address.'];
+  if ($out['building'] !== '' || $out['street'] !== '' || $out['area'] !== '') {
+    if ($out['building'] === '' || mb_strlen($out['street']) < 2 || mb_strlen($out['area']) < 2) return ['error' => 'Please enter your full delivery address.'];
+    $out['address'] = implode(', ', array_filter([$out['building'], $out['room'] !== '' ? 'Room ' . $out['room'] : '', $out['street'], $out['area']]));
+  } elseif (mb_strlen($out['address']) < 5) {   // older page with a single address box
+    return ['error' => 'Please enter your full delivery address.'];
+  }
   return $out;
 }
 
@@ -92,6 +103,7 @@ function fomaxo_log_order($row) {
   $dir = dirname(__DIR__) . '/fomaxo-orders';
   if (!is_dir($dir) && !@mkdir($dir, 0700, true)) return false;
   $f = @fopen($dir . '/orders.csv', 'a'); if (!$f) return false;
+  $row = array_map(fn($v) => preg_match('/^[=+\-@]/', (string)$v) && !preg_match('/^\+?[\d\s()\-]+$/', (string)$v) ? "'" . $v : $v, $row);   // stop spreadsheet formulas (phone numbers stay as typed)
   $ok = @fputcsv($f, $row) !== false; fclose($f); return $ok;
 }
 function fomaxo_aed($fils) { return 'AED ' . number_format($fils / 100, 2); }

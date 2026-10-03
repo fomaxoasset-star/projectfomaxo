@@ -4,8 +4,8 @@ RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# keep the Stripe key file private
-<FilesMatch "^stripe-config.*\.php$">
+# keep the Stripe and Ziina key files private
+<FilesMatch "^(?i:stripe|ziina)-config.*\.php$">
   Require all denied
 </FilesMatch>
 
