@@ -46,3 +46,12 @@ CHANGING PRICES LATER
 
 TURN CARD PAYMENTS OFF
    In index.html search  stripe: "checkout.php"  and change it to  stripe: ""
+
+CASH ON DELIVERY ORDERS
+   Cash on delivery orders (AED 200 minimum, AED 10 fee) are saved by checkout.php in
+   domains/fomaxo.com/fomaxo-orders/cash-on-delivery-orders.csv  (one level above
+   public_html, private) and emailed to fomaxoasset@gmail.com. To send them to another
+   address, add  'orders_email' => 'you@example.com',  to stripe-config.php.
+   Minimum order for card and WhatsApp is AED 30. All minimums count the total after
+   the multi-buy discount. Change them in BOTH index.html (MIN_ORDER, COD_MIN, COD_FEE)
+   and checkout.php ($MIN_ORDER, $COD_MIN, $COD_FEE).
