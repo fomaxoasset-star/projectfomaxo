@@ -2631,7 +2631,7 @@ function checkoutPage(q){
           <p class="co-err" id="coErr1" role="alert" hidden></p>
           <label>Full name<input name="name" autocomplete="name" maxlength="80" required></label>
           <div class="row2"><label>Mobile<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971 50 123 4567" maxlength="20" required></label>
-            <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" autocomplete="email" maxlength="120"></label></div>
+            <label>Email<input name="email" type="email" autocomplete="email" maxlength="120" required></label></div>
           <label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
           <div class="co-ar co-ar1">
             <label class="co-a-b">Villa / building no<input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12" required></label>
@@ -2731,7 +2731,7 @@ function bindCheckout(q){
     const bad = [];
     if (d.name.length < 2) bad.push(['name', 'full name']);
     if (d.phone.replace(/\D/g, '').length < 7) bad.push(['phone', 'mobile number']);
-    if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) bad.push(['email', 'a valid email']);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) bad.push(['email', d.email ? 'a valid email' : 'email']);
     if (!EMIRATES.includes(d.emirate)) bad.push(['emirate', 'emirate']);
     if (!d.building) bad.push(['building', 'villa / building no']);
     if (d.street.length < 2) bad.push(['street', 'street']);
