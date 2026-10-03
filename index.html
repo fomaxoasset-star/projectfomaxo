@@ -2675,7 +2675,7 @@ function bindCheckout(q){
     const missing = check(details()), locked = missing.length > 0;
     const opt = (id, title, sub, off) => { off = off || locked; return `<label class="co-opt${coPay === id && !locked ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`; };
     $('#coPay').innerHTML = (locked ? `<p class="co-lock">${CO_ICON.lock}<span>Fill in your ${listTxt(missing.map(b => b[1]))} to choose how to pay.</span></p>` : '') + (CARD_ON ? opt('card', 'Card / Apple Pay / Google Pay', `Pay securely now with ${CARD_BY}`) : '') +
-      opt('cod', 'Cash on delivery', codOk ? `Pay in cash when your order arrives · ${aed(COD_FEE)} fee` : `For orders from ${aed(COD_MIN)} · add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more · ${aed(COD_FEE)} fee`, !codOk);
+      opt('cod', 'Cash on delivery', codOk ? `Pay in cash when your order arrives · ${aed(COD_FEE)} fee` : `For orders above ${aed(COD_MIN)} · add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more · ${aed(COD_FEE)} fee`, !codOk);
     $$('#coPay input').forEach(r => r.onchange = () => { coPay = r.value; err.hidden = true; draw(); });
     // main button
     if (busy) return;
@@ -2683,7 +2683,7 @@ function bindCheckout(q){
     go.disabled = T.short > 0 || noWay;
     go.classList.toggle('co-min', T.short > 0 || locked || noWay);
     go.innerHTML = T.short > 0 ? minMsg(T.short)
-      : noWay ? `Cash on delivery is for orders from ${aed(COD_MIN)}`
+      : noWay ? `Cash on delivery is for orders above ${aed(COD_MIN)}`
       : locked ? 'Fill in your delivery details to continue'
       : coPay === 'card' ? `${CO_ICON.lock}Pay ${T.total !== null ? money2(T.total) + ' ' : ''}securely`
       : `Place order · ${money2(T.total)}`;
