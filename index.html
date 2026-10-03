@@ -2489,7 +2489,7 @@ const CO_FIELDS = ['name', 'phone', 'email', 'emirate', 'building', 'room', 'str
 const CO_CAPS = ['name', 'building', 'room', 'street', 'area', 'note'];
 const capWords = v => v.replace(/(^|[\s\-\/(])(\p{Ll})/gu, (m, a, c) => a + c.toUpperCase());
 // first letter of each sentence, for long messages ("hello. we would like…" → "Hello. We would like…")
-const capSentences = v => v.replace(/(^|[.!?]\s+|\n\s*)(\p{Ll})/gu, (m, a, c) => a + c.toUpperCase()).replace(/(^|\s)i(?=[\s'’,.!?]|$)/g, '$1I');
+const capSentences = v => v.replace(/(^|[.!?]\s+|\n\s*)(\p{Ll})/gu, (m, a, c) => a + c.toUpperCase()).replace(/(^|\s)i(?=[\s'’,.!?])/g, '$1I');
 // contact and partner forms: boxes marked data-cap capitalize as people type, keeping the cursor where it was
 app.addEventListener('input', e => {
   const t = e.target, how = t.dataset && t.dataset.cap; if (!how) return;
