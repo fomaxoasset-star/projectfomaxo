@@ -839,6 +839,8 @@ html[data-mode="light"] .rings i{border-color:rgba(153,106,36,.55)}
 .grid:not(.four)>*{flex:0 0 calc((100% - 2*var(--g))/3);min-width:0}
 @media(max-width:1100px){.grid:not(.four)>*{flex-basis:calc((100% - var(--g))/2)}}
 @media(max-width:600px){.grid:not(.four)>*{flex-basis:100%}}
+/* equal-height cards so Add to bag / Buy now line up across each row */
+.grid>.card{height:auto;align-self:stretch}
 @media(min-width:1000px){.phead .lead:has(.one-line){max-width:none}.one-line{white-space:nowrap}}
 .bw{font-family:var(--brand-font);font-style:normal;font-weight:400;letter-spacing:.08em;text-transform:uppercase}
 @media(min-width:700px){h1 .bw{margin-left:-.12em}}
