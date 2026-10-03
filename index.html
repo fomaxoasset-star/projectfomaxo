@@ -425,8 +425,14 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .upsell b{font-family:var(--display);font-weight:300;font-size:14px;letter-spacing:.14em;text-transform:uppercase}
 .recs{margin-top:18px;padding:16px 0 18px}
 .recs h5{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:400;margin-bottom:10px}
-.recs-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.rec{position:relative;min-width:0}
+.recs-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.recs-h h5{margin-bottom:0}
+.recs-nav{display:flex;gap:6px}
+.recs-nav button{width:26px;height:26px;border:1px solid var(--line-2);background:none;color:var(--gold);font-size:16px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
+.recs-nav button:hover{border-color:var(--gold)}
+.recs-row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:2px}
+.recs-row::-webkit-scrollbar{display:none}
+.rec{position:relative;min-width:0;flex:0 0 calc((100% - 30px) / 3.6);scroll-snap-align:start}
 .rec a{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;text-align:left}
 .rec img{width:100%;max-width:100%;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
 .rec b{font-weight:400;font-size:11.5px;line-height:1.25;color:var(--ivory);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1934,13 +1940,15 @@ function buyNow(line){ buyLines = [line]; try { sessionStorage.setItem('fomaxo_b
 function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'); } catch(e) {} }
 // "You may also like" in the bag: up to 4 small products the customer doesn't have yet (everyday fragrances first, then King; the Discovery Set has its own "Not sure yet?" link)
 function bagRecs(){
-  const have = new Set(cart.map(l => l.id));
-  const recs = S.products.filter(p => !have.has(p.id) && p.kind !== 'set' && p.prices && hasPrice(p.prices[defaultSize(p)]))
-    .sort((a, b) => (a.tier === 'elite') - (b.tier === 'elite')).slice(0, 4);
+  const have = new Set(cart.map(l => l.id)), haveSz = new Set(cart.map(l => l.id + '/' + l.opt));
+  const frag = S.products.filter(p => p.kind !== 'set' && p.prices).sort((a, b) => (a.tier === 'elite') - (b.tier === 'elite'));
+  // full-size fragrances the customer doesn't have, then the 10ml minis they don't have yet
+  const recs = frag.filter(p => !have.has(p.id) && hasPrice(p.prices[defaultSize(p)])).map(p => [p, defaultSize(p)])
+    .concat(frag.filter(p => p.sizes.includes(10) && hasPrice(p.prices[10]) && !haveSz.has(p.id + '/10')).map(p => [p, 10]));
   if (!recs.length) return '';
-  return `<div class="recs"><h5>You may also like</h5><div class="recs-row">${recs.map(p => { const sz = defaultSize(p); return `<div class="rec">
-      <a href="#/product/${p.id}" data-close><img src="${IMG(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])}${p.kind === 'set' ? '' : ` <small>· ${sz}ml</small>`}</span></a>
-      ${p.kind === 'set' ? '' : `<button type="button" class="rec-add" data-recadd="${p.id}" aria-label="Add ${esc(p.name)} ${sz}ml to your bag">+</button>`}</div>`; }).join('')}</div></div>`;
+  return `<div class="recs"><div class="recs-h"><h5>You may also like</h5><span class="recs-nav"><button type="button" data-recscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-recscroll="1" aria-label="Scroll for more">›</button></span></div><div class="recs-row">${recs.map(([p, sz]) => `<div class="rec">
+      <a href="#/product/${p.id}?size=${sz}" data-close><img src="${IMG(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></a>
+      <button type="button" class="rec-add" data-recadd="${p.id}" data-recsz="${sz}" aria-label="Add ${esc(p.name)} ${sz}ml to your bag">+</button></div>`).join('')}</div></div>`;
 }
 function renderCart(){
   const n = cart.reduce((a, l) => a + l.qty, 0);
@@ -1972,7 +1980,8 @@ $('#cartBody').addEventListener('click', e => {
   const q = e.target.closest('[data-q]'), rm = e.target.closest('[data-rm]');
   if (q){ const i = +q.dataset.q, l = cart[i], n = Math.min(99, l.qty + +q.dataset.d); if (n < 1) { cart.splice(i, 1); toast(`${P[l.id].name} removed from your bag`); } else l.qty = n; save(); }
   if (rm){ cart.splice(+rm.dataset.rm, 1); save(); }
-  const ra = e.target.closest('[data-recadd]'); if (ra){ const p = P[ra.dataset.recadd]; addToCart(p.id, defaultSize(p)); }
+  const ra = e.target.closest('[data-recadd]'); if (ra){ const p = P[ra.dataset.recadd]; addToCart(p.id, +ra.dataset.recsz || defaultSize(p)); }
+  const rs = e.target.closest('[data-recscroll]'); if (rs){ const row = $('.recs-row'); row.scrollBy({left: +rs.dataset.recscroll * row.clientWidth * .75, behavior: 'smooth'}); }
 });
 
 /* ============================ OVERLAYS ============================ */
