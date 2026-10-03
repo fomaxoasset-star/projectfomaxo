@@ -1933,7 +1933,7 @@ function product(id, q){
           <div id="pprice">${priceHTML(p, size, 'pprice')}</div>
         </div>
         ${p.sizes.length > 1 ? `<div><div class="opt-label"><span>${isSet ? 'Choose your set' : 'Size'}</span><span id="sizeName">${optLabel(p, size)}</span></div>
-          <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · travel':s===50?'Everyday':'Signature'}</small></button>`).join('')}</div></div>`
+          <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · Travel':s===50?'Everyday':'Supreme'}</small></button>`).join('')}</div></div>`
           : `<div class="opt-label" style="margin:0"><span>Size</span><span>${isSet ? '2ml vials' : sizeLabel(size)}</span></div>`}
         ${isSet ? `<div id="picker"><div class="opt-label"><span>Choose your fragrances</span><span id="pickCount">0 / ${size}</span></div>
           <div class="picks">${pickable(p).map(f => `<button type="button" class="pick" data-pick="${f.id}" aria-pressed="false"><img src="${IMG(f.images[0])}" alt="" loading="lazy"><span>${esc(f.name)}</span><i>✓</i></button>`).join('')}</div>
