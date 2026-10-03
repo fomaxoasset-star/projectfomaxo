@@ -694,8 +694,8 @@ html[data-mode="light"] .announce .mode-switch .ms-moon{color:#8a7f6c}
 .link.ext:hover svg{transform:translate(3px,-3px);background:var(--gold);color:var(--black)}
 
 .brand{position:relative}
-.brand .tm{font-family:var(--sans);font-size:9px;font-weight:500;line-height:1;color:var(--brand);align-self:center;margin-left:-8px;transform:translateY(-7px);letter-spacing:0}
-@media(max-width:1080px){.brand .tm{font-size:8px;transform:translateY(-6px)}}
+.brand .tm{font-family:var(--sans);font-size:10px;font-weight:500;line-height:1;color:var(--brand);align-self:center;margin-left:-8px;transform:translateY(-9px);letter-spacing:0}
+@media(max-width:1080px){.brand .tm{font-size:9px;transform:translateY(-8px)}}
 
 .empty{padding:50px 0 26px}
 .empty-ds{display:grid;grid-template-columns:84px 1fr auto;gap:16px;align-items:center;border:1px solid var(--line-2);padding:12px;background:var(--panel);transition:border-color .4s}
@@ -1084,6 +1084,12 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
 .mnav .foot{font-size:14.5px}
 .price small{font-size:12px}
 .menu a{white-space:nowrap}
+@media(max-width:1400px){.menu{gap:clamp(16px,1.6vw,40px)}}
+/* larger logo + name in the top header and mobile menu */
+header.nav .brand .em,.mnav .brand .em{width:44px;height:44px}
+header.nav .brand .wm,.mnav .brand .wm{height:20px}
+@media(max-width:1080px){header.nav .brand .em,.mnav .brand .em{width:42px;height:42px}header.nav .brand .wm,.mnav .brand .wm{height:18px}}
+@media(max-width:420px){header.nav .brand .em,.mnav .brand .em{width:38px;height:38px}header.nav .brand .wm,.mnav .brand .wm{height:16px}}
 .nav-in>.icons{grid-column:3;justify-self:end}
 @media(max-width:1240px){.menu{display:none}.burger{display:inline-flex}.hc-now{display:none}.hc-bar{grid-template-columns:1fr auto}}
 @media(max-width:760px){.hc-bar{grid-template-columns:1fr}}
