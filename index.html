@@ -1295,6 +1295,12 @@ html[data-mode="light"] .cur-link .cur-ring{border-color:#000;background:rgba(0,
 .dr-foot .total-row{margin-top:2px!important;padding-top:12px;border-top:1px solid var(--line);color:var(--ivory)}
 .dr-foot .total-row>span:first-child{font-size:17px;letter-spacing:.2em;font-weight:500}
 .dr-foot .total-row .price{font-size:32px;color:var(--gold)}
+/* bag: quantity discount nudge and negative Discount line */
+.dr-foot .qd-nudge{display:flex;align-items:center;gap:14px;margin:0 0 4px;padding:14px 18px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:14px;line-height:1.45;letter-spacing:.01em;color:var(--ivory)}
+.dr-foot .qd-nudge svg{flex:none;width:22px;height:22px;color:var(--gold)}
+.dr-foot .qd-nudge b{color:var(--gold);font-weight:600}
+.dr-foot .qd-row,.dr-foot .qd-row .price{color:#5fc48c}
+html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-row .price{color:#1e7a47}
 .dr-foot .vat-note{margin:-8px 0 0;text-align:right;font-size:11px;letter-spacing:.04em;color:var(--muted)}
 </style>
 </head>
@@ -1574,6 +1580,7 @@ const pickable = p => FRAG.filter(f => !(p.exclude || []).includes(f.id));
 const hasPrice = v => v !== null && v !== undefined && v !== '';
 const money = v => hasPrice(v) ? `${S.currency} ${Number(v).toLocaleString('en-US')}` : null;
 // prices on the page: small "AED" + number in the price font, never split across lines
+const money2 = v => `${S.currency} ${Number(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
 const moneyHTML = (v, dec) => hasPrice(v) ? `<span class="amt"><span class="cur">${S.currency}</span>&nbsp;${Number(v).toLocaleString('en-US', dec ? {minimumFractionDigits:2, maximumFractionDigits:2} : undefined)}</span>` : null;
 const wasHTML = (p, size) => { const c = p.compareAt && p.compareAt[size]; return hasPrice(c) && c > p.prices[size] ? `<s class="was">${moneyHTML(c)}</s> ` : ''; };
 const priceHTML = (p, size, cls='price') => { const m = moneyHTML(p.prices[size]); return m ? `<span class="${cls}">${wasHTML(p, size)}${m}</span>` : `<span class="${cls} na">Price on request</span>`; };
@@ -1605,13 +1612,28 @@ function addToCart(id, opt, qty=1, silent, picks){
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
 function orderText(lines){
   const rows = lines.map(l => { const p = P[l.id], m = money(p.prices[l.opt]); return `• ${p.name} — ${optLabel(p, l.opt)} × ${l.qty}${m ? ' (' + m + ' each)' : ''}${l.picks ? '\n   Fragrances: ' + l.picks.map(id => P[id] ? P[id].name : id).join(', ') : ''}`; });
-  const tot = subtotal(lines);
-  return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${tot !== null ? `\n\nSubtotal: ${money(tot)}` : ''}\n\nName:\nDelivery address:\nPhone:`;
+  const tot = subtotal(lines), dc = qtyDiscount(lines);
+  const sums = tot === null ? '' : dc.amount > 0
+    ? `\n\nItems: ${money2(tot)}\nMulti-buy discount (${pctTxt(dc.pct)}%): -${money2(dc.amount)}\nTotal: ${money2(tot - dc.amount)} (incl. 5% VAT)`
+    : `\n\nSubtotal: ${money(tot)}`;
+  return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${sums}\n\nName:\nDelivery address:\nPhone:`;
 }
 const VAT_RATE = 0.05;
 // bag line price (unit price × qty), sale price with the crossed-out original on the same line
 function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; if (!hasPrice(v)) return '<span class="price na">Price on request</span>';
   return `<span class="price lp">${hasPrice(c) && c > v ? `<s class="was">${moneyHTML(c * l.qty)}</s> ` : ''}${moneyHTML(v * l.qty)}${l.qty > 1 ? `<small class="each">${moneyHTML(v)} each</small>` : ''}</span>`; }
+// quantity discount: counts every unit in the bag except the Discovery Set and King (keep in sync with checkout.php)
+const QTY_DISCOUNT_SKIP = ['discovery', 'king'];
+const QTY_DISCOUNT_MAX = 10;   // highest discount in %
+function qtyPct(n){ return n < 3 ? 0 : n < 5 ? 5 : Math.min(QTY_DISCOUNT_MAX, 6 + (n - 5) * 0.5); }
+function qtyDiscount(lines){
+  let units = 0, base = 0;
+  for (const l of lines){ if (QTY_DISCOUNT_SKIP.includes(l.id)) continue; const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) continue; units += l.qty; base += Number(v) * l.qty; }
+  const pct = qtyPct(units), amount = Math.round(base * pct) / 100;
+  let next = null; if (units > 0 && pct < QTY_DISCOUNT_MAX){ let k = units + 1; while (qtyPct(k) === pct) k++; next = {need: k - units, pct: qtyPct(k)}; }
+  return {units, pct, amount, next};
+}
+const pctTxt = v => String(v).replace(/\.0$/, '');
 function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) return null; t += Number(v) * l.qty; } return t; }
 function checkout(lines){
   if (!lines.length) return;
@@ -1647,9 +1669,15 @@ function renderCart(){
         ${linePriceHTML(p, l)}</div>
         <button class="rm" data-rm="${i}">Remove</button></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`);
-  const t = subtotal(cart);
+  const t0 = subtotal(cart), dc = qtyDiscount(cart);
+  const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the quantity discount
   const vat = t !== null ? Math.round(t * VAT_RATE / (1 + VAT_RATE) * 100) / 100 : null;   // prices include VAT
-  foot.innerHTML = `${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t - vat, true)}</span></div><div class="sub-row"><span>VAT 5%</span><span class="price">${moneyHTML(vat, true)}</span></div>` : ''}<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div><div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>${t !== null ? '<p class="vat-note">Prices include 5% VAT</p>' : ''}
+  const saving = dc.pct ? `You’re saving <b>${pctTxt(dc.pct)}%</b>. ` : '';
+  const nudgeTxt = dc.next ? `${saving}Add <b>${dc.next.need} more item${dc.next.need > 1 ? 's' : ''}</b> to get <b>${pctTxt(dc.next.pct)}% off</b> your order` : dc.pct ? `You’re saving <b>${pctTxt(dc.pct)}%</b>, our highest multi-buy discount` : '';
+  const nudge = nudgeTxt ? `<div class="qd-nudge">${ICON.gift || ''}<span>${nudgeTxt}</span></div>` : '';
+  const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
+  const disc = t0 !== null && dc.amount > 0 ? `<div class="sub-row"><span>Items</span><span class="price">${moneyHTML(t0, true)}</span></div><div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
+  foot.innerHTML = `${delivery}${nudge}${t !== null ? `${disc}<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t - vat, true)}</span></div><div class="sub-row"><span>VAT (5%)</span><span class="price">${moneyHTML(vat, true)}</span></div>` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>${t !== null ? '<p class="vat-note">Prices include 5% VAT</p>' : ''}
     ${S.checkout.stripe ? `<button class="btn block" id="payCard">${ICON.lock || ''}Pay securely by card</button><p class="pay-note">Visa · Mastercard · Apple Pay · Google Pay — secured by Stripe</p><button class="btn line block" id="doCheckout">Order via WhatsApp</button>` : `<button class="btn block" id="doCheckout">${S.checkout.mode === 'whatsapp' ? 'Checkout via WhatsApp' : 'Checkout'}</button>`}
     <a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
   $('#doCheckout').onclick = () => checkout(cart);
