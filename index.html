@@ -1510,6 +1510,8 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-name{font-weight:400;font-size:16px;letter-spacing:.04em;color:var(--ivory)}
 .rw-ver{display:inline-flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
 .rw-ver svg{width:15px;height:15px;flex:none}
+.rw-note{max-width:440px;line-height:1.75}
+.rw-note .rw-ver{white-space:nowrap;vertical-align:-2px;margin:0 2px}
 .rw-text{font-family:var(--serif);font-size:21px;line-height:1.45;color:var(--ivory);white-space:pre-line;overflow-wrap:anywhere}
 .rw-photos{display:flex;gap:8px;flex-wrap:wrap}
 .rw-photos button{width:78px;height:78px;border:1px solid var(--line);overflow:hidden;padding:0}
@@ -2848,6 +2850,7 @@ function rwItem(r){
 function rwSection(p, d){
   const n = d.count;
   return `<div class="rv-sum"><span class="eyebrow">Customer reviews</span><h2>${esc(p.name)}</h2>
+    <p class="small rw-note">Reviews show each customer's own rating. The <span class="rw-ver">${RW_TICK}Verified Purchaser</span> badge appears only on reviews written from the review link we send after a paid order.</p>
     ${n ? `<div class="rw-avg"><b>${d.avg.toFixed(1)}</b><div>${rwStars(d.avg, 'lg')}<p class="small">Based on ${n} review${n > 1 ? 's' : ''}</p></div></div>
       <div class="rw-dist">${[5, 4, 3, 2, 1].map(s => `<div><span>${s} ★</span><span class="rw-bar"><span style="width:${d.dist[s] / n * 100}%"></span></span><span>${d.dist[s]}</span></div>`).join('')}</div>`
       : `<div>${rwStars(0, 'lg')}<p class="small" style="margin-top:10px">No reviews yet</p></div>`}
