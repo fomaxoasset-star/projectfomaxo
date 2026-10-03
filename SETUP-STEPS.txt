@@ -55,3 +55,12 @@ CASH ON DELIVERY ORDERS
    Minimum order for card and WhatsApp is AED 30. All minimums count the total after
    the multi-buy discount. Change them in BOTH index.html (MIN_ORDER, COD_MIN, COD_FEE)
    and checkout.php ($MIN_ORDER, $COD_MIN, $COD_FEE).
+
+CARD / APPLE PAY / GOOGLE PAY BY ZIINA
+   The card option on the checkout page pays through Ziina (ziina.php). The Ziina access token
+   lives in Ziina-config.php ONE LEVEL ABOVE public_html (domains/fomaxo.com/), never on GitHub:
+     <?php return ['access_token' => 'YOUR_ZIINA_TOKEN', 'test' => false];
+   'test' => true makes test payments (no real money). Paid orders are added to
+   domains/fomaxo.com/fomaxo-orders/orders.csv and emailed to fomaxoasset@gmail.com.
+   Cash on delivery still goes through checkout.php. To go back to Stripe for cards, in index.html
+   change  ziina: "ziina.php"  to  ziina: "" .
