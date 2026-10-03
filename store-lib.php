@@ -72,7 +72,7 @@ function fomaxo_price_order($in) {
 }
 
 /* Delivery details from the checkout page. Returns ['error'=>...] or clean details. Used by every payment type.
-   Address comes in separate boxes (villa/building no, room no optional, street, area); email is optional. */
+   Address comes in separate boxes (villa/building no, room no / floor optional, street, area); email is optional. */
 $EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
 function fomaxo_customer($in) {
   global $EMIRATES;
@@ -91,7 +91,7 @@ function fomaxo_customer($in) {
   if (!in_array($out['emirate'], $EMIRATES, true)) return ['error' => 'Please choose your emirate.'];
   if ($out['building'] !== '' || $out['street'] !== '' || $out['area'] !== '') {
     if ($out['building'] === '' || mb_strlen($out['street']) < 2 || mb_strlen($out['area']) < 2) return ['error' => 'Please enter your full delivery address.'];
-    $out['address'] = implode(', ', array_filter([$out['building'], $out['room'] !== '' ? 'Room ' . $out['room'] : '', $out['street'], $out['area']]));
+    $out['address'] = implode(', ', array_filter([$out['building'], $out['room'] !== '' ? 'Room/Floor ' . $out['room'] : '', $out['street'], $out['area']]));
   } elseif (mb_strlen($out['address']) < 5) {   // older page with a single address box
     return ['error' => 'Please enter your full delivery address.'];
   }

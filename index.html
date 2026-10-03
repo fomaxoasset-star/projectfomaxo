@@ -1362,7 +1362,7 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-ar{display:grid;gap:14px}
 .co-ar1{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
 .co-ar2{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
-.co-ar label{min-width:0}
+.co-ar label{min-width:0;grid-template-rows:1fr auto;align-items:end}
 .co-ar input{width:100%;min-width:0}
 .co-lock{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px dashed var(--line-2);font-size:14px;line-height:1.45;color:var(--muted)}
 .co-lock svg{flex:none;width:18px;height:18px;color:var(--gold)}
@@ -1773,7 +1773,7 @@ function orderText(lines, d, pay){
   const sums = tot === null ? '' : dc.amount > 0
     ? `\n\nSubtotal: ${money2(tot)}\nMulti-buy discount (${pctTxt(dc.pct)}%): -${money2(dc.amount)}\nTotal: ${money2(tot - dc.amount)}`
     : `\n\nSubtotal: ${money(tot)}`;
-  const who = d ? `\n\nName: ${d.name}\nMobile: ${d.phone}${d.email ? '\nEmail: ' + d.email : ''}\nEmirate: ${d.emirate}\nVilla/Building no: ${d.building}${d.room ? '\nRoom no: ' + d.room : ''}\nStreet: ${d.street}\nArea: ${d.area}${d.note ? '\nNote: ' + d.note : ''}${pay ? '\nPayment: ' + pay : ''}` : '\n\nName:\nDelivery address:\nPhone:';
+  const who = d ? `\n\nName: ${d.name}\nMobile: ${d.phone}${d.email ? '\nEmail: ' + d.email : ''}\nEmirate: ${d.emirate}\nVilla/Building no: ${d.building}${d.room ? '\nRoom No / Floor: ' + d.room : ''}\nStreet: ${d.street}\nArea: ${d.area}${d.note ? '\nNote: ' + d.note : ''}${pay ? '\nPayment: ' + pay : ''}` : '\n\nName:\nDelivery address:\nPhone:';
   return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${sums}${who}`;
 }
 // bag line price (unit price × qty), sale price with the crossed-out original on the same line
@@ -2498,7 +2498,7 @@ app.addEventListener('input', e => {
   const v = how === 'words' ? capWords(t.value) : capSentences(t.value);
   if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} }
 });
-const addrText = d => [d.building, d.room && 'Room ' + d.room, d.street, d.area].filter(Boolean).join(', ');
+const addrText = d => [d.building, d.room && 'Room/Floor ' + d.room, d.street, d.area].filter(Boolean).join(', ');
 const CARD_ON = !!(S.checkout.ziina || S.checkout.stripe), CARD_BY = S.checkout.ziina ? 'Ziina' : 'Stripe';
 let coRefresh = null, coOpen = false, coPay = CARD_ON ? 'card' : 'whatsapp';
 function savedDetails(){ try { const d = JSON.parse(localStorage.getItem('fomaxo_details') || '{}'); return d && typeof d === 'object' ? d : {}; } catch(e) { return {}; } }
@@ -2528,7 +2528,7 @@ function checkoutPage(q){
           <label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
           <div class="co-ar co-ar1">
             <label class="co-a-b">Villa / building no<input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12" required></label>
-            <label class="co-a-r"><span>Room no <span class="co-opt-l">(optional)</span></span><input name="room" autocomplete="address-line2" maxlength="20" placeholder="e.g. 1204"></label>
+            <label class="co-a-r"><span>Room No / Floor <span class="co-opt-l">(optional)</span></span><input name="room" autocomplete="address-line2" maxlength="20" placeholder="e.g. 1204"></label>
           </div>
           <div class="co-ar co-ar2">
             <label class="co-a-s">Street<input name="street" maxlength="100" placeholder="e.g. Al Wasl Road" required></label>
