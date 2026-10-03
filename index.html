@@ -2486,6 +2486,8 @@ function notFound(){ return pageHead('Not found', 'Page <em class="metal">not fo
 const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
 const CO_FIELDS = ['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'note'];
 // one-line delivery address from the separate boxes
+const CO_CAPS = ['name', 'building', 'room', 'street', 'area', 'note'];
+const capWords = v => v.replace(/(^|[\s\-\/(])(\p{Ll})/gu, (m, a, c) => a + c.toUpperCase());
 const addrText = d => [d.building, d.room && 'Room ' + d.room, d.street, d.area].filter(Boolean).join(', ');
 let coRefresh = null, coOpen = false, coPay = S.checkout.stripe ? 'card' : 'whatsapp';
 function savedDetails(){ try { const d = JSON.parse(localStorage.getItem('fomaxo_details') || '{}'); return d && typeof d === 'object' ? d : {}; } catch(e) { return {}; } }
@@ -2544,9 +2546,11 @@ function bindCheckout(q){
   const form = $('#coForm'); if (!form) return;
   const err = $('#coErr'), err1 = $('#coErr1'), go = $('#coGo');
   const d0 = savedDetails();
-  CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = d0[k]; });
+  CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = CO_CAPS.includes(k) ? capWords(d0[k]) : d0[k]; });
+  CO_CAPS.forEach(k => form.elements[k] && form.elements[k].setAttribute('autocapitalize', 'words'));
   const details = () => Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()]));
-  const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad'); try { localStorage.setItem('fomaxo_details', JSON.stringify(details())); } catch(x) {} if (!busy) draw(); };
+  const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad');
+    const t = e.target; if (CO_CAPS.includes(t.name)) { const v = capWords(t.value); if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} } } try { localStorage.setItem('fomaxo_details', JSON.stringify(details())); } catch(x) {} if (!busy) draw(); };
   form.addEventListener('input', remember);
   form.addEventListener('change', remember);
   let busy = false;

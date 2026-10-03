@@ -46,10 +46,13 @@ if ($pay === 'card' && (!$key || strpos($key, 'sk_') !== 0)) fail(500, 'Card pay
 $EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
 $cu = is_array($in['customer'] ?? null) ? $in['customer'] : null;
 $clean = function ($v, $max) { $v = is_string($v) ? trim(preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $v)) : ''; return mb_substr($v, 0, $max); };
+/* capital first letter of every word (the rest is kept as typed) — matches the checkout page */
+$caps = fn($v) => preg_replace_callback('/(^|[\s\-\/(])(\p{Ll})/u', fn($m) => $m[1] . mb_strtoupper($m[2]), $v);
 if ($cu) {
   $cu = ['name' => $clean($cu['name'] ?? '', 80), 'phone' => $clean($cu['phone'] ?? '', 20), 'email' => $clean($cu['email'] ?? '', 120),
          'emirate' => $clean($cu['emirate'] ?? '', 30), 'building' => $clean($cu['building'] ?? '', 40), 'room' => $clean($cu['room'] ?? '', 20),
          'street' => $clean($cu['street'] ?? '', 100), 'area' => $clean($cu['area'] ?? '', 80), 'address' => $clean($cu['address'] ?? '', 300), 'note' => $clean($cu['note'] ?? '', 300)];
+  foreach (['name', 'building', 'room', 'street', 'area', 'address', 'note'] as $k) $cu[$k] = $caps($cu[$k]);
   /* address in separate boxes: villa/building no, room no (optional), street, area — email is optional */
   if ($cu['building'] !== '' || $cu['street'] !== '' || $cu['area'] !== '') {
     $ok = $cu['building'] !== '' && mb_strlen($cu['street']) >= 2 && mb_strlen($cu['area']) >= 2;
