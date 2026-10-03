@@ -18,3 +18,11 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
 </IfModule>
+
+# price font (Charles Wright Singapore)
+AddType font/woff2 .woff2
+AddType font/otf .otf
+<IfModule mod_expires.c>
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType font/otf "access plus 1 year"
+</IfModule>
