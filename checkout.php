@@ -32,7 +32,14 @@ $in = json_decode(file_get_contents('php://input'), true);
 $lines = is_array($in['lines'] ?? null) ? $in['lines'] : [];
 if (!$lines || count($lines) > 30) { http_response_code(400); echo json_encode(['error'=>'Your bag is empty.']); exit; }
 
-$items = []; $summary = [];
+/* ---- quantity discount — keep in sync with the website ----
+   Counts every unit in the bag except the products below.
+   1-2 units: none · 3-4: 5% · 5: 6% · then +0.5% per extra unit, up to $QTY_DISCOUNT_MAX %. */
+$QTY_DISCOUNT_SKIP = ['discovery', 'king'];
+$QTY_DISCOUNT_MAX = 15;
+function qty_pct($n, $max) { return $n < 3 ? 0 : ($n < 5 ? 5 : min($max, 6 + ($n - 5) * 0.5)); }
+
+$items = []; $summary = []; $discUnits = 0; $discBase = 0;
 foreach ($lines as $l) {
   $id  = is_string($l['id'] ?? null) ? $l['id'] : '';
   $opt = (string)($l['opt'] ?? '');
@@ -53,6 +60,7 @@ foreach ($lines as $l) {
   $pd = ['currency'=>$cfg['currency'], 'unit_amount'=>(int)round($p['prices'][$opt] * 100), 'product_data'=>['name'=>$name]];
   if ($desc) $pd['product_data']['description'] = $desc;
   $items[] = ['price_data'=>$pd, 'quantity'=>$qty];
+  if (!in_array($id, $QTY_DISCOUNT_SKIP, true)) { $discUnits += $qty; $discBase += $p['prices'][$opt] * $qty; }
   $summary[] = "$qty x $name" . ($desc ? " ($desc)" : '');
 }
 
@@ -60,6 +68,35 @@ $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVE
 $host = preg_replace('/[^A-Za-z0-9.\-:]/', '', $_SERVER['HTTP_HOST'] ?? '');
 $dir  = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
 $base = ($https ? 'https' : 'http') . "://$host$dir/";
+
+/* quantity discount, worked out here from $CATALOG (never taken from the browser) */
+$discPct = qty_pct($discUnits, $QTY_DISCOUNT_MAX);
+$discFils = (int)round($discBase * $discPct);   // AED × % = fils (1/100 AED)
+$coupon = null;
+if ($discFils > 0) {
+  $pctTxt = rtrim(rtrim(number_format($discPct, 1, '.', ''), '0'), '.');
+  $ch = curl_init('https://api.stripe.com/v1/coupons');
+  curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => http_build_query(['amount_off' => $discFils, 'currency' => $cfg['currency'], 'duration' => 'once', 'max_redemptions' => 1, 'name' => "Multi-buy discount ($pctTxt%)"]),
+    CURLOPT_USERPWD => $key . ':',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT => 25,
+  ]);
+  $res = curl_exec($ch);
+  $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  $err = curl_error($ch);
+  curl_close($ch);
+  $c = $res ? json_decode($res, true) : null;
+  if ($code !== 200 || empty($c['id'])) {
+    error_log('FOMAXO Stripe coupon error: ' . ($err ?: $res));
+    http_response_code(502);
+    echo json_encode(['error' => 'Card payment is temporarily unavailable. Please try again or order via WhatsApp.']);
+    exit;
+  }
+  $coupon = $c['id'];
+  $summary[] = "Multi-buy discount ($pctTxt%): -" . number_format($discFils / 100, 2, '.', '') . ' ' . strtoupper($cfg['currency']);
+}
 
 $params = [
   'mode' => 'payment',
@@ -72,6 +109,7 @@ $params = [
   'metadata' => ['order' => substr(implode(' | ', $summary), 0, 490)],
   'payment_intent_data' => ['description' => substr('FOMAXO order: ' . implode(' | ', $summary), 0, 990)],
 ];
+if ($coupon) $params['discounts'] = [['coupon' => $coupon]];
 
 $ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
 curl_setopt_array($ch, [
