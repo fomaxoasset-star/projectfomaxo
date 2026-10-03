@@ -306,6 +306,11 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .sizes button:hover{border-color:var(--line-2)}
 .sizes button.on{border-color:var(--gold);background:rgba(215,170,105,.08)}
 .sizes button.on b{color:var(--gold-hi)}
+.sizes button{position:relative}
+.sizes .bv{position:absolute;top:-9px;left:50%;transform:translateX(-50%);padding:2px 8px;background:var(--gold);color:#0a0a0a;font-style:normal;font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;line-height:1.5}
+.sizes .pml,.opt-label .pml{font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--muted)}
+.opt-label .pml{margin-left:8px}
+html[data-mode="light"] .sizes .bv{color:#fffaf1}
 .qtyrow{display:grid;grid-template-columns:140px 1fr;gap:10px}
 .qty{display:flex;border:1px solid var(--line-2);height:52px}
 .qty button{width:44px;font-size:18px;color:var(--champagne)}
@@ -1314,6 +1319,11 @@ html[data-mode="light"] .cur-link .cur-ring{border-color:#000;background:rgba(0,
 .dr-foot .qd-nudge{display:flex;align-items:center;gap:14px;margin:0 0 4px;padding:14px 18px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:14px;line-height:1.45;letter-spacing:.01em;color:var(--ivory)}
 .dr-foot .qd-nudge svg{flex:none;width:22px;height:22px;color:var(--gold)}
 .dr-foot .qd-nudge b{color:var(--gold);font-weight:600}
+.dr-foot .qd-nudge .qd-line{display:block}
+.dr-foot .qd-nudge .qd-line+.qd-line{margin-top:6px}
+.dr-foot .mini-pick{display:flex;flex-direction:column;gap:6px}
+.dr-foot .mini-pick label{font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.dr-foot .mini-pick select{width:100%;padding:10px 12px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font:inherit;font-size:14px}
 .dr-foot .qd-row,.dr-foot .qd-row .price{color:#5fc48c}
 html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-row .price{color:#1e7a47}
 .dr-foot .total-row .price{font-size:32px;color:var(--gold)}
@@ -1590,6 +1600,7 @@ const FRAG = S.products.filter(p => p.kind !== 'set');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const imgFor = (p, s) => (p.sizeImages && p.sizeImages[s]) || (s == 10 && p.miniImage ? p.miniImage : p.images[0]);
 const altFor = (p, s) => s == 10 && p.miniImage ? ((p.miniImages && p.miniImages[1]) || null) : p.images[1];
+const perMl = (p, s) => hasPrice(p.prices[s]) ? `<span class="pml">${moneyHTML(p.prices[s] / s, true)} / ml</span>` : '';
 const sizeLabel = s => s === 'set' ? 'Set' : s + 'ml';
 const optLabel = (p, s) => p && p.kind === 'set' ? `Set of ${s}` : sizeLabel(s);
 const pickable = p => FRAG.filter(f => !(p.exclude || []).includes(f.id));
@@ -1628,27 +1639,33 @@ function addToCart(id, opt, qty=1, silent, picks){
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
 function orderText(lines){
   const rows = lines.map(l => { const p = P[l.id], m = money(p.prices[l.opt]); return `• ${p.name} — ${optLabel(p, l.opt)} × ${l.qty}${m ? ' (' + m + ' each)' : ''}${l.picks ? '\n   Fragrances: ' + l.picks.map(id => P[id] ? P[id].name : id).join(', ') : ''}`; });
-  const tot = subtotal(lines), dc = qtyDiscount(lines);
-  const sums = tot === null ? '' : dc.amount > 0
-    ? `\n\nSubtotal: ${money2(tot)}\nMulti-buy discount (${pctTxt(dc.pct)}%): -${money2(dc.amount)}\nTotal: ${money2(tot - dc.amount)}`
+  const tot = subtotal(lines), of = offers(lines);
+  if (of.mini) rows.push(`• FREE 10ml mini — ${P[of.miniId].name} (worth ${money(OFFER.miniWorth)})`);
+  const sums = tot === null ? '' : of.off
+    ? `\n\nSubtotal: ${money2(tot)}\nAED ${OFFER.spendOff} off (orders of AED ${OFFER.spendMin}+): -${money2(of.off)}\nTotal: ${money2(tot - of.off)}`
     : `\n\nSubtotal: ${money(tot)}`;
   return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${sums}\n\nName:\nDelivery address:\nPhone:`;
 }
 // bag line price (unit price × qty), sale price with the crossed-out original on the same line
 function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; if (!hasPrice(v)) return '<span class="price na">Price on request</span>';
   return `<span class="price lp">${hasPrice(c) && c > v ? `<s class="was">${moneyHTML(c * l.qty)}</s> ` : ''}${moneyHTML(v * l.qty)}${l.qty > 1 ? `<small class="each">${moneyHTML(v)} each</small>` : ''}</span>`; }
-// multi-buy discount: counts every unit in the bag except the Discovery Set and King (keep in sync with checkout.php)
-const QTY_DISCOUNT_SKIP = ['discovery', 'king'];
-const QTY_DISCOUNT_MAX = 10;   // highest discount in %
-function qtyPct(n){ return n < 3 ? 0 : n < 5 ? 1 : Math.min(QTY_DISCOUNT_MAX, 1.5 + (n - 5) * 0.5); }
-function qtyDiscount(lines){
-  let units = 0, base = 0;
-  for (const l of lines){ if (QTY_DISCOUNT_SKIP.includes(l.id)) continue; const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) continue; units += l.qty; base += Number(v) * l.qty; }
-  const pct = qtyPct(units), amount = Math.round(base * pct) / 100;
-  let next = null; if (units > 0 && pct < QTY_DISCOUNT_MAX){ let k = units + 1; while (qtyPct(k) === pct) k++; next = {need: k - units, pct: qtyPct(k)}; }
-  return {units, pct, amount, next};
+// offers (keep in sync with checkout.php): FREE 10ml mini with 2+ full bottles (50ml/100ml), AED 50 off orders of AED 400+.
+// The Discovery Set and King do not count as full bottles; the AED 400 uses the bag total before the AED 50 off.
+const OFFER = {skip: ['discovery', 'king'], fullSizes: ['50', '100'], miniNeed: 2, miniWorth: 40, spendMin: 400, spendOff: 50};
+const miniScents = () => Object.values(P).filter(p => !OFFER.skip.includes(p.id) && p.sizes.map(String).includes('10'));
+function miniPick(lines){
+  let saved = null; try { saved = localStorage.getItem('fomaxo_mini'); } catch(e) {}
+  const ok = miniScents().map(p => p.id);
+  if (ok.includes(saved)) return saved;
+  const l = lines.find(l => ok.includes(l.id));
+  return l ? l.id : ok[0];
 }
-const pctTxt = v => String(v).replace(/\.0$/, '');
+function offers(lines){
+  const full = lines.reduce((a, l) => a + (!OFFER.skip.includes(l.id) && OFFER.fullSizes.includes(String(l.opt)) ? l.qty : 0), 0);
+  const t = subtotal(lines), mini = full >= OFFER.miniNeed;
+  const off = t !== null && t >= OFFER.spendMin ? OFFER.spendOff : 0;
+  return {full, mini, miniId: mini ? miniPick(lines) : null, needBottles: Math.max(0, OFFER.miniNeed - full), needSpend: t === null ? null : Math.max(0, OFFER.spendMin - t), off};
+}
 function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) return null; t += Number(v) * l.qty; } return t; }
 function checkout(lines){
   if (!lines.length) return;
@@ -1662,7 +1679,7 @@ async function payByCard(lines, btn){
   const ep = S.checkout.stripe; if (!ep) return checkout(lines);
   const old = btn ? btn.innerHTML : ''; if (btn){ btn.disabled = true; btn.textContent = 'Opening secure payment…'; }
   try {
-    const r = await fetch(ep, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks}))})});
+    const r = await fetch(ep, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: offers(lines).miniId})});
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.url){ location.href = d.url; return; }
     toast(d.error || 'Card payment is unavailable right now. Please order via WhatsApp.');
@@ -1684,18 +1701,22 @@ function renderCart(){
         ${linePriceHTML(p, l)}</div>
         <button class="rm" data-rm="${i}">Remove</button></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`);
-  const t0 = subtotal(cart), dc = qtyDiscount(cart);
-  const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
-  const saving = dc.pct ? `You’re saving <b>${pctTxt(dc.pct)}%</b>. ` : '';
-  const nudgeTxt = dc.next ? `${saving}Add <b>${dc.next.need} more item${dc.next.need > 1 ? 's' : ''}</b> to get <b>${pctTxt(dc.next.pct)}% off</b> your order` : dc.pct ? `You’re saving <b>${pctTxt(dc.pct)}%</b>, our highest multi-buy discount` : '';
-  const nudge = nudgeTxt ? `<div class="qd-nudge">${ICON.gift || ''}<span>${nudgeTxt}</span></div>` : '';
-  const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
+  const t0 = subtotal(cart), of = offers(cart);
+  const t = t0 !== null ? t0 - of.off : null;   // total after the AED 50 off
+  const msgs = [
+    of.mini ? `You get a <b>FREE 10ml mini</b> worth ${moneyHTML(OFFER.miniWorth)}` : `Add <b>${of.needBottles} more full bottle${of.needBottles > 1 ? 's' : ''}</b> (50ml or 100ml) for a <b>FREE 10ml mini</b>`,
+    of.off ? `You’re saving <b>${moneyHTML(of.off)}</b> on this order` : of.needSpend !== null ? `Spend <b>${moneyHTML(of.needSpend, of.needSpend % 1 !== 0)} more</b> for <b>${moneyHTML(OFFER.spendOff)} off</b>` : ''
+  ].filter(Boolean);
+  const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${msgs.map(m => `<span class="qd-line">${m}</span>`).join('')}</span></div>`;
+  const mini = of.mini ? `<div class="mini-pick"><div class="sub-row qd-row"><span>Free 10ml mini</span><span class="price">FREE</span></div><label for="miniSel">Choose your mini scent</label><select id="miniSel">${miniScents().map(p => `<option value="${p.id}"${p.id === of.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>` : '';
+  const disc = of.off ? `<div class="sub-row qd-row"><span>AED ${OFFER.spendOff} off (AED ${OFFER.spendMin}+)</span><span class="price">−${moneyHTML(of.off, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
-  foot.innerHTML = `${delivery}${nudge}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
+  foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
     ${S.checkout.stripe ? `<button class="btn block" id="payCard">${ICON.lock || ''}Pay securely by card</button><p class="pay-note">Visa · Mastercard · Apple Pay · Google Pay — secured by Stripe</p><button class="btn line block" id="doCheckout">Order via WhatsApp</button>` : `<button class="btn block" id="doCheckout">${S.checkout.mode === 'whatsapp' ? 'Checkout via WhatsApp' : 'Checkout'}</button>`}
     <a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
   $('#doCheckout').onclick = () => checkout(cart);
   const pc = $('#payCard'); if (pc) pc.onclick = () => payByCard(cart, pc);
+  const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} };
 }
 $('#cartBody').addEventListener('click', e => {
   const q = e.target.closest('[data-q]'), rm = e.target.closest('[data-rm]');
@@ -1930,8 +1951,8 @@ function product(id, q){
           <div id="pprice">${priceHTML(p, size, 'pprice')}</div>
         </div>
         ${p.sizes.length > 1 ? `<div><div class="opt-label"><span>${isSet ? 'Choose your set' : 'Size'}</span><span id="sizeName">${optLabel(p, size)}</span></div>
-          <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}"><b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · travel':s===50?'Everyday':'Signature'}</small></button>`).join('')}</div></div>`
-          : `<div class="opt-label" style="margin:0"><span>Size</span><span>${isSet ? '2ml vials' : sizeLabel(size)}</span></div>`}
+          <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · travel':s===50?'Everyday':'Signature'}</small>${isSet ? '' : perMl(p, s)}</button>`).join('')}</div></div>`
+          : `<div class="opt-label" style="margin:0"><span>Size</span><span>${isSet ? '2ml vials' : sizeLabel(size)}${isSet ? '' : perMl(p, size)}</span></div>`}
         ${isSet ? `<div id="picker"><div class="opt-label"><span>Choose your fragrances</span><span id="pickCount">0 / ${size}</span></div>
           <div class="picks">${pickable(p).map(f => `<button type="button" class="pick" data-pick="${f.id}" aria-pressed="false"><img src="${IMG(f.images[0])}" alt="" loading="lazy"><span>${esc(f.name)}</span><i>✓</i></button>`).join('')}</div>
           <p class="small" id="pickHint" style="margin-top:12px">Select ${size} fragrances to continue.</p></div>` : ''}

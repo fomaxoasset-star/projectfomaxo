@@ -32,14 +32,16 @@ $in = json_decode(file_get_contents('php://input'), true);
 $lines = is_array($in['lines'] ?? null) ? $in['lines'] : [];
 if (!$lines || count($lines) > 30) { http_response_code(400); echo json_encode(['error'=>'Your bag is empty.']); exit; }
 
-/* ---- quantity discount — keep in sync with the website ----
-   Counts every unit in the bag except the products below.
-   1-2 units: none · 3-4: 1% · 5: 1.5% · then +0.5% per extra unit, up to $QTY_DISCOUNT_MAX %. */
-$QTY_DISCOUNT_SKIP = ['discovery', 'king'];
-$QTY_DISCOUNT_MAX = 10;
-function qty_pct($n, $max) { return $n < 3 ? 0 : ($n < 5 ? 1 : min($max, 1.5 + ($n - 5) * 0.5)); }
+/* ---- offers — keep in sync with the website ----
+   Free 10ml mini: 2 or more full bottles (50ml / 100ml) in one order; the customer picks the scent.
+   AED 50 off: orders of AED 400 or more (bag total before the AED 50 off).
+   The Discovery Set and King do not count as full bottles. Both offers can apply together. */
+$OFFER_SKIP = ['discovery', 'king'];
+$OFFER_FULL_SIZES = ['50', '100'];
+$MINI_NEED = 2;
+$SPEND_MIN = 400; $SPEND_OFF = 50;
 
-$items = []; $summary = []; $discUnits = 0; $discBase = 0;
+$items = []; $summary = []; $fullBottles = 0; $total = 0; $miniDefault = null;
 foreach ($lines as $l) {
   $id  = is_string($l['id'] ?? null) ? $l['id'] : '';
   $opt = (string)($l['opt'] ?? '');
@@ -60,7 +62,9 @@ foreach ($lines as $l) {
   $pd = ['currency'=>$cfg['currency'], 'unit_amount'=>(int)round($p['prices'][$opt] * 100), 'product_data'=>['name'=>$name]];
   if ($desc) $pd['product_data']['description'] = $desc;
   $items[] = ['price_data'=>$pd, 'quantity'=>$qty];
-  if (!in_array($id, $QTY_DISCOUNT_SKIP, true)) { $discUnits += $qty; $discBase += $p['prices'][$opt] * $qty; }
+  $total += $p['prices'][$opt] * $qty;
+  if (!in_array($id, $OFFER_SKIP, true) && in_array($opt, $OFFER_FULL_SIZES, true)) $fullBottles += $qty;
+  if (!$miniDefault && !in_array($id, $OFFER_SKIP, true) && isset($p['prices']['10'])) $miniDefault = $id;
   $summary[] = "$qty x $name" . ($desc ? " ($desc)" : '');
 }
 
@@ -69,16 +73,21 @@ $host = preg_replace('/[^A-Za-z0-9.\-:]/', '', $_SERVER['HTTP_HOST'] ?? '');
 $dir  = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
 $base = ($https ? 'https' : 'http') . "://$host$dir/";
 
-/* quantity discount, worked out here from $CATALOG (never taken from the browser) */
-$discPct = qty_pct($discUnits, $QTY_DISCOUNT_MAX);
-$discFils = (int)round($discBase * $discPct);   // AED × % = fils (1/100 AED)
+/* offers, worked out here from $CATALOG (never taken from the browser) */
+$miniName = null;
+if ($fullBottles >= $MINI_NEED) {
+  $ok = fn($x) => is_string($x) && isset($CATALOG[$x]) && !in_array($x, $OFFER_SKIP, true) && isset($CATALOG[$x]['prices']['10']);
+  $mini = $in['mini'] ?? null;
+  if (!$ok($mini)) $mini = $miniDefault ?: array_values(array_filter(array_keys($CATALOG), $ok))[0];
+  $miniName = $CATALOG[$mini]['name'];
+  $summary[] = "FREE 10ml mini: $miniName";
+}
 $coupon = null;
-if ($discFils > 0) {
-  $pctTxt = rtrim(rtrim(number_format($discPct, 1, '.', ''), '0'), '.');
+if ($total >= $SPEND_MIN) {
   $ch = curl_init('https://api.stripe.com/v1/coupons');
   curl_setopt_array($ch, [
     CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => http_build_query(['amount_off' => $discFils, 'currency' => $cfg['currency'], 'duration' => 'once', 'max_redemptions' => 1, 'name' => "Multi-buy discount ($pctTxt%)"]),
+    CURLOPT_POSTFIELDS => http_build_query(['amount_off' => $SPEND_OFF * 100, 'currency' => $cfg['currency'], 'duration' => 'once', 'max_redemptions' => 1, 'name' => "AED $SPEND_OFF off orders of AED $SPEND_MIN+"]),
     CURLOPT_USERPWD => $key . ':',
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_TIMEOUT => 25,
@@ -95,7 +104,7 @@ if ($discFils > 0) {
     exit;
   }
   $coupon = $c['id'];
-  $summary[] = "Multi-buy discount ($pctTxt%): -" . number_format($discFils / 100, 2, '.', '') . ' ' . strtoupper($cfg['currency']);
+  $summary[] = "AED $SPEND_OFF off: -$SPEND_OFF.00 " . strtoupper($cfg['currency']);
 }
 
 $params = [
@@ -110,6 +119,10 @@ $params = [
   'payment_intent_data' => ['description' => substr('FOMAXO order: ' . implode(' | ', $summary), 0, 990)],
 ];
 if ($coupon) $params['discounts'] = [['coupon' => $coupon]];
+if ($miniName) {
+  $params['metadata']['free_mini'] = "10ml $miniName";
+  $params['custom_text'] = ['submit' => ['message' => "Includes your FREE 10ml $miniName mini (worth AED 40)."]];
+}
 
 $ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
 curl_setopt_array($ch, [
