@@ -1394,6 +1394,10 @@ html[data-mode="light"] .btn.co-min,html[data-mode="light"] .btn.co-min:hover{co
 .co-edit-m{display:none}
 .co-items{display:grid;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--line)}
 .co-item{display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:14px;align-items:center}
+.co-item[data-openbag]{cursor:pointer;margin:-6px;padding:6px;transition:background .3s}
+.co-item[data-openbag]:hover{background:rgba(215,170,105,.08)}
+.co-item[data-openbag]:hover b{color:var(--gold-hi)}
+html[data-mode="light"] .co-item[data-openbag]:hover b{color:var(--gold)}
 .co-img{position:relative;width:60px;aspect-ratio:4/5;border:1px solid var(--line);background:var(--black)}
 .co-img img{width:100%;height:100%;object-fit:cover}
 .co-img i{position:absolute;top:-9px;right:-9px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--gold);color:#0a0805;font-style:normal;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center}
@@ -2532,7 +2536,7 @@ function bindCheckout(q){
     if (coPay === 'card' && !S.checkout.stripe) coPay = 'whatsapp';
     const T = orderTotals(ls, coPay), dc = T.dc;
     // order summary
-    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item"><span class="co-img"><img src="${IMG(lineImg(l))}" alt=""><i>${l.qty}</i></span><div><b>${esc(p.name)}</b><small>${optLabel(p, l.opt)}${l.qty > 1 && hasPrice(v) ? ` · ${moneyHTML(v)} each` : ''}</small>${l.picks ? `<small class="co-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
+    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item"${buy ? '' : ' data-openbag role="button" tabindex="0" title="Open your bag to change it"'}><span class="co-img"><img src="${IMG(lineImg(l))}" alt=""><i>${l.qty}</i></span><div><b>${esc(p.name)}</b><small>${optLabel(p, l.opt)}${l.qty > 1 && hasPrice(v) ? ` · ${moneyHTML(v)} each` : ''}</small>${l.picks ? `<small class="co-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
     const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${IMG(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b>Free 10ml mini</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div>` :
@@ -2546,7 +2550,10 @@ function bindCheckout(q){
       <div class="co-sum-in" id="coSumIn"><div class="co-sum-h"><h3>Order summary</h3>${buy ? '' : '<button type="button" class="co-edit" id="coEdit">Edit bag</button>'}</div>
       <div class="co-items">${items}${mini}</div>${no10}<div class="co-rows">${rows}</div>${buy ? '' : '<button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button>'}</div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
-    $$('#coEdit,#coEdit2').forEach(b => b.onclick = () => { renderCart(); openPanel($('#cart')); });
+    const openBag = () => { renderCart(); openPanel($('#cart')); };
+    $$('#coEdit,#coEdit2').forEach(b => b.onclick = openBag);
+    // tapping a product in the summary opens the bag so the customer can change it
+    $$('[data-openbag]', sum).forEach(el => { el.onclick = openBag; el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBag(); } }; });
     const cm = $('#coMini'); if (cm) cm.onchange = () => { try { localStorage.setItem('fomaxo_mini', cm.value); } catch(e) {} renderCart(); };
     // payment options
     const opt = (id, title, sub, off) => `<label class="co-opt${coPay === id ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`;
