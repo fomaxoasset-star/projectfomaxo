@@ -1308,8 +1308,11 @@ html[data-mode="light"] .cur-link .cur-ring{border-color:#000;background:rgba(0,
 .line-item .qrow .q{margin-top:0;flex:none}
 .line-item .price.lp{display:inline-flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;column-gap:8px;row-gap:2px;font-size:22px;line-height:1.1;text-align:right;color:var(--gold)}
 .line-item .price.lp .was{display:inline;margin:0;font-size:.68em}
-.line-item .price.lp .each{flex-basis:100%;font-size:11px;letter-spacing:.04em;color:var(--muted);line-height:1.2}
-.line-item .price.lp .each .amt{font-size:1.35em}
+/* Remove on the left, unit price ("AED 90 each") on the right of the same row */
+.line-item .rmrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:10px}
+.line-item .rmrow .rm{margin-top:0}
+.line-item .rmrow .each{font-size:12px;letter-spacing:.04em;color:var(--muted);white-space:nowrap}
+.line-item .rmrow .each .amt{font-size:1.35em;color:var(--gold)}
 /* bag totals: two-decimal amounts, larger Total */
 .dr-foot .sub-row{line-height:1.2}
 .dr-foot .sub-row .price{font-size:17px}
@@ -1632,7 +1635,7 @@ function orderText(lines){
 }
 // bag line price (unit price × qty), sale price with the crossed-out original on the same line
 function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; if (!hasPrice(v)) return '<span class="price na">Price on request</span>';
-  return `<span class="price lp">${hasPrice(c) && c > v ? `<s class="was">${moneyHTML(c * l.qty)}</s> ` : ''}${moneyHTML(v * l.qty)}${l.qty > 1 ? `<small class="each">${moneyHTML(v)} each</small>` : ''}</span>`; }
+  return `<span class="price lp">${hasPrice(c) && c > v ? `<s class="was">${moneyHTML(c * l.qty)}</s> ` : ''}${moneyHTML(v * l.qty)}</span>`; }
 function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) return null; t += Number(v) * l.qty; } return t; }
 function checkout(lines){
   if (!lines.length) return;
@@ -1666,7 +1669,7 @@ function renderCart(){
       <div><h4>${esc(p.name)}</h4><div class="o">${optLabel(p, l.opt)} · ${esc(p.family.split('·')[0])}</div>${l.picks ? `<div class="o" style="text-transform:none;letter-spacing:.02em;color:var(--champagne)">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</div>` : ''}
         <div class="qrow"><div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase">+</button></div>
         ${linePriceHTML(p, l)}</div>
-        <button class="rm" data-rm="${i}">Remove</button></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
+        <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`);
   const t = subtotal(cart);
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
