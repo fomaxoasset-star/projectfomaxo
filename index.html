@@ -2649,7 +2649,7 @@ function bindCheckout(q){
     if (coPay !== 'card' && coPay !== 'cod') coPay = CARD_ON ? 'card' : 'cod';
     const T = orderTotals(ls, coPay), dc = T.dc;
     // order summary
-    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item"${buy ? '' : ' data-openbag role="button" tabindex="0" title="Open your bag to change it"'}><span class="co-img"><img src="${IMG(lineImg(l))}" alt=""><i>${l.qty}</i></span><div><b>${esc(p.name)}</b><small>${optLabel(p, l.opt)}${l.qty > 1 && hasPrice(v) ? ` · ${moneyHTML(v)} each` : ''}</small>${l.picks ? `<small class="co-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
+    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${IMG(lineImg(l))}" alt=""><i>${l.qty}</i></span><div><b>${esc(p.name)}</b><small>${optLabel(p, l.opt)}${l.qty > 1 && hasPrice(v) ? ` · ${moneyHTML(v)} each` : ''}</small>${l.picks ? `<small class="co-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
     const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${IMG(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b>Free 10ml mini</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div>` :
@@ -2660,15 +2660,22 @@ function bindCheckout(q){
       <div class="co-row tot"><span>Total</span><span class="price">${moneyHTML(T.total, true)}</span></div>`;
     const sum = $('#coSum');
     sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${coOpen ? 'Tap to close' : 'Tap to open'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>
-      <div class="co-sum-in${buy ? '' : ' co-tap'}" id="coSumIn"${buy ? '' : ' title="Open your bag to change it"'}><div class="co-sum-h"><h3>Order summary</h3>${buy ? '' : '<button type="button" class="co-edit" id="coEdit">Edit bag</button>'}</div>
-      <div class="co-items">${items}${mini}</div>${no10}<div class="co-rows">${rows}</div>${buy ? '' : '<button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button>'}</div>`;
+      <div class="co-sum-in co-tap" id="coSumIn" title="Open your bag to change it"><div class="co-sum-h"><h3>Order summary</h3><button type="button" class="co-edit" id="coEdit">Edit bag</button></div>
+      <div class="co-items">${items}${mini}</div>${no10}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
-    const openBag = () => { renderCart(); openPanel($('#cart')); };
+    const openBag = () => {
+      // Buy now: move the item into the bag (once, not doubled) and switch to the bag checkout, so the customer can change it there
+      if (buy){
+        buyLines.forEach(l => { const key = (l.picks || []).join('|'); if (!cart.some(x => x.id === l.id && String(x.opt) === String(l.opt) && (x.picks || []).join('|') === key)) addToCart(l.id, l.opt, l.qty, true, l.picks); });
+        clearBuy(); const y = scrollY; history.replaceState(null, '', '#/checkout'); route(); scrollTo({top: y, behavior: 'instant'});
+      }
+      renderCart(); openPanel($('#cart'));
+    };
     $$('#coEdit,#coEdit2').forEach(b => b.onclick = openBag);
     // tapping a product in the summary opens the bag so the customer can change it
     $$('[data-openbag]', sum).forEach(el => { el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBag(); } }; });
     // tapping anywhere in the summary (heading, products, totals) opens the bag; the mini picker and Edit bag keep their own job
-    if (!buy) $('#coSumIn').onclick = e => { if (!e.target.closest('select,button,a')) openBag(); };
+    $('#coSumIn').onclick = e => { if (!e.target.closest('select,button,a')) openBag(); };
     const cm = $('#coMini'); if (cm) cm.onchange = () => { try { localStorage.setItem('fomaxo_mini', cm.value); } catch(e) {} renderCart(); };
     // payment options
     // payment stays locked until the delivery details are filled in
