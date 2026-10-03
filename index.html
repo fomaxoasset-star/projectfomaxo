@@ -1625,7 +1625,7 @@ window.STORE = {
         "Ideal for any occasion, Old Money celebrates heritage, grace and polished self-assurance."
       ],
       notes: { top: "Lemon · Bergamot · Vervain", heart: "Star Anise · Olive Blossom · Guaiac Wood", base: "Ambergris · Leather · Sandalwood" },
-      sizes: [10, 50, 100], prices: { 10: 40, 50: 90, 100: 150 }, compareAt: { 10: 80, 50: 150, 100: 300 },
+      sizes: [10, 50, 100], prices: { 10: 5, 50: 90, 100: 150 }, compareAt: { 10: 80, 50: 150, 100: 300 },
       images: ["oldmoney-1", "oldmoney-2", "oldmoney-3", "oldmoney-4"], sizeImages: { 100: "oldmoney-100" }, extraImages: ["oldmoney-100b"], miniImage: "oldmoney-10-1", miniImages: ["oldmoney-10-1", "oldmoney-10-2", "oldmoney-10-3"],
       url: "https://fomaxo.com/fomaxo-old-money"
     },
@@ -1827,14 +1827,15 @@ async function sendOrder(lines, pay, details, src){
     return {error: d.error || (pay === 'cod' ? 'We could not place your order right now. Please try again or order via WhatsApp.' : 'Card payment is unavailable right now. Please try again or order via WhatsApp.')};
   } catch(e){ return {error: 'We could not reach our server. Please check your connection and try again, or order via WhatsApp.'}; }
 }
-/* minimum order + cash on delivery (keep in sync with checkout.php). Minimums count the total after the multi-buy discount. */
+/* minimum order + cash on delivery (keep in sync with checkout.php). Minimums count the total after the multi-buy discount.
+   Card payments have no minimum; MIN_ORDER applies to WhatsApp orders. */
 const MIN_ORDER = 30, COD_MIN = 200, COD_FEE = 10;
 const aed = v => `${S.currency} ${Number(v).toLocaleString('en-US', {minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2})}`;
 function orderTotals(lines, pay){
   const t0 = subtotal(lines), dc = qtyDiscount(lines);
   const after = t0 === null ? null : Math.round((t0 - dc.amount) * 100) / 100;
   const fee = pay === 'cod' ? COD_FEE : 0;
-  return {t0, dc, after, fee, total: after === null ? null : after + fee, short: after === null ? 0 : Math.max(0, Math.round((MIN_ORDER - after) * 100) / 100)};
+  return {t0, dc, after, fee, total: after === null ? null : after + fee, short: after === null || pay === 'card' ? 0 : Math.max(0, Math.round((MIN_ORDER - after) * 100) / 100)};
 }
 const minMsg = short => `Minimum order ${aed(MIN_ORDER)} · add ${aed(short)} more`;
 // "Buy now" checks out just that product; the bag is left as it is
@@ -1864,7 +1865,7 @@ function renderCart(){
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
   foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
-    ${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout</a>`}<p class="pay-note">${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery · WhatsApp</p><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
+    ${t !== null && t < MIN_ORDER && !(S.checkout.ziina || S.checkout.stripe) ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout</a>`}<p class="pay-note">${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery · WhatsApp</p><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
   const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} coRefresh && coRefresh(); };
   coRefresh && coRefresh();
 }
@@ -2570,6 +2571,8 @@ function bindCheckout(q){
     const codOk = base.after !== null && base.after >= COD_MIN;
     if (coPay === 'cod' && !codOk) coPay = CARD_ON ? 'card' : 'whatsapp';
     if (coPay === 'card' && !CARD_ON) coPay = 'whatsapp';
+    const waOk = !CARD_ON || base.short === 0;   // WhatsApp keeps the minimum order; card has none
+    if (coPay === 'whatsapp' && !waOk) coPay = 'card';
     const T = orderTotals(ls, coPay), dc = T.dc;
     // order summary
     const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item"${buy ? '' : ' data-openbag role="button" tabindex="0" title="Open your bag to change it"'}><span class="co-img"><img src="${IMG(lineImg(l))}" alt=""><i>${l.qty}</i></span><div><b>${esc(p.name)}</b><small>${optLabel(p, l.opt)}${l.qty > 1 && hasPrice(v) ? ` · ${moneyHTML(v)} each` : ''}</small>${l.picks ? `<small class="co-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
@@ -2599,7 +2602,7 @@ function bindCheckout(q){
     const opt = (id, title, sub, off) => { off = off || locked; return `<label class="co-opt${coPay === id && !locked ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`; };
     $('#coPay').innerHTML = (locked ? `<p class="co-lock">${CO_ICON.lock}<span>Fill in your ${listTxt(missing.map(b => b[1]))} to choose how to pay.</span></p>` : '') + (CARD_ON ? opt('card', 'Card / Apple Pay / Google Pay', `Pay securely now with ${CARD_BY}`) : '') +
       opt('cod', 'Cash on delivery', codOk ? `Pay in cash when your order arrives · ${aed(COD_FEE)} fee` : `For orders from ${aed(COD_MIN)} · add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more · ${aed(COD_FEE)} fee`, !codOk) +
-      opt('whatsapp', 'WhatsApp', 'Send your order to our team on WhatsApp');
+      opt('whatsapp', 'WhatsApp', waOk ? 'Send your order to our team on WhatsApp' : `For orders from ${aed(MIN_ORDER)} · add ${aed(base.short)} more`, !waOk);
     $$('#coPay input').forEach(r => r.onchange = () => { coPay = r.value; err.hidden = true; draw(); });
     // main button
     if (busy) return;

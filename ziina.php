@@ -19,7 +19,6 @@ header('Content-Type: application/json');
 require __DIR__ . '/store-lib.php';
 
 $STORE_EMAIL = 'fomaxoasset@gmail.com';
-$MIN_ORDER   = 30;   // AED — keep in sync with index.html (minOrder)
 $API         = 'https://api-v2.ziina.com/api';
 
 /* ---- Ziina-config.php: found by name in any case (Ziina-config.php, ziina-config.php, ziina_config.php …),
@@ -121,7 +120,6 @@ $order = fomaxo_price_order($in);
 if (isset($order['error'])) { http_response_code(400); echo json_encode(['error' => $order['error']]); exit; }
 $cust = fomaxo_customer($in);
 if (isset($cust['error'])) { http_response_code(400); echo json_encode(['error' => $cust['error']]); exit; }
-if ($order['totalFils'] < $MIN_ORDER * 100) { http_response_code(400); echo json_encode(['error' => "Minimum order is AED $MIN_ORDER."]); exit; }
 
 $no = 'FMX-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
