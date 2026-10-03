@@ -1394,6 +1394,10 @@ html[data-mode="light"] .btn.co-min,html[data-mode="light"] .btn.co-min:hover{co
 .co-edit-m{display:none}
 .co-items{display:grid;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--line)}
 .co-item{display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:14px;align-items:center}
+.co-sum-in.co-tap{cursor:pointer}
+.co-sum-in.co-tap select{cursor:pointer}
+.co-sum-in.co-tap:hover h3{color:var(--gold-hi)}
+html[data-mode="light"] .co-sum-in.co-tap:hover h3{color:var(--gold)}
 .co-item[data-openbag]{cursor:pointer;margin:-6px;padding:6px;transition:background .3s}
 .co-item[data-openbag]:hover{background:rgba(215,170,105,.08)}
 .co-item[data-openbag]:hover b{color:var(--gold-hi)}
@@ -2547,13 +2551,15 @@ function bindCheckout(q){
       <div class="co-row tot"><span>Total</span><span class="price">${moneyHTML(T.total, true)}</span></div>`;
     const sum = $('#coSum');
     sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${coOpen ? 'Tap to close' : 'Tap to open'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>
-      <div class="co-sum-in" id="coSumIn"><div class="co-sum-h"><h3>Order summary</h3>${buy ? '' : '<button type="button" class="co-edit" id="coEdit">Edit bag</button>'}</div>
+      <div class="co-sum-in${buy ? '' : ' co-tap'}" id="coSumIn"${buy ? '' : ' title="Open your bag to change it"'}><div class="co-sum-h"><h3>Order summary</h3>${buy ? '' : '<button type="button" class="co-edit" id="coEdit">Edit bag</button>'}</div>
       <div class="co-items">${items}${mini}</div>${no10}<div class="co-rows">${rows}</div>${buy ? '' : '<button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button>'}</div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
     const openBag = () => { renderCart(); openPanel($('#cart')); };
     $$('#coEdit,#coEdit2').forEach(b => b.onclick = openBag);
     // tapping a product in the summary opens the bag so the customer can change it
-    $$('[data-openbag]', sum).forEach(el => { el.onclick = openBag; el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBag(); } }; });
+    $$('[data-openbag]', sum).forEach(el => { el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBag(); } }; });
+    // tapping anywhere in the summary (heading, products, totals) opens the bag; the mini picker and Edit bag keep their own job
+    if (!buy) $('#coSumIn').onclick = e => { if (!e.target.closest('select,button,a')) openBag(); };
     const cm = $('#coMini'); if (cm) cm.onchange = () => { try { localStorage.setItem('fomaxo_mini', cm.value); } catch(e) {} renderCart(); };
     // payment options
     const opt = (id, title, sub, off) => `<label class="co-opt${coPay === id ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`;
