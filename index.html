@@ -306,6 +306,11 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .sizes button:hover{border-color:var(--line-2)}
 .sizes button.on{border-color:var(--gold);background:rgba(215,170,105,.08)}
 .sizes button.on b{color:var(--gold-hi)}
+.sizes button{position:relative}
+.sizes .bv{position:absolute;top:-9px;left:50%;transform:translateX(-50%);padding:2px 8px;background:var(--gold);color:#0a0a0a;font-style:normal;font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap;line-height:1.5}
+.sizes .pml,.opt-label .pml{font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--muted)}
+.opt-label .pml{margin-left:8px}
+html[data-mode="light"] .sizes .bv{color:#fffaf1}
 .qtyrow{display:grid;grid-template-columns:140px 1fr;gap:10px}
 .qty{display:flex;border:1px solid var(--line-2);height:52px}
 .qty button{width:44px;font-size:18px;color:var(--champagne)}
@@ -1584,6 +1589,7 @@ const FRAG = S.products.filter(p => p.kind !== 'set');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const imgFor = (p, s) => (p.sizeImages && p.sizeImages[s]) || (s == 10 && p.miniImage ? p.miniImage : p.images[0]);
 const altFor = (p, s) => s == 10 && p.miniImage ? ((p.miniImages && p.miniImages[1]) || null) : p.images[1];
+const perMl = (p, s) => hasPrice(p.prices[s]) ? `<span class="pml">${moneyHTML(p.prices[s] / s, true)} / ml</span>` : '';
 const sizeLabel = s => s === 'set' ? 'Set' : s + 'ml';
 const optLabel = (p, s) => p && p.kind === 'set' ? `Set of ${s}` : sizeLabel(s);
 const pickable = p => FRAG.filter(f => !(p.exclude || []).includes(f.id));
@@ -1903,8 +1909,8 @@ function product(id, q){
           <div id="pprice">${priceHTML(p, size, 'pprice')}</div>
         </div>
         ${p.sizes.length > 1 ? `<div><div class="opt-label"><span>${isSet ? 'Choose your set' : 'Size'}</span><span id="sizeName">${optLabel(p, size)}</span></div>
-          <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}"><b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · travel':s===50?'Everyday':'Signature'}</small></button>`).join('')}</div></div>`
-          : `<div class="opt-label" style="margin:0"><span>Size</span><span>${isSet ? '2ml vials' : sizeLabel(size)}</span></div>`}
+          <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · travel':s===50?'Everyday':'Signature'}</small>${isSet ? '' : perMl(p, s)}</button>`).join('')}</div></div>`
+          : `<div class="opt-label" style="margin:0"><span>Size</span><span>${isSet ? '2ml vials' : sizeLabel(size)}${isSet ? '' : perMl(p, size)}</span></div>`}
         ${isSet ? `<div id="picker"><div class="opt-label"><span>Choose your fragrances</span><span id="pickCount">0 / ${size}</span></div>
           <div class="picks">${pickable(p).map(f => `<button type="button" class="pick" data-pick="${f.id}" aria-pressed="false"><img src="${IMG(f.images[0])}" alt="" loading="lazy"><span>${esc(f.name)}</span><i>✓</i></button>`).join('')}</div>
           <p class="small" id="pickHint" style="margin-top:12px">Select ${size} fragrances to continue.</p></div>` : ''}
