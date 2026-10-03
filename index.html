@@ -1359,6 +1359,14 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co .form label .co-opt-l{letter-spacing:.04em;text-transform:none;color:var(--muted)}
 .co .form textarea.co-addr{min-height:92px}
 .co .form textarea.co-note{min-height:70px}
+.co-ar{display:grid;gap:14px}
+.co-ar1{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.co-ar2{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.co-ar label{min-width:0}
+.co-ar input{width:100%;min-width:0}
+.co-lock{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px dashed var(--line-2);font-size:14px;line-height:1.45;color:var(--muted)}
+.co-lock svg{flex:none;width:18px;height:18px;color:var(--gold)}
+@media(max-width:620px){.co-ar2{grid-template-columns:minmax(0,1fr)}}
 .co .form select option{background:var(--black);color:var(--ivory)}
 .co .form .bad,.co .form select.bad{border-color:#e0705f;box-shadow:inset 0 0 0 1px #e0705f}
 #coStep1{scroll-margin-top:calc(var(--ann-h,40px) + 100px)}
@@ -1394,6 +1402,10 @@ html[data-mode="light"] .btn.co-min,html[data-mode="light"] .btn.co-min:hover{co
 .co-edit-m{display:none}
 .co-items{display:grid;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--line)}
 .co-item{display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:14px;align-items:center}
+.co-sum-in.co-tap{cursor:pointer}
+.co-sum-in.co-tap select{cursor:pointer}
+.co-sum-in.co-tap:hover h3{color:var(--gold-hi)}
+html[data-mode="light"] .co-sum-in.co-tap:hover h3{color:var(--gold)}
 .co-item[data-openbag]{cursor:pointer;margin:-6px;padding:6px;transition:background .3s}
 .co-item[data-openbag]:hover{background:rgba(215,170,105,.08)}
 .co-item[data-openbag]:hover b{color:var(--gold-hi)}
@@ -1760,7 +1772,7 @@ function orderText(lines, d, pay){
   const sums = tot === null ? '' : dc.amount > 0
     ? `\n\nSubtotal: ${money2(tot)}\nMulti-buy discount (${pctTxt(dc.pct)}%): -${money2(dc.amount)}\nTotal: ${money2(tot - dc.amount)}`
     : `\n\nSubtotal: ${money(tot)}`;
-  const who = d ? `\n\nName: ${d.name}\nMobile: ${d.phone}\nEmail: ${d.email}\nEmirate: ${d.emirate}\nAddress: ${d.address}${d.note ? '\nNote: ' + d.note : ''}${pay ? '\nPayment: ' + pay : ''}` : '\n\nName:\nDelivery address:\nPhone:';
+  const who = d ? `\n\nName: ${d.name}\nMobile: ${d.phone}${d.email ? '\nEmail: ' + d.email : ''}\nEmirate: ${d.emirate}\nVilla/Building no: ${d.building}${d.room ? '\nRoom no: ' + d.room : ''}\nStreet: ${d.street}\nArea: ${d.area}${d.note ? '\nNote: ' + d.note : ''}${pay ? '\nPayment: ' + pay : ''}` : '\n\nName:\nDelivery address:\nPhone:';
   return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${sums}${who}`;
 }
 // bag line price (unit price × qty), sale price with the crossed-out original on the same line
@@ -1808,7 +1820,7 @@ function checkout(lines, d){
 // sends the order to checkout.php: card → Stripe payment page, cod → order saved on the server
 async function sendOrder(lines, pay, details, src){
   try {
-    const r = await fetch(S.checkout.stripe, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pay, src, customer: details, lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: qtyDiscount(lines).miniId})});
+    const r = await fetch(S.checkout.stripe, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pay, src, customer: details && Object.assign({}, details, {address: addrText(details)}), lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: qtyDiscount(lines).miniId})});
     const d = await r.json().catch(() => ({}));
     if (r.ok && (d.url || d.order)) return d;
     return {error: d.error || (pay === 'cod' ? 'We could not place your order right now. Please try again or order via WhatsApp.' : 'Card payment is unavailable right now. Please try again or order via WhatsApp.')};
@@ -2472,7 +2484,9 @@ function notFound(){ return pageHead('Not found', 'Page <em class="metal">not fo
 
 /* ============================ CHECKOUT PAGE ============================ */
 const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
-const CO_FIELDS = ['name', 'phone', 'email', 'emirate', 'address', 'note'];
+const CO_FIELDS = ['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'note'];
+// one-line delivery address from the separate boxes
+const addrText = d => [d.building, d.room && 'Room ' + d.room, d.street, d.area].filter(Boolean).join(', ');
 let coRefresh = null, coOpen = false, coPay = S.checkout.stripe ? 'card' : 'whatsapp';
 function savedDetails(){ try { const d = JSON.parse(localStorage.getItem('fomaxo_details') || '{}'); return d && typeof d === 'object' ? d : {}; } catch(e) { return {}; } }
 const CO_ICON = {
@@ -2497,9 +2511,16 @@ function checkoutPage(q){
           <p class="co-err" id="coErr1" role="alert" hidden></p>
           <label>Full name<input name="name" autocomplete="name" maxlength="80" required></label>
           <div class="row2"><label>Mobile<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971 50 123 4567" maxlength="20" required></label>
-            <label>Email<input name="email" type="email" autocomplete="email" maxlength="120" required></label></div>
+            <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" autocomplete="email" maxlength="120"></label></div>
           <label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
-          <label>Address<textarea name="address" class="co-addr" autocomplete="street-address" maxlength="300" placeholder="Building, flat or villa number, street, area" required></textarea></label>
+          <div class="co-ar co-ar1">
+            <label class="co-a-b">Villa / building no<input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12" required></label>
+            <label class="co-a-r"><span>Room no <span class="co-opt-l">(optional)</span></span><input name="room" autocomplete="address-line2" maxlength="20" placeholder="e.g. 1204"></label>
+          </div>
+          <div class="co-ar co-ar2">
+            <label class="co-a-s">Street<input name="street" maxlength="100" placeholder="e.g. Al Wasl Road" required></label>
+            <label class="co-a-a">Area<input name="area" autocomplete="address-level2" maxlength="80" placeholder="e.g. Jumeirah 1" required></label>
+          </div>
           <label><span>Note <span class="co-opt-l">(optional)</span></span><textarea name="note" class="co-note" maxlength="300" placeholder="Landmark, delivery time or gift message"></textarea></label>
           <p class="co-small">We remember these details on this device for your next order.</p>
         </section>
@@ -2525,8 +2546,9 @@ function bindCheckout(q){
   const d0 = savedDetails();
   CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = d0[k]; });
   const details = () => Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()]));
-  form.addEventListener('input', e => { e.target.classList.remove('bad'); try { localStorage.setItem('fomaxo_details', JSON.stringify(details())); } catch(x) {} });
-  form.addEventListener('change', e => { if (e.target.name === 'emirate') e.target.classList.remove('bad'); try { localStorage.setItem('fomaxo_details', JSON.stringify(details())); } catch(x) {} });
+  const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad'); try { localStorage.setItem('fomaxo_details', JSON.stringify(details())); } catch(x) {} if (!busy) draw(); };
+  form.addEventListener('input', remember);
+  form.addEventListener('change', remember);
   let busy = false;
   function draw(){
     const ls = lines(); if (!ls.length){ route(); return; }
@@ -2547,39 +2569,47 @@ function bindCheckout(q){
       <div class="co-row tot"><span>Total</span><span class="price">${moneyHTML(T.total, true)}</span></div>`;
     const sum = $('#coSum');
     sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${coOpen ? 'Tap to close' : 'Tap to open'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>
-      <div class="co-sum-in" id="coSumIn"><div class="co-sum-h"><h3>Order summary</h3>${buy ? '' : '<button type="button" class="co-edit" id="coEdit">Edit bag</button>'}</div>
+      <div class="co-sum-in${buy ? '' : ' co-tap'}" id="coSumIn"${buy ? '' : ' title="Open your bag to change it"'}><div class="co-sum-h"><h3>Order summary</h3>${buy ? '' : '<button type="button" class="co-edit" id="coEdit">Edit bag</button>'}</div>
       <div class="co-items">${items}${mini}</div>${no10}<div class="co-rows">${rows}</div>${buy ? '' : '<button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button>'}</div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
     const openBag = () => { renderCart(); openPanel($('#cart')); };
     $$('#coEdit,#coEdit2').forEach(b => b.onclick = openBag);
     // tapping a product in the summary opens the bag so the customer can change it
-    $$('[data-openbag]', sum).forEach(el => { el.onclick = openBag; el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBag(); } }; });
+    $$('[data-openbag]', sum).forEach(el => { el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBag(); } }; });
+    // tapping anywhere in the summary (heading, products, totals) opens the bag; the mini picker and Edit bag keep their own job
+    if (!buy) $('#coSumIn').onclick = e => { if (!e.target.closest('select,button,a')) openBag(); };
     const cm = $('#coMini'); if (cm) cm.onchange = () => { try { localStorage.setItem('fomaxo_mini', cm.value); } catch(e) {} renderCart(); };
     // payment options
-    const opt = (id, title, sub, off) => `<label class="co-opt${coPay === id ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`;
-    $('#coPay').innerHTML = (S.checkout.stripe ? opt('card', 'Card / Apple Pay / Google Pay', 'Pay securely now with Stripe') : '') +
+    // payment stays locked until the delivery details are filled in
+    const missing = check(details()), locked = missing.length > 0;
+    const opt = (id, title, sub, off) => { off = off || locked; return `<label class="co-opt${coPay === id && !locked ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`; };
+    $('#coPay').innerHTML = (locked ? `<p class="co-lock">${CO_ICON.lock}<span>Fill in your ${listTxt(missing.map(b => b[1]))} to choose how to pay.</span></p>` : '') + (S.checkout.stripe ? opt('card', 'Card / Apple Pay / Google Pay', 'Pay securely now with Stripe') : '') +
       opt('cod', 'Cash on delivery', codOk ? `Pay in cash when your order arrives · ${aed(COD_FEE)} fee` : `For orders from ${aed(COD_MIN)} · add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more · ${aed(COD_FEE)} fee`, !codOk) +
       opt('whatsapp', 'WhatsApp', 'Send your order to our team on WhatsApp');
     $$('#coPay input').forEach(r => r.onchange = () => { coPay = r.value; err.hidden = true; draw(); });
     // main button
     if (busy) return;
     go.disabled = T.short > 0;
-    go.classList.toggle('co-min', T.short > 0);
+    go.classList.toggle('co-min', T.short > 0 || locked);
     go.innerHTML = T.short > 0 ? minMsg(T.short)
+      : locked ? 'Fill in your delivery details to continue'
       : coPay === 'card' ? `${CO_ICON.lock}Pay ${T.total !== null ? money2(T.total) + ' ' : ''}securely`
       : coPay === 'cod' ? `Place order · ${money2(T.total)}`
       : `${CO_ICON.whatsapp}Send order on WhatsApp${T.total !== null ? ' · ' + money2(T.total) : ''}`;
   }
-  coRefresh = draw; draw();
   function check(d){
     const bad = [];
     if (d.name.length < 2) bad.push(['name', 'full name']);
     if (d.phone.replace(/\D/g, '').length < 7) bad.push(['phone', 'mobile number']);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) bad.push(['email', 'email']);
+    if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) bad.push(['email', 'a valid email']);
     if (!EMIRATES.includes(d.emirate)) bad.push(['emirate', 'emirate']);
-    if (d.address.length < 5) bad.push(['address', 'address']);
+    if (!d.building) bad.push(['building', 'villa / building no']);
+    if (d.street.length < 2) bad.push(['street', 'street']);
+    if (d.area.length < 2) bad.push(['area', 'area']);
     return bad;
   }
+  const listTxt = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1');
+  coRefresh = draw; draw();
   const showErr = m => { err.textContent = m; err.hidden = false; };
   form.onsubmit = async e => {
     e.preventDefault(); if (busy) return;
@@ -2588,7 +2618,7 @@ function bindCheckout(q){
     $$('.bad', form).forEach(x => x.classList.remove('bad'));
     if (bad.length){
       bad.forEach(b => form.elements[b[0]].classList.add('bad'));
-      err1.textContent = `Please add your ${bad.map(b => b[1]).join(', ').replace(/, ([^,]*)$/, ' and $1')} so we can deliver your order.`; err1.hidden = false;
+      err1.textContent = `Please add your ${listTxt(bad.map(b => b[1]))} so we can deliver your order.`; err1.hidden = false;
       form.elements[bad[0][0]].focus({preventScroll: true}); $('#coStep1').scrollIntoView({behavior: 'smooth', block: 'start'});
       return;
     }
