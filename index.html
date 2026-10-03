@@ -1251,6 +1251,14 @@ html[data-mode="light"] .hero-cine .ctas .btn:not(.line) .sub{color:#f0d3a0;opac
 .pay-note{font-size:12.5px;color:var(--muted);text-align:center;margin:-4px 0 4px;letter-spacing:.02em}
 .soc-off{cursor:default;opacity:.55}
 .soc-off:hover{transform:none!important}
+/* light mode: black scrollbar and pointer so they are easy to see */
+html[data-mode="light"]{scrollbar-color:#141210 #e8dcc6}
+html[data-mode="light"] ::-webkit-scrollbar-track{background:#ede4d2}
+html[data-mode="light"] ::-webkit-scrollbar-thumb{background:#141210;border:2px solid #ede4d2;border-radius:10px}
+html[data-mode="light"] ::-webkit-scrollbar-thumb:hover{background:#000}
+html[data-mode="light"] .cur-dot{background:#000}
+html[data-mode="light"] .cur-ring{border-color:#000}
+html[data-mode="light"] .cur-link .cur-ring{border-color:#000;background:rgba(0,0,0,.08)}
 </style>
 </head>
 <body>
