@@ -2423,11 +2423,11 @@ function contact(q){
       ${(S.social || []).length ? `<div class="social-row"><small>Support</small><div class="socials">${S.social.map(s => { const icon = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="bg" cx="12" cy="12" r="12"/><g class="gl">${SOC_ICON[s.id] || ''}</g></svg>`; return s.url ? `<a class="soc" href="${s.url}" target="_blank" rel="noopener" aria-label="FOMAXO on ${s.label}" title="${s.label}">${icon}</a>` : `<span class="soc soc-off" title="${s.label} — coming soon" aria-hidden="true">${icon}</span>`; }).join('')}</div></div>` : ''}
     </div>
     <form class="form rv-up d1" id="contactForm">
-      <label>Name<input name="name" required autocomplete="name"></label>
+      <label>Name<input name="name" required autocomplete="name" data-cap="words" autocapitalize="words"></label>
       <div class="row2"><label>Email<input name="email" type="email" required autocomplete="email"></label>
         <label>Phone number<input name="phone" type="tel" autocomplete="tel"></label></div>
       <label>Topic<select name="topic">${Object.entries(topics).map(([k,v]) => `<option value="${k}" ${k===t?'selected':''}>${v}</option>`).join('')}</select></label>
-      <label>Message<textarea name="msg" required></textarea></label>
+      <label>Message<textarea name="msg" required data-cap="sentences" autocapitalize="sentences"></textarea></label>
       <button class="btn" type="submit">Send message</button>
     </form>
   </div></div></section>`;
@@ -2452,12 +2452,12 @@ function partnership(){
     </div>
     <form class="form p-form rv-up d1" id="partnerForm">
       <div class="p-form-head"><span class="eyebrow">Expression of interest</span><h3>Apply to partner</h3></div>
-      <div class="row2"><label>Name *<input name="name" required autocomplete="name"></label>
+      <div class="row2"><label>Name *<input name="name" required autocomplete="name" data-cap="words" autocapitalize="words"></label>
         <label>Phone number *<input name="phone" type="tel" required autocomplete="tel"></label></div>
-      <div class="row2"><label>Country *<input name="country" required autocomplete="country-name"></label>
+      <div class="row2"><label>Country *<input name="country" required autocomplete="country-name" data-cap="words" autocapitalize="words"></label>
         <label>No. of outlets planned<input name="outlets" type="number" min="1" inputmode="numeric"></label></div>
       <label>Email *<input name="email" type="email" required autocomplete="email"></label>
-      <label>Message *<textarea name="msg" required placeholder="Your city, investment capacity and development vision"></textarea></label>
+      <label>Message *<textarea name="msg" required data-cap="sentences" autocapitalize="sentences" placeholder="Your city, investment capacity and development vision"></textarea></label>
       <button class="btn block" type="submit">Submit</button>
     </form>
   </div></div></section>
@@ -2488,6 +2488,14 @@ const CO_FIELDS = ['name', 'phone', 'email', 'emirate', 'building', 'room', 'str
 // one-line delivery address from the separate boxes
 const CO_CAPS = ['name', 'building', 'room', 'street', 'area', 'note'];
 const capWords = v => v.replace(/(^|[\s\-\/(])(\p{Ll})/gu, (m, a, c) => a + c.toUpperCase());
+// first letter of each sentence, for long messages ("hello. we would like…" → "Hello. We would like…")
+const capSentences = v => v.replace(/(^|[.!?]\s+|\n\s*)(\p{Ll})/gu, (m, a, c) => a + c.toUpperCase()).replace(/(^|\s)i(?=[\s'’,.!?])/g, '$1I');
+// contact and partner forms: boxes marked data-cap capitalize as people type, keeping the cursor where it was
+app.addEventListener('input', e => {
+  const t = e.target, how = t.dataset && t.dataset.cap; if (!how) return;
+  const v = how === 'words' ? capWords(t.value) : capSentences(t.value);
+  if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} }
+});
 const addrText = d => [d.building, d.room && 'Room ' + d.room, d.street, d.area].filter(Boolean).join(', ');
 let coRefresh = null, coOpen = false, coPay = S.checkout.stripe ? 'card' : 'whatsapp';
 function savedDetails(){ try { const d = JSON.parse(localStorage.getItem('fomaxo_details') || '{}'); return d && typeof d === 'object' ? d : {}; } catch(e) { return {}; } }
