@@ -1319,6 +1319,18 @@ html[data-mode="light"] .cur-link .cur-ring{border-color:#000;background:rgba(0,
 .dr-foot .sub-row+.sub-row{margin-top:-4px}
 .dr-foot .total-row{margin-top:2px!important;padding-top:12px;border-top:1px solid var(--line);color:var(--ivory)}
 .dr-foot .total-row>span:first-child{font-size:17px;letter-spacing:.2em;font-weight:500}
+/* bag: multi-buy discount nudge and green negative discount line */
+.dr-foot .qd-nudge{display:flex;align-items:center;gap:14px;margin:0 0 4px;padding:14px 18px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:14px;line-height:1.45;letter-spacing:.01em;color:var(--ivory)}
+.dr-foot .qd-nudge svg{flex:none;width:22px;height:22px;color:var(--gold)}
+.dr-foot .qd-nudge b,.qd-empty b{color:var(--gold);font-weight:600}
+.qd-nudge .qd-note{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+.qd-empty{display:flex;align-items:center;gap:14px;margin:0 0 18px;padding:14px 18px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:14px;line-height:1.45;color:var(--ivory)}
+.qd-empty svg{flex:none;width:22px;height:22px;color:var(--gold)}
+.dr-foot .mini-pick{display:flex;flex-direction:column;gap:6px}
+.dr-foot .mini-pick label{font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.dr-foot .mini-pick select{width:100%;padding:10px 12px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font:inherit;font-size:14px}
+.dr-foot .qd-row,.dr-foot .qd-row .price{color:#5fc48c}
+html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-row .price{color:#1e7a47}
 .dr-foot .total-row .price{font-size:32px;color:var(--gold)}
 </style>
 </head>
@@ -1599,6 +1611,7 @@ const pickable = p => FRAG.filter(f => !(p.exclude || []).includes(f.id));
 const hasPrice = v => v !== null && v !== undefined && v !== '';
 const money = v => hasPrice(v) ? `${S.currency} ${Number(v).toLocaleString('en-US')}` : null;
 // prices on the page: small "AED" + number in the price font, never split across lines
+const money2 = v => `${S.currency} ${Number(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
 const moneyHTML = (v, dec) => hasPrice(v) ? `<span class="amt"><span class="cur">${S.currency}</span>&nbsp;${Number(v).toLocaleString('en-US', dec ? {minimumFractionDigits:2, maximumFractionDigits:2} : undefined)}</span>` : null;
 const wasHTML = (p, size) => { const c = p.compareAt && p.compareAt[size]; return hasPrice(c) && c > p.prices[size] ? `<s class="was">${moneyHTML(c)}</s> ` : ''; };
 const priceHTML = (p, size, cls='price') => { const m = moneyHTML(p.prices[size]); return m ? `<span class="${cls}">${wasHTML(p, size)}${m}</span>` : `<span class="${cls} na">Price on request</span>`; };
@@ -1630,12 +1643,47 @@ function addToCart(id, opt, qty=1, silent, picks){
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
 function orderText(lines){
   const rows = lines.map(l => { const p = P[l.id], m = money(p.prices[l.opt]); return `• ${p.name} — ${optLabel(p, l.opt)} × ${l.qty}${m ? ' (' + m + ' each)' : ''}${l.picks ? '\n   Fragrances: ' + l.picks.map(id => P[id] ? P[id].name : id).join(', ') : ''}`; });
-  const tot = subtotal(lines);
-  return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${tot !== null ? `\n\nSubtotal: ${money(tot)}` : ''}\n\nName:\nDelivery address:\nPhone:`;
+  const tot = subtotal(lines), dc = qtyDiscount(lines);
+  if (dc.mini) rows.push(`• FREE 10ml mini — ${P[dc.miniId].name}`);
+  const sums = tot === null ? '' : dc.amount > 0
+    ? `\n\nSubtotal: ${money2(tot)}\nMulti-buy discount (${pctTxt(dc.pct)}%): -${money2(dc.amount)}\nTotal: ${money2(tot - dc.amount)}`
+    : `\n\nSubtotal: ${money(tot)}`;
+  return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${sums}\n\nName:\nDelivery address:\nPhone:`;
 }
 // bag line price (unit price × qty), sale price with the crossed-out original on the same line
 function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; if (!hasPrice(v)) return '<span class="price na">Price on request</span>';
   return `<span class="price lp">${hasPrice(c) && c > v ? `<s class="was">${moneyHTML(c * l.qty)}</s> ` : ''}${moneyHTML(v * l.qty)}</span>`; }
+// multi-buy discount + FREE 10ml mini (keep in sync with checkout.php)
+// Counts every unit in the bag except the Discovery Set and King, which are never discounted.
+// 1 item: none · 2: 5% · 3-4: 10% + FREE 10ml mini · 5+: 15% + FREE 10ml mini. No free mini when the bag has a 10ml bottle.
+const QTY_DISCOUNT_SKIP = ['discovery', 'king'];
+const QTY_TIERS = [{n: 2, pct: 5, mini: false}, {n: 3, pct: 10, mini: true}, {n: 5, pct: 15, mini: true}];
+const qtyTier = n => QTY_TIERS.filter(t => n >= t.n).pop() || {n: 0, pct: 0, mini: false};
+const miniScents = () => Object.values(P).filter(p => !QTY_DISCOUNT_SKIP.includes(p.id) && p.sizes.map(String).includes('10'));
+function miniPick(){
+  let saved = null; try { saved = localStorage.getItem('fomaxo_mini'); } catch(e) {}
+  const ok = miniScents().map(p => p.id);
+  return ok.includes(saved) ? saved : ok[0];
+}
+function qtyDiscount(lines){
+  let units = 0, base = 0, has10 = false;
+  for (const l of lines){ if (QTY_DISCOUNT_SKIP.includes(l.id)) continue; if (String(l.opt) === '10') has10 = true; const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) continue; units += l.qty; base += Number(v) * l.qty; }
+  const tier = qtyTier(units), pct = tier.pct, amount = Math.round(base * pct) / 100;
+  const mini = tier.mini && !has10;
+  const next = QTY_TIERS.find(t => t.n > units) || null;
+  return {units, pct, amount, has10, mini, miniId: mini ? miniPick() : null, next: next && {need: next.n - units, pct: next.pct, mini: next.mini}};
+}
+// bag message for the multi-buy offer
+function qtyNudge(dc){
+  const u = dc.units, item = n => `${n} more item${n > 1 ? 's' : ''}`, noMini = dc.has10 && u >= 2;
+  const freeMini = noMini ? '' : ' + FREE 10ml mini';
+  if (u === 0) return 'Buy more, save more: <b>2 items 5% off</b> · <b>3 items 10% off + FREE 10ml mini</b> · <b>5+ items 15% off + FREE 10ml mini</b>';
+  if (u === 1) return `Add <b>1 more item</b> for <b>5% off</b> (3 items: 10% off + FREE 10ml mini)`;
+  if (u === 2) return `<b>5% off</b> unlocked · Add <b>1 more item</b> for <b>10% off${noMini ? '' : ' + a FREE 10ml mini'}</b>`;
+  if (u < 5) return `<b>10% off${freeMini}</b> unlocked · Add <b>${item(5 - u)}</b> for <b>15% off</b>`;
+  return `<b>15% off${freeMini}</b> unlocked · You have our best price`;
+}
+const pctTxt = v => String(v).replace(/\.0$/, '');
 function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) return null; t += Number(v) * l.qty; } return t; }
 function checkout(lines){
   if (!lines.length) return;
@@ -1649,7 +1697,7 @@ async function payByCard(lines, btn){
   const ep = S.checkout.stripe; if (!ep) return checkout(lines);
   const old = btn ? btn.innerHTML : ''; if (btn){ btn.disabled = true; btn.textContent = 'Opening secure payment…'; }
   try {
-    const r = await fetch(ep, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks}))})});
+    const r = await fetch(ep, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: qtyDiscount(lines).miniId})});
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.url){ location.href = d.url; return; }
     toast(d.error || 'Card payment is unavailable right now. Please order via WhatsApp.');
@@ -1661,7 +1709,7 @@ function renderCart(){
   const cc = $('#cartCount'); cc.textContent = n; cc.classList.toggle('on', n > 0);
   const body = $('#cartBody'), foot = $('#cartFoot');
   if (!cart.length){
-    body.innerHTML = `<div class="empty">${emblem()}<p class="caps" style="font-size:20px;color:var(--ivory)">Your bag is empty</p><p class="small">Not sure where to begin? Start with the Discovery Set.</p></div><a class="empty-ds" href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><small>Start here</small><b>Discovery Set</b><em>Choose 3 for AED 30 or 5 for AED 50 · 2ml vials</em></span><i>→</i></a><div class="empty-acts"><a class="btn sm block" href="#/product/discovery" data-close>Build your Discovery Set</a><a class="btn line sm block" href="#/fragrances" data-close>Shop FOMAXO</a></div>`;
+    body.innerHTML = `<div class="empty">${emblem()}<p class="caps" style="font-size:20px;color:var(--ivory)">Your bag is empty</p><p class="small">Not sure where to begin? Start with the Discovery Set.</p></div><div class="qd-nudge qd-empty">${ICON.gift || ''}<span>${qtyNudge({units: 0})}</span></div><a class="empty-ds" href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><small>Start here</small><b>Discovery Set</b><em>Choose 3 for AED 30 or 5 for AED 50 · 2ml vials</em></span><i>→</i></a><div class="empty-acts"><a class="btn sm block" href="#/product/discovery" data-close>Build your Discovery Set</a><a class="btn line sm block" href="#/fragrances" data-close>Shop FOMAXO</a></div>`;
     foot.innerHTML = ''; return;
   }
   body.innerHTML = cart.map((l, i) => { const p = P[l.id]; return `<div class="line-item">
@@ -1671,13 +1719,18 @@ function renderCart(){
         ${linePriceHTML(p, l)}</div>
         <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`);
-  const t = subtotal(cart);
+  const t0 = subtotal(cart), dc = qtyDiscount(cart);
+  const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
+  const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
+  const mini = dc.mini ? `<div class="mini-pick"><div class="sub-row qd-row"><span>Free 10ml mini</span><span class="price">FREE</span></div><label for="miniSel">Choose your free 10ml mini</label><select id="miniSel">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div>` : '';
+  const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
-  foot.innerHTML = `${delivery}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t, true)}</span></div>` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
+  foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
     ${S.checkout.stripe ? `<button class="btn block" id="payCard">${ICON.lock || ''}Pay securely by card</button><p class="pay-note">Visa · Mastercard · Apple Pay · Google Pay — secured by Stripe</p><button class="btn line block" id="doCheckout">Order via WhatsApp</button>` : `<button class="btn block" id="doCheckout">${S.checkout.mode === 'whatsapp' ? 'Checkout via WhatsApp' : 'Checkout'}</button>`}
     <a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
   $('#doCheckout').onclick = () => checkout(cart);
   const pc = $('#payCard'); if (pc) pc.onclick = () => payByCard(cart, pc);
+  const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} };
 }
 $('#cartBody').addEventListener('click', e => {
   const q = e.target.closest('[data-q]'), rm = e.target.closest('[data-rm]');

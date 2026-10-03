@@ -32,7 +32,15 @@ $in = json_decode(file_get_contents('php://input'), true);
 $lines = is_array($in['lines'] ?? null) ? $in['lines'] : [];
 if (!$lines || count($lines) > 30) { http_response_code(400); echo json_encode(['error'=>'Your bag is empty.']); exit; }
 
-$items = []; $summary = [];
+/* ---- quantity discount — keep in sync with the website ----
+   Counts every unit in the bag except the products below.
+   1 unit: none · 2: 5% · 3-4: 10% + FREE 10ml mini · 5 or more: 15% + FREE 10ml mini.
+   No free mini when the bag has any 10ml bottle (the % discount still applies). */
+$QTY_DISCOUNT_SKIP = ['discovery', 'king'];
+function qty_pct($n) { return $n >= 5 ? 15 : ($n >= 3 ? 10 : ($n >= 2 ? 5 : 0)); }
+function qty_mini($n) { return $n >= 3; }
+
+$items = []; $summary = []; $discUnits = 0; $discBase = 0; $has10 = false;
 foreach ($lines as $l) {
   $id  = is_string($l['id'] ?? null) ? $l['id'] : '';
   $opt = (string)($l['opt'] ?? '');
@@ -53,6 +61,7 @@ foreach ($lines as $l) {
   $pd = ['currency'=>$cfg['currency'], 'unit_amount'=>(int)round($p['prices'][$opt] * 100), 'product_data'=>['name'=>$name]];
   if ($desc) $pd['product_data']['description'] = $desc;
   $items[] = ['price_data'=>$pd, 'quantity'=>$qty];
+  if (!in_array($id, $QTY_DISCOUNT_SKIP, true)) { $discUnits += $qty; $discBase += $p['prices'][$opt] * $qty; if ($opt === '10') $has10 = true; }
   $summary[] = "$qty x $name" . ($desc ? " ($desc)" : '');
 }
 
@@ -60,6 +69,45 @@ $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVE
 $host = preg_replace('/[^A-Za-z0-9.\-:]/', '', $_SERVER['HTTP_HOST'] ?? '');
 $dir  = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
 $base = ($https ? 'https' : 'http') . "://$host$dir/";
+
+/* quantity discount, worked out here from $CATALOG (never taken from the browser) */
+$discPct = qty_pct($discUnits);
+$discFils = (int)round($discBase * $discPct);   // AED × % = fils (1/100 AED)
+$coupon = null;
+if ($discFils > 0) {
+  $pctTxt = rtrim(rtrim(number_format($discPct, 1, '.', ''), '0'), '.');
+  $ch = curl_init('https://api.stripe.com/v1/coupons');
+  curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => http_build_query(['amount_off' => $discFils, 'currency' => $cfg['currency'], 'duration' => 'once', 'max_redemptions' => 1, 'name' => "Multi-buy discount ($pctTxt%)"]),
+    CURLOPT_USERPWD => $key . ':',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT => 25,
+  ]);
+  $res = curl_exec($ch);
+  $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  $err = curl_error($ch);
+  curl_close($ch);
+  $c = $res ? json_decode($res, true) : null;
+  if ($code !== 200 || empty($c['id'])) {
+    error_log('FOMAXO Stripe coupon error: ' . ($err ?: $res));
+    http_response_code(502);
+    echo json_encode(['error' => 'Card payment is temporarily unavailable. Please try again or order via WhatsApp.']);
+    exit;
+  }
+  $coupon = $c['id'];
+  $summary[] = "Multi-buy discount ($pctTxt%): -" . number_format($discFils / 100, 2, '.', '') . ' ' . strtoupper($cfg['currency']);
+}
+
+/* FREE 10ml mini: the customer's pick if it comes in 10ml, otherwise the first scent that does */
+$miniName = null;
+if (qty_mini($discUnits) && !$has10) {
+  $ok = fn($x) => is_string($x) && isset($CATALOG[$x]) && !in_array($x, $QTY_DISCOUNT_SKIP, true) && isset($CATALOG[$x]['prices']['10']);
+  $mini = $in['mini'] ?? null;
+  if (!$ok($mini)) $mini = array_values(array_filter(array_keys($CATALOG), $ok))[0];
+  $miniName = $CATALOG[$mini]['name'];
+  $summary[] = "FREE 10ml mini: $miniName";
+}
 
 $params = [
   'mode' => 'payment',
@@ -72,6 +120,11 @@ $params = [
   'metadata' => ['order' => substr(implode(' | ', $summary), 0, 490)],
   'payment_intent_data' => ['description' => substr('FOMAXO order: ' . implode(' | ', $summary), 0, 990)],
 ];
+if ($coupon) $params['discounts'] = [['coupon' => $coupon]];
+if ($miniName) {
+  $params['metadata']['free_mini'] = "10ml $miniName";
+  $params['custom_text'] = ['submit' => ['message' => "Includes your FREE 10ml $miniName mini."]];
+}
 
 $ch = curl_init('https://api.stripe.com/v1/checkout/sessions');
 curl_setopt_array($ch, [
