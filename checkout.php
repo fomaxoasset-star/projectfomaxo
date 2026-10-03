@@ -48,9 +48,17 @@ $cu = is_array($in['customer'] ?? null) ? $in['customer'] : null;
 $clean = function ($v, $max) { $v = is_string($v) ? trim(preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $v)) : ''; return mb_substr($v, 0, $max); };
 if ($cu) {
   $cu = ['name' => $clean($cu['name'] ?? '', 80), 'phone' => $clean($cu['phone'] ?? '', 20), 'email' => $clean($cu['email'] ?? '', 120),
-         'emirate' => $clean($cu['emirate'] ?? '', 30), 'address' => $clean($cu['address'] ?? '', 300), 'note' => $clean($cu['note'] ?? '', 300)];
-  if (mb_strlen($cu['name']) < 2 || strlen(preg_replace('/\D/', '', $cu['phone'])) < 7 || !filter_var($cu['email'], FILTER_VALIDATE_EMAIL)
-      || !in_array($cu['emirate'], $EMIRATES, true) || mb_strlen($cu['address']) < 5) fail(400, 'Please check your delivery details and try again.');
+         'emirate' => $clean($cu['emirate'] ?? '', 30), 'building' => $clean($cu['building'] ?? '', 40), 'room' => $clean($cu['room'] ?? '', 20),
+         'street' => $clean($cu['street'] ?? '', 100), 'area' => $clean($cu['area'] ?? '', 80), 'address' => $clean($cu['address'] ?? '', 300), 'note' => $clean($cu['note'] ?? '', 300)];
+  /* address in separate boxes: villa/building no, room no (optional), street, area — email is optional */
+  if ($cu['building'] !== '' || $cu['street'] !== '' || $cu['area'] !== '') {
+    $ok = $cu['building'] !== '' && mb_strlen($cu['street']) >= 2 && mb_strlen($cu['area']) >= 2;
+    $cu['address'] = implode(', ', array_filter([$cu['building'], $cu['room'] !== '' ? 'Room ' . $cu['room'] : '', $cu['street'], $cu['area']]));
+  } else {
+    $ok = mb_strlen($cu['address']) >= 5;   // older page with a single address box
+  }
+  if (!$ok || mb_strlen($cu['name']) < 2 || strlen(preg_replace('/\D/', '', $cu['phone'])) < 7 || ($cu['email'] !== '' && !filter_var($cu['email'], FILTER_VALIDATE_EMAIL))
+      || !in_array($cu['emirate'], $EMIRATES, true)) fail(400, 'Please check your delivery details and try again.');
 } elseif ($pay === 'cod') {
   fail(400, 'Please add your delivery details.');
 }
@@ -126,7 +134,8 @@ if ($pay === 'cod') {
   $cell = fn($v) => preg_match('/^[=+\-@]/', (string)$v) ? "'" . $v : $v;   // stop spreadsheet formulas
   $order = [date('Y-m-d H:i:s'), $no, $cu['name'], $cu['phone'], $cu['email'], $cu['emirate'], $cu['address'], $cu['note'],
             implode(' | ', $rows), number_format($subFils / 100, 2, '.', ''), number_format($discFils / 100, 2, '.', ''),
-            number_format($COD_FEE, 2, '.', ''), number_format($totalFils / 100, 2, '.', '')];
+            number_format($COD_FEE, 2, '.', ''), number_format($totalFils / 100, 2, '.', ''),
+            $cu['building'], $cu['room'], $cu['street'], $cu['area']];   // new columns go last so older rows still line up
   $saved = false;
   $dir = dirname(__DIR__) . '/fomaxo-orders';     // one level above public_html: private, kept across deploys
   if (is_dir($dir) || @mkdir($dir, 0700, true)) {
@@ -134,7 +143,7 @@ if ($pay === 'cod') {
     $new = !is_file($file);
     if ($fh = @fopen($file, 'a')) {
       if (flock($fh, LOCK_EX)) {
-        if ($new) fputcsv($fh, ['Date', 'Order', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Note', 'Items', 'Subtotal', 'Discount', 'COD fee', 'Total to collect (AED)']);
+        if ($new) fputcsv($fh, ['Date', 'Order', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Note', 'Items', 'Subtotal', 'Discount', 'COD fee', 'Total to collect (AED)', 'Villa/Building no', 'Room no', 'Street', 'Area']);
         $saved = fputcsv($fh, array_map($cell, $order)) !== false;
         flock($fh, LOCK_UN);
       }
@@ -148,7 +157,7 @@ if ($pay === 'cod') {
         . "\nCash on delivery fee: " . aed($COD_FEE * 100) . "\nTotal: " . aed($totalFils)
         . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '');
   $mailed = @mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
-                  "From: FOMAXO Orders <orders@$host>\r\nReply-To: {$cu['email']}\r\nContent-Type: text/plain; charset=UTF-8");
+                  "From: FOMAXO Orders <orders@$host>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
   if (!$saved && !$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or order via WhatsApp.'); }
   echo json_encode(['order' => $no, 'total' => number_format($totalFils / 100, 2, '.', '')]);
   exit;
@@ -193,10 +202,13 @@ $params = [
 ];
 if ($cu) {
   /* details typed on the checkout page go to Stripe, so the customer doesn't type them twice */
-  $params['customer_email'] = $cu['email'];
-  $params['payment_intent_data']['shipping'] = ['name' => $cu['name'], 'phone' => $cu['phone'],
-    'address' => ['line1' => mb_substr($cu['address'], 0, 200), 'city' => $cu['emirate'], 'state' => $cu['emirate'], 'country' => 'AE']];
-  $params['metadata'] += ['name' => $cu['name'], 'mobile' => $cu['phone'], 'email' => $cu['email'], 'emirate' => $cu['emirate'], 'address' => $cu['address']];
+  if ($cu['email'] !== '') $params['customer_email'] = $cu['email'];
+  $ship = $cu['building'] !== ''
+    ? ['line1' => mb_substr($cu['building'] . ($cu['room'] !== '' ? ', Room ' . $cu['room'] : ''), 0, 200), 'line2' => $cu['street'], 'city' => $cu['area']]
+    : ['line1' => mb_substr($cu['address'], 0, 200), 'city' => $cu['emirate']];
+  $params['payment_intent_data']['shipping'] = ['name' => $cu['name'], 'phone' => $cu['phone'], 'address' => $ship + ['state' => $cu['emirate'], 'country' => 'AE']];
+  $params['metadata'] += ['name' => $cu['name'], 'mobile' => $cu['phone'], 'emirate' => $cu['emirate'], 'address' => $cu['address']];
+  if ($cu['email'] !== '') $params['metadata']['email'] = $cu['email'];
   if ($cu['note'] !== '') $params['metadata']['note'] = $cu['note'];
 } else {
   $params['shipping_address_collection'] = ['allowed_countries' => ['AE']];
