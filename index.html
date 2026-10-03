@@ -845,6 +845,8 @@ body.home header.nav:not(.solid){--ivory:#f6efe2;--muted:#d8ccb4;--champagne:#ec
 .track-lab span{position:absolute;top:0;transform:translateX(-50%);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);white-space:nowrap;transition:color .3s}
 .track-lab span:last-child{transform:translateX(-100%)}
 .track-lab span.on{color:var(--gold-hi)}
+.calc-head{display:grid;gap:8px}
+.calc-sub{font-size:14px;line-height:1.5;color:var(--muted);margin:0}
 .calc-hint{font-size:11px;letter-spacing:.06em;color:var(--dim)}
 html[data-mode="light"] #el-spend::-webkit-slider-thumb{border-color:#fffaf1;box-shadow:0 0 0 1px var(--gold),0 4px 14px rgba(60,40,10,.3)}
 @media(max-width:600px){.track-lab span{font-size:8px;letter-spacing:.14em}}
@@ -2419,7 +2421,7 @@ function elite(){
       </div>
       <ol class="ladder">${tiers.map(t => `<li><span class="lv">${aed(t.spend)}${t.name==='Imperial'?'+':''} <small>/ year</small></span><span class="ar">→</span><b>${t.name}</b></li>`).join('')}</ol>
       <div class="calc">
-        <label for="el-spend">Your FOMAXO spending this year</label>
+        <div class="calc-head"><label for="el-spend">Your FOMAXO experience</label><p class="calc-sub">See your spending, level and exclusive benefits</p></div>
         <div class="calc-zone" id="el-zone">
           <div class="calc-row"><span>AED</span><output id="el-val" for="el-spend">5,000</output></div>
           <div class="track"><i id="el-fill"></i>${tiers.map(t=>`<em data-v="${t.spend}" style="left:${elPct(t.spend)}%" title="${t.name}"></em>`).join('')}<input id="el-spend" type="range" min="0" max="1000" step="1" value="${elPct(5000)*10}" aria-label="Your FOMAXO spending this year, in AED"></div>
