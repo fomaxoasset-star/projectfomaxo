@@ -1634,7 +1634,7 @@ function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.co
   return `<span class="price lp">${hasPrice(c) && c > v ? `<s class="was">${moneyHTML(c * l.qty)}</s> ` : ''}${moneyHTML(v * l.qty)}${l.qty > 1 ? `<small class="each">${moneyHTML(v)} each</small>` : ''}</span>`; }
 // multi-buy discount: counts every unit in the bag except the Discovery Set and King (keep in sync with checkout.php)
 const QTY_DISCOUNT_SKIP = ['discovery', 'king'];
-const QTY_DISCOUNT_MAX = 15;   // highest discount in %
+const QTY_DISCOUNT_MAX = 10;   // highest discount in %
 function qtyPct(n){ return n < 3 ? 0 : n < 5 ? 5 : Math.min(QTY_DISCOUNT_MAX, 6 + (n - 5) * 0.5); }
 function qtyDiscount(lines){
   let units = 0, base = 0;
