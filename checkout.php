@@ -34,10 +34,10 @@ if (!$lines || count($lines) > 30) { http_response_code(400); echo json_encode([
 
 /* ---- quantity discount — keep in sync with the website ----
    Counts every unit in the bag except the products below.
-   1-2 units: none · 3-4: 2% · 5: 3% · then +0.5% per extra unit, up to $QTY_DISCOUNT_MAX %. */
+   1-2 units: none · 3-4: 1% · 5: 1.5% · then +0.5% per extra unit, up to $QTY_DISCOUNT_MAX %. */
 $QTY_DISCOUNT_SKIP = ['discovery', 'king'];
 $QTY_DISCOUNT_MAX = 10;
-function qty_pct($n, $max) { return $n < 3 ? 0 : ($n < 5 ? 2 : min($max, 3 + ($n - 5) * 0.5)); }
+function qty_pct($n, $max) { return $n < 3 ? 0 : ($n < 5 ? 1 : min($max, 1.5 + ($n - 5) * 0.5)); }
 
 $items = []; $summary = []; $discUnits = 0; $discBase = 0;
 foreach ($lines as $l) {
