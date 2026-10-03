@@ -2,6 +2,7 @@
 /* FOMAXO — card / Apple Pay / Google Pay through Ziina (hosted checkout, Payment Intent API).
    POST  ziina.php            → checks prices on the server, creates a Ziina Payment Intent, returns the payment page URL
    GET   ziina.php?verify=ID  → after payment, asks Ziina for the real status and records the paid order
+   GET   ziina.php?status     → set-up check: is Ziina-config.php found and does it have a token (never shows the token)
    The access token lives in Ziina-config.php (or ziina-config.php) ONE LEVEL ABOVE public_html (never on GitHub, never public). */
 header('Cache-Control: no-store');
 
@@ -21,15 +22,51 @@ $STORE_EMAIL = 'fomaxoasset@gmail.com';
 $MIN_ORDER   = 30;   // AED — keep in sync with index.html (minOrder)
 $API         = 'https://api-v2.ziina.com/api';
 
-$cfgFile = null;
-foreach ([dirname(__DIR__), __DIR__] as $d) foreach (['Ziina-config.php', 'ziina-config.php'] as $n) { if (!$cfgFile && is_file("$d/$n")) $cfgFile = "$d/$n"; }
-$cfg = $cfgFile ? require $cfgFile : [];
-if (!is_array($cfg)) $cfg = [];
+/* ---- Ziina-config.php: found by name in any case (Ziina-config.php, ziina-config.php, ziina_config.php …),
+   first one level above public_html (domains/fomaxo.com/), then public_html, then the folders above.
+   The file may return an array (['access_token' => '…']) or set a variable or constant ($token = '…' / define('ZIINA_TOKEN', '…')). ---- */
+function ziina_find_config() {
+  foreach ([dirname(__DIR__), __DIR__, dirname(__DIR__, 2), dirname(__DIR__, 3)] as $d) {
+    $names = @scandir($d) ?: [];
+    foreach ($names as $n) if (preg_match('/^ziina[\s_\-]?config.*\.php$/i', $n) && !preg_match('/example/i', $n) && is_file("$d/$n")) return "$d/$n";
+  }
+  return null;
+}
+function ziina_load_config($file) {
+  $consts = array_keys(get_defined_constants(true)['user'] ?? []);
+  $ret = require $file;
+  $vars = get_defined_vars(); unset($vars['file'], $vars['consts'], $vars['ret']);
+  $new = array_diff_key(get_defined_constants(true)['user'] ?? [], array_flip($consts));
+  $all = (is_array($ret) ? $ret : []) + $vars + $new;
+  if (is_string($ret) && trim($ret) !== '') $all['token'] = $ret;
+  $cfg = [];
+  foreach ($all as $k => $v) {
+    if (is_array($v)) { foreach ($v as $k2 => $v2) if (!isset($cfg[strtolower($k2)])) $cfg[strtolower($k2)] = $v2; continue; }
+    $cfg[strtolower((string)$k)] = $v;
+  }
+  return $cfg;
+}
+$cfgFile = ziina_find_config();
+$cfg = $cfgFile ? ziina_load_config($cfgFile) : [];
 $token = '';
-foreach (['access_token', 'api_key', 'token', 'secret_key', 'key'] as $k) { if ($token === '' && is_string($cfg[$k] ?? null)) $token = trim($cfg[$k]); }
-if ($token === '' || stripos($token, 'PASTE') === 0) { http_response_code(500); echo json_encode(['error' => 'Card payments are not set up yet. Please choose cash on delivery or WhatsApp.']); exit; }
-$testMode = !empty($cfg['test']) && $cfg['test'] !== 'false';
-if (!empty($cfg['api'])) $API = rtrim($cfg['api'], '/');   // only for testing against a fake Ziina server
+foreach (['access_token', 'api_key', 'apikey', 'token', 'secret_key', 'secret', 'key', 'ziina_access_token', 'ziina_api_key', 'ziina_token', 'ziina_key', 'ziina_secret'] as $k) {
+  if ($token === '' && is_string($cfg[$k] ?? null)) $token = trim($cfg[$k]);
+}
+if ($token === '') foreach ($cfg as $k => $v) { if (is_string($v) && preg_match('/token|key|secret/', $k) && strlen(trim($v)) >= 20) { $token = trim($v); break; } }
+if (stripos($token, 'PASTE') === 0 || stripos($token, 'YOUR_') === 0) $token = '';
+$t = $cfg['test'] ?? $cfg['test_mode'] ?? $cfg['ziina_test'] ?? false;
+$testMode = $t === true || $t === 1 || in_array(strtolower((string)$t), ['1', 'true', 'yes', 'on'], true);
+
+/* ---- set-up check: open fomaxo.com/ziina.php?status in a browser (shows only found / not found, never the token) ---- */
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['status'])) {
+  $home = dirname(__DIR__, 3);
+  echo json_encode(['config_file' => $cfgFile ? 'found: ' . ltrim(substr($cfgFile, strlen($home)), '/') : 'NOT FOUND — put Ziina-config.php in domains/fomaxo.com (next to public_html)',
+                    'access_token' => $token !== '' ? 'found' : 'NOT FOUND in the file',
+                    'mode' => $token === '' ? '-' : ($testMode ? 'test (no real money)' : 'live')], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+  exit;
+}
+if ($token === '') { error_log('FOMAXO Ziina: ' . ($cfgFile ? "no access token in $cfgFile" : 'Ziina-config.php not found')); http_response_code(500); echo json_encode(['error' => 'Card payments are not set up yet. Please choose cash on delivery or WhatsApp.']); exit; }
+if (is_string($cfg['api'] ?? null) && $cfg['api'] !== '') $API = rtrim($cfg['api'], '/');   // only for testing against a fake Ziina server
 
 function ziina_call($method, $url, $token, $body = null) {
   $ch = curl_init($url);
