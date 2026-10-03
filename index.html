@@ -845,8 +845,10 @@ body.home header.nav:not(.solid){--ivory:#f6efe2;--muted:#d8ccb4;--champagne:#ec
 .track-lab span{position:absolute;top:0;transform:translateX(-50%);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);white-space:nowrap;transition:color .3s}
 .track-lab span:last-child{transform:translateX(-100%)}
 .track-lab span.on{color:var(--gold-hi)}
-.calc-head{display:grid;gap:8px}
-.calc-sub{font-size:14px;line-height:1.5;color:var(--muted);margin:0}
+.calc-head{display:grid;gap:10px}
+.calc .calc-head label{font-family:var(--hfont);font-weight:500;font-size:clamp(26px,3vw,44px);line-height:1.14;letter-spacing:.06em;text-transform:uppercase;color:var(--ivory);text-wrap:balance}
+.calc-sub{font-size:12px;line-height:1.5;letter-spacing:.04em;color:var(--muted);margin:0}
+@media(max-width:600px){.calc .calc-head label{font-size:clamp(24px,7vw,32px);letter-spacing:.04em}}
 .calc-hint{font-size:11px;letter-spacing:.06em;color:var(--dim)}
 html[data-mode="light"] #el-spend::-webkit-slider-thumb{border-color:#fffaf1;box-shadow:0 0 0 1px var(--gold),0 4px 14px rgba(60,40,10,.3)}
 @media(max-width:600px){.track-lab span{font-size:8px;letter-spacing:.14em}}
