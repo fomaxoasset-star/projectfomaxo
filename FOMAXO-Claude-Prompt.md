@@ -34,7 +34,9 @@ DESIGN RULES (must keep)
 - Fonts: FOMAXO brand font for the logo, hero line, Elite level names, brand statements and
   product names. Cormorant Garamond (upright) for headings. Jost for body text, menus, buttons.
 - NO italics anywhere.
-- Do not change the font or style of numbers and prices.
+- Prices use the Charles Wright Singapore font with a smaller "AED" before the number
+  (moneyHTML + .amt in index.html), never wrapping. Do not change the font or style of
+  other numbers (membership amounts etc.).
 - Text must be easy to read in BOTH light and dark mode (strong contrast; no faded text).
   In light mode, gold buttons use a darker gold so their text stands out.
 - Mobile first: nothing may overlap or overflow from 360px phones to large desktops.
