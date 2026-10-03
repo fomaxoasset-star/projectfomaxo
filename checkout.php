@@ -53,14 +53,14 @@ if ($cu) {
          'emirate' => $clean($cu['emirate'] ?? '', 30), 'building' => $clean($cu['building'] ?? '', 40), 'room' => $clean($cu['room'] ?? '', 20),
          'street' => $clean($cu['street'] ?? '', 100), 'area' => $clean($cu['area'] ?? '', 80), 'address' => $clean($cu['address'] ?? '', 300), 'note' => $clean($cu['note'] ?? '', 300)];
   foreach (['name', 'building', 'room', 'street', 'area', 'address', 'note'] as $k) $cu[$k] = $caps($cu[$k]);
-  /* address in separate boxes: villa/building no, room no / floor (optional), street, area — email is optional */
+  /* address in separate boxes: villa/building no, room no / floor (optional), street, area — email is required */
   if ($cu['building'] !== '' || $cu['street'] !== '' || $cu['area'] !== '') {
     $ok = $cu['building'] !== '' && mb_strlen($cu['street']) >= 2 && mb_strlen($cu['area']) >= 2;
     $cu['address'] = implode(', ', array_filter([$cu['building'], $cu['room'] !== '' ? 'Room/Floor ' . $cu['room'] : '', $cu['street'], $cu['area']]));
   } else {
     $ok = mb_strlen($cu['address']) >= 5;   // older page with a single address box
   }
-  if (!$ok || mb_strlen($cu['name']) < 2 || strlen(preg_replace('/\D/', '', $cu['phone'])) < 7 || ($cu['email'] !== '' && !filter_var($cu['email'], FILTER_VALIDATE_EMAIL))
+  if (!$ok || mb_strlen($cu['name']) < 2 || strlen(preg_replace('/\D/', '', $cu['phone'])) < 7 || !filter_var($cu['email'], FILTER_VALIDATE_EMAIL)
       || !in_array($cu['emirate'], $EMIRATES, true)) fail(400, 'Please check your delivery details and try again.');
 } elseif ($pay === 'cod') {
   fail(400, 'Please add your delivery details.');
