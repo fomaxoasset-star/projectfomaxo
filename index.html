@@ -1281,6 +1281,21 @@ html[data-mode="light"] .cur-link .cur-ring{border-color:#000;background:rgba(0,
 /* one even strike line across "AED" and the number (text line-through sits at different heights for the two sizes) */
 .was{text-decoration:none;position:relative}
 .was::after{content:"";position:absolute;left:-1px;right:-1px;top:50%;border-top:1.5px solid #e04a3f;pointer-events:none}
+/* bag: qty box left, line price right on the same row (right edge lines up with the total) */
+.line-item .qrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+.line-item .qrow .q{margin-top:0;flex:none}
+.line-item .price.lp{display:inline-flex;flex-direction:row;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;column-gap:8px;row-gap:2px;font-size:22px;line-height:1.1;text-align:right;color:var(--gold)}
+.line-item .price.lp .was{display:inline;margin:0;font-size:.68em}
+.line-item .price.lp .each{flex-basis:100%;font-size:11px;letter-spacing:.04em;color:var(--muted);line-height:1.2}
+.line-item .price.lp .each .amt{font-size:1.2em}
+/* bag totals: two-decimal amounts, larger Total */
+.dr-foot .sub-row{line-height:1.2}
+.dr-foot .sub-row .price{font-size:17px}
+.dr-foot .sub-row+.sub-row{margin-top:-4px}
+.dr-foot .total-row{margin-top:2px!important;padding-top:12px;border-top:1px solid var(--line);color:var(--ivory)}
+.dr-foot .total-row>span:first-child{font-size:17px;letter-spacing:.2em;font-weight:500}
+.dr-foot .total-row .price{font-size:32px;color:var(--gold)}
+.dr-foot .vat-note{margin:-8px 0 0;text-align:right;font-size:11px;letter-spacing:.04em;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1559,7 +1574,7 @@ const pickable = p => FRAG.filter(f => !(p.exclude || []).includes(f.id));
 const hasPrice = v => v !== null && v !== undefined && v !== '';
 const money = v => hasPrice(v) ? `${S.currency} ${Number(v).toLocaleString('en-US')}` : null;
 // prices on the page: small "AED" + number in the price font, never split across lines
-const moneyHTML = v => hasPrice(v) ? `<span class="amt"><span class="cur">${S.currency}</span>&nbsp;${Number(v).toLocaleString('en-US')}</span>` : null;
+const moneyHTML = (v, dec) => hasPrice(v) ? `<span class="amt"><span class="cur">${S.currency}</span>&nbsp;${Number(v).toLocaleString('en-US', dec ? {minimumFractionDigits:2, maximumFractionDigits:2} : undefined)}</span>` : null;
 const wasHTML = (p, size) => { const c = p.compareAt && p.compareAt[size]; return hasPrice(c) && c > p.prices[size] ? `<s class="was">${moneyHTML(c)}</s> ` : ''; };
 const priceHTML = (p, size, cls='price') => { const m = moneyHTML(p.prices[size]); return m ? `<span class="${cls}">${wasHTML(p, size)}${m}</span>` : `<span class="${cls} na">Price on request</span>`; };
 const fromHTML = p => { const v = p.sizes.map(s => p.prices[s]).filter(hasPrice); const mn = Math.min(...v), ms = p.sizes.find(s => p.prices[s] == mn); return v.length ? `<span class="price">${p.sizes.length > 1 ? '<small>from</small> ' : ''}${wasHTML(p, ms)}${moneyHTML(mn)}</span>` : `<span class="price na">Price on request</span>`; };
@@ -1593,6 +1608,10 @@ function orderText(lines){
   const tot = subtotal(lines);
   return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${tot !== null ? `\n\nSubtotal: ${money(tot)}` : ''}\n\nName:\nDelivery address:\nPhone:`;
 }
+const VAT_RATE = 0.05;
+// bag line price (unit price × qty), sale price with the crossed-out original on the same line
+function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; if (!hasPrice(v)) return '<span class="price na">Price on request</span>';
+  return `<span class="price lp">${hasPrice(c) && c > v ? `<s class="was">${moneyHTML(c * l.qty)}</s> ` : ''}${moneyHTML(v * l.qty)}${l.qty > 1 ? `<small class="each">${moneyHTML(v)} each</small>` : ''}</span>`; }
 function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) return null; t += Number(v) * l.qty; } return t; }
 function checkout(lines){
   if (!lines.length) return;
@@ -1624,12 +1643,13 @@ function renderCart(){
   body.innerHTML = cart.map((l, i) => { const p = P[l.id]; return `<div class="line-item">
       <a href="#/product/${p.id}" data-close><img src="${IMG(lineImg(l))}" alt="${esc(p.name)}"></a>
       <div><h4>${esc(p.name)}</h4><div class="o">${optLabel(p, l.opt)} · ${esc(p.family.split('·')[0])}</div>${l.picks ? `<div class="o" style="text-transform:none;letter-spacing:.02em;color:var(--champagne)">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</div>` : ''}
-        <div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase">+</button></div>
-        <div style="margin-top:10px">${priceHTML(p, l.opt)}</div>
+        <div class="qrow"><div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase">+</button></div>
+        ${linePriceHTML(p, l)}</div>
         <button class="rm" data-rm="${i}">Remove</button></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`);
   const t = subtotal(cart);
-  foot.innerHTML = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div><div class="sub-row"><span>Subtotal</span>${t !== null ? `<span class="price">${moneyHTML(t)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
+  const vat = t !== null ? Math.round(t * VAT_RATE / (1 + VAT_RATE) * 100) / 100 : null;   // prices include VAT
+  foot.innerHTML = `${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t - vat, true)}</span></div><div class="sub-row"><span>VAT 5%</span><span class="price">${moneyHTML(vat, true)}</span></div>` : ''}<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div><div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>${t !== null ? '<p class="vat-note">Prices include 5% VAT</p>' : ''}
     ${S.checkout.stripe ? `<button class="btn block" id="payCard">${ICON.lock || ''}Pay securely by card</button><p class="pay-note">Visa · Mastercard · Apple Pay · Google Pay — secured by Stripe</p><button class="btn line block" id="doCheckout">Order via WhatsApp</button>` : `<button class="btn block" id="doCheckout">${S.checkout.mode === 'whatsapp' ? 'Checkout via WhatsApp' : 'Checkout'}</button>`}
     <a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
   $('#doCheckout').onclick = () => checkout(cart);
