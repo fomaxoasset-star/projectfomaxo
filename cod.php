@@ -58,7 +58,7 @@ $cb = "Thank you for your order, {$cust['name']}.\n\nOrder number: $no\n\n" . im
 
 if (!$logged && !$mailed) {
   http_response_code(502);
-  echo json_encode(['error' => 'We could not place your order right now. Please send it to us on WhatsApp.']);
+  echo json_encode(['error' => 'We could not place your order right now. Please try again or contact us on WhatsApp.']);
   exit;
 }
 echo json_encode(['order' => $no, 'total' => $order['totalFils'] / 100]);

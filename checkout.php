@@ -161,7 +161,7 @@ if ($pay === 'cod') {
         . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '');
   $mailed = @mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
                   "From: FOMAXO Orders <orders@$host>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
-  if (!$saved && !$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or order via WhatsApp.'); }
+  if (!$saved && !$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or contact us on WhatsApp.'); }
   require_once __DIR__ . '/reviews-lib.php';   // private "review your order" link → Verified Purchaser reviews
   $review = fomaxo_review_link($no, array_map(fn($l) => $l['id'] ?? '', $lines));
   echo json_encode(['order' => $no, 'total' => number_format($totalFils / 100, 2, '.', ''), 'review' => $review]);
@@ -186,7 +186,7 @@ if ($discFils > 0) {
   if ($code !== 200 || empty($c['id'])) {
     error_log('FOMAXO Stripe coupon error: ' . ($err ?: $res));
     http_response_code(502);
-    echo json_encode(['error' => 'Card payment is temporarily unavailable. Please try again or order via WhatsApp.']);
+    echo json_encode(['error' => 'Card payment is temporarily unavailable. Please try again or contact us on WhatsApp.']);
     exit;
   }
   $coupon = $c['id'];
@@ -242,7 +242,7 @@ $data = $res ? json_decode($res, true) : null;
 if ($code !== 200 || empty($data['url'])) {
   error_log('FOMAXO Stripe error: ' . ($err ?: $res));
   http_response_code(502);
-  echo json_encode(['error' => 'Card payment is temporarily unavailable. Please try again or order via WhatsApp.']);
+  echo json_encode(['error' => 'Card payment is temporarily unavailable. Please try again or contact us on WhatsApp.']);
   exit;
 }
 echo json_encode(['url' => $data['url']]);
