@@ -78,7 +78,7 @@ if ($discFils > 0) {
   $ch = curl_init('https://api.stripe.com/v1/coupons');
   curl_setopt_array($ch, [
     CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => http_build_query(['amount_off' => $discFils, 'currency' => $cfg['currency'], 'duration' => 'once', 'max_redemptions' => 1, 'name' => "Quantity discount $pctTxt%"]),
+    CURLOPT_POSTFIELDS => http_build_query(['amount_off' => $discFils, 'currency' => $cfg['currency'], 'duration' => 'once', 'max_redemptions' => 1, 'name' => "Multi-buy discount ($pctTxt%)"]),
     CURLOPT_USERPWD => $key . ':',
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_TIMEOUT => 25,
@@ -95,7 +95,7 @@ if ($discFils > 0) {
     exit;
   }
   $coupon = $c['id'];
-  $summary[] = "Quantity discount $pctTxt%: -" . number_format($discFils / 100, 2, '.', '') . ' ' . strtoupper($cfg['currency']);
+  $summary[] = "Multi-buy discount ($pctTxt%): -" . number_format($discFils / 100, 2, '.', '') . ' ' . strtoupper($cfg['currency']);
 }
 
 $params = [
