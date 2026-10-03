@@ -423,7 +423,7 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .upsell a{display:grid;grid-template-columns:54px 1fr auto;gap:14px;align-items:center;padding:10px 0}
 .upsell img{width:54px;aspect-ratio:4/5;object-fit:cover}
 .upsell b{font-family:var(--display);font-weight:300;font-size:14px;letter-spacing:.14em;text-transform:uppercase}
-.recs{margin-top:18px;padding-top:16px}
+.recs{margin-top:18px;padding:16px 0 18px}
 .recs h5{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:400;margin-bottom:10px}
 .recs-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .rec{position:relative;min-width:0}
@@ -1932,11 +1932,11 @@ let buyLines = [];
 try { buyLines = JSON.parse(sessionStorage.getItem('fomaxo_buy') || '[]').filter(l => P[l.id] && P[l.id].sizes.map(String).includes(String(l.opt))); } catch(e) { buyLines = []; }
 function buyNow(line){ buyLines = [line]; try { sessionStorage.setItem('fomaxo_buy', JSON.stringify(buyLines)); } catch(e) {} location.hash = '#/checkout?buy=1'; }
 function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'); } catch(e) {} }
-// "You may also like" in the bag: up to 4 small products the customer doesn't have yet (everyday fragrances first, then King, then the Discovery Set)
+// "You may also like" in the bag: up to 4 small products the customer doesn't have yet (everyday fragrances first, then King; the Discovery Set has its own "Not sure yet?" link)
 function bagRecs(){
   const have = new Set(cart.map(l => l.id));
-  const recs = S.products.filter(p => !have.has(p.id) && p.prices && hasPrice(p.prices[defaultSize(p)]))
-    .sort((a, b) => ((a.kind === 'set') * 2 + (a.tier === 'elite')) - ((b.kind === 'set') * 2 + (b.tier === 'elite'))).slice(0, 4);
+  const recs = S.products.filter(p => !have.has(p.id) && p.kind !== 'set' && p.prices && hasPrice(p.prices[defaultSize(p)]))
+    .sort((a, b) => (a.tier === 'elite') - (b.tier === 'elite')).slice(0, 4);
   if (!recs.length) return '';
   return `<div class="recs"><h5>You may also like</h5><div class="recs-row">${recs.map(p => { const sz = defaultSize(p); return `<div class="rec">
       <a href="#/product/${p.id}" data-close><img src="${IMG(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])}${p.kind === 'set' ? '' : ` <small>· ${sz}ml</small>`}</span></a>
@@ -1955,7 +1955,8 @@ function renderCart(){
       <div><h4>${esc(p.name)}</h4><div class="o">${optLabel(p, l.opt)} · ${esc(p.family.split('·')[0])}</div>${l.picks ? `<div class="o" style="text-transform:none;letter-spacing:.02em;color:var(--champagne)">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</div>` : ''}
         <div class="qrow"><div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase">+</button></div>
         ${linePriceHTML(p, l)}</div>
-        <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + bagRecs();
+        <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
+      `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`) + bagRecs();
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
   const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
