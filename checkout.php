@@ -20,7 +20,7 @@ $key = $cfg['secret_key'] ?? '';
 
 /* ---- minimum order + cash on delivery (AED) — keep in sync with the website ----
    Minimums count the total after the multi-buy discount. The cash on delivery fee is added on top. */
-$MIN_ORDER = 30; $COD_MIN = 200; $COD_FEE = 10;
+$MIN_ORDER = 30; /* not for card payments */ $COD_MIN = 200; $COD_FEE = 10;
 function fail($code, $msg) { http_response_code($code); echo json_encode(['error' => $msg]); exit; }
 function aed($fils) { return 'AED ' . number_format($fils / 100, 2, '.', ','); }
 function aed_short($fils) { return 'AED ' . ($fils % 100 ? number_format($fils / 100, 2, '.', ',') : number_format($fils / 100, 0, '.', ',')); }
@@ -114,7 +114,7 @@ $pctTxt = rtrim(rtrim(number_format($discPct, 1, '.', ''), '0'), '.');
 $afterFils = $subFils - $discFils;               // total after the multi-buy discount
 
 /* minimum order: checked here too, so it can't be bypassed */
-if ($afterFils < $MIN_ORDER * 100) fail(400, 'Minimum order ' . aed_short($MIN_ORDER * 100) . ' · add ' . aed_short($MIN_ORDER * 100 - $afterFils) . ' more.');
+if ($pay !== 'card' && $afterFils < $MIN_ORDER * 100) fail(400, 'Minimum order ' . aed_short($MIN_ORDER * 100) . ' · add ' . aed_short($MIN_ORDER * 100 - $afterFils) . ' more.');
 if ($pay === 'cod' && $afterFils < $COD_MIN * 100) fail(400, 'Cash on delivery is available for orders from ' . aed_short($COD_MIN * 100) . ' · add ' . aed_short($COD_MIN * 100 - $afterFils) . ' more.');
 
 /* FREE 10ml mini: the customer's pick if it comes in 10ml, otherwise the first scent that does */
