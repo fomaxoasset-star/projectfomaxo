@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['status'])) {
                     'mode' => $token === '' ? '-' : ($testMode ? 'test (no real money)' : 'live')], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
   exit;
 }
-if ($token === '') { error_log('FOMAXO Ziina: ' . ($cfgFile ? "no access token in $cfgFile" : 'Ziina-config.php not found')); http_response_code(500); echo json_encode(['error' => 'Card payments are not set up yet. Please choose cash on delivery or WhatsApp.']); exit; }
+if ($token === '') { error_log('FOMAXO Ziina: ' . ($cfgFile ? "no access token in $cfgFile" : 'Ziina-config.php not found')); http_response_code(500); echo json_encode(['error' => 'Card payments are not set up yet. Please choose cash on delivery.']); exit; }
 if (is_string($cfg['api'] ?? null) && $cfg['api'] !== '') $API = rtrim($cfg['api'], '/');   // only for testing against a fake Ziina server
 
 function ziina_call($method, $url, $token, $body = null) {
@@ -150,7 +150,7 @@ $count = array_sum(array_map(fn($it) => $it['qty'], $order['items']));
 ]);
 if (!in_array($code, [200, 201], true) || empty($pi['redirect_url']) || empty($pi['id'])) {
   error_log('FOMAXO Ziina create error: ' . $raw);
-  http_response_code(502); echo json_encode(['error' => 'Card payment is unavailable right now. Please choose cash on delivery or WhatsApp.']); exit;
+  http_response_code(502); echo json_encode(['error' => 'Card payment is unavailable right now. Please choose cash on delivery.']); exit;
 }
 
 $rows = [];
