@@ -53,10 +53,10 @@ if ($cu) {
          'emirate' => $clean($cu['emirate'] ?? '', 30), 'building' => $clean($cu['building'] ?? '', 40), 'room' => $clean($cu['room'] ?? '', 20),
          'street' => $clean($cu['street'] ?? '', 100), 'area' => $clean($cu['area'] ?? '', 80), 'address' => $clean($cu['address'] ?? '', 300), 'note' => $clean($cu['note'] ?? '', 300)];
   foreach (['name', 'building', 'room', 'street', 'area', 'address', 'note'] as $k) $cu[$k] = $caps($cu[$k]);
-  /* address in separate boxes: villa/building no, room no (optional), street, area — email is optional */
+  /* address in separate boxes: villa/building no, room no / floor (optional), street, area — email is optional */
   if ($cu['building'] !== '' || $cu['street'] !== '' || $cu['area'] !== '') {
     $ok = $cu['building'] !== '' && mb_strlen($cu['street']) >= 2 && mb_strlen($cu['area']) >= 2;
-    $cu['address'] = implode(', ', array_filter([$cu['building'], $cu['room'] !== '' ? 'Room ' . $cu['room'] : '', $cu['street'], $cu['area']]));
+    $cu['address'] = implode(', ', array_filter([$cu['building'], $cu['room'] !== '' ? 'Room/Floor ' . $cu['room'] : '', $cu['street'], $cu['area']]));
   } else {
     $ok = mb_strlen($cu['address']) >= 5;   // older page with a single address box
   }
@@ -146,7 +146,7 @@ if ($pay === 'cod') {
     $new = !is_file($file);
     if ($fh = @fopen($file, 'a')) {
       if (flock($fh, LOCK_EX)) {
-        if ($new) fputcsv($fh, ['Date', 'Order', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Note', 'Items', 'Subtotal', 'Discount', 'COD fee', 'Total to collect (AED)', 'Villa/Building no', 'Room no', 'Street', 'Area']);
+        if ($new) fputcsv($fh, ['Date', 'Order', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Note', 'Items', 'Subtotal', 'Discount', 'COD fee', 'Total to collect (AED)', 'Villa/Building no', 'Room No / Floor', 'Street', 'Area']);
         $saved = fputcsv($fh, array_map($cell, $order)) !== false;
         flock($fh, LOCK_UN);
       }
@@ -207,7 +207,7 @@ if ($cu) {
   /* details typed on the checkout page go to Stripe, so the customer doesn't type them twice */
   if ($cu['email'] !== '') $params['customer_email'] = $cu['email'];
   $ship = $cu['building'] !== ''
-    ? ['line1' => mb_substr($cu['building'] . ($cu['room'] !== '' ? ', Room ' . $cu['room'] : ''), 0, 200), 'line2' => $cu['street'], 'city' => $cu['area']]
+    ? ['line1' => mb_substr($cu['building'] . ($cu['room'] !== '' ? ', Room/Floor ' . $cu['room'] : ''), 0, 200), 'line2' => $cu['street'], 'city' => $cu['area']]
     : ['line1' => mb_substr($cu['address'], 0, 200), 'city' => $cu['emirate']];
   $params['payment_intent_data']['shipping'] = ['name' => $cu['name'], 'phone' => $cu['phone'], 'address' => $ship + ['state' => $cu['emirate'], 'country' => 'AE']];
   $params['metadata'] += ['name' => $cu['name'], 'mobile' => $cu['phone'], 'emirate' => $cu['emirate'], 'address' => $cu['address']];
