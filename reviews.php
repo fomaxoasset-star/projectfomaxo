@@ -205,12 +205,12 @@ $anon = ($_POST['anon'] ?? '') === '1';
 $real = rv_clean($_POST['name'] ?? '', 60);
 $name = $anon ? 'Anonymous' : rv_display_name($real);
 if (!$anon && mb_strlen($name) < 2) out(['error' => 'Please enter your name, or choose Post anonymously.'], 400);
-$text = rv_clean($_POST['text'] ?? '', 2000, true);
+$text = rv_clean($_POST['text'] ?? '', 5000, true);
 /* optional city and country (country = 2-letter code from the list on the website, shown with its flag) */
 $city = preg_replace_callback('/(^|[\s\-])(\p{Ll})/u', fn($m) => $m[1] . mb_strtoupper($m[2]), rv_clean(preg_replace('/[^\p{L}\p{M}\s\'\-.]/u', '', (string)($_POST['city'] ?? '')), 40));
 $country = strtoupper((string)($_POST['country'] ?? ''));
 if (!in_array($country, explode(' ', 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'), true)) $country = '';
-if (mb_strlen($text) < 10) out(['error' => 'Please write a few words about the fragrance (at least 10 characters).'], 400);
+if ($text === '') out(['error' => 'Please write your review.'], 400);
 
 $ip = rv_ip();
 $rlFile = rv_dir() . '/limits.json';
