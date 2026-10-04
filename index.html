@@ -2899,11 +2899,11 @@ function rwForm(p, link){
     <div><div class="opt-label"><span>Your rating *</span><span class="rw-rword">Tap a star</span></div>
       <div class="rw-rate" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map(s => `<button type="button" role="radio" aria-checked="false" data-r="${s}" aria-label="${s} star${s > 1 ? 's' : ''}, ${RW_WORDS[s]}">★</button>`).join('')}</div></div>
     <label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
-    <div class="row2"><label>State / City (optional)<input name="city" maxlength="40" autocomplete="address-level2" data-cap="words" autocapitalize="words" placeholder="e.g. Dubai"></label>
-      <label>Country (optional)<select name="country" autocomplete="country">${rwCountryOptions()}</select></label></div>
     <label class="rw-anon"><input type="checkbox" name="anon"><span>Post anonymously</span></label>
     <p class="small rw-shown">Your review will show the name: <b></b></p>
-    <label>Your review *<textarea name="text" maxlength="2000" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
+    <div class="row2"><label>State / City (optional)<input name="city" maxlength="40" autocomplete="address-level2" data-cap="words" autocapitalize="words" placeholder="e.g. Dubai"></label>
+      <label>Country (optional)<select name="country" autocomplete="country">${rwCountryOptions()}</select></label></div>
+    <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
     <div><div class="opt-label"><span>Photos (optional)</span><span>Up to 3</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label></div></div>
     <input name="website" class="rw-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
     ${link ? `<p class="small">Order ${esc(link.no)} · please rate honestly, every star counts.</p>` : `<p class="small">Bought on fomaxo.com? Use the review link from your order confirmation to show Verified Purchaser.</p>`}
@@ -2943,7 +2943,7 @@ function rwBindForm(form, p, link, onDone){
   form.onsubmit = async e => {
     e.preventDefault(); err.hidden = true;
     const text = form.elements.text.value.trim();
-    const bad = !rating ? 'Please choose a star rating.' : !an.checked && rwShort(nm.value).length < 2 ? 'Please enter your name, or choose Post anonymously.' : text.length < 10 ? 'Please write a few words about the fragrance (at least 10 characters).' : '';
+    const bad = !rating ? 'Please choose a star rating.' : !an.checked && rwShort(nm.value).length < 2 ? 'Please enter your name, or choose Post anonymously.' : !text ? 'Please write your review.' : '';
     if (bad) { err.textContent = bad; err.hidden = false; return; }
     const btn = $('button[type=submit]', form); btn.disabled = true; btn.textContent = files.length ? 'Uploading photos…' : 'Posting…';
     const fd = new FormData();
