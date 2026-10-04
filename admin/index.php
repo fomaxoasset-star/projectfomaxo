@@ -79,9 +79,18 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .items{margin:0;padding-left:18px}
 .pager{display:flex;gap:8px;margin-top:14px}
 .btn.sm{padding:8px 12px;font-size:11px}.btn.big{padding:15px 26px;font-size:14px;min-width:200px}
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border-bottom:1px solid var(--line)}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border-bottom:1px solid var(--line)}
 .tabs a{text-align:center;text-decoration:none;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:14px 4px;color:var(--muted);border-bottom:2px solid transparent}
 .tabs a.on{color:var(--gold);border-bottom-color:var(--gold)}
+@media (max-width:759px){.tabs a{font-size:11px;letter-spacing:.04em}}
+.prods td{vertical-align:middle}.pimg img{width:52px;height:52px;object-fit:cover;border-radius:7px;display:block}
+@media (max-width:759px){.prods tr.row{display:grid;grid-template-columns:64px 1fr auto;align-items:center;padding:8px 4px}.prods td.pimg{grid-row:span 2}.prods td.num{display:none}}
+.pform .card{margin-bottom:6px}.opt{text-transform:none;letter-spacing:0}label.sub{margin-top:4px;text-transform:none;letter-spacing:0;font-size:13px}
+.g2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}.g2>div{min-width:0}
+.szrow{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;padding:4px 0 14px;border-bottom:1px solid var(--line)}.szrow:last-child{border:0;padding-bottom:0}.szrow>div{min-width:0}
+@media (min-width:760px){.szrow{grid-template-columns:repeat(4,1fr)}}
+label.chk{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);margin:8px 0 0}label.chk input{width:auto;margin:0}label.chk.big{font-size:16px;margin:0}
+.phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:6px}.ph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--line)}
 @media (min-width:760px){.tabs{display:flex;justify-content:center;gap:10px}.tabs a{padding:14px 22px}}
 .lvl-out{color:var(--bad)}.lvl-low{color:var(--warn)}.lvl-ok{color:var(--ok)}
 .stock td,.exp td{vertical-align:middle}.stock input{width:110px;text-align:right}
@@ -109,7 +118,7 @@ CSS;
      . (!empty($_SESSION['admin']) ? '<form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Log out</button></form>' : '')
      . '</header>'
      . (!empty($_SESSION['admin']) ? '<nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
-         [['Orders', './', !array_intersect_key($_GET, ['stock' => 1, 'expenses' => 1, 'reports' => 1])], ['Stock', './?stock=1', isset($_GET['stock'])],
+         [['Orders', './', !array_intersect_key($_GET, ['stock' => 1, 'expenses' => 1, 'reports' => 1, 'products' => 1])], ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
           ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Reports', './?reports=1', isset($_GET['reports'])]])) . '</nav>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . '">' . $body . '</main></body></html>';
   exit;
@@ -245,6 +254,170 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
   if ($st === 'Cancelled' && $was !== 'Cancelled' && fomaxo_stock_move((string)$_POST['order'], true)) $msg = 'Saved. The items are back in stock.';
   if (in_array($st, ['New', 'Paid', 'Delivered'], true) && in_array($was, ['Cancelled', 'Awaiting payment'], true) && fomaxo_stock_move((string)$_POST['order'])) $msg = 'Saved. The items were taken out of stock.';
   flash($msg, true); go(['o' => $_POST['order']]);
+}
+
+/* ---- products: add a new perfume or change an existing one (name, sizes and prices, words, photos, show or hide) ----
+   The website and both checkouts read this list. Old orders keep the prices they were sold at. */
+function fx_slug($name, $taken) {
+  $base = substr(preg_replace('/[^a-z0-9]+/', '', strtolower(iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name) ?: $name)), 0, 30) ?: 'product';
+  for ($id = $base, $n = 2; isset($taken[$id]) || $id === 'new'; $n++) $id = $base . $n;
+  return $id;
+}
+/* Saves an uploaded photo as a compressed webp in assets/img/up/ and returns its key for the website (or null). */
+function fx_save_photo($tmp, $id) {
+  if (!is_uploaded_file($tmp) || !($info = @getimagesize($tmp)) || !function_exists('imagewebp')) return null;
+  $im = @imagecreatefromstring((string)file_get_contents($tmp)); if (!$im) return null;
+  if ($info[2] === IMAGETYPE_JPEG && function_exists('exif_read_data')) {   // phone photos: turn them the right way up
+    $o = (int)((@exif_read_data($tmp) ?: [])['Orientation'] ?? 1);
+    if ($o === 3) $im = imagerotate($im, 180, 0); elseif ($o === 6) $im = imagerotate($im, -90, 0); elseif ($o === 8) $im = imagerotate($im, 90, 0);
+  }
+  $w = imagesx($im); $h = imagesy($im); $max = 1600;
+  if (max($w, $h) > $max) $im = imagescale($im, $w >= $h ? $max : (int)round($w * $max / $h), $w >= $h ? (int)round($h * $max / $w) : $max);
+  imagepalettetotruecolor($im); imagealphablending($im, false); imagesavealpha($im, true);
+  $dir = dirname(__DIR__) . '/assets/img/up';
+  if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return null;
+  $name = $id . '-' . bin2hex(random_bytes(4));
+  return @imagewebp($im, "$dir/$name.webp", 80) ? "up/$name" : null;
+}
+if (isset($_GET['products'])) {
+  $rows = fomaxo_product_rows($pdo) ?: [];
+  $byId = []; foreach ($rows as $r) $byId[$r['id']] = $r;
+  $pid = (string)($_GET['p'] ?? '');
+  $isNew = $pid === 'new';
+  if ($pid !== '' && !$isNew && !isset($byId[$pid])) go(['products' => 1]);
+  $costs = []; foreach ($pdo->query('SELECT product, size, cost FROM fx_stock') as $r) $costs[$r['product'] . '|' . $r['size']] = $r['cost'];
+
+  if ($pid !== '' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_ok()) { flash('Please try again. If you added big photos, try fewer at a time.'); go(['products' => 1, 'p' => $pid]); }
+    $p = $isNew ? ['id' => '', 'name' => '', 'family' => '', 'short' => '', 'description' => [], 'sizes' => [], 'prices' => [], 'images' => [], 'url' => ''] : json_decode($byId[$pid]['data'], true);
+    $isSet = ($p['kind'] ?? '') === 'set';
+    $t = fn($k, $max) => trim(mb_substr(preg_replace('/\s+/u', ' ', (string)($_POST[$k] ?? '')), 0, $max));
+    $back = fn($m) => [flash($m), go(['products' => 1, 'p' => $pid])];
+    $p['name'] = $t('name', 60); if (mb_strlen($p['name']) < 2) $back('Please type the product name.');
+    $p['family'] = $t('family', 60) ?: 'Eau de Parfum';
+    $p['short'] = $t('short', 200);
+    if (($tag = $t('tag', 30)) !== '') $p['tag'] = $tag; else unset($p['tag']);
+    if (!$isSet) { $tier = (string)($_POST['tier'] ?? ''); if (in_array($tier, ['elite', 'signature', 'prestige'], true)) $p['tier'] = $tier; else unset($p['tier']); }
+    $desc = array_values(array_filter(array_map(fn($x) => trim(preg_replace('/\s+/u', ' ', $x)), preg_split('/\R\s*\R/u', mb_substr((string)($_POST['description'] ?? ''), 0, 4000)))));
+    $p['description'] = $desc ?: [$p['short'] ?: $p['name']];
+    if (!$isSet) {
+      $notes = [];
+      foreach (['key', 'top', 'heart', 'base'] as $k) if (($v = $t("note_$k", 120)) !== '') $notes[$k] = $v;
+      if (isset($notes['key'])) $notes = ['key' => $notes['key']];
+      elseif ($notes) $notes += ['top' => '', 'heart' => '', 'base' => ''];
+      if ($notes) $p['notes'] = $notes; else unset($p['notes']);
+    }
+    /* sizes: one row each; a row without a price is removed */
+    $sizes = []; $prices = []; $was = []; $cost = [];
+    foreach ((array)($_POST['size'] ?? []) as $i => $s) {
+      $s = (int)$s; $pr = str_replace(',', '.', trim((string)($_POST['price'][$i] ?? '')));
+      if ($s < 1 || $s > 1000 || !is_numeric($pr) || $pr <= 0 || in_array($s, $sizes, true)) continue;
+      $sizes[] = $s; $prices[(string)$s] = round($pr + 0, 2) + 0;
+      $w = str_replace(',', '.', trim((string)($_POST['was'][$i] ?? ''))); if (is_numeric($w) && $w > $pr) $was[(string)$s] = round($w + 0, 2) + 0;
+      $c = str_replace(',', '.', trim((string)($_POST['cost'][$i] ?? ''))); $cost[(string)$s] = is_numeric($c) && $c >= 0 ? round((float)$c, 2) : null;
+    }
+    if (!$sizes) $back('Please type at least one size with its price.');
+    sort($sizes);
+    $p['sizes'] = $sizes;
+    $p['prices'] = (object)array_combine(array_map('strval', $sizes), array_map(fn($s) => $prices[(string)$s], $sizes));
+    if ($was) $p['compareAt'] = (object)$was; else unset($p['compareAt']);
+    /* photos: remove ticked ones, put the chosen main photo first, add new uploads at the end */
+    $imgs = array_values(array_filter((array)($p['images'] ?? []), 'is_string'));
+    $drop = array_map('strval', (array)($_POST['drop'] ?? []));
+    $keep = array_values(array_filter($imgs, fn($k) => !in_array($k, $drop, true)));
+    $main = (string)($_POST['main'] ?? '');
+    if (in_array($main, $keep, true)) $keep = array_values(array_unique(array_merge([$main], $keep)));
+    $id = $isNew ? fx_slug($p['name'], $byId) : $pid;
+    $bad = 0;
+    $files = $_FILES['photos'] ?? null;
+    if ($files && is_array($files['tmp_name'])) foreach ($files['tmp_name'] as $i => $tmp) {
+      if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) continue;
+      if (count($keep) >= 12 || ($files['error'][$i] ?? 1) !== UPLOAD_ERR_OK || !($k = fx_save_photo($tmp, $id))) { $bad++; continue; }
+      $keep[] = $k;
+    }
+    if (!$keep) $back($bad ? 'The photo could not be saved. Please try a JPG or PNG photo.' : 'Please add at least one photo.');
+    $p['images'] = $keep;
+    $p['id'] = $id;
+    $hidden = empty($_POST['show']) ? 1 : 0;
+    if ($isNew) {
+      $pos = (int)$pdo->query('SELECT COALESCE(MAX(pos), 0) + 10 FROM fx_products')->fetchColumn();
+      $pdo->prepare('INSERT INTO fx_products (id, pos, hidden, data, updated_at) VALUES (?, ?, ?, ?, NOW())')->execute([$id, $pos, $hidden, fomaxo_json($p)]);
+    } else {
+      $pdo->prepare('UPDATE fx_products SET hidden = ?, data = ?, updated_at = NOW() WHERE id = ?')->execute([$hidden, fomaxo_json($p), $id]);
+    }
+    $setCost = $pdo->prepare('INSERT INTO fx_stock (product, size, qty, cost, updated_at) VALUES (?, ?, NULL, ?, NOW()) ON DUPLICATE KEY UPDATE cost = VALUES(cost), updated_at = NOW()');
+    foreach ($cost as $s => $c) {
+      $old = $costs["$id|$s"] ?? null;
+      if (($old === null ? null : round((float)$old, 2)) !== $c) $setCost->execute([$id, (string)$s, $c]);
+    }
+    flash(($hidden ? 'Saved. It is hidden from the website.' : 'Saved. The website shows the change within a minute.') . ($bad ? " $bad photo" . ($bad > 1 ? 's' : '') . ' could not be added (use JPG or PNG).' : ''), !$bad);
+    go(['products' => 1]);
+  }
+
+  if ($pid === '') {   // the list
+    $tr = '';
+    foreach ($rows as $r) {
+      $p = json_decode($r['data'], true) ?: [];
+      $isSet = ($p['kind'] ?? '') === 'set';
+      $sz = implode(' · ', array_map(fn($s) => ($isSet ? "Set of $s" : "{$s}ml") . ' AED ' . number_format((float)($p['prices'][(string)$s] ?? 0), 0), (array)($p['sizes'] ?? [])));
+      $img = $p['images'][0] ?? '';
+      $tr .= '<tr class="row" onclick="location.href=this.dataset.href" data-href="' . h(self_url(['products' => 1, 'p' => $r['id']])) . '">'
+           . '<td class="pimg">' . ($img ? '<img src="../assets/img/' . h($img) . '.webp" alt="">' : '') . '</td>'
+           . '<td><b>' . h($p['name'] ?? $r['id']) . '</b><div class="small muted">' . h($sz) . '</div></td>'
+           . '<td>' . ($r['hidden'] ? '<span class="tag s-Cancelled">Hidden</span>' : '<span class="tag s-Delivered">On website</span>') . '</td>'
+           . '<td class="num"><a class="btn line sm" href="' . h(self_url(['products' => 1, 'p' => $r['id']])) . '">Edit</a></td></tr>';
+    }
+    page('Products', '<div class="monthnav" style="margin-top:0"><h1 style="margin:0">Products</h1><a class="btn" href="' . h(self_url(['products' => 1, 'p' => 'new'])) . '">Add product</a></div>' . flash()
+      . ($rows ? '<table class="prods"><thead><tr><th></th><th>Product</th><th>Website</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
+               : '<p class="msg bad">The product list could not be loaded from the database.</p>')
+      . '<p class="muted small">New sizes show up on the Stock page by themselves. Changing a price does not change old orders or reports.</p>', true);
+  }
+
+  /* add or edit form */
+  $p = $isNew ? ['name' => '', 'family' => 'Eau de Parfum', 'short' => '', 'description' => [], 'sizes' => [], 'prices' => [], 'images' => [], 'tier' => 'prestige'] : (json_decode($byId[$pid]['data'], true) ?: []);
+  $isSet = ($p['kind'] ?? '') === 'set';
+  $hidden = !$isNew && $byId[$pid]['hidden'];
+  $notes = (array)($p['notes'] ?? []);
+  $sizes = (array)($p['sizes'] ?? []);
+  if ($isNew) $sizes = [10, 50, 100];
+  $rowsHtml = '';
+  foreach (array_merge($sizes, [null]) as $i => $s) {
+    $v = fn($arr) => $s !== null && isset($p[$arr][(string)$s]) ? h($p[$arr][(string)$s] + 0) : '';
+    $c = $s !== null && isset($costs["$pid|$s"]) && $costs["$pid|$s"] !== null ? h(rtrim(rtrim($costs["$pid|$s"], '0'), '.')) : '';
+    $rowsHtml .= '<div class="szrow">'
+      . '<div><label>' . ($isSet ? 'Set of (vials)' : 'Size (ml)') . '</label><input type="number" min="1" max="1000" inputmode="numeric" name="size[' . $i . ']" value="' . h($s ?? '') . '"' . ($s === null ? ' placeholder="' . ($isSet ? 'e.g. 10' : 'e.g. 30') . '"' : '') . '></div>'
+      . '<div><label>Price AED</label><input type="number" min="0" step="0.01" inputmode="decimal" name="price[' . $i . ']" value="' . $v('prices') . '"></div>'
+      . '<div><label>Was AED <span class="opt">(optional)</span></label><input type="number" min="0" step="0.01" inputmode="decimal" name="was[' . $i . ']" value="' . $v('compareAt') . '" placeholder="—"></div>'
+      . '<div><label>Your cost <span class="opt">(optional)</span></label><input type="number" min="0" step="0.01" inputmode="decimal" name="cost[' . $i . ']" value="' . $c . '" placeholder="—"></div></div>';
+  }
+  $photos = '';
+  foreach ((array)($p['images'] ?? []) as $i => $k) {
+    $photos .= '<div class="ph"><img src="../assets/img/' . h($k) . '.webp" alt="">'
+      . '<label class="chk"><input type="radio" name="main" value="' . h($k) . '"' . ($i === 0 ? ' checked' : '') . '> Main photo</label>'
+      . '<label class="chk"><input type="checkbox" name="drop[]" value="' . h($k) . '"> Remove</label></div>';
+  }
+  $tiers = ['' => 'None', 'elite' => 'Elite', 'signature' => 'Signature', 'prestige' => 'Prestige'];
+  page($isNew ? 'Add product' : 'Edit ' . ($p['name'] ?? ''), '<p><a href="' . h(self_url(['products' => 1])) . '">← All products</a></p>'
+    . '<h1>' . ($isNew ? 'Add product' : h($p['name'] ?? '')) . '</h1>' . flash()
+    . '<form method="post" enctype="multipart/form-data" class="pform">' . csrf_field()
+    . '<div class="card"><label class="chk big"><input type="checkbox" name="show" value="1"' . ($hidden ? '' : ' checked') . '> Show on the website</label>'
+    . '<label for="name">Name</label><input id="name" name="name" maxlength="60" required value="' . h($p['name'] ?? '') . '" placeholder="e.g. Velvet Oud">'
+    . '<label for="family">Type</label><input id="family" name="family" maxlength="60" value="' . h($p['family'] ?? '') . '" placeholder="e.g. Eau de Parfum · Unisex">'
+    . (!$isSet ? '<div class="g2"><div><label for="tier">Collection</label><select id="tier" name="tier">' . implode('', array_map(fn($k) => '<option value="' . $k . '"' . (($p['tier'] ?? '') === $k ? ' selected' : '') . '>' . $tiers[$k] . '</option>', array_keys($tiers))) . '</select></div>' : '<div class="g2">')
+    . '<div><label for="tag">Badge <span class="opt">(optional)</span></label><input id="tag" name="tag" maxlength="30" value="' . h($p['tag'] ?? '') . '" placeholder="e.g. New"></div></div>'
+    . '<label for="short">One-line description</label><input id="short" name="short" maxlength="200" value="' . h($p['short'] ?? '') . '">'
+    . '<label for="description">Full description <span class="opt">(leave an empty line between paragraphs)</span></label><textarea id="description" name="description" rows="6">' . h(implode("\n\n", (array)($p['description'] ?? []))) . '</textarea>'
+    . (!$isSet ? '<label>Fragrance notes</label><div class="g2">'
+        . '<div><label class="sub" for="nt">Top</label><input id="nt" name="note_top" value="' . h($notes['top'] ?? '') . '" placeholder="e.g. Bergamot · Pepper"></div>'
+        . '<div><label class="sub" for="nh">Heart</label><input id="nh" name="note_heart" value="' . h($notes['heart'] ?? '') . '"></div>'
+        . '<div><label class="sub" for="nb">Base</label><input id="nb" name="note_base" value="' . h($notes['base'] ?? '') . '"></div>'
+        . '<div><label class="sub" for="nk">Or key notes only</label><input id="nk" name="note_key" value="' . h($notes['key'] ?? '') . '"></div></div>' : '')
+    . '</div>'
+    . '<h2>Sizes and prices</h2><p class="muted small">Prices include VAT. "Was" shows a crossed-out price. Clear a price to remove that size.</p><div class="card">' . $rowsHtml . '</div>'
+    . '<h2>Photos</h2><div class="card">' . ($photos ? '<div class="phs">' . $photos . '</div>' : '')
+    . '<label for="photos">' . ($photos ? 'Add more photos' : 'Add photos') . '</label><input id="photos" type="file" name="photos[]" accept="image/*" multiple>'
+    . '<p class="muted small">Square or portrait photos look best. They are made smaller automatically.</p></div>'
+    . '<div class="savebar"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true);
 }
 
 /* ---- stock and cost price: one row per product and size ---- */

@@ -1733,6 +1733,8 @@ window.STORE = {
   // Shown on every product page. Add your delivery & returns policy.
   shipping: ["Free delivery anywhere in the UAE on every order."],
 
+  /* PRODUCTS ARE EDITED ON fomaxo.com/admin → Products (saved in the database, served by products.php).
+     This list is only the fallback for when the database is down — changing it here does NOT change the live shop. */
   products: [
     {
       id: "king", name: "King", family: "Parfum · Unisex", tag: "Elite", tier: "elite",
@@ -1867,8 +1869,24 @@ const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 const app = $('#app');
 const IMG = k => `assets/img/${k}.webp`;
-const P = Object.fromEntries(S.products.map(p => [p.id, p]));
-const FRAG = S.products.filter(p => p.kind !== 'set');
+/* products: the list in window.STORE is only the fallback. The live list is edited on fomaxo.com/admin → Products,
+   comes from products.php and is remembered on this device so the next visit opens with it straight away. */
+const TIER0 = S.tiers.map(t => t.products.slice()), MINI0 = S.mini.products.slice();
+let P = {}, FRAG = [], productsJSON = JSON.stringify(S.products);
+function useProducts(list){
+  const all = (Array.isArray(list) ? list : []).filter(p => p && p.id && Array.isArray(p.sizes) && p.sizes.length && p.prices && Array.isArray(p.images) && p.images.length);
+  if (!all.length) return false;
+  P = Object.fromEntries(all.map(p => [p.id, p]));   // hidden products stay in P so old links don't break, but are not listed or sold
+  S.products = all.filter(p => !p.hidden);
+  FRAG = S.products.filter(p => p.kind !== 'set');
+  const on = id => P[id] && !P[id].hidden;
+  S.tiers.forEach((t, i) => { const keep = TIER0[i].filter(id => on(id) && P[id].tier === t.id); t.products = [...keep, ...S.products.filter(p => p.tier === t.id && !keep.includes(p.id)).map(p => p.id)]; });
+  const mini = MINI0.filter(id => on(id) && P[id].sizes.includes(10));
+  S.mini.products = [...mini, ...FRAG.filter(p => p.sizes.includes(10) && !mini.includes(p.id)).map(p => p.id)];
+  return true;
+}
+useProducts(S.products);
+try { const c = localStorage.getItem('fomaxo_products'); if (c && useProducts(JSON.parse(c))) productsJSON = c; } catch(e) {}
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const imgFor = (p, s) => (p.sizeImages && p.sizeImages[s]) || (s == 10 && p.miniImage ? p.miniImage : p.images[0]);
 const altFor = (p, s) => s == 10 && p.miniImage ? ((p.miniImages && p.miniImages[1]) || null) : p.images[1];
@@ -1936,7 +1954,7 @@ function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.co
 const QTY_DISCOUNT_SKIP = ['discovery', 'king'];
 const QTY_TIERS = [{n: 2, pct: 5, mini: false}, {n: 3, pct: 10, mini: true}, {n: 5, pct: 15, mini: true}];
 const qtyTier = n => QTY_TIERS.filter(t => n >= t.n).pop() || {n: 0, pct: 0, mini: false};
-const miniScents = () => Object.values(P).filter(p => !QTY_DISCOUNT_SKIP.includes(p.id) && p.sizes.map(String).includes('10'));
+const miniScents = () => Object.values(P).filter(p => !p.hidden && !QTY_DISCOUNT_SKIP.includes(p.id) && p.sizes.map(String).includes('10'));
 function miniPick(){
   let saved = null; try { saved = localStorage.getItem('fomaxo_mini'); } catch(e) {}
   const ok = miniScents().map(p => p.id);
@@ -2138,8 +2156,9 @@ const HERO_SLIDES = [
   {id:'dollar', img:'banner-dollar', pos:'72% 50%'},
   {id:'king', img:'banner-king', pos:'70% 50%'}
 ];
+const heroSlides = () => HERO_SLIDES.filter(s => P[s.id] && !P[s.id].hidden);   // a product hidden on the admin drops out of the slideshow
 function home(){
-  const slides = HERO_SLIDES.map(s => ({...s, p:P[s.id]}));
+  const slides = heroSlides().map(s => ({...s, p:P[s.id]}));
   return `
   <section class="hero-cine" id="heroCine">
     <div class="hc-slides">${slides.map((s,i) => `<figure class="hc-slide${i?'':' on'}"><img src="${IMG(s.img)}" alt="FOMAXO ${esc(s.p.name)}" style="object-position:${s.pos}" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}></figure>`).join('')}</div>
@@ -2187,7 +2206,7 @@ function home(){
 
   <section class="sec" style="padding-top:0" id="tiers"><div class="wrap">
     ${secHead('The fragrance collection', 'Distinct <em class="metal">blends</em>', '<p class="lead">Four fragrances that define the house of FOMAXO.</p>')}
-    ${['king','gold','oldmoney','royalcandy'].map(id => P[id]).map((p,i) => `<div class="ed ${i%2?'rev':''}">
+    ${['king','gold','oldmoney','royalcandy'].map(id => P[id]).filter(p => p && !p.hidden).map((p,i) => `<div class="ed ${i%2?'rev':''}">
       <a class="ed-media rv-up" href="#/product/${p.id}"><img data-parallax="0.08" src="${IMG(p.editorial || p.images[0])}" alt="FOMAXO ${esc(p.name)}" loading="lazy"></a>
       <div class="ed-copy rv-up d1">
         <span class="num">0${i+1}</span>
@@ -2271,7 +2290,7 @@ function fragrances(q){
 }
 
 function product(id, q){
-  const p = P[id]; if (!p) return notFound();
+  const p = P[id]; if (!p || p.hidden) return notFound();
   let size = q.get('size') ? (q.get('size') === 'set' ? 'set' : +q.get('size')) : defaultSize(p);
   if (!p.sizes.includes(size)) size = defaultSize(p);
   const gallery = [...p.images, ...Object.values(p.sizeImages || {}), ...(p.extraImages || []), ...(p.miniImages || (p.miniImage ? [p.miniImage] : []))];
@@ -3098,7 +3117,7 @@ function route(){
   switch (seg[0]){
     case undefined: html = home(); after = bindHome; break;
     case 'fragrances': html = fragrances(q); break;
-    case 'product': html = product(seg[1], q); after = () => P[seg[1]] && bindProduct(P[seg[1]]); break;
+    case 'product': html = product(seg[1], q); after = () => P[seg[1]] && !P[seg[1]].hidden && bindProduct(P[seg[1]]); break;
     case 'collections': html = collections(seg[1]); if (seg[1] === 'elite') after = bindElite; if (seg[1] === 'fragrance') after = bindFragColl; break;
     case 'personal-care': html = personalCare(); break;
     case 'about': html = about(); break;
@@ -3126,8 +3145,8 @@ function bindHome(){
   const figs = $$('#heroCine .hc-slide'), btns = $$('#hcNav button'); let i = 0;
   const show = n => { i = n; figs.forEach((f,k) => f.classList.toggle('on', k === i)); btns.forEach((b,k) => { b.classList.toggle('on', k === i); b.classList.remove('run'); });
     void btns[i].offsetWidth; btns[i].classList.add('run');
-    const s = HERO_SLIDES[i]; $('#hcName').textContent = P[s.id].name; $('#hcNow').href = '#/product/' + s.id; $('#hcPrice').innerHTML = fromHTML(P[s.id]); };
-  $('#hcAdd').onclick = () => { const p = P[HERO_SLIDES[i].id]; addToCart(p.id, defaultSize(p)); };
+    const s = heroSlides()[i]; $('#hcName').textContent = P[s.id].name; $('#hcNow').href = '#/product/' + s.id; $('#hcPrice').innerHTML = fromHTML(P[s.id]); };
+  $('#hcAdd').onclick = () => { const p = P[heroSlides()[i].id]; addToCart(p.id, defaultSize(p)); };
   const start = () => { clearInterval(heroTimer); heroTimer = setInterval(() => show((i+1) % figs.length), 6500); };
   btns.forEach(b => b.onclick = () => { show(+b.dataset.i); start(); });
   show(0); start();
@@ -3172,7 +3191,7 @@ addEventListener('scroll', () => { if (ticking) return; ticking = true; requestA
 
 /* static bits */
 $('#accountLink').href = S.accountUrl || '#/contact';
-$('#footShop').innerHTML = `<a href="#/product/discovery">Discovery Set</a>` + [...FRAG.filter(p => p.id !== 'king'), ...FRAG.filter(p => p.id === 'king')].map(p => `<a href="#/product/${p.id}">${p.name}</a>`).join('');
+const footShop = () => $('#footShop').innerHTML = (P.discovery && !P.discovery.hidden ? `<a href="#/product/discovery">Discovery Set</a>` : '') + [...FRAG.filter(p => p.id !== 'king'), ...FRAG.filter(p => p.id === 'king')].map(p => `<a href="#/product/${p.id}">${p.name}</a>`).join('');
 $('#footIg').href = `https://instagram.com/${S.contact.instagram}`;
 $('#mnavFoot').innerHTML = `<a href="mailto:${S.contact.email}">${S.contact.email}</a><span>${S.contact.phones[0].number}</span>`;
 addEventListener('hashchange', route);
@@ -3352,7 +3371,20 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   };
   sync();
 })();
-renderCart(); route(); bindCommon(); loadRates(); loadStock();
+footShop();
+/* the live product list (fomaxo.com/admin → Products); the page is only redrawn when it differs from what is showing */
+async function loadProducts(){
+  let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
+  if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
+  const js = JSON.stringify(d.products);
+  try { localStorage.setItem('fomaxo_products', js); } catch(e) {}
+  if (js === productsJSON || !useProducts(d.products)) return;
+  productsJSON = js;
+  cart = cart.filter(l => P[l.id] && !P[l.id].hidden && P[l.id].sizes.map(String).includes(String(l.opt)));
+  footShop(); save();
+  if (!/^#\/checkout/.test(location.hash)) { route(); applyStock(); }
+}
+renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts();
 })();
 </script>
 

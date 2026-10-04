@@ -33,13 +33,15 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 2) return;
-  if ($ver === 1) {
-    /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
-    $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
-    $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '2')");
-    return;
-  }
+  if ($ver >= 3) return;
+  /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
+  if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
+  if ($ver === 0) fomaxo_db_tables($pdo);
+  /* v3: products move into the database (added and edited on fomaxo.com/admin → Products); orders, stock, expenses are not touched */
+  fomaxo_products_table($pdo);
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '3')");
+}
+function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     order_no VARCHAR(40) NOT NULL UNIQUE,
@@ -68,7 +70,41 @@ function fomaxo_db_schema($pdo) {
   /* orders count up from FMX-1001 */
   $next = max(1001, (int)$pdo->query('SELECT COALESCE(MAX(id), 0) + 1 FROM fx_orders')->fetchColumn());
   $pdo->exec("ALTER TABLE fx_orders AUTO_INCREMENT = $next");
-  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '2')");
+}
+
+/* ---- products: the shop list (index.html) and the checkout price lists read these when the database is up ----
+   Each row keeps the whole product as the website uses it (JSON). The first time, it is filled from products-seed.json,
+   which is the product list exactly as it was in index.html, so nothing changes on the site until a product is edited. */
+function fomaxo_products_table($pdo) {
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_products (id VARCHAR(40) NOT NULL PRIMARY KEY, pos INT NOT NULL DEFAULT 0,
+              hidden TINYINT(1) NOT NULL DEFAULT 0, data MEDIUMTEXT NOT NULL, updated_at DATETIME NULL) DEFAULT CHARSET=utf8mb4");
+  if ((int)$pdo->query('SELECT COUNT(*) FROM fx_products')->fetchColumn()) return;
+  $seed = json_decode((string)@file_get_contents(__DIR__ . '/products-seed.json'));
+  if (!is_array($seed)) return;
+  $ins = $pdo->prepare('INSERT INTO fx_products (id, pos, hidden, data, updated_at) VALUES (?, ?, 0, ?, NOW())');
+  foreach ($seed as $i => $p) if (is_object($p) && !empty($p->id)) $ins->execute([$p->id, ($i + 1) * 10, fomaxo_json($p)]);
+}
+function fomaxo_json($v) { return json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); }
+/* All products in shop order: [['id','pos','hidden','data'(JSON text)]], or null when the database is not available. */
+function fomaxo_product_rows($pdo = null) {
+  $pdo = $pdo ?: fomaxo_db(); if (!$pdo) return null;
+  try { $r = $pdo->query('SELECT id, pos, hidden, data FROM fx_products ORDER BY pos, id')->fetchAll(); } catch (Throwable $e) { return null; }
+  return $r ?: null;
+}
+/* Price list for checkout.php / ziina.php built from the database (shown products only), or null to keep the built-in list. */
+function fomaxo_catalog_db() {
+  $rows = fomaxo_product_rows(); if (!$rows) return null;
+  $cat = [];
+  foreach ($rows as $r) {
+    if ($r['hidden']) continue;
+    $p = json_decode($r['data'], true); if (!is_array($p)) continue;
+    $prices = [];
+    foreach ((array)($p['sizes'] ?? []) as $s) { $v = $p['prices'][(string)$s] ?? null; if (is_numeric($v) && $v > 0) $prices[(string)$s] = $v + 0; }
+    if (!$prices) continue;
+    $cat[$r['id']] = ['name' => (string)($p['name'] ?? $r['id']), 'kind' => ($p['kind'] ?? '') === 'set' ? 'set' : '', 'prices' => $prices,
+                      'exclude' => array_values(array_filter((array)($p['exclude'] ?? []), 'is_string'))];
+  }
+  return $cat ?: null;
 }
 
 function fomaxo_setting($pdo, $k, $v = null) {
