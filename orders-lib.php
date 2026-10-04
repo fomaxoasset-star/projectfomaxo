@@ -29,7 +29,7 @@ function fomaxo_db() {
   return $pdo;
 }
 
-/* Creates the tables the first time, and copies in the orders already saved in the CSV files. */
+/* Creates the tables the first time. The back office starts empty: older orders stay in the CSV files above public_html as a backup. */
 function fomaxo_db_schema($pdo) {
   try { if ((int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn() >= 1) return; } catch (Throwable $e) {}
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
@@ -57,8 +57,7 @@ function fomaxo_db_schema($pdo) {
               amount DECIMAL(10,2) NOT NULL, note VARCHAR(200) NOT NULL DEFAULT '', created_at DATETIME NULL, KEY (day)) DEFAULT CHARSET=utf8mb4");
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_settings (k VARCHAR(40) NOT NULL PRIMARY KEY, v TEXT NULL) DEFAULT CHARSET=utf8mb4");
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_login (ip VARCHAR(45) NOT NULL, at DATETIME NOT NULL, KEY (ip, at)) DEFAULT CHARSET=utf8mb4");
-  try { fomaxo_import_csv($pdo); } catch (Throwable $e) { error_log('FOMAXO import: ' . $e->getMessage()); }
-  /* new orders count up from FMX-1001 (earlier orders keep their old numbers) */
+  /* orders count up from FMX-1001 */
   $next = max(1001, (int)$pdo->query('SELECT COALESCE(MAX(id), 0) + 1 FROM fx_orders')->fetchColumn());
   $pdo->exec("ALTER TABLE fx_orders AUTO_INCREMENT = $next");
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '1')");
@@ -215,41 +214,4 @@ function fomaxo_report($pdo, $year = null) {
   foreach ($rows as &$r) $r['profit'] = round($r['sales'] - $r['cogs'] - $r['expenses'], 2);
   unset($r);
   return $rows;
-}
-
-/* ---- one-time copy of the orders saved before the database existed (CSV files above public_html) ---- */
-function fomaxo_import_csv($pdo) {
-  $dir = dirname(__DIR__) . '/fomaxo-orders';
-  $un = fn($v) => is_string($v) && strlen($v) > 1 && $v[0] === "'" && preg_match('/^[=+\-@]/', substr($v, 1)) ? substr($v, 1) : (string)$v;   // undo the spreadsheet-formula guard
-  $num = fn($v) => (float)preg_replace('/[^\d.\-]/', '', (string)$v);
-  $ins = $pdo->prepare("INSERT INTO fx_orders (order_no, created_at, payment, status, paid_at, subtotal, discount, fee, total, name, phone, email, emirate,
-                          building, room, street, area, address, note, items, test, source)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'import')
-                        ON DUPLICATE KEY UPDATE status = IF(VALUES(status) = 'Paid', 'Paid', status), paid_at = COALESCE(paid_at, VALUES(paid_at))");
-  $when = fn($d) => ($t = strtotime((string)$d)) ? date('Y-m-d H:i:s', $t) : date('Y-m-d H:i:s');
-
-  /* cash on delivery orders saved by checkout.php (has a header row) */
-  if (($f = @fopen("$dir/cash-on-delivery-orders.csv", 'r'))) {
-    $head = fgetcsv($f);
-    while (($r = fgetcsv($f)) !== false) {
-      if (count($r) < 13 || ($r[1] ?? '') === '') continue;
-      $r = array_map($un, $r);
-      $ins->execute([$r[1], $when($r[0]), 'Cash on delivery', 'New', null, $num($r[9]), $num($r[10]), $num($r[11]), $num($r[12]), $r[2], $r[3], $r[4], $r[5],
-                     $r[13] ?? '', $r[14] ?? '', $r[15] ?? '', $r[16] ?? '', $r[6], $r[7], $r[8], 0]);
-    }
-    fclose($f);
-  }
-  /* card (Ziina) and older cash orders saved by store-lib.php (no header row) */
-  if (($f = @fopen("$dir/orders.csv", 'r'))) {
-    while (($r = fgetcsv($f)) !== false) {
-      if (count($r) < 11 || ($r[1] ?? '') === '') continue;
-      $r = array_map($un, $r);
-      $type = $r[2];
-      $card = stripos($type, 'ziina') !== false;
-      $paid = $card && stripos($type, 'paid') !== false;
-      $ins->execute([$r[1], $when($r[0]), $card ? 'Card (Ziina)' : 'Cash on delivery', $card ? ($paid ? 'Paid' : 'Awaiting payment') : 'New', $paid ? $when($r[0]) : null,
-                     null, null, null, $num($r[3]), $r[4], $r[5], $r[6], $r[7], '', '', '', '', $r[8], $r[9], $r[10], stripos($type, 'test') !== false ? 1 : 0]);
-    }
-    fclose($f);
-  }
 }
