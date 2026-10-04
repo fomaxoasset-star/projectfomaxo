@@ -189,6 +189,11 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .card h3{font-size:clamp(17px,1.35vw,20px)}
 .card .desc{font-size:14px;color:var(--muted);line-height:1.65;min-height:46px}
 .card .meta{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--dim)}
+.card .rate-row{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
+.card .crate{display:inline-flex;align-items:center;gap:7px;margin-left:auto;font-size:12px;letter-spacing:.06em;color:var(--muted);white-space:nowrap;font-style:normal}
+.card .crate .rw-stars.sm{font-size:13px;letter-spacing:1.5px}
+.card .crate.none .rw-s-bg{opacity:.75}
+.card .crate:hover span:not(.rw-stars):not([aria-hidden]){color:var(--gold-hi)}
 .card .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .price{font-family:var(--serif);font-size:23px;color:var(--gold-hi);white-space:nowrap}
 .price small{font-family:var(--sans);font-size:10px;letter-spacing:.2em;color:var(--muted);margin-left:4px}
@@ -2018,6 +2023,14 @@ function runSearch(q){
 $('#q').addEventListener('input', e => runSearch(e.target.value));
 
 /* ============================ SHARED PARTS ============================ */
+/* star rating on each product card, from real reviews only (reviews.php?summary); no reviews yet = faint empty stars */
+let RATES = null;
+const rateHTML = p => { const r = RATES && RATES[p.id], n = r ? r.count : 0;
+  return `<a class="crate${n ? '' : ' none'}" data-rate="${p.id}" href="#/product/${p.id}?reviews=1" aria-label="${n ? `Rated ${r.avg.toFixed(1)} out of 5 from ${n} review${n > 1 ? 's' : ''}` : 'No reviews yet'}">${rwStars(n ? r.avg : 0, 'sm')}${n ? `<span>${r.avg.toFixed(1)} (${n})</span>` : ''}</a>`; };
+async function loadRates(){
+  try { const r = await fetch(`${RW_API}?summary`, {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.products) RATES = d.products; } } catch(e) {}
+  if (RATES) $$('[data-rate]').forEach(el => { const p = P[el.dataset.rate]; if (p) el.outerHTML = rateHTML(p); });
+}
 function card(p, opts={}){
   const size = opts.size || defaultSize(p);
   const img = imgFor(p, size);
@@ -2032,7 +2045,7 @@ function card(p, opts={}){
     </a>
     <div class="row1"><h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3><span data-price>${priceHTML(p, size)}</span></div>
     <p class="desc">${esc(p.short)}</p>
-    ${chips}
+    <div class="rate-row">${chips}${rateHTML(p)}</div>
     <div class="acts"><button class="btn line sm" data-add>Add to bag</button><button class="btn sm" data-buy>Buy now</button></div>
   </article>`;
 }
@@ -2954,6 +2967,7 @@ async function rwLoad(p, msg){
   const by = {new: (a, b) => b.date.localeCompare(a.date), help: (a, b) => b.helpful - a.helpful, high: (a, b) => b.rating - a.rating, low: (a, b) => a.rating - b.rating};
   const draw = () => { const L = $('#rwList', box); if (!L) return; const all = d.reviews.map((r, i) => [r, i]).sort((a, b) => by[sort](a[0], b[0]) || a[1] - b[1]).map(x => x[0]); L.innerHTML = all.slice(0, shown).map(rwItem).join(''); $('#rwMore', box).hidden = all.length <= shown; };
   draw();
+  if (!msg && /[?&]reviews=1/.test(location.hash)) box.scrollIntoView({behavior: 'smooth', block: 'start'});
   $$('[data-rws]', box).forEach(b => b.onclick = () => { sort = b.dataset.rws; shown = 5; $$('[data-rws]', box).forEach(x => x.classList.toggle('on', x === b)); draw(); });
   if ($('#rwMore', box)) $('#rwMore', box).onclick = () => { shown += 10; draw(); };
   box.onclick = e => { const h = e.target.closest('[data-rwh]'); if (h && !h.disabled) rwVote(h, d.reviews); const ph = e.target.closest('[data-rwph]'); if (ph) rwLightbox(ph.dataset.rwph); };
@@ -3216,7 +3230,7 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   };
   sync();
 })();
-renderCart(); route(); bindCommon();
+renderCart(); route(); bindCommon(); loadRates();
 })();
 </script>
 
