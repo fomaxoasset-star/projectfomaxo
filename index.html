@@ -1514,7 +1514,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-name{font-weight:400;font-size:16px;letter-spacing:.04em;color:var(--ivory)}
 .rw-ver{display:inline-flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
 .rw-ver svg{width:15px;height:15px;flex:none}
-.rw-note{grid-column:1/-1;font-size:12px;line-height:1.7;color:var(--muted);padding-top:18px;border-top:1px solid var(--line)}
+.rw-note{font-size:12px;line-height:1.7;color:var(--muted);max-width:420px;margin-top:-4px}
 .rw-note .rw-ver{font-size:9.5px;white-space:nowrap;vertical-align:-2px;margin-right:4px}
 .rw-note .rw-ver svg{width:13px;height:13px}
 .rw-text{font-family:var(--serif);font-size:21px;line-height:1.45;color:var(--ivory);white-space:pre-line;overflow-wrap:anywhere}
@@ -2859,13 +2859,13 @@ function rwSection(p, d){   // d = null while the reviews are loading: the text 
       <div class="rw-dist">${[5, 4, 3, 2, 1].map(s => `<div><span>${s} ★</span><span class="rw-bar"><span style="width:${d.dist[s] / n * 100}%"></span></span><span>${d.dist[s]}</span></div>`).join('')}</div>`
       : `<div>${rwStars(0, 'lg')}<p class="small" style="margin-top:10px">${d ? 'No reviews yet' : 'Loading reviews…'}</p></div>`}
     <p class="small">${rwLinkFor(p.id) ? `Thank you for your order. Share your honest rating of ${esc(p.name)}; your review will show Verified Purchaser.` : `Enjoying ${esc(p.name)}? Your honest review helps others choose their experience.`}</p>
-    <button class="btn sm" id="rwWrite">${rwLinkFor(p.id) ? 'Review your purchase' : 'Write a review'}</button></div>
+    <button class="btn sm" id="rwWrite">${rwLinkFor(p.id) ? 'Review your purchase' : 'Write a review'}</button>
+    <p class="rw-note"><span class="rw-ver">${RW_TICK}Verified Purchaser</span> badge appears only on reviews written from the review link after a paid order.</p></div>
   <div class="rw-main"><div id="rwFormBox" hidden></div>
     ${n ? `<div class="rw-tools"><span class="small">${n} review${n > 1 ? 's' : ''}</span><div class="rw-sort">${[['new', 'Newest'], ['help', 'Most helpful'], ['high', 'Highest'], ['low', 'Lowest']].map((x, i) => `<button type="button" class="chip${i ? '' : ' on'}" data-rws="${x[0]}">${x[1]}</button>`).join('')}</div></div>
       <div id="rwList"></div><button type="button" class="btn line sm rw-more" id="rwMore" hidden>Show more reviews</button>`
       : !d ? '' : `<div class="rv-empty" id="rwEmpty"><h3>Be the first to review ${esc(p.name)}</h3><p class="small">Worn ${esc(p.name)}? Share your experience with the FOMAXO community.</p></div>`}
-  </div>
-  <p class="rw-note"><span class="rw-ver">${RW_TICK}Verified Purchaser</span> badge appears only on reviews written from the review link after a paid order.</p>`;
+  </div>`;
 }
 function rwForm(p, link){
   return `<form class="form rw-form" novalidate>
