@@ -98,16 +98,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
   if ($status === 'completed' && $rec && empty($rec['paid'])) {
     $paidFils = (int)($pi['amount'] ?? 0);
     $rec['paid'] = date('Y-m-d H:i');
-    require_once __DIR__ . '/reviews-lib.php';   // private "review your order" link → Verified Purchaser reviews
+    require_once __DIR__ . '/whatsapp-lib.php';   // private "review your order" link → Verified Purchaser reviews, asked for on WhatsApp
     if (!empty($rec['pids'])) $rec['review'] = fomaxo_review_link($rec['no'], $rec['pids']);
     file_put_contents($file, json_encode($rec), LOCK_EX);
     $c = $rec['cust']; $total = fomaxo_aed($rec['totalFils']);
+    $waLines = fomaxo_wa_review_request($rec['no'], $c, array_map(fn($id) => $CATALOG[$id]['name'] ?? '', (array)($rec['pids'] ?? [])), $rec['review'] ?? null);
     $note = $paidFils && $paidFils !== (int)$rec['totalFils'] ? ' (AMOUNT MISMATCH: paid ' . fomaxo_aed($paidFils) . ')' : '';
     fomaxo_log_order([date('Y-m-d H:i'), $rec['no'], 'Ziina — PAID' . $note, $total, $c['name'], $c['phone'], $c['email'], $c['emirate'], $c['address'], $c['note'], implode(' | ', $rec['summary'])]);
     $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com'));
     $from = "FOMAXO <orders@$host>";
     $body = "NEW PAID ORDER (Ziina)  {$rec['no']}$note\n" . date('d M Y, H:i') . " (Dubai)\nZiina payment: $id\n\n" . implode("\n", $rec['rows']) . "\n\n"
-          . "TOTAL PAID: $total\nDelivery: Free\n\nName: {$c['name']}\nPhone: {$c['phone']}\n" . ($c['email'] !== '' ? "Email: {$c['email']}\n" : '') . "Address: {$c['address']}, {$c['emirate']}, UAE\n" . ($c['note'] ? "Note: {$c['note']}\n" : '');
+          . "TOTAL PAID: $total\nDelivery: Free\n\nName: {$c['name']}\nPhone: {$c['phone']}\n" . ($c['email'] !== '' ? "Email: {$c['email']}\n" : '') . "Address: {$c['address']}, {$c['emirate']}, UAE\n" . ($c['note'] ? "Note: {$c['note']}\n" : '') . $waLines;
     @mail($STORE_EMAIL, '=?UTF-8?B?' . base64_encode("New paid order {$rec['no']} — $total") . '?=', $body, "From: $from\r\n" . ($c['email'] !== '' ? "Reply-To: {$c['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
     $cb = "Thank you for your order, {$c['name']}.\n\nOrder number: {$rec['no']}\n\n" . implode("\n", $rec['rows']) . "\n\nTotal paid: $total\nDelivery: Free, to {$c['address']}, {$c['emirate']}\n\n"
         . "We will call or WhatsApp you on {$c['phone']} to arrange your delivery.\n\n"

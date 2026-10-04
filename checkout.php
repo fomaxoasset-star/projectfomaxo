@@ -153,17 +153,19 @@ if ($pay === 'cod') {
       fclose($fh);
     }
   }
+  require_once __DIR__ . '/whatsapp-lib.php';   // private "review your order" link → Verified Purchaser reviews, asked for on WhatsApp
+  $ids = array_map(fn($l) => $l['id'] ?? '', $lines);
+  $review = fomaxo_review_link($no, $ids);
+  $waLines = fomaxo_wa_review_request($no, $cu, array_map(fn($id) => $CATALOG[$id]['name'] ?? '', $ids), $review);
   $to = $cfg['orders_email'] ?? 'fomaxoasset@gmail.com';
   $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', explode(':', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com')[0])) ?: 'fomaxo.com';
   $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) . "\n\n" . implode("\n", $rows)
         . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\nMulti-buy discount ($pctTxt%): -" . aed($discFils) : '')
         . "\nCash on delivery fee: " . aed($COD_FEE * 100) . "\nTotal: " . aed($totalFils)
-        . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '');
+        . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '') . $waLines;
   $mailed = @mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
                   "From: FOMAXO Orders <orders@$host>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
   if (!$saved && !$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or contact us on WhatsApp.'); }
-  require_once __DIR__ . '/reviews-lib.php';   // private "review your order" link → Verified Purchaser reviews
-  $review = fomaxo_review_link($no, array_map(fn($l) => $l['id'] ?? '', $lines));
   echo json_encode(['order' => $no, 'total' => number_format($totalFils / 100, 2, '.', ''), 'review' => $review]);
   exit;
 }
