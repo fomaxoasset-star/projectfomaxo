@@ -21,6 +21,9 @@ $CATALOG = [
   'passionsin' => ['name' => 'Passion Sin', 'kind' => '', 'prices' => ['10' => 40, '50' => 90, '100' => 150], 'exclude' => []],
   'discovery' => ['name' => 'Discovery Set', 'kind' => 'set', 'prices' => ['3' => 30, '5' => 50], 'exclude' => ['king']]
 ];
+/* products added or edited on fomaxo.com/admin → Products win; the list above is only used when the database is down */
+require_once __DIR__ . '/orders-lib.php';
+if ($dbCatalog = fomaxo_catalog_db()) $CATALOG = $dbCatalog;
 
 /* Prices the bag on the server. Returns ['error'=>...] or the priced order (amounts in fils). */
 function fomaxo_price_order($in) {
