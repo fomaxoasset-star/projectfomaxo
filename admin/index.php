@@ -78,13 +78,18 @@ tr.row{cursor:pointer}tr.row:hover td{background:rgba(143,107,55,.08)}
 dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:var(--muted);font-size:13px}dd{margin:0;word-break:break-word}
 .items{margin:0;padding-left:18px}
 .pager{display:flex;gap:8px;margin-top:14px}
+.tabs{display:flex;gap:18px;margin-left:auto;margin-right:6px}
+@media (max-width:520px){.brand small{display:none}.tabs{gap:12px}.top{gap:10px}.top .btn{padding:9px 10px;font-size:11px}}.tabs a{text-decoration:none;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.stock td{vertical-align:middle}.stock input{max-width:110px;text-align:right}
+.lvl-out{color:var(--bad)}.lvl-low{color:var(--warn)}.lvl-ok{color:var(--ok)}
+@media (max-width:759px){.stock tr.row{display:grid;grid-template-columns:1fr auto;align-items:center;cursor:default}.stock td[data-l]::before{content:none}}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
      . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Jost:wght@400;500&display=swap">'
      . "<style>$css</style></head><body>"
      . '<header class="top"><a class="brand" href="./">FOMAXO<small>ADMIN</small></a>'
-     . (!empty($_SESSION['admin']) ? '<form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line">Log out</button></form>' : '')
+     . (!empty($_SESSION['admin']) ? '<nav class="tabs"><a href="./">Orders</a><a href="./?stock=1">Stock</a></nav><form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line">Log out</button></form>' : '')
      . '</header><main class="wrap' . ($wide ? '' : ' narrow') . '">' . $body . '</main></body></html>';
   exit;
 }
@@ -210,10 +215,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
   if (!csrf_ok()) { flash('Please try again.'); go(['o' => $_POST['order']]); }
   $st = (string)($_POST['status'] ?? '');
   if (!in_array($st, FX_STATUSES, true)) { flash('Unknown status.'); go(['o' => $_POST['order']]); }
+  $s = $pdo->prepare('SELECT status FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_POST['order']]); $was = $s->fetchColumn();
   $pdo->prepare("UPDATE fx_orders SET status = ?, admin_note = ?, updated_at = NOW(),
                  paid_at = CASE WHEN ? IN ('Paid', 'Delivered') AND paid_at IS NULL THEN NOW() ELSE paid_at END WHERE order_no = ?")
       ->execute([$st, mb_substr(trim((string)($_POST['admin_note'] ?? '')), 0, 2000), $st, (string)$_POST['order']]);
-  flash('Saved.', true); go(['o' => $_POST['order']]);
+  /* stock: a cancelled order goes back into stock; taking it out of Cancelled takes it out again */
+  $msg = 'Saved.';
+  if ($st === 'Cancelled' && $was !== 'Cancelled' && fomaxo_stock_move((string)$_POST['order'], true)) $msg = 'Saved. The items are back in stock.';
+  if (in_array($st, ['New', 'Paid', 'Delivered'], true) && in_array($was, ['Cancelled', 'Awaiting payment'], true) && fomaxo_stock_move((string)$_POST['order'])) $msg = 'Saved. The items were taken out of stock.';
+  flash($msg, true); go(['o' => $_POST['order']]);
+}
+
+/* stock: one number per product and size (empty = not counted, always available) */
+if (isset($_GET['stock'])) {
+  require_once dirname(__DIR__) . '/store-lib.php';
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_ok()) { flash('Please try again.'); go(['stock' => 1]); }
+    $set = $pdo->prepare('INSERT INTO fx_stock (product, size, qty, updated_at) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE qty = VALUES(qty), updated_at = NOW()');
+    $old = []; foreach ($pdo->query('SELECT product, size, qty FROM fx_stock') as $r) $old[$r['product'] . '|' . $r['size']] = $r['qty'];
+    foreach ($CATALOG as $id => $p) foreach (array_keys($p['prices']) as $opt) {
+      $v = trim((string)($_POST['q'][$id][$opt] ?? ''));
+      $q = $v === '' ? null : max(0, min(100000, (int)$v));
+      $k = "$id|$opt";
+      if (array_key_exists($k, $old) ? ($old[$k] === null ? $q !== null : (int)$old[$k] !== $q) : $q !== null) $set->execute([$id, (string)$opt, $q]);
+    }
+    flash('Stock saved.', true); go(['stock' => 1]);
+  }
+  $have = []; $upd = [];
+  foreach ($pdo->query('SELECT product, size, qty, updated_at FROM fx_stock') as $r) { $have[$r['product'] . '|' . $r['size']] = $r['qty']; $upd[$r['product'] . '|' . $r['size']] = $r['updated_at']; }
+  $sold = [];   // sold in the last 30 days (orders that are not cancelled), to help decide when to restock
+  $s = $pdo->query("SELECT lines_json FROM fx_orders WHERE stock_taken = 1 AND created_at > NOW() - INTERVAL 30 DAY");
+  foreach ($s as $r) foreach (fomaxo_stock_lines(json_decode((string)$r['lines_json'], true) ?: []) as $k => $n) $sold[$k] = ($sold[$k] ?? 0) + $n;
+  $tr = '';
+  foreach ($CATALOG as $id => $p) foreach (array_keys($p['prices']) as $opt) {
+    $k = "$id|$opt"; $q = $have[$k] ?? null;
+    $lvl = $q === null ? '<span class="muted small">Not counted</span>' : ((int)$q <= 0 ? '<span class="lvl-out">Sold out</span>' : ((int)$q <= FX_LOW_STOCK ? '<span class="lvl-low">Only ' . (int)$q . ' left</span>' : '<span class="lvl-ok">In stock</span>'));
+    $tr .= '<tr class="row"><td data-l=""><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
+         . '<div class="small">' . $lvl . (!empty($sold[$k]) ? ' <span class="muted">· ' . (int)$sold[$k] . ' sold in 30 days</span>' : '') . '</div></td>'
+         . '<td class="num" data-l=""><input type="number" min="0" inputmode="numeric" name="q[' . h($id) . '][' . h($opt) . ']" value="' . ($q === null ? '' : (int)$q) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' stock"></td></tr>';
+  }
+  page('Stock', '<h1>Stock</h1>' . flash()
+    . '<p class="muted small">Type how many bottles you have of each size. Stock goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml), and goes back up if you cancel an order. Leave a box empty to not count that size. The website shows "Only X left" at ' . FX_LOW_STOCK . ' or fewer, and "Sold out" at 0.</p>'
+    . '<form method="post">' . csrf_field() . '<table class="stock"><thead><tr><th>Product</th><th class="num">In stock</th></tr></thead><tbody>' . $tr . '</tbody></table>'
+    . '<p style="margin:16px 0 0"><button class="btn">Save stock</button></p></form>', true);
 }
 
 /* one order */

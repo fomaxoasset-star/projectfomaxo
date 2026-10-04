@@ -29,33 +29,42 @@ function fomaxo_db() {
   return $pdo;
 }
 
-/* Creates the tables the first time, and copies in the orders already saved in the CSV files. */
+/* Creates the tables the first time (and copies in the orders already saved in the CSV files); later versions add what is new. */
 function fomaxo_db_schema($pdo) {
-  try { if ($pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn() >= 1) return; } catch (Throwable $e) {}
-  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
-    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    order_no VARCHAR(40) NOT NULL UNIQUE,
-    created_at DATETIME NOT NULL,
-    payment VARCHAR(30) NOT NULL,
-    status VARCHAR(20) NOT NULL,
-    paid_at DATETIME NULL,
-    subtotal DECIMAL(10,2) NULL, discount DECIMAL(10,2) NULL, fee DECIMAL(10,2) NULL, total DECIMAL(10,2) NOT NULL DEFAULT 0,
-    name VARCHAR(80) NOT NULL DEFAULT '', phone VARCHAR(25) NOT NULL DEFAULT '', email VARCHAR(120) NOT NULL DEFAULT '',
-    emirate VARCHAR(30) NOT NULL DEFAULT '', building VARCHAR(40) NOT NULL DEFAULT '', room VARCHAR(20) NOT NULL DEFAULT '',
-    street VARCHAR(100) NOT NULL DEFAULT '', area VARCHAR(80) NOT NULL DEFAULT '', address VARCHAR(300) NOT NULL DEFAULT '',
-    note VARCHAR(300) NOT NULL DEFAULT '',
-    items TEXT NULL, lines_json TEXT NULL, free_mini VARCHAR(40) NULL,
-    ref VARCHAR(80) NULL, test TINYINT(1) NOT NULL DEFAULT 0, source VARCHAR(10) NOT NULL DEFAULT 'site',
-    admin_note TEXT NULL, updated_at DATETIME NULL,
-    KEY (created_at), KEY (status), KEY (ref)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_settings (k VARCHAR(40) NOT NULL PRIMARY KEY, v TEXT NULL) DEFAULT CHARSET=utf8mb4");
-  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_login (ip VARCHAR(45) NOT NULL, at DATETIME NOT NULL, KEY (ip, at)) DEFAULT CHARSET=utf8mb4");
-  try { fomaxo_import_csv($pdo); } catch (Throwable $e) { error_log('FOMAXO import: ' . $e->getMessage()); }
-  /* new orders count up from FMX-1001 (earlier orders keep their old numbers) */
-  $next = max(1001, (int)$pdo->query('SELECT COALESCE(MAX(id), 0) + 1 FROM fx_orders')->fetchColumn());
-  $pdo->exec("ALTER TABLE fx_orders AUTO_INCREMENT = $next");
-  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '1')");
+  $ver = 0;
+  try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
+  if ($ver >= 2) return;
+  if ($ver < 1) {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      order_no VARCHAR(40) NOT NULL UNIQUE,
+      created_at DATETIME NOT NULL,
+      payment VARCHAR(30) NOT NULL,
+      status VARCHAR(20) NOT NULL,
+      paid_at DATETIME NULL,
+      subtotal DECIMAL(10,2) NULL, discount DECIMAL(10,2) NULL, fee DECIMAL(10,2) NULL, total DECIMAL(10,2) NOT NULL DEFAULT 0,
+      name VARCHAR(80) NOT NULL DEFAULT '', phone VARCHAR(25) NOT NULL DEFAULT '', email VARCHAR(120) NOT NULL DEFAULT '',
+      emirate VARCHAR(30) NOT NULL DEFAULT '', building VARCHAR(40) NOT NULL DEFAULT '', room VARCHAR(20) NOT NULL DEFAULT '',
+      street VARCHAR(100) NOT NULL DEFAULT '', area VARCHAR(80) NOT NULL DEFAULT '', address VARCHAR(300) NOT NULL DEFAULT '',
+      note VARCHAR(300) NOT NULL DEFAULT '',
+      items TEXT NULL, lines_json TEXT NULL, free_mini VARCHAR(40) NULL,
+      ref VARCHAR(80) NULL, test TINYINT(1) NOT NULL DEFAULT 0, source VARCHAR(10) NOT NULL DEFAULT 'site',
+      admin_note TEXT NULL, updated_at DATETIME NULL, stock_taken TINYINT(1) NOT NULL DEFAULT 0,
+      KEY (created_at), KEY (status), KEY (ref)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS fx_settings (k VARCHAR(40) NOT NULL PRIMARY KEY, v TEXT NULL) DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS fx_login (ip VARCHAR(45) NOT NULL, at DATETIME NOT NULL, KEY (ip, at)) DEFAULT CHARSET=utf8mb4");
+    try { fomaxo_import_csv($pdo); } catch (Throwable $e) { error_log('FOMAXO import: ' . $e->getMessage()); }
+    /* new orders count up from FMX-1001 (earlier orders keep their old numbers) */
+    $next = max(1001, (int)$pdo->query('SELECT COALESCE(MAX(id), 0) + 1 FROM fx_orders')->fetchColumn());
+    $pdo->exec("ALTER TABLE fx_orders AUTO_INCREMENT = $next");
+  } else {
+    $pdo->exec("ALTER TABLE fx_orders ADD COLUMN stock_taken TINYINT(1) NOT NULL DEFAULT 0");
+  }
+  /* stock per product and size; qty NULL = not counted (always available) */
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_stock (product VARCHAR(30) NOT NULL, size VARCHAR(10) NOT NULL, qty INT NULL, updated_at DATETIME NULL,
+              PRIMARY KEY (product, size)) DEFAULT CHARSET=utf8mb4");
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '2')");
 }
 
 function fomaxo_setting($pdo, $k, $v = null) {
@@ -112,6 +121,54 @@ function fomaxo_order_paid($no, $note = '') {
                    admin_note = TRIM(CONCAT(COALESCE(admin_note, ''), ' ', ?)) WHERE order_no = ? AND status = 'Awaiting payment'")->execute([$note, $no]);
     return true;
   } catch (Throwable $e) { error_log('FOMAXO order paid: ' . $e->getMessage()); return false; }
+}
+
+/* ================= stock ================= */
+const FX_LOW_STOCK = 5;   // the website shows "Only X left" from this number down — keep in sync with index.html (LOW_STOCK)
+
+/* What an order takes from stock: [['product', 'size', qty], …]. The free mini counts as one 10ml. */
+function fomaxo_stock_lines($lines, $giftId = null) {
+  $out = [];
+  foreach ((array)$lines as $l) {
+    $k = ($l['id'] ?? '') . '|' . ($l['opt'] ?? '');
+    $out[$k] = ($out[$k] ?? 0) + max(0, (int)($l['qty'] ?? 0));
+  }
+  if ($giftId) $out["$giftId|10"] = ($out["$giftId|10"] ?? 0) + 1;
+  return $out;
+}
+function fomaxo_stock_map($pdo) {
+  $m = [];
+  foreach ($pdo->query('SELECT product, size, qty FROM fx_stock WHERE qty IS NOT NULL') as $r) $m[$r['product'] . '|' . $r['size']] = (int)$r['qty'];
+  return $m;
+}
+/* Before an order: returns a message if something in the bag is sold out or there are not enough left, else null.
+   The free mini never blocks an order. Works without the database (then nothing is counted). */
+function fomaxo_stock_problem($lines, $catalog) {
+  $pdo = fomaxo_db(); if (!$pdo) return null;
+  try { $have = fomaxo_stock_map($pdo); } catch (Throwable $e) { return null; }
+  foreach (fomaxo_stock_lines($lines) as $k => $need) {
+    if (!isset($have[$k]) || $have[$k] >= $need) continue;
+    [$id, $opt] = explode('|', $k, 2);
+    $p = $catalog[$id] ?? ['name' => $id, 'kind' => ''];
+    $label = $p['name'] . ' ' . ($p['kind'] === 'set' ? "(set of $opt)" : "{$opt}ml");
+    return $have[$k] <= 0 ? "Sorry, $label is sold out. Please remove it from your bag."
+                          : "Sorry, only {$have[$k]} left of $label. Please lower the quantity in your bag.";
+  }
+  return null;
+}
+/* Takes an order's items out of stock (once), or puts them back ($back = true) when it is cancelled. */
+function fomaxo_stock_move($no, $back = false) {
+  $pdo = fomaxo_db(); if (!$pdo) return false;
+  try {
+    $pdo->beginTransaction();
+    $s = $pdo->prepare('SELECT lines_json, stock_taken FROM fx_orders WHERE order_no = ? FOR UPDATE'); $s->execute([$no]); $o = $s->fetch();
+    if (!$o || $o['lines_json'] === null || (bool)$o['stock_taken'] !== $back) { $pdo->commit(); return false; }
+    $u = $pdo->prepare($back ? 'UPDATE fx_stock SET qty = qty + ?, updated_at = NOW() WHERE product = ? AND size = ? AND qty IS NOT NULL'
+                             : 'UPDATE fx_stock SET qty = GREATEST(0, qty - ?), updated_at = NOW() WHERE product = ? AND size = ? AND qty IS NOT NULL');
+    foreach (fomaxo_stock_lines(json_decode($o['lines_json'], true)) as $k => $n) { [$id, $opt] = explode('|', $k, 2); $u->execute([$n, $id, $opt]); }
+    $pdo->prepare('UPDATE fx_orders SET stock_taken = ? WHERE order_no = ?')->execute([$back ? 0 : 1, $no]);
+    $pdo->commit(); return true;
+  } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('FOMAXO stock: ' . $e->getMessage()); return false; }
 }
 
 /* ---- one-time copy of the orders saved before the database existed (CSV files above public_html) ---- */

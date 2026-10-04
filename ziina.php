@@ -106,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
     $note = $paidFils && $paidFils !== (int)$rec['totalFils'] ? ' (AMOUNT MISMATCH: paid ' . fomaxo_aed($paidFils) . ')' : '';
     require_once __DIR__ . '/orders-lib.php';
     fomaxo_order_paid($rec['no'], $note !== '' ? trim($note) : '');
+    fomaxo_stock_move($rec['no']);   // stock goes down once the card payment is confirmed
     fomaxo_log_order([date('Y-m-d H:i'), $rec['no'], 'Ziina — PAID' . $note, $total, $c['name'], $c['phone'], $c['email'], $c['emirate'], $c['address'], $c['note'], implode(' | ', $rec['summary'])]);
     $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com'));
     $from = "FOMAXO <orders@$host>";
@@ -135,6 +136,8 @@ if ($order['totalFils'] < $MIN_ORDER * 100) { http_response_code(400); echo json
 /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
 require_once __DIR__ . '/orders-lib.php';
 $lineIn = array_map(fn($l) => ['id' => (string)($l['id'] ?? ''), 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? []))], (array)($in['lines'] ?? []));
+if ($msg = fomaxo_stock_problem($lineIn, $CATALOG)) { http_response_code(409); echo json_encode(['error' => $msg]); exit; }
+if ($order['gift']) foreach ($CATALOG as $cid => $c) if ($c['name'] === $order['gift']) { $lineIn[] = ['id' => $cid, 'opt' => '10', 'qty' => 1, 'free' => true]; break; }
 $no = fomaxo_save_order(['payment' => 'Card (Ziina)', 'status' => 'Awaiting payment', 'subtotal' => $order['fullFils'] / 100, 'discount' => $order['discountFils'] / 100,
         'fee' => 0, 'total' => $order['totalFils'] / 100, 'items' => implode(' | ', $order['summary']), 'free_mini' => $order['gift'], 'lines' => $lineIn, 'test' => $testMode]
         + array_intersect_key($cust, array_flip(['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'address', 'note'])))
