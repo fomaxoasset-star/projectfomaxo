@@ -1973,11 +1973,18 @@ function orderTotals(lines, pay){
   return {t0, dc, after, fee, total: after === null ? null : after + fee, short: after === null ? 0 : Math.max(0, Math.round((MIN_ORDER - after) * 100) / 100)};
 }
 const minMsg = short => `Minimum order ${aed(MIN_ORDER)} · add ${aed(short)} more`;
-// "Buy now" checks out just that product; the bag is left as it is
+// "Buy now" puts the product in the bag (not doubled if it's already there) and goes straight to checkout with the whole bag.
+// buyLines / ?buy=1 only remain so an older Buy now payment that is still in progress finishes cleanly.
 let buyLines = [];
 try { buyLines = JSON.parse(sessionStorage.getItem('fomaxo_buy') || '[]').filter(l => P[l.id] && P[l.id].sizes.map(String).includes(String(l.opt))); } catch(e) { buyLines = []; }
-function buyNow(line){ buyLines = [line]; try { sessionStorage.setItem('fomaxo_buy', JSON.stringify(buyLines)); } catch(e) {} location.hash = '#/checkout?buy=1'; }
+function buyNow(line){
+  const key = (line.picks || []).join('|'), l = cart.find(x => x.id === line.id && String(x.opt) === String(line.opt) && (x.picks || []).join('|') === key);
+  if (l) { l.qty = Math.max(l.qty, line.qty); save(); } else addToCart(line.id, line.opt, line.qty, true, line.picks);
+  location.hash = '#/checkout';
+}
 function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'); } catch(e) {} }
+// a Buy now item left from before this change goes into the bag too (unless we're back from paying for it)
+if (buyLines.length && !/src=buy/.test(location.hash)) { buyLines.forEach(l => { const key = (l.picks || []).join('|'); if (!cart.some(x => x.id === l.id && String(x.opt) === String(l.opt) && (x.picks || []).join('|') === key)) cart.push(l); }); clearBuy(); try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} }
 // "You may also like" in the bag: up to 4 small products the customer doesn't have yet (everyday fragrances first, then King; the Discovery Set has its own "Not sure yet?" link)
 function bagRecs(){
   const have = new Set(cart.map(l => l.id)), haveSz = new Set(cart.map(l => l.id + '/' + l.opt));
@@ -2664,7 +2671,7 @@ const CO_ICON = {
   lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'
 };
 function checkoutPage(q){
-  const buy = q.get('buy') === '1', lines = buy ? buyLines : cart;
+  const buy = q.get('buy') === '1' && buyLines.length > 0, lines = buy ? buyLines : cart;
   document.title = 'Checkout — FOMAXO';
   if (!lines.length) return pageHead('Checkout', 'Your bag is <em class="metal">empty</em>', 'Add a fragrance to your bag to check out.') + `<section class="sec" style="padding-top:40px"><div class="wrap" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="#/fragrances">Shop FOMAXO</a><a class="btn line" href="#/product/discovery">Discovery Set</a></div></section>`;
   const C = S.contact, wa = (C.phones && C.phones[0] && C.phones[0].number) || ('+' + S.checkout.whatsapp);
@@ -2708,7 +2715,7 @@ function checkoutPage(q){
   </div>`;
 }
 function bindCheckout(q){
-  const buy = q.get('buy') === '1', src = buy ? 'buy' : 'bag', lines = () => buy ? buyLines : cart;
+  const buy = q.get('buy') === '1' && buyLines.length > 0, src = buy ? 'buy' : 'bag', lines = () => buy ? buyLines : cart;
   const form = $('#coForm'); if (!form) return;
   const err = $('#coErr'), err1 = $('#coErr1'), go = $('#coGo');
   const d0 = savedDetails();
