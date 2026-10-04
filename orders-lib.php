@@ -31,7 +31,15 @@ function fomaxo_db() {
 
 /* Creates the tables the first time. The back office starts empty: older orders stay in the CSV files above public_html as a backup. */
 function fomaxo_db_schema($pdo) {
-  try { if ((int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn() >= 1) return; } catch (Throwable $e) {}
+  $ver = 0;
+  try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
+  if ($ver >= 2) return;
+  if ($ver === 1) {
+    /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
+    $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
+    $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '2')");
+    return;
+  }
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     order_no VARCHAR(40) NOT NULL UNIQUE,
@@ -60,7 +68,7 @@ function fomaxo_db_schema($pdo) {
   /* orders count up from FMX-1001 */
   $next = max(1001, (int)$pdo->query('SELECT COALESCE(MAX(id), 0) + 1 FROM fx_orders')->fetchColumn());
   $pdo->exec("ALTER TABLE fx_orders AUTO_INCREMENT = $next");
-  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '1')");
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '2')");
 }
 
 function fomaxo_setting($pdo, $k, $v = null) {
