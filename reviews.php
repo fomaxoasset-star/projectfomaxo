@@ -40,7 +40,7 @@ function rv_change(callable $fn) {
   return $res;
 }
 function rv_public($r) {
-  return ['id' => $r['id'], 'name' => empty($r['anon']) && ($r['real'] ?? '') !== '' ? rv_display_name($r['real']) : $r['name'], 'rating' => $r['rating'], 'text' => $r['text'], 'verified' => !empty($r['verified']),
+  return ['id' => $r['id'], 'name' => $r['name'], 'rating' => $r['rating'], 'text' => $r['text'], 'verified' => !empty($r['verified']),
           'city' => $r['city'] ?? '', 'country' => $r['country'] ?? '', 'date' => substr($r['created'], 0, 10), 'helpful' => (int)($r['helpful'] ?? 0),
           'photos' => array_map(fn($p) => 'reviews.php?photo=' . rawurlencode($p), $r['photos'] ?? [])];
 }
