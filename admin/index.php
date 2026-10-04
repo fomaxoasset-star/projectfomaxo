@@ -63,7 +63,7 @@ table{width:100%;border-collapse:collapse;background:var(--panel);border:1px sol
 th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
 td.num,th.num{text-align:right;white-space:nowrap}
-tr.row{cursor:pointer}tr.row:hover td{background:rgba(143,107,55,.08)}
+tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgba(143,107,55,.08)}.stock tr.row,.exp tr.row{cursor:default}
 .no{font-weight:500;white-space:nowrap}
 .tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;border:1px solid currentColor;white-space:nowrap}
 .s-New{color:var(--warn)}.s-Paid{color:var(--gold)}.s-Delivered{color:var(--ok)}.s-Cancelled{color:var(--bad)}.s-Awaiting{color:var(--muted)}
@@ -78,19 +78,40 @@ tr.row{cursor:pointer}tr.row:hover td{background:rgba(143,107,55,.08)}
 dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:var(--muted);font-size:13px}dd{margin:0;word-break:break-word}
 .items{margin:0;padding-left:18px}
 .pager{display:flex;gap:8px;margin-top:14px}
-.tabs{display:flex;gap:18px;margin-left:auto;margin-right:6px}
-@media (max-width:520px){.brand small{display:none}.tabs{gap:12px}.top{gap:10px}.top .btn{padding:9px 10px;font-size:11px}}.tabs a{text-decoration:none;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
-.stock td{vertical-align:middle}.stock input{max-width:110px;text-align:right}
+.btn.sm{padding:8px 12px;font-size:11px}.btn.big{padding:15px 26px;font-size:14px;min-width:200px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border-bottom:1px solid var(--line)}
+.tabs a{text-align:center;text-decoration:none;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:14px 4px;color:var(--muted);border-bottom:2px solid transparent}
+.tabs a.on{color:var(--gold);border-bottom-color:var(--gold)}
+@media (min-width:760px){.tabs{display:flex;justify-content:center;gap:10px}.tabs a{padding:14px 22px}}
 .lvl-out{color:var(--bad)}.lvl-low{color:var(--warn)}.lvl-ok{color:var(--ok)}
-@media (max-width:759px){.stock tr.row{display:grid;grid-template-columns:1fr auto;align-items:center;cursor:default}.stock td[data-l]::before{content:none}}
+.stock td,.exp td{vertical-align:middle}.stock input{width:110px;text-align:right}
+label.mini{display:none}
+.savebar{position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,var(--bg) 30%)}
+.g3{display:grid;gap:0 12px}@media (min-width:760px){.g3{grid-template-columns:1fr 1fr 1fr}}
+.monthnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 10px}.monthnav h2{margin:0;text-align:center}.monthnav h2 small{display:block;font-family:Jost,sans-serif;font-size:15px;color:var(--muted)}
+.yearbar{display:flex;align-items:center;gap:10px;margin:6px 0 4px;flex-wrap:wrap}.yearbar label{margin:0}.yearbar select{width:auto}
+.rep tr.dim td{color:var(--muted)}.rep tr.tot td{font-weight:500;border-top:2px solid var(--line)}.rep td.per{white-space:nowrap}
+@media (max-width:759px){
+  .stock tr.row{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;cursor:default;padding:10px 4px}.stock tr.row td:first-child{grid-column:1/-1}
+  .stock input{width:100%}label.mini{display:block;margin:0 0 3px}
+  .exp tr.row{display:grid;grid-template-columns:1fr auto auto;align-items:center;cursor:default}
+  .rep tr{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:0 0 10px;padding:8px 4px}
+  .rep td.per{font-weight:500;padding-bottom:6px}.rep td.num{display:flex;justify-content:space-between;text-align:right}
+  .rep td.num::before{content:attr(data-l);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+  .rep tr.dim{display:none}.rep tr.tot{border-color:var(--gold)}
+}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
      . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Jost:wght@400;500&display=swap">'
      . "<style>$css</style></head><body>"
      . '<header class="top"><a class="brand" href="./">FOMAXO<small>ADMIN</small></a>'
-     . (!empty($_SESSION['admin']) ? '<nav class="tabs"><a href="./">Orders</a><a href="./?stock=1">Stock</a></nav><form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line">Log out</button></form>' : '')
-     . '</header><main class="wrap' . ($wide ? '' : ' narrow') . '">' . $body . '</main></body></html>';
+     . (!empty($_SESSION['admin']) ? '<form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Log out</button></form>' : '')
+     . '</header>'
+     . (!empty($_SESSION['admin']) ? '<nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
+         [['Orders', './', !array_intersect_key($_GET, ['stock' => 1, 'expenses' => 1, 'reports' => 1])], ['Stock', './?stock=1', isset($_GET['stock'])],
+          ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Reports', './?reports=1', isset($_GET['reports'])]])) . '</nav>' : '')
+     . '<main class="wrap' . ($wide ? '' : ' narrow') . '">' . $body . '</main></body></html>';
   exit;
 }
 function flash($m = null, $ok = false) { if ($m !== null) { $_SESSION['flash'] = [$m, $ok]; return ''; } $f = $_SESSION['flash'] ?? null; unset($_SESSION['flash']); return $f ? '<p class="msg ' . ($f[1] ? 'ok' : 'bad') . '">' . h($f[0]) . '</p>' : ''; }
@@ -226,38 +247,124 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
   flash($msg, true); go(['o' => $_POST['order']]);
 }
 
-/* stock: one number per product and size (empty = not counted, always available) */
+/* ---- stock and cost price: one row per product and size ---- */
 if (isset($_GET['stock'])) {
   require_once dirname(__DIR__) . '/store-lib.php';
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['stock' => 1]); }
-    $set = $pdo->prepare('INSERT INTO fx_stock (product, size, qty, updated_at) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE qty = VALUES(qty), updated_at = NOW()');
-    $old = []; foreach ($pdo->query('SELECT product, size, qty FROM fx_stock') as $r) $old[$r['product'] . '|' . $r['size']] = $r['qty'];
+    $set = $pdo->prepare('INSERT INTO fx_stock (product, size, qty, cost, updated_at) VALUES (?, ?, ?, ?, NOW())
+                          ON DUPLICATE KEY UPDATE qty = VALUES(qty), cost = VALUES(cost), updated_at = NOW()');
+    $old = []; foreach ($pdo->query('SELECT product, size, qty, cost FROM fx_stock') as $r) $old[$r['product'] . '|' . $r['size']] = [$r['qty'] === null ? null : (int)$r['qty'], $r['cost'] === null ? null : round((float)$r['cost'], 2)];
     foreach ($CATALOG as $id => $p) foreach (array_keys($p['prices']) as $opt) {
-      $v = trim((string)($_POST['q'][$id][$opt] ?? ''));
+      $v = trim((string)($_POST['q'][$id][$opt] ?? '')); $c = trim(str_replace(',', '.', (string)($_POST['c'][$id][$opt] ?? '')));
       $q = $v === '' ? null : max(0, min(100000, (int)$v));
+      $c = $c === '' || !is_numeric($c) ? null : round(max(0, min(1000000, (float)$c)), 2);
       $k = "$id|$opt";
-      if (array_key_exists($k, $old) ? ($old[$k] === null ? $q !== null : (int)$old[$k] !== $q) : $q !== null) $set->execute([$id, (string)$opt, $q]);
+      if (($old[$k] ?? [null, null]) !== [$q, $c]) $set->execute([$id, (string)$opt, $q, $c]);
     }
-    flash('Stock saved.', true); go(['stock' => 1]);
+    flash('Saved.', true); go(['stock' => 1]);
   }
-  $have = []; $upd = [];
-  foreach ($pdo->query('SELECT product, size, qty, updated_at FROM fx_stock') as $r) { $have[$r['product'] . '|' . $r['size']] = $r['qty']; $upd[$r['product'] . '|' . $r['size']] = $r['updated_at']; }
+  $have = []; $cost = [];
+  foreach ($pdo->query('SELECT product, size, qty, cost FROM fx_stock') as $r) { $have[$r['product'] . '|' . $r['size']] = $r['qty']; $cost[$r['product'] . '|' . $r['size']] = $r['cost']; }
   $sold = [];   // sold in the last 30 days (orders that are not cancelled), to help decide when to restock
   $s = $pdo->query("SELECT lines_json FROM fx_orders WHERE stock_taken = 1 AND created_at > NOW() - INTERVAL 30 DAY");
   foreach ($s as $r) foreach (fomaxo_stock_lines(json_decode((string)$r['lines_json'], true) ?: []) as $k => $n) $sold[$k] = ($sold[$k] ?? 0) + $n;
   $tr = '';
   foreach ($CATALOG as $id => $p) foreach (array_keys($p['prices']) as $opt) {
-    $k = "$id|$opt"; $q = $have[$k] ?? null;
-    $lvl = $q === null ? '<span class="muted small">Not counted</span>' : ((int)$q <= 0 ? '<span class="lvl-out">Sold out</span>' : ((int)$q <= FX_LOW_STOCK ? '<span class="lvl-low">Only ' . (int)$q . ' left</span>' : '<span class="lvl-ok">In stock</span>'));
-    $tr .= '<tr class="row"><td data-l=""><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
-         . '<div class="small">' . $lvl . (!empty($sold[$k]) ? ' <span class="muted">· ' . (int)$sold[$k] . ' sold in 30 days</span>' : '') . '</div></td>'
-         . '<td class="num" data-l=""><input type="number" min="0" inputmode="numeric" name="q[' . h($id) . '][' . h($opt) . ']" value="' . ($q === null ? '' : (int)$q) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' stock"></td></tr>';
+    $k = "$id|$opt"; $q = $have[$k] ?? null; $c = $cost[$k] ?? null;
+    $lvl = $q === null ? '<span class="muted">Not counted</span>' : ((int)$q <= 0 ? '<span class="lvl-out">Sold out</span>' : ((int)$q <= FX_LOW_STOCK ? '<span class="lvl-low">Only ' . (int)$q . ' left</span>' : '<span class="lvl-ok">In stock</span>'));
+    $margin = ' · <span class="muted">sells at AED ' . h(number_format($p['prices'][$opt], 0)) . '</span>';
+    $tr .= '<tr class="row"><td><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
+         . '<div class="small">' . $lvl . $margin . (!empty($sold[$k]) ? ' <span class="muted">· ' . (int)$sold[$k] . ' sold in 30 days</span>' : '') . '</div></td>'
+         . '<td class="num"><label class="mini">Stock</label><input type="number" min="0" inputmode="numeric" name="q[' . h($id) . '][' . h($opt) . ']" value="' . ($q === null ? '' : (int)$q) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' stock"></td>'
+         . '<td class="num"><label class="mini">Cost AED</label><input type="number" min="0" step="0.01" inputmode="decimal" name="c[' . h($id) . '][' . h($opt) . ']" value="' . ($c === null ? '' : h(rtrim(rtrim($c, '0'), '.'))) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' cost price"></td></tr>';
   }
-  page('Stock', '<h1>Stock</h1>' . flash()
-    . '<p class="muted small">Type how many bottles you have of each size. Stock goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml), and goes back up if you cancel an order. Leave a box empty to not count that size. The website shows "Only X left" at ' . FX_LOW_STOCK . ' or fewer, and "Sold out" at 0.</p>'
-    . '<form method="post">' . csrf_field() . '<table class="stock"><thead><tr><th>Product</th><th class="num">In stock</th></tr></thead><tbody>' . $tr . '</tbody></table>'
-    . '<p style="margin:16px 0 0"><button class="btn">Save stock</button></p></form>', true);
+  page('Stock', '<h1>Stock &amp; cost</h1>' . flash()
+    . '<p class="muted small"><b>Stock:</b> how many bottles you have. It goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml) and goes back up if you cancel an order. Leave it empty to not count that size. The website shows "Only X left" at ' . FX_LOW_STOCK . ' or fewer, and "Sold out" at 0.<br>'
+    . '<b>Cost:</b> what one bottle costs you. Reports use it to work out your profit.</p>'
+    . '<form method="post">' . csrf_field() . '<table class="stock"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost (AED)</th></tr></thead><tbody>' . $tr . '</tbody></table>'
+    . '<div class="savebar"><button class="btn big">Save</button></div></form>', true);
+}
+
+/* ---- expenses: money going out that is not a bottle sold (ads, delivery, packaging, rent …) ---- */
+if (isset($_GET['expenses'])) {
+  $month = preg_match('/^\d{4}-\d{2}$/', (string)($_GET['m'] ?? '')) ? $_GET['m'] : date('Y-m');
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_ok()) { flash('Please try again.'); go(['expenses' => 1, 'm' => $month]); }
+    if (isset($_POST['delete'])) {
+      $pdo->prepare('DELETE FROM fx_expenses WHERE id = ?')->execute([(int)$_POST['delete']]);
+      flash('Expense deleted.', true); go(['expenses' => 1, 'm' => $month]);
+    }
+    $day = (string)($_POST['day'] ?? ''); $cat = (string)($_POST['category'] ?? ''); $amt = (float)str_replace(',', '.', (string)($_POST['amount'] ?? ''));
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) || !in_array($cat, FX_EXPENSE_TYPES, true) || $amt <= 0) { flash('Please fill in the date, type and amount.'); go(['expenses' => 1, 'm' => $month]); }
+    $pdo->prepare('INSERT INTO fx_expenses (day, category, amount, note, created_at) VALUES (?, ?, ?, ?, NOW())')->execute([$day, $cat, round($amt, 2), mb_substr(trim((string)($_POST['note'] ?? '')), 0, 200)]);
+    flash('Expense added.', true); go(['expenses' => 1, 'm' => substr($day, 0, 7)]);
+  }
+  $s = $pdo->prepare('SELECT * FROM fx_expenses WHERE day >= ? AND day < ? ORDER BY day DESC, id DESC');
+  $s->execute(["$month-01", date('Y-m-d', strtotime("$month-01 +1 month"))]); $list = $s->fetchAll();
+  $sum = array_sum(array_map(fn($e) => (float)$e['amount'], $list));
+  $opts = implode('', array_map(fn($c) => '<option>' . h($c) . '</option>', FX_EXPENSE_TYPES));
+  $tr = '';
+  foreach ($list as $e) $tr .= '<tr class="row"><td><b>' . h($e['category']) . '</b><div class="muted small">' . h(date('d M', strtotime($e['day']))) . ($e['note'] !== '' ? ' · ' . h($e['note']) : '') . '</div></td>'
+    . '<td class="num">' . money($e['amount']) . '</td><td class="num"><form method="post" style="margin:0" onsubmit="return confirm(\'Delete this expense?\')">' . csrf_field()
+    . '<input type="hidden" name="delete" value="' . (int)$e['id'] . '"><button class="btn line sm">Delete</button></form></td></tr>';
+  $prev = date('Y-m', strtotime("$month-01 -1 month")); $next = date('Y-m', strtotime("$month-01 +1 month"));
+  page('Expenses', '<h1>Expenses</h1>' . flash()
+    . '<form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Add an expense</h2>'
+    . '<div class="g3"><div><label for="day">Date</label><input id="day" type="date" name="day" value="' . h(date('Y-m-d')) . '" required></div>'
+    . '<div><label for="category">Type</label><select id="category" name="category">' . $opts . '</select></div>'
+    . '<div><label for="amount">Amount (AED)</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" required></div></div>'
+    . '<label for="note">Note (optional)</label><input id="note" name="note" maxlength="200" placeholder="e.g. Instagram ads, Aramex invoice">'
+    . '<p style="margin:16px 0 0"><button class="btn big">Add expense</button></p></form>'
+    . '<div class="monthnav"><a class="btn line" href="' . h(self_url(['expenses' => 1, 'm' => $prev])) . '">←</a><h2>' . h(date('F Y', strtotime("$month-01"))) . '<small>' . money($sum) . '</small></h2><a class="btn line" href="' . h(self_url(['expenses' => 1, 'm' => $next])) . '">→</a></div>'
+    . ($list ? '<table class="exp"><tbody>' . $tr . '</tbody></table>' : '<p class="card muted">No expenses this month.</p>')
+    . '<p class="muted small">"Stock purchase" is shown in reports but not taken off profit, because the cost of each bottle is already counted when it sells.</p>', true);
+}
+
+/* ---- reports: sales, costs and profit or loss by month and by year ---- */
+if (isset($_GET['reports'])) {
+  $years = $pdo->query("SELECT DISTINCT YEAR(created_at) y FROM fx_orders UNION SELECT DISTINCT YEAR(day) FROM fx_expenses ORDER BY y DESC")->fetchAll(PDO::FETCH_COLUMN);
+  if (!in_array((int)date('Y'), array_map('intval', $years), true)) array_unshift($years, date('Y'));
+  $year = (int)($_GET['y'] ?? date('Y')); if ($year < 2000 || $year > 2100) $year = (int)date('Y');
+  $rows = fomaxo_report($pdo, $year);
+  $all = fomaxo_report($pdo, null);
+  $cols = ['orders' => 'Orders', 'sales' => 'Sales', 'cogs' => 'Cost of goods', 'expenses' => 'Expenses', 'profit' => 'Profit / loss', 'discount' => 'Discounts given', 'fees' => 'COD fees in sales', 'stock_bought' => 'Stock bought'];
+  $tot = fn($rs) => array_reduce($rs, function ($a, $r) { foreach ($r as $k => $v) $a[$k] = ($a[$k] ?? 0) + $v; return $a; }, []);
+  $T = $tot($rows); $missing = (int)($T['no_cost'] ?? 0);
+
+  if (isset($_GET['export'])) {   // Excel: the months of this year, the year total, then every year
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="fomaxo-profit-and-loss-' . $year . '.csv"');
+    $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
+    fputcsv($out, array_merge(['Period'], array_map(fn($c) => $c === 'Orders' ? $c : "$c (AED)", array_values($cols))));
+    $line = fn($label, $r) => fputcsv($out, array_merge([$label], array_map(fn($k) => $k === 'orders' ? (int)($r[$k] ?? 0) : number_format((float)($r[$k] ?? 0), 2, '.', ''), array_keys($cols))));
+    foreach ($rows as $k => $r) $line(date('F Y', strtotime("$k-01")), $r);
+    $line("Total $year", $T);
+    fputcsv($out, []);
+    foreach ($all as $k => $r) $line("Year $k", $r);
+    exit;
+  }
+
+  $cell = fn($k, $v) => $k === 'orders' ? (int)$v : ($k === 'profit' ? '<b class="' . ($v < 0 ? 'lvl-out' : 'lvl-ok') . '">' . ($v < 0 ? '−' : '') . money(abs($v)) . '</b>' : money($v));
+  $main = ['orders', 'sales', 'cogs', 'expenses', 'profit'];
+  $table = function ($rs, $labelFn, $total = null) use ($cols, $main, $cell) {
+    $h = '<table class="rep"><thead><tr><th></th>' . implode('', array_map(fn($k) => '<th class="num">' . h($cols[$k]) . '</th>', $main)) . '</tr></thead><tbody>';
+    foreach ($rs as $k => $r) { $empty = !$r['orders'] && !$r['expenses'] && !$r['stock_bought'];
+      $h .= '<tr class="' . ($empty ? 'dim' : '') . '"><td class="per">' . h($labelFn($k)) . '</td>' . implode('', array_map(fn($c) => '<td class="num" data-l="' . h($cols[$c]) . '">' . $cell($c, $r[$c]) . '</td>', $main)) . '</tr>'; }
+    if ($total) $h .= '<tr class="tot"><td class="per">' . h($total[0]) . '</td>' . implode('', array_map(fn($c) => '<td class="num" data-l="' . h($cols[$c]) . '">' . $cell($c, $total[1][$c] ?? 0) . '</td>', $main)) . '</tr>';
+    return $h . '</tbody></table>';
+  };
+  $thisM = $rows[date('Y-m')] ?? null;
+  $yOpts = implode('', array_map(fn($y) => '<option' . ((int)$y === $year ? ' selected' : '') . '>' . (int)$y . '</option>', $years));
+  page('Reports', '<h1>Profit &amp; loss</h1>'
+    . ($thisM ? '<div class="stats"><div class="stat"><b>' . money($thisM['sales']) . '</b><span>Sales this month</span></div><div class="stat"><b class="' . ($thisM['profit'] < 0 ? 'lvl-out' : 'lvl-ok') . '">' . ($thisM['profit'] < 0 ? '−' : '') . money(abs($thisM['profit'])) . '</b><span>Profit this month</span></div>'
+             . '<div class="stat"><b>' . money($T['sales'] ?? 0) . '</b><span>Sales ' . $year . '</span></div><div class="stat"><b class="' . (($T['profit'] ?? 0) < 0 ? 'lvl-out' : 'lvl-ok') . '">' . (($T['profit'] ?? 0) < 0 ? '−' : '') . money(abs($T['profit'] ?? 0)) . '</b><span>Profit ' . $year . '</span></div></div>' : '')
+    . '<form class="yearbar" method="get"><input type="hidden" name="reports" value="1"><label for="y">Year</label><select id="y" name="y" onchange="this.form.submit()">' . $yOpts . '</select>'
+    . '<a class="btn line" href="' . h(self_url(['reports' => 1, 'y' => $year, 'export' => 1])) . '">Download Excel</a></form>'
+    . ($missing ? '<p class="msg bad">' . $missing . ' order' . ($missing > 1 ? 's' : '') . ' in ' . $year . ' ha' . ($missing > 1 ? 've' : 's') . ' no cost price, so profit is too high. Type the cost of each bottle on the <a href="./?stock=1">Stock</a> page. Orders from before this system have no item list, so their cost cannot be counted.</p>' : '')
+    . '<h2>' . $year . ' by month</h2>' . $table($rows, fn($k) => date('M Y', strtotime("$k-01")), ["Total $year", $T])
+    . '<h2>By year</h2>' . $table($all, fn($k) => (string)$k)
+    . '<p class="muted small">Sales are what customers paid (VAT included, COD fee included) for New, Paid and Delivered orders; cancelled orders, unpaid card attempts and test payments are left out. Cost of goods is the cost price of the bottles sold, including free minis. Profit = sales − cost of goods − expenses. In ' . $year . ': discounts given ' . money($T['discount'] ?? 0) . ', COD fees ' . money($T['fees'] ?? 0) . ', stock bought ' . money($T['stock_bought'] ?? 0) . ' (not taken off profit).</p>', true);
 }
 
 /* one order */

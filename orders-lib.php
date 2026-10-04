@@ -29,42 +29,39 @@ function fomaxo_db() {
   return $pdo;
 }
 
-/* Creates the tables the first time (and copies in the orders already saved in the CSV files); later versions add what is new. */
+/* Creates the tables the first time, and copies in the orders already saved in the CSV files. */
 function fomaxo_db_schema($pdo) {
-  $ver = 0;
-  try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 2) return;
-  if ($ver < 1) {
-    $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
-      id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      order_no VARCHAR(40) NOT NULL UNIQUE,
-      created_at DATETIME NOT NULL,
-      payment VARCHAR(30) NOT NULL,
-      status VARCHAR(20) NOT NULL,
-      paid_at DATETIME NULL,
-      subtotal DECIMAL(10,2) NULL, discount DECIMAL(10,2) NULL, fee DECIMAL(10,2) NULL, total DECIMAL(10,2) NOT NULL DEFAULT 0,
-      name VARCHAR(80) NOT NULL DEFAULT '', phone VARCHAR(25) NOT NULL DEFAULT '', email VARCHAR(120) NOT NULL DEFAULT '',
-      emirate VARCHAR(30) NOT NULL DEFAULT '', building VARCHAR(40) NOT NULL DEFAULT '', room VARCHAR(20) NOT NULL DEFAULT '',
-      street VARCHAR(100) NOT NULL DEFAULT '', area VARCHAR(80) NOT NULL DEFAULT '', address VARCHAR(300) NOT NULL DEFAULT '',
-      note VARCHAR(300) NOT NULL DEFAULT '',
-      items TEXT NULL, lines_json TEXT NULL, free_mini VARCHAR(40) NULL,
-      ref VARCHAR(80) NULL, test TINYINT(1) NOT NULL DEFAULT 0, source VARCHAR(10) NOT NULL DEFAULT 'site',
-      admin_note TEXT NULL, updated_at DATETIME NULL, stock_taken TINYINT(1) NOT NULL DEFAULT 0,
-      KEY (created_at), KEY (status), KEY (ref)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS fx_settings (k VARCHAR(40) NOT NULL PRIMARY KEY, v TEXT NULL) DEFAULT CHARSET=utf8mb4");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS fx_login (ip VARCHAR(45) NOT NULL, at DATETIME NOT NULL, KEY (ip, at)) DEFAULT CHARSET=utf8mb4");
-    try { fomaxo_import_csv($pdo); } catch (Throwable $e) { error_log('FOMAXO import: ' . $e->getMessage()); }
-    /* new orders count up from FMX-1001 (earlier orders keep their old numbers) */
-    $next = max(1001, (int)$pdo->query('SELECT COALESCE(MAX(id), 0) + 1 FROM fx_orders')->fetchColumn());
-    $pdo->exec("ALTER TABLE fx_orders AUTO_INCREMENT = $next");
-  } else {
-    $pdo->exec("ALTER TABLE fx_orders ADD COLUMN stock_taken TINYINT(1) NOT NULL DEFAULT 0");
-  }
-  /* stock per product and size; qty NULL = not counted (always available) */
-  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_stock (product VARCHAR(30) NOT NULL, size VARCHAR(10) NOT NULL, qty INT NULL, updated_at DATETIME NULL,
-              PRIMARY KEY (product, size)) DEFAULT CHARSET=utf8mb4");
-  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '2')");
+  try { if ((int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn() >= 1) return; } catch (Throwable $e) {}
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    order_no VARCHAR(40) NOT NULL UNIQUE,
+    created_at DATETIME NOT NULL,
+    payment VARCHAR(30) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    paid_at DATETIME NULL,
+    subtotal DECIMAL(10,2) NULL, discount DECIMAL(10,2) NULL, fee DECIMAL(10,2) NULL, total DECIMAL(10,2) NOT NULL DEFAULT 0,
+    cost DECIMAL(10,2) NULL,
+    name VARCHAR(80) NOT NULL DEFAULT '', phone VARCHAR(25) NOT NULL DEFAULT '', email VARCHAR(120) NOT NULL DEFAULT '',
+    emirate VARCHAR(30) NOT NULL DEFAULT '', building VARCHAR(40) NOT NULL DEFAULT '', room VARCHAR(20) NOT NULL DEFAULT '',
+    street VARCHAR(100) NOT NULL DEFAULT '', area VARCHAR(80) NOT NULL DEFAULT '', address VARCHAR(300) NOT NULL DEFAULT '',
+    note VARCHAR(300) NOT NULL DEFAULT '',
+    items TEXT NULL, lines_json TEXT NULL, free_mini VARCHAR(40) NULL,
+    ref VARCHAR(80) NULL, test TINYINT(1) NOT NULL DEFAULT 0, source VARCHAR(10) NOT NULL DEFAULT 'site',
+    admin_note TEXT NULL, updated_at DATETIME NULL, stock_taken TINYINT(1) NOT NULL DEFAULT 0,
+    KEY (created_at), KEY (status), KEY (ref)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+  /* per product and size: stock (NULL = not counted, always available) and cost price (what one bottle costs you) */
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_stock (product VARCHAR(30) NOT NULL, size VARCHAR(10) NOT NULL, qty INT NULL, cost DECIMAL(10,2) NULL,
+              updated_at DATETIME NULL, PRIMARY KEY (product, size)) DEFAULT CHARSET=utf8mb4");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_expenses (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, day DATE NOT NULL, category VARCHAR(30) NOT NULL,
+              amount DECIMAL(10,2) NOT NULL, note VARCHAR(200) NOT NULL DEFAULT '', created_at DATETIME NULL, KEY (day)) DEFAULT CHARSET=utf8mb4");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_settings (k VARCHAR(40) NOT NULL PRIMARY KEY, v TEXT NULL) DEFAULT CHARSET=utf8mb4");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_login (ip VARCHAR(45) NOT NULL, at DATETIME NOT NULL, KEY (ip, at)) DEFAULT CHARSET=utf8mb4");
+  try { fomaxo_import_csv($pdo); } catch (Throwable $e) { error_log('FOMAXO import: ' . $e->getMessage()); }
+  /* new orders count up from FMX-1001 (earlier orders keep their old numbers) */
+  $next = max(1001, (int)$pdo->query('SELECT COALESCE(MAX(id), 0) + 1 FROM fx_orders')->fetchColumn());
+  $pdo->exec("ALTER TABLE fx_orders AUTO_INCREMENT = $next");
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '1')");
 }
 
 function fomaxo_setting($pdo, $k, $v = null) {
@@ -77,12 +74,13 @@ function fomaxo_setting($pdo, $k, $v = null) {
    $o: payment, status, subtotal, discount, fee, total (AED), customer fields, items (text), lines (array), free_mini, ref, test */
 function fomaxo_save_order($o) {
   $pdo = fomaxo_db(); if (!$pdo) return null;
-  $cols = ['created_at', 'payment', 'status', 'subtotal', 'discount', 'fee', 'total', 'name', 'phone', 'email', 'emirate', 'building', 'room',
+  $cols = ['created_at', 'payment', 'status', 'subtotal', 'discount', 'fee', 'total', 'cost', 'name', 'phone', 'email', 'emirate', 'building', 'room',
            'street', 'area', 'address', 'note', 'items', 'lines_json', 'free_mini', 'ref', 'test'];
   $o += ['created_at' => (new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('Y-m-d H:i:s'), 'lines_json' => isset($o['lines']) ? json_encode($o['lines'], JSON_UNESCAPED_UNICODE) : null,
          'subtotal' => null, 'discount' => null, 'fee' => null, 'items' => null, 'free_mini' => null, 'ref' => null, 'test' => 0, 'total' => 0];
+  $o['cost'] = isset($o['lines']) ? fomaxo_cost_of($o['lines'], fomaxo_cost_map($pdo)) : null;   // cost of goods at today's cost prices (kept, so later price changes don't rewrite old months)
   $vals = []; foreach ($cols as $c) $vals[] = is_bool($o[$c] ?? null) ? (int)$o[$c] : ($o[$c] ?? '');
-  foreach (['subtotal', 'discount', 'fee', 'items', 'lines_json', 'free_mini', 'ref'] as $c) if ($o[$c] === null) $vals[array_search($c, $cols)] = null;
+  foreach (['subtotal', 'discount', 'fee', 'cost', 'items', 'lines_json', 'free_mini', 'ref'] as $c) if ($o[$c] === null) $vals[array_search($c, $cols)] = null;
   $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ') VALUES (?' . str_repeat(', ?', count($cols)) . ')');
   for ($try = 0; $try < 5; $try++) {   // the number is the row id; if an older order already uses that number, take the next one
     $id = 0;
@@ -169,6 +167,54 @@ function fomaxo_stock_move($no, $back = false) {
     $pdo->prepare('UPDATE fx_orders SET stock_taken = ? WHERE order_no = ?')->execute([$back ? 0 : 1, $no]);
     $pdo->commit(); return true;
   } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('FOMAXO stock: ' . $e->getMessage()); return false; }
+}
+
+/* ================= cost prices and reports ================= */
+function fomaxo_cost_map($pdo) {
+  $m = [];
+  try { foreach ($pdo->query('SELECT product, size, cost FROM fx_stock WHERE cost IS NOT NULL') as $r) $m[$r['product'] . '|' . $r['size']] = (float)$r['cost']; } catch (Throwable $e) {}
+  return $m;
+}
+/* Cost of an order's bottles (free mini included). Null when a product in it has no cost price yet. */
+function fomaxo_cost_of($lines, $costs) {
+  $t = 0.0;
+  foreach (fomaxo_stock_lines($lines) as $k => $n) { if (!isset($costs[$k])) return null; $t += $costs[$k] * $n; }
+  return round($t, 2);
+}
+const FX_EXPENSE_TYPES = ['Ads & marketing', 'Delivery', 'Packaging', 'Rent', 'Salaries', 'Card & bank fees', 'Stock purchase', 'Other'];
+
+/* Monthly report for one year (or every year when $year is null): rows keyed 'YYYY-MM' (or 'YYYY').
+   Sales = what customers paid (VAT included, COD fee included), counting New, Paid and Delivered orders, no test payments.
+   Cost of goods = cost price of the bottles sold (orders saved before a cost price was typed in use today's cost price).
+   Profit = sales − cost of goods − expenses. "Stock purchase" expenses are shown but not taken off profit,
+   because those bottles are counted as cost of goods when they sell. */
+function fomaxo_report($pdo, $year = null) {
+  $key = fn($d) => $year === null ? substr($d, 0, 4) : substr($d, 0, 7);
+  $rows = [];
+  $blank = ['orders' => 0, 'sales' => 0.0, 'discount' => 0.0, 'fees' => 0.0, 'cogs' => 0.0, 'no_cost' => 0, 'expenses' => 0.0, 'stock_bought' => 0.0];
+  if ($year !== null) for ($m = 1; $m <= 12; $m++) $rows[sprintf('%04d-%02d', $year, $m)] = $blank;
+  $costs = fomaxo_cost_map($pdo);
+  $w = $year === null ? '' : ' AND created_at >= ? AND created_at < ?';
+  $s = $pdo->prepare("SELECT created_at, total, discount, fee, cost, lines_json FROM fx_orders WHERE status IN ('New', 'Paid', 'Delivered') AND test = 0$w");
+  $s->execute($year === null ? [] : ["$year-01-01", ($year + 1) . '-01-01']);
+  foreach ($s as $o) {
+    $k = $key($o['created_at']); $rows[$k] ??= $blank; $r = &$rows[$k];
+    $r['orders']++; $r['sales'] += (float)$o['total']; $r['discount'] += (float)$o['discount']; $r['fees'] += (float)$o['fee'];
+    $c = $o['cost'] !== null ? (float)$o['cost'] : ($o['lines_json'] ? fomaxo_cost_of(json_decode($o['lines_json'], true) ?: [], $costs) : null);
+    if ($c === null) $r['no_cost']++; else $r['cogs'] += $c;
+    unset($r);
+  }
+  $w = $year === null ? '' : ' WHERE day >= ? AND day < ?';
+  $s = $pdo->prepare("SELECT day, category, amount FROM fx_expenses$w");
+  $s->execute($year === null ? [] : ["$year-01-01", ($year + 1) . '-01-01']);
+  foreach ($s as $e) {
+    $k = $key($e['day']); $rows[$k] ??= $blank;
+    if ($e['category'] === 'Stock purchase') $rows[$k]['stock_bought'] += (float)$e['amount']; else $rows[$k]['expenses'] += (float)$e['amount'];
+  }
+  ksort($rows);
+  foreach ($rows as &$r) $r['profit'] = round($r['sales'] - $r['cogs'] - $r['expenses'], 2);
+  unset($r);
+  return $rows;
 }
 
 /* ---- one-time copy of the orders saved before the database existed (CSV files above public_html) ---- */
