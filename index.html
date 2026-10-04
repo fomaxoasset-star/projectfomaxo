@@ -1323,6 +1323,10 @@ html[data-mode="light"] ::-webkit-scrollbar-thumb:hover{background:#000}
 html[data-mode="light"] .cur-dot{background:#000}
 html[data-mode="light"] .cur-ring{border-color:#000}
 html[data-mode="light"] .cur-link .cur-ring{border-color:#000;background:rgba(0,0,0,.08)}
+/* light mode: the cursor turns gold while it is over a dark area (hero, dark photos, dark buttons) */
+html[data-mode="light"].cur-gold .cur-dot{background:#f0d3a0}
+html[data-mode="light"].cur-gold .cur-ring{border-color:#d7aa69}
+html[data-mode="light"].cur-gold.cur-link .cur-ring{border-color:#f0d3a0;background:rgba(215,170,105,.12)}
 /* ---------- prices: Charles Wright Singapore, small "AED" before the number, never wraps ---------- */
 .amt{font-family:var(--price-font);font-weight:400;font-style:normal;letter-spacing:.02em;text-transform:none;white-space:nowrap;font-variant-numeric:tabular-nums}
 .amt{font-size:1.15em}
@@ -3238,7 +3242,43 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   document.addEventListener('pointerleave', () => root.classList.remove('cur-on'));
   addEventListener('blur', () => root.classList.remove('cur-on'));
   addEventListener('hashchange', () => root.classList.remove('cur-view', 'cur-link'));
+  // light mode: find what is under the pointer and switch the cursor to gold over dark areas
+  const lum = (r, g, b) => (.2126 * r + .7152 * g + .0722 * b) / 255;
+  const rgba = c => { const m = c.match(/[\d.]+/g); return m ? [+m[0], +m[1], +m[2], m[3] == null ? 1 : +m[3]] : null; };
+  const thumbs = new WeakMap();
+  const imgLum = (img, px, py) => {
+    if (!img.complete || !img.naturalWidth) return null;
+    let t = thumbs.get(img);
+    if (t === undefined) { try { const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d', {willReadFrequently: true}); g.drawImage(img, 0, 0, 32, 32); t = g.getImageData(0, 0, 32, 32).data; } catch (e) { t = null; } thumbs.set(img, t); }
+    if (!t) return null;
+    const r = img.getBoundingClientRect(), nw = img.naturalWidth, nh = img.naturalHeight, cs = getComputedStyle(img);
+    const k = cs.objectFit === 'contain' ? Math.min(r.width / nw, r.height / nh) : cs.objectFit === 'cover' ? Math.max(r.width / nw, r.height / nh) : null;
+    let u = (px - r.left) / r.width, v = (py - r.top) / r.height;
+    if (k) { const [ox, oy] = cs.objectPosition.split(' ').map(p => parseFloat(p) / 100); const dw = nw * k, dh = nh * k;
+      u = (px - r.left - (r.width - dw) * (isNaN(ox) ? .5 : ox)) / dw; v = (py - r.top - (r.height - dh) * (isNaN(oy) ? .5 : oy)) / dh; }
+    if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+    const i = (Math.min(31, v * 32 | 0) * 32 + Math.min(31, u * 32 | 0)) * 4;
+    return t[i + 3] < 128 ? null : lum(t[i], t[i + 1], t[i + 2]);
+  };
+  const darkAt = (px, py) => {
+    for (const el of document.elementsFromPoint(px, py)) {
+      const cs = getComputedStyle(el);
+      if (+cs.opacity < .5 || cs.visibility === 'hidden') continue;
+      if (el.tagName === 'IMG') { const l = imgLum(el, px, py); if (l != null) return l < .45; continue; }
+      if (el.tagName === 'VIDEO') return true;
+      const bg = rgba(cs.backgroundColor);
+      if (bg && bg[3] >= .5) return lum(bg[0], bg[1], bg[2]) < .45;
+      if (cs.backgroundImage.includes('gradient')) {
+        const cols = (cs.backgroundImage.match(/rgba?\([^)]*\)/g) || []).map(rgba);
+        if (cols.length && cols.every(c => c[3] >= .5)) return cols.reduce((a, c) => a + lum(c[0], c[1], c[2]), 0) / cols.length < .45;
+      }
+    }
+    return false;
+  };
+  let lastCheck = 0, cx = -1, cy = -1;
   (function loop(){ rx += (x - rx) * .18; ry += (y - ry) * .18;
+    const now = performance.now();
+    if (root.dataset.mode === 'light' && now - lastCheck > 80 && (x !== cx || y !== cy || now - lastCheck > 600)) { lastCheck = now; cx = x; cy = y; root.classList.toggle('cur-gold', darkAt(x, y)); }
     dot.style.transform = `translate3d(${x}px,${y}px,0)`; ring.style.transform = `translate3d(${rx}px,${ry}px,0)`;
     requestAnimationFrame(loop); })();
 })();
