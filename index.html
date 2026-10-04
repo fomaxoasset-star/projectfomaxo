@@ -417,7 +417,9 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .line-item{display:grid;grid-template-columns:78px 1fr;gap:16px;padding:20px 0;border-bottom:1px solid var(--line);align-items:start}
 .line-item img{width:78px;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
 .line-item h4{font-size:15px}
-.line-item .o{font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.line-item .o,.co-item .o{font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.line-item .o-picks,.co-item .o-picks{text-transform:none;letter-spacing:.02em;color:var(--champagne)}
+.co-item small{margin-top:4px}
 .line-item .q{display:inline-flex;border:1px solid var(--line);margin-top:12px;height:34px}
 .line-item .q button{width:32px;color:var(--champagne)}
 .line-item .q span{min-width:28px;display:flex;align-items:center;justify-content:center;font-size:13px}
@@ -1000,13 +1002,13 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
 
 /* product & collection names: elegant, readable serif */
 .exp h3{font-family:var(--hfont);font-weight:500;text-transform:uppercase;letter-spacing:.07em;line-height:1.15}
-.card h3,.buy h1,.ed-copy h2,.tier-item b,.mbuy .n b,.sres b,.upsell b,.line-item h4,.pick span,.hc-now b,.arch-cap b{
+.card h3,.buy h1,.ed-copy h2,.tier-item b,.mbuy .n b,.sres b,.upsell b,.line-item h4,.co-item h4,.pick span,.hc-now b,.arch-cap b{
   font-family:var(--brand-font);font-weight:400;text-transform:uppercase;letter-spacing:.1em;line-height:1.2}
 .card h3{font-size:clamp(18px,1.4vw,22px)}
 .buy h1{font-size:clamp(34px,3.6vw,54px)}
 .ed-copy h2{font-size:clamp(34px,4vw,60px)}
 .tier-item b{font-size:16px}
-.line-item h4{font-size:16px}
+.line-item h4,.co-item h4{font-size:16px}
 .hc-now b{font-size:22px}
 .pick span{font-size:12px;letter-spacing:.08em}
 .card .desc{font-size:14.5px;line-height:1.7}
@@ -1452,15 +1454,14 @@ html[data-mode="light"] .btn.co-min,html[data-mode="light"] .btn.co-min:hover{co
 html[data-mode="light"] .co-sum-in.co-tap:hover h3{color:var(--gold)}
 .co-item[data-openbag]{cursor:pointer;margin:-6px;padding:6px;transition:background .3s}
 .co-item[data-openbag]:hover{background:rgba(215,170,105,.08)}
-.co-item[data-openbag]:hover b{color:var(--gold-hi)}
-html[data-mode="light"] .co-item[data-openbag]:hover b{color:var(--gold)}
+.co-item[data-openbag]:hover h4{color:var(--gold-hi)}
+html[data-mode="light"] .co-item[data-openbag]:hover h4{color:var(--gold)}
 .co-img{position:relative;width:60px;aspect-ratio:4/5;border:1px solid var(--line);background:var(--black)}
 .co-img img{width:100%;height:100%;object-fit:cover}
 .co-img i{position:absolute;top:-9px;right:-9px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--gold);color:#0a0805;font-style:normal;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center}
 html[data-mode="light"] .co-img i{color:#fffaf1}
 .co-item b{display:block;font-weight:500;font-size:15.5px;line-height:1.3}
 .co-item small{display:block;font-size:13px;line-height:1.4;color:var(--muted)}
-.co-item small.co-picks{color:var(--champagne)}
 .co-item .price{font-size:17px}
 .co-free select{margin-top:5px;width:100%;max-width:200px;padding:6px 8px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font-size:14px}
 .co-free .price{font-family:var(--sans);font-size:12px;letter-spacing:.2em;color:#5fc48c}
@@ -1902,6 +1903,8 @@ function addToCart(id, opt, qty=1, silent, picks){
   if (!silent) toast(`${P[id].name} · ${optLabel(P[id], opt)} added to your bag`);
 }
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
+// one look for a product everywhere it is listed (bag and checkout summary, whether it came from Add to bag or Buy now)
+function lineInfo(l){ const p = P[l.id]; return `<h4>${esc(p.name)}</h4><div class="o">${optLabel(p, l.opt)} · ${esc(p.family.split('·')[0])}</div>${l.picks ? `<div class="o o-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</div>` : ''}`; }
 function orderText(lines, d, pay){
   const rows = lines.map(l => { const p = P[l.id], m = money(p.prices[l.opt]); return `• ${p.name} — ${optLabel(p, l.opt)} × ${l.qty}${m ? ' (' + m + ' each)' : ''}${l.picks ? '\n   Fragrances: ' + l.picks.map(id => P[id] ? P[id].name : id).join(', ') : ''}`; });
   const tot = subtotal(lines), dc = qtyDiscount(lines);
@@ -2007,7 +2010,7 @@ function renderCart(){
   }
   body.innerHTML = cart.map((l, i) => { const p = P[l.id]; return `<div class="line-item">
       <a href="#/product/${p.id}" data-close><img src="${IMG(lineImg(l))}" alt="${esc(p.name)}"></a>
-      <div><h4>${esc(p.name)}</h4><div class="o">${optLabel(p, l.opt)} · ${esc(p.family.split('·')[0])}</div>${l.picks ? `<div class="o" style="text-transform:none;letter-spacing:.02em;color:var(--champagne)">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</div>` : ''}
+      <div>${lineInfo(l)}
         <div class="qrow"><div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase">+</button></div>
         ${linePriceHTML(p, l)}</div>
         <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
@@ -2736,7 +2739,7 @@ function bindCheckout(q){
     if (coPay !== 'card' && coPay !== 'cod') coPay = CARD_ON ? 'card' : 'cod';
     const T = orderTotals(ls, coPay), dc = T.dc;
     // order summary
-    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${IMG(lineImg(l))}" alt=""><i>${l.qty}</i></span><div><b>${esc(p.name)}</b><small>${optLabel(p, l.opt)}${l.qty > 1 && hasPrice(v) ? ` · ${moneyHTML(v)} each` : ''}</small>${l.picks ? `<small class="co-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
+    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${IMG(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
     const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${IMG(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b>Free 10ml mini</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div>` :
