@@ -1474,7 +1474,8 @@ html[data-mode="light"] .co-row.disc,html[data-mode="light"] .co-row.disc .price
 .co-row.tot{margin-top:6px;padding-top:14px;border-top:1px solid var(--line);color:var(--ivory);font-size:16px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;align-items:center}
 .co-row.tot .price{font-size:30px;color:var(--gold);letter-spacing:0}
 .co-bar{display:none}
-.co-nudge{display:flex;align-items:center;gap:12px;margin:22px 26px 0;padding:10px 14px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:13.5px;line-height:1.45;color:var(--ivory)}
+.co-nudge.co-nudge-m{display:none}
+.co-nudge{display:flex;align-items:center;gap:12px;margin:18px 0 0;padding:10px 14px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:13.5px;line-height:1.45;color:var(--ivory)}
 .co-nudge svg{flex:none;width:20px;height:20px;color:var(--gold)}
 .co-nudge b{color:var(--gold);font-weight:600}
 .co-done{display:flex;flex-wrap:wrap;gap:16px 56px;align-items:flex-end;padding:28px;border:1px solid var(--line-2);background:var(--panel);max-width:760px}
@@ -1497,6 +1498,8 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   .co-bar::after{content:"";flex:none;width:8px;height:8px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg);margin:-4px 2px 0 4px;transition:transform .3s}
   .co-sum.open .co-bar::after{transform:rotate(-135deg);margin-top:4px}
   .co-sum-in{display:none;padding:4px 16px 18px;border-top:1px solid var(--line)}
+  .co-nudge.co-nudge-m{display:flex}
+  .co-nudge.co-nudge-d{display:none}
   .co-nudge{margin:0 16px 14px;font-size:12.5px;padding:8px 12px}
   .co-sum.open .co-sum-in{display:block}
   .co-sum-h{display:none}
@@ -2735,11 +2738,11 @@ function bindCheckout(q){
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}
       <div class="co-row tot"><span>Total</span><span class="price">${moneyHTML(T.total, true)}</span></div>`;
-    const nudge = `<div class="co-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}</span></div>`;   // same offer line as the bag
+    const nudge = m => `<div class="co-nudge ${m}">${ICON.gift || ''}<span>${qtyNudge(dc)}</span></div>`;   // same offer line as the bag: under the bar on phones, above Subtotal on desktop
     const sum = $('#coSum');
-    sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${coOpen ? 'Tap to close' : 'Tap to open'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>${nudge}
+    sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${coOpen ? 'Tap to close' : 'Tap to open'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>${nudge('co-nudge-m')}
       <div class="co-sum-in co-tap" id="coSumIn" title="Open your bag to change it"><div class="co-sum-h"><h3>Order summary</h3><button type="button" class="co-edit" id="coEdit">Edit bag</button></div>
-      <div class="co-items">${items}${mini}</div>${no10}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
+      <div class="co-items">${items}${mini}</div>${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
     const openBag = () => {
       // Buy now: move the item into the bag (once, not doubled) and switch to the bag checkout, so the customer can change it there
