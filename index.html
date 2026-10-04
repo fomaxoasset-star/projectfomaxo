@@ -1554,6 +1554,11 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-flag{font-size:17px;line-height:1}
 .rw-form select{width:100%;min-width:0;max-width:100%}
 .rw-form .row2 input,.rw-form .row2 select{box-sizing:border-box;width:100%;height:52px;padding-top:0;padding-bottom:0;line-height:normal}
+.rw-emo{display:flex;flex-wrap:wrap;gap:6px;margin-top:-6px}
+.rw-emo button{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;line-height:1;border:1px solid var(--line-2);background:transparent;transition:border-color .2s,transform .15s}
+.rw-emo button:hover,.rw-emo button:focus-visible{border-color:var(--gold-hi)}
+.rw-emo button:active{transform:scale(.9)}
+@media(max-width:600px){.rw-emo{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}.rw-emo button{width:auto;height:38px;font-size:18px}}
 .rw-ph-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .rw-ph-prev{display:contents}
 .rw-ph-prev span{position:relative;width:78px;height:78px;border:1px solid var(--line)}
@@ -2871,6 +2876,8 @@ const rwFlag = c => /^[A-Z]{2}$/.test(c || '') ? String.fromCodePoint(...[...c].
 const rwPlace = r => (r.city || r.country) ? `<span class="rw-loc">· ${r.city ? esc(r.city) : ''}${r.country ? `<span class="rw-flag" role="img" aria-label="${esc(rwCountryName(r.country))}" title="${esc(rwCountryName(r.country))}">${rwFlag(r.country)}</span>` : ''}</span>` : '';
 const rwCountryOptions = () => { const all = RW_COUNTRIES.map(c => [c, rwCountryName(c)]).sort((a, b) => a[1].localeCompare(b[1])), opt = c => `<option value="${c[0]}">${rwFlag(c[0])} ${esc(c[1])}</option>`;
   return `<option value="">Choose country</option>${RW_TOP.map(c => opt([c, rwCountryName(c)])).join('')}<option disabled>──────────</option>${all.map(opt).join('')}`; };
+/* one-tap emojis under the review box (phone keyboards' own emojis work too) */
+const RW_EMO = ['😍', '🔥', '✨', '💯', '👌', '❤️', '🌹', '👍'];
 const rwHelpLabel = n => `${RW_HEART}<span>Helpful${n ? ` · ${n}` : ''}</span>`;
 
 function rwItem(r){
@@ -2907,6 +2914,7 @@ function rwForm(p, link){
     <div class="row2"><label>State / City (optional)<input name="city" maxlength="40" autocomplete="address-level2" data-cap="words" autocapitalize="words" placeholder="e.g. Dubai"></label>
       <label>Country (optional)<select name="country" autocomplete="country">${rwCountryOptions()}</select></label></div>
     <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
+    <div class="rw-emo" role="group" aria-label="Add an emoji to your review">${RW_EMO.map(e => `<button type="button" data-emo="${e}" aria-label="Add ${e}">${e}</button>`).join('')}</div>
     <div><div class="opt-label"><span>Photos (optional)</span><span>Up to 3</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label></div></div>
     <input name="website" class="rw-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
     ${link ? `<p class="small">Order ${esc(link.no)} · please rate honestly, every star counts.</p>` : `<p class="small">Bought on fomaxo.com? Use the review link from your order confirmation to show Verified Purchaser.</p>`}
@@ -2928,6 +2936,8 @@ async function rwShrink(f){
 }
 function rwBindForm(form, p, link, onDone){
   let rating = 0; const files = [];
+  const ta = form.elements.text;
+  $$('[data-emo]', form).forEach(b => { b.onclick = () => { const e = b.dataset.emo, a = ta.selectionStart ?? ta.value.length, z = ta.selectionEnd ?? a; ta.setRangeText(e, a, z, 'end'); ta.focus(); ta.dispatchEvent(new Event('input', {bubbles: true})); }; });
   const stars = $$('.rw-rate button', form), word = $('.rw-rword', form), err = $('.rw-err', form);
   const paint = v => stars.forEach(b => b.classList.toggle('on', +b.dataset.r <= v));
   stars.forEach(b => { b.onclick = () => { rating = +b.dataset.r; stars.forEach(x => x.setAttribute('aria-checked', String(x === b))); paint(rating); word.textContent = `${rating} · ${RW_WORDS[rating]}`; }; b.onmouseenter = () => paint(+b.dataset.r); });
