@@ -2856,8 +2856,8 @@ function rwSaveLink(t, d){ rwSet('fomaxo_review_links', [{t, no: d.order, produc
 function rwMarkDone(t, id){ rwSet('fomaxo_review_links', rwLinks().map(l => l.t === t ? Object.assign(l, {done: [...new Set([...(l.done || []), id])]}) : l)); }
 async function rwAddLink(t){ if (!/^[a-f0-9]{24}$/.test(t || '')) return; try { const d = await (await fetch(`${RW_API}?link=${t}`, {cache: 'no-store'})).json(); if (d.products) rwSaveLink(t, d); } catch(e) {} }
 const rwVoter = () => { let v = rwGet('fomaxo_voter'); if (!/^[a-z0-9]{12,64}$/.test(v || '')) { v = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); rwSet('fomaxo_voter', v); } return v; };
-/* "ahmed saleh" → "Ahmed S." (same rule as reviews.php) */
-const rwShort = v => { const w = v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).filter(Boolean); if (!w.length) return ''; const f = w[0][0].toUpperCase() + w[0].slice(1, 24); const l = w.length > 1 ? w[w.length - 1].replace(/[^\p{L}]/gu, '') : ''; return l ? `${f} ${l[0].toUpperCase()}.` : f; };
+/* "ahmed saleh" → "Ahmed Saleh", full name (same rule as reviews.php) */
+const rwShort = v => v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ').slice(0, 60);
 const rwStars = (v, cls = '') => `<span class="rw-stars ${cls}" role="img" aria-label="${v} out of 5 stars"><span class="rw-s-bg" aria-hidden="true">★★★★★</span><span class="rw-s-fg" aria-hidden="true" style="width:${Math.max(0, Math.min(5, v)) * 20}%">★★★★★</span></span>`;
 const rwDate = s => { const d = new Date(s + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}); };
 /* state/city + country (optional) shown after the reviewer's name: "Name · Dubai 🇦🇪"; country is an ISO code → flag only */

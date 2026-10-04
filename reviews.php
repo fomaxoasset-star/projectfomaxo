@@ -40,7 +40,7 @@ function rv_change(callable $fn) {
   return $res;
 }
 function rv_public($r) {
-  return ['id' => $r['id'], 'name' => $r['name'], 'rating' => $r['rating'], 'text' => $r['text'], 'verified' => !empty($r['verified']),
+  return ['id' => $r['id'], 'name' => empty($r['anon']) && ($r['real'] ?? '') !== '' ? rv_display_name($r['real']) : $r['name'], 'rating' => $r['rating'], 'text' => $r['text'], 'verified' => !empty($r['verified']),
           'city' => $r['city'] ?? '', 'country' => $r['country'] ?? '', 'date' => substr($r['created'], 0, 10), 'helpful' => (int)($r['helpful'] ?? 0),
           'photos' => array_map(fn($p) => 'reviews.php?photo=' . rawurlencode($p), $r['photos'] ?? [])];
 }
@@ -64,14 +64,10 @@ function rv_clean($v, $max, $lines = false) {
   if ($lines) $v = preg_replace("/\n{3,}/", "\n\n", preg_replace('/[ \t]+/', ' ', $v)); else $v = preg_replace('/\s+/u', ' ', $v);
   return trim(mb_substr(trim((string)$v), 0, $max));
 }
-/* "ahmed saleh" → "Ahmed S." · "Ahmed" → "Ahmed" */
+/* "ahmed saleh" → "Ahmed Saleh": full name as typed, each word starting with a capital */
 function rv_display_name($full) {
   $parts = preg_split('/\s+/u', trim(preg_replace('/[^\p{L}\p{M}\s\'\-.]/u', '', $full)), -1, PREG_SPLIT_NO_EMPTY);
-  if (!$parts) return '';
-  $first = mb_strtoupper(mb_substr($parts[0], 0, 1)) . mb_substr($parts[0], 1, 23);
-  if (count($parts) < 2) return $first;
-  $last = preg_replace('/[^\p{L}]/u', '', end($parts));
-  return $last === '' ? $first : $first . ' ' . mb_strtoupper(mb_substr($last, 0, 1)) . '.';
+  return mb_substr(implode(' ', array_map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)) . mb_substr($w, 1), $parts)), 0, 60);
 }
 
 /* ---------------- photos ---------------- */
