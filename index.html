@@ -1546,7 +1546,8 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .form .rw-anon input{width:18px;height:18px;padding:0;accent-color:var(--gold);flex:none}
 .form input:disabled{opacity:.45}
 .rw-shown b{color:var(--ivory);font-weight:400}
-.rw-loc{display:flex;align-items:center;gap:7px;font-size:12.5px;letter-spacing:.04em;color:var(--muted);margin-top:-6px}
+.rw-who{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px}
+.rw-loc{display:inline-flex;align-items:center;gap:6px;font-size:14px;letter-spacing:.04em;color:var(--muted)}
 .rw-flag{font-size:17px;line-height:1}
 .rw-form select{width:100%;min-width:0;max-width:100%}
 .rw-ph-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -2858,19 +2859,19 @@ const rwVoter = () => { let v = rwGet('fomaxo_voter'); if (!/^[a-z0-9]{12,64}$/.
 const rwShort = v => { const w = v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).filter(Boolean); if (!w.length) return ''; const f = w[0][0].toUpperCase() + w[0].slice(1, 24); const l = w.length > 1 ? w[w.length - 1].replace(/[^\p{L}]/gu, '') : ''; return l ? `${f} ${l[0].toUpperCase()}.` : f; };
 const rwStars = (v, cls = '') => `<span class="rw-stars ${cls}" role="img" aria-label="${v} out of 5 stars"><span class="rw-s-bg" aria-hidden="true">★★★★★</span><span class="rw-s-fg" aria-hidden="true" style="width:${Math.max(0, Math.min(5, v)) * 20}%">★★★★★</span></span>`;
 const rwDate = s => { const d = new Date(s + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}); };
-/* city + country (optional) shown under the reviewer's name; country is an ISO code → flag only */
+/* state/city + country (optional) shown after the reviewer's name: "Name · Dubai 🇦🇪"; country is an ISO code → flag only */
 const RW_COUNTRIES = 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ');
 const RW_TOP = ['AE', 'SA', 'OM', 'QA', 'KW', 'BH', 'IN', 'PK', 'GB', 'US'];
 const rwCountryName = c => { try { return new Intl.DisplayNames(['en'], {type: 'region'}).of(c) || c; } catch(e) { return c; } };
 const rwFlag = c => /^[A-Z]{2}$/.test(c || '') ? String.fromCodePoint(...[...c].map(x => 0x1F1E6 + x.charCodeAt(0) - 65)) : '';
-const rwPlace = r => (r.city || r.country) ? `<span class="rw-loc">${r.country ? `<span class="rw-flag" role="img" aria-label="${esc(rwCountryName(r.country))}" title="${esc(rwCountryName(r.country))}">${rwFlag(r.country)}</span>` : ''}${r.city ? esc(r.city) : ''}</span>` : '';
+const rwPlace = r => (r.city || r.country) ? `<span class="rw-loc">· ${r.city ? esc(r.city) : ''}${r.country ? `<span class="rw-flag" role="img" aria-label="${esc(rwCountryName(r.country))}" title="${esc(rwCountryName(r.country))}">${rwFlag(r.country)}</span>` : ''}</span>` : '';
 const rwCountryOptions = () => { const all = RW_COUNTRIES.map(c => [c, rwCountryName(c)]).sort((a, b) => a[1].localeCompare(b[1])), opt = c => `<option value="${c[0]}">${rwFlag(c[0])} ${esc(c[1])}</option>`;
   return `<option value="">Choose country</option>${RW_TOP.map(c => opt([c, rwCountryName(c)])).join('')}<option disabled>──────────</option>${all.map(opt).join('')}`; };
 const rwHelpLabel = n => `${RW_HEART}<span>Helpful${n ? ` · ${n}` : ''}</span>`;
 
 function rwItem(r){
   const voted = (rwGet('fomaxo_helpful') || []).includes(r.id);
-  return `<article class="rv rw-item"><div class="rw-top"><b class="rw-name">${esc(r.name)}</b><span class="small">${rwDate(r.date)}</span></div>${rwPlace(r)}
+  return `<article class="rv rw-item"><div class="rw-top"><span class="rw-who"><b class="rw-name">${esc(r.name)}</b>${rwPlace(r)}</span><span class="small">${rwDate(r.date)}</span></div>
     ${rwStars(r.rating)}${r.verified ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}
     <p class="rw-text">“${esc(r.text)}”</p>
     ${r.photos.length ? `<div class="rw-photos">${r.photos.map(u => `<button type="button" data-rwph="${esc(u)}" aria-label="Open customer photo"><img src="${esc(u)}" alt="Customer photo of ${esc(r.name)}" loading="lazy"></button>`).join('')}</div>` : ''}
@@ -2897,7 +2898,7 @@ function rwForm(p, link){
     <div><div class="opt-label"><span>Your rating *</span><span class="rw-rword">Tap a star</span></div>
       <div class="rw-rate" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map(s => `<button type="button" role="radio" aria-checked="false" data-r="${s}" aria-label="${s} star${s > 1 ? 's' : ''}, ${RW_WORDS[s]}">★</button>`).join('')}</div></div>
     <label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
-    <div class="row2"><label>City (optional)<input name="city" maxlength="40" autocomplete="address-level2" data-cap="words" autocapitalize="words" placeholder="e.g. Dubai"></label>
+    <div class="row2"><label>State / City (optional)<input name="city" maxlength="40" autocomplete="address-level2" data-cap="words" autocapitalize="words" placeholder="e.g. Dubai"></label>
       <label>Country (optional)<select name="country" autocomplete="country">${rwCountryOptions()}</select></label></div>
     <label class="rw-anon"><input type="checkbox" name="anon"><span>Post anonymously</span></label>
     <p class="small rw-shown">Your review will show the name: <b></b></p>
