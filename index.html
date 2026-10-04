@@ -81,6 +81,11 @@ em{font-style:italic}
 .btn.sm{min-height:42px;padding:0 20px;font-size:10px}
 .btn.block{width:100%}
 .btn[disabled]{opacity:.4;pointer-events:none}
+/* stock: "Only X left" / "Sold out" (from stock.php) */
+.stk-line{margin:-6px 0 -4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}.stk-line:empty{display:none}
+.stk{color:var(--gold)}.stk.out{color:var(--muted)}
+#pstk{font-size:12px;letter-spacing:.14em;text-transform:uppercase}#pstk:empty{display:none}
+.sizes button.so{opacity:.45}.sizes button.so small::after{content:" · Sold out"}
 .link{display:inline-block;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--champagne);border-bottom:1px solid var(--line-2);padding-bottom:6px;transition:color .4s,border-color .4s}
 .link:hover{color:var(--gold-hi);border-color:var(--gold-hi)}
 
@@ -1896,11 +1901,18 @@ let cart = [];
 try { cart = JSON.parse(localStorage.getItem('fomaxo_cart') || '[]').filter(l => P[l.id] && P[l.id].sizes.map(String).includes(String(l.opt))); } catch(e) { cart = []; }
 const save = () => { try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} renderCart(); };
 function addToCart(id, opt, qty=1, silent, picks){
+  const left = stockLeft(id, opt);
+  if (left !== null) {   // never more in the bag than we have
+    const inBag = cart.filter(x => x.id === id && String(x.opt) === String(opt)).reduce((a, x) => a + x.qty, 0);
+    if (left - inBag <= 0) { toast(left <= 0 ? `${P[id].name} · ${optLabel(P[id], opt)} is sold out` : `Only ${left} left of ${P[id].name} · ${optLabel(P[id], opt)}, and they are in your bag`); return false; }
+    if (qty > left - inBag) { qty = left - inBag; if (!silent) { silent = true; toast(`Only ${left} left of ${P[id].name} · ${optLabel(P[id], opt)}. ${qty} added to your bag`); } }
+  }
   const key = (picks || []).join('|');
   const l = cart.find(x => x.id === id && String(x.opt) === String(opt) && (x.picks || []).join('|') === key);
   if (l) l.qty = Math.min(99, l.qty + qty); else cart.push(picks ? {id, opt, qty, picks} : {id, opt, qty});
   save();
   if (!silent) toast(`${P[id].name} · ${optLabel(P[id], opt)} added to your bag`);
+  return true;
 }
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
 // one look for a product everywhere it is listed (bag and checkout summary, whether it came from Add to bag or Buy now)
@@ -1982,7 +1994,8 @@ let buyLines = [];
 try { buyLines = JSON.parse(sessionStorage.getItem('fomaxo_buy') || '[]').filter(l => P[l.id] && P[l.id].sizes.map(String).includes(String(l.opt))); } catch(e) { buyLines = []; }
 function buyNow(line){
   const key = (line.picks || []).join('|'), l = cart.find(x => x.id === line.id && String(x.opt) === String(line.opt) && (x.picks || []).join('|') === key);
-  if (l) { l.qty = Math.max(l.qty, line.qty); save(); } else addToCart(line.id, line.opt, line.qty, true, line.picks);
+  const left = stockLeft(line.id, line.opt);
+  if (l) { l.qty = Math.max(l.qty, left === null ? line.qty : Math.min(line.qty, left)); save(); } else if (!addToCart(line.id, line.opt, line.qty, true, line.picks)) return;
   location.hash = '#/checkout';
 }
 function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'); } catch(e) {} }
@@ -2065,6 +2078,19 @@ async function loadRates(){
   try { const r = await fetch(`${RW_API}?summary`, {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.products) RATES = d.products; } } catch(e) {}
   if (RATES) $$('[data-rate]').forEach(el => { const p = P[el.dataset.rate]; if (p) el.outerHTML = rateHTML(p); });
 }
+/* stock from stock.php: only sizes running low are listed (null = in stock). Typed in on fomaxo.com/admin → Stock. */
+let STOCK = {}, pdpStock = null;
+const stockLeft = (id, opt) => { const s = STOCK[id]; return s && s[String(opt)] !== undefined ? +s[String(opt)] : null; };
+const stockHTML = (id, opt) => { const n = stockLeft(id, opt); return n === null ? '' : n <= 0 ? '<span class="stk out">Sold out</span>' : `<span class="stk">Only ${n} left</span>`; };
+function applyStock(){
+  $$('.card[data-id]').forEach(c => { const p = P[c.dataset.id]; if (!p) return; const sel = c.dataset.sel, el = $('[data-stk]', c);
+    if (el) el.innerHTML = stockHTML(p.id, sel); $$('[data-add],[data-buy]', c).forEach(b => b.disabled = stockLeft(p.id, sel) === 0); });
+  pdpStock && pdpStock();
+}
+async function loadStock(){
+  try { const r = await fetch('stock.php', {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.stock) STOCK = d.stock; } } catch(e) {}
+  applyStock();
+}
 function card(p, opts={}){
   const size = opts.size || defaultSize(p);
   const img = imgFor(p, size);
@@ -2080,6 +2106,7 @@ function card(p, opts={}){
     <div class="row1"><h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3><span data-price>${priceHTML(p, size)}</span></div>
     <p class="desc">${esc(p.short)}</p>
     <div class="rate-row">${chips}${rateHTML(p)}</div>
+    <p class="stk-line" data-stk>${stockHTML(p.id, size)}</p>
     <div class="acts"><button class="btn line sm" data-add>Add to bag</button><button class="btn sm" data-buy>Buy now</button></div>
   </article>`;
 }
@@ -2089,7 +2116,8 @@ app.addEventListener('click', e => {
   const chip = e.target.closest('[data-size]');
   if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s);
     const im = $('.media img', c); const src = IMG(imgFor(p, s)); if (im.getAttribute('src') !== src) im.src = src;
-    const al = $('.media img.alt', c), ak = altFor(p, s); if (al) { if (ak) { al.src = IMG(ak); al.hidden = false; } else al.hidden = true; } }
+    const al = $('.media img.alt', c), ak = altFor(p, s); if (al) { if (ak) { al.src = IMG(ak); al.hidden = false; } else al.hidden = true; }
+    applyStock(); }
   const sel = c.dataset.sel === 'set' ? 'set' : +c.dataset.sel;
   if (p.kind === 'set' && e.target.closest('[data-add],[data-buy]')) { location.hash = `#/product/${p.id}?size=${sel}`; return; }
   if (e.target.closest('[data-add]')) addToCart(p.id, sel);
@@ -2268,6 +2296,7 @@ function product(id, q){
           <button type="button" class="rw-head" id="rwHead" hidden></button>
           <p class="lead" style="max-width:none">${esc(p.short)}</p>
           <div id="pprice">${priceHTML(p, size, 'pprice')}</div>
+          <div id="pstk">${stockHTML(p.id, size)}</div>
         </div>
         ${p.sizes.length > 1 ? `<div><div class="opt-label"><span>${isSet ? 'Choose your set' : 'Size'}</span><span id="sizeName">${optLabel(p, size)}</span></div>
           <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · Travel':s===50?'Everyday':'Supreme'}</small></button>`).join('')}</div></div>`
@@ -2310,7 +2339,7 @@ function bindProduct(p){
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
     $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = priceHTML(p, size, 'pprice');
     setImg(imgFor(p, size));
-    renderMbuy();
+    renderMbuy(); pdpStock();
   });
   const stage = $('#stage');
   stage.onclick = () => stage.classList.toggle('zoom');
@@ -2332,6 +2361,10 @@ function bindProduct(p){
   const mb = $('#mbuy');
   function renderMbuy(){ mb.innerHTML = `<div class="n"><b>${esc(p.name)}</b><small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) || 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
   renderMbuy();
+  pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size);
+    ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
+    $$('#sizes button').forEach(b => b.classList.toggle('so', stockLeft(p.id, b.dataset.s) === 0)); };
+  pdpStock();
   const addBtn = $('#addBtn');
   mobileBarCheck = () => { const r = addBtn.getBoundingClientRect(); mb.classList.toggle('show', r.bottom < 0 && $('#reviews').getBoundingClientRect().top > innerHeight*.6); };
   rwLoad(p);
@@ -3059,7 +3092,7 @@ function route(){
   const raw = location.hash.replace(/^#/, '') || '/';
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
   const seg = path.split('/').filter(Boolean);
-  clearInterval(heroTimer); mobileBarCheck = null; coRefresh = null; $('#mbuy').classList.remove('show');
+  clearInterval(heroTimer); mobileBarCheck = null; coRefresh = null; pdpStock = null; $('#mbuy').classList.remove('show');
   document.title = 'FOMAXO — The Art of Modern Luxury';
   let html, after;
   switch (seg[0]){
@@ -3086,6 +3119,7 @@ function route(){
   closePanels();
   window.scrollTo({top: 0, left: 0, behavior: 'instant'});
   after && after();
+  applyStock();
   bindCommon();
 }
 function bindHome(){
@@ -3318,7 +3352,7 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   };
   sync();
 })();
-renderCart(); route(); bindCommon(); loadRates();
+renderCart(); route(); bindCommon(); loadRates(); loadStock();
 })();
 </script>
 

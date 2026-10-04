@@ -4,8 +4,8 @@ RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# keep the Stripe and Ziina key files private
-<FilesMatch "^(?i:stripe|ziina|whatsapp)-config.*\.php$">
+# keep the Stripe, Ziina and database key files private
+<FilesMatch "^(?i:stripe|ziina|whatsapp|fomaxo-db)-config.*\.php$">
   Require all denied
 </FilesMatch>
 
