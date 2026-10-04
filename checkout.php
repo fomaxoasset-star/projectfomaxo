@@ -128,12 +128,18 @@ if (qty_mini($discUnits) && !$has10) {
 
 /* ---- cash on delivery: save the order (file outside public_html) and email it ---- */
 if ($pay === 'cod') {
-  $no = 'FX' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
   $totalFils = $afterFils + $COD_FEE * 100;
   $rows = $summary;
   if ($discFils > 0) $rows[] = "Multi-buy discount ($pctTxt%): -" . aed($discFils);
   if ($miniName) $rows[] = "FREE 10ml mini: $miniName";
   $rows[] = 'Cash on delivery fee: ' . aed($COD_FEE * 100);
+  /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
+  require_once __DIR__ . '/orders-lib.php';
+  $no = fomaxo_save_order(['payment' => 'Cash on delivery', 'status' => 'New', 'subtotal' => $subFils / 100, 'discount' => $discFils / 100,
+          'fee' => $COD_FEE, 'total' => $totalFils / 100, 'items' => implode(' | ', $rows), 'free_mini' => $miniName,
+          'lines' => array_map(fn($l) => ['id' => $l['id'] ?? '', 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? []))], $lines)]
+          + array_intersect_key($cu, array_flip(['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'address', 'note'])))
+        ?? 'FX' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
   $cell = fn($v) => preg_match('/^[=+\-@]/', (string)$v) ? "'" . $v : $v;   // stop spreadsheet formulas
   $order = [date('Y-m-d H:i:s'), $no, $cu['name'], $cu['phone'], $cu['email'], $cu['emirate'], $cu['address'], $cu['note'],
             implode(' | ', $rows), number_format($subFils / 100, 2, '.', ''), number_format($discFils / 100, 2, '.', ''),
