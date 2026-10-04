@@ -74,14 +74,22 @@ function fomaxo_save_order($o) {
          'subtotal' => null, 'discount' => null, 'fee' => null, 'items' => null, 'free_mini' => null, 'ref' => null, 'test' => 0, 'total' => 0];
   $vals = []; foreach ($cols as $c) $vals[] = is_bool($o[$c] ?? null) ? (int)$o[$c] : ($o[$c] ?? '');
   foreach (['subtotal', 'discount', 'fee', 'items', 'lines_json', 'free_mini', 'ref'] as $c) if ($o[$c] === null) $vals[array_search($c, $cols)] = null;
-  try {
-    $tmp = 'new-' . bin2hex(random_bytes(8));
-    $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ') VALUES (?' . str_repeat(', ?', count($cols)) . ')')->execute(array_merge([$tmp], $vals));
-    $id = (int)$pdo->lastInsertId();
-    $no = 'FMX-' . $id;
-    $pdo->prepare('UPDATE fx_orders SET order_no = ? WHERE id = ?')->execute([$no, $id]);
-    return $no;
-  } catch (Throwable $e) { error_log('FOMAXO save order: ' . $e->getMessage()); return null; }
+  $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ') VALUES (?' . str_repeat(', ?', count($cols)) . ')');
+  for ($try = 0; $try < 5; $try++) {   // the number is the row id; if an older order already uses that number, take the next one
+    $id = 0;
+    try {
+      $ins->execute(array_merge(['new-' . bin2hex(random_bytes(8))], $vals));
+      $id = (int)$pdo->lastInsertId();
+      $no = 'FMX-' . $id;
+      $pdo->prepare('UPDATE fx_orders SET order_no = ? WHERE id = ?')->execute([$no, $id]);
+      return $no;
+    } catch (Throwable $e) {
+      if ($id) { try { $pdo->prepare('DELETE FROM fx_orders WHERE id = ?')->execute([$id]); } catch (Throwable $e2) {} }
+      error_log('FOMAXO save order: ' . $e->getMessage());
+      if (!$id) return null;
+    }
+  }
+  return null;
 }
 
 /* Changes a few fields of an order (ref, status …). */
