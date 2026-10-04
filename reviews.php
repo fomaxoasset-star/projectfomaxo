@@ -41,7 +41,7 @@ function rv_change(callable $fn) {
 }
 function rv_public($r) {
   return ['id' => $r['id'], 'name' => $r['name'], 'rating' => $r['rating'], 'text' => $r['text'], 'verified' => !empty($r['verified']),
-          'date' => substr($r['created'], 0, 10), 'helpful' => (int)($r['helpful'] ?? 0),
+          'city' => $r['city'] ?? '', 'country' => $r['country'] ?? '', 'date' => substr($r['created'], 0, 10), 'helpful' => (int)($r['helpful'] ?? 0),
           'photos' => array_map(fn($p) => 'reviews.php?photo=' . rawurlencode($p), $r['photos'] ?? [])];
 }
 function rv_stats($list) {
@@ -160,7 +160,7 @@ if (isset($_GET['manage']) || ($_POST['action'] ?? '') === 'toggle') {
   foreach ($list as $r) {
     $off = !empty($r['hidden']);
     echo '<div class="r' . ($off ? ' off' : '') . '" id="r-' . $h($r['id']) . '"><div><b>' . $h($CATALOG[$r['product']]['name'] ?? $r['product']) . '</b> · <span class="s">' . str_repeat('★', $r['rating']) . str_repeat('☆', 5 - $r['rating']) . '</span></div>'
-       . '<div class="m">' . $h($r['name']) . ($r['anon'] ? ' (real name: ' . $h($r['real'] ?? '') . ')' : '') . ' · ' . ($r['verified'] ? 'Verified Purchaser, order ' . $h($r['order']) : 'not verified') . ' · ' . $h(substr($r['created'], 0, 16)) . ($off ? ' · HIDDEN' : '') . '</div>'
+       . '<div class="m">' . $h($r['name']) . ($r['anon'] ? ' (real name: ' . $h($r['real'] ?? '') . ')' : '') . (($r['city'] ?? '') . ($r['country'] ?? '') !== '' ? ' · ' . $h(trim(($r['city'] ?? '') . ' ' . ($r['country'] ?? ''))) : '') . ' · ' . ($r['verified'] ? 'Verified Purchaser, order ' . $h($r['order']) : 'not verified') . ' · ' . $h(substr($r['created'], 0, 16)) . ($off ? ' · HIDDEN' : '') . '</div>'
        . '<p>' . $h($r['text']) . '</p>';
     foreach ($r['photos'] ?? [] as $p) echo '<a href="reviews.php?photo=' . $h($p) . '" target="_blank"><img src="reviews.php?photo=' . $h($p) . '" alt=""></a>';
     echo '<form method="post" action="reviews.php"><input type="hidden" name="action" value="toggle"><input type="hidden" name="k" value="' . $h($k) . '"><input type="hidden" name="id" value="' . $h($r['id']) . '">'
@@ -206,6 +206,10 @@ $real = rv_clean($_POST['name'] ?? '', 60);
 $name = $anon ? 'Anonymous' : rv_display_name($real);
 if (!$anon && mb_strlen($name) < 2) out(['error' => 'Please enter your name, or choose Post anonymously.'], 400);
 $text = rv_clean($_POST['text'] ?? '', 2000, true);
+/* optional city and country (country = 2-letter code from the list on the website, shown with its flag) */
+$city = preg_replace_callback('/(^|[\s\-])(\p{Ll})/u', fn($m) => $m[1] . mb_strtoupper($m[2]), rv_clean(preg_replace('/[^\p{L}\p{M}\s\'\-.]/u', '', (string)($_POST['city'] ?? '')), 40));
+$country = strtoupper((string)($_POST['country'] ?? ''));
+if (!in_array($country, explode(' ', 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'), true)) $country = '';
 if (mb_strlen($text) < 10) out(['error' => 'Please write a few words about the fragrance (at least 10 characters).'], 400);
 
 $ip = rv_ip();
@@ -235,7 +239,7 @@ if ($files && is_array($files['tmp_name'])) {
   }
 }
 
-$rec = ['id' => $id, 'product' => $pid, 'rating' => $rating, 'name' => $name, 'anon' => $anon, 'real' => $real, 'text' => $text,
+$rec = ['id' => $id, 'product' => $pid, 'rating' => $rating, 'name' => $name, 'anon' => $anon, 'real' => $real, 'city' => $city, 'country' => $country, 'text' => $text,
         'verified' => (bool)$link, 'order' => $link['no'] ?? null, 'photos' => $photos, 'helpful' => 0, 'hidden' => false,
         'created' => date('c'), 'ip' => $ip];
 $saved = rv_change(function (&$list) use ($rec) { $list[] = $rec; return true; });
@@ -251,7 +255,7 @@ $manage = rv_base() . 'reviews.php?manage&k=' . rv_sign('manage') . '#r-' . $id;
 $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', explode(':', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com')[0])) ?: 'fomaxo.com';
 $pname = $CATALOG[$pid]['name'];
 $body = "New review on fomaxo.com — it is live now.\n\nProduct: $pname\nRating: " . str_repeat('★', $rating) . str_repeat('☆', 5 - $rating) . " ($rating/5)\n"
-      . "Name shown: $name" . ($anon ? " (real name: $real)" : '') . "\n" . ($link ? "Verified Purchaser — order {$link['no']}\n" : "Not a verified purchase\n")
+      . "Name shown: $name" . ($anon ? " (real name: $real)" : '') . "\n" . ($city . $country !== '' ? "From: " . trim("$city $country") . "\n" : '') . ($link ? "Verified Purchaser — order {$link['no']}\n" : "Not a verified purchase\n")
       . 'Photos: ' . count($photos) . "\n\n$text\n\nTo hide this review (or any other), open:\n$manage\n";
 @mail($STORE_EMAIL, '=?UTF-8?B?' . base64_encode("New $rating★ review — $pname") . '?=', $body, "From: FOMAXO Reviews <orders@$host>\r\nContent-Type: text/plain; charset=UTF-8");
 
