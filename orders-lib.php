@@ -33,7 +33,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 7) return;
+  if ($ver >= 8) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -56,6 +56,13 @@ function fomaxo_db_schema($pdo) {
   try { $pdo->exec("ALTER TABLE fx_orders ADD COLUMN delivered_at DATETIME NULL AFTER paid_at"); $pdo->exec("UPDATE fx_orders SET delivered_at = updated_at WHERE status = 'Delivered'"); } catch (Throwable $e) {}
   if (!$pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'delivered_at'")->fetch()) return;
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '7')");
+  /* v8: the new poster is the main photo of six perfumes (only where the old main photo is still first, so a photo picked in admin stays) */
+  $get = $pdo->prepare('SELECT data FROM fx_products WHERE id = ?'); $set = $pdo->prepare('UPDATE fx_products SET data = ? WHERE id = ?');
+  foreach (['gold', 'oldmoney', 'royalcandy', 'dollar', 'matchacoco', 'passionsin'] as $id) {
+    $get->execute([$id]); $d = json_decode((string)$get->fetchColumn(), true);
+    if (is_array($d) && ($d['images'][0] ?? '') === "$id-1") { $d['images'][0] = "$id-main"; $set->execute([fomaxo_json($d), $id]); }
+  }
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '8')");
 }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
