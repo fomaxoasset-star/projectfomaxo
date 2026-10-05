@@ -1303,7 +1303,7 @@ html[data-mode="light"] .btn:not(.line){color:#fffaf1}
 .card .desc,.lead,.small,.pillars p,.etier ul,.tier ul,.fgrid a,.perks-strip span{color:var(--muted)}
 .hc-nav button{color:rgba(246,239,226,.82)}
 .hc-nav button.on{color:#f0d3a0}
-.hero-cine .hc-lead{color:#f3e6cc}
+.hero-cine .hc-lead{color:#f3e6cc;max-width:760px}
 .hc-now small,.hc-stats span{color:#d8ccb4}
 .track-lab span{color:var(--muted)}
 .form input::placeholder,.form textarea::placeholder,.notify input::placeholder{color:var(--dim);opacity:1}
@@ -2175,7 +2175,7 @@ function home(){
       ${emblem('hc-em rv-up')}
       <span class="eyebrow hc-kick rv-up"><i aria-hidden="true"></i>Luxury house <em aria-hidden="true">◆</em> Founded in Dubai<i aria-hidden="true"></i></span>
       <h1 class="rv-up d1"><span class="metal">The house of</span><span class="l2">Modern Luxury</span></h1>
-      <p class="hc-lead rv-up d2">Every FOMAXO creation is an extension of personal presence — refined, expressive and made to last.</p>
+      <p class="hc-lead rv-up d2">Every FOMAXO creation is an extension of personal presence<br><span style="display:inline-block;margin-top:6px">— Refined, Expressive And Made To Last.</span></p>
       <div class="ctas rv-up d3"><a class="btn two" href="#/fragrances"><span>Shop the collection</span><span class="sub">from ${moneyHTML(Math.min(...FRAG.flatMap(p => Object.values(p.prices)).filter(hasPrice)))}</span></a><a class="btn line two" href="#/product/discovery"><span>Discovery Set</span>${P.discovery ? '<span class="sub">from ' + moneyHTML(Math.min(...Object.values(P.discovery.prices))) + '</span>' : ''}</a></div>
     </div>
     <div class="hc-bar">
