@@ -216,7 +216,7 @@ function fomaxo_low_stock() {
   $v = null; if ($pdo = fomaxo_db()) { try { $v = fomaxo_setting($pdo, 'low_stock'); } catch (Throwable $e) {} }
   return $n = ($v !== null && ctype_digit((string)$v) ? min(100, (int)$v) : FX_LOW_STOCK);
 }
-/* Where new-order emails go (Settings → Order emails). The admin password reset link always goes to the store inbox. */
+/* Where store emails go (Settings → Store emails): new orders, new reviews and the admin password reset link. Falls back to the store inbox. */
 const FX_STORE_EMAIL = 'fomaxoasset@gmail.com';
 function fomaxo_orders_email($fallback = FX_STORE_EMAIL) {
   $v = null; if ($pdo = fomaxo_db()) { try { $v = fomaxo_setting($pdo, 'orders_email'); } catch (Throwable $e) {} }
