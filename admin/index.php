@@ -215,7 +215,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .sp{display:flex;align-items:center;gap:10px}.sth{width:40px;height:40px;flex:none;border-radius:7px;object-fit:cover;background:var(--line)}
 .savebar{display:flex;align-items:center;gap:14px}.savebar .stock-help{flex:1;margin:0;font-size:12px;line-height:1.45}.savebar .btn{flex:none}
 .rseg{flex-wrap:wrap}.stars{color:var(--gold);letter-spacing:.06em;white-space:nowrap}.stars i{font-style:normal;color:var(--line)}
-.rfilter{margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rfilter select{max-width:240px;width:auto}.rfilter input{flex:1 1 220px;min-width:0;max-width:420px;padding:7px 10px}.rvlist{list-style:none;margin:0;padding:0}.rv{padding:10px 14px;border-bottom:1px solid var(--line);display:grid;gap:3px}.rv:last-child{border-bottom:0}.rv.off{opacity:.55}
+.rfilter .vcount{margin:0}.rfilter .vcount .em{font-size:12.5px;padding:4px 11px}.rfilter{margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rfilter select{max-width:240px;width:auto}.rfilter input{flex:1 1 220px;min-width:0;max-width:420px;padding:7px 10px}.rvlist{list-style:none;margin:0;padding:0}.rv{padding:10px 14px;border-bottom:1px solid var(--line);display:grid;gap:3px}.rv:last-child{border-bottom:0}.rv.off{opacity:.55}
 .rv p{margin:2px 0;white-space:normal}.rv form{margin:4px 0 0}.rph{display:flex;gap:6px}.rph img{width:56px;height:56px;object-fit:cover;border-radius:6px;display:block}
 .btn.danger{background:#a33a2c;border-color:#a33a2c;color:#fff}.dist span{margin-right:8px;white-space:nowrap}.dist b{color:var(--ink);font-weight:600}.rprod .ph,.rppl .ph{display:none}
 @media (max-width:759px){.hacts{gap:6px}.hacts .btn{padding:6px 9px;font-size:10.5px}.hacts .vw{display:none}.pagehead{flex-wrap:wrap}.tsearch{order:3;flex-basis:100%;max-width:none;margin:0}
@@ -826,7 +826,7 @@ if (isset($_GET['reviews'])) {
   require_once dirname(__DIR__) . '/reviews-lib.php';
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['reviews' => 1]); }
-    $back = array_filter(['reviews' => 1, 'v' => (string)($_POST['v'] ?? ''), 'rp' => (string)($_POST['rp'] ?? ''), 'rq' => (string)($_POST['rq'] ?? '')], fn($x) => $x !== '');
+    $back = array_filter(['reviews' => 1, 'v' => (string)($_POST['v'] ?? ''), 'rp' => (string)($_POST['rp'] ?? ''), 'rq' => (string)($_POST['rq'] ?? ''), 'vf' => (string)($_POST['vf'] ?? '')], fn($x) => $x !== '');
     if (isset($_POST['reviewer_min'])) {
       $n = trim((string)$_POST['reviewer_min']);
       if (ctype_digit($n) && (int)$n >= 1 && (int)$n <= 1000) { fomaxo_setting($pdo, 'reviewer_min', (string)(int)$n); flash('Saved.', true); }
@@ -884,6 +884,9 @@ if (isset($_GET['reviews'])) {
           . '<p class="muted small after">Reviews with the same name count as one customer. Anonymous reviews use the real name the customer typed. Removed reviews are left out.</p></div>';
   } else {
     $list = $rp !== '' ? array_filter($all, fn($r) => $r['product'] === $rp) : $all;
+    $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
+    $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
+    if ($vf !== '') $list = array_filter($list, fn($r) => !empty($r['verified']) === ($vf === '1'));
     $tel = [];   // mobile and email of verified reviews, from their order
     $nos = array_values(array_unique(array_filter(array_column($list, 'order'))));
     if ($nos) { $s = $pdo->prepare('SELECT order_no, phone, email FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'); $s->execute($nos); foreach ($s as $o) $tel[$o['order_no']] = $o; }
@@ -904,12 +907,15 @@ if (isset($_GET['reviews'])) {
         . (!empty($tel[$r['order'] ?? '']['phone']) ? ' · ' . h($tel[$r['order']]['phone']) : '')
         . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' . (!empty($r['order']) ? ', ' . h($r['order']) : '') : 'not verified') . ' · ' . h(date('d M Y', strtotime($r['created']))) . '</div>'
         . '<p>' . nl2br(h($r['text'])) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '')
-        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '')
+        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '') . ($vf !== '' ? $hidden('vf', $vf) : '')
         . '<button class="btn sm' . ($off ? ' line' : ' danger') . '">' . ($off ? 'Put back on website' : 'Remove') . '</button></form></li>';
     }
     $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
-    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1"><select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>'
-          . '<input name="rq" value="' . h($rq) . '" placeholder="Search words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '') . '</form>'
+    $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []);
+    $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
+    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . '<select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>'
+          . '<input name="rq" value="' . h($rq) . '" placeholder="Search words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
+          . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . '</nav></form>'
           . '<div class="fill">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="card muted" style="margin:0">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>')
           . '<p class="muted small after">Remove takes a review off the website and out of the star rating. It stays here, so you can put it back.</p></div>';
   }
