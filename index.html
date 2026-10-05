@@ -3157,6 +3157,7 @@ const FXT = (() => {
       if (!d || !(d.name || d.phone)) return;
       clearTimeout(leadTimer);
       const body = {e: 'lead', st: stage, name: d.name, phone: d.phone, email: d.email, emirate: d.emirate, total: total === null ? '' : total,
+        addr: [d.room, d.building, d.street, d.area].filter(Boolean).join(', ').slice(0, 300),
         items: ls.map(l => `${l.qty} × ${P[l.id] ? P[l.id].name + ' ' + optLabel(P[l.id], l.opt) : l.id}`).join(', ').slice(0, 600)};
       const go = () => { const j = JSON.stringify(body); if (j === lastLead) return; lastLead = j; send('lead', body); };
       if (now) go(); else leadTimer = setTimeout(go, 1500);
