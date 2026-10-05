@@ -380,8 +380,8 @@ if (isset($_GET['forgot'])) {   // emails a one-hour link to the store inbox (ne
       $host = preg_replace('/[^A-Za-z0-9.\-:]/', '', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com');
       $link = ($https ? 'https' : 'http') . "://$host" . rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/admin/index.php'), '/') . "/?reset=$tok";
       $mailHost = preg_replace('/^www\./', '', explode(':', $host)[0]);
-      @mail(fomaxo_orders_email($STORE_EMAIL), 'FOMAXO admin password link', "Someone asked to set the password for the FOMAXO back office.\n\nOpen this link within one hour to choose a new password:\n$link\n\nIf this was not you, ignore this email. Your password stays the same.",
-            "From: FOMAXO <mail@fomaxo.com>\r\nContent-Type: text/plain; charset=UTF-8", '-fmail@fomaxo.com');
+      fomaxo_mail(fomaxo_orders_email($STORE_EMAIL), 'FOMAXO admin password link', "Someone asked to set the password for the FOMAXO back office.\n\nOpen this link within one hour to choose a new password:\n$link\n\nIf this was not you, ignore this email. Your password stays the same.",
+            "From: FOMAXO <mail@fomaxo.com>\r\nContent-Type: text/plain; charset=UTF-8");
     }
     $sent = true;
   }
@@ -609,6 +609,20 @@ if (isset($_GET['settings'])) {
       else { fomaxo_setting($pdo, 'admin_hash', password_hash($p1, PASSWORD_DEFAULT)); session_regenerate_id(true); flash('Your new password is saved.', true); }
       go(['settings' => 1]);
     }
+    if (isset($_POST['mail_test'])) {
+      $err = null; $ok = fomaxo_mail(fomaxo_orders_email(), 'FOMAXO test email', "This is a test from fomaxo.com/admin.", "From: FOMAXO <" . FX_MAIL_FROM . ">\r\nContent-Type: text/plain; charset=UTF-8", $err);
+      flash($ok && $err === null ? 'A test email was sent to ' . fomaxo_orders_email() . '.' : ($err !== null ? 'Hostinger did not accept it: ' . $err . '.' : 'The email could not be sent.'), $ok && $err === null);
+      go(['settings' => 1]);
+    }
+    if (isset($_POST['mail_pass'])) {   // mail@fomaxo.com password: kept above public_html, never shown again
+      $mp = (string)$_POST['mail_pass'];
+      if ($mp === '') { flash('Please type the mail@fomaxo.com password.'); go(['settings' => 1]); }
+      if (!fomaxo_mail_save_password($mp)) { flash('The password could not be saved. Please try again.'); go(['settings' => 1]); }
+      $err = fomaxo_smtp_send(fomaxo_mail_config(), fomaxo_orders_email(), 'FOMAXO test email', "This is a test from fomaxo.com/admin.\n\nStore emails are now sent from mail@fomaxo.com.", "From: FOMAXO <" . FX_MAIL_FROM . ">\r\nContent-Type: text/plain; charset=UTF-8");
+      if ($err !== null) flash('Saved, but Hostinger did not accept it: ' . $err . '. Check the password of mail@fomaxo.com in Hostinger → Emails.');
+      else flash('Saved. A test email was sent to ' . fomaxo_orders_email() . '.', true);
+      go(['settings' => 1]);
+    }
     $email = trim((string)($_POST['orders_email'] ?? ''));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { flash('Please type a valid email address.'); go(['settings' => 1]); }
     fomaxo_setting($pdo, 'orders_email', $email);   // the "Only X left" level is set on the Stock page
@@ -620,6 +634,15 @@ if (isset($_GET['settings'])) {
     . '<label for="orders_email">Store emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
     . '<p class="muted small" style="margin:6px 0 0">New cash and card orders, new reviews and admin password reset links are all emailed here.</p>'
     . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
+    . '<form class="card" method="post">' . csrf_field()
+    . '<h2 style="margin-top:0">Email sending</h2>'
+    . (fomaxo_mail_config()
+        ? '<p class="small" style="margin:0 0 8px"><span class="lvl-ok">●</span> Emails are sent from ' . FX_MAIL_FROM . ' through Hostinger, so they do not land in spam.</p>'
+        : '<p class="small" style="margin:0 0 8px"><span class="lvl-low">●</span> Not set up yet: emails may land in spam. Type the password of the ' . FX_MAIL_FROM . ' mailbox (the one you made in Hostinger → Emails).</p>')
+    . '<label for="mail_pass">' . FX_MAIL_FROM . ' password</label><input id="mail_pass" name="mail_pass" type="password" autocomplete="new-password" placeholder="' . (fomaxo_mail_config() ? 'Saved, type again only to change it' : '') . '">'
+    . '<p class="muted small" style="margin:6px 0 0">Kept on your Hostinger server only, never shown again.</p>'
+    . '<p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Save and send a test</button>'
+    . (fomaxo_mail_config() ? '<button class="btn line" name="mail_test" value="1" formnovalidate>Send a test email</button>' : '') . '</p></form>'
     . '<form class="card" method="post">' . csrf_field()
     . '<h2 style="margin-top:0">Admin password</h2>'
     . '<label for="pw_now">Current password</label><input id="pw_now" name="pw_now" type="password" required autocomplete="current-password">'

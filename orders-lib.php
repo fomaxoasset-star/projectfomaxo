@@ -315,3 +315,52 @@ function fomaxo_report($pdo, $year = null) {
   unset($r);
   return $rows;
 }
+
+/* ---- store emails ----
+   Sent through the mail@fomaxo.com mailbox (Hostinger SMTP, signed for fomaxo.com) once its password is saved in
+   fomaxo.com/admin → Settings, so they do not land in spam. The password sits in fomaxo-mail-config.php ONE LEVEL ABOVE
+   public_html (never on GitHub, never shown again). Without it, or if Hostinger cannot be reached, PHP mail() is used as before. */
+const FX_MAIL_FROM = 'mail@fomaxo.com';
+function fomaxo_mail_config_file() { return dirname(__DIR__) . '/fomaxo-mail-config.php'; }
+function fomaxo_mail_config() {
+  $f = fomaxo_mail_config_file();
+  $c = is_file($f) ? require $f : null;
+  return is_array($c) && ($c['pass'] ?? '') !== '' ? $c + ['server' => 'ssl://smtp.hostinger.com:465'] : null;
+}
+function fomaxo_mail_save_password($pass) {
+  $f = fomaxo_mail_config_file();
+  if ($pass === '') return @unlink($f) || !is_file($f);
+  $ok = @file_put_contents($f, "<?php\n// mail@fomaxo.com password for store emails (written by fomaxo.com/admin → Settings)\nreturn " . var_export(['pass' => $pass], true) . ";\n", LOCK_EX) !== false;
+  if ($ok) @chmod($f, 0600);
+  return $ok;
+}
+/* $subject may be plain text or already =?UTF-8?B?…?= encoded; $headers is the usual "From: …\r\nReply-To: …" block. Returns true when sent. */
+function fomaxo_mail($to, $subject, $body, $headers, &$err = null) {
+  if (!preg_match('/^=\?UTF-8\?B\?/i', $subject) && preg_match('/[^\x20-\x7e]/', $subject)) $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+  $err = null;
+  if ($c = fomaxo_mail_config()) {
+    $err = fomaxo_smtp_send($c, $to, $subject, $body, $headers);
+    if ($err === null) return true;
+    error_log("FOMAXO email by SMTP failed ($err), trying PHP mail()");
+  }
+  return @mail($to, $subject, $body, $headers, '-f' . FX_MAIL_FROM);
+}
+/* Returns null when sent, else a short reason (never the password). */
+function fomaxo_smtp_send($c, $to, $subject, $body, $headers) {
+  $to = str_replace(["\r", "\n", '<', '>'], '', $to);
+  $s = @stream_socket_client($c['server'], $no, $msg, 15);
+  if (!$s) return "could not reach the mail server ($msg)";
+  stream_set_timeout($s, 15);
+  $read = function () use ($s) { $all = ''; while (($l = fgets($s, 1024)) !== false) { $all .= $l; if (strlen($l) < 4 || $l[3] !== '-') break; } return $all; };
+  $cmd = function ($line, $want) use ($s, $read) { if ($line !== null) fwrite($s, $line . "\r\n"); $r = $read(); return (int)substr($r, 0, 3) === $want ? null : (trim(preg_replace('/\s+/', ' ', $r)) ?: 'no answer'); };
+  $hdr = preg_replace("/\r?\n/", "\r\n", trim($headers));
+  $data = "Date: " . date('r') . "\r\nTo: <$to>\r\nSubject: $subject\r\nMessage-ID: <" . bin2hex(random_bytes(12)) . '@fomaxo.com>' . "\r\nMIME-Version: 1.0\r\n"
+        . $hdr . "\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode(preg_replace("/\r?\n/", "\r\n", $body)), 76, "\r\n");
+  $steps = [[null, 220], ['EHLO fomaxo.com', 250], ['AUTH LOGIN', 334], [base64_encode(FX_MAIL_FROM), 334], [base64_encode($c['pass']), 235],
+            ['MAIL FROM:<' . FX_MAIL_FROM . '>', 250], ["RCPT TO:<$to>", 250], ['DATA', 354], [$data . '.', 250]];
+  foreach ($steps as $i => [$line, $want]) {
+    if (($e = $cmd($line, $want)) !== null) { fclose($s); return ($i === 4 ? 'the mailbox password was not accepted: ' : '') . substr($e, 0, 160); }
+  }
+  $cmd('QUIT', 221); fclose($s);
+  return null;
+}
