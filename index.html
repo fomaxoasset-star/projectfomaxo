@@ -1164,6 +1164,25 @@ header.nav .brand .wm,.mnav .brand .wm{height:20px}
 /* INDIA site link: outlined rectangle, set apart after Franchise */
 .menu a.nav-india{margin-left:clamp(10px,1.6vw,28px);padding:8px 12px 8px 14px;border:1px solid var(--gold);border-radius:0;color:var(--gold-hi);line-height:1;transition:background-color .4s,color .4s}
 .menu a.nav-india::after{display:none}
+/* 'Visit India' sits inside the box the old 'India' label sized (.dz keeps that size, hidden) */
+.menu a.nav-india .dz,.mnav nav a.nav-india .dz{visibility:hidden}
+.mnav nav a.nav-india{position:relative}
+.menu a.nav-india .vd,.mnav nav a.nav-india .vd{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1;padding-left:.12em}
+.menu a.nav-india .vd small,.mnav nav a.nav-india .vd small{font-size:.62em;letter-spacing:.32em;padding-left:.32em;opacity:.85}
+/* home: Franchise card */
+.hw{display:block}
+.hw-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:1px solid var(--line-2);background:rgba(var(--bg-rgb),.55);overflow:hidden}
+.hw-media{display:block;min-height:100%;aspect-ratio:16/10;overflow:hidden;background:#000}
+.hw-media img{width:100%;height:100%;object-fit:cover;transition:transform 2s var(--ease)}
+.hw-card:hover .hw-media img{transform:scale(1.05)}
+.hw-copy{display:flex;flex-direction:column;justify-content:center;gap:16px;padding:clamp(24px,4vw,64px)}
+.hw-copy h2{font-size:clamp(26px,2.8vw,40px)}
+.hw-copy em{font-style:normal}
+.hw-copy .ctas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:8px;max-width:560px}
+.hw-copy .ctas .btn{width:100%;padding-left:12px;padding-right:12px;min-height:54px;white-space:nowrap}
+.hw-copy .btn svg{width:19px;height:19px;flex:none}
+@media(max-width:900px){.hw-card{grid-template-columns:minmax(0,1fr)}.hw-media{min-height:0}}
+@media(max-width:560px){.hw-copy .ctas{grid-template-columns:minmax(0,1fr)}}
 .menu a.nav-india:hover,.menu a.nav-india:focus-visible{background:var(--gold);color:rgb(var(--bg-rgb))}
 .mnav nav a.nav-india{align-self:flex-start;margin-top:28px;padding:12px 26px;border:1px solid var(--gold);color:var(--gold-hi)}
 .mnav nav a.nav-india::after{display:none}
@@ -1662,7 +1681,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
       <a href="#/about" data-r="about">About FOMAXO</a>
       <a href="#/contact" data-r="contact">Contact</a>
       <a href="#/franchise" data-r="franchise">Franchise</a>
-      <a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="FOMAXO India website (opens in a new tab)">India</a>
+      <a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
     </nav>
     <div class="icons">
       <button class="icon" id="openSearch" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
@@ -1676,7 +1695,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 <div class="mnav" id="mnav" aria-hidden="true">
   <div class="top"><a class="brand" href="#/"><svg class="em" aria-hidden="true"><use href="#emblem"/></svg><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><use href="#wordmark"/></svg><sup class="tm">™</sup></a><button class="icon" data-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
   <nav>
-    <a href="#/fragrances">Fragrances</a><a href="#/personal-care">Personal Care</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="FOMAXO India website (opens in a new tab)">India</a>
+    <a href="#/fragrances">Fragrances</a><a href="#/personal-care">Personal Care</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
   </nav>
   <div class="foot" id="mnavFoot"></div>
 </div>
@@ -2290,6 +2309,17 @@ function home(){
     <div class="center rv-up" style="display:flex;flex-direction:column;gap:28px;align-items:center">
       <p class="quote">Founded in the vibrant city of Dubai, FOMAXO reflects the elegance and opulence the city is renowned for — <em class="gold">a celebration of elegance, ambition and success.</em></p>
       <a class="link" href="#/about">Read our story →</a>
+    </div>
+  </div></section>
+
+  <section class="sec" style="padding-top:0" id="worlds"><div class="wrap">
+    <div class="hw">
+      <article class="hw-card rv-up">
+        <a class="hw-media" href="#/franchise"><img src="${IMG('atelier')}" alt="A FOMAXO boutique" loading="lazy"></a>
+        <div class="hw-copy"><span class="eyebrow">Franchise</span><h2>Own a <em class="metal">FOMAXO</em> store</h2>
+          <p class="lead">Partner with a Dubai-born luxury brand as a franchise partner, distributor or retail stockist in your country.</p>
+          <div class="ctas"><a class="btn" href="https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent('Hello FOMAXO, I would like to know more about the FOMAXO franchise.')}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${SOC_ICON.whatsapp.replace(/^<g transform="[^"]*">/, '<g>')}</svg>Chat on WhatsApp</a><a class="btn line" href="#/franchise">Send an Enquiry</a></div></div>
+      </article>
     </div>
   </div></section>
 
