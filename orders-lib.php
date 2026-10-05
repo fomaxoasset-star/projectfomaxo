@@ -6,7 +6,7 @@
    orders still go through with the old random number and are kept in the CSV files and emails as before. */
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
 
-const FX_STATUSES = ['Awaiting payment', 'New', 'Paid', 'Delivered', 'Cancelled'];
+const FX_STATUSES = ['Awaiting payment', 'New', 'Paid', 'Delivered', 'Cancelled', 'Refunded'];
 
 function fomaxo_db_config_file() { return dirname(__DIR__) . '/fomaxo-db-config.php'; }
 function fomaxo_db_connect($c) {
@@ -33,7 +33,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 6) return;
+  if ($ver >= 7) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -52,6 +52,10 @@ function fomaxo_db_schema($pdo) {
   try { $pdo->exec("ALTER TABLE fx_leads ADD COLUMN address VARCHAR(300) NOT NULL DEFAULT ''"); } catch (Throwable $e) {}
   if (!$pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'address'")->fetch()) return;
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '6')");
+  /* v7: when an order was delivered, for the order tracker on fomaxo.com/admin (old delivered orders take their last change) */
+  try { $pdo->exec("ALTER TABLE fx_orders ADD COLUMN delivered_at DATETIME NULL AFTER paid_at"); $pdo->exec("UPDATE fx_orders SET delivered_at = updated_at WHERE status = 'Delivered'"); } catch (Throwable $e) {}
+  if (!$pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'delivered_at'")->fetch()) return;
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '7')");
 }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
