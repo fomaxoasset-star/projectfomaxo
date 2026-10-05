@@ -201,6 +201,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .filters{gap:6px 8px;padding:10px 12px}.filters label{font-size:10.5px;margin-bottom:2px}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.stat{padding:6px 8px}.stat b{font-size:14.5px}.stat span{font-size:9.5px;letter-spacing:.04em;display:block;line-height:1.25}
   .g3{grid-template-columns:1fr 1fr}.g3>div:last-child{grid-column:1/-1}
+  .rstats{grid-template-columns:1fr 1fr}.rstats .stat{min-width:0}.rstats .stat b{font-size:16px;white-space:nowrap}.rstats .stat span{font-size:10px}
   .settings{grid-template-columns:1fr}
   .top{padding:7px 12px}.brand{font-size:18px}
   .filters input,.filters select{padding:6px 9px}.filters .acts .btn{padding:8px 12px;font-size:11.5px}
@@ -877,7 +878,7 @@ if (isset($_GET['reports'])) {
   $thisM = $rows[date('Y-m')] ?? null;
   $yOpts = implode('', array_map(fn($y) => '<option' . ((int)$y === $year ? ' selected' : '') . '>' . (int)$y . '</option>', $years));
   page('Reports', '<h1>Profit &amp; loss</h1>'
-    . ($thisM ? '<div class="stats"><div class="stat"><b>' . money($thisM['sales']) . '</b><span>Sales this month</span></div><div class="stat"><b class="' . ($thisM['profit'] < 0 ? 'lvl-out' : 'lvl-ok') . '">' . ($thisM['profit'] < 0 ? '−' : '') . money(abs($thisM['profit'])) . '</b><span>Profit this month</span></div>'
+    . ($thisM ? '<div class="stats rstats"><div class="stat"><b>' . money($thisM['sales']) . '</b><span>Sales this month</span></div><div class="stat"><b class="' . ($thisM['profit'] < 0 ? 'lvl-out' : 'lvl-ok') . '">' . ($thisM['profit'] < 0 ? '−' : '') . money(abs($thisM['profit'])) . '</b><span>Profit this month</span></div>'
              . '<div class="stat"><b>' . money($T['sales'] ?? 0) . '</b><span>Sales ' . $year . '</span></div><div class="stat"><b class="' . (($T['profit'] ?? 0) < 0 ? 'lvl-out' : 'lvl-ok') . '">' . (($T['profit'] ?? 0) < 0 ? '−' : '') . money(abs($T['profit'] ?? 0)) . '</b><span>Profit ' . $year . '</span></div></div>' : '')
     . '<form class="yearbar" method="get"><input type="hidden" name="reports" value="1"><label for="y">Year</label><select id="y" name="y" onchange="this.form.submit()">' . $yOpts . '</select>'
     . '<a class="btn line" href="' . h(self_url(['reports' => 1, 'y' => $year, 'export' => 1])) . '">Download Excel</a></form>'
