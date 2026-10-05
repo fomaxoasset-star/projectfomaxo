@@ -67,7 +67,7 @@ tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgb
 .no{font-weight:500;white-space:nowrap}
 .tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;border:1px solid currentColor;white-space:nowrap}
 .s-New{color:var(--warn)}.s-Paid{color:var(--gold)}.s-Delivered{color:var(--ok)}.s-Cancelled{color:var(--bad)}.s-Refunded{color:var(--bad)}.s-Awaiting{color:var(--muted)}
-.oacts{display:flex;gap:5px;flex-wrap:wrap;margin:0}.oacts form{margin:0}.oacts button{font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}.oacts button:hover{border-color:var(--gold)}.oacts .a-paid{border-color:var(--gold);color:var(--gold)}.oacts .a-delivered{border-color:var(--ok);color:var(--ok)}.oacts .a-cancel,.oacts .a-refund{color:var(--bad)}.oacts .seg2{display:inline-flex;border:1px solid var(--gold);border-radius:999px;overflow:hidden}.oacts .seg2 form+form button{border-left:1px solid var(--gold)}.oacts .seg2 button{border:0;border-radius:0;color:var(--gold)}.oacts .seg2 button:disabled{background:var(--gold);color:var(--gold-ink);cursor:default}.oacts .seg2 .a-unpaid:disabled{background:var(--warn);color:var(--gold-ink)}.tag.p-Unpaid{color:var(--warn);border-style:dashed}.tag.p-Paid{color:var(--gold)}.tags{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.order-acts{margin:0 0 14px}.order-acts button{font-size:12.5px;padding:7px 14px}
+.oacts{display:flex;gap:5px;flex-wrap:wrap;margin:0}.oacts form{margin:0}.oacts button{font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}.oacts button:hover{border-color:var(--gold)}.oacts .a-paid{border-color:var(--gold);color:var(--gold)}.oacts .a-delivered{border-color:var(--ok);color:var(--ok)}.oacts .a-cancel,.oacts .a-refund{color:var(--bad)}.tag.p-Unpaid{color:var(--warn);border-style:dashed}.tag.p-Paid{color:var(--gold)}.tags{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.order-acts{margin:0 0 14px}.order-acts button{font-size:12.5px;padding:7px 14px}
 @media (max-width:759px){
   table,tbody,tr,td{display:block;border:0}thead{display:none}
   table{background:none;border:0}
@@ -437,7 +437,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
   if (!csrf_ok()) { flash('Please try again.'); go($back); }
   if ($quick !== '') {
     $s = $pdo->prepare('SELECT status, payment, admin_note FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_POST['order']]); $cur = $s->fetch();
-    $to = ['paid' => 'Paid', 'unpaid' => 'New', 'delivered' => 'Delivered', 'pending' => 'Paid', 'cancel' => 'Cancelled', 'refund' => 'Refunded'][$quick] ?? '';
+    $to = ['paid' => 'Paid', 'delivered' => 'Delivered', 'pending' => 'Paid', 'cancel' => 'Cancelled', 'refund' => 'Refunded'][$quick] ?? '';
     if (!$cur || $to === '' || !in_array($quick, fx_order_actions($cur), true)) { flash('That order has already changed. Please check it again.'); go($back); }
     $_POST['status'] = $to; $_POST['admin_note'] = (string)$cur['admin_note'];
   }
@@ -448,8 +448,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
                  paid_at = CASE WHEN ? IN ('Paid', 'Delivered') AND paid_at IS NULL THEN NOW() ELSE paid_at END WHERE order_no = ?")
       ->execute([$st, mb_substr(trim((string)($_POST['admin_note'] ?? '')), 0, 2000), $st, (string)$_POST['order']]);
   /* stock: a cancelled or refunded order goes back into stock; taking it out of Cancelled or Refunded takes it out again */
-  if ($quick === 'unpaid') $pdo->prepare('UPDATE fx_orders SET paid_at = NULL WHERE order_no = ?')->execute([(string)$_POST['order']]);
-  $msg = $quick !== '' ? $_POST['order'] . ' is now ' . ['paid' => 'paid', 'unpaid' => 'unpaid', 'delivered' => 'delivered', 'pending' => 'pending again', 'cancel' => 'cancelled', 'refund' => 'refunded'][$quick] . '.' : 'Saved.';
+  $msg = $quick !== '' ? $_POST['order'] . ' is now ' . ['paid' => 'paid', 'delivered' => 'delivered', 'pending' => 'pending again', 'cancel' => 'cancelled', 'refund' => 'refunded'][$quick] . '.' : 'Saved.';
   if (in_array($st, ['Cancelled', 'Refunded'], true) && !in_array($was, ['Cancelled', 'Refunded'], true) && fomaxo_stock_move((string)$_POST['order'], true)) $msg .= ' The items are back in stock.';
   if (in_array($st, ['New', 'Paid', 'Delivered'], true) && in_array($was, ['Cancelled', 'Refunded', 'Awaiting payment'], true) && fomaxo_stock_move((string)$_POST['order'])) $msg .= ' The items were taken out of stock.';
   flash($msg, true); go($back);
@@ -462,22 +461,22 @@ function fx_tags($o) {
   $p = in_array($st, ['New', 'Paid', 'Delivered'], true) ? ($st === 'New' ? '<span class="tag p-Unpaid">Unpaid</span>' : '<span class="tag p-Paid">Paid</span>') : '';
   return '<span class="tags">' . $d . $p . '</span>';
 }
-/* which one-tap buttons an order gets: Paid / Unpaid only for cash orders not yet delivered */
+/* which one-tap buttons an order gets: Paid only for cash orders not yet paid */
 function fx_order_actions($o) {
   $cod = $o['payment'] === 'Cash on delivery';
-  return ['New' => $cod ? ['paid', 'delivered', 'cancel'] : ['delivered', 'cancel'], 'Paid' => $cod ? ['unpaid', 'delivered', 'cancel', 'refund'] : ['delivered', 'cancel', 'refund'],
+  return ['New' => $cod ? ['paid', 'delivered', 'cancel'] : ['delivered', 'cancel'], 'Paid' => ['delivered', 'cancel', 'refund'],
           'Delivered' => ['pending', 'refund']][$o['status']] ?? [];
 }
 function fx_order_buttons($o, $back = '', $cls = '') {
-  $label = ['paid' => 'Paid', 'unpaid' => 'Unpaid', 'delivered' => '✓ Mark delivered', 'pending' => '↺ Not delivered', 'cancel' => 'Cancel order', 'refund' => 'Refund'];
+  $label = ['paid' => 'Paid', 'delivered' => '✓ Mark delivered', 'pending' => '↺ Not delivered', 'cancel' => 'Cancel order', 'refund' => 'Refund'];
   $ask = ['cancel' => 'Cancel order ' . $o['order_no'] . '? The items go back into stock.',
           'refund' => 'Mark order ' . $o['order_no'] . ' as refunded? The items go back into stock. This only records the refund here; it does not send money back. Card refunds are done in Ziina.'];
   $ok = fx_order_actions($o);
   $btn = fn($a) => '<form method="post"' . (isset($ask[$a]) ? ' onsubmit="return confirm(' . h(json_encode($ask[$a], JSON_UNESCAPED_UNICODE)) . ')"' : '') . '>' . csrf_field()
           . '<input type="hidden" name="order" value="' . h($o['order_no']) . '"><input type="hidden" name="quick" value="' . $a . '">'
-          . ($back !== '' ? '<input type="hidden" name="back" value="' . h($back) . '">' : '') . '<button class="a-' . $a . '"' . (in_array($a, $ok, true) ? '' : ' disabled') . '>' . h($label[$a]) . '</button></form>';
-  $out = $o['payment'] === 'Cash on delivery' && in_array($o['status'], ['New', 'Paid'], true) ? '<div class="seg2" title="Cash collected?">' . $btn('paid') . $btn('unpaid') . '</div>' : '';
-  foreach (array_diff($ok, ['paid', 'unpaid']) as $a) $out .= $btn($a);
+          . ($back !== '' ? '<input type="hidden" name="back" value="' . h($back) . '">' : '') . '<button class="a-' . $a . '">' . h($label[$a]) . '</button></form>';
+  $out = '';
+  foreach ($ok as $a) $out .= $btn($a);
   return $out ? '<div class="oacts' . ($cls ? ' ' . $cls : '') . '" onclick="event.stopPropagation()">' . $out . '</div>' : '';
 }
 
