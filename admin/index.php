@@ -106,12 +106,12 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .dgrid{display:grid;gap:8px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.15fr) minmax(0,1fr)}.dgrid>*{min-width:0}
 .db .list{overflow:auto;flex:1 1 auto;min-height:0;overscroll-behavior:contain}.db .list li{padding:5px 0;font-size:13.5px}.db .list.orders li{padding:0}.db .list.orders a{padding:5px 0}.db .list .r{flex-direction:row;align-items:center;gap:8px}.db .list small{font-size:11.5px}
 .db .empty{margin:0;font-size:13px}
-@media (max-width:759px){.dgrid .c-years{display:none}.lists{overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;min-height:0}.lists>.card{flex:none;overflow:visible}.lists .c-stock{order:-1}.lists .list{overflow:visible}
+@media (max-width:759px){.lists{overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;min-height:0}.lists>.card{flex:none;overflow:visible}.lists .c-stock{order:-1}.lists .list{overflow:visible}
   .tile{padding:6px 9px}.tile b{font-size:15px}.tile.todo b{font-size:18px}.tile span{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .db .list.orders small{display:none}.db .list.orders a>span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .seg button{padding:3px 7px}}
-@media (min-width:760px){.lists{display:contents}.seg .ph{display:none}.tiles{grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}.tile,.tile.todo{grid-column:auto}.tile{padding:10px 14px}.tile b,.tile.todo b{font-size:21px}.tile span{font-size:11px}
-  .dgrid{grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"sales orders" "years stock";gap:10px}
-  .dgrid .c-sales{grid-area:sales}.dgrid .c-years{grid-area:years}.dgrid .c-orders{grid-area:orders}.dgrid .c-stock{grid-area:stock}.db .card{padding:12px 16px}.db h2{font-size:15.5px}}
+@media (min-width:760px){.lists{display:contents}.tiles{grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}.tile,.tile.todo{grid-column:auto}.tile{padding:10px 14px}.tile b,.tile.todo b{font-size:21px}.tile span{font-size:11px}
+  .dgrid{grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"sales orders" "sales stock";gap:10px}
+  .dgrid .c-sales{grid-area:sales}.dgrid .c-orders{grid-area:orders}.dgrid .c-stock{grid-area:stock}.db .card{padding:12px 16px}.db h2{font-size:15.5px}}
 .list{list-style:none;margin:0;padding:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.list li:last-child{border:0}
 .list.orders li{padding:0}.list.orders a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;color:var(--ink);text-decoration:none;width:100%}
 .list small{display:block}.list .r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
@@ -142,6 +142,30 @@ label.mini{display:none}
   .rep td.num::before{content:attr(data-l);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
   .rep tr.dim{display:none}.rep tr.tot{border-color:var(--gold)}
 }
+/* analytics */
+.seg a{font-size:11.5px;font-weight:600;color:var(--muted);padding:3px 9px;border-radius:20px;text-decoration:none;white-space:nowrap}.seg a.on{background:var(--gold);color:var(--gold-ink)}
+.an .pagehead{flex-wrap:wrap;margin-bottom:8px;gap:6px 10px}.arange{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}.arange input[type=date]{width:auto;padding:4px 7px;font-size:12.5px}
+.apick{display:none}
+.agrid{grid-template-rows:minmax(0,1fr)}
+.fun li{display:block;padding:5px 0;border-bottom:0}.fl{display:flex;justify-content:space-between;gap:8px;font-size:13px}.fb{height:7px;background:var(--line);border-radius:4px;margin:3px 0 0;overflow:hidden}.fb i{display:block;height:100%;background:var(--gold);border-radius:4px}
+.fd{font-size:11.5px;color:var(--bad);margin-left:4px;white-space:nowrap}.fun li.fx{padding-top:8px;line-height:1.5}
+.leads li{display:block}.leads .lt{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.leads .lt .r{margin-left:auto}.items1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.leads .tag{font-size:11px;padding:1px 8px}
+.stage-details{color:var(--muted)}.stage-payment{color:var(--warn)}.stage-card{color:var(--bad)}
+table.mini{border:0;border-radius:0;background:none;font-size:13px;overflow:visible}table.mini th,table.mini td{padding:5px 6px}table.mini th:first-child,table.mini td:first-child{padding-left:0}table.mini th:last-child,table.mini td:last-child{padding-right:0}
+table.mini th{position:sticky;top:0;background:var(--panel)}
+@media (max-width:759px){
+  table.mini{display:table}table.mini thead{display:table-header-group}table.mini tbody{display:table-row-group}table.mini tr{display:table-row}table.mini td{display:table-cell;border-bottom:1px solid var(--line)}table.mini td.num{text-align:right}
+  .tiles.at{grid-template-columns:repeat(4,1fr)}.tiles.at .tile{grid-column:auto}.tiles.at .tile b{font-size:14px}.tiles.at .tile span{font-size:9.5px;white-space:normal;line-height:1.2}
+  .apick{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 8px}.apick::-webkit-scrollbar{display:none}
+  .apick button{flex:none;font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:20px;padding:5px 11px;cursor:pointer}.apick button.on{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
+  .agrid>.card{display:none}.agrid>.card.on{display:flex}
+  .an .pagehead{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:6px}.an .pagehead h1{margin:0}.arange{display:contents}
+  .arange .seg{grid-column:2/5;justify-self:end}.arange .seg a{padding:3px 8px}.arange input[name=d1]{grid-column:1/3;width:100%}.arange input[name=d2]{width:100%}
+  .tiles.at .tile:last-child{grid-column:span 2}
+}
+@media (min-width:760px){.tiles.at{grid-template-columns:repeat(7,1fr)}.tiles.at .tile b{font-size:19px}
+  .agrid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"funnel visitors left" "products sources left"}
+  .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}}
 /* app layout: header and tabs stay put, the page never scrolls, long lists scroll inside their own panel */
 html,body{height:100%}
 body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
@@ -186,10 +210,25 @@ CSS;
      . (!empty($_SESSION['admin']) ? '<nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
          [['Dashboard', './', !$_GET], ['Orders', './?orders=1', (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
           ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
-          ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Reports', './?reports=1', isset($_GET['reports'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav>' : '')
+          ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Analytics', './?analytics=1', isset($_GET['analytics'])], ['Reports', './?reports=1', isset($_GET['reports'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . ($fit ? ' fit' : '') . '">' . $body . '</main>'
-     . '<script>var t=document.querySelector(".tabs a.on");if(t&&t.parentNode.scrollWidth>t.parentNode.clientWidth)t.parentNode.scrollLeft=t.offsetLeft-(t.parentNode.clientWidth-t.offsetWidth)/2;</script></body></html>';
+     . '<script>' . (!empty($_SESSION['admin']) ? 'try{localStorage.setItem("fomaxo_notrack","1")}catch(e){}' : '') . 'var t=document.querySelector(".tabs a.on");if(t&&t.parentNode.scrollWidth>t.parentNode.clientWidth)t.parentNode.scrollLeft=t.offsetLeft-(t.parentNode.clientWidth-t.offsetWidth)/2;</script></body></html>';
   exit;
+}
+/* bar graph for the Dashboard and Analytics: bars stretch to fill the box; the amounts and dates are normal text so they stay readable */
+function fx_graph($pts, $aria, $hidden = false, $fmt = 'money') {
+  $W = 600; $H = 100; $n = count($pts); $slot = $W / $n; $bw = min(44, max(6, round($slot * .6, 1)));
+  $max = max(array_column($pts, 'v')); $out = ''; $lab = '';
+  foreach ($pts as $i => $p) {
+    $h = $max > 0 ? round(($H - 2) * $p['v'] / $max, 1) : 0;
+    if ($h > 0) $out .= '<rect class="bar" x="' . round($i * $slot + ($slot - $bw) / 2, 1) . '" y="' . ($H - $h) . '" width="' . $bw . '" height="' . $h . '"/>';
+    $out .= '<rect class="hit" x="' . round($i * $slot, 1) . '" y="0" width="' . round($slot, 1) . '" height="' . $H . '" data-t="' . h($p['t']) . '"><title>' . h($p['t']) . '</title></rect>';
+    if ($n <= 12 || in_array($i, [0, intdiv($n, 2), $n - 1], true)) $lab .= '<span>' . h($p['l']) . '</span>';
+  }
+  return '<div class="graph"' . ($hidden ? ' hidden' : '') . '><div class="cmax">' . h($fmt($max)) . '</div>'
+    . '<svg class="chart" viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="none" role="img" aria-label="' . h($aria) . '">'
+    . '<line class="grid" x1="0" x2="' . $W . '" y1="1" y2="1"/>' . $out . '<line class="axis" x1="0" x2="' . $W . '" y1="' . $H . '" y2="' . $H . '"/></svg>'
+    . '<div class="clab' . ($n <= 12 ? '' : ' ends') . '"' . ($n <= 12 ? ' style="grid-template-columns:repeat(' . $n . ',1fr)"' : '') . '>' . $lab . '</div></div>';
 }
 function flash($m = null, $ok = false) { if ($m !== null) { $_SESSION['flash'] = [$m, $ok]; return ''; } $f = $_SESSION['flash'] ?? null; unset($_SESSION['flash']); return $f ? '<p class="msg ' . ($f[1] ? 'ok' : 'bad') . '">' . h($f[0]) . '</p>' : ''; }
 function csrf_field() { return '<input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '">'; }
@@ -599,6 +638,114 @@ if (isset($_GET['expenses'])) {
     . '<p class="muted small after">"Stock purchase" is shown in reports but not taken off profit, because the cost of each bottle is already counted when it sells.</p></div>', true, true);
 }
 
+/* ---- analytics: visitors, where they come from, and where sales are lost (filled by track.php on the website) ---- */
+if (isset($_GET['analytics'])) {
+  $isDay = fn($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$v) && strtotime($v);
+  $r = (string)($_GET['r'] ?? '7');
+  if ($r === 'custom' && $isDay($_GET['d1'] ?? '') && $isDay($_GET['d2'] ?? '')) { $d1 = min($_GET['d1'], $_GET['d2']); $d2 = max($_GET['d1'], $_GET['d2']); }
+  else { if (!in_array($r, ['today', '7', '30'], true)) $r = '7'; $d2 = date('Y-m-d'); $d1 = date('Y-m-d', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')); }
+  $span = [$d1 . ' 00:00:00', $d2 . ' 23:59:59'];
+  $nDays = (int)round((strtotime($d2) - strtotime($d1)) / 86400) + 1;
+  $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
+
+  $f = $q("SELECT COUNT(DISTINCT vid) visitors, COUNT(DISTINCT sid) visits, SUM(ev = 'view') views,
+                  COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) product, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) cart,
+                  COUNT(DISTINCT CASE WHEN ev = 'checkout' THEN sid END) checkout, COUNT(DISTINCT CASE WHEN ev = 'pay' THEN sid END) pay,
+                  COUNT(DISTINCT CASE WHEN ev = 'card' THEN sid END) card, COUNT(DISTINCT CASE WHEN ev = 'buy' THEN sid END) buy
+           FROM fx_events WHERE at BETWEEN ? AND ?")->fetch();
+  $f = array_map('intval', $f);
+  $live = (int)$pdo->query('SELECT COUNT(*) FROM fx_live WHERE seen > NOW() - INTERVAL 5 MINUTE')->fetchColumn();
+  $ord = $q("SELECT COUNT(*) n, COALESCE(SUM(total), 0) t FROM fx_orders WHERE status IN ('New', 'Paid', 'Delivered') AND test = 0 AND created_at BETWEEN ? AND ?")->fetch();
+  $back = (int)$q('SELECT COUNT(DISTINCT e.vid) FROM fx_events e WHERE e.at BETWEEN ? AND ? AND EXISTS (SELECT 1 FROM fx_events o WHERE o.vid = e.vid AND o.at < ?)', [$span[0], $span[1], $span[0]])->fetchColumn();
+  $pct = fn($a, $b) => $b > 0 ? round(100 * $a / $b, 1) : 0;
+  $pctT = fn($v) => rtrim(rtrim(number_format($v, 1), '0'), '.') . '%';
+
+  /* visitors over time: by hour for one day, by day up to three months, by month for longer */
+  $mode = $nDays === 1 ? 'hour' : ($nDays <= 92 ? 'day' : 'month');
+  $fmtKey = ['hour' => '%H', 'day' => '%Y-%m-%d', 'month' => '%Y-%m'][$mode];
+  $per = []; foreach ($q("SELECT DATE_FORMAT(at, '$fmtKey') k, COUNT(DISTINCT vid) n FROM fx_events WHERE at BETWEEN ? AND ? GROUP BY k") as $row) $per[$row['k']] = (int)$row['n'];
+  $pts = [];
+  if ($mode === 'hour') for ($h = 0; $h < 24; $h++) { $k = sprintf('%02d', $h); $pts[] = ['v' => $per[$k] ?? 0, 'l' => date('ga', mktime($h, 0)), 't' => date('ga', mktime($h, 0)) . '–' . date('ga', mktime($h + 1, 0)) . ': ' . ($per[$k] ?? 0) . ' visitors']; }
+  else for ($t = strtotime($d1); $t <= strtotime($d2); $t = strtotime($mode === 'day' ? '+1 day' : 'first day of next month', $t)) {
+    $k = date($mode === 'day' ? 'Y-m-d' : 'Y-m', $t);
+    $pts[] = ['v' => $per[$k] ?? 0, 'l' => date($mode === 'day' ? ($nDays <= 7 ? 'D' : 'j M') : 'M y', $t), 't' => date($mode === 'day' ? 'D j M' : 'F Y', $t) . ': ' . ($per[$k] ?? 0) . ' visitors'];
+  }
+  $chart = fx_graph($pts, 'Visitors per ' . $mode, false, fn($v) => number_format($v) . ' visitors');
+
+  /* where visits come from (the first page of each visit), and how many of them bought */
+  $src = '';
+  foreach ($q("SELECT x.source, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND b.ev = 'buy')) bought
+               FROM (SELECT sid, MIN(vid) vid, MIN(source) source FROM fx_events WHERE ev = 'view' AND source IS NOT NULL AND at BETWEEN ? AND ? GROUP BY sid) x
+               GROUP BY x.source ORDER BY visits DESC") as $row)
+    $src .= '<tr><td>' . h($row['source']) . '</td><td class="num">' . (int)$row['visitors'] . '</td><td class="num">' . (int)$row['visits'] . '</td><td class="num">' . (int)$row['bought'] . '</td><td class="num">' . $pctT($pct($row['bought'], $row['visits'])) . '</td></tr>';
+
+  /* products: views and adds to bag; devices */
+  $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $row) { $pd = json_decode($row['data'], true); $names[$row['id']] = $pd['name'] ?? $row['id']; }
+  $prod = '';
+  foreach ($q("SELECT product, COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) views, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) adds
+               FROM fx_events WHERE ev IN ('product', 'cart') AND product IS NOT NULL AND at BETWEEN ? AND ? GROUP BY product ORDER BY views DESC, adds DESC") as $row)
+    $prod .= '<tr><td>' . h($names[$row['product']] ?? $row['product']) . '</td><td class="num">' . (int)$row['views'] . '</td><td class="num">' . (int)$row['adds'] . '</td><td class="num">' . $pctT($pct($row['adds'], $row['views'])) . '</td></tr>';
+  $dev = [];
+  foreach ($q("SELECT device, COUNT(DISTINCT sid) n FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY device ORDER BY n DESC") as $row) $dev[] = h(ucfirst($row['device'] ?: 'other')) . ' ' . $pctT($pct($row['n'], $f['visits']));
+
+  /* checkouts where the customer typed their name or mobile but did not buy, and the step they left at */
+  $stageName = ['details' => 'Delivery details', 'payment' => 'Payment choice', 'card' => 'Card payment page'];
+  $left = ''; $leftN = ['details' => 0, 'payment' => 0, 'card' => 0];
+  foreach ($q("SELECT l.* FROM fx_leads l WHERE l.updated_at BETWEEN ? AND ? AND l.order_no IS NULL
+               AND NOT EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
+                               AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9))
+               ORDER BY l.updated_at DESC LIMIT 200") as $l) {
+    $leftN[$l['stage']] = ($leftN[$l['stage']] ?? 0) + 1;
+    $wa = preg_replace('/\D/', '', $l['phone']); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1);
+    $recent = strtotime($l['updated_at']) > time() - 900;
+    $left .= '<li><div class="lt"><b>' . h($l['name'] ?: 'No name') . '</b>' . ($l['phone'] !== '' ? ' <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">' . h($l['phone']) . '</a>' : '')
+           . '<span class="r">' . ($l['total'] !== null ? '<b>' . money($l['total']) . '</b>' : '') . '</span></div>'
+           . '<div class="small"><span class="tag stage-' . h($l['stage']) . '">Left at ' . h($stageName[$l['stage']] ?? $l['stage']) . '</span> <span class="muted">' . h(date('d M, H:i', strtotime($l['updated_at']))) . ($recent ? ' · may still be checking out' : '') . ($l['emirate'] !== '' ? ' · ' . h($l['emirate']) : '') . '</span></div>'
+           . ($l['items'] !== '' ? '<div class="muted small items1">' . h($l['items']) . '</div>' : '') . '</li>';
+  }
+
+  /* funnel: each step counts visits (one person can visit more than once) */
+  $steps = [['Visits', $f['visits']], ['Viewed a product', $f['product']], ['Added to bag', $f['cart']], ['Started checkout', $f['checkout']], ['Reached payment', $f['pay']], ['Purchased', $f['buy']]];
+  $fun = ''; $prev = null;
+  foreach ($steps as [$label, $n]) {
+    $fun .= '<li><div class="fl"><span>' . $label . ($prev !== null && $prev > $n ? ' <span class="fd">' . number_format($prev - $n) . ' left here (' . $pctT($pct($prev - $n, $prev)) . ')</span>' : '') . '</span>'
+          . '<span><b>' . number_format($n) . '</b> <span class="muted">' . $pctT($pct($n, $f['visits'])) . '</span></span></div>'
+          . '<div class="fb"><i style="width:' . ($f['visits'] ? max(1, $pct($n, $f['visits'])) : 0) . '%"></i></div></li>';
+    $prev = $n;
+  }
+  $fun .= '<li class="fx muted small">Opened the card payment page: ' . number_format($f['card']) . ' · Pages per visit: ' . ($f['visits'] ? number_format($f['views'] / $f['visits'], 1) : '0') . ' · Returning visitors: ' . number_format($back) . ($dev ? ' · ' . implode(', ', $dev) : '') . '</li>';
+
+  $tile = fn($val, $label, $cls = '') => '<div class="tile ' . $cls . '"><b>' . $val . '</b><span>' . $label . '</span></div>';
+  $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
+  $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'left' => 'Left checkout'];
+  page('Analytics', '<div class="db an">'
+    . '<div class="pagehead"><h1>Analytics</h1><form class="arange" method="get"><input type="hidden" name="analytics" value="1"><div class="seg">'
+    . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k])) . '"' . ($r === $k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
+    . '<input type="hidden" name="r" value="custom"><input type="date" name="d1" value="' . h($d1) . '" aria-label="From"><input type="date" name="d2" value="' . h($d2) . '" aria-label="To"><button class="btn sm' . ($r === 'custom' ? '' : ' line') . '">Show</button></form></div>'
+    . '<div class="tiles at">'
+    . $tile(number_format($f['visitors']), 'Visitors · ' . number_format($f['visits']) . ' visits')
+    . $tile(number_format($live), 'On the site now', $live ? 'hot' : '')
+    . $tile($pctT($pct($f['buy'], $f['visits'])), 'Conversion rate')
+    . $tile($pctT($f['cart'] ? 100 - $pct($f['buy'], $f['cart']) : 0), 'Cart abandonment')
+    . $tile($pctT($f['checkout'] ? 100 - $pct($f['buy'], $f['checkout']) : 0), 'Checkout abandonment')
+    . $tile(number_format((int)$ord['n']), 'Orders')
+    . $tile('AED ' . number_format(round((float)$ord['t'])), 'Revenue')
+    . '</div>'
+    . '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
+    . '<div class="dgrid agrid">'
+    . '<section class="card a-funnel on" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
+    . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a bar to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p></section>'
+    . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout</h2></div>' . (array_sum($leftN) ? '<p class="muted small" style="margin:0 0 4px">' . implode(' · ', array_map(fn($k) => $leftN[$k] . ' at ' . strtolower($stageName[$k]), array_keys(array_filter($leftN)))) . '</p>' : '')
+    . ($left ? '<ul class="list leads">' . $left . '</ul>' : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
+    . '<section class="card a-sources" data-p="sources"><div class="ch"><h2>Where visitors come from</h2></div>'
+    . ($src ? '<div class="list"><table class="mini"><thead><tr><th>Source</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th></tr></thead><tbody>' . $src . '</tbody></table></div>' : '<p class="muted empty">No visits yet.</p>') . '</section>'
+    . '<section class="card a-products" data-p="products"><div class="ch"><h2>Products</h2></div>'
+    . ($prod ? '<div class="list"><table class="mini"><thead><tr><th>Product</th><th class="num">Viewed</th><th class="num">To bag</th><th class="num">Rate</th></tr></thead><tbody>' . $prod . '</tbody></table></div>' : '<p class="muted empty">No product views yet.</p>') . '</section>'
+    . '</div></div>'
+    . '<script>document.querySelectorAll(".apick button").forEach(function(b){b.addEventListener("click",function(){document.querySelectorAll(".apick button,.agrid>.card").forEach(function(x){x.classList.toggle("on",x.dataset.p===b.dataset.p)})})});'
+    . 'document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});</script>', true, true);
+}
+
 /* ---- reports: sales, costs and profit or loss by month and by year ---- */
 if (isset($_GET['reports'])) {
   $years = $pdo->query("SELECT DISTINCT YEAR(created_at) y FROM fx_orders UNION SELECT DISTINCT YEAR(day) FROM fx_expenses ORDER BY y DESC")->fetchAll(PDO::FETCH_COLUMN);
@@ -689,9 +836,10 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   $s = $pdo->prepare("SELECT DATE(created_at) d, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY DATE(created_at)");
   $s->execute([array_key_first($days) . ' 00:00:00']);
   foreach ($s as $r) if (isset($days[$r['d']])) $days[$r['d']] = [(float)$r['t'], (int)$r['n']];
-  $years = [date('Y') => [0.0, 0]];
-  foreach ($pdo->query("SELECT YEAR(created_at) y, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real GROUP BY YEAR(created_at)") as $r) $years[$r['y']] = [(float)$r['t'], (int)$r['n']];
-  ksort($years);
+  $months = []; for ($i = 11; $i >= 0; $i--) $months[date('Y-m', strtotime(date('Y-m-01') . " -$i month"))] = [0.0, 0];
+  $s = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%Y-%m') m, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY m");
+  $s->execute([array_key_first($months) . '-01 00:00:00']);
+  foreach ($s as $r) if (isset($months[$r['m']])) $months[$r['m']] = [(float)$r['t'], (int)$r['n']];
   $pt = fn($v, $label, $tip) => ['v' => $v[0], 'l' => $label, 't' => $tip . ': ' . $orders($v[1] ? $v : null)];
   $series = [
     'day' => array_map(fn($h, $v) => $pt($v, date('ga', mktime($h, 0)), date('ga', mktime($h, 0)) . '–' . date('ga', mktime($h + 1, 0))), array_keys($hours), $hours),
@@ -699,25 +847,9 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     'month' => array_map(fn($d, $v) => $pt($v, date('j M', strtotime($d)), date('D j M', strtotime($d))), array_keys($days), $days),
   ];
   $series['week'] = array_slice($series['week'], -7);
-  $byMonth = count($years) < 2;
-  $series['year'] = $byMonth ? array_map(fn($k, $r) => $pt([$r['sales'], $r['orders']], date('M', strtotime("$k-01")), date('F Y', strtotime("$k-01"))), array_keys($yr), $yr)
-                             : array_map(fn($y, $v) => $pt($v, (string)$y, (string)$y), array_keys($years), $years);
-  $graph = function ($pts, $aria, $hidden = false) {   // bars stretch to fill the box; the amounts and dates are normal text so they stay readable
-    $W = 600; $H = 100; $n = count($pts); $slot = $W / $n; $bw = min(44, max(6, round($slot * .6, 1)));
-    $max = max(array_column($pts, 'v')); $out = ''; $lab = '';
-    foreach ($pts as $i => $p) {
-      $h = $max > 0 ? round(($H - 2) * $p['v'] / $max, 1) : 0;
-      if ($h > 0) $out .= '<rect class="bar" x="' . round($i * $slot + ($slot - $bw) / 2, 1) . '" y="' . ($H - $h) . '" width="' . $bw . '" height="' . $h . '"/>';
-      $out .= '<rect class="hit" x="' . round($i * $slot, 1) . '" y="0" width="' . round($slot, 1) . '" height="' . $H . '" data-t="' . h($p['t']) . '"><title>' . h($p['t']) . '</title></rect>';
-      if ($n <= 12 || in_array($i, [0, intdiv($n, 2), $n - 1], true)) $lab .= '<span>' . h($p['l']) . '</span>';
-    }
-    return '<div class="graph"' . ($hidden ? ' hidden' : '') . '><div class="cmax">' . h($max > 0 ? money($max) : 'AED 0') . '</div>'
-      . '<svg class="chart" viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="none" role="img" aria-label="' . h($aria) . '">'
-      . '<line class="grid" x1="0" x2="' . $W . '" y1="1" y2="1"/>' . $out . '<line class="axis" x1="0" x2="' . $W . '" y1="' . $H . '" y2="' . $H . '"/></svg>'
-      . '<div class="clab' . ($n <= 12 ? '' : ' ends') . '"' . ($n <= 12 ? ' style="grid-template-columns:repeat(' . $n . ',1fr)"' : '') . '>' . $lab . '</div></div>';
-  };
+  $series['year'] = array_map(fn($m, $v) => $pt($v, date('M', strtotime("$m-01")), date('F Y', strtotime("$m-01"))), array_keys($months), $months);   // last 12 months
   $sum = fn($k) => money(array_sum(array_column($series[$k], 'v')));
-  $ranges = ['day' => 'Today', 'week' => '7 days', 'month' => '30 days', 'year' => $byMonth ? date('Y') : 'Years'];   // the last one only shows on phones, where the year graph moves into this card
+  $ranges = ['day' => 'Today', 'week' => '7 days', 'month' => '30 days', 'year' => 'Year'];
   /* stock running low (counted sizes at or below the warning level) */
   $low = fomaxo_low_stock(); $alerts = '';
   foreach ($pdo->query('SELECT product, size, qty FROM fx_stock WHERE qty IS NOT NULL ORDER BY qty, product') as $r) {
@@ -748,12 +880,9 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     . ($month['no_cost'] ? '<p class="muted note">' . $plural($month['no_cost'], 'order') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit shows too high. <a href="./?stock=1">Add costs</a></p>' : '')
     . '<div class="dgrid">'
     . '<section class="card c-sales"><div class="ch"><h2>Sales</h2><div class="seg" role="group" aria-label="Sales period">'
-    . implode('', array_map(fn($k, $l) => '<button type="button" data-k="' . $k . '"' . ($k === 'month' ? ' class="on"' : ($k === 'year' ? ' class="ph"' : '')) . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div></div>'
-    . '<div class="chartbox">' . implode('', array_map(fn($k) => $graph($series[$k], 'Sales ' . strtolower($ranges[$k]) . ', ' . $sum($k) . ' in total', $k !== 'month'), array_keys($ranges))) . '</div>'
+    . implode('', array_map(fn($k, $l) => '<button type="button" data-k="' . $k . '"' . ($k === 'month' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div></div>'
+    . '<div class="chartbox">' . implode('', array_map(fn($k) => fx_graph($series[$k], 'Sales ' . strtolower($ranges[$k]) . ', ' . $sum($k) . ' in total', $k !== 'month'), array_keys($ranges))) . '</div>'
     . '<p class="sub"><span class="tip">Tap a bar to see its sales</span><b class="tot">' . implode('', array_map(fn($k) => '<span data-k="' . $k . '"' . ($k !== 'month' ? ' hidden' : '') . '>' . h($sum($k)) . '</span>', array_keys($ranges))) . '</b></p></section>'
-    . '<section class="card c-years"><div class="ch"><h2>' . ($byMonth ? 'Sales ' . date('Y') . ' by month' : 'Sales by year') . '</h2><a href="./?reports=1">Reports</a></div>'
-    . '<div class="chartbox">' . $graph($series['year'], $byMonth ? 'Sales per month in ' . date('Y') : 'Sales per year') . '</div>'
-    . '<p class="sub"><span class="tip">Tap a bar to see its sales</span><b class="tot">' . h($sum('year')) . '</b></p></section>'
     . '<div class="lists"><section class="card c-orders"><div class="ch"><h2>Latest orders</h2><a href="./?orders=1">All orders</a></div>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted empty">No orders yet.</p>') . '</section>'
     . '<section class="card c-stock"><div class="ch"><h2>Stock alerts</h2><a href="./?stock=1">Stock</a></div>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted empty">No size is running low.</p>') . '</section></div>'
     . '</div></div>'

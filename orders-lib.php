@@ -33,13 +33,15 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 3) return;
+  if ($ver >= 4) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
   /* v3: products move into the database (added and edited on fomaxo.com/admin → Products); orders, stock, expenses are not touched */
-  fomaxo_products_table($pdo);
-  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '3')");
+  if ($ver < 3) fomaxo_products_table($pdo);
+  /* v4: visit stats for fomaxo.com/admin → Analytics */
+  fomaxo_analytics_tables($pdo);
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '4')");
 }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
@@ -70,6 +72,38 @@ function fomaxo_db_tables($pdo) {
   /* orders count up from FMX-1001 */
   $next = max(1001, (int)$pdo->query('SELECT COALESCE(MAX(id), 0) + 1 FROM fx_orders')->fetchColumn());
   $pdo->exec("ALTER TABLE fx_orders AUTO_INCREMENT = $next");
+}
+
+/* ---- visit stats (track.php writes, fomaxo.com/admin → Analytics reads) ----
+   fx_events: one row per step a visitor takes (page view, product view, add to bag, checkout, payment step, card page, purchase).
+   Visitors are an anonymous random id kept in their browser; no names, IP addresses or cookies.
+   fx_leads: only for checkouts where the customer typed their name or mobile, so you can see who left and at which step.
+   fx_live: when each visitor was last seen, for "on the website now". */
+function fomaxo_analytics_tables($pdo) {
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_events (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, at DATETIME NOT NULL,
+              vid CHAR(16) NOT NULL, sid CHAR(16) NOT NULL, ev VARCHAR(10) NOT NULL, page VARCHAR(80) NOT NULL DEFAULT '',
+              product VARCHAR(40) NULL, source VARCHAR(40) NULL, ref VARCHAR(120) NULL, device VARCHAR(8) NOT NULL DEFAULT '',
+              KEY (at), KEY (sid), KEY (vid), KEY (ev, at)) DEFAULT CHARSET=utf8mb4");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_live (vid CHAR(16) NOT NULL PRIMARY KEY, seen DATETIME NOT NULL, page VARCHAR(80) NOT NULL DEFAULT '', KEY (seen)) DEFAULT CHARSET=utf8mb4");
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_leads (sid CHAR(16) NOT NULL PRIMARY KEY, vid CHAR(16) NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL,
+              stage VARCHAR(10) NOT NULL, name VARCHAR(80) NOT NULL DEFAULT '', phone VARCHAR(25) NOT NULL DEFAULT '', email VARCHAR(120) NOT NULL DEFAULT '',
+              emirate VARCHAR(30) NOT NULL DEFAULT '', items VARCHAR(600) NOT NULL DEFAULT '', total DECIMAL(10,2) NULL, order_no VARCHAR(40) NULL,
+              KEY (updated_at)) DEFAULT CHARSET=utf8mb4");
+}
+/* where a visit came from: utm_source first, then the in-app browser (Instagram, TikTok … often send no referrer), then the referring site */
+function fomaxo_source($ref, $utm, $ua) {
+  $names = ['instagram' => 'Instagram', 'facebook' => 'Facebook', 'fb' => 'Facebook', 'whatsapp' => 'WhatsApp', 'wa.me' => 'WhatsApp', 'google' => 'Google',
+            'tiktok' => 'TikTok', 'snapchat' => 'Snapchat', 'youtube' => 'YouTube', 'youtu.be' => 'YouTube', 'bing' => 'Bing', 't.co' => 'X', 'twitter' => 'X', 'x.com' => 'X'];
+  $match = function ($s) use ($names) { foreach ($names as $k => $v) if (preg_match('/(^|[^a-z])' . preg_quote($k, '/') . '/i', $s)) return $v; return null; };
+  if ($utm !== '' && ($m = $match($utm))) return $m;
+  if (preg_match('/Instagram/', $ua)) return 'Instagram';
+  if (preg_match('/FBAN|FBAV|FB_IAB/', $ua)) return 'Facebook';
+  if (preg_match('/musical_ly|TikTok|BytedanceWebview/i', $ua)) return 'TikTok';
+  if (preg_match('/Snapchat/', $ua)) return 'Snapchat';
+  $host = strtolower((string)parse_url($ref, PHP_URL_HOST));
+  $host = preg_replace('/^(www|m|l|lm)\./', '', $host);
+  if ($host === '' || preg_match('/(^|\.)(fomaxo\.com|ziina\.com)$/', $host)) return $utm !== '' ? mb_substr(ucfirst($utm), 0, 40) : 'Direct';
+  return $match($host) ?? mb_substr($host, 0, 40);
 }
 
 /* ---- products: the shop list (index.html) and the checkout price lists read these when the database is up ----
