@@ -165,7 +165,19 @@ function fomaxo_order_paid($no, $note = '') {
 }
 
 /* ================= stock ================= */
-const FX_LOW_STOCK = 5;   // the website shows "Only X left" from this number down — keep in sync with index.html (LOW_STOCK)
+const FX_LOW_STOCK = 5;   // default for the "Only X left" level; can be changed on fomaxo.com/admin → Settings
+/* "Only X left" shows on the website from this number down (Settings → Low stock warning). */
+function fomaxo_low_stock() {
+  static $n = null; if ($n !== null) return $n;
+  $v = null; if ($pdo = fomaxo_db()) { try { $v = fomaxo_setting($pdo, 'low_stock'); } catch (Throwable $e) {} }
+  return $n = ($v !== null && ctype_digit((string)$v) ? min(100, (int)$v) : FX_LOW_STOCK);
+}
+/* Where new-order emails go (Settings → Order emails). The admin password reset link always goes to the store inbox. */
+const FX_STORE_EMAIL = 'fomaxoasset@gmail.com';
+function fomaxo_orders_email($fallback = FX_STORE_EMAIL) {
+  $v = null; if ($pdo = fomaxo_db()) { try { $v = fomaxo_setting($pdo, 'orders_email'); } catch (Throwable $e) {} }
+  return $v !== null && filter_var($v, FILTER_VALIDATE_EMAIL) ? $v : $fallback;
+}
 
 /* What an order takes from stock: [['product', 'size', qty], …]. The free mini counts as one 10ml. */
 function fomaxo_stock_lines($lines, $giftId = null) {
