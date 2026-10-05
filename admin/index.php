@@ -1413,7 +1413,7 @@ if (isset($_GET['o'])) {
   $row = fn($k, $v) => $v === '' || $v === null ? '' : '<dt>' . h($k) . '</dt><dd>' . $v . '</dd>';
   page($o['order_no'], '<p class="small"><a href="./?orders=1">← All orders</a></p>'
     . '<h1>' . h($o['order_no']) . ' ' . fx_tags($o) . '</h1>' . flash()
-    . fx_tracker($o) . fx_order_buttons($o, '', 'order-acts')
+    . fx_tracker($o)
     . '<div class="grid2"><div>'
     . '<div class="card"><h2 style="margin-top:0">Items</h2><ul class="items">' . implode('', array_map(fn($i) => '<li>' . h($i) . '</li>', $items)) . '</ul>'
     . '<dl style="margin-top:14px">' . $row('Subtotal', $o['subtotal'] !== null ? money($o['subtotal']) : '') . $row('Discount', $o['discount'] > 0 ? '-' . money($o['discount']) : '')
