@@ -173,8 +173,9 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
   .tiles.at .tile:last-child{grid-column:span 2}
 }
 @media (min-width:760px){.tiles.at{grid-template-columns:repeat(7,1fr)}.tiles.at .tile b{font-size:19px}
-  .agrid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"funnel visitors left" "products sources left"}
-  .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}}
+  .agrid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"funnel visitors countries left" "products sources emirates left"}
+  .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}.a-countries{grid-area:countries}.a-emirates{grid-area:emirates}}
+.agrid .list[hidden]{display:none!important}.gbar{width:28%}.gbar .fb{margin:0}.gnote{margin:6px 0 0;flex:none}.a-countries .ch,.a-emirates .ch{flex-wrap:wrap;gap:6px}.gseg button{padding:3px 7px}@media (min-width:760px){.gtab{table-layout:fixed;width:100%}.gtab .gbar{display:none}.gtab th:nth-child(2){width:64px}.gtab th:nth-child(4){width:52px}.gtab td:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 /* app layout: header and tabs stay put, the page never scrolls, long lists scroll inside their own panel */
 html,body{height:100%}
 body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
@@ -729,6 +730,36 @@ if (isset($_GET['analytics'])) {
   $dev = [];
   foreach ($q("SELECT device, COUNT(DISTINCT sid) n FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY device ORDER BY n DESC") as $row) $dev[] = h(ucfirst($row['device'] ?: 'other')) . ' ' . $pctT($pct($row['n'], $f['visits']));
 
+  /* where visitors are: country of each visit, and the emirate for the UAE (looked up from the IP address when the visit starts; the address is not kept) */
+  require_once dirname(__DIR__) . '/geo-lib.php';
+  $gr = ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'year' => 'Year'];
+  $gFrom = ['today' => date('Y-m-d 00:00:00'), '7' => date('Y-m-d 00:00:00', strtotime('-6 day')), '30' => date('Y-m-d 00:00:00', strtotime('-29 day')), 'year' => date('Y-m-d 00:00:00', strtotime('-1 year +1 day'))];
+  $gOn = isset($gr[$r]) ? $r : '7';
+  $gSince = fomaxo_setting($pdo, 'geo_since');
+  $geoTable = function ($rows, $label) use ($pct, $pctT) {
+    $tot = array_sum(array_column($rows, 'n')); $tr = '';
+    foreach ($rows as $row) $tr .= '<tr><td>' . $row['name'] . '</td><td class="num">' . number_format($row['n']) . '</td><td class="gbar"><div class="fb"><i style="width:' . max(1, $pct($row['n'], $tot)) . '%"></i></div></td><td class="num muted">' . $pctT($pct($row['n'], $tot)) . '</td></tr>';
+    return '<table class="mini gtab"><thead><tr><th>' . $label . '</th><th class="num">Visitors</th><th class="gbar"></th><th class="num">Share</th></tr></thead><tbody>' . $tr . '</tbody></table>';
+  };
+  $gCountries = $gEmirates = '';
+  foreach ($gr as $k => $l) {
+    $cRows = $eRows = [];
+    try {
+      foreach ($q("SELECT country, COUNT(DISTINCT vid) n FROM fx_events WHERE country IS NOT NULL AND at >= ? GROUP BY country ORDER BY n DESC, country LIMIT 30", [$gFrom[$k]]) as $row)
+        $cRows[] = ['name' => fomaxo_flag($row['country']) . ' ' . h(fomaxo_country_name($row['country'])), 'n' => (int)$row['n']];
+      $em = array_fill_keys(FOMAXO_EMIRATES, 0); $unk = 0;
+      foreach ($q("SELECT region, COUNT(DISTINCT vid) n FROM fx_events WHERE country = 'AE' AND at >= ? GROUP BY region", [$gFrom[$k]]) as $row)
+        if (isset($em[$row['region']])) $em[$row['region']] = (int)$row['n']; else $unk += (int)$row['n'];
+      arsort($em); foreach ($em as $name => $n) $eRows[] = ['name' => h($name), 'n' => $n];
+      if ($unk) $eRows[] = ['name' => '<span class="muted">Not known</span>', 'n' => $unk];
+    } catch (Throwable $e) {}
+    $hid = (string)$k === $gOn ? '' : ' hidden';
+    $gCountries .= '<div class="list" data-r="' . $k . '"' . $hid . '>' . ($cRows ? $geoTable($cRows, 'Country') : '<p class="muted empty">No visitors yet.</p>') . '</div>';
+    $gEmirates .= '<div class="list" data-r="' . $k . '"' . $hid . '>' . (array_sum(array_column($eRows, 'n')) ? $geoTable($eRows, 'Emirate') : '<p class="muted empty">No visitors from the UAE yet.</p>') . '</div>';
+  }
+  $gSeg = '<div class="seg gseg" role="group" aria-label="Period">' . implode('', array_map(fn($k, $l) => '<button type="button" data-r="' . $k . '"' . ((string)$k === $gOn ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($gr), $gr)) . '</div>';
+  $gNote = 'Counting since ' . ($gSince ? h(date('j M Y', strtotime($gSince))) : 'today') . '.';
+
   /* checkouts where the customer typed their name or mobile but did not buy, and the step they left at */
   $stageName = ['details' => 'Delivery details', 'payment' => 'Payment choice', 'card' => 'Card payment page'];
   $left = ''; $leftN = ['details' => 0, 'payment' => 0, 'card' => 0];
@@ -758,10 +789,10 @@ if (isset($_GET['analytics'])) {
 
   $tile = fn($val, $label, $cls = '') => '<div class="tile ' . $cls . '"><b>' . $val . '</b><span>' . $label . '</span></div>';
   $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
-  $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'left' => 'Left checkout'];
+  $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'countries' => 'Countries', 'emirates' => 'UAE emirates', 'left' => 'Left checkout'];
   page('Analytics', '<div class="db an">'
     . '<div class="pagehead"><h1>Analytics</h1><form class="arange" method="get"><input type="hidden" name="analytics" value="1"><div class="seg">'
-    . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k])) . '"' . ($r === $k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
+    . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
     . '<input type="hidden" name="r" value="custom"><input type="date" name="d1" value="' . h($d1) . '" aria-label="From"><input type="date" name="d2" value="' . h($d2) . '" aria-label="To"><button class="btn sm' . ($r === 'custom' ? '' : ' line') . '">Show</button></form></div>'
     . '<div class="tiles at">'
     . $tile(number_format($f['visitors']), 'Visitors · ' . number_format($f['visits']) . ' visits')
@@ -782,8 +813,11 @@ if (isset($_GET['analytics'])) {
     . ($src ? '<div class="list"><table class="mini"><thead><tr><th>Source</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th></tr></thead><tbody>' . $src . '</tbody></table></div>' : '<p class="muted empty">No visits yet.</p>') . '</section>'
     . '<section class="card a-products" data-p="products"><div class="ch"><h2>Products</h2></div>'
     . ($prod ? '<div class="list"><table class="mini"><thead><tr><th>Product</th><th class="num">Viewed</th><th class="num">To bag</th><th class="num">Rate</th></tr></thead><tbody>' . $prod . '</tbody></table></div>' : '<p class="muted empty">No product views yet.</p>') . '</section>'
+    . '<section class="card a-countries" data-p="countries"><div class="ch"><h2>Top countries</h2>' . $gSeg . '</div>' . $gCountries . '<p class="muted small gnote">' . $gNote . ' Location data by <a href="https://db-ip.com" target="_blank" rel="noopener">DB-IP</a>.</p></section>'
+    . '<section class="card a-emirates" data-p="emirates"><div class="ch"><h2>UAE visitors by emirate</h2>' . $gSeg . '</div>' . $gEmirates . '<p class="muted small gnote">Approximate: phone networks often show Dubai or Abu Dhabi. ' . $gNote . '</p></section>'
     . '</div></div>'
-    . '<script>document.querySelectorAll(".apick button").forEach(function(b){b.addEventListener("click",function(){document.querySelectorAll(".apick button,.agrid>.card").forEach(function(x){x.classList.toggle("on",x.dataset.p===b.dataset.p)})})});'
+    . '<script>document.querySelectorAll(".gseg button").forEach(function(b){b.addEventListener("click",function(){var c=b.closest(".card");c.querySelectorAll(".gseg button").forEach(function(x){x.classList.toggle("on",x===b)});c.querySelectorAll(".list[data-r]").forEach(function(x){x.hidden=x.dataset.r!==b.dataset.r})})});'
+    . 'document.querySelectorAll(".apick button").forEach(function(b){b.addEventListener("click",function(){document.querySelectorAll(".apick button,.agrid>.card").forEach(function(x){x.classList.toggle("on",x.dataset.p===b.dataset.p)})})});'
     . 'document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});</script>', true, true);
 }
 
