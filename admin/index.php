@@ -180,7 +180,7 @@ body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidd
 main.wrap{flex:1 1 auto;min-height:0;overflow:auto;width:100%;overscroll-behavior:contain}
 main.fit{display:flex;flex-direction:column;overflow:hidden}
 main.fit>*,.fitform>*{flex:none;min-width:0}
-main.fit>.fill,main.fit>.fitform,main.fit>.db,.fitform>.fill{flex:1 1 auto;min-height:0}
+main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,.fitform>.fill{flex:1 1 auto;min-height:0}
 .fitform{display:flex;flex-direction:column;margin:0}
 .fill{overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .fill>table{border:0;border-radius:0;overflow:visible}.fill>table tr:last-child td{border-bottom:0}
@@ -222,6 +222,11 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
   .savebar{flex-direction:column;align-items:stretch;gap:6px;padding-top:6px}.savebar .stock-help{font-size:11px;line-height:1.35}.sth{width:34px;height:34px}
   .rseg{order:3;flex-basis:100%}.rv{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-bottom:8px}
   .rprod tr.row,.rppl tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 12px}.rprod td,.rppl td{padding:0}.rprod td.dist,.rppl td:nth-child(4){grid-column:1/-1}.rprod .ph,.rppl .ph{display:inline}}
+.cgrid{display:grid;gap:10px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(260px,1fr) 2fr;grid-template-rows:minmax(0,3fr) minmax(0,2fr);grid-template-areas:"det ord" "det rev"}
+.cgrid .card{margin:0;display:flex;flex-direction:column;min-height:0;padding:12px 14px}.cgrid h2{font-size:14px;margin:0 0 8px}.cdet{grid-area:det;overflow:auto}.cord{grid-area:ord}.crev{grid-area:rev}.cdet h2+dl{margin-bottom:14px}.cdet dl{margin:0}
+.cscroll{overflow:auto;flex:1 1 auto;min-height:0;margin:0 -14px -12px}.cscroll table{border:0;border-radius:0}.cscroll .rvlist{padding:0}.cscroll>p{padding:0 14px}
+.vlist{list-style:none;margin:8px 0 0;padding:0;font-size:12.5px}.vlist li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-top:1px solid var(--line)}.cstats{grid-template-columns:repeat(6,1fr)}.cstats .stat{flex:1}
+@media (max-width:759px){main.fit .cgrid{display:block;overflow:auto}.cgrid .card{margin-bottom:10px}.cscroll{overflow:visible;margin:0 -14px -12px}.cstats{grid-template-columns:repeat(3,1fr)}.cdet{overflow:visible}}
 .stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:14px;max-width:900px}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}@media (min-width:860px){.settings{grid-template-columns:1fr 1fr;align-items:start}}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
@@ -961,30 +966,88 @@ if (isset($_GET['members'])) {
     unset($c);
   }
 
-  if (isset($_GET['c'])) {   // one customer: details and every order
-    $c = $cust[(string)$_GET['c']] ?? null;
-    if (!$c) page('Not found', '<h1>Customer not found</h1><p><a href="./?members=1">Back to members</a></p>');
+  if (isset($_GET['c'])) {   // one customer: everything we know — details, every order, reviews, visits to the website
+    $ck = (string)$_GET['c']; $c = $cust[$ck] ?? null;
+    /* every order of this customer, also cancelled and unpaid ones (the totals above count only real orders) */
+    $allO = array_values(array_filter($pdo->query("SELECT order_no, created_at, payment, status, total, discount, name, phone, email, emirate, building, room, street, area, address, items, note, test FROM fx_orders WHERE test = 0 ORDER BY created_at DESC, id DESC")->fetchAll(), fn($o) => $key($o) === $ck));
+    if (!$c && !$allO) page('Not found', '<h1>Customer not found</h1><p><a href="./?members=1">Back to members</a></p>');
+    if (!$c) { $o = $allO[0]; $c = ['n' => 0, 'spent' => 0, 'first' => end($allO)['created_at'], 'last' => $o['created_at'], 'name' => $o['name'], 'phone' => $o['phone'] ?: null, 'email' => $o['email'] ?: null, 'emirate' => $o['emirate'] ?: null, 'addr' => $addr($o)]; }
     $wa = $waLink($c['phone'] ?? '');
+    $nos = array_column($allO, 'order_no');
+    $d9 = substr(preg_replace('/\D/', '', (string)($c['phone'] ?? '')), -9);
     $row = fn($k, $v) => $v === '' || $v === null ? '' : '<dt>' . h($k) . '</dt><dd>' . $v . '</dd>';
+
+    /* reviews: the ones written from this customer's order links, plus any with the same name */
+    require_once dirname(__DIR__) . '/store-lib.php';
+    require_once dirname(__DIR__) . '/reviews-lib.php';
+    $nm = mb_strtolower(trim((string)($c['name'] ?? '')));
+    $revs = array_filter(rv_all(), fn($r) => (!empty($r['order']) && in_array($r['order'], $nos, true))
+      || ($nm !== '' && mb_strtolower(trim((string)(!empty($r['anon']) ? ($r['real'] ?? '') : $r['name']))) === $nm));
+    usort($revs, fn($a, $b) => strcmp($b['created'], $a['created']));
+
+    /* website visits: the browsers that checked out with this mobile number or placed one of these orders */
+    $web = null;
+    try {
+      $w = []; $args = [];
+      if (strlen($d9) >= 7) { $w[] = "RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) = ?"; $args[] = $d9; }
+      if ($nos) { $w[] = 'order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'; $args = array_merge($args, $nos); }
+      if ($w) {
+        $s = $pdo->prepare('SELECT vid, sid, stage, order_no, updated_at, total FROM fx_leads WHERE ' . implode(' OR ', $w)); $s->execute($args); $leads = $s->fetchAll();
+        $vids = array_values(array_unique(array_column($leads, 'vid')));
+        if ($vids) {
+          $in = implode(',', array_fill(0, count($vids), '?'));
+          $s = $pdo->prepare("SELECT sid, MIN(at) a, MAX(at) b, COUNT(*) n, SUM(ev = 'view') pv, SUM(ev = 'product') prod, SUM(ev = 'cart') cart,
+                              MAX(source) src, MAX(device) dev FROM fx_events WHERE vid IN ($in) GROUP BY sid ORDER BY a DESC"); $s->execute($vids); $ses = $s->fetchAll();
+          $s = $pdo->prepare("SELECT product, COUNT(*) n FROM fx_events WHERE vid IN ($in) AND ev = 'product' AND product IS NOT NULL GROUP BY product ORDER BY n DESC LIMIT 5"); $s->execute($vids); $viewed = $s->fetchAll();
+          $secs = 0; foreach ($ses as $x) $secs += min(3 * 3600, strtotime($x['b']) - strtotime($x['a']));   // a visit's time = first to last step (capped at 3 hours)
+          $web = ['ses' => $ses, 'secs' => $secs, 'viewed' => $viewed, 'left' => array_filter($leads, fn($l) => empty($l['order_no']) && !in_array($l['order_no'], $nos, true)),
+                  'pv' => array_sum(array_column($ses, 'pv')), 'devices' => array_unique(array_filter(array_column($ses, 'dev'))),
+                  'source' => $ses ? (end($ses)['src'] ?: 'Direct') : ''];
+        }
+      }
+    } catch (Throwable $e) { $web = null; }
+    $dur = function ($s) { $s = (int)$s; return $s >= 3600 ? floor($s / 3600) . ' h ' . floor($s % 3600 / 60) . ' min' : ($s >= 60 ? floor($s / 60) . ' min' : $s . ' sec'); };
+
     $tr = '';
-    foreach (array_reverse($c['orders']) as $o) {
+    foreach ($allO as $o) {
       $u = h(self_url(['o' => $o['order_no']]));
       $tr .= '<tr class="row" onclick="location.href=\'' . $u . '\'"><td class="no"><a href="' . $u . '">' . h($o['order_no']) . '</a></td>'
            . '<td>' . h(date('d M Y, H:i', strtotime($o['created_at']))) . '</td>'
            . '<td>' . h($o['name']) . '<div class="muted small">' . h($o['emirate']) . '</div></td>'
-           . '<td class="small">' . h(mb_strimwidth(str_replace(' | ', ', ', (string)$o['items']), 0, 90, '…')) . '</td>'
+           . '<td class="small">' . h(str_replace(' | ', ', ', (string)$o['items'])) . '</td>'
            . '<td>' . h($o['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . '</td>'
            . '<td><span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span></td>'
            . '<td class="num">' . money($o['total']) . '</td></tr>';
     }
-    page($c['name'] ?? 'Customer', '<p class="small" style="margin:0 0 6px"><a href="./?members=1">← All members</a></p>'
-      . '<h1>' . h($c['name'] ?? 'No name') . ($c['n'] >= $min && $c['spent'] >= $spend ? ' <span class="tag mtag">Member</span>' : '') . '</h1>'
-      . '<div class="stats up"><div class="stat"><span>Orders</span><b>' . (int)$c['n'] . '</b></div><div class="stat"><span>Total spent</span><b>' . money($c['spent']) . '</b></div>'
-      . '<div class="stat"><span>Average order</span><b>' . money($c['spent'] / $c['n']) . '</b></div><div class="stat"><span>Customer since</span><b>' . h(date('d M Y', strtotime($c['first']))) . '</b></div></div>'
-      . '<div class="card mcard"><dl>' . $row('Mobile', isset($c['phone']) ? h($c['phone']) . ($wa ? ' · <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') : '')
+    $stars = fn($n) => '<span class="stars">' . str_repeat('★', (int)$n) . '<i>' . str_repeat('★', 5 - (int)$n) . '</i></span>';
+    $rv = '';
+    foreach ($revs as $r) $rv .= '<li class="rv' . (!empty($r['hidden']) ? ' off' : '') . '"><div class="rh"><b>' . h($CATALOG[$r['product']]['name'] ?? $r['product']) . '</b> ' . $stars($r['rating'])
+      . (!empty($r['hidden']) ? ' <span class="tag s-Cancelled">Removed</span>' : '') . '</div><div class="small muted">' . h(date('d M Y', strtotime($r['created']))) . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' : 'not verified') . '</div><p>' . nl2br(h($r['text'])) . '</p></li>';
+    $act = '';
+    if ($web) {
+      $act .= '<dl>' . $row('Visits', count($web['ses'])) . $row('Time on site', 'about ' . $dur($web['secs'])) . $row('Pages viewed', (int)$web['pv'])
+        . $row('First visit', h(date('d M Y', strtotime(end($web['ses'])['a'])))) . $row('Last visit', h(date('d M Y, H:i', strtotime($web['ses'][0]['b']))))
+        . $row('Came from', h($web['source'])) . $row('Device', h(implode(', ', $web['devices'])))
+        . $row('Products looked at', h(implode(', ', array_map(fn($v) => ($CATALOG[$v['product']]['name'] ?? $v['product']) . ' (' . $v['n'] . ')', $web['viewed']))))
+        . $row('Left at checkout', count($web['left']) ? count($web['left']) . ' time' . (count($web['left']) > 1 ? 's' : '') : '') . '</dl>';
+      $act .= '<ul class="vlist">' . implode('', array_map(fn($x) => '<li><span>' . h(date('d M Y, H:i', strtotime($x['a']))) . '</span><span class="muted">' . $dur(strtotime($x['b']) - strtotime($x['a'])) . ' · ' . (int)$x['pv'] . ' pages'
+        . ($x['cart'] ? ' · added to bag' : '') . '</span></li>', array_slice($web['ses'], 0, 30))) . '</ul>';
+      $act .= '<p class="muted small" style="margin:8px 0 0">Visits are linked through the phone or computer this customer used to check out. Visits from other devices, and visits before 5 Oct 2026, cannot be linked. Time on site is approximate.</p>';
+    } else $act = '<p class="muted small" style="margin:0">No website visits can be linked to this customer yet. Visits are linked once they check out on the website with this mobile number (counting started 5 Oct 2026, and orders placed on WhatsApp have no visits).</p>';
+
+    page($c['name'] ?? 'Customer', '<div class="pagehead"><div><p class="small" style="margin:0 0 2px"><a href="./?members=1">← All members</a></p>'
+      . '<h1>' . h($c['name'] ?? 'No name') . ($c['n'] && $c['n'] >= $min && $c['spent'] >= $spend ? ' <span class="tag mtag">Member</span>' : '') . '</h1></div>'
+      . ($wa ? '<a class="btn line sm" href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') . '</div>'
+      . '<div class="stats up cstats"><div class="stat"><span>Orders</span><b>' . (int)$c['n'] . '</b></div><div class="stat"><span>Total spent</span><b>' . money($c['spent']) . '</b></div>'
+      . '<div class="stat"><span>Average order</span><b>' . money($c['n'] ? $c['spent'] / $c['n'] : 0) . '</b></div><div class="stat"><span>Reviews</span><b>' . count($revs) . '</b></div>'
+      . '<div class="stat"><span>Visits</span><b>' . ($web ? count($web['ses']) : '—') . '</b></div><div class="stat"><span>Time on site</span><b>' . ($web ? $dur($web['secs']) : '—') . '</b></div></div>'
+      . '<div class="cgrid"><section class="card cdet"><h2>Details</h2><dl>' . $row('Mobile', isset($c['phone']) ? h($c['phone']) . ($wa ? ' · <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') : '')
       . $row('Email', isset($c['email']) ? '<a href="mailto:' . h($c['email']) . '">' . h($c['email']) . '</a>' : '')
-      . $row('Address', h($c['addr'] ?? '')) . $row('Emirate', h($c['emirate'] ?? '')) . $row('Last order', h(date('d M Y', strtotime($c['last'])))) . '</dl></div>'
-      . '<div class="fill"><table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Name</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>' . $tr . '</tbody></table></div>', true, true);
+      . $row('Address', h($c['addr'] ?? '')) . $row('Emirate', h($c['emirate'] ?? '')) . $row('First order', h(date('d M Y', strtotime($c['first'])))) . $row('Last order', h(date('d M Y', strtotime($c['last']))))
+      . $row('All orders', count($allO) . (count($allO) > $c['n'] ? ' <span class="muted">(' . (count($allO) - $c['n']) . ' cancelled or unpaid)</span>' : '')) . '</dl>'
+      . '<h2>On the website</h2>' . $act . '</section>'
+      . '<section class="card cord"><h2>Orders <span class="muted small">' . count($allO) . '</span></h2><div class="cscroll"><table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Name</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>' . $tr . '</tbody></table></div></section>'
+      . '<section class="card crev"><h2>Reviews <span class="muted small">' . count($revs) . '</span></h2><div class="cscroll">' . ($rv ? '<ul class="rvlist">' . $rv . '</ul>' : '<p class="muted small" style="margin:0">No reviews yet.</p>') . '</div></section></div>', true, true);
   }
 
   $mem = array_filter($cust, fn($c) => $c['n'] >= $min && $c['spent'] >= $spend);
