@@ -175,8 +175,8 @@ if ($pay === 'cod') {
         . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\nMulti-buy discount ($pctTxt%): -" . aed($discFils) : '')
         . "\nCash on delivery fee: " . aed($COD_FEE * 100) . "\nTotal: " . aed($totalFils)
         . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '') . $waLines;
-  $mailed = @mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
-                  "From: FOMAXO Orders <mail@fomaxo.com>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8", '-fmail@fomaxo.com');
+  $mailed = fomaxo_mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
+                  "From: FOMAXO Orders <mail@fomaxo.com>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
   if (!$saved && !$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or contact us on WhatsApp.'); }
   echo json_encode(['order' => $no, 'total' => number_format($totalFils / 100, 2, '.', ''), 'review' => $review]);
   exit;
