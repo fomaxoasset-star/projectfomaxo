@@ -205,7 +205,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,.fitform>.fill{flex:1 1 auto;min-h
   .stock-help{font-size:12px}.lowlvl{padding:8px 12px}.lowlvl label{font-size:13px}.lowlvl input{padding:6px 9px;max-width:72px}
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
-.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
+.mtop .mmin input{text-align:center}.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
 .mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
 @media (max-width:759px){.mmin{flex:1 1 100%;padding:7px 10px;gap:6px}.mmin label,.mmin span{font-size:12.5px}.mmin input{width:58px;padding:5px 6px}.mmin .btn{margin-left:auto}.mq{flex-basis:100%}
   .mlist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"mn ms" "ma mo" "md mv";gap:2px 10px;padding:8px 12px;margin-bottom:8px}.mlist td{padding:0}
@@ -215,7 +215,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .sp{display:flex;align-items:center;gap:10px}.sth{width:40px;height:40px;flex:none;border-radius:7px;object-fit:cover;background:var(--line)}
 .savebar{display:flex;align-items:center;gap:14px}.savebar .stock-help{flex:1;margin:0;font-size:12px;line-height:1.45}.savebar .btn{flex:none}
 .rseg{flex-wrap:wrap}.stars{color:var(--gold);letter-spacing:.06em;white-space:nowrap}.stars i{font-style:normal;color:var(--line)}
-.rfilter{margin:0 0 8px}.rfilter select{max-width:280px}.rvlist{list-style:none;margin:0;padding:0}.rv{padding:10px 14px;border-bottom:1px solid var(--line);display:grid;gap:3px}.rv:last-child{border-bottom:0}.rv.off{opacity:.55}
+.rfilter{margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rfilter select{max-width:240px;width:auto}.rfilter input{flex:1 1 220px;min-width:0;max-width:420px;padding:7px 10px}.rvlist{list-style:none;margin:0;padding:0}.rv{padding:10px 14px;border-bottom:1px solid var(--line);display:grid;gap:3px}.rv:last-child{border-bottom:0}.rv.off{opacity:.55}
 .rv p{margin:2px 0;white-space:normal}.rv form{margin:4px 0 0}.rph{display:flex;gap:6px}.rph img{width:56px;height:56px;object-fit:cover;border-radius:6px;display:block}
 .btn.danger{background:#a33a2c;border-color:#a33a2c;color:#fff}.dist span{margin-right:8px;white-space:nowrap}.dist b{color:var(--ink);font-weight:600}.rprod .ph,.rppl .ph{display:none}
 @media (max-width:759px){.hacts{gap:6px}.hacts .btn{padding:6px 9px;font-size:10.5px}.hacts .vw{display:none}.pagehead{flex-wrap:wrap}.tsearch{order:3;flex-basis:100%;max-width:none;margin:0}
@@ -826,7 +826,7 @@ if (isset($_GET['reviews'])) {
   require_once dirname(__DIR__) . '/reviews-lib.php';
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['reviews' => 1]); }
-    $back = array_filter(['reviews' => 1, 'v' => (string)($_POST['v'] ?? ''), 'rp' => (string)($_POST['rp'] ?? '')], fn($x) => $x !== '');
+    $back = array_filter(['reviews' => 1, 'v' => (string)($_POST['v'] ?? ''), 'rp' => (string)($_POST['rp'] ?? ''), 'rq' => (string)($_POST['rq'] ?? '')], fn($x) => $x !== '');
     if (isset($_POST['reviewer_min'])) {
       $n = trim((string)$_POST['reviewer_min']);
       if (ctype_digit($n) && (int)$n >= 1 && (int)$n <= 1000) { fomaxo_setting($pdo, 'reviewer_min', (string)(int)$n); flash('Saved.', true); }
@@ -841,6 +841,7 @@ if (isset($_GET['reviews'])) {
   $v = in_array($_GET['v'] ?? '', ['products', 'people'], true) ? $_GET['v'] : 'all';
   $rp = (string)($_GET['rp'] ?? ''); if ($rp !== '' && !isset($CATALOG[$rp])) $rp = '';
   $live = array_filter($all, fn($r) => empty($r['hidden']));
+  $rq = trim((string)($_GET['rq'] ?? ''));
   $pname = fn($id) => $CATALOG[$id]['name'] ?? $id;
   $stars = fn($n) => '<span class="stars" aria-label="' . (int)$n . ' stars">' . str_repeat('★', (int)$n) . '<i>' . str_repeat('★', 5 - (int)$n) . '</i></span>';
   $avg = $live ? round(array_sum(array_column($live, 'rating')) / count($live), 1) : 0;
@@ -883,20 +884,33 @@ if (isset($_GET['reviews'])) {
           . '<p class="muted small after">Reviews with the same name count as one customer. Anonymous reviews use the real name the customer typed. Removed reviews are left out.</p></div>';
   } else {
     $list = $rp !== '' ? array_filter($all, fn($r) => $r['product'] === $rp) : $all;
+    $tel = [];   // mobile and email of verified reviews, from their order
+    $nos = array_values(array_unique(array_filter(array_column($list, 'order'))));
+    if ($nos) { $s = $pdo->prepare('SELECT order_no, phone, email FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'); $s->execute($nos); foreach ($s as $o) $tel[$o['order_no']] = $o; }
+    if ($rq !== '') {   // words, name, mobile, email, city, product or order no
+      $d = preg_replace('/\D/', '', $rq); $q = mb_strtolower($rq);
+      $list = array_filter($list, function ($r) use ($q, $d, $tel, $pname) {
+        $o = $tel[$r['order'] ?? ''] ?? ['phone' => '', 'email' => ''];
+        $hay = mb_strtolower(implode(' ', [$r['text'], $r['name'], $r['real'] ?? '', $r['city'] ?? '', $pname($r['product']), $r['order'] ?? '', $o['phone'], $o['email']]));
+        return str_contains($hay, $q) || (strlen($d) >= 4 && str_contains(preg_replace('/\D/', '', $o['phone']), $d));
+      });
+    }
     $items = '';
     foreach ($list as $r) {
       $off = !empty($r['hidden']); $where = trim(($r['city'] ?? '') . ' ' . ($r['country'] ?? ''));
       $ph = ''; foreach ($r['photos'] ?? [] as $p) $ph .= '<a href="../reviews.php?photo=' . h(rawurlencode($p)) . '" target="_blank" rel="noopener"><img src="../reviews.php?photo=' . h(rawurlencode($p)) . '" alt="" loading="lazy"></a>';
       $items .= '<li class="rv' . ($off ? ' off' : '') . '"><div class="rh"><b>' . h($pname($r['product'])) . '</b> ' . $stars($r['rating']) . ($off ? ' <span class="tag s-Cancelled">Removed</span>' : '') . '</div>'
         . '<div class="small muted">' . h($r['name']) . (!empty($r['anon']) ? ' (real name: ' . h($r['real'] ?? '') . ')' : '') . ($where !== '' ? ' · ' . h($where) : '')
+        . (!empty($tel[$r['order'] ?? '']['phone']) ? ' · ' . h($tel[$r['order']]['phone']) : '')
         . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' . (!empty($r['order']) ? ', ' . h($r['order']) : '') : 'not verified') . ' · ' . h(date('d M Y', strtotime($r['created']))) . '</div>'
         . '<p>' . nl2br(h($r['text'])) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '')
-        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '')
+        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '')
         . '<button class="btn sm' . ($off ? ' line' : ' danger') . '">' . ($off ? 'Put back on website' : 'Remove') . '</button></form></li>';
     }
     $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
-    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1"><select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select></form>'
-          . '<div class="fill">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="card muted" style="margin:0">No reviews yet.</p>')
+    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1"><select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>'
+          . '<input name="rq" value="' . h($rq) . '" placeholder="Search words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '') . '</form>'
+          . '<div class="fill">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="card muted" style="margin:0">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>')
           . '<p class="muted small after">Remove takes a review off the website and out of the star rating. It stays here, so you can put it back.</p></div>';
   }
   page('Reviews', '<div class="pagehead"><h1>Reviews</h1>' . $seg . '</div>' . flash()
@@ -909,14 +923,18 @@ if (isset($_GET['reviews'])) {
 if (isset($_GET['members'])) {
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['members' => 1]); }
-    $n = trim((string)($_POST['member_min'] ?? ''));
-    $a = trim(str_replace(',', '', (string)($_POST['member_spend'] ?? '0')));
-    if (ctype_digit($n) && (int)$n >= 1 && (int)$n <= 1000 && is_numeric($a) && (float)$a >= 0 && (float)$a <= 10000000) {
-      fomaxo_setting($pdo, 'member_min', (string)(int)$n); fomaxo_setting($pdo, 'member_spend', (string)round((float)$a)); flash('Saved.', true);
+    /* two separate boxes, each saved on its own; an empty box means "no limit" */
+    if (isset($_POST['member_min'])) {
+      $n = trim((string)$_POST['member_min']);
+      if ($n === '' || (ctype_digit($n) && (int)$n <= 1000)) { fomaxo_setting($pdo, 'member_min', $n === '' ? '0' : (string)(int)$n); flash('Saved.', true); }
+    }
+    if (isset($_POST['member_spend'])) {
+      $a = trim(str_replace(',', '', (string)$_POST['member_spend']));
+      if ($a === '' || (is_numeric($a) && (float)$a >= 0 && (float)$a <= 10000000)) { fomaxo_setting($pdo, 'member_spend', $a === '' ? '0' : (string)round((float)$a)); flash('Saved.', true); }
     }
     go(['members' => 1]);
   }
-  $min = (int)(fomaxo_setting($pdo, 'member_min') ?? 5) ?: 5;
+  $min = (int)(fomaxo_setting($pdo, 'member_min') ?? 5);
   $spend = (int)(fomaxo_setting($pdo, 'member_spend') ?? 0);
   $key = function ($o) { $d = preg_replace('/\D/', '', (string)$o['phone']); return strlen($d) >= 7 ? 'm' . substr($d, -9) : ($o['email'] !== '' ? 'e' . mb_strtolower(trim($o['email'])) : ''); };
   $addr = fn($o) => $o['address'] !== '' ? $o['address'] : implode(', ', array_filter([$o['building'], $o['room'], $o['street'], $o['area']], fn($x) => $x !== ''));
@@ -997,15 +1015,15 @@ if (isset($_GET['members'])) {
          . '<td class="md small">' . h(date('d M Y', strtotime($c['first']))) . ' – ' . h(date('d M Y', strtotime($c['last']))) . '</td></tr>';
   }
   page('Members', '<div class="pagehead"><h1>Members</h1><a class="btn line sm" href="' . h(self_url(['members' => 1] + ($mq !== '' ? ['mq' => $mq] : []) + ['export' => 1])) . '">Download Excel</a></div>' . flash()
-    . '<div class="mtop"><form class="card mmin" method="post">' . csrf_field() . '<label for="member_min">Show customers with at least</label>'
-    . '<input id="member_min" type="number" min="1" max="1000" inputmode="numeric" name="member_min" required value="' . $min . '"><span>orders</span>'
-    . '<label for="member_spend">and spent at least AED</label><input id="member_spend" class="amt" type="number" min="0" step="1" inputmode="numeric" name="member_spend" required value="' . $spend . '"><button class="btn sm">Save</button></form>'
+    . '<div class="mtop"><form class="card mmin" method="post">' . csrf_field() . '<label for="member_min">Orders: at least</label>'
+    . '<input id="member_min" type="number" min="0" max="1000" inputmode="numeric" name="member_min" value="' . ($min ?: '') . '" placeholder="any"><span>orders</span><button class="btn sm">Save</button></form>'
+    . '<form class="card mmin" method="post">' . csrf_field() . '<label for="member_spend">Spent: at least AED</label><input id="member_spend" class="amt" type="number" min="0" step="1" inputmode="numeric" name="member_spend" value="' . ($spend ?: '') . '" placeholder="any"><button class="btn sm">Save</button></form>'
     . '<form class="mq" method="get"><input type="hidden" name="members" value="1"><input name="mq" value="' . h($mq) . '" placeholder="Search name, mobile, email or area" aria-label="Search members"><button class="btn line sm">Search</button></form></div>'
     . '<div class="stats up"><div class="stat"><span>Members</span><b>' . count($mem) . '</b></div><div class="stat"><span>Members spent</span><b>' . money($memSpent) . '</b></div>'
     . '<div class="stat"><span>Share of all sales</span><b>' . ($allSales > 0 ? round($memSpent / $allSales * 100) : 0) . '%</b></div>'
     . '<div class="stat"><span>Average per member</span><b>' . money($mem ? $memSpent / count($mem) : 0) . '</b></div></div>'
     . '<div class="fill">' . ($list ? '<table class="mlist"><thead><tr><th>Member</th><th>Latest address</th><th class="num">Orders</th><th class="num">Spent</th><th class="num">Average</th><th>First – last order</th></tr></thead><tbody>' . $tr . '</tbody></table>'
-         : '<p class="card muted" style="margin:0">' . ($mq !== '' ? 'No members match.' : 'No customer has ' . $min . ' or more orders' . ($spend ? ' and AED ' . number_format($spend) . ' spent' : '') . ' yet.') . '</p>')
+         : '<p class="card muted" style="margin:0">' . ($mq !== '' ? 'No members match.' : 'No customer matches ' . ($min ? $min . ' or more orders' : '') . ($min && $spend ? ' and ' : '') . ($spend ? 'AED ' . number_format($spend) . ' or more spent' : '') . ($min || $spend ? '' : 'yet') . '.') . '</p>')
     . '<p class="muted small after">Orders from the same mobile number (or the same email when there is no mobile) count as one customer. Cancelled orders, unpaid card attempts and test payments are left out. Tap a member to see every order.</p></div>', true, true);
 }
 
