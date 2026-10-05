@@ -33,10 +33,16 @@ function fomaxo_review_link($orderNo, $ids) {
 }
 
 /* ---- reviews.json: read, or change under a file lock ---- */
+/* first letter of every word in capitals ("ahmed saleh" -> "Ahmed Saleh"); the rest is left as typed */
+function rv_caps($s) { return preg_replace_callback('/(^|[\s\-\/(])(\p{Ll})/u', fn($m) => $m[1] . mb_strtoupper($m[2]), (string)$s); }
 function rv_all() {
   $f = rv_dir() . '/reviews.json';
   $d = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null;
-  return is_array($d['reviews'] ?? null) ? $d['reviews'] : [];
+  $list = is_array($d['reviews'] ?? null) ? $d['reviews'] : [];
+  /* name, real name and state / city always shown with capitals, also for reviews saved before this rule */
+  foreach ($list as &$r) { foreach (['name', 'real', 'city'] as $k) if (isset($r[$k]) && is_string($r[$k])) $r[$k] = rv_caps($r[$k]); }
+  unset($r);
+  return $list;
 }
 function rv_change(callable $fn) {
   $fh = @fopen(rv_dir() . '/reviews.json', 'c+'); if (!$fh) return false;
