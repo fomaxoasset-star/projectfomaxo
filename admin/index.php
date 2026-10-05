@@ -89,8 +89,21 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .todo.hot{border-color:var(--gold)}.todo.hot b{color:var(--gold)}
 .dash{display:grid;gap:14px}@media (min-width:860px){.dash{grid-template-columns:3fr 2fr}}.dash>*{min-width:0}
 .chart{width:100%;height:auto;display:block;overflow:visible}.chart .bar{fill:var(--gold)}.chart .grid,.chart .axis{stroke:var(--line);stroke-width:1}
-.chart text{fill:var(--muted);font-size:11px}@media (max-width:759px){.chart text{font-size:21px}}.chart .hit{fill:transparent;cursor:pointer}.chart .hit.on{fill:rgba(143,107,55,.12)}
-#tip{min-height:1.5em;margin:6px 0 0}
+.chart text{fill:var(--muted);font-size:20px}.chart .hit{fill:transparent;cursor:pointer}.chart .hit.on{fill:rgba(143,107,55,.12)}
+#tip{min-height:1.5em;margin:4px 0 0;color:var(--muted)}
+.db h2{font-size:18px;margin:0}.db .card{padding:12px 14px}.db .ch{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 0 6px}.db .ch a,.db .ch span{font-size:13px}
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:0 0 8px}.tile{grid-column:span 2;display:block;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 11px;text-decoration:none;color:var(--ink)}
+.tile.todo{grid-column:span 3}.tile b{display:block;font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tile span{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);line-height:1.35}
+.tile.todo b{font-size:22px;color:var(--muted)}.tile.hot{border-color:var(--gold)}.tile.hot b{color:var(--gold)}
+.db .note{font-size:12px;margin:0 0 8px}
+.dgrid{display:grid;gap:8px}.dgrid>*{min-width:0}
+.db .list li{padding:6px 0;font-size:14px}.db .list.orders li{padding:0}.db .list.orders a{padding:6px 0}.db .list .r{flex-direction:row;align-items:center;gap:8px}.db .list small{font-size:12px}
+@media (max-width:759px){.db .list li:nth-child(n+4){display:none}.db .list.orders small{display:none}.wrap:has(.db){padding-top:10px}
+  .tile{padding:8px 10px}.tile b{font-size:15px}.tile.todo b{font-size:20px}.tile span{font-size:10.5px}.db .note{font-size:11.5px}
+  .db .list.orders a>span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .card{padding:10px 12px}.db .list li{padding:5px 0}
+  .tabs a{padding-top:12px;padding-bottom:12px}}
+@media (min-width:760px){.tiles{grid-template-columns:repeat(5,1fr);gap:10px}.tile,.tile.todo{grid-column:auto}.tile{padding:12px 14px}.tile b,.tile.todo b{font-size:22px}
+  .dgrid{grid-template-columns:6fr 4fr 6fr;gap:10px}.db .card{padding:14px 16px}}
 .list{list-style:none;margin:0;padding:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.list li:last-child{border:0}
 .list.orders li{padding:0}.list.orders a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;color:var(--ink);text-decoration:none;width:100%}
 .list small{display:block}.list .r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
@@ -130,7 +143,7 @@ CSS;
      . (!empty($_SESSION['admin']) ? '<form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Log out</button></form>' : '')
      . '</header>'
      . (!empty($_SESSION['admin']) ? '<nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
-         [['Home', './', !$_GET], ['Orders', './?orders=1', (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
+         [['Dashboard', './', !$_GET], ['Orders', './?orders=1', (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
           ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
           ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Reports', './?reports=1', isset($_GET['reports'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . '">' . $body . '</main>'
@@ -631,7 +644,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   $s->execute([array_key_first($days) . ' 00:00:00']);
   foreach ($s as $r) if (isset($days[$r['d']])) $days[$r['d']] = [(float)$r['t'], (int)$r['n']];
   $max = max(array_map(fn($d) => $d[0], $days)); $sum30 = array_sum(array_map(fn($d) => $d[0], $days));
-  $W = 600; $H = 170; $top = 18; $base = 146; $slot = $W / 30; $bw = 12;
+  $W = 600; $H = 132; $top = 20; $base = 106; $slot = $W / 30; $bw = 12;
   $bars = ''; $i = 0;
   foreach ($days as $d => [$t, $n]) {
     $x = round($i * $slot + ($slot - $bw) / 2, 1); $h = $max > 0 ? round(($base - $top) * $t / $max, 1) : 0;
@@ -641,10 +654,10 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     $bars .= '<rect class="hit" x="' . round($i * $slot, 1) . '" y="0" width="' . round($slot, 1) . '" height="' . $H . '" data-t="' . h($tip) . '"><title>' . h($tip) . '</title></rect>';
     $i++;
   }
-  $lbl = fn($k, $anchor, $x) => '<text x="' . $x . '" y="164" text-anchor="' . $anchor . '">' . h(date('j M', strtotime($k))) . '</text>';
+  $lbl = fn($k, $anchor, $x) => '<text x="' . $x . '" y="130" text-anchor="' . $anchor . '">' . h(date('j M', strtotime($k))) . '</text>';
   $keys = array_keys($days);
   $chart = '<svg class="chart" viewBox="0 0 ' . $W . ' ' . $H . '" role="img" aria-label="Sales per day for the last 30 days, ' . h(money($sum30)) . ' in total">'
-    . '<line class="grid" x1="0" x2="' . $W . '" y1="' . $top . '" y2="' . $top . '"/><text x="0" y="12">' . h($max > 0 ? money($max) : 'AED 0') . '</text>'
+    . '<line class="grid" x1="0" x2="' . $W . '" y1="' . $top . '" y2="' . $top . '"/><text x="0" y="14">' . h($max > 0 ? money($max) : 'AED 0') . '</text>'
     . '<line class="axis" x1="0" x2="' . $W . '" y1="' . $base . '" y2="' . $base . '"/>' . $bars
     . $lbl($keys[0], 'start', 0) . $lbl($keys[15], 'middle', round(15.5 * $slot)) . $lbl($keys[29], 'end', $W) . '</svg>';
   /* stock running low (counted sizes at or below the warning level) */
@@ -663,19 +676,24 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   }
   $profit = (float)$month['profit'];
   $todoBox = fn($n, $label, $st) => '<a class="todo' . ($n ? ' hot' : '') . '" href="' . h(self_url(['orders' => 1, 'status' => $st])) . '"><b>' . (int)$n . '</b><span>' . $label . '</span></a>';
-  page('Dashboard', '<h1>Dashboard</h1>' . flash()
-    . '<div class="todos">' . $todoBox($todo['cod'], 'Cash orders to deliver', 'New') . $todoBox($todo['card'], 'Paid card orders to deliver', 'Paid') . '</div>'
-    . '<div class="stats">'
-    . '<div class="stat"><b>' . money($today['sales']) . '</b><span>Sales today · ' . (int)$today['n'] . ' order' . ((int)$today['n'] === 1 ? '' : 's') . '</span></div>'
-    . '<div class="stat"><b>' . money($month['sales']) . '</b><span>Sales ' . date('F') . ' · ' . (int)$month['orders'] . ' order' . ((int)$month['orders'] === 1 ? '' : 's') . '</span></div>'
-    . '<div class="stat"><b class="' . ($profit < 0 ? 'lvl-out' : 'lvl-ok') . '">' . ($profit < 0 ? '−' : '') . money(abs($profit)) . '</b><span>' . ($profit < 0 ? 'Loss' : 'Profit') . ' ' . date('F') . '</span></div></div>'
-    . ($month['no_cost'] ? '<p class="muted small">' . (int)$month['no_cost'] . ' order' . ($month['no_cost'] > 1 ? 's' : '') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit is too high. Add costs on the <a href="./?stock=1">Stock</a> page.</p>' : '')
-    . '<div class="dash"><section class="card"><h2 style="margin-top:0">Sales, last 30 days</h2><p class="muted small" style="margin:-6px 0 8px">' . h(money($sum30)) . ' in total · tap a day</p>' . $chart
-    . '<p class="small" id="tip" aria-live="polite">&nbsp;</p></section>'
-    . '<section class="card"><h2 style="margin-top:0">Stock alerts</h2>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted small">No size is running low. Sizes with an empty stock box are not counted.</p>')
-    . '<p class="small" style="margin:10px 0 0"><a href="./?stock=1">Open Stock</a></p></section></div>'
-    . '<section class="card" style="margin-top:14px"><h2 style="margin-top:0">Latest orders</h2>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted small">No orders yet.</p>')
-    . '<p class="small" style="margin:10px 0 0"><a href="./?orders=1">All orders</a> · <a href="./?reports=1">Reports</a></p></section>'
+  $tile = fn($val, $label, $cls = '', $href = null, $vcls = '') => ($href ? '<a class="tile ' . $cls . '" href="' . h($href) . '">' : '<div class="tile ' . $cls . '">') . '<b class="' . $vcls . '">' . $val . '</b><span>' . $label . '</span>' . ($href ? '</a>' : '</div>');
+  $aed = fn($v) => 'AED ' . number_format(round((float)$v));   // whole dirhams on the tiles; exact amounts are on Orders and Reports
+  $plural = fn($n, $w) => (int)$n . ' ' . $w . ((int)$n === 1 ? '' : 's');
+  page('Dashboard', '<div class="db">' . flash()
+    . '<div class="tiles">'
+    . $tile((int)$todo['cod'], 'Cash to deliver', 'todo' . ($todo['cod'] ? ' hot' : ''), self_url(['orders' => 1, 'status' => 'New']))
+    . $tile((int)$todo['card'], 'Card to deliver', 'todo' . ($todo['card'] ? ' hot' : ''), self_url(['orders' => 1, 'status' => 'Paid']))
+    . $tile($aed($today['sales']), 'Today · ' . $plural($today['n'], 'order'))
+    . $tile($aed($month['sales']), date('M') . ' · ' . $plural($month['orders'], 'order'))
+    . $tile(($profit < 0 ? '−' : '') . $aed(abs($profit)), ($profit < 0 ? 'Loss ' : 'Profit ') . date('M'), '', self_url(['reports' => 1]), $profit < 0 ? 'lvl-out' : 'lvl-ok')
+    . '</div>'
+    . ($month['no_cost'] ? '<p class="muted note">' . $plural($month['no_cost'], 'order') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit shows too high. <a href="./?stock=1">Add costs</a></p>' : '')
+    . '<div class="dgrid">'
+    . '<section class="card"><div class="ch"><h2>Sales, last 30 days</h2><span class="muted">' . h(money($sum30)) . '</span></div>' . $chart
+    . '<p class="small" id="tip" aria-live="polite">Tap a day to see its sales</p></section>'
+    . '<section class="card"><div class="ch"><h2>Stock alerts</h2><a href="./?stock=1">Stock</a></div>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted small" style="margin:0">No size is running low.</p>') . '</section>'
+    . '<section class="card"><div class="ch"><h2>Latest orders</h2><a href="./?orders=1">All orders</a></div>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted small" style="margin:0">No orders yet.</p>') . '</section>'
+    . '</div></div>'
     . '<script>document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){document.getElementById("tip").textContent=r.dataset.t;document.querySelectorAll(".chart .hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});</script>', true);
 }
 
