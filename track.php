@@ -1,7 +1,7 @@
 <?php
 /* FOMAXO — visit stats for fomaxo.com/admin → Analytics.
    The website sends one tiny message per step (page view, product view, add to bag, checkout, payment step, card page, purchase).
-   Visitors are an anonymous random id from their browser. Names and mobile numbers are only kept for a checkout
+   Visitors are an anonymous random id from their browser; the first page of a visit also notes the country (and UAE emirate), never the IP address. Names and mobile numbers are only kept for a checkout
    where the customer typed them in, so you can see who left without buying. Bots and the admin are not counted. */
 header('Cache-Control: no-store');
 http_response_code(204);
@@ -39,16 +39,23 @@ try {
     exit;
   }
 
-  $source = null; $ref = null;
+  $source = null; $ref = null; $country = null; $region = null;
   if ($ev === 'view' && !empty($d['first'])) {   // the first page of a visit says where it came from
     $ref = $t('r', 300);
     $source = fomaxo_source($ref, strtolower($t('u', 40)), $ua);
     $ref = mb_substr((string)parse_url($ref, PHP_URL_HOST), 0, 120) ?: null;
+    require_once __DIR__ . '/geo-lib.php';   // country and UAE emirate of the visit; the IP address itself is not kept
+    [$country, $region] = fomaxo_geo(fomaxo_geo_ip());
   }
   $device = preg_match('/iPad|Tablet|(Android(?!.*Mobile))/i', $ua) ? 'tablet' : (preg_match('/Mobi|iPhone|Android/i', $ua) ? 'phone' : 'computer');
   $product = $ev === 'product' || $ev === 'cart' ? (preg_match('/^[a-z0-9-]{1,40}$/', (string)($d['id'] ?? '')) ? $d['id'] : null) : null;
-  $pdo->prepare('INSERT INTO fx_events (at, vid, sid, ev, page, product, source, ref, device) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)')
-      ->execute([$vid, $sid, $ev, $page, $product, $source, $ref, $device]);
+  try {
+    $pdo->prepare('INSERT INTO fx_events (at, vid, sid, ev, page, product, source, ref, device, country, region) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$vid, $sid, $ev, $page, $product, $source, $ref, $device, $country, $region]);
+  } catch (Throwable $e) {   // before the country columns exist: keep counting the visit without them
+    $pdo->prepare('INSERT INTO fx_events (at, vid, sid, ev, page, product, source, ref, device) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$vid, $sid, $ev, $page, $product, $source, $ref, $device]);
+  }
   if ($ev === 'buy' && ($no = $t('o', 40)) !== '') $pdo->prepare('UPDATE fx_leads SET order_no = ? WHERE sid = ?')->execute([$no, $sid]);
   if (mt_rand(1, 500) === 1) {   // keep the tables small: 400 days of steps, one day of "on the website now"
     $pdo->exec('DELETE FROM fx_events WHERE at < NOW() - INTERVAL 400 DAY');

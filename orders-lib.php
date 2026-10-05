@@ -33,7 +33,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 4) return;
+  if ($ver >= 5) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -41,7 +41,11 @@ function fomaxo_db_schema($pdo) {
   if ($ver < 3) fomaxo_products_table($pdo);
   /* v4: visit stats for fomaxo.com/admin → Analytics */
   fomaxo_analytics_tables($pdo);
-  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '4')");
+  /* v5: the country (and UAE emirate) of each visit, for Analytics → Top countries and UAE emirates */
+  try { $pdo->exec("ALTER TABLE fx_events ADD COLUMN country CHAR(2) NULL, ADD COLUMN region VARCHAR(20) NULL, ADD KEY (country, at)"); } catch (Throwable $e) {}
+  if (!$pdo->query("SHOW COLUMNS FROM fx_events LIKE 'country'")->fetch()) return;
+  if (!fomaxo_setting($pdo, 'geo_since')) fomaxo_setting($pdo, 'geo_since', date('Y-m-d'));
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '5')");
 }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
