@@ -172,7 +172,7 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
   .arange .seg{grid-column:2/5;justify-self:end}.arange .seg a{padding:3px 8px}.arange input[name=d1]{grid-column:1/3;width:100%}.arange input[name=d2]{width:100%}
   .tiles.at .tile:last-child{grid-column:span 2}
 }
-@media (min-width:760px){.tiles.at{grid-template-columns:repeat(7,1fr)}.tiles.at .tile b{font-size:19px}
+@media (min-width:760px){.tiles.at{grid-template-columns:repeat(8,1fr)}.tiles.at .tile b{font-size:19px}
   .agrid{grid-template-columns:minmax(0,1.05fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"funnel visitors countries left" "products sources emirates left"}
   .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}.a-countries{grid-area:countries}.a-emirates{grid-area:emirates}}
 .agrid .list[hidden]{display:none!important}.gbar{width:28%}.gbar .fb{margin:0}.gnote{margin:6px 0 0;flex:none}.a-countries .ch,.a-emirates .ch{flex-wrap:wrap;gap:6px}.gseg button{padding:3px 7px}.a-left .ch{gap:8px}.a-left .ch .btn{flex:none}.a-left .ch h2{min-width:0;flex:1 1 0;white-space:normal;overflow:visible}.a-countries .ch h2,.a-emirates .ch h2{flex:1 1 100%}@media (min-width:760px) and (max-width:1199px){.agrid table.mini{font-size:11.5px}.agrid table.mini th,.agrid table.mini td{padding:5px 3px;letter-spacing:0}}@media (min-width:760px){.gtab{table-layout:fixed;width:100%}.gtab .gbar{display:none}.gtab th:nth-child(2){width:64px}.gtab th:nth-child(4){width:52px}.gtab td:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
@@ -191,7 +191,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:
   .tiles.at .tile span{order:-1;font-size:9.5px;letter-spacing:.07em;white-space:normal;line-height:1.25}.tiles.at .tile b{font-size:17px;margin:1px 0}
   .tiles.at .tile .tn{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tiles.at .tile span .dk{display:none}.tiles.at .tile span .mo{display:inline;font:inherit;letter-spacing:inherit;color:inherit}
-  .tiles.at .tile.hot b{color:var(--ok,#6fbf73)}.tiles.at .tile.rev,.tiles.at .tile:last-child{grid-column:1/-1}
+  .tiles.at .tile.hot b{color:var(--ok,#6fbf73)}.tiles.at .tile.rev{grid-column:span 2}.tiles.at .tile.ret .tn{white-space:normal}
   .apick{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:8px}
   .apick button{border:0;border-radius:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:none;color:var(--ink);font-weight:500;font-size:12.5px;padding:8px 2px;white-space:nowrap}
   .apick button:nth-child(4n){border-right:0}.apick button:nth-child(n+5){border-bottom:0}.apick button[data-p=left]{grid-column:span 2;border-right:0}
@@ -740,6 +740,19 @@ if (isset($_GET['analytics'])) {
   $f = array_map('intval', $f);
   $live = (int)$pdo->query('SELECT COUNT(*) FROM fx_live WHERE seen > NOW() - INTERVAL 5 MINUTE')->fetchColumn();
   $ord = $q("SELECT COUNT(*) n, COALESCE(SUM(total), 0) t FROM fx_orders WHERE status IN ('New', 'Paid', 'Delivered') AND test = 0 AND created_at BETWEEN ? AND ?")->fetch();
+  /* returning customers: orders in the range from a mobile (last 9 digits, as in Members) that had ordered before, and the days since that earlier order */
+  $ret = ['orders' => 0, 'people' => [], 'days' => []];
+  try {
+    foreach ($q("SELECT o.p9, o.created_at, (SELECT MAX(x.created_at) FROM fx_orders x WHERE x.status IN ('New', 'Paid', 'Delivered') AND x.test = 0 AND x.created_at < o.created_at
+                   AND RIGHT(REGEXP_REPLACE(x.phone, '[^0-9]', ''), 9) = o.p9) prev
+                 FROM (SELECT RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) p9, created_at FROM fx_orders
+                       WHERE status IN ('New', 'Paid', 'Delivered') AND test = 0 AND phone <> '' AND created_at BETWEEN ? AND ?) o") as $row)
+      if ($row['prev'] !== null && strlen($row['p9']) >= 7) {
+        $ret['orders']++; $ret['people'][$row['p9']] = 1;
+        $ret['days'][] = (strtotime($row['created_at']) - strtotime($row['prev'])) / 86400;
+      }
+  } catch (Throwable $e) {}
+  $retN = count($ret['people']); $retD = $ret['days'] ? (int)round(array_sum($ret['days']) / count($ret['days'])) : null;
   $back = (int)$q('SELECT COUNT(DISTINCT e.vid) FROM fx_events e WHERE e.at BETWEEN ? AND ? AND EXISTS (SELECT 1 FROM fx_events o WHERE o.vid = e.vid AND o.at < ?)', [$span[0], $span[1], $span[0]])->fetchColumn();
   $pct = fn($a, $b) => $b > 0 ? round(100 * $a / $b, 1) : 0;
   $pctT = fn($v) => rtrim(rtrim(number_format($v, 1), '0'), '.') . '%';
@@ -852,6 +865,8 @@ if (isset($_GET['analytics'])) {
     . $tile($pctT($f['cart'] ? 100 - $pct($f['buy'], $f['cart']) : 0), 'Cart abandonment', '', 'added, did not buy')
     . $tile($pctT($f['checkout'] ? 100 - $pct($f['buy'], $f['checkout']) : 0), 'Checkout abandonment', '', 'at checkout, did not buy')
     . $tile(number_format((int)$ord['n']), $dk('Orders', 'Purchases'), '', 'orders')
+    . $tile($pctT($pct($ret['orders'], (int)$ord['n'])), 'Returning<span class="dk"> · ' . $retN . ($retN === 1 ? ' person' : ' people') . ($retD !== null ? ', ' . $retD . ' days apart' : '') . '</span>', 'ret',
+            $retN . ($retN === 1 ? ' person' : ' people') . ($retD !== null ? ' · reorder in ' . $retD . ($retD === 1 ? ' day' : ' days') : ''))
     . $tile('AED ' . number_format(round((float)$ord['t'])), 'Revenue', 'rev', 'AED ' . number_format((int)$ord['n'] ? round((float)$ord['t'] / (int)$ord['n']) : 0) . ' per order')
     . '</div>'
     . '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
