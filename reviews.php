@@ -22,23 +22,6 @@ date_default_timezone_set('Asia/Dubai');
 $method = $_SERVER['REQUEST_METHOD'];
 function out($data, $code = 200) { http_response_code($code); header('Content-Type: application/json'); echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit; }
 
-/* ---- reviews.json: read, or change under a file lock ---- */
-function rv_all() {
-  $f = rv_dir() . '/reviews.json';
-  $d = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null;
-  return is_array($d['reviews'] ?? null) ? $d['reviews'] : [];
-}
-function rv_change(callable $fn) {
-  $fh = @fopen(rv_dir() . '/reviews.json', 'c+'); if (!$fh) return false;
-  if (!flock($fh, LOCK_EX)) { fclose($fh); return false; }
-  $d = json_decode(stream_get_contents($fh), true);
-  $list = is_array($d['reviews'] ?? null) ? $d['reviews'] : [];
-  $res = $fn($list);
-  ftruncate($fh, 0); rewind($fh);
-  fwrite($fh, json_encode(['reviews' => $list], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-  fflush($fh); flock($fh, LOCK_UN); fclose($fh);
-  return $res;
-}
 function rv_public($r) {
   return ['id' => $r['id'], 'name' => $r['name'], 'rating' => $r['rating'], 'text' => $r['text'], 'verified' => !empty($r['verified']),
           'city' => $r['city'] ?? '', 'country' => $r['country'] ?? '', 'date' => substr($r['created'], 0, 10), 'helpful' => (int)($r['helpful'] ?? 0),

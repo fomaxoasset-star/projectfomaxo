@@ -31,3 +31,21 @@ function fomaxo_review_link($orderNo, $ids) {
     json_encode(['no' => (string)$orderNo, 'products' => $ids, 'created' => date('c'), 'done' => new stdClass()]), LOCK_EX);
   return $ok ? $t : null;
 }
+
+/* ---- reviews.json: read, or change under a file lock ---- */
+function rv_all() {
+  $f = rv_dir() . '/reviews.json';
+  $d = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null;
+  return is_array($d['reviews'] ?? null) ? $d['reviews'] : [];
+}
+function rv_change(callable $fn) {
+  $fh = @fopen(rv_dir() . '/reviews.json', 'c+'); if (!$fh) return false;
+  if (!flock($fh, LOCK_EX)) { fclose($fh); return false; }
+  $d = json_decode(stream_get_contents($fh), true);
+  $list = is_array($d['reviews'] ?? null) ? $d['reviews'] : [];
+  $res = $fn($list);
+  ftruncate($fh, 0); rewind($fh);
+  fwrite($fh, json_encode(['reviews' => $list], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+  fflush($fh); flock($fh, LOCK_UN); fclose($fh);
+  return $res;
+}
