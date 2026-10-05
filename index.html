@@ -1169,19 +1169,19 @@ header.nav .brand .wm,.mnav .brand .wm{height:20px}
 .mnav nav a.nav-india{position:relative}
 .menu a.nav-india .vd,.mnav nav a.nav-india .vd{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1;padding-left:.12em}
 .menu a.nav-india .vd small,.mnav nav a.nav-india .vd small{font-size:.62em;letter-spacing:.32em;padding-left:.32em;opacity:.85}
-/* home: Franchise and Visit India cards */
-.hw{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(18px,2.4vw,32px)}
-.hw-card{display:flex;flex-direction:column;border:1px solid var(--line-2);background:rgba(var(--bg-rgb),.55);overflow:hidden}
-.hw-media{display:block;aspect-ratio:16/10;overflow:hidden;background:#000}
+/* home: Franchise card */
+.hw{display:block}
+.hw-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border:1px solid var(--line-2);background:rgba(var(--bg-rgb),.55);overflow:hidden}
+.hw-media{display:block;min-height:100%;aspect-ratio:16/10;overflow:hidden;background:#000}
 .hw-media img{width:100%;height:100%;object-fit:cover;transition:transform 2s var(--ease)}
 .hw-card:hover .hw-media img{transform:scale(1.05)}
-.hw-copy{display:flex;flex-direction:column;gap:16px;padding:clamp(24px,3vw,40px);flex:1}
+.hw-copy{display:flex;flex-direction:column;justify-content:center;gap:16px;padding:clamp(24px,4vw,64px)}
 .hw-copy h2{font-size:clamp(26px,2.8vw,40px)}
 .hw-copy em{font-style:normal}
-.hw-copy .ctas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:auto;padding-top:8px}
+.hw-copy .ctas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:8px;max-width:560px}
 .hw-copy .ctas .btn{width:100%;padding-left:12px;padding-right:12px;min-height:54px;white-space:nowrap}
 .hw-copy .btn svg{width:19px;height:19px;flex:none}
-@media(max-width:900px){.hw{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:900px){.hw-card{grid-template-columns:minmax(0,1fr)}.hw-media{min-height:0}}
 @media(max-width:560px){.hw-copy .ctas{grid-template-columns:minmax(0,1fr)}}
 .menu a.nav-india:hover,.menu a.nav-india:focus-visible{background:var(--gold);color:rgb(var(--bg-rgb))}
 .mnav nav a.nav-india{align-self:flex-start;margin-top:28px;padding:12px 26px;border:1px solid var(--gold);color:var(--gold-hi)}
@@ -2319,12 +2319,6 @@ function home(){
         <div class="hw-copy"><span class="eyebrow">Franchise</span><h2>Own a <em class="metal">FOMAXO</em> store</h2>
           <p class="lead">Partner with a Dubai-born luxury brand as a franchise partner, distributor or retail stockist in your country.</p>
           <div class="ctas"><a class="btn" href="https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent('Hello FOMAXO, I would like to know more about the FOMAXO franchise.')}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${SOC_ICON.whatsapp.replace(/^<g transform="[^"]*">/, '<g>')}</svg>Chat on WhatsApp</a><a class="btn line" href="#/franchise">Send an Enquiry</a></div></div>
-      </article>
-      <article class="hw-card rv-up d1">
-        <a class="hw-media" href="http://fomaxo.in" target="_blank" rel="noopener" tabindex="-1"><img src="${IMG('india')}" alt="Taj Mahal, India Gate and Gateway of India at night in gold" loading="lazy"></a>
-        <div class="hw-copy"><span class="eyebrow">FOMAXO India</span><h2>Visit <em class="metal">India</em></h2>
-          <p class="lead">Founded in Dubai, now loved across India. Shop the FOMAXO India collection on fomaxo.in.</p>
-          <div class="ctas"><a class="btn" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit FOMAXO India (fomaxo.in, opens in a new tab)">Visit India</a><a class="btn line" href="#/about">Our story</a></div></div>
       </article>
     </div>
   </div></section>
