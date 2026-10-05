@@ -158,6 +158,7 @@ label.mini{display:none}
 .ems .em.on{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.ems .em.on b{color:var(--gold-ink)}
 @media (max-width:759px){.ems{margin-bottom:8px;gap:5px}.ems .em{font-size:11.5px;padding:2px 9px}.stats{margin-bottom:6px}}
 /* order step chips fill the row as equal, evenly spaced boxes */
+.ems.track.swarn{grid-template-columns:repeat(2,minmax(0,1fr))}.ems.track.swarn .t-low b{color:var(--warn)}.ems.track.swarn .t-out b{color:var(--bad)}.ems.track.swarn .t-low:not(.on){border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}.ems.track.swarn .t-out:not(.on){border-color:color-mix(in srgb,var(--bad) 55%,var(--line))}.ems.track.swarn .em.on b{color:var(--gold-ink)}.swnote{margin:-4px 0 8px;flex:none}tr.row.wf{display:none!important}
 .ems.track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;width:100%;max-width:none;box-sizing:border-box}.ems.track .em{display:flex;justify-content:center;align-items:baseline;gap:6px;border-radius:10px;padding:8px 10px;font-size:12.5px}.ems.track .em b{margin:0;font-size:15px}
 @media (max-width:759px){.ems.track{gap:6px}.ems.track .em{flex-direction:column;align-items:center;gap:1px;padding:6px 2px;font-size:10.5px;white-space:normal;text-align:center;line-height:1.2}.ems.track .em b{font-size:16px}}
 /* analytics */
@@ -757,7 +758,7 @@ if (isset($_GET['stock'])) {
       $k = "$id|$opt";
       if (($old[$k] ?? [null, null]) !== [$q, $c]) $set->execute([$id, (string)$opt, $q, $c]);
     }
-    flash('Saved.', true); go(['stock' => 1]);
+    flash('Saved.', true); go(['stock' => 1] + (in_array($_POST['w'] ?? '', ['low', 'out'], true) ? ['w' => $_POST['w']] : []));
   }
   $have = []; $cost = [];
   foreach ($pdo->query('SELECT product, size, qty, cost FROM fx_stock') as $r) { $have[$r['product'] . '|' . $r['size']] = $r['qty']; $cost[$r['product'] . '|' . $r['size']] = $r['cost']; }
@@ -766,19 +767,22 @@ if (isset($_GET['stock'])) {
   $sold = [];   // sold in the last 30 days (orders that are not cancelled), to help decide when to restock
   $s = $pdo->query("SELECT lines_json FROM fx_orders WHERE stock_taken = 1 AND created_at > NOW() - INTERVAL 30 DAY");
   foreach ($s as $r) foreach (fomaxo_stock_lines(json_decode((string)$r['lines_json'], true) ?: []) as $k => $n) $sold[$k] = ($sold[$k] ?? 0) + $n;
-  $tr = '';
+  $tr = ''; $w = in_array($_GET['w'] ?? '', ['low', 'out'], true) ? $_GET['w'] : ''; $nw = ['low' => 0, 'out' => 0];
   foreach ($CATALOG as $id => $p) foreach (array_keys($p['prices']) as $opt) {
     $k = "$id|$opt"; $q = $have[$k] ?? null; $c = $cost[$k] ?? null;
+    $st = $q === null ? '' : ((int)$q <= 0 ? 'out' : ((int)$q <= fomaxo_low_stock() ? 'low' : '')); if ($st !== '') $nw[$st]++;
     $lvl = $q === null ? '<span class="muted">Not counted</span>' : ((int)$q <= 0 ? '<span class="lvl-out">Sold out</span>' : ((int)$q <= fomaxo_low_stock() ? '<span class="lvl-low">Only ' . (int)$q . ' left</span>' : '<span class="lvl-ok">In stock</span>'));
     $margin = ' · <span class="muted">sells at AED ' . h(number_format($p['prices'][$opt], 0)) . '</span>';
     $img = $pic[$id] ?? ($p['images'][0] ?? '');
-    $tr .= '<tr class="row"><td class="sp">' . ($img ? '<img class="sth" src="../assets/img/' . h($img) . '.webp" alt="" loading="lazy">' : '<span class="sth"></span>') . '<div><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
+    $tr .= '<tr class="row' . ($w !== '' && $st !== $w ? ' wf' : '') . '"><td class="sp">' . ($img ? '<img class="sth" src="../assets/img/' . h($img) . '.webp" alt="" loading="lazy">' : '<span class="sth"></span>') . '<div><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
          . '<div class="small">' . $lvl . $margin . (!empty($sold[$k]) ? ' <span class="muted">· ' . (int)$sold[$k] . ' sold in 30 days</span>' : '') . '</div></div></td>'
          . '<td class="num"><label class="mini">Stock</label><input type="number" min="0" inputmode="numeric" name="q[' . h($id) . '][' . h($opt) . ']" value="' . ($q === null ? '' : (int)$q) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' stock"></td>'
          . '<td class="num"><label class="mini">Cost AED</label><input type="number" min="0" step="0.01" inputmode="decimal" name="c[' . h($id) . '][' . h($opt) . ']" value="' . ($c === null ? '' : h(rtrim(rtrim($c, '0'), '.'))) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' cost price"></td></tr>';
   }
   page('Stock', '<div class="pagehead"><h1>Stock &amp; cost</h1><input type="search" class="tsearch" placeholder="Search product" aria-label="Search product"></div>' . flash()
-    . '<form class="fitform" method="post">' . csrf_field()
+    . '<nav class="ems track swarn" aria-label="Stock warnings">' . implode('', array_map(fn($k, $l) => '<a class="em t-' . $k . ($w === $k ? ' on' : '') . '" href="' . h(self_url(['stock' => 1] + ($w === $k ? [] : ['w' => $k]))) . '">' . $l . ' <b>' . $nw[$k] . '</b></a>', ['low', 'out'], ['⚠ Running low', 'Out of stock'])) . '</nav>'
+    . ($w !== '' ? '<p class="small muted swnote">Showing only ' . ($w === 'low' ? 'sizes running low (' . fomaxo_low_stock() . ' or fewer left)' : 'sizes out of stock') . ' · <a href="./?stock=1">Show all</a></p>' : '')
+    . '<form class="fitform" method="post">' . csrf_field() . ($w !== '' ? '<input type="hidden" name="w" value="' . $w . '">' : '')
     . '<div class="card lowlvl"><label for="low_stock">Show "Only X left" on the website when stock is at or below</label><input id="low_stock" type="number" min="0" max="100" inputmode="numeric" name="low_stock" required value="' . fomaxo_low_stock() . '">'
     . '<p class="muted small" style="margin:6px 0 0">One level for every product and size. 0 turns it off (Sold out still shows).</p></div>'
     . '<div class="fill"><table class="stock"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost (AED)</th></tr></thead><tbody>' . $tr . '</tbody></table></div>'
