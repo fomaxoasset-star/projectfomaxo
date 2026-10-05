@@ -479,8 +479,7 @@ function fx_tracker($o) {
 /* which one-tap buttons an order gets: Paid only for cash orders not yet paid */
 function fx_order_actions($o) {
   $cod = $o['payment'] === 'Cash on delivery';
-  return ['New' => $cod ? ['paid', 'delivered', 'cancel'] : ['delivered', 'cancel'], 'Paid' => ['delivered', 'cancel', 'refund'],
-          'Delivered' => ['pending', 'refund']][$o['status']] ?? [];
+  return ['New' => $cod ? ['paid', 'delivered', 'cancel'] : ['delivered', 'cancel'], 'Paid' => ['delivered', 'cancel']][$o['status']] ?? [];
 }
 function fx_order_buttons($o, $back = '', $cls = '') {
   $label = ['paid' => 'Paid', 'delivered' => '✓ Mark delivered', 'pending' => '↺ Not delivered', 'cancel' => 'Cancel order', 'refund' => 'Refund'];
