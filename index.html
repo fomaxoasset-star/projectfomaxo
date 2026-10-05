@@ -1563,6 +1563,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-note .rw-ver{font-size:9.5px;white-space:nowrap;vertical-align:-2px;margin-right:4px}
 .rw-note .rw-ver svg{width:13px;height:13px}
 .rw-text{font-family:var(--serif);font-size:21px;line-height:1.45;color:var(--ivory);white-space:pre-line;overflow-wrap:anywhere}
+.rw-reply{margin:12px 0 4px;padding:10px 14px;border-left:2px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent);border-radius:0 8px 8px 0}.rw-reply b{display:block;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}.rw-reply p{margin:0;font-size:15px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere}
 .rw-photos{display:flex;gap:8px;flex-wrap:wrap}
 .rw-photos button{width:78px;height:78px;border:1px solid var(--line);overflow:hidden;padding:0}
 .rw-photos img{width:100%;height:100%;object-fit:cover}
@@ -3011,6 +3012,7 @@ function rwItem(r){
   return `<article class="rv rw-item"><div class="rw-top"><span class="rw-who"><b class="rw-name">${esc(r.name)}</b>${rwPlace(r)}</span><span class="small">${rwDate(r.date)}</span></div>
     ${rwStars(r.rating)}${r.verified ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}
     <p class="rw-text">“${esc(r.text)}”</p>
+    ${r.reply ? `<div class="rw-reply"><b>Reply from FOMAXO</b><p>${esc(r.reply)}</p></div>` : ''}
     ${r.photos.length ? `<div class="rw-photos">${r.photos.map(u => `<button type="button" data-rwph="${esc(u)}" aria-label="Open customer photo"><img src="${esc(u)}" alt="Customer photo of ${esc(r.name)}" loading="lazy"></button>`).join('')}</div>` : ''}
     <button type="button" class="rw-help${voted ? ' on' : ''}" data-rwh="${r.id}"${voted ? ' disabled' : ''}>${rwHelpLabel(r.helpful)}</button></article>`;
 }
