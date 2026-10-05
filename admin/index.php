@@ -682,6 +682,21 @@ if (isset($_GET['expenses'])) {
 
 /* ---- analytics: visitors, where they come from, and where sales are lost (filled by track.php on the website) ---- */
 if (isset($_GET['analytics'])) {
+  if (isset($_GET['leads'])) {   // Excel: everyone who typed their details at checkout, from the start, and whether they ordered later
+    $ordered = "(l.order_no IS NOT NULL OR EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
+                 AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9)))";
+    $addr = $pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'address'")->fetch() ? 'l.address' : "''";
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="fomaxo-checkout-details-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
+    fputcsv($out, ['Started', 'Last change', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Products in bag', 'Bag value (AED)', 'Left at', 'Ordered later']);
+    $stageName = ['details' => 'Delivery details', 'payment' => 'Payment choice', 'card' => 'Card payment page'];
+    $cell = fn($v) => is_string($v) && preg_match('/^[=+\-@]/', $v) && !preg_match('/^\+?[\d\s()\-]+$/', $v) ? "'" . $v : $v;   // typed by visitors: never let Excel run it as a formula
+    foreach ($pdo->query("SELECT l.*, $addr addr, $ordered ordered FROM fx_leads l ORDER BY l.updated_at DESC") as $l)
+      fputcsv($out, array_map($cell, [$l['created_at'], $l['updated_at'], $l['name'], $l['phone'], $l['email'], $l['emirate'], $l['addr'], $l['items'],
+                     $l['total'] === null ? '' : number_format((float)$l['total'], 2, '.', ''), $stageName[$l['stage']] ?? $l['stage'], $l['ordered'] ? 'Yes' . ($l['order_no'] ? ' (' . $l['order_no'] . ')' : '') : 'No']));
+    exit;
+  }
   $isDay = fn($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$v) && strtotime($v);
   $r = (string)($_GET['r'] ?? '7');
   if ($r === 'custom' && $isDay($_GET['d1'] ?? '') && $isDay($_GET['d2'] ?? '')) { $d1 = min($_GET['d1'], $_GET['d2']); $d2 = max($_GET['d1'], $_GET['d2']); }
@@ -773,6 +788,7 @@ if (isset($_GET['analytics'])) {
     $left .= '<li><div class="lt"><b>' . h($l['name'] ?: 'No name') . '</b>' . ($l['phone'] !== '' ? ' <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">' . h($l['phone']) . '</a>' : '')
            . '<span class="r">' . ($l['total'] !== null ? '<b>' . money($l['total']) . '</b>' : '') . '</span></div>'
            . '<div class="small"><span class="tag stage-' . h($l['stage']) . '">Left at ' . h($stageName[$l['stage']] ?? $l['stage']) . '</span> <span class="muted">' . h(date('d M, H:i', strtotime($l['updated_at']))) . ($recent ? ' · may still be checking out' : '') . ($l['emirate'] !== '' ? ' · ' . h($l['emirate']) : '') . '</span></div>'
+           . (($l['address'] ?? '') !== '' ? '<div class="muted small items1">' . h($l['address']) . '</div>' : '')
            . ($l['items'] !== '' ? '<div class="muted small items1">' . h($l['items']) . '</div>' : '') . '</li>';
   }
 
@@ -807,7 +823,7 @@ if (isset($_GET['analytics'])) {
     . '<div class="dgrid agrid">'
     . '<section class="card a-funnel on" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
     . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a bar to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p></section>'
-    . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout</h2></div>' . (array_sum($leftN) ? '<p class="muted small" style="margin:0 0 4px">' . implode(' · ', array_map(fn($k) => $leftN[$k] . ' at ' . strtolower($stageName[$k]), array_keys(array_filter($leftN)))) . '</p>' : '')
+    . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout</h2><a class="btn line sm" href="./?analytics=1&amp;leads=1">Excel</a></div>' . (array_sum($leftN) ? '<p class="muted small" style="margin:0 0 4px">' . implode(' · ', array_map(fn($k) => $leftN[$k] . ' at ' . strtolower($stageName[$k]), array_keys(array_filter($leftN)))) . '</p>' : '')
     . ($left ? '<ul class="list leads">' . $left . '</ul>' : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
     . '<section class="card a-sources" data-p="sources"><div class="ch"><h2>Where visitors come from</h2></div>'
     . ($src ? '<div class="list"><table class="mini"><thead><tr><th>Source</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th></tr></thead><tbody>' . $src . '</tbody></table></div>' : '<p class="muted empty">No visits yet.</p>') . '</section>'

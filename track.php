@@ -30,12 +30,14 @@ try {
     $stage = isset($stages[$d['st'] ?? '']) ? $d['st'] : 'details';
     $name = $t('name', 80); $phone = $t('phone', 25);
     if ($name === '' && $phone === '') exit;
-    $pdo->prepare("INSERT INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone, email, emirate, items, total)
-                   VALUES (?, ?, NOW(), NOW(), ?, ?, ?, ?, ?, ?, ?)
+    $args = [$sid, $vid, $stage, $name, $phone, $t('email', 120), $t('emirate', 30), $t('items', 600), is_numeric($d['total'] ?? null) ? round((float)$d['total'], 2) : null];
+    $sql = fn($a, $b, $c) => "INSERT INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone, email, emirate, items, total$a)
+                   VALUES (?, ?, NOW(), NOW(), ?, ?, ?, ?, ?, ?, ?$b)
                    ON DUPLICATE KEY UPDATE updated_at = NOW(), name = VALUES(name), phone = VALUES(phone), email = VALUES(email), emirate = VALUES(emirate),
-                     items = VALUES(items), total = VALUES(total),
-                     stage = IF(FIELD(VALUES(stage), 'details', 'payment', 'card') > FIELD(stage, 'details', 'payment', 'card'), VALUES(stage), stage)")
-        ->execute([$sid, $vid, $stage, $name, $phone, $t('email', 120), $t('emirate', 30), $t('items', 600), is_numeric($d['total'] ?? null) ? round((float)$d['total'], 2) : null]);
+                     items = VALUES(items), total = VALUES(total)$c,
+                     stage = IF(FIELD(VALUES(stage), 'details', 'payment', 'card') > FIELD(stage, 'details', 'payment', 'card'), VALUES(stage), stage)";
+    try { $pdo->prepare($sql(', address', ', ?', ', address = VALUES(address)'))->execute(array_merge($args, [$t('addr', 300)])); }
+    catch (Throwable $e) { $pdo->prepare($sql('', '', ''))->execute($args); }   // before the address column exists
     exit;
   }
 
@@ -57,9 +59,8 @@ try {
         ->execute([$vid, $sid, $ev, $page, $product, $source, $ref, $device]);
   }
   if ($ev === 'buy' && ($no = $t('o', 40)) !== '') $pdo->prepare('UPDATE fx_leads SET order_no = ? WHERE sid = ?')->execute([$no, $sid]);
-  if (mt_rand(1, 500) === 1) {   // keep the tables small: 400 days of steps, one day of "on the website now"
+  if (mt_rand(1, 500) === 1) {   // keep the tables small: 400 days of steps, one day of "on the website now" (checkout details are kept for good)
     $pdo->exec('DELETE FROM fx_events WHERE at < NOW() - INTERVAL 400 DAY');
     $pdo->exec('DELETE FROM fx_live WHERE seen < NOW() - INTERVAL 1 DAY');
-    $pdo->exec('DELETE FROM fx_leads WHERE updated_at < NOW() - INTERVAL 400 DAY');
   }
 } catch (Throwable $e) { error_log('FOMAXO track: ' . $e->getMessage()); }
