@@ -1596,6 +1596,11 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-clr{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--gold-hi);font-size:22px;line-height:1;cursor:pointer;padding:0}
 .rw-clr-w select+.rw-clr{right:30px}
 .rw-clr[hidden]{display:none}
+.rw-sug{position:absolute;left:0;right:0;top:100%;z-index:20;max-height:264px;overflow-y:auto;background:var(--panel);border:1px solid var(--gold-hi);border-top:0;box-shadow:0 12px 28px rgba(0,0,0,.18)}
+.rw-sug[hidden]{display:none}
+.rw-sug button{display:block;width:100%;text-align:left;padding:12px 16px;min-height:44px;border:0;border-bottom:1px solid var(--line-2);background:transparent;color:var(--ivory);font-size:15px;letter-spacing:0;text-transform:none;cursor:pointer}
+.rw-sug button:last-child{border-bottom:0}
+.rw-sug button:hover,.rw-sug button:focus-visible{background:rgba(215,170,105,.14);color:var(--gold-hi);outline:none}
 .rw-clr:hover{color:var(--ivory)}
 .rw-clr:focus-visible{outline:1px solid var(--gold-hi);outline-offset:-2px}
 .rw-form .row2 input,.rw-form .row2 select{box-sizing:border-box;width:100%;height:52px;padding-top:0;padding-bottom:0;line-height:normal}
@@ -2979,6 +2984,19 @@ const rwDate = s => { const d = new Date(s + 'T12:00:00'); return isNaN(d) ? '' 
 /* state/city + country (optional) shown after the reviewer's name: "Name · Dubai 🇦🇪"; country is an ISO code → flag only */
 const RW_COUNTRIES = 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ');
 const RW_TOP = ['AE', 'SA', 'OM', 'QA', 'KW', 'BH', 'IN', 'PK', 'GB', 'US'];
+/* State / City suggestions (tap one or type any other place); follows the chosen country, UAE when none is chosen */
+const RW_CITIES = {
+  AE: 'Dubai|Abu Dhabi|Sharjah|Ajman|Ras Al Khaimah|Fujairah|Umm Al Quwain|Al Ain|Khor Fakkan|Kalba|Dibba|Al Dhafra|Ruwais|Madinat Zayed|Hatta',
+  SA: 'Riyadh|Jeddah|Mecca|Medina|Dammam|Khobar|Dhahran|Taif|Tabuk|Abha|Buraidah|Hail|Jubail|Najran|Yanbu',
+  OM: 'Muscat|Salalah|Sohar|Nizwa|Sur|Ibri|Barka|Rustaq|Buraimi|Khasab',
+  QA: 'Doha|Al Rayyan|Al Wakrah|Lusail|Al Khor|Umm Salal|Mesaieed|Dukhan',
+  KW: 'Kuwait City|Hawalli|Salmiya|Farwaniya|Jahra|Ahmadi|Mubarak Al Kabeer|Fahaheel',
+  BH: 'Manama|Muharraq|Riffa|Isa Town|Hamad Town|Sitra|Budaiya|Juffair',
+  IN: 'Kerala|Mumbai|Delhi|Bengaluru|Chennai|Hyderabad|Kolkata|Pune|Ahmedabad|Jaipur|Lucknow|Kochi|Kozhikode|Thiruvananthapuram|Goa|Punjab|Tamil Nadu|Karnataka|Maharashtra|Gujarat|Uttar Pradesh|Rajasthan|Telangana|West Bengal',
+  PK: 'Karachi|Lahore|Islamabad|Rawalpindi|Faisalabad|Multan|Peshawar|Quetta|Sialkot|Hyderabad|Punjab|Sindh|Khyber Pakhtunkhwa|Balochistan',
+  GB: 'London|Manchester|Birmingham|Liverpool|Leeds|Glasgow|Edinburgh|Bristol|Cardiff|Belfast|Newcastle|Sheffield|Nottingham|Leicester',
+  US: 'New York|Los Angeles|Chicago|Houston|Miami|San Francisco|Washington DC|Dallas|Atlanta|Boston|Seattle|Las Vegas|California|Texas|Florida|New Jersey'
+};
 const rwCountryName = c => { try { return new Intl.DisplayNames(['en'], {type: 'region'}).of(c) || c; } catch(e) { return c; } };
 const rwFlag = c => /^[A-Z]{2}$/.test(c || '') ? String.fromCodePoint(...[...c].map(x => 0x1F1E6 + x.charCodeAt(0) - 65)) : '';
 const rwPlace = r => (r.city || r.country) ? `<span class="rw-loc">· ${r.city ? esc(r.city) : ''}${r.country ? `<span class="rw-flag" role="img" aria-label="${esc(rwCountryName(r.country))}" title="${esc(rwCountryName(r.country))}">${rwFlag(r.country)}</span>` : ''}</span>` : '';
@@ -3019,7 +3037,7 @@ function rwForm(p, link){
     <label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
     <label class="rw-anon"><input type="checkbox" name="anon"><span>Post anonymously</span></label>
     <p class="small rw-shown">Your review will show the name: <b></b></p>
-    <div class="row2"><label>State / City (optional)<span class="rw-clr-w"><input name="city" maxlength="40" autocomplete="address-level2" data-cap="words" autocapitalize="words" placeholder="e.g. Dubai"><button type="button" class="rw-clr" data-clr="city" aria-label="Clear city" hidden>×</button></span></label>
+    <div class="row2"><label>State / City (optional)<span class="rw-clr-w"><input name="city" maxlength="40" autocomplete="off" data-cap="words" autocapitalize="words" placeholder="Type or pick, e.g. Dubai" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="rw-sug" role="listbox" hidden></div><button type="button" class="rw-clr" data-clr="city" aria-label="Clear city" hidden>×</button></span></label>
       <label>Country (optional)<span class="rw-clr-w"><select name="country" autocomplete="country">${rwCountryOptions()}</select><button type="button" class="rw-clr" data-clr="country" aria-label="Clear country" hidden>×</button></span></label></div>
     <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
     <div class="rw-emo" role="group" aria-label="Add an emoji to your review">${RW_EMO.map(e => `<button type="button" data-emo="${e}" aria-label="Add ${e}">${e}</button>`).join('')}</div>
@@ -3058,6 +3076,21 @@ function rwBindForm(form, p, link, onDone){
   $$('[data-clr]', form).forEach(b => { const f = form.elements[b.dataset.clr], show = () => { b.hidden = !f.value; };
     f.addEventListener('input', show); f.addEventListener('change', show);
     b.onclick = e => { e.preventDefault(); f.value = ''; show(); f.focus(); }; });
+  /* State / City: list of places to tap while typing; anything typed is still accepted */
+  const ci = form.elements.city, co = form.elements.country, sug = $('.rw-sug', form);
+  const sugShow = () => {
+    const q = ci.value.trim().toLowerCase(), list = (RW_CITIES[co.value] || (co.value ? '' : RW_CITIES.AE)).split('|').filter(Boolean);
+    const hits = list.filter(c => c.toLowerCase().startsWith(q)).concat(q ? list.filter(c => !c.toLowerCase().startsWith(q) && c.toLowerCase().includes(q)) : []).filter(c => c.toLowerCase() !== q).slice(0, 8);
+    sug.innerHTML = hits.map(c => `<button type="button" role="option">${esc(c)}</button>`).join('');
+    sug.hidden = !hits.length; ci.setAttribute('aria-expanded', String(!sug.hidden));
+  };
+  const sugHide = () => { sug.hidden = true; ci.setAttribute('aria-expanded', 'false'); };
+  ci.addEventListener('focus', sugShow); ci.addEventListener('input', () => setTimeout(sugShow));
+  ci.addEventListener('blur', () => setTimeout(sugHide, 150));
+  ci.addEventListener('keydown', e => { if (e.key === 'Escape') sugHide(); });
+  sug.onmousedown = e => e.preventDefault();
+  sug.onclick = e => { const b = e.target.closest('button'); if (!b) return; ci.value = b.textContent; ci.dispatchEvent(new Event('change')); sugHide(); };
+  co.addEventListener('change', () => { if (document.activeElement === ci) sugShow(); });
   const fi = $('input[type=file]', form), prev = $('.rw-ph-prev', form), add = $('.rw-add', form);
   const drawPrev = () => {
     prev.innerHTML = files.map((x, i) => `<span><img src="${x.url}" alt=""><button type="button" data-x="${i}" aria-label="Remove photo">×</button></span>`).join('');
