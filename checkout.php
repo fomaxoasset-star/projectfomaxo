@@ -169,7 +169,7 @@ if ($pay === 'cod') {
   $ids = array_map(fn($l) => $l['id'] ?? '', $lines);
   $review = fomaxo_review_link($no, $ids);
   $waLines = fomaxo_wa_review_request($no, $cu, array_map(fn($id) => $CATALOG[$id]['name'] ?? '', $ids), $review);
-  $to = $cfg['orders_email'] ?? 'fomaxoasset@gmail.com';
+  $to = fomaxo_orders_email($cfg['orders_email'] ?? FX_STORE_EMAIL);   // Settings on fomaxo.com/admin, else the key file, else the store inbox
   $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', explode(':', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com')[0])) ?: 'fomaxo.com';
   $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) . "\n\n" . implode("\n", $rows)
         . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\nMulti-buy discount ($pctTxt%): -" . aed($discFils) : '')

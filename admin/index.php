@@ -79,10 +79,21 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .items{margin:0;padding-left:18px}
 .pager{display:flex;gap:8px;margin-top:14px}
 .btn.sm{padding:8px 12px;font-size:11px}.btn.big{padding:15px 26px;font-size:14px;min-width:200px}
-.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border-bottom:1px solid var(--line)}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;background:var(--panel);border-bottom:1px solid var(--line)}
 .tabs a{text-align:center;text-decoration:none;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:14px 4px;color:var(--muted);border-bottom:2px solid transparent}
 .tabs a.on{color:var(--gold);border-bottom-color:var(--gold)}
-@media (max-width:759px){.tabs a{font-size:11px;letter-spacing:.04em}}
+@media (max-width:759px){.tabs a{flex:0 0 auto;padding:14px 13px;font-size:12px;letter-spacing:.08em}}.tabs::-webkit-scrollbar{display:none}
+.todos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 4px}
+.todo{display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-decoration:none;color:var(--ink)}
+.todo b{display:block;font-size:26px;font-weight:500;color:var(--muted)}.todo span{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.todo.hot{border-color:var(--gold)}.todo.hot b{color:var(--gold)}
+.dash{display:grid;gap:14px}@media (min-width:860px){.dash{grid-template-columns:3fr 2fr}}.dash>*{min-width:0}
+.chart{width:100%;height:auto;display:block;overflow:visible}.chart .bar{fill:var(--gold)}.chart .grid,.chart .axis{stroke:var(--line);stroke-width:1}
+.chart text{fill:var(--muted);font-size:11px}@media (max-width:759px){.chart text{font-size:21px}}.chart .hit{fill:transparent;cursor:pointer}.chart .hit.on{fill:rgba(143,107,55,.12)}
+#tip{min-height:1.5em;margin:6px 0 0}
+.list{list-style:none;margin:0;padding:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.list li:last-child{border:0}
+.list.orders li{padding:0}.list.orders a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;color:var(--ink);text-decoration:none;width:100%}
+.list small{display:block}.list .r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
 .prods td{vertical-align:middle}.pimg img{width:52px;height:52px;object-fit:cover;border-radius:7px;display:block}
 @media (max-width:759px){.prods tr.row{display:grid;grid-template-columns:64px 1fr auto;align-items:center;padding:8px 4px}.prods td.pimg{grid-row:span 2}.prods td.num{display:none}}
 .pform .card{margin-bottom:6px}.opt{text-transform:none;letter-spacing:0}label.sub{margin-top:4px;text-transform:none;letter-spacing:0;font-size:13px}
@@ -118,9 +129,11 @@ CSS;
      . (!empty($_SESSION['admin']) ? '<form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Log out</button></form>' : '')
      . '</header>'
      . (!empty($_SESSION['admin']) ? '<nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
-         [['Orders', './', !array_intersect_key($_GET, ['stock' => 1, 'expenses' => 1, 'reports' => 1, 'products' => 1])], ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
-          ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Reports', './?reports=1', isset($_GET['reports'])]])) . '</nav>' : '')
-     . '<main class="wrap' . ($wide ? '' : ' narrow') . '">' . $body . '</main></body></html>';
+         [['Home', './', !$_GET], ['Orders', './?orders=1', (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
+          ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
+          ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Reports', './?reports=1', isset($_GET['reports'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav>' : '')
+     . '<main class="wrap' . ($wide ? '' : ' narrow') . '">' . $body . '</main>'
+     . '<script>var t=document.querySelector(".tabs a.on");if(t&&t.parentNode.scrollWidth>t.parentNode.clientWidth)t.parentNode.scrollLeft=t.offsetLeft-(t.parentNode.clientWidth-t.offsetWidth)/2;</script></body></html>';
   exit;
 }
 function flash($m = null, $ok = false) { if ($m !== null) { $_SESSION['flash'] = [$m, $ok]; return ''; } $f = $_SESSION['flash'] ?? null; unset($_SESSION['flash']); return $f ? '<p class="msg ' . ($f[1] ? 'ok' : 'bad') . '">' . h($f[0]) . '</p>' : ''; }
@@ -420,6 +433,41 @@ if (isset($_GET['products'])) {
     . '<div class="savebar"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true);
 }
 
+/* ---- settings: admin password, where order emails go, low stock warning ---- */
+if (isset($_GET['settings'])) {
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_ok()) { flash('Please try again.'); go(['settings' => 1]); }
+    if (isset($_POST['pw_now'])) {
+      $hash = (string)fomaxo_setting($pdo, 'admin_hash');
+      $p1 = (string)($_POST['pw1'] ?? ''); $p2 = (string)($_POST['pw2'] ?? '');
+      if (!password_verify((string)$_POST['pw_now'], $hash)) { sleep(1); flash('Your current password is not right.'); }
+      elseif (strlen($p1) < 8) flash('Choose a new password of at least 8 characters.');
+      elseif ($p1 !== $p2) flash('The two new passwords are not the same.');
+      else { fomaxo_setting($pdo, 'admin_hash', password_hash($p1, PASSWORD_DEFAULT)); session_regenerate_id(true); flash('Your new password is saved.', true); }
+      go(['settings' => 1]);
+    }
+    $email = trim((string)($_POST['orders_email'] ?? '')); $low = trim((string)($_POST['low_stock'] ?? ''));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { flash('Please type a valid email address.'); go(['settings' => 1]); }
+    if (!ctype_digit($low) || (int)$low > 100) { flash('Low stock warning must be a number from 0 to 100.'); go(['settings' => 1]); }
+    fomaxo_setting($pdo, 'orders_email', $email); fomaxo_setting($pdo, 'low_stock', (string)(int)$low);
+    flash('Settings saved.', true); go(['settings' => 1]);
+  }
+  page('Settings', '<h1>Settings</h1>' . flash()
+    . '<form class="card" method="post">' . csrf_field()
+    . '<h2 style="margin-top:0">Store</h2>'
+    . '<label for="orders_email">New order emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
+    . '<p class="muted small" style="margin:6px 0 0">Every cash and card order is emailed here. Password reset links always go to ' . h(FX_STORE_EMAIL) . '.</p>'
+    . '<label for="low_stock">Low stock warning</label><input id="low_stock" type="number" min="0" max="100" inputmode="numeric" name="low_stock" required value="' . fomaxo_low_stock() . '">'
+    . '<p class="muted small" style="margin:6px 0 0">The website shows "Only X left" when a size has this many bottles or fewer. 0 turns the warning off (Sold out still shows).</p>'
+    . '<p style="margin:18px 0 0"><button class="btn">Save</button></p></form>'
+    . '<form class="card" method="post" style="margin-top:16px">' . csrf_field()
+    . '<h2 style="margin-top:0">Admin password</h2>'
+    . '<label for="pw_now">Current password</label><input id="pw_now" name="pw_now" type="password" required autocomplete="current-password">'
+    . '<label for="pw1">New password</label><input id="pw1" name="pw1" type="password" minlength="8" required autocomplete="new-password">'
+    . '<label for="pw2">New password again</label><input id="pw2" name="pw2" type="password" minlength="8" required autocomplete="new-password">'
+    . '<p style="margin:18px 0 0"><button class="btn">Change password</button></p></form>');
+}
+
 /* ---- stock and cost price: one row per product and size ---- */
 if (isset($_GET['stock'])) {
   require_once dirname(__DIR__) . '/store-lib.php';
@@ -445,7 +493,7 @@ if (isset($_GET['stock'])) {
   $tr = '';
   foreach ($CATALOG as $id => $p) foreach (array_keys($p['prices']) as $opt) {
     $k = "$id|$opt"; $q = $have[$k] ?? null; $c = $cost[$k] ?? null;
-    $lvl = $q === null ? '<span class="muted">Not counted</span>' : ((int)$q <= 0 ? '<span class="lvl-out">Sold out</span>' : ((int)$q <= FX_LOW_STOCK ? '<span class="lvl-low">Only ' . (int)$q . ' left</span>' : '<span class="lvl-ok">In stock</span>'));
+    $lvl = $q === null ? '<span class="muted">Not counted</span>' : ((int)$q <= 0 ? '<span class="lvl-out">Sold out</span>' : ((int)$q <= fomaxo_low_stock() ? '<span class="lvl-low">Only ' . (int)$q . ' left</span>' : '<span class="lvl-ok">In stock</span>'));
     $margin = ' · <span class="muted">sells at AED ' . h(number_format($p['prices'][$opt], 0)) . '</span>';
     $tr .= '<tr class="row"><td><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
          . '<div class="small">' . $lvl . $margin . (!empty($sold[$k]) ? ' <span class="muted">· ' . (int)$sold[$k] . ' sold in 30 days</span>' : '') . '</div></td>'
@@ -453,7 +501,7 @@ if (isset($_GET['stock'])) {
          . '<td class="num"><label class="mini">Cost AED</label><input type="number" min="0" step="0.01" inputmode="decimal" name="c[' . h($id) . '][' . h($opt) . ']" value="' . ($c === null ? '' : h(rtrim(rtrim($c, '0'), '.'))) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' cost price"></td></tr>';
   }
   page('Stock', '<h1>Stock &amp; cost</h1>' . flash()
-    . '<p class="muted small"><b>Stock:</b> how many bottles you have. It goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml) and goes back up if you cancel an order. Leave it empty to not count that size. The website shows "Only X left" at ' . FX_LOW_STOCK . ' or fewer, and "Sold out" at 0.<br>'
+    . '<p class="muted small"><b>Stock:</b> how many bottles you have. It goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml) and goes back up if you cancel an order. Leave it empty to not count that size. The website shows "Only X left" at ' . fomaxo_low_stock() . ' or fewer, and "Sold out" at 0.<br>'
     . '<b>Cost:</b> what one bottle costs you. Reports use it to work out your profit.</p>'
     . '<form method="post">' . csrf_field() . '<table class="stock"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost (AED)</th></tr></thead><tbody>' . $tr . '</tbody></table>'
     . '<div class="savebar"><button class="btn big">Save</button></div></form>', true);
@@ -543,12 +591,12 @@ if (isset($_GET['reports'])) {
 /* one order */
 if (isset($_GET['o'])) {
   $s = $pdo->prepare('SELECT * FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_GET['o']]); $o = $s->fetch();
-  if (!$o) page('Not found', '<h1>Order not found</h1><p><a href="./">Back to orders</a></p>');
+  if (!$o) page('Not found', '<h1>Order not found</h1><p><a href="./?orders=1">Back to orders</a></p>');
   $items = array_filter(array_map('trim', explode('|', (string)$o['items'])));
   $opts = ''; foreach (FX_STATUSES as $x) $opts .= '<option' . ($x === $o['status'] ? ' selected' : '') . '>' . h($x) . '</option>';
   $wa = preg_replace('/\D/', '', $o['phone']); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1);
   $row = fn($k, $v) => $v === '' || $v === null ? '' : '<dt>' . h($k) . '</dt><dd>' . $v . '</dd>';
-  page($o['order_no'], '<p class="small"><a href="./">← All orders</a></p>'
+  page($o['order_no'], '<p class="small"><a href="./?orders=1">← All orders</a></p>'
     . '<h1>' . h($o['order_no']) . ' <span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span></h1>' . flash()
     . '<div class="grid2"><div>'
     . '<div class="card"><h2 style="margin-top:0">Items</h2><ul class="items">' . implode('', array_map(fn($i) => '<li>' . h($i) . '</li>', $items)) . '</ul>'
@@ -564,6 +612,68 @@ if (isset($_GET['o'])) {
     . '<h2 style="margin-top:0">Status</h2><label for="status">Order status</label><select id="status" name="status">' . $opts . '</select>'
     . '<label for="admin_note">Your note (only you see this)</label><textarea id="admin_note" name="admin_note">' . h($o['admin_note'] ?? '') . '</textarea>'
     . '<p style="margin:16px 0 0"><button class="btn">Save</button></p></form></div>', true);
+}
+
+/* ---- dashboard: the home screen — today, this month, what needs doing, stock alerts, latest orders, last 30 days ---- */
+if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'status', 'pay', 'from', 'to', 'p', 'export']))) {
+  require_once dirname(__DIR__) . '/store-lib.php';
+  $real = "status IN ('New', 'Paid', 'Delivered') AND test = 0";
+  $s = $pdo->prepare("SELECT COUNT(*) n, COALESCE(SUM(total), 0) sales FROM fx_orders WHERE $real AND created_at >= ?");
+  $s->execute([date('Y-m-d') . ' 00:00:00']); $today = $s->fetch();
+  $month = fomaxo_report($pdo, (int)date('Y'))[date('Y-m')];
+  $todo = $pdo->query("SELECT SUM(status = 'New') cod, SUM(status = 'Paid') card FROM fx_orders WHERE test = 0")->fetch();
+  /* last 30 days, one bar per day */
+  $days = []; for ($i = 29; $i >= 0; $i--) $days[date('Y-m-d', strtotime("-$i day"))] = [0.0, 0];
+  $s = $pdo->prepare("SELECT DATE(created_at) d, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY DATE(created_at)");
+  $s->execute([array_key_first($days) . ' 00:00:00']);
+  foreach ($s as $r) if (isset($days[$r['d']])) $days[$r['d']] = [(float)$r['t'], (int)$r['n']];
+  $max = max(array_map(fn($d) => $d[0], $days)); $sum30 = array_sum(array_map(fn($d) => $d[0], $days));
+  $W = 600; $H = 170; $top = 18; $base = 146; $slot = $W / 30; $bw = 12;
+  $bars = ''; $i = 0;
+  foreach ($days as $d => [$t, $n]) {
+    $x = round($i * $slot + ($slot - $bw) / 2, 1); $h = $max > 0 ? round(($base - $top) * $t / $max, 1) : 0;
+    $tip = date('D j M', strtotime($d)) . ': ' . ($n ? money($t) . ' · ' . $n . ' order' . ($n > 1 ? 's' : '') : 'no sales');
+    if ($h > 0) { $r = min(4, $h, $bw / 2); $y = $base - $h;
+      $bars .= '<path class="bar" d="M' . $x . ' ' . $base . 'V' . ($y + $r) . 'Q' . $x . ' ' . $y . ' ' . ($x + $r) . ' ' . $y . 'H' . ($x + $bw - $r) . 'Q' . ($x + $bw) . ' ' . $y . ' ' . ($x + $bw) . ' ' . ($y + $r) . 'V' . $base . 'Z"/>'; }
+    $bars .= '<rect class="hit" x="' . round($i * $slot, 1) . '" y="0" width="' . round($slot, 1) . '" height="' . $H . '" data-t="' . h($tip) . '"><title>' . h($tip) . '</title></rect>';
+    $i++;
+  }
+  $lbl = fn($k, $anchor, $x) => '<text x="' . $x . '" y="164" text-anchor="' . $anchor . '">' . h(date('j M', strtotime($k))) . '</text>';
+  $keys = array_keys($days);
+  $chart = '<svg class="chart" viewBox="0 0 ' . $W . ' ' . $H . '" role="img" aria-label="Sales per day for the last 30 days, ' . h(money($sum30)) . ' in total">'
+    . '<line class="grid" x1="0" x2="' . $W . '" y1="' . $top . '" y2="' . $top . '"/><text x="0" y="12">' . h($max > 0 ? money($max) : 'AED 0') . '</text>'
+    . '<line class="axis" x1="0" x2="' . $W . '" y1="' . $base . '" y2="' . $base . '"/>' . $bars
+    . $lbl($keys[0], 'start', 0) . $lbl($keys[15], 'middle', round(15.5 * $slot)) . $lbl($keys[29], 'end', $W) . '</svg>';
+  /* stock running low (counted sizes at or below the warning level) */
+  $low = fomaxo_low_stock(); $alerts = '';
+  foreach ($pdo->query('SELECT product, size, qty FROM fx_stock WHERE qty IS NOT NULL ORDER BY qty, product') as $r) {
+    if ((int)$r['qty'] > $low || !isset($CATALOG[$r['product']]['prices'][$r['size']])) continue;
+    $p = $CATALOG[$r['product']];
+    $alerts .= '<li><span>' . h($p['name']) . ' <span class="muted">' . h($p['kind'] === 'set' ? 'Set of ' . $r['size'] : $r['size'] . 'ml') . '</span></span>'
+             . ((int)$r['qty'] <= 0 ? '<b class="lvl-out">Sold out</b>' : '<b class="lvl-low">' . (int)$r['qty'] . ' left</b>') . '</li>';
+  }
+  $latest = '';
+  foreach ($pdo->query("SELECT order_no, created_at, status, total, name, payment FROM fx_orders WHERE status <> 'Awaiting payment' ORDER BY created_at DESC, id DESC LIMIT 5") as $o) {
+    $latest .= '<li><a href="' . h(self_url(['o' => $o['order_no']])) . '"><span><b>' . h($o['order_no']) . '</b> ' . h($o['name'])
+             . '<small class="muted">' . h(date('d M, H:i', strtotime($o['created_at']))) . ' · ' . h($o['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . '</small></span>'
+             . '<span class="r"><span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span><b>' . money($o['total']) . '</b></span></a></li>';
+  }
+  $profit = (float)$month['profit'];
+  $todoBox = fn($n, $label, $st) => '<a class="todo' . ($n ? ' hot' : '') . '" href="' . h(self_url(['orders' => 1, 'status' => $st])) . '"><b>' . (int)$n . '</b><span>' . $label . '</span></a>';
+  page('Dashboard', '<h1>Dashboard</h1>' . flash()
+    . '<div class="todos">' . $todoBox($todo['cod'], 'Cash orders to deliver', 'New') . $todoBox($todo['card'], 'Paid card orders to deliver', 'Paid') . '</div>'
+    . '<div class="stats">'
+    . '<div class="stat"><b>' . money($today['sales']) . '</b><span>Sales today · ' . (int)$today['n'] . ' order' . ((int)$today['n'] === 1 ? '' : 's') . '</span></div>'
+    . '<div class="stat"><b>' . money($month['sales']) . '</b><span>Sales ' . date('F') . ' · ' . (int)$month['orders'] . ' order' . ((int)$month['orders'] === 1 ? '' : 's') . '</span></div>'
+    . '<div class="stat"><b class="' . ($profit < 0 ? 'lvl-out' : 'lvl-ok') . '">' . ($profit < 0 ? '−' : '') . money(abs($profit)) . '</b><span>' . ($profit < 0 ? 'Loss' : 'Profit') . ' ' . date('F') . '</span></div></div>'
+    . ($month['no_cost'] ? '<p class="muted small">' . (int)$month['no_cost'] . ' order' . ($month['no_cost'] > 1 ? 's' : '') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit is too high. Add costs on the <a href="./?stock=1">Stock</a> page.</p>' : '')
+    . '<div class="dash"><section class="card"><h2 style="margin-top:0">Sales, last 30 days</h2><p class="muted small" style="margin:-6px 0 8px">' . h(money($sum30)) . ' in total · tap a day</p>' . $chart
+    . '<p class="small" id="tip" aria-live="polite">&nbsp;</p></section>'
+    . '<section class="card"><h2 style="margin-top:0">Stock alerts</h2>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted small">No size is running low. Sizes with an empty stock box are not counted.</p>')
+    . '<p class="small" style="margin:10px 0 0"><a href="./?stock=1">Open Stock</a></p></section></div>'
+    . '<section class="card" style="margin-top:14px"><h2 style="margin-top:0">Latest orders</h2>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted small">No orders yet.</p>')
+    . '<p class="small" style="margin:10px 0 0"><a href="./?orders=1">All orders</a> · <a href="./?reports=1">Reports</a></p></section>'
+    . '<script>document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){document.getElementById("tip").textContent=r.dataset.t;document.querySelectorAll(".chart .hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});</script>', true);
 }
 
 /* list + filters (the same filters are used for the Excel download) */
@@ -616,12 +726,12 @@ foreach ($rows as $o) {
        . '<td data-l=""><span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span></td>'
        . '<td class="num" data-l="">' . money($o['total']) . '</td></tr>';
 }
-$qs = array_filter($f, fn($v) => $v !== '');
+$qs = ['orders' => 1] + array_filter($f, fn($v) => $v !== '');
 $pager = ($pg > 1 ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg - 1])) . '">Newer</a>' : '')
        . ($sum['n'] > $pg * $per ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg + 1])) . '">Older</a>' : '');
 
 page('Orders', '<h1>Orders</h1>' . flash()
-  . '<form class="filters card" method="get">'
+  . '<form class="filters card" method="get"><input type="hidden" name="orders" value="1">'
   . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile, email or product"></div>'
   . '<div><label for="status">Status</label>' . $sel('status', $stOpts) . '</div>'
   . '<div><label for="pay">Payment</label>' . $sel('pay', ['' => 'All', 'cod' => 'Cash on delivery', 'card' => 'Card']) . '</div>'
