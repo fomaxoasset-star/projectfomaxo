@@ -131,6 +131,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 @media (min-width:760px){.szrow{grid-template-columns:repeat(4,1fr)}}
 label.chk{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);margin:8px 0 0}label.chk input{width:auto;margin:0}label.chk.big{font-size:16px;margin:0}
 .phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:6px}.ph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--line)}
+.pimgw{position:relative}.pno{position:absolute;left:6px;top:6px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.7);color:#fff;padding:2px 7px;border-radius:10px}.ph.first .pno{background:var(--gold);color:var(--gold-ink)}.ph.first img{border:2px solid var(--gold)}.pmv{display:grid;grid-template-columns:36px 1fr 36px;gap:4px;margin:6px 0 2px}.pmv button{height:34px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0}.pmv button[data-mv='-1'],.pmv button[data-mv='1']{font-size:20px;line-height:1;color:var(--gold)}.pmv button[data-mv='0']{border-color:var(--gold);color:var(--gold)}.pmv button:disabled{opacity:.3;cursor:default}
 @media (min-width:760px){.tabs{display:flex;justify-content:center;gap:10px}.tabs a{padding:11px 22px}}
 .lvl-out{color:var(--bad)}.lvl-low{color:var(--warn)}.lvl-ok{color:var(--ok)}
 .lowlvl{margin:0 0 10px;display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;padding:10px 14px}.lowlvl label{margin:0;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}.lowlvl input{max-width:90px}.lowlvl p{flex:1 1 240px;margin:0 !important}
@@ -587,8 +588,10 @@ if (isset($_GET['products'])) {
     $p['sizes'] = $sizes;
     $p['prices'] = (object)array_combine(array_map('strval', $sizes), array_map(fn($s) => $prices[(string)$s], $sizes));
     if ($was) $p['compareAt'] = (object)$was; else unset($p['compareAt']);
-    /* photos: remove ticked ones, put the chosen main photo first, add new uploads at the end */
+    /* photos: put them in the chosen order, remove ticked ones, add new uploads at the end */
     $imgs = array_values(array_filter((array)($p['images'] ?? []), 'is_string'));
+    $ord = array_values(array_intersect(array_map('strval', (array)($_POST['photo_order'] ?? [])), $imgs));   // the order set with the ‹ › buttons
+    if ($ord) $imgs = array_values(array_unique(array_merge($ord, $imgs)));
     $drop = array_map('strval', (array)($_POST['drop'] ?? []));
     $keep = array_values(array_filter($imgs, fn($k) => !in_array($k, $drop, true)));
     $main = (string)($_POST['main'] ?? '');
@@ -658,8 +661,8 @@ if (isset($_GET['products'])) {
   }
   $photos = '';
   foreach ((array)($p['images'] ?? []) as $i => $k) {
-    $photos .= '<div class="ph"><img src="../assets/img/' . h($k) . '.webp" alt="">'
-      . '<label class="chk"><input type="radio" name="main" value="' . h($k) . '"' . ($i === 0 ? ' checked' : '') . '> Main photo</label>'
+    $photos .= '<div class="ph"><div class="pimgw"><img src="../assets/img/' . h($k) . '.webp" alt=""><span class="pno">' . ($i === 0 ? 'Main photo' : 'Photo ' . ($i + 1)) . '</span></div><input type="hidden" name="photo_order[]" value="' . h($k) . '">'
+      . '<div class="pmv"><button type="button" data-mv="-1" aria-label="Move left">‹</button><button type="button" data-mv="0">Make main</button><button type="button" data-mv="1" aria-label="Move right">›</button></div>'
       . '<label class="chk"><input type="checkbox" name="drop[]" value="' . h($k) . '"> Remove</label></div>';
   }
   $tiers = ['' => 'None', 'elite' => 'Elite', 'signature' => 'Signature', 'prestige' => 'Prestige'];
@@ -680,7 +683,8 @@ if (isset($_GET['products'])) {
         . '<div><label class="sub" for="nk">Or key notes only</label><input id="nk" name="note_key" value="' . h($notes['key'] ?? '') . '"></div></div>' : '')
     . '</div>'
     . '<h2>Sizes and prices</h2><p class="muted small">Prices include VAT. "Was" shows a crossed-out price. Clear a price to remove that size.</p><div class="card">' . $rowsHtml . '</div>'
-    . '<h2>Photos</h2><div class="card">' . ($photos ? '<div class="phs">' . $photos . '</div>' : '')
+    . '<h2>Photos</h2><div class="card">' . ($photos ? '<p class="muted small" style="margin:0 0 8px">The first photo is the main one on the shop. Use ‹ › to change the order, then Save. The product page shows them in this order.</p><div class="phs">' . $photos . '</div>'
+        . '<script>(function(){var g=document.querySelector(".phs");function fix(){var a=g.querySelectorAll(".ph");a.forEach(function(p,i){p.querySelector(".pno").textContent=i?"Photo "+(i+1):"Main photo";p.classList.toggle("first",!i);p.querySelector("[data-mv=\'-1\']").disabled=!i;p.querySelector("[data-mv=\'1\']").disabled=i==a.length-1;p.querySelector("[data-mv=\'0\']").disabled=!i})}g.addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;var p=b.closest(".ph"),d=+b.dataset.mv;if(d===0)g.prepend(p);else if(d<0&&p.previousElementSibling)g.insertBefore(p,p.previousElementSibling);else if(d>0&&p.nextElementSibling)g.insertBefore(p.nextElementSibling,p);fix()});fix()})()</script>' : '')
     . '<label for="photos">' . ($photos ? 'Add more photos' : 'Add photos') . '</label><input id="photos" type="file" name="photos[]" accept="image/*" multiple>'
     . '<p class="muted small">Square or portrait photos look best. They are made smaller automatically.</p></div>'
     . '<div class="savebar"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true);
