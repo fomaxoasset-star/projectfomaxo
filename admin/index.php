@@ -67,7 +67,7 @@ tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgb
 .no{font-weight:500;white-space:nowrap}
 .tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;border:1px solid currentColor;white-space:nowrap}
 .s-New{color:var(--warn)}.s-Paid{color:var(--gold)}.s-Delivered{color:var(--ok)}.s-Cancelled{color:var(--bad)}.s-Refunded{color:var(--bad)}.s-Awaiting{color:var(--muted)}
-.oacts{display:flex;gap:5px;flex-wrap:wrap;margin:0}.oacts form{margin:0}.oacts button{font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}.oacts button:hover{border-color:var(--gold)}.oacts .a-paid{border-color:var(--gold);color:var(--gold)}.oacts .a-delivered{border-color:var(--ok);color:var(--ok)}.oacts .a-cancel,.oacts .a-refund{color:var(--bad)}.tag.p-Unpaid{color:var(--warn);border-style:dashed}.wait{display:block;font-size:11px;color:var(--muted);margin-top:3px}.wait.late{color:var(--bad);font-weight:600}.track{list-style:none;display:flex;margin:0 0 14px;padding:0;max-width:640px}.track li{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;font-size:12px;color:var(--muted)}.track li+li::before{content:'';position:absolute;top:13px;right:calc(50% + 16px);left:calc(-50% + 16px);height:2px;background:var(--line)}.track li.done+li.done::before{background:var(--gold)}.track li.bad::before{background:var(--bad)!important}.track i{font-style:normal;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:12px;color:var(--muted)}.track .done i{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.track .bad i{background:var(--bad);border-color:var(--bad);color:#fff}.track b{color:var(--ink);font-size:12.5px;font-weight:600}.track .done span{color:var(--ink)}@media (min-width:760px){.olist.acts td:nth-child(8){white-space:nowrap;width:1%}.olist.acts .oacts{flex-wrap:nowrap}.olist.acts td:nth-child(6) .tags{flex-wrap:nowrap}}.tag.p-Paid{color:var(--gold)}.tags{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.order-acts{margin:0 0 14px}.order-acts button{font-size:12.5px;padding:7px 14px}
+.oacts{display:flex;gap:5px;flex-wrap:wrap;margin:0}.oacts form{margin:0}.oacts button{font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}.oacts button:hover{border-color:var(--gold)}.oacts .a-paid{border-color:var(--gold);color:var(--gold)}.oacts .a-delivered{border-color:var(--ok);color:var(--ok)}.oacts .a-cancel,.oacts .a-refund{color:var(--bad)}.tag.p-Unpaid{color:var(--warn);border-style:dashed}.wait{display:block;font-size:11px;color:var(--muted);margin-top:3px}.wait.late{color:var(--bad);font-weight:600}.track{list-style:none;display:flex;margin:0 0 14px;padding:0;max-width:640px}.track li{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;font-size:12px;color:var(--muted)}.track li+li::before{content:'';position:absolute;top:13px;right:calc(50% + 16px);left:calc(-50% + 16px);height:2px;background:var(--line)}.track li.done+li.done::before{background:var(--gold)}.track li.bad::before{background:var(--bad)!important}.track i{font-style:normal;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:12px;color:var(--muted)}.track .done i{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.track .bad i{background:var(--bad);border-color:var(--bad);color:#fff}.track b{color:var(--ink);font-size:12.5px;font-weight:600}.track .done span{color:var(--ink)}@media (min-width:760px){.olist.acts td:nth-child(8){white-space:nowrap;width:1%}.olist.acts .oacts{flex-wrap:nowrap}.olist.acts td:nth-child(6) .tags{flex-wrap:nowrap}}.tag.p-Paid{color:var(--gold)}.tags{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.oacts button:disabled{opacity:.35;cursor:default}.oacts button.done:disabled{opacity:1}.oacts .a-paid.done{background:var(--gold);color:var(--gold-ink)}.oacts .a-delivered.done{background:var(--ok);border-color:var(--ok);color:var(--gold-ink)}.order-acts{margin:0 0 14px}.order-acts button{font-size:12.5px;padding:7px 14px}
 @media (max-width:759px){
   table,tbody,tr,td{display:block;border:0}thead{display:none}
   table{background:none;border:0}
@@ -479,20 +479,28 @@ function fx_tracker($o) {
 /* which one-tap buttons an order gets: Paid only for cash orders not yet paid */
 function fx_order_actions($o) {
   $cod = $o['payment'] === 'Cash on delivery';
-  return ['New' => $cod ? ['paid', 'delivered', 'cancel'] : ['delivered', 'cancel'], 'Paid' => ['delivered', 'cancel', 'refund'],
-          'Delivered' => ['pending', 'refund']][$o['status']] ?? [];
+  return ['New' => $cod ? ['paid', 'delivered', 'cancel'] : ['delivered', 'cancel'], 'Paid' => $cod ? ['delivered', 'cancel'] : ['refund', 'delivered', 'cancel'],
+          'Delivered' => $cod ? [] : ['refund']][$o['status']] ?? [];
 }
+/* always three buttons: Paid (cash) or Refund (card), Mark delivered, Cancel order; steps already done stay lit, the rest are greyed out */
 function fx_order_buttons($o, $back = '', $cls = '') {
-  $label = ['paid' => 'Paid', 'delivered' => '✓ Mark delivered', 'pending' => '↺ Not delivered', 'cancel' => 'Cancel order', 'refund' => 'Refund'];
+  if (!in_array($o['status'], ['New', 'Paid', 'Delivered'], true)) return '';
+  $cod = $o['payment'] === 'Cash on delivery';
+  $label = ['paid' => 'Paid', 'delivered' => '✓ Mark delivered', 'cancel' => 'Cancel order', 'refund' => 'Refund'];
+  $doneLabel = ['paid' => '✓ Paid', 'delivered' => '✓ Delivered'];
+  $done = ['paid' => $o['status'] !== 'New', 'delivered' => $o['status'] === 'Delivered'];
   $ask = ['cancel' => 'Cancel order ' . $o['order_no'] . '? The items go back into stock.',
           'refund' => 'Mark order ' . $o['order_no'] . ' as refunded? The items go back into stock. This only records the refund here; it does not send money back. Card refunds are done in Ziina.'];
   $ok = fx_order_actions($o);
-  $btn = fn($a) => '<form method="post"' . (isset($ask[$a]) ? ' onsubmit="return confirm(' . h(json_encode($ask[$a], JSON_UNESCAPED_UNICODE)) . ')"' : '') . '>' . csrf_field()
-          . '<input type="hidden" name="order" value="' . h($o['order_no']) . '"><input type="hidden" name="quick" value="' . $a . '">'
-          . ($back !== '' ? '<input type="hidden" name="back" value="' . h($back) . '">' : '') . '<button class="a-' . $a . '">' . h($label[$a]) . '</button></form>';
   $out = '';
-  foreach ($ok as $a) $out .= $btn($a);
-  return $out ? '<div class="oacts' . ($cls ? ' ' . $cls : '') . '" onclick="event.stopPropagation()">' . $out . '</div>' : '';
+  foreach ([$cod ? 'paid' : 'refund', 'delivered', 'cancel'] as $a) {
+    $on = in_array($a, $ok, true); $d = !$on && !empty($done[$a]);
+    $out .= '<form method="post"' . ($on && isset($ask[$a]) ? ' onsubmit="return confirm(' . h(json_encode($ask[$a], JSON_UNESCAPED_UNICODE)) . ')"' : '') . '>' . csrf_field()
+          . '<input type="hidden" name="order" value="' . h($o['order_no']) . '"><input type="hidden" name="quick" value="' . $a . '">'
+          . ($back !== '' ? '<input type="hidden" name="back" value="' . h($back) . '">' : '')
+          . '<button class="a-' . $a . ($d ? ' done' : '') . '"' . ($on ? '' : ' disabled') . '>' . h($d ? $doneLabel[$a] : $label[$a]) . '</button></form>';
+  }
+  return '<div class="oacts' . ($cls ? ' ' . $cls : '') . '" onclick="event.stopPropagation()">' . $out . '</div>';
 }
 
 /* ---- products: add a new perfume or change an existing one (name, sizes and prices, words, photos, show or hide) ----
