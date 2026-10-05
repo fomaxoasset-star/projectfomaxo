@@ -591,6 +591,12 @@ footer{border-top:1px solid var(--line);background:var(--deep);padding:80px 0 34
 .pc-photo img{opacity:1;object-position:center 40%}
 .pc-photo::after{background:linear-gradient(90deg,transparent 70%,var(--black))}
 @media(max-width:860px){.pc-photo{min-height:360px}.pc-photo::after{background:linear-gradient(180deg,transparent 75%,var(--black))}}
+/* Personal care poster: show the whole portrait poster, no crop or fade */
+.pc.pc-poster{grid-template-columns:minmax(0,2fr) minmax(0,3fr)}
+.pc-poster .pc-photo{min-height:0}
+.pc-poster .pc-photo img{position:static;display:block;width:100%;height:auto;aspect-ratio:2/3}
+html .pc-poster .pc-photo::after{display:none}
+@media(max-width:860px){.pc.pc-poster{grid-template-columns:minmax(0,1fr)}}
 
 /* discovery set picker */
 .picks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -2265,8 +2271,8 @@ function home(){
   </div></section>
 
   <section class="sec" style="padding-top:0"><div class="wrap">
-    <div class="pc rv-up">
-      <div class="pc-media pc-photo"><img src="${IMG('personal-care')}" alt="The FOMAXO personal care collection" loading="lazy"></div>
+    <div class="pc pc-poster rv-up">
+      <div class="pc-media pc-photo"><img src="${IMG('personal-care-poster')}" alt="FOMAXO Personal Care poster: crafted by nature, elevated by luxury" loading="lazy" width="1024" height="1536"></div>
       <div class="pc-copy">
         <span class="soon">Coming soon</span>
         <span class="eyebrow">Personal Care Collection</span>
@@ -2579,8 +2585,8 @@ function bindElite(){
 }
 function personalCare(){
   return pageHead('Personal Care', 'Personal <em class="metal">Care</em>', 'The FOMAXO universe is expanding beyond fragrance.') + `
-  <section class="sec"><div class="wrap"><div class="pc rv-up">
-    <div class="pc-media pc-photo"><img src="${IMG('personal-care')}" alt="The FOMAXO personal care collection" loading="lazy"></div>
+  <section class="sec"><div class="wrap"><div class="pc pc-poster rv-up">
+    <div class="pc-media pc-photo"><img src="${IMG('personal-care-poster')}" alt="FOMAXO Personal Care poster: crafted by nature, elevated by luxury" loading="lazy" width="1024" height="1536"></div>
     <div class="pc-copy"><span class="soon">Coming soon</span><h2>Elevating <em class="metal">everyday rituals</em></h2>
       <p class="lead">Looking ahead, our ambition extends beyond fragrances. We are launching a diverse range of high-end, luxury products designed to elevate lifestyles and inspire aspirational minds.</p>
       <p class="lead">Every new introduction is guided by the same principles as our perfumes: simplicity, quality and recognisability.</p>
