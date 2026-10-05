@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
         . "We will call or WhatsApp you on {$c['phone']} to arrange your delivery.\n\n"
         . (!empty($rec['review']) ? "Once your order arrives, we would love your honest review (it will show Verified Purchaser):\nhttps://$host/#/review?t={$rec['review']}\n\n" : '')
         . "FOMAXO\nhttps://$host";
-    if ($c['email'] !== '') @mail($c['email'], '=?UTF-8?B?' . base64_encode("Your FOMAXO order {$rec['no']}") . '?=', $cb, "From: $from\r\nReply-To: $STORE_EMAIL\r\nContent-Type: text/plain; charset=UTF-8", '-fmail@fomaxo.com');
+    if ($c['email'] !== '') @mail($c['email'], '=?UTF-8?B?' . base64_encode("Your FOMAXO order {$rec['no']}") . '?=', $cb, "From: $from\r\nReply-To: " . fomaxo_orders_email($STORE_EMAIL) . "\r\nContent-Type: text/plain; charset=UTF-8", '-fmail@fomaxo.com');
   }
   if ($status === 'completed' && !empty($rec['review'])) $out['review'] = $rec['review'];
   echo json_encode($out); exit;

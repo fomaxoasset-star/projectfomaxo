@@ -11,7 +11,7 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-in
 require dirname(__DIR__) . '/orders-lib.php';
 date_default_timezone_set('Asia/Dubai');
 
-$STORE_EMAIL = 'fomaxoasset@gmail.com';   // set-up and password reset links are sent here
+$STORE_EMAIL = 'fomaxoasset@gmail.com';   // first set-up; after that password links go to the address in Settings
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 session_name('fxadmin');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
@@ -380,14 +380,14 @@ if (isset($_GET['forgot'])) {   // emails a one-hour link to the store inbox (ne
       $host = preg_replace('/[^A-Za-z0-9.\-:]/', '', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com');
       $link = ($https ? 'https' : 'http') . "://$host" . rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/admin/index.php'), '/') . "/?reset=$tok";
       $mailHost = preg_replace('/^www\./', '', explode(':', $host)[0]);
-      @mail($STORE_EMAIL, 'FOMAXO admin password link', "Someone asked to set the password for the FOMAXO back office.\n\nOpen this link within one hour to choose a new password:\n$link\n\nIf this was not you, ignore this email. Your password stays the same.",
+      @mail(fomaxo_orders_email($STORE_EMAIL), 'FOMAXO admin password link', "Someone asked to set the password for the FOMAXO back office.\n\nOpen this link within one hour to choose a new password:\n$link\n\nIf this was not you, ignore this email. Your password stays the same.",
             "From: FOMAXO <mail@fomaxo.com>\r\nContent-Type: text/plain; charset=UTF-8", '-fmail@fomaxo.com');
     }
     $sent = true;
   }
   page('Forgot password', '<h1>Forgot password</h1>'
     . ($sent ? '<p class="msg ok">A link has been sent to the store email. It works for one hour.</p>'
-             : '<form class="card" method="post">' . csrf_field() . '<p style="margin-top:0">We will email a link to set a new password to the store inbox (' . h(preg_replace('/(?<=.).(?=[^@]*@)/', '•', $STORE_EMAIL)) . ').</p><button class="btn">Email me a link</button></form>')
+             : '<form class="card" method="post">' . csrf_field() . '<p style="margin-top:0">We will email a link to set a new password to the store inbox (' . h(preg_replace('/(?<=.).(?=[^@]*@)/', '•', fomaxo_orders_email($STORE_EMAIL))) . ').</p><button class="btn">Email me a link</button></form>')
     . '<p class="small"><a href="./">Back to log in</a></p>');
 }
 
@@ -617,8 +617,8 @@ if (isset($_GET['settings'])) {
   page('Settings', '<h1>Settings</h1>' . flash()
     . '<div class="settings"><form class="card" method="post">' . csrf_field()
     . '<h2 style="margin-top:0">Store</h2>'
-    . '<label for="orders_email">New order emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
-    . '<p class="muted small" style="margin:6px 0 0">Every cash and card order is emailed here. Password reset links always go to ' . h(FX_STORE_EMAIL) . '.</p>'
+    . '<label for="orders_email">Store emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
+    . '<p class="muted small" style="margin:6px 0 0">New cash and card orders, new reviews and admin password reset links are all emailed here.</p>'
     . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
     . '<form class="card" method="post">' . csrf_field()
     . '<h2 style="margin-top:0">Admin password</h2>'
