@@ -107,6 +107,7 @@ header.nav.solid,body:not(.home) header.nav{background:rgba(var(--bg-rgb),.86);b
 .icons{display:flex;align-items:center;gap:6px}
 .icon{width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;color:var(--champagne);position:relative;transition:color .3s}
 .icon:hover{color:var(--gold-hi)}
+.icon-static,.icon-static:hover{color:var(--champagne);cursor:default}
 .icon svg{width:19px;height:19px}
 .count{position:absolute;top:5px;right:3px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--gold);color:#000;font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;transform:scale(0);transition:transform .4s var(--ease)}
 .count.on{transform:scale(1)}
@@ -1632,7 +1633,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
     </nav>
     <div class="icons">
       <button class="icon" id="openSearch" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
-      <a class="icon hide-xs" id="accountLink" href="#" aria-label="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></a>
+      <span class="icon hide-xs icon-static" id="accountLink" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>
       <button class="icon" id="openCart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M5 8h14l-1 13H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="count" id="cartCount">0</span></button>
       <button class="icon burger" id="openMenu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 7h18M3 12h18M3 17h12"/></svg></button>
     </div>
@@ -3190,7 +3191,6 @@ addEventListener('scroll', () => { if (ticking) return; ticking = true; requestA
   ticking = false; }); }, {passive: true});
 
 /* static bits */
-$('#accountLink').href = S.accountUrl || '#/contact';
 const footShop = () => $('#footShop').innerHTML = (P.discovery && !P.discovery.hidden ? `<a href="#/product/discovery">Discovery Set</a>` : '') + [...FRAG.filter(p => p.id !== 'king'), ...FRAG.filter(p => p.id === 'king')].map(p => `<a href="#/product/${p.id}">${p.name}</a>`).join('');
 $('#footIg').href = `https://instagram.com/${S.contact.instagram}`;
 $('#mnavFoot').innerHTML = `<a href="mailto:${S.contact.email}">${S.contact.email}</a><span>${S.contact.phones[0].number}</span>`;
