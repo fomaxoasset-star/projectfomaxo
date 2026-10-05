@@ -180,7 +180,7 @@ body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidd
 main.wrap{flex:1 1 auto;min-height:0;overflow:auto;width:100%;overscroll-behavior:contain}
 main.fit{display:flex;flex-direction:column;overflow:hidden}
 main.fit>*,.fitform>*{flex:none;min-width:0}
-main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,.fitform>.fill{flex:1 1 auto;min-height:0}
+main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rgrid,.fitform>.fill{flex:1 1 auto;min-height:0}
 .fitform{display:flex;flex-direction:column;margin:0}
 .fill{overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .fill>table{border:0;border-radius:0;overflow:visible}.fill>table tr:last-child td{border-bottom:0}
@@ -227,6 +227,12 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .cscroll{overflow:auto;flex:1 1 auto;min-height:0;margin:0 -14px -12px}.cscroll table{border:0;border-radius:0}.cscroll .rvlist{padding:0}.cscroll>p{padding:0 14px}
 .vlist{list-style:none;margin:8px 0 0;padding:0;font-size:12.5px}.vlist li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-top:1px solid var(--line)}.cstats{grid-template-columns:repeat(6,1fr)}.cstats .stat{flex:1}
 @media (max-width:759px){main.fit .cgrid{display:block;overflow:auto}.cgrid .card{margin-bottom:10px}.cscroll{overflow:visible;margin:0 -14px -12px}.cstats{grid-template-columns:repeat(3,1fr)}.cdet{overflow:visible}}
+.rgrid{display:grid;gap:12px;grid-template-columns:minmax(0,2fr) minmax(0,1.25fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"list prod" "list ppl"}
+.rgrid .card{margin:0;display:flex;flex-direction:column;min-height:0;padding:0;overflow:hidden}.rgrid h2{font-size:13px;letter-spacing:.12em;margin:0;color:var(--gold)}.rgrid .card>h2,.rgrid .ch{padding:12px 16px;border-bottom:1px solid var(--line);margin:0}
+.rgrid .cscroll{margin:0}.rlist{grid-area:list}.rprodc{grid-area:prod}.rpplc{grid-area:ppl}.rnote{padding:10px 16px;margin:0;border-bottom:1px solid var(--line)}.rgrid .empty{text-align:center;padding:24px 12px;margin:0}
+.rgrid table{border:0;border-radius:0}.rgrid tr.on td{background:rgba(143,107,55,.12)}.rmin{display:flex;align-items:center;gap:6px;margin:0;font-size:13px}.rmin label{margin:0;font-size:13px;text-transform:none;letter-spacing:0;color:var(--muted)}.rmin input{width:58px;padding:5px 8px}.rpplc .ch{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.rfilter input{max-width:none}
+@media (max-width:759px){main.fit .rgrid{display:block;overflow:auto}.rgrid .card{margin-bottom:10px;overflow:visible}.rgrid .cscroll{overflow:visible}.rlist .rvlist{padding:0 8px}}
 .stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:14px;max-width:900px}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}@media (min-width:860px){.settings{grid-template-columns:1fr 1fr;align-items:start}}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
@@ -851,23 +857,21 @@ if (isset($_GET['reviews'])) {
   $stars = fn($n) => '<span class="stars" aria-label="' . (int)$n . ' stars">' . str_repeat('★', (int)$n) . '<i>' . str_repeat('★', 5 - (int)$n) . '</i></span>';
   $avg = $live ? round(array_sum(array_column($live, 'rating')) / count($live), 1) : 0;
   $rmin = (int)(fomaxo_setting($pdo, 'reviewer_min') ?? 2) ?: 2;
-  $seg = '<nav class="seg rseg">' . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['reviews' => 1] + ($k !== 'all' ? ['v' => $k] : []))) . '"' . ($v === $k ? ' class="on"' : '') . '>' . $l . '</a>',
-         ['all', 'products', 'people'], ['Reviews', 'Stars by product', 'Top reviewers'])) . '</nav>';
   $hidden = fn($k, $val) => '<input type="hidden" name="' . $k . '" value="' . h($val) . '">';
 
-  if ($v === 'products') {
+  {   // stars by product
     $tr = '';
     foreach ($CATALOG as $id => $p) {
       $l = array_filter($live, fn($r) => $r['product'] === $id); $n = count($l);
       $a = $n ? round(array_sum(array_column($l, 'rating')) / $n, 1) : 0;
       $dist = ''; foreach ([5, 4, 3, 2, 1] as $s) { $c = count(array_filter($l, fn($r) => (int)$r['rating'] === $s)); $dist .= '<span>' . $s . '★ <b>' . $c . '</b></span>'; }
-      $tr .= '<tr class="row" onclick="location.href=this.dataset.href" data-href="' . h(self_url(['reviews' => 1, 'rp' => $id])) . '"><td><b>' . h($p['name']) . '</b></td>'
-           . '<td>' . ($n ? $stars(round($a)) . ' <b>' . number_format($a, 1) . '</b>' : '<span class="muted">No reviews yet</span>') . '</td>'
-           . '<td class="num">' . $n . '<span class="ph"> reviews</span></td><td class="dist small muted">' . $dist . '</td></tr>';
+      if (!$n) continue;
+      $tr .= '<tr class="row' . ($rp === $id ? ' on' : '') . '" onclick="location.href=this.dataset.href" data-href="' . h(self_url(['reviews' => 1] + ($rp === $id ? [] : ['rp' => $id]))) . '"><td><b>' . h($p['name']) . '</b><div class="dist small muted">' . $dist . '</div></td>'
+           . '<td class="num">' . $stars(round($a)) . ' <b>' . number_format($a, 1) . '</b><div class="small muted">' . $n . ' review' . ($n > 1 ? 's' : '') . '</div></td></tr>';
     }
-    $body = '<div class="fill"><table class="rprod"><thead><tr><th>Product</th><th>Stars</th><th class="num">Reviews</th><th>Breakdown</th></tr></thead><tbody>' . $tr . '</tbody></table>'
-          . '<p class="muted small after">Only reviews on the website count. Tap a product to see its reviews.</p></div>';
-  } elseif ($v === 'people') {
+    $bodyP = $tr ? '<table class="rprod"><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty">No live reviews yet.</p>';
+  }
+  {   // top reviewers
     $ppl = [];
     foreach ($live as $r) {
       $real = trim((string)(!empty($r['anon']) ? ($r['real'] ?? $r['name']) : $r['name'])); if ($real === '') continue;
@@ -882,12 +886,11 @@ if (isset($_GET['reviews'])) {
     foreach ($ppl as $c) $tr .= '<tr class="row"><td><b>' . h($c['name']) . '</b><div class="small muted">' . h(implode(', ', array_map($pname, array_keys($c['products'])))) . '</div></td>'
       . '<td class="num"><b>' . $c['n'] . '</b><span class="ph"> reviews</span></td><td>' . $stars(round($c['sum'] / $c['n'])) . ' <span class="small">' . number_format($c['sum'] / $c['n'], 1) . '</span></td>'
       . '<td class="small muted">' . ($c['verified'] ? $c['verified'] . ' verified · ' : '') . 'last ' . h(date('d M Y', strtotime($c['last']))) . '</td></tr>';
-    $body = '<form class="card mmin" method="post">' . csrf_field() . $hidden('v', 'people') . '<label for="reviewer_min">Show customers with at least</label>'
-          . '<input id="reviewer_min" type="number" min="1" max="1000" inputmode="numeric" name="reviewer_min" required value="' . $rmin . '"><span>reviews</span><button class="btn sm">Save</button></form>'
-          . '<div class="fill">' . ($tr ? '<table class="rppl"><thead><tr><th>Customer</th><th class="num">Reviews</th><th>Average stars</th><th>Details</th></tr></thead><tbody>' . $tr . '</tbody></table>'
-              : '<p class="card muted" style="margin:0">No customer has ' . $rmin . ' or more reviews yet.</p>')
-          . '<p class="muted small after">Reviews with the same name count as one customer. Anonymous reviews use the real name the customer typed. Removed reviews are left out.</p></div>';
-  } else {
+    $formR = '<form class="rmin" method="post">' . csrf_field() . '<label for="reviewer_min">at least</label>'
+          . '<input id="reviewer_min" type="number" min="1" max="1000" inputmode="numeric" name="reviewer_min" required value="' . $rmin . '"><span>reviews</span><button class="btn line sm">Save</button></form>';
+    $bodyR = $tr ? '<table class="rppl"><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty">Nobody has ' . $rmin . ' or more reviews yet.</p>';
+  }
+  {   // the reviews
     $list = $rp !== '' ? array_filter($all, fn($r) => $r['product'] === $rp) : $all;
     $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
     $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
@@ -918,16 +921,15 @@ if (isset($_GET['reviews'])) {
     $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
     $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []);
     $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
-    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . '<select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>'
-          . '<input name="rq" value="' . h($rq) . '" placeholder="Search words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
+    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . ($rp !== '' ? '<input type="hidden" name="rp" value="' . h($rp) . '">' : '')
+          . '<input name="rq" value="' . h($rq) . '" placeholder="Words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
           . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . '</nav></form>'
-          . '<div class="fill">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="card muted" style="margin:0">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>')
-          . '<p class="muted small after">Remove takes a review off the website and out of the star rating. It stays here, so you can put it back.</p></div>';
+          . '<div class="rgrid"><section class="card rlist"><p class="rnote small muted">' . count($list) . ' review' . (count($list) === 1 ? '' : 's') . ($rp !== '' ? ' of ' . h($pname($rp)) . ' · <a href="' . h(self_url(['reviews' => 1] + ($rq !== '' ? ['rq' => $rq] : []) + ($vf !== '' ? ['vf' => $vf] : []))) . '">all products</a>' : '')
+          . '. Removed reviews leave the website and the star rating; Put back shows them again.</p><div class="cscroll">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="muted empty">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>') . '</div></section>'
+          . '<section class="card rprodc"><h2>Stars by product</h2><div class="cscroll">' . $bodyP . '</div></section>'
+          . '<section class="card rpplc"><div class="ch"><h2>Top reviewers</h2>' . $formR . '</div><div class="cscroll">' . $bodyR . '</div></section></div>';
   }
-  page('Reviews', '<div class="pagehead"><h1>Reviews</h1>' . $seg . '</div>' . flash()
-    . '<div class="stats up"><div class="stat"><span>On website</span><b>' . count($live) . '</b></div><div class="stat"><span>Average stars</span><b>' . number_format($avg, 1) . ' ★</b></div>'
-    . '<div class="stat"><span>Verified</span><b>' . count(array_filter($live, fn($r) => !empty($r['verified']))) . '</b></div><div class="stat"><span>Removed</span><b>' . (count($all) - count($live)) . '</b></div></div>'
-    . $body, true, true);
+  page('Reviews', flash() . $body, true, true);
 }
 
 /* ---- members: customers who keep coming back. Orders are grouped by mobile number (last 9 digits), or by email when there is no mobile ---- */
