@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>FOMAXO — The Art of Modern Luxury</title>
+<title>FOMAXO — The House of Modern Luxury</title>
 <meta name="description" content="FOMAXO — luxury house founded in Dubai. Signature perfumes, personal care and luxury essentials.">
 <meta name="theme-color" content="#050505">
 <meta name="color-scheme" content="dark light">
 <meta name="darkreader-lock">
-<meta property="og:title" content="FOMAXO — The Art of Modern Luxury">
+<meta property="og:title" content="FOMAXO — The House of Modern Luxury">
 <meta property="og:description" content="For Outstanding Minds, Acquiring Xtraordinary Opulence. Luxury, founded in Dubai.">
 <meta property="og:image" content="assets/img/oldmoney-1.jpg">
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
@@ -1002,7 +1002,7 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
 .final h2{letter-spacing:.08em;font-size:clamp(30px,4.6vw,70px)}
 .final h2 em{font-family:var(--brand-font);font-weight:400}
 .el-hero h1 em{font-family:var(--hfont);font-weight:500;letter-spacing:.08em}
-/* hero heading: "The art of" in serif, "Modern Luxury" in the FOMAXO brand face, gold */
+/* hero heading: "The house of" in serif, "Modern Luxury" in the FOMAXO brand face, gold */
 .hero-cine h1 .metal{font-family:var(--hfont);font-weight:500;letter-spacing:.08em;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#f8f1e4;animation:none}
 .hero-cine h1 .l2{font-family:var(--brand-font);font-weight:400;letter-spacing:.06em;background:var(--metal);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 10s ease-in-out infinite}
 
@@ -2168,7 +2168,7 @@ function home(){
     <div class="hc-copy">
       ${emblem('hc-em rv-up')}
       <span class="eyebrow hc-kick rv-up"><i aria-hidden="true"></i>Luxury house <em aria-hidden="true">◆</em> Founded in Dubai<i aria-hidden="true"></i></span>
-      <h1 class="rv-up d1"><span class="metal">The art of</span><span class="l2">Modern Luxury</span></h1>
+      <h1 class="rv-up d1"><span class="metal">The house of</span><span class="l2">Modern Luxury</span></h1>
       <p class="hc-lead rv-up d2">Every FOMAXO creation is an extension of personal presence — refined, expressive and made to last.</p>
       <div class="ctas rv-up d3"><a class="btn two" href="#/fragrances"><span>Shop the collection</span><span class="sub">from ${moneyHTML(Math.min(...FRAG.flatMap(p => Object.values(p.prices)).filter(hasPrice)))}</span></a><a class="btn line two" href="#/product/discovery"><span>Discovery Set</span>${P.discovery ? '<span class="sub">from ' + moneyHTML(Math.min(...Object.values(P.discovery.prices))) + '</span>' : ''}</a></div>
     </div>
@@ -3113,7 +3113,7 @@ function route(){
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
   const seg = path.split('/').filter(Boolean);
   clearInterval(heroTimer); mobileBarCheck = null; coRefresh = null; pdpStock = null; $('#mbuy').classList.remove('show');
-  document.title = 'FOMAXO — The Art of Modern Luxury';
+  document.title = 'FOMAXO — The House of Modern Luxury';
   let html, after;
   switch (seg[0]){
     case undefined: html = home(); after = bindHome; break;
