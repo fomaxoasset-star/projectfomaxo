@@ -33,7 +33,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 9) return;
+  if ($ver >= 10) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -69,6 +69,10 @@ function fomaxo_db_schema($pdo) {
     if (is_array($d) && ($d['images'][0] ?? '') === "$id-main") { $d['images'][0] = "$id-main2"; $set->execute([fomaxo_json($d), $id]); }
   }
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '9')");
+  /* v10: King's poster as its main photo (only where the old one is still first) */
+  $get->execute(['king']); $d = json_decode((string)$get->fetchColumn(), true);
+  if (is_array($d) && ($d['images'][0] ?? '') === 'king-1') { $d['images'][0] = 'king-main'; $set->execute([fomaxo_json($d), 'king']); }
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '10')");
 }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
