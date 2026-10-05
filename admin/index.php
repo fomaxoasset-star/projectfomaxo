@@ -201,7 +201,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,.fitform>.fill{flex:1 1 auto;min-h
   .stock-help{font-size:12px}.lowlvl{padding:8px 12px}.lowlvl label{font-size:13px}.lowlvl input{padding:6px 9px;max-width:72px}
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
-.settings{display:grid;gap:14px;max-width:900px}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}@media (min-width:860px){.settings{grid-template-columns:1fr 1fr;align-items:start}}
+.stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:14px;max-width:900px}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}@media (min-width:860px){.settings{grid-template-columns:1fr 1fr;align-items:start}}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
@@ -953,8 +953,11 @@ if (isset($_GET['export'])) {   // CSV that opens straight in Excel
   exit;
 }
 
-$s = $pdo->prepare("SELECT COUNT(*) n, COALESCE(SUM(CASE WHEN status IN ('New','Paid','Delivered') AND test = 0 THEN total END), 0) sales,
-                    SUM(status = 'New') todo_cod, SUM(status = 'Paid') todo_card FROM fx_orders $W");
+/* the four boxes follow the filters; cancelled orders, unpaid card attempts and test payments are left out */
+$real = "status IN ('New','Paid','Delivered') AND test = 0";
+$s = $pdo->prepare("SELECT COUNT(*) n,
+                    COALESCE(SUM($real AND payment = 'Cash on delivery'), 0) cod_n, COALESCE(SUM(CASE WHEN $real AND payment = 'Cash on delivery' THEN total END), 0) cod_t,
+                    COALESCE(SUM($real AND payment LIKE 'Card%'), 0) card_n, COALESCE(SUM(CASE WHEN $real AND payment LIKE 'Card%' THEN total END), 0) card_t FROM fx_orders $W");
 $s->execute($args); $sum = $s->fetch();
 $per = 100; $pg = max(1, (int)($_GET['p'] ?? 1));
 $s = $pdo->prepare("SELECT order_no, created_at, payment, status, total, name, phone, emirate, items, test FROM fx_orders $W ORDER BY created_at DESC, id DESC LIMIT $per OFFSET " . (($pg - 1) * $per));
@@ -985,11 +988,11 @@ page('Orders', '<h1>Orders</h1>' . flash()
   . '<div><label for="from">From</label><input id="from" type="date" name="from" value="' . h($f['from']) . '"></div>'
   . '<div><label for="to">To</label><input id="to" type="date" name="to" value="' . h($f['to']) . '"></div>'
   . '<div class="acts"><button class="btn">Show</button><a class="btn line" href="' . h(self_url($qs + ['export' => 1])) . '">Download Excel</a></div></form>'
-  . '<div class="stats"><div class="stat"><b>' . (int)$sum['n'] . '</b><span>Orders</span></div>'
-  . '<div class="stat"><b>' . money($sum['sales']) . '</b><span>Sales (not cancelled)</span></div>'
-  . '<div class="stat"><b>' . (int)$sum['todo_cod'] . '</b><span>Cash to deliver</span></div>'
-  . '<div class="stat"><b>' . (int)$sum['todo_card'] . '</b><span>Paid, to deliver</span></div></div>'
+  . '<div class="stats up"><div class="stat"><span>COD orders</span><b>' . (int)$sum['cod_n'] . '</b></div>'
+  . '<div class="stat"><span>Online orders</span><b>' . (int)$sum['card_n'] . '</b></div>'
+  . '<div class="stat"><span>COD amount</span><b>' . money($sum['cod_t']) . '</b></div>'
+  . '<div class="stat"><span>Card amount</span><b>' . money($sum['card_t']) . '</b></div></div>'
   . '<div class="fill">' . ($rows ? '<table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
-  . '<p class="muted small after">Sales count New, Paid and Delivered orders and leave out test payments. Unpaid card attempts are hidden unless you pick "Everything".</p></div>', true, true);
+  . '<p class="muted small after">The boxes count New, Paid and Delivered orders and leave out cancelled orders and test payments. Unpaid card attempts are hidden unless you pick "Everything".</p></div>', true, true);
