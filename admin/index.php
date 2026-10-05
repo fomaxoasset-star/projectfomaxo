@@ -142,6 +142,9 @@ label.mini{display:none}
   .rep td.num::before{content:attr(data-l);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
   .rep tr.dim{display:none}.rep tr.tot{border-color:var(--gold)}
 }
+.ch.wrap2{flex-wrap:wrap;gap:6px}.seg.met button{font-size:12.5px}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.quick .btn{font-size:11px;letter-spacing:.08em}
+@media (max-width:759px){.quick{display:grid;grid-template-columns:1fr 1fr;gap:6px}.quick .btn{padding:7px 6px;font-size:10px;letter-spacing:.04em;text-align:center;white-space:normal;line-height:1.25}}
 /* analytics */
 .seg a{font-size:11.5px;font-weight:600;color:var(--muted);padding:3px 9px;border-radius:20px;text-decoration:none;white-space:nowrap}.seg a.on{background:var(--gold);color:var(--gold-ink)}
 .an .pagehead{flex-wrap:wrap;margin-bottom:8px;gap:6px 10px}.arange{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}.arange input[type=date]{width:auto;padding:4px 7px;font-size:12.5px}
@@ -850,6 +853,28 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   $series['year'] = array_map(fn($m, $v) => $pt($v, date('M', strtotime("$m-01")), date('F Y', strtotime("$m-01"))), array_keys($months), $months);   // last 12 months
   $sum = fn($k) => money(array_sum(array_column($series[$k], 'v')));
   $ranges = ['day' => 'Today', 'week' => '7 days', 'month' => '30 days', 'year' => 'Year'];
+  /* visitors (from track.php) for the same periods: different people per hour, day or month */
+  $vis = ['day' => [], 'week' => [], 'month' => [], 'year' => []];
+  $count = function ($fmt, $from) use ($pdo) { $o = []; $s = $pdo->prepare("SELECT DATE_FORMAT(at, '$fmt') k, COUNT(DISTINCT vid) n FROM fx_events WHERE at >= ? GROUP BY k"); $s->execute([$from]); foreach ($s as $r) $o[$r['k']] = (int)$r['n']; return $o; };
+  $vt = []; $people = fn($n) => $n . ' visitor' . ($n === 1 ? '' : 's');
+  try {
+    $c = $count('%H', date('Y-m-d') . ' 00:00:00');
+    foreach (array_keys($hours) as $h) $vis['day'][] = ['v' => $c[sprintf('%02d', $h)] ?? 0, 'l' => date('ga', mktime($h, 0)), 't' => date('ga', mktime($h, 0)) . '–' . date('ga', mktime($h + 1, 0)) . ': ' . $people($c[sprintf('%02d', $h)] ?? 0)];
+    $c = $count('%Y-%m-%d', array_key_first($days) . ' 00:00:00');
+    foreach (array_keys($days) as $d) $vis['month'][] = ['v' => $c[$d] ?? 0, 'l' => date('j M', strtotime($d)), 't' => date('D j M', strtotime($d)) . ': ' . $people($c[$d] ?? 0)];
+    foreach (array_slice(array_keys($days), -7) as $d) $vis['week'][] = ['v' => $c[$d] ?? 0, 'l' => date('D', strtotime($d)), 't' => date('D j M', strtotime($d)) . ': ' . $people($c[$d] ?? 0)];
+    $c = $count('%Y-%m', array_key_first($months) . '-01 00:00:00');
+    foreach (array_keys($months) as $m) $vis['year'][] = ['v' => $c[$m] ?? 0, 'l' => date('M', strtotime("$m-01")), 't' => date('F Y', strtotime("$m-01")) . ': ' . $people($c[$m] ?? 0)];
+    /* totals count each person once per period, not once per bar */
+    foreach (['day' => date('Y-m-d') . ' 00:00:00', 'week' => date('Y-m-d', strtotime('-6 day')) . ' 00:00:00', 'month' => array_key_first($days) . ' 00:00:00', 'year' => array_key_first($months) . '-01 00:00:00'] as $k => $from) {
+      $s = $pdo->prepare('SELECT COUNT(DISTINCT vid) FROM fx_events WHERE at >= ?'); $s->execute([$from]); $vt[$k] = $people((int)$s->fetchColumn()); }
+  } catch (Throwable $e) { foreach ($vis as $k => $v) { $vis[$k] = $series[$k]; foreach ($vis[$k] as &$p) { $p['v'] = 0; $p['t'] = 'No visitor data yet'; } unset($p); $vt[$k] = $people(0); } }
+  $graphs = ''; $tots = '';
+  foreach (['sales' => $series, 'visitors' => $vis] as $m => $set) foreach ($ranges as $k => $l) {
+    $on = $m === 'sales' && $k === 'month';
+    $graphs .= str_replace('<div class="graph"', '<div class="graph" data-k="' . $m . '-' . $k . '"', fx_graph($set[$k], ucfirst($m) . ' ' . strtolower($l), !$on, $m === 'sales' ? 'money' : fn($v) => $people((int)$v)));
+    $tots .= '<span data-k="' . $m . '-' . $k . '"' . ($on ? '' : ' hidden') . '>' . h($m === 'sales' ? $sum($k) : $vt[$k]) . '</span>';
+  }
   /* stock running low (counted sizes at or below the warning level) */
   $low = fomaxo_low_stock(); $alerts = '';
   foreach ($pdo->query('SELECT product, size, qty FROM fx_stock WHERE qty IS NOT NULL ORDER BY qty, product') as $r) {
@@ -879,15 +904,19 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     . '</div>'
     . ($month['no_cost'] ? '<p class="muted note">' . $plural($month['no_cost'], 'order') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit shows too high. <a href="./?stock=1">Add costs</a></p>' : '')
     . '<div class="dgrid">'
-    . '<section class="card c-sales"><div class="ch"><h2>Sales</h2><div class="seg" role="group" aria-label="Sales period">'
-    . implode('', array_map(fn($k, $l) => '<button type="button" data-k="' . $k . '"' . ($k === 'month' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div></div>'
-    . '<div class="chartbox">' . implode('', array_map(fn($k) => fx_graph($series[$k], 'Sales ' . strtolower($ranges[$k]) . ', ' . $sum($k) . ' in total', $k !== 'month'), array_keys($ranges))) . '</div>'
-    . '<p class="sub"><span class="tip">Tap a bar to see its sales</span><b class="tot">' . implode('', array_map(fn($k) => '<span data-k="' . $k . '"' . ($k !== 'month' ? ' hidden' : '') . '>' . h($sum($k)) . '</span>', array_keys($ranges))) . '</b></p></section>'
+    . '<section class="card c-sales" data-m="sales" data-r="month"><div class="ch wrap2"><div class="seg met" role="group" aria-label="Show"><button type="button" data-m="sales" class="on">Sales</button><button type="button" data-m="visitors">Visitors</button></div><div class="seg" role="group" aria-label="Period">'
+    . implode('', array_map(fn($k, $l) => '<button type="button" data-r="' . $k . '"' . ($k === 'month' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div></div>'
+    . '<div class="chartbox">' . $graphs . '</div>'
+    . '<p class="sub"><span class="tip">Tap a bar to see the details</span><b class="tot">' . $tots . '</b></p></section>'
     . '<div class="lists"><section class="card c-orders"><div class="ch"><h2>Latest orders</h2><a href="./?orders=1">All orders</a></div>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted empty">No orders yet.</p>') . '</section>'
     . '<section class="card c-stock"><div class="ch"><h2>Stock alerts</h2><a href="./?stock=1">Stock</a></div>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted empty">No size is running low.</p>') . '</section></div>'
-    . '</div></div>'
+    . '</div>'
+    . '<nav class="quick"><a class="btn line sm" href="./?expenses=1">+ Add an expense</a><a class="btn line sm" href="' . h(self_url(['products' => 1, 'p' => 'new'])) . '">+ Add a product</a>'
+    . '<a class="btn line sm" href="' . h(self_url(['orders' => 1, 'export' => 1])) . '">Download all orders (Excel)</a><a class="btn line sm" href="' . h(self_url(['reports' => 1, 'y' => date('Y'), 'export' => 1])) . '">Download ' . date('Y') . ' profit &amp; loss (Excel)</a></nav>'
+    . '</div>'
     . '<script>document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});'
-    . 'document.querySelectorAll(".seg button").forEach(function(b,i){b.addEventListener("click",function(){var c=b.closest(".card");c.querySelectorAll(".seg button").forEach(function(x,j){x.classList.toggle("on",x===b)});c.querySelectorAll(".chartbox .graph").forEach(function(g,j){g.hidden=j!==i});c.querySelectorAll(".tot span").forEach(function(t){t.hidden=t.dataset.k!==b.dataset.k});c.querySelector(".tip").textContent="Tap a bar to see its sales";c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")})})});</script>', true, true);
+    . 'document.querySelectorAll(".c-sales .seg button").forEach(function(b){b.addEventListener("click",function(){var c=b.closest(".card"),g=b.parentNode;g.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b)});if(b.dataset.m)c.dataset.m=b.dataset.m;if(b.dataset.r)c.dataset.r=b.dataset.r;var k=c.dataset.m+"-"+c.dataset.r;'
+    . 'c.querySelectorAll(".chartbox .graph,.tot span").forEach(function(x){x.hidden=x.dataset.k!==k});c.querySelector(".tip").textContent="Tap a bar to see the details";c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")})})});</script>', true, true);
 }
 
 /* list + filters (the same filters are used for the Excel download) */
