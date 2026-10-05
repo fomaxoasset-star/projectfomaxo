@@ -174,7 +174,7 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 }
 @media (min-width:760px){.tiles.at{grid-template-columns:repeat(8,1fr)}.tiles.at .tile b{font-size:19px}
   .agrid{grid-template-columns:minmax(0,1.05fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"funnel visitors countries left" "products sources emirates left"}
-  .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}.a-countries{grid-area:countries}.a-emirates{grid-area:emirates}}
+  .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}.a-countries{grid-area:countries}.a-emirates{grid-area:emirates}.agrid>.a-returning{display:none}}
 .agrid .list[hidden]{display:none!important}.gbar{width:28%}.gbar .fb{margin:0}.gnote{margin:6px 0 0;flex:none}.a-countries .ch,.a-emirates .ch{flex-wrap:wrap;gap:6px}.gseg button{padding:3px 7px}.a-left .ch{gap:8px}.a-left .ch .btn{flex:none}.a-left .ch h2{min-width:0;flex:1 1 0;white-space:normal;overflow:visible}.a-countries .ch h2,.a-emirates .ch h2{flex:1 1 100%}@media (min-width:760px) and (max-width:1199px){.agrid table.mini{font-size:11.5px}.agrid table.mini th,.agrid table.mini td{padding:5px 3px;letter-spacing:0}}@media (min-width:760px){.gtab{table-layout:fixed;width:100%}.gtab .gbar{display:none}.gtab th:nth-child(2){width:64px}.gtab th:nth-child(4){width:52px}.gtab td:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 /* phone: no zooming by itself (iPhone zooms into boxes under 16px, double-tap zooms); two-finger pinch still works */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overflow-x:hidden}
@@ -191,10 +191,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:
   .tiles.at .tile span{order:-1;font-size:9.5px;letter-spacing:.07em;white-space:normal;line-height:1.25}.tiles.at .tile b{font-size:17px;margin:1px 0}
   .tiles.at .tile .tn{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .tiles.at .tile span .dk{display:none}.tiles.at .tile span .mo{display:inline;font:inherit;letter-spacing:inherit;color:inherit}
-  .tiles.at .tile.hot b{color:var(--ok,#6fbf73)}.tiles.at .tile.rev{grid-column:span 2}.tiles.at .tile.ret .tn{white-space:normal}
+  .tiles.at .tile.hot b{color:var(--ok,#6fbf73)}.tiles.at .tile.ret{display:none}.tiles.at .tile.rev{grid-column:1/-1}
+  .rsum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin:2px 0 8px;flex:none}.rsum b{display:block;font-size:20px;font-weight:600}.rsum span{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .rtab td>b,.rtab td>span{display:block}.rtab td{vertical-align:top}.rtab td span{font-size:12px}
   .apick{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:8px}
   .apick button{border:0;border-radius:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:none;color:var(--ink);font-weight:500;font-size:12.5px;padding:8px 2px;white-space:nowrap}
-  .apick button:nth-child(4n){border-right:0}.apick button:nth-child(n+5){border-bottom:0}.apick button[data-p=left]{grid-column:span 2;border-right:0}
+  .apick button:nth-child(4n){border-right:0}.apick button:nth-child(n+5){border-bottom:0}.apick button[data-p=left]{white-space:normal;line-height:1.15}
   .apick button.on{background:rgba(201,169,97,.16);border-color:var(--line);color:var(--gold)}
   .a-left .ch .btn{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
   .a-left .ldesk{display:none}.a-left .lmob{display:block}
@@ -743,13 +745,17 @@ if (isset($_GET['analytics'])) {
   /* returning customers: orders in the range from a mobile (last 9 digits, as in Members) that had ordered before, and the days since that earlier order */
   $ret = ['orders' => 0, 'people' => [], 'days' => []];
   try {
-    foreach ($q("SELECT o.p9, o.created_at, (SELECT MAX(x.created_at) FROM fx_orders x WHERE x.status IN ('New', 'Paid', 'Delivered') AND x.test = 0 AND x.created_at < o.created_at
+    foreach ($q("SELECT o.p9, o.name, o.phone, o.total, o.created_at, (SELECT MAX(x.created_at) FROM fx_orders x WHERE x.status IN ('New', 'Paid', 'Delivered') AND x.test = 0 AND x.created_at < o.created_at
                    AND RIGHT(REGEXP_REPLACE(x.phone, '[^0-9]', ''), 9) = o.p9) prev
-                 FROM (SELECT RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) p9, created_at FROM fx_orders
+                 FROM (SELECT RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) p9, name, phone, total, created_at FROM fx_orders
                        WHERE status IN ('New', 'Paid', 'Delivered') AND test = 0 AND phone <> '' AND created_at BETWEEN ? AND ?) o") as $row)
       if ($row['prev'] !== null && strlen($row['p9']) >= 7) {
-        $ret['orders']++; $ret['people'][$row['p9']] = 1;
-        $ret['days'][] = (strtotime($row['created_at']) - strtotime($row['prev'])) / 86400;
+        $gap = (strtotime($row['created_at']) - strtotime($row['prev'])) / 86400;
+        $ret['orders']++; $ret['days'][] = $gap;
+        $pp = $ret['people'][$row['p9']] ?? ['name' => $row['name'], 'phone' => $row['phone'], 'n' => 0, 't' => 0, 'last' => '', 'gap' => 0];
+        $pp['n']++; $pp['t'] += (float)$row['total'];
+        if ($row['created_at'] > $pp['last']) { $pp['last'] = $row['created_at']; $pp['gap'] = $gap; $pp['name'] = $row['name'] ?: $pp['name']; }
+        $ret['people'][$row['p9']] = $pp;
       }
   } catch (Throwable $e) {}
   $retN = count($ret['people']); $retD = $ret['days'] ? (int)round(array_sum($ret['days']) / count($ret['days'])) : null;
@@ -853,7 +859,19 @@ if (isset($_GET['analytics'])) {
   $tile = fn($val, $label, $cls = '', $note = '') => '<div class="tile ' . $cls . '"><b>' . $val . '</b><span>' . $label . '</span>' . ($note !== '' ? '<small class="tn">' . $note . '</small>' : '') . '</div>';
   $dk = fn($desk, $mob) => '<span class="dk">' . $desk . '</span><span class="mo">' . $mob . '</span>';
   $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
-  $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'countries' => 'Countries', 'emirates' => 'Emirates', 'left' => 'Left at checkout'];
+  $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'countries' => 'Countries', 'emirates' => 'Emirates', 'returning' => 'Returning', 'left' => 'Left at checkout'];
+  /* phone only: the Returning section (laptop shows the Returning box in the top row) */
+  $retRows = '';
+  uasort($ret['people'], fn($a, $b) => strcmp($b['last'], $a['last']));
+  foreach ($ret['people'] as $pp) {
+    $g = (int)round($pp['gap']);
+    $retRows .= '<tr><td><b>' . h($pp['name'] ?: 'No name') . '</b><span class="muted">' . h($pp['phone']) . '</span></td><td class="num">' . $pp['n'] . '</td><td class="num">' . money($pp['t']) . '</td><td class="num">' . $g . ($g === 1 ? ' day' : ' days') . '</td></tr>';
+  }
+  $retCard = '<section class="card a-returning" data-p="returning"><div class="ch"><h2>Returning customers</h2></div>'
+    . '<div class="rsum"><div><b>' . $pctT($pct($ret['orders'], (int)$ord['n'])) . '</b><span>of orders</span></div><div><b>' . $retN . '</b><span>' . ($retN === 1 ? 'person' : 'people') . '</span></div><div><b>' . ($retD ?? '—') . '</b><span>days to reorder</span></div></div>'
+    . ($retRows ? '<div class="list"><table class="mini rtab"><thead><tr><th>Customer</th><th class="num">Orders</th><th class="num">Spent</th><th class="num">Since last</th></tr></thead><tbody>' . $retRows . '</tbody></table></div>'
+               : '<p class="muted empty">No repeat orders in these dates.</p>')
+    . '<p class="muted small gnote">Orders in these dates from a mobile that had ordered before.</p></section>';
   page('Analytics', '<div class="db an">'
     . '<div class="pagehead"><h1>Analytics</h1><form class="arange" method="get"><input type="hidden" name="analytics" value="1"><div class="seg">'
     . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
@@ -873,6 +891,7 @@ if (isset($_GET['analytics'])) {
     . '<div class="dgrid agrid">'
     . '<section class="card a-funnel on" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
     . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a bar to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p></section>'
+    . $retCard
     . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout</h2><a class="btn line sm" href="./?analytics=1&amp;leads=1">Excel</a></div>' . (array_sum($leftN) ? '<p class="muted small" style="margin:0 0 4px">' . implode(' · ', array_map(fn($k) => $leftN[$k] . ' at ' . strtolower($stageName[$k]), array_keys(array_filter($leftN)))) . '</p>' : '')
     . ($left ? '<ul class="list leads ldesk">' . $left . '</ul><div class="list lmob"><table class="mini ltab"><thead><tr><th>Name</th><th>Emirate · Address</th></tr></thead><tbody>' . $leftM . '</tbody></table></div>' : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
     . '<section class="card a-sources" data-p="sources"><div class="ch"><h2>Where visitors come from</h2></div>'
