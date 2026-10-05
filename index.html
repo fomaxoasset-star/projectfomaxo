@@ -451,6 +451,15 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .recs-nav button:hover{border-color:var(--gold)}
 .recs-row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:2px}
 .recs-row::-webkit-scrollbar{display:none}
+/* product page "You may also like": every product in one sideways row (swipe on phone, arrows or trackpad on laptop) */
+.also-nav{display:flex;gap:8px}
+.also-nav button{width:42px;height:42px;border:1px solid var(--line-2);background:none;color:var(--gold);font-size:22px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0;transition:border-color .3s}
+.also-nav button:hover{border-color:var(--gold)}
+.also-row{display:flex;gap:clamp(18px,2vw,30px);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:4px}
+.also-row::-webkit-scrollbar{display:none}
+.also-row>.card{flex:0 0 calc((100% - 3 * clamp(18px,2vw,30px)) / 4);scroll-snap-align:start;height:auto}
+@media(max-width:1100px){.also-row>.card{flex-basis:calc((100% - clamp(18px,2vw,30px)) / 2.2)}}
+@media(max-width:600px){.also-row>.card{flex-basis:80%}.also-nav{display:none}}
 .rec{position:relative;min-width:0;flex:0 0 calc((100% - 30px) / 3.6);scroll-snap-align:start}
 .rec a{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;text-align:left}
 .rec img{width:100%;max-width:100%;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
@@ -2319,7 +2328,7 @@ function product(id, q){
   const perks = isSet
     ? [[ICON.drop,'Try before you buy'],[ICON.travel,'Pocket-friendly, ideal for travel'],[ICON.gift,'Luxury mini-box, ready to gift'],[ICON.truck,'Free delivery anywhere in UAE']]
     : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.pen,'Custom engraving on request'],[ICON.truck,'Free delivery anywhere in UAE']];
-  const related = FRAG.filter(x => x.id !== p.id).slice(0, 4);
+  const related = S.products.filter(x => x.id !== p.id);   // every product on sale except this one, in a sideways swipe row
   const ship = S.shipping.length ? S.shipping.map(s => `<p>${esc(s)}</p>`).join('') : `<p class="ph">Add your delivery &amp; returns information in assets/data.js.</p>`;
   document.title = `${p.name} — FOMAXO`;
   return `<div class="wrap page-fade">
@@ -2362,12 +2371,13 @@ function product(id, q){
     <div class="reviews" id="reviews">${rwSection(p, null)}</div>
 
     <section style="padding:80px 0 120px;border-top:1px solid var(--line)">
-      <div class="sec-head"><div class="t rv-up"><span class="eyebrow">You may also like</span><h2>Complete your <em class="metal">collection</em></h2></div></div>
-      <div class="grid four">${related.map((r,i) => card(r, {d:'d'+i})).join('')}</div>
+      <div class="sec-head"><div class="t rv-up"><span class="eyebrow">You may also like</span><h2>Complete your <em class="metal">collection</em></h2></div><span class="also-nav"><button type="button" data-alsoscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-alsoscroll="1" aria-label="Scroll for more">›</button></span></div>
+      <div class="also-row" id="alsoRow">${related.map((r,i) => card(r, {d: i < 4 ? 'd'+i : ''})).join('')}</div>
     </section>
   </div>`;
 }
 function bindProduct(p){
+  $$('[data-alsoscroll]').forEach(b => b.onclick = () => { const row = $('#alsoRow'); row.scrollBy({left: +b.dataset.alsoscroll * row.clientWidth * .8, behavior: 'smooth'}); });
   let size = +($('#sizes .on')?.dataset.s) || defaultSize(p);
   const isSet = p.kind === 'set'; let picks = [];
   const qty = $('#qty'), getQ = () => Math.max(1, Math.min(99, parseInt(qty.value) || 1));
