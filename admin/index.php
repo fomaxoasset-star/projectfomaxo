@@ -186,7 +186,7 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 @media (min-width:760px){.tiles.at{grid-template-columns:repeat(8,1fr)}.tiles.at .tile b{font-size:19px}
   .agrid{grid-template-columns:minmax(0,1.05fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"funnel visitors countries left" "products sources emirates left"}
   .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}.a-countries{grid-area:countries}.a-emirates{grid-area:emirates}.agrid>.a-returning{display:none}}
-.agrid .list[hidden]{display:none!important}.gbar{width:28%}.gbar .fb{margin:0}.gnote{margin:6px 0 0;flex:none}.a-countries .ch,.a-emirates .ch{flex-wrap:wrap;gap:6px}.gseg button{padding:3px 7px}.a-left .ch{gap:8px}.a-left .ch .btn{flex:none}.a-left .ch h2{min-width:0;flex:1 1 0;white-space:normal;overflow:visible}.a-countries .ch h2,.a-emirates .ch h2{flex:1 1 100%}@media (min-width:760px) and (max-width:1199px){.agrid table.mini{font-size:11.5px}.agrid table.mini th,.agrid table.mini td{padding:5px 3px;letter-spacing:0}}@media (min-width:760px){.gtab{table-layout:fixed;width:100%}.gtab .gbar{display:none}.gtab th:nth-child(2){width:64px}.gtab th:nth-child(4){width:52px}.gtab td:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.agrid .list[hidden]{display:none!important}.gbar{width:28%}.gbar .fb{margin:0}.gnote{margin:6px 0 0;flex:none}.a-countries .ch,.a-emirates .ch{flex-wrap:wrap;gap:6px}.gseg button{padding:3px 7px}.gseg{max-width:100%;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}.gseg::-webkit-scrollbar{display:none}.gseg button{flex:none;white-space:nowrap}.a-left .ch{gap:8px}.a-left .ch .btn{flex:none}.a-left .ch h2{min-width:0;flex:1 1 0;white-space:normal;overflow:visible}.a-countries .ch h2,.a-emirates .ch h2{flex:1 1 100%}@media (min-width:760px) and (max-width:1199px){.agrid table.mini{font-size:11.5px}.agrid table.mini th,.agrid table.mini td{padding:5px 3px;letter-spacing:0}}@media (min-width:760px){.gtab{table-layout:fixed;width:100%}.gtab .gbar{display:none}.gtab th:nth-child(2){width:64px}.gtab th:nth-child(4){width:52px}.gtab td:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 /* phone: no zooming by itself (iPhone zooms into boxes under 16px, double-tap zooms); two-finger pinch still works */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overflow-x:hidden}
 @media (max-width:759px){input,select,textarea{font-size:16px!important}
@@ -915,6 +915,11 @@ if (isset($_GET['analytics'])) {
   require_once dirname(__DIR__) . '/geo-lib.php';
   $gr = ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'year' => 'Year'];
   $gFrom = ['today' => date('Y-m-d 00:00:00'), '7' => date('Y-m-d 00:00:00', strtotime('-6 day')), '30' => date('Y-m-d 00:00:00', strtotime('-29 day')), 'year' => date('Y-m-d 00:00:00', strtotime('-1 year +1 day'))];
+  $gTo = array_fill_keys(array_keys($gFrom), date('Y-m-d 23:59:59'));
+  if ($r === 'custom') {   // dates picked with Show: these lists follow them too (their own buttons still switch)
+    $gr = ['custom' => $d1 === $d2 ? date('j M', strtotime($d1)) : (substr($d1, 0, 7) === substr($d2, 0, 7) ? date('j', strtotime($d1)) : date('j M', strtotime($d1))) . '–' . date('j M', strtotime($d2))] + $gr;
+    $gFrom['custom'] = $span[0]; $gTo['custom'] = $span[1];
+  }
   $gOn = isset($gr[$r]) ? $r : '7';
   $gSince = fomaxo_setting($pdo, 'geo_since');
   $geoTable = function ($rows, $label) use ($pct, $pctT) {
@@ -926,10 +931,10 @@ if (isset($_GET['analytics'])) {
   foreach ($gr as $k => $l) {
     $cRows = $eRows = [];
     try {
-      foreach ($q("SELECT country, COUNT(DISTINCT vid) n FROM fx_events WHERE country IS NOT NULL AND at >= ? GROUP BY country ORDER BY n DESC, country LIMIT 30", [$gFrom[$k]]) as $row)
+      foreach ($q("SELECT country, COUNT(DISTINCT vid) n FROM fx_events WHERE country IS NOT NULL AND at BETWEEN ? AND ? GROUP BY country ORDER BY n DESC, country LIMIT 30", [$gFrom[$k], $gTo[$k]]) as $row)
         $cRows[] = ['name' => fomaxo_flag($row['country']) . ' ' . h(fomaxo_country_name($row['country'])), 'n' => (int)$row['n']];
       $em = array_fill_keys(FOMAXO_EMIRATES, 0); $unk = 0;
-      foreach ($q("SELECT region, COUNT(DISTINCT vid) n FROM fx_events WHERE country = 'AE' AND at >= ? GROUP BY region", [$gFrom[$k]]) as $row)
+      foreach ($q("SELECT region, COUNT(DISTINCT vid) n FROM fx_events WHERE country = 'AE' AND at BETWEEN ? AND ? GROUP BY region", [$gFrom[$k], $gTo[$k]]) as $row)
         if (isset($em[$row['region']])) $em[$row['region']] = (int)$row['n']; else $unk += (int)$row['n'];
       arsort($em); foreach ($em as $name => $n) $eRows[] = ['name' => h($name), 'n' => $n];
       if ($unk) $eRows[] = ['name' => '<span class="muted">Not known</span>', 'n' => $unk];
