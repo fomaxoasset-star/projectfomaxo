@@ -110,8 +110,8 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
   .tile{padding:6px 9px}.tile b{font-size:15px}.tile.todo b{font-size:18px}.tile span{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .db .list.orders small{display:none}.db .list.orders a>span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .seg button{padding:3px 7px}}
 @media (min-width:760px){.lists{display:contents}.tiles{grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}.tile,.tile.todo{grid-column:auto}.tile{padding:10px 14px}.tile b,.tile.todo b{font-size:21px}.tile span{font-size:11px}
-  .dgrid{grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"sales orders" "sales stock";gap:10px}
-  .dgrid .c-sales{grid-area:sales}.dgrid .c-orders{grid-area:orders}.dgrid .c-stock{grid-area:stock}.db .card{padding:12px 16px}.db h2{font-size:15.5px}}
+  .dgrid{grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"sales orders" "visits stock";gap:10px}
+  .dgrid .c-sales{grid-area:sales}.dgrid .c-visits{grid-area:visits}.seg.met{display:none}.dgrid .c-orders{grid-area:orders}.dgrid .c-stock{grid-area:stock}.db .card{padding:12px 16px}.db h2{font-size:15.5px}}
 .list{list-style:none;margin:0;padding:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.list li:last-child{border:0}
 .list.orders li{padding:0}.list.orders a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;color:var(--ink);text-decoration:none;width:100%}
 .list small{display:block}.list .r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
@@ -142,7 +142,7 @@ label.mini{display:none}
   .rep td.num::before{content:attr(data-l);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
   .rep tr.dim{display:none}.rep tr.tot{border-color:var(--gold)}
 }
-.ch.wrap2{flex-wrap:wrap;gap:6px}.seg.met button{font-size:12.5px}
+.ch.wrap2{flex-wrap:wrap;gap:6px}@media (max-width:759px){.db .dgrid .c-visits,.ch .dt{display:none}}.seg.met button{font-size:12.5px}
 .quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.quick .btn{font-size:11px;letter-spacing:.08em}
 @media (max-width:759px){.quick{display:grid;grid-template-columns:1fr 1fr;gap:6px}.quick .btn{padding:7px 6px;font-size:10px;letter-spacing:.04em;text-align:center;white-space:normal;line-height:1.25}}
 /* analytics */
@@ -869,12 +869,14 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     foreach (['day' => date('Y-m-d') . ' 00:00:00', 'week' => date('Y-m-d', strtotime('-6 day')) . ' 00:00:00', 'month' => array_key_first($days) . ' 00:00:00', 'year' => array_key_first($months) . '-01 00:00:00'] as $k => $from) {
       $s = $pdo->prepare('SELECT COUNT(DISTINCT vid) FROM fx_events WHERE at >= ?'); $s->execute([$from]); $vt[$k] = $people((int)$s->fetchColumn()); }
   } catch (Throwable $e) { foreach ($vis as $k => $v) { $vis[$k] = $series[$k]; foreach ($vis[$k] as &$p) { $p['v'] = 0; $p['t'] = 'No visitor data yet'; } unset($p); $vt[$k] = $people(0); } }
-  $graphs = ''; $tots = '';
+  /* laptop: a Sales graph and a Visitors graph; phone: one graph with a Sales / Visitors switch (the Visitors card is hidden) */
+  $graphs = ['sales' => '', 'visitors' => '']; $tots = ['sales' => '', 'visitors' => ''];
   foreach (['sales' => $series, 'visitors' => $vis] as $m => $set) foreach ($ranges as $k => $l) {
-    $on = $m === 'sales' && $k === 'month';
-    $graphs .= str_replace('<div class="graph"', '<div class="graph" data-k="' . $m . '-' . $k . '"', fx_graph($set[$k], ucfirst($m) . ' ' . strtolower($l), !$on, $m === 'sales' ? 'money' : fn($v) => $people((int)$v)));
-    $tots .= '<span data-k="' . $m . '-' . $k . '"' . ($on ? '' : ' hidden') . '>' . h($m === 'sales' ? $sum($k) : $vt[$k]) . '</span>';
+    $graphs[$m] .= str_replace('<div class="graph"', '<div class="graph" data-k="' . $m . '-' . $k . '"', fx_graph($set[$k], ucfirst($m) . ' ' . strtolower($l), $k !== 'month', $m === 'sales' ? 'money' : fn($v) => $people((int)$v)));
+    $tots[$m] .= '<span data-k="' . $m . '-' . $k . '"' . ($k === 'month' ? '' : ' hidden') . '>' . h($m === 'sales' ? $sum($k) : $vt[$k]) . '</span>';
   }
+  $rangeSeg = '<div class="seg" role="group" aria-label="Period">' . implode('', array_map(fn($k, $l) => '<button type="button" data-r="' . $k . '"' . ($k === 'month' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div>';
+  $hideV = fn($html) => preg_replace('/(<(?:div class="graph"|span) data-k="visitors-[a-z]+")(?: hidden)?/', '$1 hidden', $html);
   /* stock running low (counted sizes at or below the warning level) */
   $low = fomaxo_low_stock(); $alerts = '';
   foreach ($pdo->query('SELECT product, size, qty FROM fx_stock WHERE qty IS NOT NULL ORDER BY qty, product') as $r) {
@@ -904,10 +906,12 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     . '</div>'
     . ($month['no_cost'] ? '<p class="muted note">' . $plural($month['no_cost'], 'order') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit shows too high. <a href="./?stock=1">Add costs</a></p>' : '')
     . '<div class="dgrid">'
-    . '<section class="card c-sales" data-m="sales" data-r="month"><div class="ch wrap2"><div class="seg met" role="group" aria-label="Show"><button type="button" data-m="sales" class="on">Sales</button><button type="button" data-m="visitors">Visitors</button></div><div class="seg" role="group" aria-label="Period">'
-    . implode('', array_map(fn($k, $l) => '<button type="button" data-r="' . $k . '"' . ($k === 'month' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div></div>'
-    . '<div class="chartbox">' . $graphs . '</div>'
-    . '<p class="sub"><span class="tip">Tap a bar to see the details</span><b class="tot">' . $tots . '</b></p></section>'
+    . '<section class="card c-sales" data-m="sales" data-r="month"><div class="ch wrap2"><h2 class="dt">Sales</h2><div class="seg met" role="group" aria-label="Show"><button type="button" data-m="sales" class="on">Sales</button><button type="button" data-m="visitors">Visitors</button></div>' . $rangeSeg . '</div>'
+    . '<div class="chartbox">' . $graphs['sales'] . $hideV($graphs['visitors']) . '</div>'
+    . '<p class="sub"><span class="tip">Tap a bar to see the details</span><b class="tot">' . $tots['sales'] . $hideV($tots['visitors']) . '</b></p></section>'
+    . '<section class="card c-visits" data-m="visitors" data-r="month"><div class="ch wrap2"><h2>Visitors</h2>' . $rangeSeg . '</div>'
+    . '<div class="chartbox">' . $graphs['visitors'] . '</div>'
+    . '<p class="sub"><span class="tip">Tap a bar to see the details</span><b class="tot">' . $tots['visitors'] . '</b></p></section>'
     . '<div class="lists"><section class="card c-orders"><div class="ch"><h2>Latest orders</h2><a href="./?orders=1">All orders</a></div>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted empty">No orders yet.</p>') . '</section>'
     . '<section class="card c-stock"><div class="ch"><h2>Stock alerts</h2><a href="./?stock=1">Stock</a></div>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted empty">No size is running low.</p>') . '</section></div>'
     . '</div>'
@@ -915,7 +919,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     . '<a class="btn line sm" href="' . h(self_url(['orders' => 1, 'export' => 1])) . '">Download all orders (Excel)</a><a class="btn line sm" href="' . h(self_url(['reports' => 1, 'y' => date('Y'), 'export' => 1])) . '">Download ' . date('Y') . ' profit &amp; loss (Excel)</a></nav>'
     . '</div>'
     . '<script>document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});'
-    . 'document.querySelectorAll(".c-sales .seg button").forEach(function(b){b.addEventListener("click",function(){var c=b.closest(".card"),g=b.parentNode;g.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b)});if(b.dataset.m)c.dataset.m=b.dataset.m;if(b.dataset.r)c.dataset.r=b.dataset.r;var k=c.dataset.m+"-"+c.dataset.r;'
+    . 'document.querySelectorAll(".c-sales .seg button,.c-visits .seg button").forEach(function(b){b.addEventListener("click",function(){var c=b.closest(".card"),g=b.parentNode;g.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b)});if(b.dataset.m)c.dataset.m=b.dataset.m;if(b.dataset.r)c.dataset.r=b.dataset.r;var k=c.dataset.m+"-"+c.dataset.r;'
     . 'c.querySelectorAll(".chartbox .graph,.tot span").forEach(function(x){x.hidden=x.dataset.k!==k});c.querySelector(".tip").textContent="Tap a bar to see the details";c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")})})});</script>', true, true);
 }
 
