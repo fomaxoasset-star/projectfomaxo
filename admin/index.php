@@ -180,6 +180,26 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overflow-x:hidden}
 @media (max-width:759px){input,select,textarea{font-size:16px!important}
   .an .pagehead{display:flex;flex-wrap:wrap}.an .pagehead h1{flex:none}.arange .seg{margin-left:auto}.arange input[type=date]{flex:1 1 35%;min-width:0;width:auto!important;padding:4px 6px}.arange .btn{flex:none}}
+.tile .tn,.tile .mo,.lmob{display:none}.tile span .dk{display:inline;font:inherit;letter-spacing:inherit;color:inherit}
+/* phone analytics: same layout as fomaxo.in */
+@media (max-width:759px){
+  .an .pagehead h1{display:none}.an .pagehead{gap:6px;margin-bottom:6px}.arange{display:flex;width:100%;gap:6px}
+  .arange .seg{display:flex;width:100%;margin:0;padding:0;gap:0;border-radius:8px;overflow:hidden}.arange .seg a{flex:1;text-align:center;font-size:13px;font-weight:500;padding:7px 0;border-radius:0;color:var(--ink)}
+  .arange .seg a.on{background:rgba(201,169,97,.16);color:var(--gold)}.arange .seg a+a{border-left:1px solid var(--line)}
+  .arange input[type=date]{flex:1 1 0!important;padding:5px 8px!important;border-radius:8px}.arange .btn{border-radius:8px;padding:6px 12px}
+  .tiles.at{grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}.tiles.at .tile{display:flex;flex-direction:column;padding:6px 9px;border-radius:10px}
+  .tiles.at .tile span{order:-1;font-size:9.5px;letter-spacing:.07em;white-space:normal;line-height:1.25}.tiles.at .tile b{font-size:17px;margin:1px 0}
+  .tiles.at .tile .tn{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tiles.at .tile span .dk{display:none}.tiles.at .tile span .mo{display:inline;font:inherit;letter-spacing:inherit;color:inherit}
+  .tiles.at .tile.hot b{color:var(--ok,#6fbf73)}.tiles.at .tile.rev,.tiles.at .tile:last-child{grid-column:1/-1}
+  .apick{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:8px}
+  .apick button{border:0;border-radius:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:none;color:var(--ink);font-weight:500;font-size:12.5px;padding:8px 2px;white-space:nowrap}
+  .apick button:nth-child(4n){border-right:0}.apick button:nth-child(n+5){border-bottom:0}.apick button[data-p=left]{grid-column:span 2;border-right:0}
+  .apick button.on{background:rgba(201,169,97,.16);border-color:var(--line);color:var(--gold)}
+  .a-left .ch .btn{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
+  .a-left .ldesk{display:none}.a-left .lmob{display:block}
+  .ltab td{vertical-align:top;padding:9px 6px 9px 0;line-height:1.35}.ltab td:first-child{width:46%}.ltab td>*{display:block;overflow-wrap:anywhere}.ltab td b{font-size:13.5px}.ltab td a{color:var(--ink);text-decoration:none}
+  .ltab td span{font-size:12px}.ltab .lm-s{margin-top:3px}.ltab .lm-s .tag{display:inline;font-size:10.5px;padding:0 6px}.ltab th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}}
 /* app layout: header and tabs stay put, the page never scrolls, long lists scroll inside their own panel */
 html,body{height:100%}
 body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
@@ -782,7 +802,7 @@ if (isset($_GET['analytics'])) {
 
   /* checkouts where the customer typed their name or mobile but did not buy, and the step they left at */
   $stageName = ['details' => 'Delivery details', 'payment' => 'Payment choice', 'card' => 'Card payment page'];
-  $left = ''; $leftN = ['details' => 0, 'payment' => 0, 'card' => 0];
+  $left = $leftM = ''; $leftN = ['details' => 0, 'payment' => 0, 'card' => 0];
   foreach ($q("SELECT l.* FROM fx_leads l WHERE l.updated_at BETWEEN ? AND ? AND l.order_no IS NULL
                AND NOT EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
                                AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9))
@@ -795,6 +815,12 @@ if (isset($_GET['analytics'])) {
            . '<div class="small"><span class="tag stage-' . h($l['stage']) . '">Left at ' . h($stageName[$l['stage']] ?? $l['stage']) . '</span> <span class="muted">' . h(date('d M, H:i', strtotime($l['updated_at']))) . ($recent ? ' · may still be checking out' : '') . ($l['emirate'] !== '' ? ' · ' . h($l['emirate']) : '') . '</span></div>'
            . (($l['address'] ?? '') !== '' ? '<div class="muted small items1">' . h($l['address']) . '</div>' : '')
            . ($l['items'] !== '' ? '<div class="muted small items1">' . h($l['items']) . '</div>' : '') . '</li>';
+    $leftM .= '<tr><td><b>' . h($l['name'] ?: 'No name') . '</b>' . ($l['phone'] !== '' ? '<a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">' . h($l['phone']) . '</a>' : '')
+            . ($l['email'] !== '' ? '<span class="muted">' . h($l['email']) . '</span>' : '')
+            . '<span class="lm-s"><span class="tag stage-' . h($l['stage']) . '">' . h($stageName[$l['stage']] ?? $l['stage']) . '</span></span></td>'
+            . '<td><b>' . h($l['emirate'] !== '' ? $l['emirate'] : '—') . '</b>' . (($l['address'] ?? '') !== '' ? '<span>' . h($l['address']) . '</span>' : '')
+            . '<span class="muted">' . h(date('d M, H:i', strtotime($l['updated_at']))) . ($l['total'] !== null ? ' · ' . money($l['total']) : '') . ($recent ? ' · may still be checking out' : '') . '</span>'
+            . ($l['items'] !== '' ? '<span class="muted">' . h($l['items']) . '</span>' : '') . '</td></tr>';
   }
 
   /* funnel: each step counts visits (one person can visit more than once) */
@@ -808,28 +834,30 @@ if (isset($_GET['analytics'])) {
   }
   $fun .= '<li class="fx muted small">Opened the card payment page: ' . number_format($f['card']) . ' · Pages per visit: ' . ($f['visits'] ? number_format($f['views'] / $f['visits'], 1) : '0') . ' · Returning visitors: ' . number_format($back) . ($dev ? ' · ' . implode(', ', $dev) : '') . '</li>';
 
-  $tile = fn($val, $label, $cls = '') => '<div class="tile ' . $cls . '"><b>' . $val . '</b><span>' . $label . '</span></div>';
+  /* on a phone the label sits on top with a short note under the number; laptop shows label under the number as before */
+  $tile = fn($val, $label, $cls = '', $note = '') => '<div class="tile ' . $cls . '"><b>' . $val . '</b><span>' . $label . '</span>' . ($note !== '' ? '<small class="tn">' . $note . '</small>' : '') . '</div>';
+  $dk = fn($desk, $mob) => '<span class="dk">' . $desk . '</span><span class="mo">' . $mob . '</span>';
   $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
-  $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'countries' => 'Countries', 'emirates' => 'UAE emirates', 'left' => 'Left checkout'];
+  $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'countries' => 'Countries', 'emirates' => 'Emirates', 'left' => 'Left at checkout'];
   page('Analytics', '<div class="db an">'
     . '<div class="pagehead"><h1>Analytics</h1><form class="arange" method="get"><input type="hidden" name="analytics" value="1"><div class="seg">'
     . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
     . '<input type="hidden" name="r" value="custom"><input type="date" name="d1" value="' . h($d1) . '" aria-label="From"><input type="date" name="d2" value="' . h($d2) . '" aria-label="To"><button class="btn sm' . ($r === 'custom' ? '' : ' line') . '">Show</button></form></div>'
     . '<div class="tiles at">'
-    . $tile(number_format($f['visitors']), 'Visitors · ' . number_format($f['visits']) . ' visits')
-    . $tile(number_format($live), 'On the site now', $live ? 'hot' : '')
-    . $tile($pctT($pct($f['buy'], $f['visits'])), 'Conversion rate')
-    . $tile($pctT($f['cart'] ? 100 - $pct($f['buy'], $f['cart']) : 0), 'Cart abandonment')
-    . $tile($pctT($f['checkout'] ? 100 - $pct($f['buy'], $f['checkout']) : 0), 'Checkout abandonment')
-    . $tile(number_format((int)$ord['n']), 'Orders')
-    . $tile('AED ' . number_format(round((float)$ord['t'])), 'Revenue')
+    . $tile(number_format($f['visitors']), 'Visitors<span class="dk"> · ' . number_format($f['visits']) . ' visits</span>', '', number_format($f['visits']) . ' visits')
+    . $tile(number_format($live), 'On the site now', $live ? 'hot' : '', 'last 5 minutes')
+    . $tile($pctT($pct($f['buy'], $f['visits'])), 'Conversion rate', '', 'visits that bought')
+    . $tile($pctT($f['cart'] ? 100 - $pct($f['buy'], $f['cart']) : 0), 'Cart abandonment', '', 'added, did not buy')
+    . $tile($pctT($f['checkout'] ? 100 - $pct($f['buy'], $f['checkout']) : 0), 'Checkout abandonment', '', 'at checkout, did not buy')
+    . $tile(number_format((int)$ord['n']), $dk('Orders', 'Purchases'), '', 'orders')
+    . $tile('AED ' . number_format(round((float)$ord['t'])), 'Revenue', 'rev', 'AED ' . number_format((int)$ord['n'] ? round((float)$ord['t'] / (int)$ord['n']) : 0) . ' per order')
     . '</div>'
     . '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
     . '<div class="dgrid agrid">'
     . '<section class="card a-funnel on" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
     . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a bar to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p></section>'
     . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout</h2><a class="btn line sm" href="./?analytics=1&amp;leads=1">Excel</a></div>' . (array_sum($leftN) ? '<p class="muted small" style="margin:0 0 4px">' . implode(' · ', array_map(fn($k) => $leftN[$k] . ' at ' . strtolower($stageName[$k]), array_keys(array_filter($leftN)))) . '</p>' : '')
-    . ($left ? '<ul class="list leads">' . $left . '</ul>' : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
+    . ($left ? '<ul class="list leads ldesk">' . $left . '</ul><div class="list lmob"><table class="mini ltab"><thead><tr><th>Name</th><th>Emirate · Address</th></tr></thead><tbody>' . $leftM . '</tbody></table></div>' : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
     . '<section class="card a-sources" data-p="sources"><div class="ch"><h2>Where visitors come from</h2></div>'
     . ($src ? '<div class="list"><table class="mini"><thead><tr><th>Source</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th></tr></thead><tbody>' . $src . '</tbody></table></div>' : '<p class="muted empty">No visits yet.</p>') . '</section>'
     . '<section class="card a-products" data-p="products"><div class="ch"><h2>Products</h2></div>'
