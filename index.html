@@ -483,6 +483,7 @@ footer{border-top:1px solid var(--line);background:var(--deep);padding:80px 0 34
 .fgrid a.brand{display:flex}
 .fgrid a{display:block;color:var(--muted);font-size:14px;margin-bottom:12px;transition:color .3s}
 .fgrid a:hover{color:var(--gold-hi)}
+.fpriv{margin:14px 0 0;font-size:11px;color:var(--dim)}
 .fbase{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);border-top:1px solid var(--line);padding-top:26px}
 @media(max-width:860px){.fgrid{grid-template-columns:1fr 1fr}.fgrid>div:first-child{grid-column:1/-1}}
 
@@ -1665,6 +1666,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
       <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">Personal Care</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
     </div>
     <div class="fbase"><span>© 2026 FOMAXO™. All rights reserved.</span><span>Inspire greatness</span></div>
+    <p class="fpriv">We count anonymous visits (no cookies, nothing shared) to improve the store.</p>
   </div>
 </footer>
 
@@ -1931,6 +1933,7 @@ function addToCart(id, opt, qty=1, silent, picks){
   if (l) l.qty = Math.min(99, l.qty + qty); else cart.push(picks ? {id, opt, qty, picks} : {id, opt, qty});
   save();
   if (!silent) toast(`${P[id].name} · ${optLabel(P[id], opt)} added to your bag`);
+  FXT.send('cart', {id});
   return true;
 }
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
@@ -2824,6 +2827,7 @@ function bindCheckout(q){
     // payment options
     // payment stays locked until the delivery details are filled in
     const missing = check(details()), locked = missing.length > 0;
+    FXT.lead(locked ? 'details' : 'payment', details(), ls, T.total); if (!locked) FXT.once('pay');
     const opt = (id, title, sub, off) => { off = off || locked; return `<label class="co-opt${coPay === id && !locked ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`; };
     $('#coPay').innerHTML = (locked ? `<p class="co-lock">${CO_ICON.lock}<span>Fill in your ${listTxt(missing.map(b => b[1]))} to choose how to pay.</span></p>` : '') + (CARD_ON ? opt('card', 'Card / Apple Pay / Google Pay', `Pay securely now with ${CARD_BY}`) : '') +
       opt('cod', 'Cash on delivery', codOk ? `Pay in cash when your order arrives · ${aed(COD_FEE)} fee` : `For orders above ${aed(COD_MIN)} · ${aed(COD_FEE)} fee<span class="co-opt-more">Add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more to activate COD</span>`, !codOk);
@@ -2871,8 +2875,9 @@ function bindCheckout(q){
     busy = true; const old = go.innerHTML; go.disabled = true;
     go.textContent = coPay === 'card' ? 'Opening secure payment…' : 'Placing your order…';
     const r = await sendOrder(ls, coPay, d, src);
-    if (r.url){ location.href = r.url; return; }
+    if (r.url){ FXT.lead('card', d, ls, orderTotals(ls, coPay).total, true); FXT.send('card'); location.href = r.url; return; }
     if (r.order){
+      FXT.send('buy', {o: r.order});
       if (buy) clearBuy(); else { cart = []; save(); }
       if (r.review) rwAddLink(r.review);
       location.hash = `#/order-confirmed?no=${encodeURIComponent(r.order)}&total=${encodeURIComponent(r.total)}${r.review ? '&rv=' + r.review : ''}`;
@@ -2907,6 +2912,7 @@ async function verifyZiina(id, buy, tries = 0){
   const wa = `<a class="btn line" href="https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent('Hello FOMAXO, about my order ' + (d.order || ''))}" target="_blank" rel="noopener">Message us on WhatsApp</a>`;
   const show = (eyebrow, title, lead, body) => { const h = $('.phead'); if (h) h.outerHTML = pageHead(eyebrow, title, lead); $('#ziBox').innerHTML = body; };
   if (d.status === 'paid') {
+    FXT.once('buy', {o: d.order || ''});
     if (buy) clearBuy(); else { cart = []; save(); }
     if (d.review) rwAddLink(d.review);
     document.title = 'Order confirmed — FOMAXO';
@@ -3108,6 +3114,52 @@ async function bindReviewPage(q){
 
 /* ============================ ROUTER ============================ */
 let heroTimer;
+/* anonymous visit stats for fomaxo.com/admin → Analytics: sent only to our own server (track.php), no cookies, no outside scripts.
+   A visitor is a random id kept in this browser; a visit ends after 30 minutes without activity. */
+const FXT = (() => {
+  const rid = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('');
+  let vid = '', sid = '', lastT = 0, first = true, off = false, ref = document.referrer, lastView = '', lastViewT = 0, lastLead = '', leadTimer = 0;
+  const sent = {};
+  try {
+    off = !!navigator.webdriver || localStorage.getItem('fomaxo_notrack') === '1';
+    vid = localStorage.getItem('fomaxo_vid') || '';
+    if (!/^[a-f0-9]{16}$/.test(vid)) { vid = rid(); localStorage.setItem('fomaxo_vid', vid); }
+    const s = JSON.parse(localStorage.getItem('fomaxo_sid') || 'null');
+    if (s && /^[a-f0-9]{16}$/.test(s.id) && Date.now() - s.t < 18e5) { sid = s.id; lastT = s.t; first = false; }
+  } catch(e) {}
+  vid = vid || rid();
+  const post = body => { if (off) return; const b = JSON.stringify(body); try { if (navigator.sendBeacon && navigator.sendBeacon('track.php', new Blob([b], {type: 'text/plain'}))) return; } catch(e) {} fetch('track.php', {method: 'POST', body: b, keepalive: true}).catch(() => {}); };
+  const send = (e, data) => {
+    const now = Date.now();
+    if (!sid || now - lastT > 18e5) { sid = rid(); first = true; for (const k in sent) delete sent[k]; }
+    lastT = now; try { localStorage.setItem('fomaxo_sid', JSON.stringify({id: sid, t: now})); } catch(x) {}
+    const body = Object.assign({v: vid, s: sid, e, p: (location.hash || '#/').slice(1, 81)}, data);
+    if (e === 'view' && first) { first = false; body.first = 1; body.r = ref; ref = ''; try { body.u = new URLSearchParams(location.search).get('utm_source') || ''; } catch(x) {} }
+    post(body);
+  };
+  setInterval(() => { if (!document.hidden && sid && Date.now() - lastT < 18e5) post({v: vid, s: sid, e: 'ping', p: (location.hash || '#/').slice(1, 81)}); }, 6e4);
+  return {
+    send,
+    once(e, data) { if (sent[e]) return; sent[e] = 1; send(e, data); },
+    view(seg) {
+      const k = location.hash, now = Date.now();
+      if (k === lastView && now - lastViewT < 2000) return;
+      lastView = k; lastViewT = now;
+      send('view');
+      if (seg[0] === 'product' && P[seg[1]] && !P[seg[1]].hidden) send('product', {id: seg[1]});
+      if (seg[0] === 'checkout' && (cart.length || buyLines.length)) send('checkout');
+    },
+    // checkout details: kept only once a name or mobile is typed, so the admin can see who left and at which step
+    lead(stage, d, ls, total, now) {
+      if (!d || !(d.name || d.phone)) return;
+      clearTimeout(leadTimer);
+      const body = {e: 'lead', st: stage, name: d.name, phone: d.phone, email: d.email, emirate: d.emirate, total: total === null ? '' : total,
+        items: ls.map(l => `${l.qty} × ${P[l.id] ? P[l.id].name + ' ' + optLabel(P[l.id], l.opt) : l.id}`).join(', ').slice(0, 600)};
+      const go = () => { const j = JSON.stringify(body); if (j === lastLead) return; lastLead = j; send('lead', body); };
+      if (now) go(); else leadTimer = setTimeout(go, 1500);
+    }
+  };
+})();
 function route(){
   const raw = location.hash.replace(/^#/, '') || '/';
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
@@ -3135,6 +3187,7 @@ function route(){
   if (html === '') return;
   document.body.classList.toggle('home', !seg[0]);
   app.innerHTML = `<div class="page-fade">${html}</div>`;
+  FXT.view(seg);
   $$('#menu a').forEach(a => a.classList.toggle('on', a.dataset.r === seg[0] || (a.dataset.r === 'fragrances' && seg[0] === 'product')));
   closePanels();
   window.scrollTo({top: 0, left: 0, behavior: 'instant'});
