@@ -25,26 +25,26 @@ function csrf_ok() { return hash_equals($_SESSION['csrf'] ?? '', (string)($_POST
 function client_ip() { return substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45); }
 function go($q = []) { header('Location: ' . self_url($q), true, 303); exit; }
 
-function page($title, $body, $wide = false) {
+function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
   $css = <<<'CSS'
 :root{--bg:#f7f3ec;--panel:#fff;--ink:#16130f;--muted:#5d554a;--line:#e3d9c8;--gold:#8f6b37;--gold-ink:#fff;--ok:#2f6b3a;--warn:#9a5b12;--bad:#9b2c2c}
 @media (prefers-color-scheme:dark){:root{--bg:#050505;--panel:#0e0d0b;--ink:#f2ebdd;--muted:#b5aa98;--line:#2a251e;--gold:#d7aa69;--gold-ink:#000;--ok:#7fc48b;--warn:#e0a85a;--bad:#ef8a8a}}
 *{box-sizing:border-box}html{color-scheme:light dark}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Jost,system-ui,sans-serif;font-style:normal}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.45 Manrope,system-ui,sans-serif;font-style:normal;-webkit-font-smoothing:antialiased}
 em,i{font-style:normal}
 a{color:var(--gold)}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
-.brand{font-family:"Cormorant Garamond",serif;font-size:22px;letter-spacing:.18em;color:var(--gold);text-decoration:none}
-.brand small{font-family:Jost,sans-serif;font-size:11px;letter-spacing:.3em;color:var(--muted);margin-left:8px}
-.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{font-family:Cinzel,Georgia,serif;font-weight:600;font-size:20px;letter-spacing:.2em;color:var(--gold);text-decoration:none}
+.brand small{font-family:Manrope,sans-serif;font-size:11px;letter-spacing:.3em;color:var(--muted);margin-left:8px}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 16px 16px}
 .narrow{max-width:420px}
-h1{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:28px;margin:6px 0 16px}
-h2{font-family:"Cormorant Garamond",serif;font-weight:500;font-size:21px;margin:22px 0 10px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
-label{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0 5px}
-input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:10px 11px}
+h1{font-family:Cinzel,Georgia,serif;font-weight:600;font-size:21px;letter-spacing:.06em;margin:0 0 10px}
+h2{font-family:Cinzel,Georgia,serif;font-weight:600;font-size:16px;letter-spacing:.06em;margin:14px 0 8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+label{display:block;font-size:11.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px}
 textarea{min-height:80px}
-.btn{display:inline-block;font:inherit;font-size:13px;letter-spacing:.12em;text-transform:uppercase;background:var(--gold);color:var(--gold-ink);border:0;border-radius:7px;padding:11px 18px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn{display:inline-block;font:inherit;font-size:12.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;background:var(--gold);color:var(--gold-ink);border:0;border-radius:7px;padding:9px 16px;cursor:pointer;text-decoration:none;white-space:nowrap}
 .btn.line{background:transparent;color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
 .msg{padding:10px 12px;border-radius:7px;margin:0 0 14px;border:1px solid var(--line)}
 .msg.bad{color:var(--bad);border-color:var(--bad)}.msg.ok{color:var(--ok);border-color:var(--ok)}
@@ -55,13 +55,13 @@ textarea{min-height:80px}
 .filters .q{grid-column:1/-1}
 .filters .acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
 @media (min-width:860px){.filters{grid-template-columns:2fr 1fr 1fr 1fr 1fr auto}.filters .q,.filters .acts{grid-column:auto}}
-.stats{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
-.stat{flex:1 1 140px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-.stat b{display:block;font-size:20px;font-weight:500}
-.stat span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.stat{flex:1 1 140px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.stat b{display:block;font-size:18px;font-weight:600}
+.stat span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 td.num,th.num{text-align:right;white-space:nowrap}
 tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgba(143,107,55,.08)}.stock tr.row,.exp tr.row{cursor:default}
 .no{font-weight:500;white-space:nowrap}
@@ -78,19 +78,40 @@ tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgb
 dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:var(--muted);font-size:13px}dd{margin:0;word-break:break-word}
 .items{margin:0;padding-left:18px}
 .pager{display:flex;gap:8px;margin-top:14px}
-.btn.sm{padding:8px 12px;font-size:11px}.btn.big{padding:15px 26px;font-size:14px;min-width:200px}
+.btn.sm{padding:7px 11px;font-size:11px}.btn.big{padding:12px 24px;font-size:13px;min-width:180px}
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none;background:var(--panel);border-bottom:1px solid var(--line)}
-.tabs a{text-align:center;text-decoration:none;font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:14px 4px;color:var(--muted);border-bottom:2px solid transparent}
+.tabs a{text-align:center;text-decoration:none;font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:11px 4px;color:var(--muted);border-bottom:2px solid transparent}
 .tabs a.on{color:var(--gold);border-bottom-color:var(--gold)}
-@media (max-width:759px){.tabs a{flex:0 0 auto;padding:14px 13px;font-size:12px;letter-spacing:.08em}}.tabs::-webkit-scrollbar{display:none}
+@media (max-width:759px){.tabs a{flex:0 0 auto;padding:11px 13px;font-size:12px;letter-spacing:.08em}}.tabs::-webkit-scrollbar{display:none}
 .todos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 4px}
 .todo{display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-decoration:none;color:var(--ink)}
 .todo b{display:block;font-size:26px;font-weight:500;color:var(--muted)}.todo span{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .todo.hot{border-color:var(--gold)}.todo.hot b{color:var(--gold)}
 .dash{display:grid;gap:14px}@media (min-width:860px){.dash{grid-template-columns:3fr 2fr}}.dash>*{min-width:0}
-.chart{width:100%;height:auto;display:block;overflow:visible}.chart .bar{fill:var(--gold)}.chart .grid,.chart .axis{stroke:var(--line);stroke-width:1}
-.chart text{fill:var(--muted);font-size:11px}@media (max-width:759px){.chart text{font-size:21px}}.chart .hit{fill:transparent;cursor:pointer}.chart .hit.on{fill:rgba(143,107,55,.12)}
-#tip{min-height:1.5em;margin:6px 0 0}
+.chart{width:100%;display:block;flex:1 1 auto;min-height:0;height:100%;overflow:visible}.chart .bar{fill:var(--gold)}.chart .grid,.chart .axis{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
+.chart .hit{fill:transparent;cursor:pointer}.chart .hit.on{fill:rgba(143,107,55,.16)}
+.graph{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;width:100%}.graph[hidden]{display:none}
+.cmax{font-size:11.5px;color:var(--muted);line-height:1.2;margin:0 0 3px;font-variant-numeric:tabular-nums}
+.clab{display:grid;font-size:11.5px;color:var(--muted);margin-top:4px;text-align:center;line-height:1.2}.clab span{white-space:nowrap;overflow:hidden}.clab.ends{display:flex;justify-content:space-between}
+.db{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}.db>*{flex:none}
+.db h2{font-size:14.5px;margin:0;white-space:nowrap}.db .card{padding:10px 12px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.db .ch{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 6px;flex:none}.db .ch a,.db .ch .val{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.db .ch .val{color:var(--muted);text-align:right}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:20px;padding:2px;gap:2px;flex:none}.seg button{font:inherit;font-size:11.5px;font-weight:600;border:0;background:none;color:var(--muted);padding:3px 9px;border-radius:20px;cursor:pointer;white-space:nowrap}.seg button.on{background:var(--gold);color:var(--gold-ink)}
+.db .chartbox{flex:1 1 auto;min-height:40px;display:flex}
+.db .sub{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin:4px 0 0;flex:none;min-height:1.45em}
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:0 0 8px}.tile{grid-column:span 2;display:block;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-decoration:none;color:var(--ink)}
+.tile.todo{grid-column:span 3}.tile b{display:block;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}.tile span{display:block;font-size:10.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);line-height:1.35}
+.tile.todo b{font-size:20px;color:var(--muted)}.tile.hot{border-color:var(--gold)}.tile.hot b{color:var(--gold)}
+.db .note{font-size:11.5px;margin:0 0 8px}
+.dgrid{display:grid;gap:8px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.15fr) minmax(0,1fr)}.dgrid>*{min-width:0}
+.db .list{overflow:auto;flex:1 1 auto;min-height:0;overscroll-behavior:contain}.db .list li{padding:5px 0;font-size:13.5px}.db .list.orders li{padding:0}.db .list.orders a{padding:5px 0}.db .list .r{flex-direction:row;align-items:center;gap:8px}.db .list small{font-size:11.5px}
+.db .empty{margin:0;font-size:13px}
+@media (max-width:759px){.dgrid .c-years{display:none}.lists{overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;min-height:0}.lists>.card{flex:none;overflow:visible}.lists .c-stock{order:-1}.lists .list{overflow:visible}
+  .tile{padding:6px 9px}.tile b{font-size:15px}.tile.todo b{font-size:18px}.tile span{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .db .list.orders small{display:none}.db .list.orders a>span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .seg button{padding:3px 7px}}
+@media (min-width:760px){.lists{display:contents}.seg .ph{display:none}.tiles{grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}.tile,.tile.todo{grid-column:auto}.tile{padding:10px 14px}.tile b,.tile.todo b{font-size:21px}.tile span{font-size:11px}
+  .dgrid{grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"sales orders" "years stock";gap:10px}
+  .dgrid .c-sales{grid-area:sales}.dgrid .c-years{grid-area:years}.dgrid .c-orders{grid-area:orders}.dgrid .c-stock{grid-area:stock}.db .card{padding:12px 16px}.db h2{font-size:15.5px}}
 .list{list-style:none;margin:0;padding:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.list li:last-child{border:0}
 .list.orders li{padding:0}.list.orders a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;color:var(--ink);text-decoration:none;width:100%}
 .list small{display:block}.list .r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
@@ -102,14 +123,14 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 @media (min-width:760px){.szrow{grid-template-columns:repeat(4,1fr)}}
 label.chk{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);margin:8px 0 0}label.chk input{width:auto;margin:0}label.chk.big{font-size:16px;margin:0}
 .phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:6px}.ph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--line)}
-@media (min-width:760px){.tabs{display:flex;justify-content:center;gap:10px}.tabs a{padding:14px 22px}}
+@media (min-width:760px){.tabs{display:flex;justify-content:center;gap:10px}.tabs a{padding:11px 22px}}
 .lvl-out{color:var(--bad)}.lvl-low{color:var(--warn)}.lvl-ok{color:var(--ok)}
-.lowlvl{margin:0 0 14px}.lowlvl label{margin-top:0;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink)}.lowlvl input{max-width:120px}
+.lowlvl{margin:0 0 10px;display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;padding:10px 14px}.lowlvl label{margin:0;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}.lowlvl input{max-width:90px}.lowlvl p{flex:1 1 240px;margin:0 !important}
 .stock td,.exp td{vertical-align:middle}.stock input{width:110px;text-align:right}
 label.mini{display:none}
-.savebar{position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,var(--bg) 30%)}
+.savebar{padding:10px 0 0}
 .g3{display:grid;gap:0 12px}@media (min-width:760px){.g3{grid-template-columns:1fr 1fr 1fr}}
-.monthnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 10px}.monthnav h2{margin:0;text-align:center}.monthnav h2 small{display:block;font-family:Jost,sans-serif;font-size:15px;color:var(--muted)}
+.monthnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0 8px}.monthnav h2{margin:0;text-align:center}.monthnav h2 small{display:block;font-family:Manrope,sans-serif;font-size:15px;color:var(--muted)}
 .yearbar{display:flex;align-items:center;gap:10px;margin:6px 0 4px;flex-wrap:wrap}.yearbar label{margin:0}.yearbar select{width:auto}
 .rep tr.dim td{color:var(--muted)}.rep tr.tot td{font-weight:500;border-top:2px solid var(--line)}.rep td.per{white-space:nowrap}
 @media (max-width:759px){
@@ -121,19 +142,52 @@ label.mini{display:none}
   .rep td.num::before{content:attr(data-l);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
   .rep tr.dim{display:none}.rep tr.tot{border-color:var(--gold)}
 }
+/* app layout: header and tabs stay put, the page never scrolls, long lists scroll inside their own panel */
+html,body{height:100%}
+body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+.top,.tabs{flex:none}
+main.wrap{flex:1 1 auto;min-height:0;overflow:auto;width:100%;overscroll-behavior:contain}
+main.fit{display:flex;flex-direction:column;overflow:hidden}
+main.fit>*,.fitform>*{flex:none;min-width:0}
+main.fit>.fill,main.fit>.fitform,main.fit>.db,.fitform>.fill{flex:1 1 auto;min-height:0}
+.fitform{display:flex;flex-direction:column;margin:0}
+.fill{overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.fill>table{border:0;border-radius:0;overflow:visible}.fill>table tr:last-child td{border-bottom:0}
+.fill th{position:sticky;top:0;background:var(--panel);z-index:1}
+.fill>.after{padding:8px 12px 10px;margin:0}.fill .pager{margin:8px 12px 0}
+.pagehead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}.pagehead h1{margin:0}
+.num,.stat b{font-variant-numeric:tabular-nums}
+@media (max-width:759px){
+  .wrap{padding:10px 12px 12px}h1{font-size:18px;margin-bottom:8px}
+  .fill{border:0;background:none;border-radius:0}.fill>table tr.row:last-child{margin-bottom:0}.fill>.after{padding:6px 2px 4px}.fill .pager{margin:6px 0 0}
+  .filters{gap:6px 8px;padding:10px 12px}.filters label{font-size:10.5px;margin-bottom:2px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.stat{padding:6px 8px}.stat b{font-size:14.5px}.stat span{font-size:9.5px;letter-spacing:.04em;display:block;line-height:1.25}
+  .g3{grid-template-columns:1fr 1fr}.g3>div:last-child{grid-column:1/-1}
+  .settings{grid-template-columns:1fr}
+  .top{padding:7px 12px}.brand{font-size:18px}
+  .filters input,.filters select{padding:6px 9px}.filters .acts .btn{padding:8px 12px;font-size:11.5px}
+  .filters label.phx{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .stat b{white-space:nowrap;font-size:13px}
+  .olist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"no tot" "date st" "cust pay" "items items";gap:1px 10px;padding:8px 12px;margin-bottom:8px}
+  .olist td{padding:0}.olist td:nth-child(1){grid-area:no}.olist td:nth-child(2){grid-area:date;color:var(--muted);font-size:12.5px}.olist td:nth-child(3){grid-area:cust;font-size:13.5px}.olist td:nth-child(3) div{display:inline;margin-left:6px}
+  .olist td:nth-child(4){grid-area:items;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:12px}.olist td:nth-child(5){grid-area:pay;text-align:right;font-size:13px}.olist td:nth-child(6){grid-area:st;text-align:right}.olist td:nth-child(7){grid-area:tot;font-weight:600}
+  .stock-help{font-size:12px}.lowlvl{padding:8px 12px}.lowlvl label{font-size:13px}.lowlvl input{padding:6px 9px;max-width:72px}
+  .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
+}
+.settings{display:grid;gap:14px;max-width:900px}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}@media (min-width:860px){.settings{grid-template-columns:1fr 1fr;align-items:start}}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
-     . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Jost:wght@400;500&display=swap">'
+     . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Manrope:wght@400;500;600;700&display=swap">'
      . "<style>$css</style></head><body>"
      . '<header class="top"><a class="brand" href="./">FOMAXO<small>ADMIN</small></a>'
      . (!empty($_SESSION['admin']) ? '<form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Log out</button></form>' : '')
      . '</header>'
      . (!empty($_SESSION['admin']) ? '<nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
-         [['Home', './', !$_GET], ['Orders', './?orders=1', (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
+         [['Dashboard', './', !$_GET], ['Orders', './?orders=1', (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
           ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
           ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Reports', './?reports=1', isset($_GET['reports'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav>' : '')
-     . '<main class="wrap' . ($wide ? '' : ' narrow') . '">' . $body . '</main>'
+     . '<main class="wrap' . ($wide ? '' : ' narrow') . ($fit ? ' fit' : '') . '">' . $body . '</main>'
      . '<script>var t=document.querySelector(".tabs a.on");if(t&&t.parentNode.scrollWidth>t.parentNode.clientWidth)t.parentNode.scrollLeft=t.offsetLeft-(t.parentNode.clientWidth-t.offsetWidth)/2;</script></body></html>';
   exit;
 }
@@ -381,10 +435,10 @@ if (isset($_GET['products'])) {
            . '<td>' . ($r['hidden'] ? '<span class="tag s-Cancelled">Hidden</span>' : '<span class="tag s-Delivered">On website</span>') . '</td>'
            . '<td class="num"><a class="btn line sm" href="' . h(self_url(['products' => 1, 'p' => $r['id']])) . '">Edit</a></td></tr>';
     }
-    page('Products', '<div class="monthnav" style="margin-top:0"><h1 style="margin:0">Products</h1><a class="btn" href="' . h(self_url(['products' => 1, 'p' => 'new'])) . '">Add product</a></div>' . flash()
-      . ($rows ? '<table class="prods"><thead><tr><th></th><th>Product</th><th>Website</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
+    page('Products', '<div class="pagehead"><h1>Products</h1><a class="btn" href="' . h(self_url(['products' => 1, 'p' => 'new'])) . '">Add product</a></div>' . flash()
+      . '<div class="fill">' . ($rows ? '<table class="prods"><thead><tr><th></th><th>Product</th><th>Website</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
                : '<p class="msg bad">The product list could not be loaded from the database.</p>')
-      . '<p class="muted small">New sizes show up on the Stock page by themselves. Changing a price does not change old orders or reports.</p>', true);
+      . '<p class="muted small after">New sizes show up on the Stock page by themselves. Changing a price does not change old orders or reports.</p></div>', true, true);
   }
 
   /* add or edit form */
@@ -453,17 +507,17 @@ if (isset($_GET['settings'])) {
     flash('Settings saved.', true); go(['settings' => 1]);
   }
   page('Settings', '<h1>Settings</h1>' . flash()
-    . '<form class="card" method="post">' . csrf_field()
+    . '<div class="settings"><form class="card" method="post">' . csrf_field()
     . '<h2 style="margin-top:0">Store</h2>'
     . '<label for="orders_email">New order emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
     . '<p class="muted small" style="margin:6px 0 0">Every cash and card order is emailed here. Password reset links always go to ' . h(FX_STORE_EMAIL) . '.</p>'
-    . '<p style="margin:18px 0 0"><button class="btn">Save</button></p></form>'
-    . '<form class="card" method="post" style="margin-top:16px">' . csrf_field()
+    . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
+    . '<form class="card" method="post">' . csrf_field()
     . '<h2 style="margin-top:0">Admin password</h2>'
     . '<label for="pw_now">Current password</label><input id="pw_now" name="pw_now" type="password" required autocomplete="current-password">'
     . '<label for="pw1">New password</label><input id="pw1" name="pw1" type="password" minlength="8" required autocomplete="new-password">'
     . '<label for="pw2">New password again</label><input id="pw2" name="pw2" type="password" minlength="8" required autocomplete="new-password">'
-    . '<p style="margin:18px 0 0"><button class="btn">Change password</button></p></form>');
+    . '<p style="margin:14px 0 0"><button class="btn">Change password</button></p></form></div>', true);
 }
 
 /* ---- stock and cost price: one row per product and size ---- */
@@ -501,13 +555,13 @@ if (isset($_GET['stock'])) {
          . '<td class="num"><label class="mini">Cost AED</label><input type="number" min="0" step="0.01" inputmode="decimal" name="c[' . h($id) . '][' . h($opt) . ']" value="' . ($c === null ? '' : h(rtrim(rtrim($c, '0'), '.'))) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' cost price"></td></tr>';
   }
   page('Stock', '<h1>Stock &amp; cost</h1>' . flash()
-    . '<p class="muted small"><b>Stock:</b> how many bottles you have. It goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml) and goes back up if you cancel an order. Leave it empty to not count that size. The website shows "Only X left" at ' . fomaxo_low_stock() . ' or fewer, and "Sold out" at 0.<br>'
+    . '<p class="muted small stock-help" style="margin:0 0 8px"><b>Stock:</b> how many bottles you have. It goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml) and goes back up if you cancel an order. Leave it empty to not count that size. The website shows "Only X left" at ' . fomaxo_low_stock() . ' or fewer, and "Sold out" at 0.<br>'
     . '<b>Cost:</b> what one bottle costs you. Reports use it to work out your profit.</p>'
-    . '<form method="post">' . csrf_field()
+    . '<form class="fitform" method="post">' . csrf_field()
     . '<div class="card lowlvl"><label for="low_stock">Show "Only X left" on the website when stock is at or below</label><input id="low_stock" type="number" min="0" max="100" inputmode="numeric" name="low_stock" required value="' . fomaxo_low_stock() . '">'
     . '<p class="muted small" style="margin:6px 0 0">One level for every product and size. 0 turns it off (Sold out still shows).</p></div>'
-    . '<table class="stock"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost (AED)</th></tr></thead><tbody>' . $tr . '</tbody></table>'
-    . '<div class="savebar"><button class="btn big">Save</button></div></form>', true);
+    . '<div class="fill"><table class="stock"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost (AED)</th></tr></thead><tbody>' . $tr . '</tbody></table></div>'
+    . '<div class="savebar"><button class="btn big">Save</button></div></form>', true, true);
 }
 
 /* ---- expenses: money going out that is not a bottle sold (ads, delivery, packaging, rent …) ---- */
@@ -539,10 +593,10 @@ if (isset($_GET['expenses'])) {
     . '<div><label for="category">Type</label><select id="category" name="category">' . $opts . '</select></div>'
     . '<div><label for="amount">Amount (AED)</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" required></div></div>'
     . '<label for="note">Note (optional)</label><input id="note" name="note" maxlength="200" placeholder="e.g. Instagram ads, Aramex invoice">'
-    . '<p style="margin:16px 0 0"><button class="btn big">Add expense</button></p></form>'
+    . '<p style="margin:12px 0 0"><button class="btn">Add expense</button></p></form>'
     . '<div class="monthnav"><a class="btn line" href="' . h(self_url(['expenses' => 1, 'm' => $prev])) . '">←</a><h2>' . h(date('F Y', strtotime("$month-01"))) . '<small>' . money($sum) . '</small></h2><a class="btn line" href="' . h(self_url(['expenses' => 1, 'm' => $next])) . '">→</a></div>'
-    . ($list ? '<table class="exp"><tbody>' . $tr . '</tbody></table>' : '<p class="card muted">No expenses this month.</p>')
-    . '<p class="muted small">"Stock purchase" is shown in reports but not taken off profit, because the cost of each bottle is already counted when it sells.</p>', true);
+    . '<div class="fill">' . ($list ? '<table class="exp"><tbody>' . $tr . '</tbody></table>' : '<p class="card muted" style="margin:0">No expenses this month.</p>')
+    . '<p class="muted small after">"Stock purchase" is shown in reports but not taken off profit, because the cost of each bottle is already counted when it sells.</p></div>', true, true);
 }
 
 /* ---- reports: sales, costs and profit or loss by month and by year ---- */
@@ -586,9 +640,9 @@ if (isset($_GET['reports'])) {
     . '<form class="yearbar" method="get"><input type="hidden" name="reports" value="1"><label for="y">Year</label><select id="y" name="y" onchange="this.form.submit()">' . $yOpts . '</select>'
     . '<a class="btn line" href="' . h(self_url(['reports' => 1, 'y' => $year, 'export' => 1])) . '">Download Excel</a></form>'
     . ($missing ? '<p class="msg bad">' . $missing . ' order' . ($missing > 1 ? 's' : '') . ' in ' . $year . ' ha' . ($missing > 1 ? 've' : 's') . ' no cost price, so profit is too high. Type the cost of each bottle on the <a href="./?stock=1">Stock</a> page.</p>' : '')
-    . '<h2>' . $year . ' by month</h2>' . $table($rows, fn($k) => date('M Y', strtotime("$k-01")), ["Total $year", $T])
+    . '<div class="fill rfill"><h2>' . $year . ' by month</h2>' . $table($rows, fn($k) => date('M Y', strtotime("$k-01")), ["Total $year", $T])
     . '<h2>By year</h2>' . $table($all, fn($k) => (string)$k)
-    . '<p class="muted small">Sales are what customers paid (VAT included, COD fee included) for New, Paid and Delivered orders; cancelled orders, unpaid card attempts and test payments are left out. Cost of goods is the cost price of the bottles sold, including free minis. Profit = sales − cost of goods − expenses. In ' . $year . ': discounts given ' . money($T['discount'] ?? 0) . ', COD fees ' . money($T['fees'] ?? 0) . ', stock bought ' . money($T['stock_bought'] ?? 0) . ' (not taken off profit).</p>', true);
+    . '<p class="muted small after">Sales are what customers paid (VAT included, COD fee included) for New, Paid and Delivered orders; cancelled orders, unpaid card attempts and test payments are left out. Cost of goods is the cost price of the bottles sold, including free minis. Profit = sales − cost of goods − expenses. In ' . $year . ': discounts given ' . money($T['discount'] ?? 0) . ', COD fees ' . money($T['fees'] ?? 0) . ', stock bought ' . money($T['stock_bought'] ?? 0) . ' (not taken off profit).</p></div>', true, true);
 }
 
 /* one order */
@@ -623,30 +677,47 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   $real = "status IN ('New', 'Paid', 'Delivered') AND test = 0";
   $s = $pdo->prepare("SELECT COUNT(*) n, COALESCE(SUM(total), 0) sales FROM fx_orders WHERE $real AND created_at >= ?");
   $s->execute([date('Y-m-d') . ' 00:00:00']); $today = $s->fetch();
-  $month = fomaxo_report($pdo, (int)date('Y'))[date('Y-m')];
+  $yr = fomaxo_report($pdo, (int)date('Y')); $month = $yr[date('Y-m')];
   $todo = $pdo->query("SELECT SUM(status = 'New') cod, SUM(status = 'Paid') card FROM fx_orders WHERE test = 0")->fetch();
-  /* last 30 days, one bar per day */
+  /* sales graphs: one with a Today / 7 days / 30 days switch, one by year (by month while there is only one year of sales) */
+  $orders = fn($n) => $n ? money($n[0]) . ' · ' . $n[1] . ' order' . ($n[1] > 1 ? 's' : '') : 'no sales';
+  $hours = array_fill(0, 24, [0.0, 0]);
+  $s = $pdo->prepare("SELECT HOUR(created_at) h, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY HOUR(created_at)");
+  $s->execute([date('Y-m-d') . ' 00:00:00']);
+  foreach ($s as $r) $hours[(int)$r['h']] = [(float)$r['t'], (int)$r['n']];
   $days = []; for ($i = 29; $i >= 0; $i--) $days[date('Y-m-d', strtotime("-$i day"))] = [0.0, 0];
   $s = $pdo->prepare("SELECT DATE(created_at) d, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY DATE(created_at)");
   $s->execute([array_key_first($days) . ' 00:00:00']);
   foreach ($s as $r) if (isset($days[$r['d']])) $days[$r['d']] = [(float)$r['t'], (int)$r['n']];
-  $max = max(array_map(fn($d) => $d[0], $days)); $sum30 = array_sum(array_map(fn($d) => $d[0], $days));
-  $W = 600; $H = 170; $top = 18; $base = 146; $slot = $W / 30; $bw = 12;
-  $bars = ''; $i = 0;
-  foreach ($days as $d => [$t, $n]) {
-    $x = round($i * $slot + ($slot - $bw) / 2, 1); $h = $max > 0 ? round(($base - $top) * $t / $max, 1) : 0;
-    $tip = date('D j M', strtotime($d)) . ': ' . ($n ? money($t) . ' · ' . $n . ' order' . ($n > 1 ? 's' : '') : 'no sales');
-    if ($h > 0) { $r = min(4, $h, $bw / 2); $y = $base - $h;
-      $bars .= '<path class="bar" d="M' . $x . ' ' . $base . 'V' . ($y + $r) . 'Q' . $x . ' ' . $y . ' ' . ($x + $r) . ' ' . $y . 'H' . ($x + $bw - $r) . 'Q' . ($x + $bw) . ' ' . $y . ' ' . ($x + $bw) . ' ' . ($y + $r) . 'V' . $base . 'Z"/>'; }
-    $bars .= '<rect class="hit" x="' . round($i * $slot, 1) . '" y="0" width="' . round($slot, 1) . '" height="' . $H . '" data-t="' . h($tip) . '"><title>' . h($tip) . '</title></rect>';
-    $i++;
-  }
-  $lbl = fn($k, $anchor, $x) => '<text x="' . $x . '" y="164" text-anchor="' . $anchor . '">' . h(date('j M', strtotime($k))) . '</text>';
-  $keys = array_keys($days);
-  $chart = '<svg class="chart" viewBox="0 0 ' . $W . ' ' . $H . '" role="img" aria-label="Sales per day for the last 30 days, ' . h(money($sum30)) . ' in total">'
-    . '<line class="grid" x1="0" x2="' . $W . '" y1="' . $top . '" y2="' . $top . '"/><text x="0" y="12">' . h($max > 0 ? money($max) : 'AED 0') . '</text>'
-    . '<line class="axis" x1="0" x2="' . $W . '" y1="' . $base . '" y2="' . $base . '"/>' . $bars
-    . $lbl($keys[0], 'start', 0) . $lbl($keys[15], 'middle', round(15.5 * $slot)) . $lbl($keys[29], 'end', $W) . '</svg>';
+  $years = [date('Y') => [0.0, 0]];
+  foreach ($pdo->query("SELECT YEAR(created_at) y, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real GROUP BY YEAR(created_at)") as $r) $years[$r['y']] = [(float)$r['t'], (int)$r['n']];
+  ksort($years);
+  $pt = fn($v, $label, $tip) => ['v' => $v[0], 'l' => $label, 't' => $tip . ': ' . $orders($v[1] ? $v : null)];
+  $series = [
+    'day' => array_map(fn($h, $v) => $pt($v, date('ga', mktime($h, 0)), date('ga', mktime($h, 0)) . '–' . date('ga', mktime($h + 1, 0))), array_keys($hours), $hours),
+    'week' => array_map(fn($d, $v) => $pt($v, date('D', strtotime($d)), date('D j M', strtotime($d))), array_keys($days), $days),
+    'month' => array_map(fn($d, $v) => $pt($v, date('j M', strtotime($d)), date('D j M', strtotime($d))), array_keys($days), $days),
+  ];
+  $series['week'] = array_slice($series['week'], -7);
+  $byMonth = count($years) < 2;
+  $series['year'] = $byMonth ? array_map(fn($k, $r) => $pt([$r['sales'], $r['orders']], date('M', strtotime("$k-01")), date('F Y', strtotime("$k-01"))), array_keys($yr), $yr)
+                             : array_map(fn($y, $v) => $pt($v, (string)$y, (string)$y), array_keys($years), $years);
+  $graph = function ($pts, $aria, $hidden = false) {   // bars stretch to fill the box; the amounts and dates are normal text so they stay readable
+    $W = 600; $H = 100; $n = count($pts); $slot = $W / $n; $bw = min(44, max(6, round($slot * .6, 1)));
+    $max = max(array_column($pts, 'v')); $out = ''; $lab = '';
+    foreach ($pts as $i => $p) {
+      $h = $max > 0 ? round(($H - 2) * $p['v'] / $max, 1) : 0;
+      if ($h > 0) $out .= '<rect class="bar" x="' . round($i * $slot + ($slot - $bw) / 2, 1) . '" y="' . ($H - $h) . '" width="' . $bw . '" height="' . $h . '"/>';
+      $out .= '<rect class="hit" x="' . round($i * $slot, 1) . '" y="0" width="' . round($slot, 1) . '" height="' . $H . '" data-t="' . h($p['t']) . '"><title>' . h($p['t']) . '</title></rect>';
+      if ($n <= 12 || in_array($i, [0, intdiv($n, 2), $n - 1], true)) $lab .= '<span>' . h($p['l']) . '</span>';
+    }
+    return '<div class="graph"' . ($hidden ? ' hidden' : '') . '><div class="cmax">' . h($max > 0 ? money($max) : 'AED 0') . '</div>'
+      . '<svg class="chart" viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="none" role="img" aria-label="' . h($aria) . '">'
+      . '<line class="grid" x1="0" x2="' . $W . '" y1="1" y2="1"/>' . $out . '<line class="axis" x1="0" x2="' . $W . '" y1="' . $H . '" y2="' . $H . '"/></svg>'
+      . '<div class="clab' . ($n <= 12 ? '' : ' ends') . '"' . ($n <= 12 ? ' style="grid-template-columns:repeat(' . $n . ',1fr)"' : '') . '>' . $lab . '</div></div>';
+  };
+  $sum = fn($k) => money(array_sum(array_column($series[$k], 'v')));
+  $ranges = ['day' => 'Today', 'week' => '7 days', 'month' => '30 days', 'year' => $byMonth ? date('Y') : 'Years'];   // the last one only shows on phones, where the year graph moves into this card
   /* stock running low (counted sizes at or below the warning level) */
   $low = fomaxo_low_stock(); $alerts = '';
   foreach ($pdo->query('SELECT product, size, qty FROM fx_stock WHERE qty IS NOT NULL ORDER BY qty, product') as $r) {
@@ -656,27 +727,38 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
              . ((int)$r['qty'] <= 0 ? '<b class="lvl-out">Sold out</b>' : '<b class="lvl-low">' . (int)$r['qty'] . ' left</b>') . '</li>';
   }
   $latest = '';
-  foreach ($pdo->query("SELECT order_no, created_at, status, total, name, payment FROM fx_orders WHERE status <> 'Awaiting payment' ORDER BY created_at DESC, id DESC LIMIT 5") as $o) {
+  foreach ($pdo->query("SELECT order_no, created_at, status, total, name, payment FROM fx_orders WHERE status <> 'Awaiting payment' ORDER BY created_at DESC, id DESC LIMIT 20") as $o) {
     $latest .= '<li><a href="' . h(self_url(['o' => $o['order_no']])) . '"><span><b>' . h($o['order_no']) . '</b> ' . h($o['name'])
              . '<small class="muted">' . h(date('d M, H:i', strtotime($o['created_at']))) . ' · ' . h($o['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . '</small></span>'
              . '<span class="r"><span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span><b>' . money($o['total']) . '</b></span></a></li>';
   }
   $profit = (float)$month['profit'];
   $todoBox = fn($n, $label, $st) => '<a class="todo' . ($n ? ' hot' : '') . '" href="' . h(self_url(['orders' => 1, 'status' => $st])) . '"><b>' . (int)$n . '</b><span>' . $label . '</span></a>';
-  page('Dashboard', '<h1>Dashboard</h1>' . flash()
-    . '<div class="todos">' . $todoBox($todo['cod'], 'Cash orders to deliver', 'New') . $todoBox($todo['card'], 'Paid card orders to deliver', 'Paid') . '</div>'
-    . '<div class="stats">'
-    . '<div class="stat"><b>' . money($today['sales']) . '</b><span>Sales today · ' . (int)$today['n'] . ' order' . ((int)$today['n'] === 1 ? '' : 's') . '</span></div>'
-    . '<div class="stat"><b>' . money($month['sales']) . '</b><span>Sales ' . date('F') . ' · ' . (int)$month['orders'] . ' order' . ((int)$month['orders'] === 1 ? '' : 's') . '</span></div>'
-    . '<div class="stat"><b class="' . ($profit < 0 ? 'lvl-out' : 'lvl-ok') . '">' . ($profit < 0 ? '−' : '') . money(abs($profit)) . '</b><span>' . ($profit < 0 ? 'Loss' : 'Profit') . ' ' . date('F') . '</span></div></div>'
-    . ($month['no_cost'] ? '<p class="muted small">' . (int)$month['no_cost'] . ' order' . ($month['no_cost'] > 1 ? 's' : '') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit is too high. Add costs on the <a href="./?stock=1">Stock</a> page.</p>' : '')
-    . '<div class="dash"><section class="card"><h2 style="margin-top:0">Sales, last 30 days</h2><p class="muted small" style="margin:-6px 0 8px">' . h(money($sum30)) . ' in total · tap a day</p>' . $chart
-    . '<p class="small" id="tip" aria-live="polite">&nbsp;</p></section>'
-    . '<section class="card"><h2 style="margin-top:0">Stock alerts</h2>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted small">No size is running low. Sizes with an empty stock box are not counted.</p>')
-    . '<p class="small" style="margin:10px 0 0"><a href="./?stock=1">Open Stock</a></p></section></div>'
-    . '<section class="card" style="margin-top:14px"><h2 style="margin-top:0">Latest orders</h2>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted small">No orders yet.</p>')
-    . '<p class="small" style="margin:10px 0 0"><a href="./?orders=1">All orders</a> · <a href="./?reports=1">Reports</a></p></section>'
-    . '<script>document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){document.getElementById("tip").textContent=r.dataset.t;document.querySelectorAll(".chart .hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});</script>', true);
+  $tile = fn($val, $label, $cls = '', $href = null, $vcls = '') => ($href ? '<a class="tile ' . $cls . '" href="' . h($href) . '">' : '<div class="tile ' . $cls . '">') . '<b class="' . $vcls . '">' . $val . '</b><span>' . $label . '</span>' . ($href ? '</a>' : '</div>');
+  $aed = fn($v) => 'AED ' . number_format(round((float)$v));   // whole dirhams on the tiles; exact amounts are on Orders and Reports
+  $plural = fn($n, $w) => (int)$n . ' ' . $w . ((int)$n === 1 ? '' : 's');
+  page('Dashboard', '<div class="db">' . flash()
+    . '<div class="tiles">'
+    . $tile((int)$todo['cod'], 'Cash to deliver', 'todo' . ($todo['cod'] ? ' hot' : ''), self_url(['orders' => 1, 'status' => 'New']))
+    . $tile((int)$todo['card'], 'Card to deliver', 'todo' . ($todo['card'] ? ' hot' : ''), self_url(['orders' => 1, 'status' => 'Paid']))
+    . $tile($aed($today['sales']), 'Today · ' . $plural($today['n'], 'order'))
+    . $tile($aed($month['sales']), date('M') . ' · ' . $plural($month['orders'], 'order'))
+    . $tile(($profit < 0 ? '−' : '') . $aed(abs($profit)), ($profit < 0 ? 'Loss ' : 'Profit ') . date('M'), '', self_url(['reports' => 1]), $profit < 0 ? 'lvl-out' : 'lvl-ok')
+    . '</div>'
+    . ($month['no_cost'] ? '<p class="muted note">' . $plural($month['no_cost'], 'order') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit shows too high. <a href="./?stock=1">Add costs</a></p>' : '')
+    . '<div class="dgrid">'
+    . '<section class="card c-sales"><div class="ch"><h2>Sales</h2><div class="seg" role="group" aria-label="Sales period">'
+    . implode('', array_map(fn($k, $l) => '<button type="button" data-k="' . $k . '"' . ($k === 'month' ? ' class="on"' : ($k === 'year' ? ' class="ph"' : '')) . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div></div>'
+    . '<div class="chartbox">' . implode('', array_map(fn($k) => $graph($series[$k], 'Sales ' . strtolower($ranges[$k]) . ', ' . $sum($k) . ' in total', $k !== 'month'), array_keys($ranges))) . '</div>'
+    . '<p class="sub"><span class="tip">Tap a bar to see its sales</span><b class="tot">' . implode('', array_map(fn($k) => '<span data-k="' . $k . '"' . ($k !== 'month' ? ' hidden' : '') . '>' . h($sum($k)) . '</span>', array_keys($ranges))) . '</b></p></section>'
+    . '<section class="card c-years"><div class="ch"><h2>' . ($byMonth ? 'Sales ' . date('Y') . ' by month' : 'Sales by year') . '</h2><a href="./?reports=1">Reports</a></div>'
+    . '<div class="chartbox">' . $graph($series['year'], $byMonth ? 'Sales per month in ' . date('Y') : 'Sales per year') . '</div>'
+    . '<p class="sub"><span class="tip">Tap a bar to see its sales</span><b class="tot">' . h($sum('year')) . '</b></p></section>'
+    . '<div class="lists"><section class="card c-orders"><div class="ch"><h2>Latest orders</h2><a href="./?orders=1">All orders</a></div>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted empty">No orders yet.</p>') . '</section>'
+    . '<section class="card c-stock"><div class="ch"><h2>Stock alerts</h2><a href="./?stock=1">Stock</a></div>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted empty">No size is running low.</p>') . '</section></div>'
+    . '</div></div>'
+    . '<script>document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});'
+    . 'document.querySelectorAll(".seg button").forEach(function(b,i){b.addEventListener("click",function(){var c=b.closest(".card");c.querySelectorAll(".seg button").forEach(function(x,j){x.classList.toggle("on",x===b)});c.querySelectorAll(".chartbox .graph").forEach(function(g,j){g.hidden=j!==i});c.querySelectorAll(".tot span").forEach(function(t){t.hidden=t.dataset.k!==b.dataset.k});c.querySelector(".tip").textContent="Tap a bar to see its sales";c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")})})});</script>', true, true);
 }
 
 /* list + filters (the same filters are used for the Excel download) */
@@ -736,8 +818,8 @@ $pager = ($pg > 1 ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg 
 page('Orders', '<h1>Orders</h1>' . flash()
   . '<form class="filters card" method="get"><input type="hidden" name="orders" value="1">'
   . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile, email or product"></div>'
-  . '<div><label for="status">Status</label>' . $sel('status', $stOpts) . '</div>'
-  . '<div><label for="pay">Payment</label>' . $sel('pay', ['' => 'All', 'cod' => 'Cash on delivery', 'card' => 'Card']) . '</div>'
+  . '<div><label for="status" class="phx">Status</label>' . $sel('status', $stOpts) . '</div>'
+  . '<div><label for="pay" class="phx">Payment</label>' . $sel('pay', ['' => 'All', 'cod' => 'Cash on delivery', 'card' => 'Card']) . '</div>'
   . '<div><label for="from">From</label><input id="from" type="date" name="from" value="' . h($f['from']) . '"></div>'
   . '<div><label for="to">To</label><input id="to" type="date" name="to" value="' . h($f['to']) . '"></div>'
   . '<div class="acts"><button class="btn">Show</button><a class="btn line" href="' . h(self_url($qs + ['export' => 1])) . '">Download Excel</a></div></form>'
@@ -745,7 +827,7 @@ page('Orders', '<h1>Orders</h1>' . flash()
   . '<div class="stat"><b>' . money($sum['sales']) . '</b><span>Sales (not cancelled)</span></div>'
   . '<div class="stat"><b>' . (int)$sum['todo_cod'] . '</b><span>Cash to deliver</span></div>'
   . '<div class="stat"><b>' . (int)$sum['todo_card'] . '</b><span>Paid, to deliver</span></div></div>'
-  . ($rows ? '<table><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>' . $tr . '</tbody></table>'
-           : '<p class="card muted">No orders match.</p>')
-  . '<div class="pager">' . $pager . '</div>'
-  . '<p class="muted small">Sales count New, Paid and Delivered orders and leave out test payments. Unpaid card attempts are hidden unless you pick "Everything".</p>', true);
+  . '<div class="fill">' . ($rows ? '<table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>' . $tr . '</tbody></table>'
+           : '<p class="card muted" style="margin:0">No orders match.</p>')
+  . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
+  . '<p class="muted small after">Sales count New, Paid and Delivered orders and leave out test payments. Unpaid card attempts are hidden unless you pick "Everything".</p></div>', true, true);
