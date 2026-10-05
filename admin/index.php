@@ -199,6 +199,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:
   .a-left .ch .btn{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
   .a-left .ldesk{display:none}.a-left .lmob{display:block}
   .ltab td{vertical-align:top;padding:9px 6px 9px 0;line-height:1.35}.ltab td:first-child{width:46%}.ltab td>*{display:block;overflow-wrap:anywhere}.ltab td b{font-size:13.5px}.ltab td a{color:var(--ink);text-decoration:none}
+  .tiles.at .tile{align-items:center;text-align:center}.tiles.at .tile .tn{max-width:100%}
+  .a-left .ch{justify-content:center}.a-left .ch h2{flex:none}.a-left>p.small{text-align:center}.ltab th,.ltab td{text-align:center}.ltab td{padding:9px 4px}.ltab th:first-child,.ltab td:first-child{padding-left:0}.ltab th:last-child,.ltab td:last-child{padding-right:0}
   .ltab td span{font-size:12px}.ltab .lm-s{margin-top:3px}.ltab .lm-s .tag{display:inline;font-size:10.5px;padding:0 6px}.ltab th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}}
 /* app layout: header and tabs stay put, the page never scrolls, long lists scroll inside their own panel */
 html,body{height:100%}
