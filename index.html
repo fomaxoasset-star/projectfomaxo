@@ -83,11 +83,11 @@ em{font-style:italic}
 .btn.sm{min-height:42px;padding:0 20px;font-size:10px}
 .btn.block{width:100%}
 .btn[disabled]{opacity:.4;pointer-events:none}
-/* stock: "Only X left" / "Sold out" (from stock.php) */
+/* stock: "Only X left" / "Out of Stock — Restocking Soon" (from stock.php) */
 .stk-line{margin:-6px 0 -4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}.stk-line:empty{display:none}
 .stk{color:var(--gold)}.stk.out{color:var(--muted)}
 #pstk{font-size:12px;letter-spacing:.14em;text-transform:uppercase}#pstk:empty{display:none}
-.sizes button.so{opacity:.45}.sizes button.so small::after{content:" · Sold out"}
+.sizes button.so{opacity:.45}.sizes button.so small::after{content:" · Out of stock"}
 .link{display:inline-block;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--champagne);border-bottom:1px solid var(--line-2);padding-bottom:6px;transition:color .4s,border-color .4s}
 .link:hover{color:var(--gold-hi);border-color:var(--gold-hi)}
 
@@ -1956,7 +1956,7 @@ function addToCart(id, opt, qty=1, silent, picks){
   const left = stockLeft(id, opt);
   if (left !== null) {   // never more in the bag than we have
     const inBag = cart.filter(x => x.id === id && String(x.opt) === String(opt)).reduce((a, x) => a + x.qty, 0);
-    if (left - inBag <= 0) { toast(left <= 0 ? `${P[id].name} · ${optLabel(P[id], opt)} is sold out` : `Only ${left} left of ${P[id].name} · ${optLabel(P[id], opt)}, and they are in your bag`); return false; }
+    if (left - inBag <= 0) { toast(left <= 0 ? `${P[id].name} · ${optLabel(P[id], opt)} is out of stock, restocking soon` : `Only ${left} left of ${P[id].name} · ${optLabel(P[id], opt)}, and they are in your bag`); return false; }
     if (qty > left - inBag) { qty = left - inBag; if (!silent) { silent = true; toast(`Only ${left} left of ${P[id].name} · ${optLabel(P[id], opt)}. ${qty} added to your bag`); } }
   }
   const key = (picks || []).join('|');
@@ -2134,7 +2134,7 @@ async function loadRates(){
 /* stock from stock.php: only sizes running low are listed (null = in stock). Typed in on fomaxo.com/admin → Stock. */
 let STOCK = {}, pdpStock = null;
 const stockLeft = (id, opt) => { const s = STOCK[id]; return s && s[String(opt)] !== undefined ? +s[String(opt)] : null; };
-const stockHTML = (id, opt) => { const n = stockLeft(id, opt); return n === null ? '' : n <= 0 ? '<span class="stk out">Sold out</span>' : `<span class="stk">Only ${n} left</span>`; };
+const stockHTML = (id, opt) => { const n = stockLeft(id, opt); return n === null ? '' : n <= 0 ? '<span class="stk out">Out of Stock — Restocking Soon</span>' : `<span class="stk">Only ${n} left</span>`; };
 function applyStock(){
   $$('.card[data-id]').forEach(c => { const p = P[c.dataset.id]; if (!p) return; const sel = c.dataset.sel, el = $('[data-stk]', c);
     if (el) el.innerHTML = stockHTML(p.id, sel); $$('[data-add],[data-buy]', c).forEach(b => b.disabled = stockLeft(p.id, sel) === 0); });

@@ -248,7 +248,7 @@ function fomaxo_stock_problem($lines, $catalog) {
     [$id, $opt] = explode('|', $k, 2);
     $p = $catalog[$id] ?? ['name' => $id, 'kind' => ''];
     $label = $p['name'] . ' ' . ($p['kind'] === 'set' ? "(set of $opt)" : "{$opt}ml");
-    return $have[$k] <= 0 ? "Sorry, $label is sold out. Please remove it from your bag."
+    return $have[$k] <= 0 ? "Sorry, $label is out of stock (restocking soon). Please remove it from your bag."
                           : "Sorry, only {$have[$k]} left of $label. Please lower the quantity in your bag.";
   }
   return null;
