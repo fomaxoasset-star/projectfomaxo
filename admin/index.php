@@ -145,6 +145,10 @@ label.mini{display:none}
 .ch.wrap2{flex-wrap:wrap;gap:6px}@media (max-width:759px){.db .dgrid .c-visits,.ch .dt{display:none}}.seg.met button{font-size:12.5px}
 .quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.quick .btn{font-size:11px;letter-spacing:.08em}
 @media (max-width:759px){.quick{display:grid;grid-template-columns:1fr 1fr;gap:6px}.quick .btn{padding:7px 6px;font-size:10px;letter-spacing:.04em;text-align:center;white-space:normal;line-height:1.25}}
+.ems{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;flex:none}.ems::-webkit-scrollbar{display:none}
+.ems .em{flex:none;font-size:12px;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--panel);border-radius:20px;padding:3px 10px;white-space:nowrap}.ems .em b{color:var(--gold);font-weight:600;margin-left:2px}
+.ems .em.on{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.ems .em.on b{color:var(--gold-ink)}
+@media (max-width:759px){.ems{margin-bottom:8px;gap:5px}.ems .em{font-size:11.5px;padding:2px 9px}.stats{margin-bottom:6px}}
 /* analytics */
 .seg a{font-size:11.5px;font-weight:600;color:var(--muted);padding:3px 9px;border-radius:20px;text-decoration:none;white-space:nowrap}.seg a.on{background:var(--gold);color:var(--gold-ink)}
 .an .pagehead{flex-wrap:wrap;margin-bottom:8px;gap:6px 10px}.arange{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}.arange input[type=date]{width:auto;padding:4px 7px;font-size:12.5px}
@@ -925,7 +929,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
 
 /* list + filters (the same filters are used for the Excel download) */
 $f = ['q' => trim((string)($_GET['q'] ?? '')), 'status' => (string)($_GET['status'] ?? ''), 'pay' => (string)($_GET['pay'] ?? ''),
-      'from' => (string)($_GET['from'] ?? ''), 'to' => (string)($_GET['to'] ?? '')];
+      'from' => (string)($_GET['from'] ?? ''), 'to' => (string)($_GET['to'] ?? ''), 'em' => mb_substr(trim((string)($_GET['em'] ?? '')), 0, 30)];
 $where = []; $args = [];
 if ($f['status'] === '') $where[] = "status <> 'Awaiting payment'";            // default: every real order
 elseif ($f['status'] !== 'all' && in_array($f['status'], FX_STATUSES, true)) { $where[] = 'status = ?'; $args[] = $f['status']; }
@@ -933,6 +937,10 @@ if ($f['pay'] === 'cod') $where[] = "payment = 'Cash on delivery'"; elseif ($f['
 if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['from'])) { $where[] = 'created_at >= ?'; $args[] = $f['from'] . ' 00:00:00'; }
 if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['to']))   { $where[] = 'created_at <= ?'; $args[] = $f['to'] . ' 23:59:59'; }
 if ($f['q'] !== '') { $where[] = '(order_no LIKE ? OR name LIKE ? OR phone LIKE ? OR email LIKE ? OR items LIKE ?)'; $like = '%' . addcslashes($f['q'], '%_\\') . '%'; array_push($args, $like, $like, $like, $like, $like); }
+/* orders per emirate: same filters, but not the emirate itself, so every emirate stays visible */
+$s = $pdo->prepare("SELECT emirate, COUNT(*) n FROM fx_orders WHERE status IN ('New','Paid','Delivered') AND test = 0" . ($where ? ' AND ' . implode(' AND ', $where) : '') . " GROUP BY emirate ORDER BY n DESC, emirate");
+$s->execute($args); $byEmirate = $s->fetchAll();
+if ($f['em'] !== '') { $where[] = 'emirate = ?'; $args[] = $f['em']; }
 $W = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 if (isset($_GET['export'])) {   // CSV that opens straight in Excel
@@ -981,7 +989,7 @@ $pager = ($pg > 1 ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg 
        . ($sum['n'] > $pg * $per ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg + 1])) . '">Older</a>' : '');
 
 page('Orders', '<h1>Orders</h1>' . flash()
-  . '<form class="filters card" method="get"><input type="hidden" name="orders" value="1">'
+  . '<form class="filters card" method="get"><input type="hidden" name="orders" value="1">' . ($f['em'] !== '' ? '<input type="hidden" name="em" value="' . h($f['em']) . '">' : '')
   . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile, email or product"></div>'
   . '<div><label for="status" class="phx">Status</label>' . $sel('status', $stOpts) . '</div>'
   . '<div><label for="pay" class="phx">Payment</label>' . $sel('pay', ['' => 'All', 'cod' => 'Cash on delivery', 'card' => 'Card']) . '</div>'
@@ -992,6 +1000,10 @@ page('Orders', '<h1>Orders</h1>' . flash()
   . '<div class="stat"><span>Online orders</span><b>' . (int)$sum['card_n'] . '</b></div>'
   . '<div class="stat"><span>COD amount</span><b>' . money($sum['cod_t']) . '</b></div>'
   . '<div class="stat"><span>Card amount</span><b>' . money($sum['card_t']) . '</b></div></div>'
+  . ($byEmirate ? '<nav class="ems" aria-label="Orders by emirate">' . implode('', array_map(function ($r) use ($f, $qs) {
+        $e = (string)$r['emirate']; $on = $f['em'] !== '' && $f['em'] === $e; $q = $qs; unset($q['em'], $q['p']);
+        return '<a class="em' . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['em' => $e])) . '">' . h($e !== '' ? $e : 'No emirate') . ' <b>' . (int)$r['n'] . '</b></a>';
+      }, $byEmirate)) . '</nav>' : '')
   . '<div class="fill">' . ($rows ? '<table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
