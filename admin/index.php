@@ -447,10 +447,9 @@ if (isset($_GET['settings'])) {
       else { fomaxo_setting($pdo, 'admin_hash', password_hash($p1, PASSWORD_DEFAULT)); session_regenerate_id(true); flash('Your new password is saved.', true); }
       go(['settings' => 1]);
     }
-    $email = trim((string)($_POST['orders_email'] ?? '')); $low = trim((string)($_POST['low_stock'] ?? ''));
+    $email = trim((string)($_POST['orders_email'] ?? ''));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { flash('Please type a valid email address.'); go(['settings' => 1]); }
-    if (!ctype_digit($low) || (int)$low > 100) { flash('Low stock warning must be a number from 0 to 100.'); go(['settings' => 1]); }
-    fomaxo_setting($pdo, 'orders_email', $email); fomaxo_setting($pdo, 'low_stock', (string)(int)$low);
+    fomaxo_setting($pdo, 'orders_email', $email);   // the "Only X left" level is set on the Stock page
     flash('Settings saved.', true); go(['settings' => 1]);
   }
   page('Settings', '<h1>Settings</h1>' . flash()
@@ -458,8 +457,6 @@ if (isset($_GET['settings'])) {
     . '<h2 style="margin-top:0">Store</h2>'
     . '<label for="orders_email">New order emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
     . '<p class="muted small" style="margin:6px 0 0">Every cash and card order is emailed here. Password reset links always go to ' . h(FX_STORE_EMAIL) . '.</p>'
-    . '<label for="low_stock">Low stock warning</label><input id="low_stock" type="number" min="0" max="100" inputmode="numeric" name="low_stock" required value="' . fomaxo_low_stock() . '">'
-    . '<p class="muted small" style="margin:6px 0 0">The website shows "Only X left" when a size has this many bottles or fewer. 0 turns the warning off (Sold out still shows).</p>'
     . '<p style="margin:18px 0 0"><button class="btn">Save</button></p></form>'
     . '<form class="card" method="post" style="margin-top:16px">' . csrf_field()
     . '<h2 style="margin-top:0">Admin password</h2>'
@@ -474,7 +471,7 @@ if (isset($_GET['stock'])) {
   require_once dirname(__DIR__) . '/store-lib.php';
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['stock' => 1]); }
-    $lvl = trim((string)($_POST['low_stock'] ?? ''));   // the same "Only X left" level as on Settings
+    $lvl = trim((string)($_POST['low_stock'] ?? ''));   // the "Only X left" level for the website (only set here)
     if (ctype_digit($lvl) && (int)$lvl <= 100) fomaxo_setting($pdo, 'low_stock', (string)(int)$lvl);
     $set = $pdo->prepare('INSERT INTO fx_stock (product, size, qty, cost, updated_at) VALUES (?, ?, ?, ?, NOW())
                           ON DUPLICATE KEY UPDATE qty = VALUES(qty), cost = VALUES(cost), updated_at = NOW()');
