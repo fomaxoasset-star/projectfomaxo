@@ -446,6 +446,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
     $_POST['status'] = $to; $_POST['admin_note'] = (string)$cur['admin_note'];
   }
   $st = (string)($_POST['status'] ?? '');
+  /* "Undelivered" puts the order back to pending: Paid if the money is in (card, or cash already marked paid), else Unpaid */
+  if ($st === 'Undelivered') {
+    $s = $pdo->prepare('SELECT payment, paid_at, delivered_at, status FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_POST['order']]); $u = $s->fetch();
+    /* a cash order counts as paid at delivery, so it goes back to Unpaid unless it was marked paid before it was delivered */
+    $paidBefore = $u && $u['paid_at'] && ($u['status'] !== 'Delivered' || ($u['delivered_at'] && strtotime($u['paid_at']) < strtotime($u['delivered_at'])));
+    $st = $u && ($u['payment'] !== 'Cash on delivery' || $paidBefore) ? 'Paid' : 'New';
+    if ($st === 'New') $pdo->prepare('UPDATE fx_orders SET paid_at = NULL WHERE order_no = ?')->execute([(string)$_POST['order']]);
+  }
   if (!in_array($st, FX_STATUSES, true)) { flash('Unknown status.'); go(['o' => $_POST['order']]); }
   $s = $pdo->prepare('SELECT status FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_POST['order']]); $was = $s->fetchColumn();
   $pdo->prepare("UPDATE fx_orders SET status = ?, admin_note = ?, updated_at = NOW(),
@@ -1405,10 +1413,10 @@ if (isset($_GET['o'])) {
   if (!$o) page('Not found', '<h1>Order not found</h1><p><a href="./?orders=1">Back to orders</a></p>');
   $items = array_filter(array_map('trim', explode('|', (string)$o['items'])));
   /* every status in the dropdown with a clear name; picking one saves at once (with your note) */
-  $stLabel = ['New' => 'Pending · Unpaid', 'Paid' => 'Pending · Paid', 'Delivered' => 'Delivered', 'Cancelled' => 'Cancelled', 'Refunded' => 'Refunded', 'Awaiting payment' => 'Card not paid'];
+  $stLabel = ['New' => 'Pending · Unpaid', 'Paid' => 'Pending · Paid', 'Delivered' => 'Delivered', 'Undelivered' => 'Undelivered', 'Cancelled' => 'Cancelled', 'Refunded' => 'Refunded', 'Awaiting payment' => 'Card not paid'];
   $stAsk = ['Cancelled' => 'Cancel this order? The items go back into stock.', 'Refunded' => 'Mark this order as refunded? The items go back into stock. This only records the refund here; card money is refunded in Ziina.'];
   $opts = '';
-  foreach ($stLabel as $x => $lbl) $opts .= '<option value="' . h($x) . '"' . ($x === $o['status'] ? ' selected' : '') . (isset($stAsk[$x]) ? ' data-ask="' . h($stAsk[$x]) . '"' : '') . '>' . h($lbl) . ($x === 'Paid' ? ' (not delivered)' : '') . '</option>';
+  foreach ($stLabel as $x => $lbl) $opts .= '<option value="' . h($x) . '"' . ($x === $o['status'] ? ' selected' : '') . (isset($stAsk[$x]) ? ' data-ask="' . h($stAsk[$x]) . '"' : '') . '>' . h($lbl) . '' . '</option>';
   $wa = preg_replace('/\D/', '', $o['phone']); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1);
   $row = fn($k, $v) => $v === '' || $v === null ? '' : '<dt>' . h($k) . '</dt><dd>' . $v . '</dd>';
   page($o['order_no'], '<p class="small"><a href="./?orders=1">← All orders</a></p>'
