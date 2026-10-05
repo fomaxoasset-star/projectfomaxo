@@ -66,7 +66,8 @@ td.num,th.num{text-align:right;white-space:nowrap}
 tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgba(143,107,55,.08)}.stock tr.row,.exp tr.row{cursor:default}
 .no{font-weight:500;white-space:nowrap}
 .tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;border:1px solid currentColor;white-space:nowrap}
-.s-New{color:var(--warn)}.s-Paid{color:var(--gold)}.s-Delivered{color:var(--ok)}.s-Cancelled{color:var(--bad)}.s-Awaiting{color:var(--muted)}
+.s-New{color:var(--warn)}.s-Paid{color:var(--gold)}.s-Delivered{color:var(--ok)}.s-Cancelled{color:var(--bad)}.s-Refunded{color:var(--bad)}.s-Awaiting{color:var(--muted)}
+.oacts{display:flex;gap:5px;flex-wrap:wrap;margin:0}.oacts form{margin:0}.oacts button{font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}.oacts button:hover{border-color:var(--gold)}.oacts .a-paid{border-color:var(--gold);color:var(--gold)}.oacts .a-delivered{border-color:var(--ok);color:var(--ok)}.oacts .a-cancel,.oacts .a-refund{color:var(--bad)}.order-acts{margin:0 0 14px}.order-acts button{font-size:12.5px;padding:7px 14px}
 @media (max-width:759px){
   table,tbody,tr,td{display:block;border:0}thead{display:none}
   table{background:none;border:0}
@@ -244,6 +245,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .olist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"no tot" "date st" "cust pay" "items items";gap:1px 10px;padding:8px 12px;margin-bottom:8px}
   .olist td{padding:0}.olist td:nth-child(1){grid-area:no}.olist td:nth-child(2){grid-area:date;color:var(--muted);font-size:12.5px}.olist td:nth-child(3){grid-area:cust;font-size:13.5px}.olist td:nth-child(3) div{display:inline;margin-left:6px}
   .olist td:nth-child(4){grid-area:items;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:12px}.olist td:nth-child(5){grid-area:pay;text-align:right;font-size:13px}.olist td:nth-child(6){grid-area:st;text-align:right}.olist td:nth-child(7){grid-area:tot;font-weight:600}
+  .olist.acts tr.row{grid-template-areas:"no tot" "date st" "cust pay" "items items" "acts acts"}.olist td:nth-child(8){grid-area:acts}.olist td:nth-child(8) .oacts{margin-top:5px}
   .stock-help{font-size:12px}.lowlvl{padding:8px 12px}.lowlvl label{font-size:13px}.lowlvl input{padding:6px 9px;max-width:72px}
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
@@ -428,18 +430,45 @@ if (empty($_SESSION['admin'])) {
 
 /* save a change to one order */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
-  if (!csrf_ok()) { flash('Please try again.'); go(['o' => $_POST['order']]); }
+  /* one-tap buttons send "quick" and go back to the list they came from */
+  $quick = (string)($_POST['quick'] ?? '');
+  parse_str((string)($_POST['back'] ?? ''), $back);
+  $back = $quick !== '' && $back ? array_intersect_key($back, array_flip(['orders', 'q', 'status', 'pay', 'from', 'to', 'em', 'p'])) : ['o' => $_POST['order']];
+  if (!csrf_ok()) { flash('Please try again.'); go($back); }
+  if ($quick !== '') {
+    $s = $pdo->prepare('SELECT status, payment, admin_note FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_POST['order']]); $cur = $s->fetch();
+    $to = ['paid' => 'Paid', 'delivered' => 'Delivered', 'cancel' => 'Cancelled', 'refund' => 'Refunded'][$quick] ?? '';
+    if (!$cur || $to === '' || !in_array($quick, fx_order_actions($cur), true)) { flash('That order has already changed. Please check it again.'); go($back); }
+    $_POST['status'] = $to; $_POST['admin_note'] = (string)$cur['admin_note'];
+  }
   $st = (string)($_POST['status'] ?? '');
   if (!in_array($st, FX_STATUSES, true)) { flash('Unknown status.'); go(['o' => $_POST['order']]); }
   $s = $pdo->prepare('SELECT status FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_POST['order']]); $was = $s->fetchColumn();
   $pdo->prepare("UPDATE fx_orders SET status = ?, admin_note = ?, updated_at = NOW(),
                  paid_at = CASE WHEN ? IN ('Paid', 'Delivered') AND paid_at IS NULL THEN NOW() ELSE paid_at END WHERE order_no = ?")
       ->execute([$st, mb_substr(trim((string)($_POST['admin_note'] ?? '')), 0, 2000), $st, (string)$_POST['order']]);
-  /* stock: a cancelled order goes back into stock; taking it out of Cancelled takes it out again */
-  $msg = 'Saved.';
-  if ($st === 'Cancelled' && $was !== 'Cancelled' && fomaxo_stock_move((string)$_POST['order'], true)) $msg = 'Saved. The items are back in stock.';
-  if (in_array($st, ['New', 'Paid', 'Delivered'], true) && in_array($was, ['Cancelled', 'Awaiting payment'], true) && fomaxo_stock_move((string)$_POST['order'])) $msg = 'Saved. The items were taken out of stock.';
-  flash($msg, true); go(['o' => $_POST['order']]);
+  /* stock: a cancelled or refunded order goes back into stock; taking it out of Cancelled or Refunded takes it out again */
+  $msg = $quick !== '' ? $_POST['order'] . ' is now ' . $st . '.' : 'Saved.';
+  if (in_array($st, ['Cancelled', 'Refunded'], true) && !in_array($was, ['Cancelled', 'Refunded'], true) && fomaxo_stock_move((string)$_POST['order'], true)) $msg .= ' The items are back in stock.';
+  if (in_array($st, ['New', 'Paid', 'Delivered'], true) && in_array($was, ['Cancelled', 'Refunded', 'Awaiting payment'], true) && fomaxo_stock_move((string)$_POST['order'])) $msg .= ' The items were taken out of stock.';
+  flash($msg, true); go($back);
+}
+
+/* which one-tap buttons an order gets: Save paid only for cash orders not yet paid */
+function fx_order_actions($o) {
+  $cod = $o['payment'] === 'Cash on delivery';
+  return ['New' => $cod ? ['paid', 'delivered', 'cancel'] : ['delivered', 'cancel'], 'Paid' => ['delivered', 'cancel', 'refund'], 'Delivered' => ['refund']][$o['status']] ?? [];
+}
+function fx_order_buttons($o, $back = '', $cls = '') {
+  $label = ['paid' => 'Save paid', 'delivered' => '✓ Mark delivered', 'cancel' => 'Cancel order', 'refund' => 'Refund'];
+  $ask = ['cancel' => 'Cancel order ' . $o['order_no'] . '? The items go back into stock.',
+          'refund' => 'Mark order ' . $o['order_no'] . ' as refunded? The items go back into stock. This only records the refund here; it does not send money back. Card refunds are done in Ziina.'];
+  $out = '';
+  foreach (fx_order_actions($o) as $a)
+    $out .= '<form method="post"' . (isset($ask[$a]) ? ' onsubmit="return confirm(' . h(json_encode($ask[$a], JSON_UNESCAPED_UNICODE)) . ')"' : '') . '>' . csrf_field()
+          . '<input type="hidden" name="order" value="' . h($o['order_no']) . '"><input type="hidden" name="quick" value="' . $a . '">'
+          . ($back !== '' ? '<input type="hidden" name="back" value="' . h($back) . '">' : '') . '<button class="a-' . $a . '">' . h($label[$a]) . '</button></form>';
+  return $out ? '<div class="oacts' . ($cls ? ' ' . $cls : '') . '" onclick="event.stopPropagation()">' . $out . '</div>' : '';
 }
 
 /* ---- products: add a new perfume or change an existing one (name, sizes and prices, words, photos, show or hide) ----
@@ -1344,6 +1373,7 @@ if (isset($_GET['o'])) {
   $row = fn($k, $v) => $v === '' || $v === null ? '' : '<dt>' . h($k) . '</dt><dd>' . $v . '</dd>';
   page($o['order_no'], '<p class="small"><a href="./?orders=1">← All orders</a></p>'
     . '<h1>' . h($o['order_no']) . ' <span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span></h1>' . flash()
+    . fx_order_buttons($o, '', 'order-acts')
     . '<div class="grid2"><div>'
     . '<div class="card"><h2 style="margin-top:0">Items</h2><ul class="items">' . implode('', array_map(fn($i) => '<li>' . h($i) . '</li>', $items)) . '</ul>'
     . '<dl style="margin-top:14px">' . $row('Subtotal', $o['subtotal'] !== null ? money($o['subtotal']) : '') . $row('Discount', $o['discount'] > 0 ? '-' . money($o['discount']) : '')
@@ -1367,7 +1397,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   $s = $pdo->prepare("SELECT COUNT(*) n, COALESCE(SUM(total), 0) sales FROM fx_orders WHERE $real AND created_at >= ?");
   $s->execute([date('Y-m-d') . ' 00:00:00']); $today = $s->fetch();
   $yr = fomaxo_report($pdo, (int)date('Y')); $month = $yr[date('Y-m')];
-  $todo = $pdo->query("SELECT SUM(status = 'New') cod, SUM(status = 'Paid') card FROM fx_orders WHERE test = 0")->fetch();
+  $todo = $pdo->query("SELECT SUM(status = 'New' OR (status = 'Paid' AND payment = 'Cash on delivery')) cod, SUM(status = 'Paid' AND payment <> 'Cash on delivery') card FROM fx_orders WHERE test = 0")->fetch();
   /* sales graphs: one with a Today / 7 days / 30 days switch, one by year (by month while there is only one year of sales) */
   $orders = fn($n) => $n ? money($n[0]) . ' · ' . $n[1] . ' order' . ($n[1] > 1 ? 's' : '') : 'no sales';
   $hours = array_fill(0, 24, [0.0, 0]);
@@ -1508,7 +1538,7 @@ $s->execute($args); $rows = $s->fetchAll();
 
 $sel = fn($name, $opts) => '<select id="' . $name . '" name="' . $name . '">' . implode('', array_map(fn($k, $v) => '<option value="' . h($k) . '"' . ((string)$f[$name] === (string)$k ? ' selected' : '') . '>' . h($v) . '</option>', array_keys($opts), $opts)) . '</select>';
 $stOpts = ['' => 'All orders', 'all' => 'Everything (incl. unpaid card)'] + array_combine(FX_STATUSES, FX_STATUSES);
-$tr = '';
+$tr = ''; $backQ = http_build_query(['orders' => 1] + array_filter($f, fn($v) => $v !== '') + ($pg > 1 ? ['p' => $pg] : []));
 foreach ($rows as $o) {
   $u = h(self_url(['o' => $o['order_no']]));
   $tr .= '<tr class="row" onclick="location.href=\'' . $u . '\'"><td class="no" data-l=""><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['test'] ? ' <span class="muted small">test</span>' : '') . '</td>'
@@ -1517,7 +1547,7 @@ foreach ($rows as $o) {
        . '<td class="small" data-l="">' . h(mb_strimwidth(str_replace(' | ', ', ', (string)$o['items']), 0, 90, '…')) . '</td>'
        . '<td data-l="">' . h($o['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . '</td>'
        . '<td data-l=""><span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span></td>'
-       . '<td class="num" data-l="">' . money($o['total']) . '</td></tr>';
+       . '<td class="num" data-l="">' . money($o['total']) . '</td><td data-l="">' . fx_order_buttons($o, $backQ) . '</td></tr>';
 }
 $qs = ['orders' => 1] + array_filter($f, fn($v) => $v !== '');
 $pager = ($pg > 1 ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg - 1])) . '">Newer</a>' : '')
@@ -1539,7 +1569,7 @@ page('Orders', '<h1>Orders</h1>' . flash()
         $e = (string)$r['emirate']; $on = $f['em'] !== '' && $f['em'] === $e; $q = $qs; unset($q['em'], $q['p']);
         return '<a class="em' . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['em' => $e])) . '">' . h($e !== '' ? $e : 'No emirate') . ' <b>' . (int)$r['n'] . '</b></a>';
       }, $byEmirate)) . '</nav>' : '')
-  . '<div class="fill">' . ($rows ? '<table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>' . $tr . '</tbody></table>'
+  . '<div class="fill">' . ($rows ? '<table class="olist acts"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
   . '<p class="muted small after">The boxes count New, Paid and Delivered orders and leave out cancelled orders and test payments. Unpaid card attempts are hidden unless you pick "Everything".</p></div>', true, true);

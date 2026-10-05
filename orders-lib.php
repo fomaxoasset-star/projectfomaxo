@@ -6,7 +6,7 @@
    orders still go through with the old random number and are kept in the CSV files and emails as before. */
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
 
-const FX_STATUSES = ['Awaiting payment', 'New', 'Paid', 'Delivered', 'Cancelled'];
+const FX_STATUSES = ['Awaiting payment', 'New', 'Paid', 'Delivered', 'Cancelled', 'Refunded'];
 
 function fomaxo_db_config_file() { return dirname(__DIR__) . '/fomaxo-db-config.php'; }
 function fomaxo_db_connect($c) {
