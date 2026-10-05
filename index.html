@@ -1581,6 +1581,14 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-loc{display:inline-flex;align-items:center;gap:6px;font-size:14px;letter-spacing:.04em;color:var(--muted)}
 .rw-flag{font-size:17px;line-height:1}
 .rw-form select{width:100%;min-width:0;max-width:100%}
+.rw-clr-w{position:relative;display:block}
+.rw-clr-w input{padding-right:44px}
+.rw-clr-w select{padding-right:64px}
+.rw-clr{position:absolute;top:50%;right:6px;transform:translateY(-50%);width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--gold-hi);font-size:22px;line-height:1;cursor:pointer;padding:0}
+.rw-clr-w select+.rw-clr{right:30px}
+.rw-clr[hidden]{display:none}
+.rw-clr:hover{color:var(--ivory)}
+.rw-clr:focus-visible{outline:1px solid var(--gold-hi);outline-offset:-2px}
 .rw-form .row2 input,.rw-form .row2 select{box-sizing:border-box;width:100%;height:52px;padding-top:0;padding-bottom:0;line-height:normal}
 .rw-emo{display:flex;flex-wrap:wrap;gap:4px;margin:-8px 0 0 -6px}
 .rw-emo button{width:32px;height:36px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;line-height:1;border:0;background:transparent;transition:transform .15s}
@@ -3001,8 +3009,8 @@ function rwForm(p, link){
     <label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
     <label class="rw-anon"><input type="checkbox" name="anon"><span>Post anonymously</span></label>
     <p class="small rw-shown">Your review will show the name: <b></b></p>
-    <div class="row2"><label>State / City (optional)<input name="city" maxlength="40" autocomplete="address-level2" data-cap="words" autocapitalize="words" placeholder="e.g. Dubai"></label>
-      <label>Country (optional)<select name="country" autocomplete="country">${rwCountryOptions()}</select></label></div>
+    <div class="row2"><label>State / City (optional)<span class="rw-clr-w"><input name="city" maxlength="40" autocomplete="address-level2" data-cap="words" autocapitalize="words" placeholder="e.g. Dubai"><button type="button" class="rw-clr" data-clr="city" aria-label="Clear city" hidden>×</button></span></label>
+      <label>Country (optional)<span class="rw-clr-w"><select name="country" autocomplete="country">${rwCountryOptions()}</select><button type="button" class="rw-clr" data-clr="country" aria-label="Clear country" hidden>×</button></span></label></div>
     <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
     <div class="rw-emo" role="group" aria-label="Add an emoji to your review">${RW_EMO.map(e => `<button type="button" data-emo="${e}" aria-label="Add ${e}">${e}</button>`).join('')}</div>
     <div><div class="opt-label"><span>Photos (optional)</span><span>Up to 3</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label></div></div>
@@ -3036,6 +3044,10 @@ function rwBindForm(form, p, link, onDone){
   try { const d0 = JSON.parse(localStorage.getItem('fomaxo_details') || '{}'); if (link && d0.name) nm.value = d0.name; } catch(e) {}
   const upd = () => { nm.disabled = an.checked; shown.textContent = an.checked ? 'Anonymous' : (rwShort(nm.value) || '…'); };
   nm.addEventListener('input', () => setTimeout(upd)); an.onchange = upd; upd();
+  /* × beside State / City and Country clears the choice (shown only when something is filled in) */
+  $$('[data-clr]', form).forEach(b => { const f = form.elements[b.dataset.clr], show = () => { b.hidden = !f.value; };
+    f.addEventListener('input', show); f.addEventListener('change', show);
+    b.onclick = e => { e.preventDefault(); f.value = ''; show(); f.focus(); }; });
   const fi = $('input[type=file]', form), prev = $('.rw-ph-prev', form), add = $('.rw-add', form);
   const drawPrev = () => {
     prev.innerHTML = files.map((x, i) => `<span><img src="${x.url}" alt=""><button type="button" data-x="${i}" aria-label="Remove photo">×</button></span>`).join('');
