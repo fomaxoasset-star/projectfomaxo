@@ -67,7 +67,7 @@ tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgb
 .no{font-weight:500;white-space:nowrap}
 .tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;border:1px solid currentColor;white-space:nowrap}
 .s-New{color:var(--warn)}.s-Paid{color:var(--gold)}.s-Delivered{color:var(--ok)}.s-Cancelled{color:var(--bad)}.s-Refunded{color:var(--bad)}.s-Awaiting{color:var(--muted)}
-.oacts{display:flex;gap:5px;flex-wrap:wrap;margin:0}.oacts form{margin:0}.oacts button{font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}.oacts button:hover{border-color:var(--gold)}.oacts .a-paid{border-color:var(--gold);color:var(--gold)}.oacts .a-delivered{border-color:var(--ok);color:var(--ok)}.oacts .a-cancel,.oacts .a-refund{color:var(--bad)}.tag.p-Unpaid{color:var(--warn);border-style:dashed}.tag.p-Paid{color:var(--gold)}.tags{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.order-acts{margin:0 0 14px}.order-acts button{font-size:12.5px;padding:7px 14px}
+.oacts{display:flex;gap:5px;flex-wrap:wrap;margin:0}.oacts form{margin:0}.oacts button{font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}.oacts button:hover{border-color:var(--gold)}.oacts .a-paid{border-color:var(--gold);color:var(--gold)}.oacts .a-delivered{border-color:var(--ok);color:var(--ok)}.oacts .a-cancel,.oacts .a-refund{color:var(--bad)}.tag.p-Unpaid{color:var(--warn);border-style:dashed}.wait{display:block;font-size:11px;color:var(--muted);margin-top:3px}.wait.late{color:var(--bad);font-weight:600}.track{list-style:none;display:flex;margin:0 0 14px;padding:0;max-width:640px}.track li{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;font-size:12px;color:var(--muted)}.track li+li::before{content:'';position:absolute;top:13px;right:calc(50% + 16px);left:calc(-50% + 16px);height:2px;background:var(--line)}.track li.done+li.done::before{background:var(--gold)}.track li.bad::before{background:var(--bad)!important}.track i{font-style:normal;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:12px;color:var(--muted)}.track .done i{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.track .bad i{background:var(--bad);border-color:var(--bad);color:#fff}.track b{color:var(--ink);font-size:12.5px;font-weight:600}.track .done span{color:var(--ink)}@media (min-width:760px){.olist.acts td:nth-child(8){white-space:nowrap;width:1%}.olist.acts .oacts{flex-wrap:nowrap}.olist.acts td:nth-child(6) .tags{flex-wrap:nowrap}}.tag.p-Paid{color:var(--gold)}.tags{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.order-acts{margin:0 0 14px}.order-acts button{font-size:12.5px;padding:7px 14px}
 @media (max-width:759px){
   table,tbody,tr,td{display:block;border:0}thead{display:none}
   table{background:none;border:0}
@@ -447,6 +447,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
   $pdo->prepare("UPDATE fx_orders SET status = ?, admin_note = ?, updated_at = NOW(),
                  paid_at = CASE WHEN ? IN ('Paid', 'Delivered') AND paid_at IS NULL THEN NOW() ELSE paid_at END WHERE order_no = ?")
       ->execute([$st, mb_substr(trim((string)($_POST['admin_note'] ?? '')), 0, 2000), $st, (string)$_POST['order']]);
+  if ($st !== $was) try { $pdo->prepare("UPDATE fx_orders SET delivered_at = " . ($st === 'Delivered' ? 'NOW()' : 'NULL') . " WHERE order_no = ?")->execute([(string)$_POST['order']]); } catch (Throwable $e) {}
   /* stock: a cancelled or refunded order goes back into stock; taking it out of Cancelled or Refunded takes it out again */
   $msg = $quick !== '' ? $_POST['order'] . ' is now ' . ['paid' => 'paid', 'delivered' => 'delivered', 'pending' => 'pending again', 'cancel' => 'cancelled', 'refund' => 'refunded'][$quick] . '.' : 'Saved.';
   if (in_array($st, ['Cancelled', 'Refunded'], true) && !in_array($was, ['Cancelled', 'Refunded'], true) && fomaxo_stock_move((string)$_POST['order'], true)) $msg .= ' The items are back in stock.';
@@ -459,7 +460,21 @@ function fx_tags($o) {
   $st = $o['status'];
   $d = in_array($st, ['New', 'Paid'], true) ? '<span class="tag s-New">Pending</span>' : '<span class="tag s-' . h(strtok($st, ' ')) . '">' . h($st) . '</span>';
   $p = in_array($st, ['New', 'Paid', 'Delivered'], true) ? ($st === 'New' ? '<span class="tag p-Unpaid">Unpaid</span>' : '<span class="tag p-Paid">Paid</span>') : '';
-  return '<span class="tags">' . $d . $p . '</span>';
+  $days = in_array($st, ['New', 'Paid'], true) ? (int)floor((time() - strtotime($o['created_at'])) / 86400) : 0;
+  return '<span class="tags">' . $d . $p . '</span>' . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '');
+}
+/* Ordered → Paid → Delivered, with the date of each step (cancelled and refunded orders end in red) */
+function fx_tracker($o) {
+  $d = fn($t) => $t ? h(date('d M, H:i', strtotime($t))) : '';
+  $steps = [['Ordered', $o['created_at']], ['Paid', $o['paid_at'] ?? null], ['Delivered', $o['delivered_at'] ?? null]];
+  if (in_array($o['status'], ['Cancelled', 'Refunded'], true)) $steps[] = [$o['status'], $o['updated_at'] ?? null, 'bad'];
+  if ($o['status'] === 'Awaiting payment') $steps[1][0] = 'Card not paid';
+  $out = '';
+  foreach ($steps as $i => $s) {
+    $done = $s[1] || $i === 0 || isset($s[2]) || ($i === 1 && in_array($o['status'], ['Paid', 'Delivered'], true)) || ($i === 2 && $o['status'] === 'Delivered');
+    $out .= '<li class="' . ($done ? 'done' : '') . (isset($s[2]) ? ' bad' : '') . '"><i>' . ($done ? (isset($s[2]) ? '×' : '✓') : $i + 1) . '</i><b>' . h($s[0]) . '</b><span>' . ($done ? $d($s[1]) : 'Not yet') . '</span></li>';
+  }
+  return '<ol class="track">' . $out . '</ol>';
 }
 /* which one-tap buttons an order gets: Paid only for cash orders not yet paid */
 function fx_order_actions($o) {
@@ -1382,7 +1397,7 @@ if (isset($_GET['o'])) {
   $row = fn($k, $v) => $v === '' || $v === null ? '' : '<dt>' . h($k) . '</dt><dd>' . $v . '</dd>';
   page($o['order_no'], '<p class="small"><a href="./?orders=1">← All orders</a></p>'
     . '<h1>' . h($o['order_no']) . ' ' . fx_tags($o) . '</h1>' . flash()
-    . fx_order_buttons($o, '', 'order-acts')
+    . fx_tracker($o) . fx_order_buttons($o, '', 'order-acts')
     . '<div class="grid2"><div>'
     . '<div class="card"><h2 style="margin-top:0">Items</h2><ul class="items">' . implode('', array_map(fn($i) => '<li>' . h($i) . '</li>', $items)) . '</ul>'
     . '<dl style="margin-top:14px">' . $row('Subtotal', $o['subtotal'] !== null ? money($o['subtotal']) : '') . $row('Discount', $o['discount'] > 0 ? '-' . money($o['discount']) : '')
@@ -1596,4 +1611,4 @@ page('Orders', '<h1>Orders</h1>' . flash()
   . '<div class="fill">' . ($rows ? '<table class="olist acts"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
-  . '<p class="muted small after">The boxes count New, Paid and Delivered orders and leave out cancelled orders and test payments. Unpaid card attempts are hidden unless you pick "Everything".</p></div>', true, true);
+  . '<p class="muted small after">The boxes count pending and delivered orders and leave out cancelled and refunded orders and test payments. "Waiting" shows how many days a pending order has not been delivered (red from 3 days). Unpaid card attempts are hidden unless you pick "Everything".</p></div>', true, true);
