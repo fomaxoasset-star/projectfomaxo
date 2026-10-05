@@ -234,8 +234,8 @@ CSS;
      . (!empty($_SESSION['admin']) ? '<nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
          [['Home', './', !$_GET], ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
           ['Orders', './?orders=1', !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
-          ['Members', './?members=1', isset($_GET['members'])], ['Reviews', './?reviews=1', isset($_GET['reviews'])],
-          ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Analytics', './?analytics=1', isset($_GET['analytics'])], ['Reports', './?reports=1', isset($_GET['reports'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav>' : '')
+          ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Analytics', './?analytics=1', isset($_GET['analytics'])], ['Reports', './?reports=1', isset($_GET['reports'])],
+          ['Members', './?members=1', isset($_GET['members'])], ['Reviews', './?reviews=1', isset($_GET['reviews'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . ($fit ? ' fit' : '') . '">' . $body . '</main>'
      . '<script>' . (!empty($_SESSION['admin']) ? 'try{localStorage.setItem("fomaxo_notrack","1")}catch(e){}' : '') . 'document.querySelectorAll(".tsearch").forEach(function(i){i.addEventListener("input",function(){var q=i.value.trim().toLowerCase();document.querySelectorAll("main table tr.row").forEach(function(r){r.hidden=q!==""&&r.innerText.toLowerCase().indexOf(q)<0})})});var t=document.querySelector(".tabs a.on");if(t&&t.parentNode.scrollWidth>t.parentNode.clientWidth)t.parentNode.scrollLeft=t.offsetLeft-(t.parentNode.clientWidth-t.offsetWidth)/2;</script></body></html>';
   exit;
