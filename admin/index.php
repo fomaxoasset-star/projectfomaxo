@@ -859,7 +859,7 @@ if (isset($_GET['reviews'])) {
   $avg = $live ? round(array_sum(array_column($live, 'rating')) / count($live), 1) : 0;
   $rmin = (int)(fomaxo_setting($pdo, 'reviewer_min') ?? 2) ?: 2;
   $seg = '<nav class="seg rseg">' . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['reviews' => 1] + ($k !== 'all' ? ['v' => $k] : []))) . '"' . ($v === $k ? ' class="on"' : '') . '>' . $l . '</a>',
-         ['all', 'products', 'people'], ['Reviews', 'Stars by product', 'Top reviewers'])) . '</nav>';
+         ['all', 'products', 'people'], ['Reviews', 'Stars By Product', 'Top Reviewers'])) . '</nav>';
   $hidden = fn($k, $val) => '<input type="hidden" name="' . $k . '" value="' . h($val) . '">';
 
   if ($v === 'products') {
@@ -1004,8 +1004,8 @@ if (isset($_GET['reviews'])) {
           . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . '</nav></form>'
           . '<div class="rgrid"><section class="card rlist"><p class="rnote small muted">' . count($list) . ' review' . (count($list) === 1 ? '' : 's') . ($rp !== '' ? ' of ' . h($pname($rp)) . ' · <a href="' . h(self_url(['reviews' => 1] + ($rq !== '' ? ['rq' => $rq] : []) + ($vf !== '' ? ['vf' => $vf] : []))) . '">all products</a>' : '')
           . '. Removed reviews leave the website and the star rating; Put back shows them again.</p><div class="cscroll">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="muted empty">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>') . '</div></section>'
-          . '<section class="card rprodc"><h2>Stars by product</h2><div class="cscroll">' . $bodyP . '</div></section>'
-          . '<section class="card rpplc"><div class="ch"><h2>Top reviewers</h2>' . $formR . '</div><div class="cscroll">' . $bodyR . '</div></section></div>';
+          . '<section class="card rprodc"><h2>Stars By Product</h2><div class="cscroll">' . $bodyP . '</div></section>'
+          . '<section class="card rpplc"><div class="ch"><h2>Top Reviewers</h2>' . $formR . '</div><div class="cscroll">' . $bodyR . '</div></section></div>';
   }
   page('Reviews', flash() . '<div class="rmob">' . $mob . '</div><div class="rdesk">' . $body . '</div>', true, true);
 }
