@@ -104,6 +104,7 @@ label.chk{display:flex;align-items:center;gap:8px;text-transform:none;letter-spa
 .phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:6px}.ph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--line)}
 @media (min-width:760px){.tabs{display:flex;justify-content:center;gap:10px}.tabs a{padding:14px 22px}}
 .lvl-out{color:var(--bad)}.lvl-low{color:var(--warn)}.lvl-ok{color:var(--ok)}
+.lowlvl{margin:0 0 14px}.lowlvl label{margin-top:0;text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink)}.lowlvl input{max-width:120px}
 .stock td,.exp td{vertical-align:middle}.stock input{width:110px;text-align:right}
 label.mini{display:none}
 .savebar{position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,var(--bg) 30%)}
@@ -446,10 +447,9 @@ if (isset($_GET['settings'])) {
       else { fomaxo_setting($pdo, 'admin_hash', password_hash($p1, PASSWORD_DEFAULT)); session_regenerate_id(true); flash('Your new password is saved.', true); }
       go(['settings' => 1]);
     }
-    $email = trim((string)($_POST['orders_email'] ?? '')); $low = trim((string)($_POST['low_stock'] ?? ''));
+    $email = trim((string)($_POST['orders_email'] ?? ''));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { flash('Please type a valid email address.'); go(['settings' => 1]); }
-    if (!ctype_digit($low) || (int)$low > 100) { flash('Low stock warning must be a number from 0 to 100.'); go(['settings' => 1]); }
-    fomaxo_setting($pdo, 'orders_email', $email); fomaxo_setting($pdo, 'low_stock', (string)(int)$low);
+    fomaxo_setting($pdo, 'orders_email', $email);   // the "Only X left" level is set on the Stock page
     flash('Settings saved.', true); go(['settings' => 1]);
   }
   page('Settings', '<h1>Settings</h1>' . flash()
@@ -457,8 +457,6 @@ if (isset($_GET['settings'])) {
     . '<h2 style="margin-top:0">Store</h2>'
     . '<label for="orders_email">New order emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
     . '<p class="muted small" style="margin:6px 0 0">Every cash and card order is emailed here. Password reset links always go to ' . h(FX_STORE_EMAIL) . '.</p>'
-    . '<label for="low_stock">Low stock warning</label><input id="low_stock" type="number" min="0" max="100" inputmode="numeric" name="low_stock" required value="' . fomaxo_low_stock() . '">'
-    . '<p class="muted small" style="margin:6px 0 0">The website shows "Only X left" when a size has this many bottles or fewer. 0 turns the warning off (Sold out still shows).</p>'
     . '<p style="margin:18px 0 0"><button class="btn">Save</button></p></form>'
     . '<form class="card" method="post" style="margin-top:16px">' . csrf_field()
     . '<h2 style="margin-top:0">Admin password</h2>'
@@ -473,6 +471,8 @@ if (isset($_GET['stock'])) {
   require_once dirname(__DIR__) . '/store-lib.php';
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['stock' => 1]); }
+    $lvl = trim((string)($_POST['low_stock'] ?? ''));   // the "Only X left" level for the website (only set here)
+    if (ctype_digit($lvl) && (int)$lvl <= 100) fomaxo_setting($pdo, 'low_stock', (string)(int)$lvl);
     $set = $pdo->prepare('INSERT INTO fx_stock (product, size, qty, cost, updated_at) VALUES (?, ?, ?, ?, NOW())
                           ON DUPLICATE KEY UPDATE qty = VALUES(qty), cost = VALUES(cost), updated_at = NOW()');
     $old = []; foreach ($pdo->query('SELECT product, size, qty, cost FROM fx_stock') as $r) $old[$r['product'] . '|' . $r['size']] = [$r['qty'] === null ? null : (int)$r['qty'], $r['cost'] === null ? null : round((float)$r['cost'], 2)];
@@ -503,7 +503,10 @@ if (isset($_GET['stock'])) {
   page('Stock', '<h1>Stock &amp; cost</h1>' . flash()
     . '<p class="muted small"><b>Stock:</b> how many bottles you have. It goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml) and goes back up if you cancel an order. Leave it empty to not count that size. The website shows "Only X left" at ' . fomaxo_low_stock() . ' or fewer, and "Sold out" at 0.<br>'
     . '<b>Cost:</b> what one bottle costs you. Reports use it to work out your profit.</p>'
-    . '<form method="post">' . csrf_field() . '<table class="stock"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost (AED)</th></tr></thead><tbody>' . $tr . '</tbody></table>'
+    . '<form method="post">' . csrf_field()
+    . '<div class="card lowlvl"><label for="low_stock">Show "Only X left" on the website when stock is at or below</label><input id="low_stock" type="number" min="0" max="100" inputmode="numeric" name="low_stock" required value="' . fomaxo_low_stock() . '">'
+    . '<p class="muted small" style="margin:6px 0 0">One level for every product and size. 0 turns it off (Sold out still shows).</p></div>'
+    . '<table class="stock"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost (AED)</th></tr></thead><tbody>' . $tr . '</tbody></table>'
     . '<div class="savebar"><button class="btn big">Save</button></div></form>', true);
 }
 
