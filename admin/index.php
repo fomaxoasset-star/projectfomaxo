@@ -205,6 +205,12 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,.fitform>.fill{flex:1 1 auto;min-h
   .stock-help{font-size:12px}.lowlvl{padding:8px 12px}.lowlvl label{font-size:13px}.lowlvl input{padding:6px 9px;max-width:72px}
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
+.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
+.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
+@media (max-width:759px){.mmin{flex:1 1 100%;padding:7px 10px;gap:6px}.mmin label,.mmin span{font-size:12.5px}.mmin input{width:58px;padding:5px 6px}.mmin .btn{margin-left:auto}.mq{flex-basis:100%}
+  .mlist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"mn ms" "ma mo" "md mv";gap:2px 10px;padding:8px 12px;margin-bottom:8px}.mlist td{padding:0}
+  .mlist .mn{grid-area:mn}.mlist .ms{grid-area:ms}.mlist .ma{grid-area:ma;color:var(--muted)}.mlist .ma div{display:inline;margin-left:4px}.mlist .ma div::before{content:"· "}.mlist .mo,.mlist .mv{align-self:end}.mlist .mo{grid-area:mo}.mlist .mo b{font-weight:600}.mlist .md{grid-area:md;font-size:11.5px}.mlist .mv{grid-area:mv;font-size:12px;color:var(--muted)}.mlist td.mo span,.mlist td.mv span{display:inline}
+  .mcard{padding:8px 12px}}
 .stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:14px;max-width:900px}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}@media (min-width:860px){.settings{grid-template-columns:1fr 1fr;align-items:start}}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
@@ -216,6 +222,7 @@ CSS;
      . '</header>'
      . (!empty($_SESSION['admin']) ? '<nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
          [['Dashboard', './', !$_GET], ['Orders', './?orders=1', (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
+          ['Members', './?members=1', isset($_GET['members'])],
           ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
           ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Analytics', './?analytics=1', isset($_GET['analytics'])], ['Reports', './?reports=1', isset($_GET['reports'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . ($fit ? ' fit' : '') . '">' . $body . '</main>'
@@ -800,6 +807,105 @@ if (isset($_GET['reports'])) {
 }
 
 /* one order */
+/* ---- members: customers who keep coming back. Orders are grouped by mobile number (last 9 digits), or by email when there is no mobile ---- */
+if (isset($_GET['members'])) {
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_ok()) { flash('Please try again.'); go(['members' => 1]); }
+    $n = trim((string)($_POST['member_min'] ?? ''));
+    if (ctype_digit($n) && (int)$n >= 1 && (int)$n <= 1000) { fomaxo_setting($pdo, 'member_min', (string)(int)$n); flash('Saved.', true); }
+    go(['members' => 1]);
+  }
+  $min = (int)(fomaxo_setting($pdo, 'member_min') ?? 5) ?: 5;
+  $key = function ($o) { $d = preg_replace('/\D/', '', (string)$o['phone']); return strlen($d) >= 7 ? 'm' . substr($d, -9) : ($o['email'] !== '' ? 'e' . mb_strtolower(trim($o['email'])) : ''); };
+  $addr = fn($o) => $o['address'] !== '' ? $o['address'] : implode(', ', array_filter([$o['building'], $o['room'], $o['street'], $o['area']], fn($x) => $x !== ''));
+  $waLink = function ($phone) { $wa = preg_replace('/\D/', '', (string)$phone); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); return $wa; };
+  /* every real order (not cancelled, not unpaid card, not a test), oldest first so the latest name and address win */
+  $all = $pdo->query("SELECT order_no, created_at, payment, status, total, name, phone, email, emirate, building, room, street, area, address, items, test
+                      FROM fx_orders WHERE status IN ('New','Paid','Delivered') AND test = 0 ORDER BY created_at, id")->fetchAll();
+  $cust = []; $allSales = 0;
+  foreach ($all as $o) {
+    $allSales += (float)$o['total'];
+    if (($k = $key($o)) === '') continue;
+    $c = &$cust[$k];
+    $c['n'] = ($c['n'] ?? 0) + 1; $c['spent'] = ($c['spent'] ?? 0) + (float)$o['total'];
+    $c['first'] ??= $o['created_at']; $c['last'] = $o['created_at'];
+    foreach (['name', 'phone', 'email', 'emirate'] as $f2) if ($o[$f2] !== '') $c[$f2] = $o[$f2];
+    if ($addr($o) !== '') $c['addr'] = $addr($o);
+    $c['orders'][] = $o;
+    unset($c);
+  }
+
+  if (isset($_GET['c'])) {   // one customer: details and every order
+    $c = $cust[(string)$_GET['c']] ?? null;
+    if (!$c) page('Not found', '<h1>Customer not found</h1><p><a href="./?members=1">Back to members</a></p>');
+    $wa = $waLink($c['phone'] ?? '');
+    $row = fn($k, $v) => $v === '' || $v === null ? '' : '<dt>' . h($k) . '</dt><dd>' . $v . '</dd>';
+    $tr = '';
+    foreach (array_reverse($c['orders']) as $o) {
+      $u = h(self_url(['o' => $o['order_no']]));
+      $tr .= '<tr class="row" onclick="location.href=\'' . $u . '\'"><td class="no"><a href="' . $u . '">' . h($o['order_no']) . '</a></td>'
+           . '<td>' . h(date('d M Y, H:i', strtotime($o['created_at']))) . '</td>'
+           . '<td>' . h($o['name']) . '<div class="muted small">' . h($o['emirate']) . '</div></td>'
+           . '<td class="small">' . h(mb_strimwidth(str_replace(' | ', ', ', (string)$o['items']), 0, 90, '…')) . '</td>'
+           . '<td>' . h($o['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . '</td>'
+           . '<td><span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span></td>'
+           . '<td class="num">' . money($o['total']) . '</td></tr>';
+    }
+    page($c['name'] ?? 'Customer', '<p class="small" style="margin:0 0 6px"><a href="./?members=1">← All members</a></p>'
+      . '<h1>' . h($c['name'] ?? 'No name') . ($c['n'] >= $min ? ' <span class="tag mtag">Member</span>' : '') . '</h1>'
+      . '<div class="stats up"><div class="stat"><span>Orders</span><b>' . (int)$c['n'] . '</b></div><div class="stat"><span>Total spent</span><b>' . money($c['spent']) . '</b></div>'
+      . '<div class="stat"><span>Average order</span><b>' . money($c['spent'] / $c['n']) . '</b></div><div class="stat"><span>Customer since</span><b>' . h(date('d M Y', strtotime($c['first']))) . '</b></div></div>'
+      . '<div class="card mcard"><dl>' . $row('Mobile', isset($c['phone']) ? h($c['phone']) . ($wa ? ' · <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') : '')
+      . $row('Email', isset($c['email']) ? '<a href="mailto:' . h($c['email']) . '">' . h($c['email']) . '</a>' : '')
+      . $row('Address', h($c['addr'] ?? '')) . $row('Emirate', h($c['emirate'] ?? '')) . $row('Last order', h(date('d M Y', strtotime($c['last'])))) . '</dl></div>'
+      . '<div class="fill"><table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Name</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>' . $tr . '</tbody></table></div>', true, true);
+  }
+
+  $mem = array_filter($cust, fn($c) => $c['n'] >= $min);
+  uasort($mem, fn($a, $b) => $b['spent'] <=> $a['spent'] ?: $b['n'] <=> $a['n']);
+  $mq = trim((string)($_GET['mq'] ?? ''));
+  $list = $mq === '' ? $mem : array_filter($mem, function ($c) use ($mq) {
+    $hay = mb_strtolower(implode(' ', [$c['name'] ?? '', $c['phone'] ?? '', $c['email'] ?? '', $c['emirate'] ?? '', $c['addr'] ?? '']));
+    $d = preg_replace('/\D/', '', $mq);
+    return str_contains($hay, mb_strtolower($mq)) || (strlen($d) >= 4 && str_contains(preg_replace('/\D/', '', $c['phone'] ?? ''), $d));
+  });
+
+  if (isset($_GET['export'])) {   // CSV that opens straight in Excel
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="fomaxo-members-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
+    $cell = fn($v) => is_string($v) && preg_match('/^[=+\-@]/', $v) && !preg_match('/^\+?[\d\s()\-]+$/', $v) ? "'" . $v : $v;
+    fputcsv($out, ['Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Orders', 'Total spent (AED)', 'Average order (AED)', 'First order', 'Last order']);
+    foreach ($list as $c) fputcsv($out, array_map($cell, [$c['name'] ?? '', $c['phone'] ?? '', $c['email'] ?? '', $c['emirate'] ?? '', $c['addr'] ?? '', $c['n'],
+      number_format($c['spent'], 2, '.', ''), number_format($c['spent'] / $c['n'], 2, '.', ''), date('Y-m-d', strtotime($c['first'])), date('Y-m-d', strtotime($c['last']))]));
+    exit;
+  }
+
+  $memSpent = array_sum(array_column($mem, 'spent'));
+  $tr = '';
+  foreach ($list as $k => $c) {
+    $u = h(self_url(['members' => 1, 'c' => $k])); $wa = $waLink($c['phone'] ?? '');
+    $tr .= '<tr class="row" onclick="location.href=\'' . $u . '\'"><td class="mn"><a href="' . $u . '"><b>' . h($c['name'] ?? 'No name') . '</b></a>'
+         . '<div class="muted small">' . (isset($c['phone']) ? ($wa ? '<a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' . h($c['phone']) . '</a>' : h($c['phone'])) : '')
+         . (isset($c['email']) ? (isset($c['phone']) ? ' · ' : '') . h($c['email']) : '') . '</div></td>'
+         . '<td class="ma small">' . h($c['addr'] ?? '') . (isset($c['emirate']) ? '<div class="muted">' . h($c['emirate']) . '</div>' : '') . '</td>'
+         . '<td class="num mo"><b>' . (int)$c['n'] . '</b><span> orders</span></td>'
+         . '<td class="num ms"><b>' . money($c['spent']) . '</b></td>'
+         . '<td class="num mv">' . money($c['spent'] / $c['n']) . '<span> avg</span></td>'
+         . '<td class="md small">' . h(date('d M Y', strtotime($c['first']))) . ' – ' . h(date('d M Y', strtotime($c['last']))) . '</td></tr>';
+  }
+  page('Members', '<div class="pagehead"><h1>Members</h1><a class="btn line sm" href="' . h(self_url(['members' => 1] + ($mq !== '' ? ['mq' => $mq] : []) + ['export' => 1])) . '">Download Excel</a></div>' . flash()
+    . '<div class="mtop"><form class="card mmin" method="post">' . csrf_field() . '<label for="member_min">Show customers with at least</label>'
+    . '<input id="member_min" type="number" min="1" max="1000" inputmode="numeric" name="member_min" required value="' . $min . '"><span>orders</span><button class="btn sm">Save</button></form>'
+    . '<form class="mq" method="get"><input type="hidden" name="members" value="1"><input name="mq" value="' . h($mq) . '" placeholder="Search name, mobile, email or area" aria-label="Search members"><button class="btn line sm">Search</button></form></div>'
+    . '<div class="stats up"><div class="stat"><span>Members</span><b>' . count($mem) . '</b></div><div class="stat"><span>Members spent</span><b>' . money($memSpent) . '</b></div>'
+    . '<div class="stat"><span>Share of all sales</span><b>' . ($allSales > 0 ? round($memSpent / $allSales * 100) : 0) . '%</b></div>'
+    . '<div class="stat"><span>Average per member</span><b>' . money($mem ? $memSpent / count($mem) : 0) . '</b></div></div>'
+    . '<div class="fill">' . ($list ? '<table class="mlist"><thead><tr><th>Member</th><th>Latest address</th><th class="num">Orders</th><th class="num">Spent</th><th class="num">Average</th><th>First – last order</th></tr></thead><tbody>' . $tr . '</tbody></table>'
+         : '<p class="card muted" style="margin:0">' . ($mq !== '' ? 'No members match.' : 'No customer has ' . $min . ' or more orders yet.') . '</p>')
+    . '<p class="muted small after">Orders from the same mobile number (or the same email when there is no mobile) count as one customer. Cancelled orders, unpaid card attempts and test payments are left out. Tap a member to see every order.</p></div>', true, true);
+}
+
 if (isset($_GET['o'])) {
   $s = $pdo->prepare('SELECT * FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_GET['o']]); $o = $s->fetch();
   if (!$o) page('Not found', '<h1>Order not found</h1><p><a href="./?orders=1">Back to orders</a></p>');
