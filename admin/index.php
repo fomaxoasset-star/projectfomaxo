@@ -106,12 +106,12 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .dgrid{display:grid;gap:8px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.15fr) minmax(0,1fr)}.dgrid>*{min-width:0}
 .db .list{overflow:auto;flex:1 1 auto;min-height:0;overscroll-behavior:contain}.db .list li{padding:5px 0;font-size:13.5px}.db .list.orders li{padding:0}.db .list.orders a{padding:5px 0}.db .list .r{flex-direction:row;align-items:center;gap:8px}.db .list small{font-size:11.5px}
 .db .empty{margin:0;font-size:13px}
-@media (max-width:759px){.dgrid .c-years{display:none}.lists{overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;min-height:0}.lists>.card{flex:none;overflow:visible}.lists .c-stock{order:-1}.lists .list{overflow:visible}
+@media (max-width:759px){.lists{overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;min-height:0}.lists>.card{flex:none;overflow:visible}.lists .c-stock{order:-1}.lists .list{overflow:visible}
   .tile{padding:6px 9px}.tile b{font-size:15px}.tile.todo b{font-size:18px}.tile span{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .db .list.orders small{display:none}.db .list.orders a>span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .seg button{padding:3px 7px}}
-@media (min-width:760px){.lists{display:contents}.seg .ph{display:none}.tiles{grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}.tile,.tile.todo{grid-column:auto}.tile{padding:10px 14px}.tile b,.tile.todo b{font-size:21px}.tile span{font-size:11px}
-  .dgrid{grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"sales orders" "years stock";gap:10px}
-  .dgrid .c-sales{grid-area:sales}.dgrid .c-years{grid-area:years}.dgrid .c-orders{grid-area:orders}.dgrid .c-stock{grid-area:stock}.db .card{padding:12px 16px}.db h2{font-size:15.5px}}
+@media (min-width:760px){.lists{display:contents}.tiles{grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px}.tile,.tile.todo{grid-column:auto}.tile{padding:10px 14px}.tile b,.tile.todo b{font-size:21px}.tile span{font-size:11px}
+  .dgrid{grid-template-columns:minmax(0,3fr) minmax(0,2fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"sales orders" "sales stock";gap:10px}
+  .dgrid .c-sales{grid-area:sales}.dgrid .c-orders{grid-area:orders}.dgrid .c-stock{grid-area:stock}.db .card{padding:12px 16px}.db h2{font-size:15.5px}}
 .list{list-style:none;margin:0;padding:0}.list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.list li:last-child{border:0}
 .list.orders li{padding:0}.list.orders a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;color:var(--ink);text-decoration:none;width:100%}
 .list small{display:block}.list .r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
@@ -836,9 +836,10 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   $s = $pdo->prepare("SELECT DATE(created_at) d, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY DATE(created_at)");
   $s->execute([array_key_first($days) . ' 00:00:00']);
   foreach ($s as $r) if (isset($days[$r['d']])) $days[$r['d']] = [(float)$r['t'], (int)$r['n']];
-  $years = [date('Y') => [0.0, 0]];
-  foreach ($pdo->query("SELECT YEAR(created_at) y, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real GROUP BY YEAR(created_at)") as $r) $years[$r['y']] = [(float)$r['t'], (int)$r['n']];
-  ksort($years);
+  $months = []; for ($i = 11; $i >= 0; $i--) $months[date('Y-m', strtotime(date('Y-m-01') . " -$i month"))] = [0.0, 0];
+  $s = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%Y-%m') m, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY m");
+  $s->execute([array_key_first($months) . '-01 00:00:00']);
+  foreach ($s as $r) if (isset($months[$r['m']])) $months[$r['m']] = [(float)$r['t'], (int)$r['n']];
   $pt = fn($v, $label, $tip) => ['v' => $v[0], 'l' => $label, 't' => $tip . ': ' . $orders($v[1] ? $v : null)];
   $series = [
     'day' => array_map(fn($h, $v) => $pt($v, date('ga', mktime($h, 0)), date('ga', mktime($h, 0)) . '–' . date('ga', mktime($h + 1, 0))), array_keys($hours), $hours),
@@ -846,11 +847,9 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     'month' => array_map(fn($d, $v) => $pt($v, date('j M', strtotime($d)), date('D j M', strtotime($d))), array_keys($days), $days),
   ];
   $series['week'] = array_slice($series['week'], -7);
-  $byMonth = count($years) < 2;
-  $series['year'] = $byMonth ? array_map(fn($k, $r) => $pt([$r['sales'], $r['orders']], date('M', strtotime("$k-01")), date('F Y', strtotime("$k-01"))), array_keys($yr), $yr)
-                             : array_map(fn($y, $v) => $pt($v, (string)$y, (string)$y), array_keys($years), $years);
+  $series['year'] = array_map(fn($m, $v) => $pt($v, date('M', strtotime("$m-01")), date('F Y', strtotime("$m-01"))), array_keys($months), $months);   // last 12 months
   $sum = fn($k) => money(array_sum(array_column($series[$k], 'v')));
-  $ranges = ['day' => 'Today', 'week' => '7 days', 'month' => '30 days', 'year' => $byMonth ? date('Y') : 'Years'];   // the last one only shows on phones, where the year graph moves into this card
+  $ranges = ['day' => 'Today', 'week' => '7 days', 'month' => '30 days', 'year' => 'Year'];
   /* stock running low (counted sizes at or below the warning level) */
   $low = fomaxo_low_stock(); $alerts = '';
   foreach ($pdo->query('SELECT product, size, qty FROM fx_stock WHERE qty IS NOT NULL ORDER BY qty, product') as $r) {
@@ -881,12 +880,9 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     . ($month['no_cost'] ? '<p class="muted note">' . $plural($month['no_cost'], 'order') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit shows too high. <a href="./?stock=1">Add costs</a></p>' : '')
     . '<div class="dgrid">'
     . '<section class="card c-sales"><div class="ch"><h2>Sales</h2><div class="seg" role="group" aria-label="Sales period">'
-    . implode('', array_map(fn($k, $l) => '<button type="button" data-k="' . $k . '"' . ($k === 'month' ? ' class="on"' : ($k === 'year' ? ' class="ph"' : '')) . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div></div>'
+    . implode('', array_map(fn($k, $l) => '<button type="button" data-k="' . $k . '"' . ($k === 'month' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div></div>'
     . '<div class="chartbox">' . implode('', array_map(fn($k) => fx_graph($series[$k], 'Sales ' . strtolower($ranges[$k]) . ', ' . $sum($k) . ' in total', $k !== 'month'), array_keys($ranges))) . '</div>'
     . '<p class="sub"><span class="tip">Tap a bar to see its sales</span><b class="tot">' . implode('', array_map(fn($k) => '<span data-k="' . $k . '"' . ($k !== 'month' ? ' hidden' : '') . '>' . h($sum($k)) . '</span>', array_keys($ranges))) . '</b></p></section>'
-    . '<section class="card c-years"><div class="ch"><h2>' . ($byMonth ? 'Sales ' . date('Y') . ' by month' : 'Sales by year') . '</h2><a href="./?reports=1">Reports</a></div>'
-    . '<div class="chartbox">' . fx_graph($series['year'], $byMonth ? 'Sales per month in ' . date('Y') : 'Sales per year') . '</div>'
-    . '<p class="sub"><span class="tip">Tap a bar to see its sales</span><b class="tot">' . h($sum('year')) . '</b></p></section>'
     . '<div class="lists"><section class="card c-orders"><div class="ch"><h2>Latest orders</h2><a href="./?orders=1">All orders</a></div>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted empty">No orders yet.</p>') . '</section>'
     . '<section class="card c-stock"><div class="ch"><h2>Stock alerts</h2><a href="./?stock=1">Stock</a></div>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted empty">No size is running low.</p>') . '</section></div>'
     . '</div></div>'
