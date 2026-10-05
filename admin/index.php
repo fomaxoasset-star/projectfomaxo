@@ -381,7 +381,7 @@ if (isset($_GET['forgot'])) {   // emails a one-hour link to the store inbox (ne
       $link = ($https ? 'https' : 'http') . "://$host" . rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/admin/index.php'), '/') . "/?reset=$tok";
       $mailHost = preg_replace('/^www\./', '', explode(':', $host)[0]);
       @mail($STORE_EMAIL, 'FOMAXO admin password link', "Someone asked to set the password for the FOMAXO back office.\n\nOpen this link within one hour to choose a new password:\n$link\n\nIf this was not you, ignore this email. Your password stays the same.",
-            "From: FOMAXO <orders@$mailHost>\r\nContent-Type: text/plain; charset=UTF-8");
+            "From: FOMAXO <mail@fomaxo.com>\r\nContent-Type: text/plain; charset=UTF-8", '-fmail@fomaxo.com');
     }
     $sent = true;
   }

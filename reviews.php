@@ -236,6 +236,6 @@ $pname = $CATALOG[$pid]['name'];
 $body = "New review on fomaxo.com — it is live now.\n\nProduct: $pname\nRating: " . str_repeat('★', $rating) . str_repeat('☆', 5 - $rating) . " ($rating/5)\n"
       . "Name shown: $name" . ($anon ? " (real name: $real)" : '') . "\n" . ($city . $country !== '' ? "From: " . trim("$city $country") . "\n" : '') . ($link ? "Verified Purchaser — order {$link['no']}\n" : "Not a verified purchase\n")
       . 'Photos: ' . count($photos) . "\n\n$text\n\nTo hide this review (or any other), open:\n$manage\n";
-@mail($STORE_EMAIL, '=?UTF-8?B?' . base64_encode("New $rating★ review — $pname") . '?=', $body, "From: FOMAXO Reviews <orders@$host>\r\nContent-Type: text/plain; charset=UTF-8");
+@mail($STORE_EMAIL, '=?UTF-8?B?' . base64_encode("New $rating★ review — $pname") . '?=', $body, "From: FOMAXO Reviews <mail@fomaxo.com>\r\nContent-Type: text/plain; charset=UTF-8", '-fmail@fomaxo.com');
 
 out(['ok' => true, 'review' => rv_public($rec), 'note' => $photoNote]);
