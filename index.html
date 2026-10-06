@@ -1840,6 +1840,10 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
 .promo.al .pm-hurry{margin-top:22px}
 .promo .pm-hurry{margin:14px 0 18px;font-size:15px;font-weight:700;letter-spacing:.24em;color:#e04a3f}
 .promo .btn{width:100%}
+.promo .pm-img{display:block;width:150px;aspect-ratio:4/5;object-fit:cover;margin:16px auto 0;border:1px solid var(--line-2)}
+.promo .pm-name{display:block;margin:16px 0 6px;font-family:var(--display);font-weight:300;font-size:30px;line-height:1.1;letter-spacing:.12em;text-transform:uppercase;color:var(--ivory)}
+.promo .pm-line{margin:0 0 4px;font-size:14px;line-height:1.5;color:var(--muted)}
+.promo.pnew .btn{margin-top:18px}
 .promo .pm-no{display:inline-block;margin-top:12px;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 @media (max-width:600px){.promo-box{max-width:340px;padding:30px 18px 18px}.promo .pm-big{font-size:44px}.pm-cd{gap:6px}.pm-cd span{min-width:0;flex:1;font-size:21px}}
 .p-off{align-self:center;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#e04a3f;padding:6px 9px;line-height:1}
@@ -2335,9 +2339,9 @@ const moneyHTML = (v, dec) => hasPrice(v) ? `<span class="amt"><span class="cur"
 const wasHTML = (p, size) => { const c = p.compareAt && p.compareAt[size]; return hasPrice(c) && c > p.prices[size] ? `<s class="was">${moneyHTML(c)}</s> ` : ''; };
 const priceHTML = (p, size, cls='price') => { const m = moneyHTML(p.prices[size]); return m ? `<span class="${cls}">${wasHTML(p, size)}${m}</span>` : `<span class="${cls} na">Price on request</span>`; };
 /* limited-time sale countdown: SALE_END comes from products.php (set on fomaxo.com/admin → Offer); on products / sizes with an old price */
-let SALE_END = 0, SALE_ALWAYS = false, SALE_POPUP = true, SALE_LINE = true, SALE_PCT = 0;   // SALE_PCT: % typed on the admin (never more than the real saving)
+let SALE_END = 0, SALE_ALWAYS = false, SALE_POPUP = true, SALE_LINE = true, SALE_PCT = 0, NEW_POP = null;   // NEW_POP: {status: soon|arrived, name, line, product} from admin → Offer   // SALE_PCT: % typed on the admin (never more than the real saving)
    // SALE_ALWAYS: offer on with no timer; popup / line: what shows (admin → Offer)
-try { const v = JSON.parse(localStorage.getItem('fomaxo_sale') || '{}'); SALE_END = +v.e || 0; SALE_ALWAYS = !!v.a; SALE_POPUP = v.p !== false; SALE_LINE = v.l !== false; SALE_PCT = +v.pc || 0; } catch(e) {}
+try { const v = JSON.parse(localStorage.getItem('fomaxo_sale') || '{}'); SALE_END = +v.e || 0; SALE_ALWAYS = !!v.a; SALE_POPUP = v.p !== false; SALE_LINE = v.l !== false; SALE_PCT = +v.pc || 0; NEW_POP = v.np || null; } catch(e) {}
 const onSale = (p, s) => { const v = p.prices[s], c = p.compareAt && p.compareAt[s]; return hasPrice(v) && hasPrice(c) && +c > +v; };
 const saleLeft = () => { const ms = SALE_END - Date.now(); if (ms <= 0) return ''; const t = Math.floor(ms / 1000), d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), x = t % 60, p = n => String(n).padStart(2, '0');
   return (d ? `${d}d ` : '') + `${p(h)}h ${p(m)}m ${p(x)}s`; };
@@ -2352,22 +2356,36 @@ function promoMaybe(){
   clearTimeout(promoT);
   try { if (sessionStorage.getItem('fomaxo_promo')) return; } catch(e) {}
   promoT = setTimeout(() => {
-    const al = !saleLeft() && SALE_ALWAYS; if (!SALE_POPUP || (!saleLeft() && !al) || /^#\/checkout/.test(location.hash) || document.querySelector('.promo')) return;
+    if (/^#\/checkout/.test(location.hash) || document.querySelector('.promo')) return;
+    /* the new product popup first, once per visitor and product; the sale popup then shows on their next visit */
+    const np = NEW_POP, npKey = np ? np.status + '|' + np.name : '';
+    let npSeen = ''; try { npSeen = localStorage.getItem('fomaxo_np_seen') || ''; } catch(e) {}
+    if (np && npSeen !== npKey) {
+      try { sessionStorage.setItem('fomaxo_promo', '1'); localStorage.setItem('fomaxo_np_seen', npKey); } catch(e) {}
+      const p = np.product && P[np.product], arr = np.status === 'arrived', pic = p && p.images && p.images[0];
+      return promoOpen(`<div class="promo pnew" role="dialog" aria-modal="true" aria-label="${arr ? 'Just arrived' : 'Coming soon'}"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
+        <span class="pm-eye">${arr ? 'Just arrived' : 'Coming soon'}</span>${pic ? `<img class="pm-img" ${cardPic(pic)} alt="">` : ''}<b class="pm-name">${esc(np.name)}</b>${np.line ? `<p class="pm-line">${esc(np.line)}</p>` : ''}
+        <a class="btn" href="${arr && p && !p.hidden ? '#/product/' + p.id : '#/fragrances'}" data-pm-close>${arr ? 'Shop now' : 'Explore FOMAXO'}</a><button type="button" class="pm-no" data-pm-close>Close</button></div></div>`);
+    }
+    const al = !saleLeft() && SALE_ALWAYS; if (!SALE_POPUP || (!saleLeft() && !al)) return;
     let pct = 0; S.products.forEach(p => p.sizes.forEach(z => { if (onSale(p, z)) pct = Math.max(pct, Math.round((p.compareAt[z] - p.prices[z]) / p.compareAt[z] * 100)); }));
     if (!pct) return;
     if (SALE_PCT > 0 && SALE_PCT < pct) pct = SALE_PCT;
     try { sessionStorage.setItem('fomaxo_promo', '1'); } catch(e) {}
     const u = ['Days', 'Hours', 'Min', 'Sec'].map(l => `<span><b data-pm="${l}">00</b><small>${l}</small></span>`).join('');
-    document.body.insertAdjacentHTML('beforeend', `<div class="promo${al ? ' al' : ''}" role="dialog" aria-modal="true" aria-label="Limited time offer"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
+    promoOpen(`<div class="promo${al ? ' al' : ''}" role="dialog" aria-modal="true" aria-label="Limited time offer"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
       <span class="pm-eye">Limited time offer</span><b class="pm-big">${pct}<span class="pm-pc">%</span> OFF</b><p class="pm-sub">on selected fragrances</p>
       ${al ? '' : `<div class="pm-cd">${u}</div>`}<p class="pm-hurry">HURRY UP!!!</p>
       <a class="btn" href="#/fragrances" data-pm-close>Shop the offer</a><button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
+  }, 2500);
+}
+function promoOpen(html){
+    document.body.insertAdjacentHTML('beforeend', html);
     const m = document.querySelector('.promo'), close = () => { m.classList.remove('on'); setTimeout(() => m.remove(), 300); document.removeEventListener('keydown', esc); };
     const esc = e => { if (e.key === 'Escape') close(); };
     m.addEventListener('click', e => { if (e.target === m || e.target.closest('.promo-x,[data-pm-close]')) close(); });
     document.addEventListener('keydown', esc);
     saleTick(); requestAnimationFrame(() => m.classList.add('on'));
-  }, 2500);
 }
 const fromHTML = p => { const v = p.sizes.map(s => p.prices[s]).filter(hasPrice); const mn = Math.min(...v), ms = p.sizes.find(s => p.prices[s] == mn); return v.length ? `<span class="price">${p.sizes.length > 1 ? '<small>from</small> ' : ''}${wasHTML(p, ms)}${moneyHTML(mn)}</span>` : `<span class="price na">Price on request</span>`; };
 const emblem = (cls='em') => `<svg class="${cls}" aria-hidden="true"><use href="#emblem"/></svg>`;
@@ -4150,7 +4168,7 @@ footShop();
 /* the live product list (fomaxo.com/admin → Products); the page is only redrawn when it differs from what is showing */
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
-  if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT})); } catch(e) {} saleTick(); promoMaybe(); }
+  if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP})); } catch(e) {} saleTick(); promoMaybe(); }
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
   const js = JSON.stringify(d.products);
   try { localStorage.setItem('fomaxo_products', js); } catch(e) {}
