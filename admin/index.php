@@ -241,7 +241,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:
 html,body{height:100%}
 body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
 /* big screens (desktop): the whole admin is shown larger so it fills the screen; the page height is divided by the same amount so one-screen pages still fit */
-@supports (zoom:1){@media (min-width:1440px) and (min-height:700px){:root{--z:1.12}}@media (min-width:1680px) and (min-height:800px){:root{--z:1.25}}@media (min-width:1900px) and (min-height:900px){:root{--z:1.35}}@media (min-width:1440px) and (min-height:700px){html{zoom:var(--z)}body{height:calc(100dvh / var(--z))}}}
+@media (min-width:1440px){.wrap{max-width:1320px}}@supports (zoom:1){@media (min-width:1440px) and (min-height:700px){:root{--z:1.04}}@media (min-width:1680px) and (min-height:800px){:root{--z:1.1}}@media (min-width:1900px) and (min-height:900px){:root{--z:1.16}}@media (min-width:1440px) and (min-height:700px){html{zoom:var(--z)}body{height:calc(100dvh / var(--z))}}}
 .top,.tabs{flex:none}
 main.wrap{flex:1 1 auto;min-height:0;overflow:auto;width:100%;overscroll-behavior:contain}
 main.fit{display:flex;flex-direction:column;overflow:hidden}
