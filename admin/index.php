@@ -737,6 +737,9 @@ if (isset($_GET['products'])) {
 
 /* ---- offer: the website's offer popup, its timer and the "Limited time offer" line by sale prices (prices themselves are set on Products) ---- */
 if (isset($_GET['offer'])) {
+  $realMax = 0;   // the biggest real saving on the website: old price vs price, shown products only
+  foreach (fomaxo_product_rows($pdo) ?: [] as $r) { if ($r['hidden']) continue; $p = json_decode($r['data'], true); if (!is_array($p)) continue;
+    foreach ((array)($p['prices'] ?? []) as $z => $v) { $c = $p['compareAt'][$z] ?? null; if (is_numeric($v) && is_numeric($c) && $c > $v) $realMax = max($realMax, (int)round(($c - $v) / $c * 100)); } }
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['offer' => 1]); }
     $mode = (string)($_POST['mode'] ?? 'off');
@@ -749,12 +752,20 @@ if (isset($_GET['offer'])) {
       fomaxo_setting($pdo, 'sale_ends', (string)$end); fomaxo_setting($pdo, 'sale_always', '');
     } elseif ($mode === 'always') { fomaxo_setting($pdo, 'sale_ends', ''); fomaxo_setting($pdo, 'sale_always', '1'); }
     else { fomaxo_setting($pdo, 'sale_ends', ''); fomaxo_setting($pdo, 'sale_always', ''); }
+    $capped = false;
+    if (!isset($_POST['all_off'])) {   // the % in the popup: empty = the biggest real saving; never more than that
+      $pc = trim((string)($_POST['pct'] ?? ''));
+      if ($pc !== '' && (!ctype_digit($pc) || (int)$pc < 1 || (int)$pc > 99)) { flash('Please type a % between 1 and 99, or leave it empty.'); go(['offer' => 1]); }
+      if ($pc !== '' && $realMax && (int)$pc > $realMax) { $pc = (string)$realMax; $capped = true; }
+      fomaxo_setting($pdo, 'sale_pct', $pc);
+    }
     if (!isset($_POST['all_off'])) { fomaxo_setting($pdo, 'sale_popup', isset($_POST['popup']) ? '1' : '0'); fomaxo_setting($pdo, 'sale_line', isset($_POST['line']) ? '1' : '0'); }
-    flash($mode === 'off' ? 'The offer is off: no popup and no line on the website.' : 'Offer saved.', true); go(['offer' => 1]);
+    flash($mode === 'off' ? 'The offer is off: no popup and no line on the website.' : 'Offer saved.' . ($capped ? " The % was set to $realMax%, the biggest real saving on your products (old price vs price)." : ''), true); go(['offer' => 1]);
   }
   $e = (int)fomaxo_setting($pdo, 'sale_ends'); $on = $e > time(); $l = $e - time(); $al = (string)fomaxo_setting($pdo, 'sale_always') === '1';
   $mode = $on ? 'date' : ($al ? 'always' : 'off');
   $pop = (string)fomaxo_setting($pdo, 'sale_popup') !== '0'; $line = (string)fomaxo_setting($pdo, 'sale_line') !== '0';
+  $pct = (string)fomaxo_setting($pdo, 'sale_pct');
   $what = array_filter([$pop ? 'popup' : '', $line ? 'line by prices' : '']);
   $state = $mode === 'off' ? '<span class="lvl-low">●</span> Off: nothing shows on the website.'
     : '<span class="lvl-ok">●</span> On' . ($mode === 'date' ? ': ends ' . date('d/m/Y, g:i a', $e) . ' (' . ($l >= 86400 ? floor($l / 86400) . 'd ' : '') . floor($l % 86400 / 3600) . 'h ' . floor($l % 3600 / 60) . 'm left)' : ': always on, no timer') . '. Showing: ' . ($what ? implode(' + ', $what) : 'nothing (both switches off)') . '.';
@@ -771,11 +782,14 @@ if (isset($_GET['offer'])) {
     . '<div class="sg2"><div><label for="sale_end_d">Ends</label><input id="sale_end_d" type="date" name="sale_end_d" value="' . ($on ? date('Y-m-d', $e) : '') . '"></div><div><label for="sale_end_t">End time (UAE)</label><input id="sale_end_t" type="time" name="sale_end_t" value="' . ($on ? date('H:i', $e) : '') . '"></div></div></div>'
     . $radio('always', 'Always on (no timer)', '"Limited time offer · HURRY UP!!!" with no clock, until you turn it off.')
     . $radio('off', 'Off', 'Nothing shows on the website.')
+    . '<h2>Discount %</h2>'
+    . '<label class="om" style="cursor:default;align-items:center"><span style="flex:1"><b>% shown in the popup</b><small>Leave empty to show the biggest real saving' . ($realMax ? ' (now ' . $realMax . '%)' : '') . '. It can\'t be more than that: set the old prices on Products first.</small></span>'
+    . '<span style="display:flex;align-items:center;gap:6px;flex:none"><input name="pct" type="number" min="1" max="' . ($realMax ?: 99) . '" step="1" inputmode="numeric" value="' . h($pct) . '" placeholder="' . ($realMax ?: '') . '" style="width:84px;margin:0;text-align:center">%</span></label>'
     . '<h2>What shows</h2>'
     . $box('popup', $pop, 'Popup', 'The box with × that opens a few seconds after someone arrives (once per visit, never on checkout).')
     . $box('line', $line, 'Line by sale prices', '"Limited time offer · Ends in …" on the product page and shop cards of items with an old price.')
     . '<p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Save</button>' . ($mode !== 'off' ? '<button class="btn line" name="all_off" value="1">Turn everything off</button>' : '') . '</p>'
-    . '<p class="muted small" style="margin:10px 0 0">The popup shows the biggest real saving among products with an old price (set on Products). Prices are not changed here.</p></form>'
+    . '<p class="muted small" style="margin:10px 0 0">Old prices are set on Products. Prices are not changed here.</p></form>'
     . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},e=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000+b.dataset.h*3600000);'
     . 'set("sale_end_d",e.getFullYear()+"-"+p(e.getMonth()+1)+"-"+p(e.getDate()));set("sale_end_t",p(e.getHours())+":"+p(e.getMinutes()));f.querySelector("input[name=mode][value=date]").checked=true;document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}});'
     . 'document.querySelectorAll(".odate input").forEach(function(i){i.addEventListener("input",function(){document.querySelector("input[name=mode][value=date]").checked=true})})</script>');
