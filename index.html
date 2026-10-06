@@ -1596,8 +1596,7 @@ html[data-mode="light"] .co-img i{color:#fffaf1}
 .co-item .price{font-size:17px}
 .co-item .price.lp{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-size:20px;line-height:1.15}   /* AJAY: old price small on top, new price bigger, right aligned */
 .co-item .price.lp .was{font-size:.6em;margin:0}
-.co-item .price.lp{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-size:20px;line-height:1.15}   /* AJAY: old price small on top, new price bigger, right aligned */
-.co-item .price.lp .was{font-size:.6em;margin:0}
+@media(min-width:901px){.co-item .price.lp{flex-direction:row;align-items:baseline;column-gap:10px}}   /* AJAY: laptop old price then new price on one line */
 .co-free select{margin-top:5px;width:100%;max-width:200px;padding:6px 8px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font-size:14px}
 .co-free .price{font-family:var(--sans);font-size:12px;letter-spacing:.2em;color:#5fc48c}
 .co-sum .co-small{margin-top:12px}
