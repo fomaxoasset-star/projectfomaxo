@@ -169,7 +169,8 @@ label.mini{display:none}
 .agrid{grid-template-rows:minmax(0,1fr)}
 .fun li{display:block;padding:5px 0;border-bottom:0}.fl{display:flex;justify-content:space-between;gap:8px;font-size:13px}.fb{height:7px;background:var(--line);border-radius:4px;margin:3px 0 0;overflow:hidden}.fb i{display:block;height:100%;background:var(--gold);border-radius:4px}
 .fd{font-size:11.5px;color:var(--bad);margin-left:4px;white-space:nowrap}.fun li.fx{padding-top:8px;line-height:1.5}
-.leads li{display:block}.leads .lt{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.leads .lt .r{margin-left:auto}.items1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.leads .tag{font-size:11px;padding:1px 8px}
+.leads li{display:block}
+.lxl li.lx{padding:0;border-bottom:1px solid var(--line)}.lx summary{list-style:none;display:flex;align-items:center;gap:8px;padding:7px 2px;cursor:pointer;min-height:34px}.lx summary::-webkit-details-marker{display:none}.lx summary::before{content:'›';color:var(--gold);font-size:16px;line-height:1;transition:transform .15s;flex:none;width:10px}.lx details[open] summary::before{transform:rotate(90deg)}.lx .ln{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lx .ln .muted{font-size:12px;margin-left:4px}.lx .lv{flex:none;font-weight:600;font-variant-numeric:tabular-nums}.lx .wa{flex:none;font-size:11px;font-weight:700;letter-spacing:.03em;text-decoration:none;color:#25d366;border:1px solid #25d366;border-radius:14px;padding:3px 9px}.lx .wa.none{border:0;padding:0;width:0}.lx .wa svg{display:none;width:15px;height:15px}.lxl{container-type:inline-size}@container (max-width:340px){.lx summary{gap:6px}.lx .ln .muted{display:none}.lx .lv{font-size:13px}.lx .wa{width:26px;height:26px;padding:0;border-radius:50%;display:grid;place-items:center}.lx .wa svg{display:block}.lx .wa span{display:none}}.lx .ld{display:grid;gap:3px;padding:0 4px 9px 20px}.lx .ld .tag{font-size:11px;padding:1px 8px}.leads .lt{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.leads .lt .r{margin-left:auto}.items1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.leads .tag{font-size:11px;padding:1px 8px}
 .stage-details{color:var(--muted)}.stage-payment{color:var(--warn)}.stage-card{color:var(--bad)}
 table.mini{border:0;border-radius:0;background:none;font-size:13px;overflow:visible}table.mini th,table.mini td{padding:5px 6px}table.mini th:first-child,table.mini td:first-child{padding-left:0}table.mini th:last-child,table.mini td:last-child{padding-right:0}
 table.mini th{position:sticky;top:0;background:var(--panel)}
@@ -184,9 +185,11 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
   .tiles.at .tile:last-child{grid-column:span 2}
 }
 @media (min-width:760px){.tiles.at{grid-template-columns:repeat(8,1fr)}.tiles.at .tile b{font-size:19px}
-  .agrid{grid-template-columns:minmax(0,1.05fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"funnel visitors countries left" "products sources emirates left"}
+  .agrid{grid-template-columns:minmax(0,1.05fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"funnel visitors countries emirates" "products sources left left"}
   .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}.a-countries{grid-area:countries}.a-emirates{grid-area:emirates}.agrid>.a-returning{display:none}}
 .agrid .list[hidden]{display:none!important}.gbar{width:28%}.gbar .fb{margin:0}.gnote{margin:6px 0 0;flex:none}.a-countries .ch,.a-emirates .ch{flex-wrap:wrap;gap:6px}.gseg button{padding:3px 7px}.gseg{max-width:100%;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}.gseg::-webkit-scrollbar{display:none}.gseg button{flex:none;white-space:nowrap}.a-left .ch{gap:8px}.a-left .ch .btn{flex:none}.a-left .ch h2{min-width:0;flex:1 1 0;white-space:normal;overflow:visible}.a-countries .ch h2,.a-emirates .ch h2{flex:1 1 100%}@media (min-width:760px) and (max-width:1199px){.agrid table.mini{font-size:11.5px}.agrid table.mini th,.agrid table.mini td{padding:5px 3px;letter-spacing:0}}@media (min-width:760px){.gtab{table-layout:fixed;width:100%}.gtab .gbar{display:none}.gtab th:nth-child(2){width:64px}.gtab th:nth-child(4){width:52px}.gtab td:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+/* phone turned sideways (short screen): Analytics scrolls as a page and each section keeps a readable height */
+@media (min-width:760px) and (max-height:540px){main.fit:has(>.db.an){display:block;overflow:auto}main.fit>.db.an{height:auto;min-height:0}.an .agrid{flex:none;height:auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:290px 290px 290px 360px;grid-template-areas:"funnel visitors" "products sources" "countries emirates" "left left"}.tiles.at{grid-template-columns:repeat(4,1fr)}.tiles.at .tile:last-child{grid-column:auto}}
 /* phone: no zooming by itself (iPhone zooms into boxes under 16px, double-tap zooms); two-finger pinch still works */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overflow-x:hidden}
 @media (max-width:759px){input,select,textarea{font-size:16px!important}
@@ -956,17 +959,14 @@ if (isset($_GET['analytics'])) {
     $leftN[$l['stage']] = ($leftN[$l['stage']] ?? 0) + 1;
     $wa = preg_replace('/\D/', '', $l['phone']); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1);
     $recent = strtotime($l['updated_at']) > time() - 900;
-    $left .= '<li><div class="lt"><b>' . h($l['name'] ?: 'No name') . '</b>' . ($l['phone'] !== '' ? ' <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">' . h($l['phone']) . '</a>' : '')
-           . '<span class="r">' . ($l['total'] !== null ? '<b>' . money($l['total']) . '</b>' : '') . '</span></div>'
-           . '<div class="small"><span class="tag stage-' . h($l['stage']) . '">Left at ' . h($stageName[$l['stage']] ?? $l['stage']) . '</span> <span class="muted">' . h(date('d M, H:i', strtotime($l['updated_at']))) . ($recent ? ' · may still be checking out' : '') . ($l['emirate'] !== '' ? ' · ' . h($l['emirate']) : '') . '</span></div>'
-           . (($l['address'] ?? '') !== '' ? '<div class="muted small items1">' . h($l['address']) . '</div>' : '')
-           . ($l['items'] !== '' ? '<div class="muted small items1">' . h($l['items']) . '</div>' : '') . '</li>';
-    $leftM .= '<tr><td><b>' . h($l['name'] ?: 'No name') . '</b>' . ($l['phone'] !== '' ? '<a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">' . h($l['phone']) . '</a>' : '')
-            . ($l['email'] !== '' ? '<span class="muted">' . h($l['email']) . '</span>' : '')
-            . '<span class="lm-s"><span class="tag stage-' . h($l['stage']) . '">' . h($stageName[$l['stage']] ?? $l['stage']) . '</span></span></td>'
-            . '<td><b>' . h($l['emirate'] !== '' ? $l['emirate'] : '—') . '</b>' . (($l['address'] ?? '') !== '' ? '<span>' . h($l['address']) . '</span>' : '')
-            . '<span class="muted">' . h(date('d M, H:i', strtotime($l['updated_at']))) . ($l['total'] !== null ? ' · ' . money($l['total']) : '') . ($recent ? ' · may still be checking out' : '') . '</span>'
-            . ($l['items'] !== '' ? '<span class="muted">' . h($l['items']) . '</span>' : '') . '</td></tr>';
+    /* one line per person (name, emirate, bag value, WhatsApp); tap the line for everything else */
+    $left .= '<li class="lx"><details><summary><span class="ln"><b>' . h($l['name'] ?: 'No name') . '</b>' . ($l['emirate'] !== '' ? ' <span class="muted">' . h($l['emirate']) . '</span>' : '') . '</span>'
+           . '<span class="lv">' . ($l['total'] !== null ? money($l['total']) : '') . '</span>'
+           . ($l['phone'] !== '' ? '<a class="wa" href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener" aria-label="WhatsApp ' . h($l['name'] ?: $l['phone']) . '"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg><span>WhatsApp</span></a>' : '<span class="wa none"></span>') . '</summary>'
+           . '<div class="ld small"><div><span class="tag stage-' . h($l['stage']) . '">Left at ' . h($stageName[$l['stage']] ?? $l['stage']) . '</span> <span class="muted">' . h(date('d M, H:i', strtotime($l['updated_at']))) . ($recent ? ' · may still be checking out' : '') . '</span></div>'
+           . '<div>' . h($l['phone']) . ($l['email'] !== '' ? ' · ' . h($l['email']) : '') . '</div>'
+           . (($l['address'] ?? '') !== '' ? '<div>' . h($l['address']) . '</div>' : '')
+           . ($l['items'] !== '' ? '<div class="muted">' . h($l['items']) . '</div>' : '') . '</div></details></li>';
   }
 
   /* funnel: each step counts visits (one person can visit more than once) */
@@ -1018,7 +1018,7 @@ if (isset($_GET['analytics'])) {
     . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a bar to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p></section>'
     . $retCard
     . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout</h2><a class="btn line sm" href="./?analytics=1&amp;leads=1">Excel</a></div>' . (array_sum($leftN) ? '<p class="muted small" style="margin:0 0 4px">' . implode(' · ', array_map(fn($k) => $leftN[$k] . ' at ' . strtolower($stageName[$k]), array_keys(array_filter($leftN)))) . '</p>' : '')
-    . ($left ? '<ul class="list leads ldesk">' . $left . '</ul><div class="list lmob"><table class="mini ltab"><thead><tr><th>Name</th><th>Emirate · Address</th></tr></thead><tbody>' . $leftM . '</tbody></table></div>' : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
+    . ($left ? '<ul class="list leads lxl">' . $left . '</ul>' : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
     . '<section class="card a-sources" data-p="sources"><div class="ch"><h2>Where visitors come from</h2></div>'
     . ($src ? '<div class="list"><table class="mini"><thead><tr><th>Source</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th></tr></thead><tbody>' . $src . '</tbody></table></div>' : '<p class="muted empty">No visits yet.</p>') . '</section>'
     . '<section class="card a-products" data-p="products"><div class="ch"><h2>Products</h2></div>'
