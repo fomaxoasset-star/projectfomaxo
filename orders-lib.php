@@ -362,6 +362,32 @@ function fomaxo_report($pdo, $year = null) {
   return $rows;
 }
 
+/* the same report for any dates: one row for every day of the period (or every month when $byMonth) */
+function fomaxo_report_span($pdo, $d1, $d2, $byMonth = false) {
+  $len = $byMonth ? 7 : 10; $rows = [];
+  $blank = ['orders' => 0, 'sales' => 0.0, 'discount' => 0.0, 'fees' => 0.0, 'cogs' => 0.0, 'no_cost' => 0, 'expenses' => 0.0, 'stock_bought' => 0.0];
+  for ($t = strtotime($d1); $t <= strtotime($d2); $t = strtotime($byMonth ? 'first day of next month' : '+1 day', $t)) $rows[substr(date('Y-m-d', $t), 0, $len)] = $blank;
+  $costs = fomaxo_cost_map($pdo);
+  $s = $pdo->prepare("SELECT created_at, total, discount, fee, cost, lines_json FROM fx_orders WHERE status IN ('New', 'Paid', 'Delivered') AND test = 0 AND created_at BETWEEN ? AND ?");
+  $s->execute(["$d1 00:00:00", "$d2 23:59:59"]);
+  foreach ($s as $o) {
+    $k = substr($o['created_at'], 0, $len); $rows[$k] ??= $blank; $r = &$rows[$k];
+    $r['orders']++; $r['sales'] += (float)$o['total']; $r['discount'] += (float)$o['discount']; $r['fees'] += (float)$o['fee'];
+    $c = $o['cost'] !== null ? (float)$o['cost'] : ($o['lines_json'] ? fomaxo_cost_of(json_decode($o['lines_json'], true) ?: [], $costs) : null);
+    if ($c === null) $r['no_cost']++; else $r['cogs'] += $c;
+    unset($r);
+  }
+  $s = $pdo->prepare('SELECT day, category, amount FROM fx_expenses WHERE day BETWEEN ? AND ?'); $s->execute([$d1, $d2]);
+  foreach ($s as $e) {
+    $k = substr($e['day'], 0, $len); $rows[$k] ??= $blank;
+    if ($e['category'] === 'Stock purchase') $rows[$k]['stock_bought'] += (float)$e['amount']; else $rows[$k]['expenses'] += (float)$e['amount'];
+  }
+  ksort($rows);
+  foreach ($rows as &$r) $r['profit'] = round($r['sales'] - $r['cogs'] - $r['expenses'], 2);
+  unset($r);
+  return $rows;
+}
+
 /* ---- store emails ----
    Sent through the mail@fomaxo.com mailbox (Hostinger SMTP, signed for fomaxo.com) once its password is saved in
    fomaxo.com/admin → Settings, so they do not land in spam. The password sits in fomaxo-mail-config.php ONE LEVEL ABOVE

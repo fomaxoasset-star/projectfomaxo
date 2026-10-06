@@ -265,7 +265,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:
 .dmy{position:relative;display:block;min-width:0}.arange .dmy{display:inline-block}.dmy>input.dt{width:100%!important;padding-right:30px!important;font-variant-numeric:tabular-nums}
 .dmy>input[type=date]{position:absolute!important;right:0;top:0;bottom:0;width:30px!important;min-width:0!important;height:100%;padding:0!important;margin:0;border:0!important;opacity:0;cursor:pointer;flex:none!important}.dmy>input[type=date]::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:auto;height:auto;opacity:0;cursor:pointer}
 .arange .dmy>input.dt{padding:4px 7px;font-size:12.5px;width:118px!important}@media (max-width:759px){.arange .dmy>input.dt{width:100%!important;padding:5px 30px 5px 8px!important;border-radius:8px}}.dmy>svg{position:absolute;right:9px;top:50%;width:14px;height:14px;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
-.exsum{margin:14px 0 8px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.exsum small{font-family:Manrope,sans-serif;font-size:14px;letter-spacing:0;text-transform:none;color:var(--muted)}@media (max-width:759px){.tile.wr span{white-space:normal;line-height:1.25}}.rgbar{display:flex;justify-content:flex-end;margin:0 0 10px}.rgbar .arange,.pagehead.rg .arange{justify-content:flex-end}@media (max-width:759px){.rgbar{margin-bottom:8px}.rgbar .arange{width:100%}}
+.exsum{margin:14px 0 8px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.exsum small{font-family:Manrope,sans-serif;font-size:14px;letter-spacing:0;text-transform:none;color:var(--muted)}@media (max-width:759px){.tile.wr span{white-space:normal;line-height:1.25}}.rep tr[data-href]{cursor:pointer}.rep tr[data-href]:hover td{background:rgba(201,169,97,.08)}a.stat{color:inherit;text-decoration:none}a.stat.on{border-color:var(--gold)}@media (hover:hover){a.stat:hover{border-color:var(--gold)}}.rgbar{display:flex;justify-content:flex-end;margin:0 0 10px}.rgbar .arange,.pagehead.rg .arange{justify-content:flex-end}@media (max-width:759px){.rgbar{margin-bottom:8px}.rgbar .arange{width:100%}}
 /* app layout: header and tabs stay put, the page never scrolls, long lists scroll inside their own panel */
 html,body{height:100%}
 body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
@@ -1225,7 +1225,8 @@ if (isset($_GET['analytics'])) {
 if (isset($_GET['reports'])) {
   $years = $pdo->query("SELECT DISTINCT YEAR(created_at) y FROM fx_orders UNION SELECT DISTINCT YEAR(day) FROM fx_expenses ORDER BY y DESC")->fetchAll(PDO::FETCH_COLUMN);
   if (!in_array((int)date('Y'), array_map('intval', $years), true)) array_unshift($years, date('Y'));
-  $year = (int)($_GET['y'] ?? date('Y')); if ($year < 2000 || $year > 2100) $year = (int)date('Y');
+  $rg = adm_range('reports', '30', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
+  $year = (int)($_GET['y'] ?? ($rg['r'] === 'custom' ? substr($rg['d2'], 0, 4) : date('Y'))); if ($year < 2000 || $year > 2100) $year = (int)date('Y');
   $rows = fomaxo_report($pdo, $year);
   $all = fomaxo_report($pdo, null);
   $cols = ['orders' => 'Orders', 'sales' => 'Sales', 'cogs' => 'Cost of goods', 'expenses' => 'Expenses', 'profit' => 'Profit / loss', 'discount' => 'Discounts given', 'fees' => 'COD fees in sales', 'stock_bought' => 'Stock bought'];
@@ -1247,23 +1248,37 @@ if (isset($_GET['reports'])) {
 
   $cell = fn($k, $v) => $k === 'orders' ? (int)$v : ($k === 'profit' ? '<b class="' . ($v < 0 ? 'lvl-out' : 'lvl-ok') . '">' . ($v < 0 ? '−' : '') . money(abs($v)) . '</b>' : money($v));
   $main = ['orders', 'sales', 'cogs', 'expenses', 'profit'];
-  $table = function ($rs, $labelFn, $total = null) use ($cols, $main, $cell) {
+  $table = function ($rs, $labelFn, $total = null, $hrefFn = null) use ($cols, $main, $cell) {
     $h = '<table class="rep"><thead><tr><th></th>' . implode('', array_map(fn($k) => '<th class="num">' . h($cols[$k]) . '</th>', $main)) . '</tr></thead><tbody>';
     foreach ($rs as $k => $r) { $empty = !$r['orders'] && !$r['expenses'] && !$r['stock_bought'];
-      $h .= '<tr class="' . ($empty ? 'dim' : '') . '"><td class="per">' . h($labelFn($k)) . '</td>' . implode('', array_map(fn($c) => '<td class="num" data-l="' . h($cols[$c]) . '">' . $cell($c, $r[$c]) . '</td>', $main)) . '</tr>'; }
+      $h .= '<tr class="' . ($empty ? 'dim' : '') . '"' . ($hrefFn ? ' data-href="' . h($hrefFn($k)) . '" onclick="location.href=this.dataset.href"' : '') . '><td class="per">' . h($labelFn($k)) . '</td>' . implode('', array_map(fn($c) => '<td class="num" data-l="' . h($cols[$c]) . '">' . $cell($c, $r[$c]) . '</td>', $main)) . '</tr>'; }
     if ($total) $h .= '<tr class="tot"><td class="per">' . h($total[0]) . '</td>' . implode('', array_map(fn($c) => '<td class="num" data-l="' . h($cols[$c]) . '">' . $cell($c, $total[1][$c] ?? 0) . '</td>', $main)) . '</tr>';
     return $h . '</tbody></table>';
   };
+  /* tap a month, a year or a box to see those dates in the period table */
+  $go = fn($d1, $d2) => self_url(['reports' => 1, 'y' => (int)substr($d1, 0, 4), 'r' => 'custom', 'd1' => $d1, 'd2' => $d2]);
+  $mHref = fn($k) => $go("$k-01", date('Y-m-t', strtotime("$k-01")));
+  $yHref = fn($k) => $go("$k-01-01", "$k-12-31");
+  if ($rg['span']) { $nDays = (int)round((strtotime($rg['d2']) - strtotime($rg['d1'])) / 86400) + 1; $byM = $nDays > 92; $prd = fomaxo_report_span($pdo, $rg['d1'], $rg['d2'], $byM); }
+  else { $byM = false; $prd = $all; }
+  $P = $tot($prd);
+  $prdLabel = fn($k) => $rg['span'] ? date($byM ? 'M Y' : 'D j M', strtotime($byM ? "$k-01" : $k)) : (string)$k;
+  $prdHref = $rg['span'] ? ($byM ? $mHref : null) : $yHref;
   $thisM = $rows[date('Y-m')] ?? null;
+  $box = fn($val, $label, $href, $on, $cls = '') => '<a class="stat' . ($on ? ' on' : '') . '" href="' . h($href) . '"><b class="' . $cls . '">' . $val . '</b><span>' . $label . '</span></a>';
+  $pf = fn($v) => ($v < 0 ? '−' : '') . money(abs($v));
+  $isM = $rg['r'] === 'custom' && $rg['d1'] === date('Y-m-01') && $rg['d2'] === date('Y-m-t');
+  $isY = $rg['r'] === 'custom' && $rg['d1'] === "$year-01-01" && $rg['d2'] === "$year-12-31";
   $yOpts = implode('', array_map(fn($y) => '<option' . ((int)$y === $year ? ' selected' : '') . '>' . (int)$y . '</option>', $years));
-  page('Reports', '<h1>Profit &amp; loss</h1>'
-    . ($thisM ? '<div class="stats rstats"><div class="stat"><b>' . money($thisM['sales']) . '</b><span>Sales this month</span></div><div class="stat"><b class="' . ($thisM['profit'] < 0 ? 'lvl-out' : 'lvl-ok') . '">' . ($thisM['profit'] < 0 ? '−' : '') . money(abs($thisM['profit'])) . '</b><span>Profit this month</span></div>'
-             . '<div class="stat"><b>' . money($T['sales'] ?? 0) . '</b><span>Sales ' . $year . '</span></div><div class="stat"><b class="' . (($T['profit'] ?? 0) < 0 ? 'lvl-out' : 'lvl-ok') . '">' . (($T['profit'] ?? 0) < 0 ? '−' : '') . money(abs($T['profit'] ?? 0)) . '</b><span>Profit ' . $year . '</span></div></div>' : '')
+  page('Reports', '<div class="pagehead rg"><h1>Profit &amp; loss</h1>' . adm_range_form($rg, ['reports' => 1]) . '</div>'
+    . ($thisM ? '<div class="stats rstats">' . $box(money($thisM['sales']), 'Sales this month', $mHref(date('Y-m')), $isM) . $box($pf($thisM['profit']), 'Profit this month', $mHref(date('Y-m')), $isM, $thisM['profit'] < 0 ? 'lvl-out' : 'lvl-ok')
+             . $box(money($T['sales'] ?? 0), 'Sales ' . $year, $yHref($year), $isY) . $box($pf($T['profit'] ?? 0), 'Profit ' . $year, $yHref($year), $isY, ($T['profit'] ?? 0) < 0 ? 'lvl-out' : 'lvl-ok') . '</div>' : '')
     . '<form class="yearbar" method="get"><input type="hidden" name="reports" value="1"><label for="y">Year</label><select id="y" name="y" onchange="this.form.submit()">' . $yOpts . '</select>'
     . '<a class="btn line" href="' . h(self_url(['reports' => 1, 'y' => $year, 'export' => 1])) . '">Download Excel</a></form>'
     . ($missing ? '<p class="msg bad">' . $missing . ' order' . ($missing > 1 ? 's' : '') . ' in ' . $year . ' ha' . ($missing > 1 ? 've' : 's') . ' no cost price, so profit is too high. Type the cost of each bottle on the <a href="./?stock=1">Stock</a> page.</p>' : '')
-    . '<div class="fill rfill"><h2>' . $year . ' by month</h2>' . $table($rows, fn($k) => date('M Y', strtotime("$k-01")), ["Total $year", $T])
-    . '<h2>By year</h2>' . $table($all, fn($k) => (string)$k)
+    . '<div class="fill rfill"><h2>' . h($rg['r'] === 'all' ? 'All time by year' : $rg['label'] . ($byM ? ' by month' : ' by day')) . '</h2>' . $table($prd, $prdLabel, ['Total', $P], $prdHref)
+    . '<h2>' . $year . ' by month</h2>' . $table($rows, fn($k) => date('M Y', strtotime("$k-01")), ["Total $year", $T], $mHref)
+    . ($rg['r'] === 'all' ? '' : '<h2>By year</h2>' . $table($all, fn($k) => (string)$k, null, $yHref))
     . '<p class="muted small after">Sales are what customers paid (VAT included, COD fee included) for New, Paid and Delivered orders; cancelled orders, unpaid card attempts and test payments are left out. Cost of goods is the cost price of the bottles sold, including free minis. Profit = sales − cost of goods − expenses. In ' . $year . ': discounts given ' . money($T['discount'] ?? 0) . ', COD fees ' . money($T['fees'] ?? 0) . ', stock bought ' . money($T['stock_bought'] ?? 0) . ' (not taken off profit).</p></div>', true, true);
 }
 
