@@ -1306,8 +1306,6 @@ html{scroll-padding-top:calc(var(--ann-h,40px) + 80px)}
   .shop-grid .card .acts{grid-template-columns:1fr;gap:6px}
   .shop-grid .card .acts .btn{min-height:42px;padding:0 6px;font-size:10.5px;letter-spacing:.14em}
 }
-.co .form .row2>label{align-content:start}
-.co .form label .co-ph-hint{margin-top:-2px;font-size:11.5px;letter-spacing:.02em;text-transform:none;color:var(--muted)}
 /* bag: one-tap add for the next multi-buy level */
 .qd-add{display:block;margin-top:10px;padding:8px 12px;border:1px solid var(--line-2);color:var(--gold-hi);font-size:12.5px;letter-spacing:.06em;text-align:left;line-height:1.35;transition:.3s}
 .qd-add:hover{border-color:var(--gold);background:rgba(215,170,105,.08)}
@@ -3030,7 +3028,7 @@ function checkoutPage(q){
           <h2 id="coStep1"><span>1</span>Delivery details</h2>
           <p class="co-err" id="coErr1" role="alert" hidden></p>
           <label>Full name<input name="name" autocomplete="name" maxlength="80" required></label>
-          <div class="row2"><label>Mobile<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971 50 123 4567" maxlength="20" required><small class="co-ph-hint">Not a UAE number? Type your country code, e.g. +966 or +44</small></label>
+          <div class="row2"><label>Mobile<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971 50 123 4567" maxlength="20" required></label>
             <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></label></div>
           <label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
           <div class="co-ar co-ar1">
@@ -3067,12 +3065,6 @@ function bindCheckout(q){
   CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = CO_CAPS.includes(k) ? capWords(d0[k]) : d0[k]; });
   CO_CAPS.forEach(k => form.elements[k] && form.elements[k].setAttribute('autocapitalize', 'words'));
   const details = () => Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()]));
-  // UAE numbers: the mobile box starts with +971 when the customer taps into it, and is emptied again if nothing was added
-  const ph = form.elements.phone;
-  ph.addEventListener('focus', () => { if (!ph.value.trim()) { ph.value = '+971 '; try { ph.setSelectionRange(5, 5); } catch(x) {} } });
-  // not a UAE number: typing another code (+966…) replaces the +971; on leaving the box 00966… becomes +966… and a local 05… loses its 0
-  ph.addEventListener('input', () => { const w = ph.value.replace(/^\+971\s*(?=\+)/, ''); if (w !== ph.value) ph.value = w; });
-  ph.addEventListener('blur', () => { let v = ph.value.trim(); if (v.replace(/\D/g, '') === '971') v = ''; v = v.replace(/^\+971\s*00(?=[1-9])/, '+').replace(/^\+971\s*0(?=[1-9])/, '+971 '); if (v !== ph.value) { ph.value = v; ph.dispatchEvent(new Event('input', {bubbles: true})); } });
   const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad');
     const t = e.target; if (CO_CAPS.includes(t.name)) { const v = capWords(t.value); if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} } } const key = JSON.stringify(details()); try { localStorage.setItem('fomaxo_details', key); } catch(x) {} if (!busy && key !== drawnKey) { drawnKey = key; draw(); } };
   // redraw only when a detail really changed: leaving a box (change) would otherwise rebuild the payment options under the customer's finger and swallow that tap
