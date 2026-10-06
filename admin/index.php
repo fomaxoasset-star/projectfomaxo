@@ -186,10 +186,11 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 }
 @media (min-width:760px){.tiles.at{grid-template-columns:repeat(8,1fr)}.tiles.at .tile b{font-size:19px}
   .agrid{grid-template-columns:minmax(0,1.05fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"funnel visitors countries emirates" "products sources left left"}
-  .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}.a-countries{grid-area:countries}.a-emirates{grid-area:emirates}.agrid>.a-returning{display:none}}
+  .a-funnel{grid-area:funnel}.a-visitors{grid-area:visitors}.a-left{grid-area:left}.a-sources{grid-area:sources}.a-products{grid-area:products}.a-countries{grid-area:countries}.a-emirates{grid-area:emirates}.a-devices{grid-area:devices}.agrid>.a-returning,.agrid>.a-devices{display:none}}
 .agrid .list[hidden]{display:none!important}.gbar{width:28%}.gbar .fb{margin:0}.gnote{margin:6px 0 0;flex:none}.a-countries .ch,.a-emirates .ch{flex-wrap:wrap;gap:6px}.gseg button{padding:3px 7px}.gseg{max-width:100%;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}.gseg::-webkit-scrollbar{display:none}.gseg button{flex:none;white-space:nowrap}.a-left .ch{gap:8px}.a-left .ch .btn{flex:none}.a-left .ch h2{min-width:0;flex:1 1 0;white-space:normal;overflow:visible}.a-countries .ch h2,.a-emirates .ch h2{flex:1 1 100%}@media (min-width:760px) and (max-width:1199px){.agrid table.mini{font-size:11.5px}.agrid table.mini th,.agrid table.mini td{padding:5px 3px;letter-spacing:0}}@media (min-width:760px){.gtab{table-layout:fixed;width:100%}.gtab .gbar{display:none}.gtab th:nth-child(2){width:64px}.gtab th:nth-child(4){width:52px}.gtab td:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.dtab td b{font-weight:600}.dtab .fb{margin:4px 0 0;height:5px;max-width:140px}.a-devices{container-type:inline-size}.dstrip{display:none}@media (min-width:760px){.dstrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px;flex:none}.dstrip button{font:inherit;text-align:left;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--ink);cursor:pointer;line-height:1.25}.dstrip button:hover{border-color:var(--gold)}.dstrip b{display:block;font-size:15px;font-variant-numeric:tabular-nums}.dstrip span{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}}@media (min-width:760px) and (max-height:540px){.dstrip{display:none}}@container (max-width:380px){.dtab th:nth-child(2),.dtab td:nth-child(2),.dtab th:nth-child(3),.dtab td:nth-child(3),.dtab .fb{display:none}.dtab td{padding-top:4px;padding-bottom:4px}}
 /* phone turned sideways (short screen): Analytics scrolls as a page and each section keeps a readable height */
-@media (min-width:760px) and (max-height:540px){main.fit:has(>.db.an){display:block;overflow:auto}main.fit>.db.an{height:auto;min-height:0}.an .agrid{flex:none;height:auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:290px 290px 290px 360px;grid-template-areas:"funnel visitors" "products sources" "countries emirates" "left left"}.tiles.at{grid-template-columns:repeat(4,1fr)}.tiles.at .tile:last-child{grid-column:auto}}
+@media (min-width:760px) and (max-height:540px){main.fit:has(>.db.an){display:block;overflow:auto}main.fit>.db.an{height:auto;min-height:0}.an .agrid{flex:none;height:auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:290px 290px 290px 230px 360px;grid-template-areas:"funnel visitors" "products sources" "countries emirates" "devices devices" "left left".agrid>.a-devices{display:flex}}.tiles.at{grid-template-columns:repeat(4,1fr)}.tiles.at .tile:last-child{grid-column:auto}}
 /* phone: no zooming by itself (iPhone zooms into boxes under 16px, double-tap zooms); two-finger pinch still works */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overflow-x:hidden}
 @media (max-width:759px){input,select,textarea{font-size:16px!important}
@@ -218,9 +219,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:
   .tiles.at .tile.hot b{color:var(--ok,#6fbf73)}.tiles.at .tile.ret{display:none}.tiles.at .tile.rev{grid-column:1/-1}
   .rsum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin:2px 0 8px;flex:none}.rsum b{display:block;font-size:20px;font-weight:600}.rsum span{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .rtab td>b,.rtab td>span{display:block}.rtab td{vertical-align:top}.rtab td span{font-size:12px}
-  .apick{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:8px}
+  .apick{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:8px}
   .apick button{border:0;border-radius:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:none;color:var(--ink);font-weight:500;font-size:12.5px;padding:8px 2px;white-space:nowrap}
-  .apick button:nth-child(4n){border-right:0}.apick button:nth-child(n+5){border-bottom:0}.apick button[data-p=left]{white-space:normal;line-height:1.15}
+  .apick button:nth-child(3n){border-right:0}.apick button:nth-child(n+7){border-bottom:0}.apick button[data-p=left]{white-space:normal;line-height:1.15}
   .apick button.on{background:rgba(201,169,97,.16);border-color:var(--line);color:var(--gold)}
   .a-left .ch .btn{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
   .a-left .ldesk{display:none}.a-left .lmob{display:block}
@@ -913,6 +914,17 @@ if (isset($_GET['analytics'])) {
     $prod .= '<tr><td>' . h($names[$row['product']] ?? $row['product']) . '</td><td class="num">' . (int)$row['views'] . '</td><td class="num">' . (int)$row['adds'] . '</td><td class="num">' . $pctT($pct($row['adds'], $row['views'])) . '</td></tr>';
   $dev = [];
   foreach ($q("SELECT device, COUNT(DISTINCT sid) n FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY device ORDER BY n DESC") as $row) $dev[] = h(ucfirst($row['device'] ?: 'other')) . ' ' . $pctT($pct($row['n'], $f['visits']));
+  /* devices: phone, tablet or computer, read from the browser when the visit starts (the browser details themselves are not kept) */
+  $devN = ['phone' => 'Phone', 'tablet' => 'Tablet', 'computer' => 'Desktop'];
+  $devR = []; foreach ($devN as $k => $l) $devR[$k] = ['visitors' => 0, 'visits' => 0, 'bought' => 0];
+  foreach ($q("SELECT x.device, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND b.ev = 'buy')) bought
+               FROM (SELECT sid, MIN(vid) vid, MIN(device) device FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY sid) x
+               WHERE x.device IN ('phone', 'tablet', 'computer') GROUP BY x.device") as $row)
+    $devR[$row['device']] = ['visitors' => (int)$row['visitors'], 'visits' => (int)$row['visits'], 'bought' => (int)$row['bought']];
+  $devAll = array_sum(array_column($devR, 'visits'));
+  $devT = '';
+  foreach ($devN as $k => $l) { $r0 = $devR[$k]; $sh = $pct($r0['visits'], $devAll);
+    $devT .= '<tr><td><b>' . $l . '</b><div class="fb"><i style="width:' . min(100, round($sh, 1)) . '%"></i></div></td><td class="num">' . number_format($r0['visitors']) . '</td><td class="num">' . number_format($r0['visits']) . '</td><td class="num">' . number_format($r0['bought']) . '</td><td class="num">' . $pctT($pct($r0['bought'], $r0['visits'])) . '</td><td class="num"><b>' . $pctT($sh) . '</b></td></tr>'; }
 
   /* where visitors are: country of each visit, and the emirate for the UAE (looked up from the IP address when the visit starts; the address is not kept) */
   require_once dirname(__DIR__) . '/geo-lib.php';
@@ -984,7 +996,7 @@ if (isset($_GET['analytics'])) {
   $tile = fn($val, $label, $cls = '', $note = '') => '<div class="tile ' . $cls . '"><b>' . $val . '</b><span>' . $label . '</span>' . ($note !== '' ? '<small class="tn">' . $note . '</small>' : '') . '</div>';
   $dk = fn($desk, $mob) => '<span class="dk">' . $desk . '</span><span class="mo">' . $mob . '</span>';
   $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
-  $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'countries' => 'Countries', 'emirates' => 'Emirates', 'returning' => 'Returning', 'left' => 'Left at checkout'];
+  $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'countries' => 'Countries', 'emirates' => 'Emirates', 'devices' => 'Devices', 'returning' => 'Returning', 'left' => 'Left at checkout'];
   /* phone only: the Returning section (laptop shows the Returning box in the top row) */
   $retRows = '';
   uasort($ret['people'], fn($a, $b) => strcmp($b['last'], $a['last']));
@@ -1015,7 +1027,7 @@ if (isset($_GET['analytics'])) {
     . '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
     . '<div class="dgrid agrid">'
     . '<section class="card a-funnel on" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
-    . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a bar to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p></section>'
+    . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a bar to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p>' . ($devAll ? '<div class="dstrip" title="Tap for the full devices table">' . implode('', array_map(fn($k, $l) => '<button type="button" data-open="devices"><span>' . $l . '</span><b>' . $pctT($pct($devR[$k]['visits'], $devAll)) . '</b><span>' . number_format($devR[$k]['bought']) . ' bought</span></button>', array_keys($devN), $devN)) . '</div>' : '') . '</section>'
     . $retCard
     . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout</h2><a class="btn line sm" href="./?analytics=1&amp;leads=1">Excel</a></div>' . (array_sum($leftN) ? '<p class="muted small" style="margin:0 0 4px">' . implode(' · ', array_map(fn($k) => $leftN[$k] . ' at ' . strtolower($stageName[$k]), array_keys(array_filter($leftN)))) . '</p>' : '')
     . ($left ? '<ul class="list leads lxl">' . $left . '</ul>' : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
@@ -1025,13 +1037,15 @@ if (isset($_GET['analytics'])) {
     . ($prod ? '<div class="list"><table class="mini"><thead><tr><th>Product</th><th class="num">Viewed</th><th class="num">To bag</th><th class="num">Rate</th></tr></thead><tbody>' . $prod . '</tbody></table></div>' : '<p class="muted empty">No product views yet.</p>') . '</section>'
     . '<section class="card a-countries" data-p="countries"><div class="ch"><h2>Top countries</h2>' . $gSeg . '</div>' . $gCountries . '<p class="muted small gnote">' . $gNote . ' Location data by <a href="https://db-ip.com" target="_blank" rel="noopener">DB-IP</a>.</p></section>'
     . '<section class="card a-emirates" data-p="emirates"><div class="ch"><h2>UAE visitors by emirate</h2>' . $gSeg . '</div>' . $gEmirates . '<p class="muted small gnote">Approximate: phone networks often show Dubai or Abu Dhabi. ' . $gNote . '</p></section>'
+    . '<section class="card a-devices" data-p="devices"><div class="ch"><h2>Devices</h2></div>'
+    . ($devAll ? '<div class="list"><table class="mini dtab"><thead><tr><th>Device</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th><th class="num">Share</th></tr></thead><tbody>' . $devT . '</tbody></table></div>' : '<p class="muted empty">No visits in these dates.</p>') . '</section>'
     . '</div></div>'
     . '<script>document.querySelectorAll(".gseg button").forEach(function(b){b.addEventListener("click",function(){var c=b.closest(".card");c.querySelectorAll(".gseg button").forEach(function(x){x.classList.toggle("on",x===b)});c.querySelectorAll(".list[data-r]").forEach(function(x){x.hidden=x.dataset.r!==b.dataset.r})})});'
     . '(function(){var open=null,back=null;function shut(){if(!open)return;open.classList.remove("big");open.querySelector(".zoom").textContent="⤢";open.querySelector(".zoom").setAttribute("aria-label","Open bigger");back.remove();open=null;document.body.classList.remove("zoomed")}'
     . 'function show(c){shut();open=c;c.classList.add("big");var z=c.querySelector(".zoom");z.textContent="×";z.setAttribute("aria-label","Close");back=document.createElement("div");back.className="zback";back.onclick=shut;document.body.appendChild(back);document.body.classList.add("zoomed");c.scrollTop=0}'
     . 'document.querySelectorAll(".agrid>.card").forEach(function(c){var h=c.querySelector(".ch");if(!h)return;var b=document.createElement("button");b.type="button";b.className="zoom";b.textContent="⤢";b.setAttribute("aria-label","Open bigger");b.onclick=function(e){e.stopPropagation();open===c?shut():show(c)};h.appendChild(b);var t=h.querySelector("h2");if(t){t.style.cursor="pointer";t.onclick=function(){open===c?shut():show(c)}}});'
     . 'var map=["visitors","visitors","funnel","funnel","funnel","funnel","returning","funnel"];document.querySelectorAll(".tiles.at .tile").forEach(function(t,i){t.onclick=function(){var c=document.querySelector(".agrid>.card[data-p="+(t.classList.contains("ret")?"returning":t.classList.contains("rev")?"funnel":map[i])+"]");if(c)show(c)}});'
-    . 'document.addEventListener("keydown",function(e){if(e.key==="Escape")shut()})})();'
+    . 'document.querySelectorAll("[data-open]").forEach(function(b){b.onclick=function(e){e.stopPropagation();var c=document.querySelector(".agrid>.card[data-p="+b.dataset.open+"]");if(c)show(c)}});document.addEventListener("keydown",function(e){if(e.key==="Escape")shut()})})();'
     . 'document.querySelectorAll(".apick button").forEach(function(b){b.addEventListener("click",function(){document.querySelectorAll(".apick button,.agrid>.card").forEach(function(x){x.classList.toggle("on",x.dataset.p===b.dataset.p)})})});'
     . 'document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});</script>', true, true);
 }
