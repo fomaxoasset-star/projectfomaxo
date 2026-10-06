@@ -33,7 +33,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 13) return;
+  if ($ver >= 14) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -93,6 +93,15 @@ function fomaxo_db_schema($pdo) {
   if (!$pdo->query("SHOW COLUMNS FROM fx_events LIKE 'depth'")->fetch()) return;
   if (!fomaxo_setting($pdo, 'conv_since')) fomaxo_setting($pdo, 'conv_since', date('Y-m-d'));
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '13')");
+  /* v14: coupon codes made on fomaxo.com/admin → Coupons, and the code each order used */
+  fomaxo_coupons_table($pdo);
+  try { $pdo->exec("ALTER TABLE fx_orders ADD COLUMN coupon VARCHAR(30) NULL"); } catch (Throwable $e) {}
+  if (!$pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'coupon'")->fetch()) return;
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '14')");
+}
+function fomaxo_coupons_table($pdo) {
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_coupons (code VARCHAR(30) NOT NULL PRIMARY KEY, kind VARCHAR(3) NOT NULL DEFAULT 'pct', amount DECIMAL(10,2) NOT NULL,
+              min_order DECIMAL(10,2) NULL, expires DATE NULL, max_uses INT NULL, active TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NULL) DEFAULT CHARSET=utf8mb4");
 }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
@@ -212,6 +221,7 @@ function fomaxo_save_order($o) {
   $o += ['created_at' => (new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('Y-m-d H:i:s'), 'lines_json' => isset($o['lines']) ? json_encode($o['lines'], JSON_UNESCAPED_UNICODE) : null,
          'subtotal' => null, 'discount' => null, 'fee' => null, 'items' => null, 'free_mini' => null, 'ref' => null, 'test' => 0, 'total' => 0];
   $o['cost'] = isset($o['lines']) ? fomaxo_cost_of($o['lines'], fomaxo_cost_map($pdo)) : null;   // cost of goods at today's cost prices (kept, so later price changes don't rewrite old months)
+  if (!empty($o['coupon'])) $cols[] = 'coupon';   // the coupon code the order used (only sent when there is one)
   $vals = []; foreach ($cols as $c) $vals[] = is_bool($o[$c] ?? null) ? (int)$o[$c] : ($o[$c] ?? '');
   foreach (['subtotal', 'discount', 'fee', 'cost', 'items', 'lines_json', 'free_mini', 'ref'] as $c) if ($o[$c] === null) $vals[array_search($c, $cols)] = null;
   $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ') VALUES (?' . str_repeat(', ?', count($cols)) . ')');
@@ -252,6 +262,40 @@ function fomaxo_order_paid($no, $note = '') {
                    admin_note = TRIM(CONCAT(COALESCE(admin_note, ''), ' ', ?)) WHERE order_no = ? AND status = 'Awaiting payment'")->execute([$note, $no]);
     return true;
   } catch (Throwable $e) { error_log('FOMAXO order paid: ' . $e->getMessage()); return false; }
+}
+
+/* ================= coupon codes (made on fomaxo.com/admin → Coupons) =================
+   A coupon never adds to the multi-buy discount: the customer gets whichever saving is bigger (the free 10ml mini still applies).
+   Minimum order on a coupon counts the bag before any discount. */
+function fomaxo_coupon_norm($code) { return substr(preg_replace('/[^A-Z0-9_\-]/', '', strtoupper(trim((string)$code))), 0, 30); }
+/* orders that count as a use: placed and not cancelled, refunded, unpaid card attempts or test payments */
+function fomaxo_coupon_uses($pdo, $code) {
+  $s = $pdo->prepare("SELECT COUNT(*) FROM fx_orders WHERE coupon = ? AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')");
+  $s->execute([$code]); return (int)$s->fetchColumn();
+}
+function fomaxo_coupon_label($c) {
+  $a = (float)$c['amount']; $n = rtrim(rtrim(number_format($a, 2, '.', ''), '0'), '.');
+  return $c['kind'] === 'aed' ? "AED $n off" : "$n% off";
+}
+/* Finds a code that can be used now. Returns ['error' => …] or ['code', 'kind', 'amount', 'min', 'label'] */
+function fomaxo_coupon_find($code) {
+  $code = fomaxo_coupon_norm($code);
+  if ($code === '') return ['error' => 'Please type a coupon code.'];
+  $pdo = fomaxo_db(); if (!$pdo) return ['error' => 'Coupons are not available right now. Please try again later.'];
+  try { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$code]); $c = $s->fetch(); }
+  catch (Throwable $e) { error_log('FOMAXO coupon: ' . $e->getMessage()); return ['error' => 'Coupons are not available right now. Please try again later.']; }
+  if (!$c || !(int)$c['active'] || (float)$c['amount'] <= 0) return ['error' => 'This coupon code is not valid.'];
+  if ($c['expires'] && $c['expires'] < (new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('Y-m-d')) return ['error' => 'This coupon code has expired.'];
+  if ($c['max_uses'] !== null && fomaxo_coupon_uses($pdo, $code) >= (int)$c['max_uses']) return ['error' => 'This coupon code has been fully used.'];
+  return ['code' => $c['code'], 'kind' => $c['kind'] === 'aed' ? 'aed' : 'pct', 'amount' => (float)$c['amount'], 'min' => $c['min_order'] !== null ? (float)$c['min_order'] : 0,
+          'label' => fomaxo_coupon_label($c)];
+}
+/* What the code saves on a bag of $subFils (fils, before any discount). Returns ['error' => …] or the coupon plus 'saveFils'. */
+function fomaxo_coupon_apply($code, $subFils) {
+  $c = fomaxo_coupon_find($code); if (isset($c['error'])) return $c;
+  if ($c['min'] > 0 && $subFils < (int)round($c['min'] * 100)) return ['error' => 'This coupon code is for orders of AED ' . rtrim(rtrim(number_format($c['min'], 2, '.', ''), '0'), '.') . ' or more.'];
+  $c['saveFils'] = $c['kind'] === 'aed' ? min($subFils, (int)round($c['amount'] * 100)) : (int)round($subFils * min(100, $c['amount']) / 100);
+  return $c;
 }
 
 /* ================= stock ================= */

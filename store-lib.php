@@ -59,7 +59,7 @@ function fomaxo_price_order($in) {
     $unit = (int)round($p['prices'][$opt] * (100 - $linePct));   // price per item after multi-buy, in fils
     $fullFils += (int)round($p['prices'][$opt] * 100) * $qty;
     $netFils  += $unit * $qty;
-    $items[] = ['name' => $name, 'desc' => $desc, 'pct' => $linePct, 'unit' => $unit, 'qty' => $qty];
+    $items[] = ['name' => $name, 'desc' => $desc, 'pct' => $linePct, 'unit' => $unit, 'full' => (int)round($p['prices'][$opt] * 100), 'qty' => $qty];
     $summary[] = "$qty x $name" . ($desc ? " ($desc)" : '');
   }
 
@@ -70,7 +70,18 @@ function fomaxo_price_order($in) {
     if (!isset($CATALOG[$gid]['prices']['10'])) { $gid = ''; foreach ($CATALOG as $cid => $c) { if (isset($c['prices']['10'])) { $gid = $cid; break; } } }
     if ($gid !== '') { $gift = $CATALOG[$gid]['name']; $summary[] = "FREE 10ml $gift mini"; }
   }
-  return ['items' => $items, 'summary' => $summary, 'pct' => $pct, 'gift' => $gift,
+  /* coupon code (checked again here, never trusted from the browser): used only when it saves more than the multi-buy discount */
+  $coupon = null; $discLabel = "Multi-buy $pct% off";
+  if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
+    $cp = fomaxo_coupon_apply($in['coupon'], $fullFils);
+    if (isset($cp['error'])) return ['error' => $cp['error'] . ' Please remove it and try again.'];
+    if ($cp['saveFils'] > $fullFils - $netFils) {
+      foreach ($items as &$it) { $it['unit'] = $it['full']; $it['pct'] = 0; } unset($it);
+      $pct = 0; $netFils = $fullFils - $cp['saveFils']; $coupon = $cp['code']; $discLabel = "Coupon {$cp['code']} ({$cp['label']})";
+      $summary[] = "$discLabel: -" . fomaxo_aed($cp['saveFils']);
+    }
+  }
+  return ['items' => $items, 'summary' => $summary, 'pct' => $pct, 'gift' => $gift, 'coupon' => $coupon, 'discLabel' => $discLabel,
           'fullFils' => $fullFils, 'discountFils' => $fullFils - $netFils, 'totalFils' => $netFils];
 }
 

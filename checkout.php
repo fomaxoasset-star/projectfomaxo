@@ -126,7 +126,14 @@ $base = ($https ? 'https' : 'http') . "://$host$dir/";
 $discPct = qty_pct($discUnits);
 $discFils = (int)round($discBase * $discPct);   // AED × % = fils (1/100 AED)
 $pctTxt = rtrim(rtrim(number_format($discPct, 1, '.', ''), '0'), '.');
-$afterFils = $subFils - $discFils;               // total after the multi-buy discount
+/* coupon code: checked here again (never trusted from the browser); it replaces the multi-buy discount only when it saves more */
+$discLabel = "Multi-buy discount ($pctTxt%)"; $couponCode = null;
+if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
+  $cp = fomaxo_coupon_apply($in['coupon'], $subFils);
+  if (isset($cp['error'])) fail(400, $cp['error'] . ' Please remove it and try again.');
+  if ($cp['saveFils'] > $discFils) { $discFils = $cp['saveFils']; $couponCode = $cp['code']; $discLabel = "Coupon {$cp['code']} ({$cp['label']})"; }
+}
+$afterFils = $subFils - $discFils;               // total after the multi-buy discount or the coupon
 
 /* minimum order: checked here too, so it can't be bypassed */
 if ($afterFils < $MIN_ORDER * 100) fail(400, 'Minimum order ' . aed_short($MIN_ORDER * 100) . ' · add ' . aed_short($MIN_ORDER * 100 - $afterFils) . ' more.');
@@ -145,7 +152,7 @@ if (qty_mini($discUnits) && !$has10) {
 if ($pay === 'cod') {
   $totalFils = $afterFils + $COD_FEE * 100;
   $rows = $summary;
-  if ($discFils > 0) $rows[] = "Multi-buy discount ($pctTxt%): -" . aed($discFils);
+  if ($discFils > 0) $rows[] = "$discLabel: -" . aed($discFils);
   if ($miniName) $rows[] = "FREE 10ml mini: $miniName";
   $rows[] = 'Cash on delivery fee: ' . aed($COD_FEE * 100);
   /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
@@ -154,7 +161,7 @@ if ($pay === 'cod') {
   if ($msg = fomaxo_stock_problem($saveLines, $CATALOG)) fail(409, $msg);
   if ($miniName) $saveLines[] = ['id' => $mini, 'opt' => '10', 'qty' => 1, 'free' => true];
   $no = fomaxo_save_order(['payment' => 'Cash on delivery', 'status' => 'New', 'subtotal' => $subFils / 100, 'discount' => $discFils / 100,
-          'fee' => $COD_FEE, 'total' => $totalFils / 100, 'items' => implode(' | ', $rows), 'free_mini' => $miniName, 'lines' => $saveLines]
+          'fee' => $COD_FEE, 'total' => $totalFils / 100, 'items' => implode(' | ', $rows), 'free_mini' => $miniName, 'coupon' => $couponCode, 'lines' => $saveLines]
           + array_intersect_key($cu, array_flip(['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'address', 'note'])));
   if ($no) fomaxo_stock_move($no);   // stock goes down as soon as a cash order is placed
   else $no = 'FX' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
@@ -184,7 +191,7 @@ if ($pay === 'cod') {
   $to = fomaxo_orders_email($cfg['orders_email'] ?? FX_STORE_EMAIL);   // Settings on fomaxo.com/admin, else the key file, else the store inbox
   $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', explode(':', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com')[0])) ?: 'fomaxo.com';
   $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) . "\n\n" . implode("\n", $rows)
-        . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\nMulti-buy discount ($pctTxt%): -" . aed($discFils) : '')
+        . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\n$discLabel: -" . aed($discFils) : '')
         . "\nCash on delivery fee: " . aed($COD_FEE * 100) . "\nTotal: " . aed($totalFils)
         . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '') . $waLines;
   $mailed = fomaxo_mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
@@ -199,7 +206,7 @@ if ($discFils > 0) {
   $ch = curl_init('https://api.stripe.com/v1/coupons');
   curl_setopt_array($ch, [
     CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => http_build_query(['amount_off' => $discFils, 'currency' => $cfg['currency'], 'duration' => 'once', 'max_redemptions' => 1, 'name' => "Multi-buy discount ($pctTxt%)"]),
+    CURLOPT_POSTFIELDS => http_build_query(['amount_off' => $discFils, 'currency' => $cfg['currency'], 'duration' => 'once', 'max_redemptions' => 1, 'name' => mb_substr($discLabel, 0, 40)]),
     CURLOPT_USERPWD => $key . ':',
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_TIMEOUT => 25,
@@ -216,7 +223,7 @@ if ($discFils > 0) {
     exit;
   }
   $coupon = $c['id'];
-  $summary[] = "Multi-buy discount ($pctTxt%): -" . number_format($discFils / 100, 2, '.', '') . ' ' . strtoupper($cfg['currency']);
+  $summary[] = "$discLabel: -" . number_format($discFils / 100, 2, '.', '') . ' ' . strtoupper($cfg['currency']);
 }
 
 if ($miniName) $summary[] = "FREE 10ml mini: $miniName";
