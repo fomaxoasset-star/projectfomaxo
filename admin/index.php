@@ -1079,6 +1079,8 @@ if (isset($_GET['analytics'])) {
     $gFrom['custom'] = $span[0]; $gTo['custom'] = $span[1];
   }
   $gOn = isset($gr[$r]) ? $r : '7';
+  /* countries and emirates follow the dates at the top of the page, like every other section (no separate period buttons) */
+  $gr = [$gOn => $gr[$gOn]]; $gFrom[$gOn] = $span[0]; $gTo[$gOn] = $span[1];
   $gSince = fomaxo_setting($pdo, 'geo_since');
   $geoTable = function ($rows, $label) use ($pct, $pctT) {
     $tot = array_sum(array_column($rows, 'n')); $tr = '';
@@ -1102,6 +1104,7 @@ if (isset($_GET['analytics'])) {
     $gEmirates .= '<div class="list" data-r="' . $k . '"' . $hid . '>' . (array_sum(array_column($eRows, 'n')) ? $geoTable($eRows, 'Emirate') : '<p class="muted empty">No visitors from the UAE yet.</p>') . '</div>';
   }
   $gSeg = '<div class="seg gseg" role="group" aria-label="Period">' . implode('', array_map(fn($k, $l) => '<button type="button" data-r="' . $k . '"' . ((string)$k === $gOn ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($gr), $gr)) . '</div>';
+  $gSeg = '';
   $gNote = 'Counting since ' . ($gSince ? h(date('j M Y', strtotime($gSince))) : 'today') . '.';
 
   /* checkouts where the customer typed their name or mobile but did not buy, and the step they left at */
