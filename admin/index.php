@@ -915,7 +915,7 @@ if (isset($_GET['analytics'])) {
   $dev = [];
   foreach ($q("SELECT device, COUNT(DISTINCT sid) n FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY device ORDER BY n DESC") as $row) $dev[] = h(ucfirst($row['device'] ?: 'other')) . ' ' . $pctT($pct($row['n'], $f['visits']));
   /* devices: phone, tablet or computer, read from the browser when the visit starts (the browser details themselves are not kept) */
-  $devN = ['phone' => 'Phone', 'tablet' => 'Tablet', 'computer' => 'Desktop'];
+  $devN = ['phone' => 'Phone', 'computer' => 'Desktop', 'tablet' => 'Tablet'];
   $devR = []; foreach ($devN as $k => $l) $devR[$k] = ['visitors' => 0, 'visits' => 0, 'bought' => 0];
   foreach ($q("SELECT x.device, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND b.ev = 'buy')) bought
                FROM (SELECT sid, MIN(vid) vid, MIN(device) device FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY sid) x
