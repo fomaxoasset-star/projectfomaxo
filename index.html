@@ -1743,8 +1743,10 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .buy .pp-line .pprice{font-size:46px;line-height:1}
 .pp-line .was{display:inline-block;margin:0;font-size:26px;line-height:1;color:#e04a3f;font-weight:300;opacity:.85}
 .pp-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
-.pp-row .pp-line{flex-direction:column;align-items:flex-end;gap:4px}
-.pp-row .p-save{margin:0;line-height:1.7}
+.pp-row .pp-line{flex-direction:column;align-items:flex-start;gap:4px}
+.pp-row .p-save{margin:0;flex:none;white-space:nowrap;font-size:10.5px;letter-spacing:.12em;line-height:1;color:#2f8a4e;border:1px solid #2f8a4e;background:rgba(47,138,78,.08);padding:7px 10px}
+.pp-row .p-save .amt{font-size:1.15em}
+html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483;background:rgba(92,196,131,.1)}
 .pp-row .pp-line .was{font-size:22px}
 .p-off{align-self:center;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#e04a3f;padding:6px 9px;line-height:1}
 .pdp-offer{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line-2);background:rgba(215,170,105,.05);font-size:13px;line-height:1.5;color:var(--ivory)}
@@ -2667,8 +2669,8 @@ function fragrances(q){
 
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
-  // sale: the saving as plain text on the left; old price struck on top, new price below it, on the right
-  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><span class="p-save">You save ${moneyHTML(c - v)}<br>${Math.round((c - v) / c * 100)}% off</span><div class="pp-line"><s class="was">${moneyHTML(c)}</s><span class="pprice">${moneyHTML(v)}</span></div></div>`;
+  // sale: old price struck on top, new price below it, on the left; the saving in a small green box on the right
+  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><div class="pp-line"><s class="was">${moneyHTML(c)}</s><span class="pprice">${moneyHTML(v)}</span></div><span class="p-save">You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span></div>`;
   return priceHTML(p, size, 'pprice'); };
 // the multi-buy offer, shown before the customer adds to bag (King and the Discovery Set are not part of it)
 const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
