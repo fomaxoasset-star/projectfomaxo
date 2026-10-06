@@ -1739,6 +1739,10 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .pp-line{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px}
 .buy .pp-line .pprice{font-size:46px;line-height:1}
 .pp-line .was{display:inline-block;margin:0;font-size:26px;line-height:1;color:#e04a3f;font-weight:300;opacity:.85}
+.pp-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.pp-row .pp-line{flex-direction:column;align-items:flex-start;gap:4px}
+.pp-row .pp-line .was{font-size:22px}
+.pp-row .pdp-save{flex:none;margin:0;line-height:1.6}
 .pdp-save{margin-top:10px;align-items:center;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
 .pdp-save .amt{font-size:1.3em}
 .p-off{align-self:center;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#e04a3f;padding:6px 9px;line-height:1}
@@ -2617,8 +2621,8 @@ function fragrances(q){
 
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
-  // sale: old price struck, then the new price on one line; the saving sits in its own box under it
-  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-line"><s class="was">${moneyHTML(c)}</s><span class="pprice">${moneyHTML(v)}</span></div><p class="pdp-offer pdp-save">${ICON.tag}<span>You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span></p>`;
+  // sale: old price struck on top, new price below it; the saving sits in its own box on the right
+  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><div class="pp-line"><s class="was">${moneyHTML(c)}</s><span class="pprice">${moneyHTML(v)}</span></div><p class="pdp-offer pdp-save">${ICON.tag}<span>You save ${moneyHTML(c - v)}<br>${Math.round((c - v) / c * 100)}% off</span></p></div>`;
   return priceHTML(p, size, 'pprice'); };
 // the multi-buy offer, shown before the customer adds to bag (King and the Discovery Set are not part of it)
 const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
