@@ -75,8 +75,18 @@ function fomaxo_price_order($in) {
 }
 
 /* Delivery details from the checkout page. Returns ['error'=>...] or clean details. Used by every payment type.
-   Address comes in separate boxes (villa/building no, room no / floor optional, street, area); email is required. */
+   Address comes in separate boxes (villa/building no, room no / floor optional, street, area); email is optional. */
 $EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
+/* a real-looking phone number, any country — same rules as phoneOk() in index.html */
+if (!function_exists('fomaxo_phone_ok')) { function fomaxo_phone_ok($v) {
+  $v = trim((string)$v); if (!preg_match('/^\+?[\d\s\-()]+$/', $v)) return false;
+  $d = preg_replace('/\D/', '', $v); if (strpos($d, '00') === 0) $d = substr($d, 2);
+  $n = strlen($d);
+  if ($n < 9 || $n > 15 || preg_match('/^(\d)\1+$/', $d) || strpos('01234567890123456789', $d) !== false || strpos('98765432109876543210', $d) !== false) return false;
+  if (strpos($d, '971') === 0) return (bool)preg_match('/^9710?[1-9]\d{7,8}$/', $d);
+  if (strpos($d, '05') === 0) return $n === 10;
+  return true;
+} }
 function fomaxo_customer($in) {
   global $EMIRATES;
   $c = is_array($in['customer'] ?? null) ? $in['customer'] : [];
@@ -88,9 +98,8 @@ function fomaxo_customer($in) {
           'address' => $t('address', 300), 'note' => $t('note', 300)];
   foreach (['name', 'building', 'room', 'street', 'area', 'address', 'note'] as $k) $out[$k] = $caps($out[$k]);
   if (mb_strlen($out['name']) < 2) return ['error' => 'Please enter your full name.'];
-  $digits = preg_replace('/\D/', '', $out['phone']);
-  if (strlen($digits) < 7 || strlen($digits) > 15) return ['error' => 'Please enter a valid mobile number.'];
-  if (!filter_var($out['email'], FILTER_VALIDATE_EMAIL)) return ['error' => 'Please enter a valid email address.'];
+  if (!fomaxo_phone_ok($out['phone'])) return ['error' => 'Please enter a valid mobile number.'];
+  if ($out['email'] !== '' && !filter_var($out['email'], FILTER_VALIDATE_EMAIL)) return ['error' => 'Please enter a valid email address.'];
   if (!in_array($out['emirate'], $EMIRATES, true)) return ['error' => 'Please choose your emirate.'];
   if ($out['building'] !== '' || $out['street'] !== '' || $out['area'] !== '') {
     if ($out['building'] === '' || mb_strlen($out['street']) < 2 || mb_strlen($out['area']) < 2) return ['error' => 'Please enter your full delivery address.'];

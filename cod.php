@@ -47,14 +47,14 @@ $logged = fomaxo_log_order([date('Y-m-d H:i'), $no, 'Cash on delivery', $total, 
 
 $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com'));
 $from = "FOMAXO <mail@fomaxo.com>";
-$h = "From: $from\r\nReply-To: {$cust['email']}\r\nContent-Type: text/plain; charset=UTF-8";
+$h = "From: $from\r\n" . ($cust['email'] !== '' ? "Reply-To: {$cust['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8";
 $mailed = fomaxo_mail($STORE_EMAIL, "=?UTF-8?B?" . base64_encode("New COD order $no — $total") . "?=", $body, $h);
 
 /* confirmation for the customer */
 $cb = "Thank you for your order, {$cust['name']}.\n\nOrder number: $no\n\n" . implode("\n", $rows) . "\n\n"
     . "Total to pay in cash on delivery: $total (includes AED $COD_FEE cash on delivery fee)\nDelivery: Free, to {$cust['address']}, {$cust['emirate']}\n\n"
     . "We will call or WhatsApp you on {$cust['phone']} to confirm your delivery time.\n\nFOMAXO\nhttps://$host";
-fomaxo_mail($cust['email'], "=?UTF-8?B?" . base64_encode("Your FOMAXO order $no") . "?=", $cb, "From: $from\r\nReply-To: $STORE_EMAIL\r\nContent-Type: text/plain; charset=UTF-8");
+if ($cust['email'] !== '') fomaxo_mail($cust['email'], "=?UTF-8?B?" . base64_encode("Your FOMAXO order $no") . "?=", $cb, "From: $from\r\nReply-To: $STORE_EMAIL\r\nContent-Type: text/plain; charset=UTF-8");
 
 if (!$logged && !$mailed) {
   http_response_code(502);
