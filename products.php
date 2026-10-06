@@ -12,6 +12,6 @@ foreach (fomaxo_product_rows() ?: [] as $r) {
   $out[] = fomaxo_json($p);
 }
 /* limited-time sale: when it ends (Unix time), as set on fomaxo.com/admin → Offer; null = no countdown */
-$saleEnds = null; $saleAlways = false; $salePopup = true; $saleLine = true;   // saleAlways: on with no timer until turned off; popup / line: what shows (admin → Offer)
-if ($pdo = fomaxo_db()) { try { $v = (int)fomaxo_setting($pdo, 'sale_ends'); if ($v > time()) $saleEnds = $v; $saleAlways = (string)fomaxo_setting($pdo, 'sale_always') === '1'; $salePopup = (string)fomaxo_setting($pdo, 'sale_popup') !== '0'; $saleLine = (string)fomaxo_setting($pdo, 'sale_line') !== '0'; } catch (Throwable $e) {} }
-echo '{"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . '}';
+$saleEnds = null; $saleAlways = false; $salePopup = true; $saleLine = true; $salePct = 0;   // saleAlways: on with no timer until turned off; popup / line: what shows (admin → Offer)
+if ($pdo = fomaxo_db()) { try { $v = (int)fomaxo_setting($pdo, 'sale_ends'); if ($v > time()) $saleEnds = $v; $saleAlways = (string)fomaxo_setting($pdo, 'sale_always') === '1'; $salePopup = (string)fomaxo_setting($pdo, 'sale_popup') !== '0'; $saleLine = (string)fomaxo_setting($pdo, 'sale_line') !== '0'; $salePct = (int)fomaxo_setting($pdo, 'sale_pct'); } catch (Throwable $e) {} }
+echo '{"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . '}';
