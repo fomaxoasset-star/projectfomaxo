@@ -2303,7 +2303,7 @@ function home(){
     <div class="exp rv-up">
       <a href="#/product/discovery"><img src="${IMG('discovery-1')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">01</span><h3>Discovery Sets</h3><p>“Experience the FOMAXO collection at home.”</p><span class="go">Shop the set →</span></div></a>
       <a href="#/collections/name"><img src="${IMG('gift-2-hq')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">02</span><h3>Personalized Gifting</h3><p>“Your gift. Your scent. Your legacy.”</p><span class="go">Discover →</span></div></a>
-      <a href="#/collections/gifting"><img src="${IMG('gift-set-3')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">03</span><h3>Bespoke Gifting</h3><p>“A fragrance of memories.”</p><span class="go">Discover →</span></div></a>
+      <a href="#/collections/gifting"><img src="${IMG('gift-set-3-hq')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">03</span><h3>Bespoke Gifting</h3><p>“A fragrance of memories.”</p><span class="go">Discover →</span></div></a>
       <a href="#/collections/elite"><img src="${IMG('elite-card')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">04</span><h3>Elite Membership</h3><p>“For those chosen to experience beyond luxury.”</p><span class="go">Discover →</span></div></a>
     </div>
   </div></section>
@@ -2519,7 +2519,7 @@ function collections(sub){
     ['fragrance','Fragrance Collection','Three tiers of luxury: Elite, Signature and Prestige.','king-1'],
     ['mini','Mini Collection','Luxury redefined in 10ml. Elegance no longer confined to the dressing table.','oldmoney-10-1'],
     ['discovery','Discovery Sets','2ml vials to experience the FOMAXO collection at home before choosing your full-size bottle.','discovery-1'],
-    ['gifting','Bespoke Gifting','Luxury gifting for weddings, gatherings and corporate functions.','gift-set-3'],
+    ['gifting','Bespoke Gifting','Luxury gifting for weddings, gatherings and corporate functions.','gift-set-3-hq'],
     ['name','Exclusive Personalized Gifting','Your gift. Your scent. Your legacy. The highest form of personalisation: a perfume gifted after the client themselves.','gift-2-hq'],
     ['elite','FOMAXO Elite','No application, no fee. Your yearly FOMAXO spending unlocks Black, Gold, Elite and Imperial benefits.','elite-card']
   ];
@@ -2530,7 +2530,7 @@ function collections(sub){
 function gifting(){
   return pageHead('<a href="#/collections">Collections</a> / Bespoke Gifting', 'Bespoke <em class="metal">Gifting</em>', '“A Fragrance of Memories.” Gifting is not just about giving an item — it is about creating a memory, an emotional connection and a symbol of appreciation.') + `
   <section class="sec"><div class="wrap">
-    <div class="split"><div class="img rv-up"><img src="${IMG('gift-set-2')}" alt="FOMAXO bespoke gifting display" loading="lazy"></div>
+    <div class="split"><div class="img rv-up"><img src="${IMG('gift-set-2-hq')}" alt="FOMAXO bespoke gifting display" loading="lazy"></div>
       <div class="prose rv-up d1"><span class="eyebrow">Why perfume gifting works</span><h2>A lasting <em class="metal">impression</em></h2>
         <p><b class="gold">Emotional memory trigger.</b> Each spray of FOMAXO perfume brings guests back to your special day.</p>
         <p><b class="gold">Luxury with purpose.</b> Unlike typical favours that are quickly forgotten, perfume is personal, useful and treasured.</p>
@@ -2553,11 +2553,11 @@ function gifting(){
       <p><b class="gold">Presentation</b> — premium boxes, velvet pouches or satin-finish cases.</p>
       <p class="small">Standard, Premium and Elite packages. Pricing depends on bottle size, customisation level and quantity — a tailored quotation is provided upon consultation.</p>
       <div><a class="btn" href="#/contact?topic=gifting">Request a consultation</a></div></div>
-      <div class="img rv-up d1"><img src="${IMG('gift-set-7')}" alt="FOMAXO wedding gifting display" loading="lazy"></div></div>
+      <div class="img rv-up d1"><img src="${IMG('gift-set-7-hq')}" alt="FOMAXO wedding gifting display" loading="lazy"></div></div>
   </div></section>
   <section class="sec" style="padding-top:0"><div class="wrap">
     ${secHead('Bespoke setups','Gifting <span class="metal">displays</span>','<p class="lead">FOMAXO gifting stations designed for weddings, private gatherings and corporate events.</p>')}
-    <div class="gallery-g">${['gift-set-1','gift-set-3','gift-set-4','gift-set-5','gift-set-2','gift-set-6','gift-set-7'].map((k,i) => `<figure class="rv-up d${i%3}"><img src="${IMG(k)}" alt="FOMAXO bespoke gifting setup" loading="lazy"></figure>`).join('')}</div>
+    <div class="gallery-g">${['gift-set-1-hq','gift-set-3-hq','gift-set-4-hq','gift-set-5-hq','gift-set-2-hq','gift-set-6-hq','gift-set-7-hq'].map((k,i) => `<figure class="rv-up d${i%3}"><img src="${IMG(k)}" alt="FOMAXO bespoke gifting setup" loading="lazy"></figure>`).join('')}</div>
   </div></section>` + finalCTA();
 }
 function nameCollection(){
