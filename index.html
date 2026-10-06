@@ -1555,8 +1555,11 @@ html[data-mode="light"] .co-img i{color:#fffaf1}
 .co-rows{display:grid;gap:10px;padding-top:18px}
 .co-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:14.5px;color:var(--muted)}
 .co-row .price{font-size:17px}
-.co-row.disc,.co-row.disc .price{color:#5fc48c}
-html[data-mode="light"] .co-row.disc,html[data-mode="light"] .co-row.disc .price,html[data-mode="light"] .co-free .price{color:#1e7a47}
+.co-row.disc,.co-row.disc .price,.co-row.co-save,.co-row.co-save .price{color:#5fc48c}
+.co-row.co-save{font-weight:500;letter-spacing:.04em;justify-content:flex-start;gap:6px;margin-top:8px;padding:9px 14px;border:1px solid currentColor;background:rgba(95,196,140,.08)}
+.co-bar-save{display:block;font-weight:500;color:#5fc48c}
+html[data-mode="light"] .co-bar-save{color:#1e7a47}
+html[data-mode="light"] .co-row.disc,html[data-mode="light"] .co-row.disc .price,html[data-mode="light"] .co-row.co-save,html[data-mode="light"] .co-row.co-save .price,html[data-mode="light"] .co-free .price{color:#1e7a47}
 .co-free-t{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
 .co-row.tot{margin-top:6px;padding-top:14px;border-top:1px solid var(--line);color:var(--ivory);font-size:16px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;align-items:center}
 .co-row.tot .price{font-size:30px;color:var(--gold);letter-spacing:0}
@@ -1806,6 +1809,52 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   #cart .dr-foot .pay-note{margin:0}
 }
 
+.co-r3{display:grid;gap:14px}
+/* laptop checkout: same fields, tighter spacing so the whole checkout fits one screen */
+@media(min-width:961px){
+  .co{padding-top:14px;padding-bottom:40px}
+  .co-h{font-size:28px;margin:4px 0 10px}
+  .co-grid{gap:48px}
+  .co-main{gap:18px}
+  .co-step{gap:8px}
+  .co-step h2{font-size:21px;gap:10px;padding-bottom:7px;margin-bottom:0}
+  .co-step h2 span{width:26px;height:26px;font-size:12px}
+  .co .form label{gap:5px}
+  .co .form input,.co .form select,.co .form textarea{padding:9px 12px;font-size:14px}
+  .co .form textarea.co-note{min-height:0;height:40px}
+  .co-ar,.co .form .row2{gap:10px}
+  .co-r3{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+  .co-r3>label{min-width:0}
+  .co-r3 .row2,.co-r3 .co-ar1,.co-r3 .co-ar2{display:contents}
+  .co-r3 label{grid-template-rows:auto auto}
+  .co-small{font-size:12px;line-height:1.4}
+  .co-lock{padding:7px 12px;font-size:13px}
+  .co-pay{gap:8px}
+  .co .form label.co-opt{padding:9px 14px}
+  .co-opt-t{gap:1px}
+  .co-opt-t b{font-size:14.5px}
+  .co-opt-t small{font-size:12.5px}
+  .co-go{min-height:46px}
+  .co-trust{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:2px;padding-top:10px}
+  .co-trust li{font-size:12.5px;gap:8px}
+  .co-trust svg{width:16px;height:16px}
+  .co-sum{top:calc(var(--ann-h,40px) + 90px)}
+  .co-sum-in{padding:16px 20px 18px}
+  .co-sum-h{margin-bottom:10px}
+  .co-sum h3{font-size:20px}
+  .co-nudge{margin-top:10px;padding:7px 12px;font-size:12.5px}
+  .co-items{gap:10px;padding-bottom:12px}
+  .co-item{grid-template-columns:44px minmax(0,1fr) auto;gap:12px}
+  .co-img{width:44px}
+  .co-img i{top:-7px;right:-7px;min-width:18px;height:18px;font-size:10.5px;padding:0 4px}
+  .co-item b{font-size:14px}
+  .co-item small{font-size:12px}
+  .co-item .price{font-size:15px}
+  .co-free select{margin-top:3px;padding:4px 6px;font-size:13px}
+  .co-rows{gap:6px;padding-top:12px}
+  .co-row{font-size:13.5px}
+  .co-row .price{font-size:15px}
+}
 /* laptop product page: same layout, tighter spacing so it fits one screen */
 @media(min-width:961px){
   .crumbs[style]{padding-top:18px!important}
@@ -3082,19 +3131,19 @@ function checkoutPage(q){
         <section class="co-step">
           <h2 id="coStep1"><span>1</span>Delivery details</h2>
           <p class="co-err" id="coErr1" role="alert" hidden></p>
-          <label>Full name<input name="name" autocomplete="name" maxlength="80" required></label>
+          <div class="co-r3"><label>Full name<input name="name" autocomplete="name" maxlength="80" required></label>
           <div class="row2"><label>Mobile<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971 50 123 4567" maxlength="20" required></label>
-            <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></label></div>
-          <label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
+            <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></label></div></div>
+          <div class="co-r3 co-r3b"><label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
           <div class="co-ar co-ar1">
             <label class="co-a-b">Villa / building no<input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12" required></label>
             <label class="co-a-r"><span>Room No / Floor <span class="co-opt-l">(optional)</span></span><input name="room" autocomplete="address-line2" maxlength="20" placeholder="e.g. 1204"></label>
-          </div>
-          <div class="co-ar co-ar2">
+          </div></div>
+          <div class="co-r3 co-r3c"><div class="co-ar co-ar2">
             <label class="co-a-s">Street<input name="street" maxlength="100" placeholder="e.g. Al Wasl Road" required></label>
             <label class="co-a-a">Area<input name="area" autocomplete="address-level2" maxlength="80" placeholder="e.g. Jumeirah 1" required></label>
           </div>
-          <label><span>Note <span class="co-opt-l">(optional)</span></span><textarea name="note" class="co-note" maxlength="300" placeholder="Landmark, delivery time or gift message"></textarea></label>
+          <label><span>Note <span class="co-opt-l">(optional)</span></span><textarea name="note" class="co-note" maxlength="300" placeholder="Landmark, delivery time or gift message"></textarea></label></div>
           <p class="co-small">We remember these details on this device for your next order. We will WhatsApp you about your delivery and, after it arrives, ask for a quick review.</p>
         </section>
         <section class="co-step">
@@ -3139,15 +3188,17 @@ function bindCheckout(q){
     const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${SM(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
     const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${SM(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b>Free 10ml mini</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
+    // You save = crossed-out prices minus paid prices, plus the multi-buy discount
+    const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (dc.amount > 0 ? dc.amount : 0)) * 100) / 100;
     const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div>` :
       `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div>
       ${dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}
-      <div class="co-row tot"><span>Total</span><span class="price">${moneyHTML(T.total, true)}</span></div>`;
+      <div class="co-row tot"><span>Total</span><span class="price">${moneyHTML(T.total, true)}</span></div>${saved > 0 ? `<div class="co-row co-save"><span>You save</span><span class="price">${moneyHTML(saved, true)}</span></div>` : ''}`;
     const nudge = m => `<div class="co-nudge ${m}">${ICON.gift || ''}<span>${qtyNudge(dc)}</span></div>`;   // same offer line as the bag: under the bar on phones, above Subtotal on desktop
     const sum = $('#coSum');
-    sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${coOpen ? 'Tap to close' : 'Tap to open'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>${nudge('co-nudge-m')}
+    sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${saved > 0 ? `<b class="co-bar-save">You save ${money2(saved)}</b>` : ''}${coOpen ? 'Tap to close' : 'Tap to open'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>${nudge('co-nudge-m')}
       <div class="co-sum-in co-tap" id="coSumIn" title="Open your bag to change it"><div class="co-sum-h"><h3>Order summary</h3><button type="button" class="co-edit" id="coEdit">Edit bag</button></div>
       <div class="co-items">${items}${mini}</div>${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
