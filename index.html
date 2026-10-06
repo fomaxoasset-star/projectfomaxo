@@ -1524,6 +1524,7 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-cp-f .btn{flex:none;padding:0 22px;min-height:0}
 .co-cp-on{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border:1px dashed var(--gold);font-size:14px}
 .co-cp-on b{letter-spacing:.08em;color:var(--gold-hi)}
+.co-cp-end{display:block;margin-top:3px;font-size:12px;letter-spacing:.04em;color:var(--champagne)}
 html[data-mode="light"] .co-cp-on b{color:var(--gold)}
 .co-cp-x{background:none;border:0;padding:0;font:inherit;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line-2);cursor:pointer}
 .co-cp-m{margin:8px 0 0;font-size:13px;line-height:1.45;color:var(--muted)}
@@ -2322,7 +2323,7 @@ let coupon = null;
 try { coupon = JSON.parse(sessionStorage.getItem('fomaxo_coupon') || 'null'); } catch(e) { coupon = null; }
 function setCoupon(c){ coupon = c || null; try { c ? sessionStorage.setItem('fomaxo_coupon', JSON.stringify(c)) : sessionStorage.removeItem('fomaxo_coupon'); } catch(e) {} }
 function couponSave(t0){
-  if (!coupon || t0 === null || (coupon.min > 0 && t0 < coupon.min)) return 0;
+  if (!coupon || t0 === null || (coupon.min > 0 && t0 < coupon.min) || (coupon.ends && Date.parse(coupon.ends) <= Date.now())) return 0;
   return coupon.kind === 'aed' ? Math.min(t0, coupon.amount) : Math.round(t0 * Math.min(100, coupon.amount)) / 100;
 }
 /* minimum order + cash on delivery (keep in sync with checkout.php). Minimums count the total after the multi-buy discount or coupon. */
@@ -3220,7 +3221,7 @@ function bindCheckout(q){
   function drawCoupon(){
     if (!cpBox) return;
     cpBox.innerHTML = coupon
-      ? `<div class="co-cp-on"><span>Coupon <b>${esc(coupon.code)}</b> · ${esc(coupon.label)}</span><button type="button" class="co-cp-x" id="coCpX">Remove</button></div><p class="co-cp-m" id="coCpM" hidden></p>`
+      ? `<div class="co-cp-on"><span>Coupon <b>${esc(coupon.code)}</b> · ${esc(coupon.label)}<small class="co-cp-end" id="coCpEnd" hidden></small></span><button type="button" class="co-cp-x" id="coCpX">Remove</button></div><p class="co-cp-m" id="coCpM" hidden></p>`
       : cpOpen ? `<div class="co-cp-f"><input id="coCpIn" maxlength="30" placeholder="Coupon code" aria-label="Coupon code" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn line" id="coCpGo">Apply</button></div><p class="co-cp-m bad" id="coCpM"${cpMsg ? '' : ' hidden'}>${esc(cpMsg)}</p>`
       : `<button type="button" class="co-cp-t" id="coCpOpen">Have a coupon code?</button>`;
     const x = $('#coCpX'), o = $('#coCpOpen'), go2 = $('#coCpGo'), inp = $('#coCpIn');
@@ -3236,14 +3237,19 @@ function bindCheckout(q){
     let d = {};
     try { const r = await fetch('coupon.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code})}); d = await r.json().catch(() => ({})); }
     catch(e) { d = {error: 'We could not check this code. Please check your connection and try again.'}; }
-    if (d && d.code) { setCoupon({code: d.code, kind: d.kind, amount: +d.amount, min: +d.min || 0, label: d.label}); cpMsg = ''; drawCoupon(); draw(); return; }
+    if (d && d.code) { setCoupon({code: d.code, kind: d.kind, amount: +d.amount, min: +d.min || 0, label: d.label, ends: d.ends || null}); cpMsg = ''; drawCoupon(); draw(); return; }
     cpMsg = (d && d.error) || 'This coupon code is not valid.'; drawCoupon(); const i = $('#coCpIn'); if (i) { i.value = code; i.focus(); }
   }
   // the line under an applied code: what it saves, or why it isn't used
   function cpNote(T){
     const m = $('#coCpM'); if (!m || !coupon) return;
     let t = '', cls = '';
-    if (T.t0 !== null && coupon.min > 0 && T.t0 < coupon.min) t = `Add ${aed(Math.round((coupon.min - T.t0) * 100) / 100)} more to use this code (for orders of ${aed(coupon.min)} or more).`;
+    // time-limited code: how long it has left
+    const end = coupon.ends ? Date.parse(coupon.ends) - Date.now() : null, en = $('#coCpEnd');
+    if (en) { const mins = Math.max(0, Math.floor((end || 0) / 60000)), d = Math.floor(mins / 1440), h = Math.floor(mins % 1440 / 60);
+      en.textContent = end > 0 ? `Ends in ${d ? d + (d > 1 ? ' days' : ' day') + (h ? ' ' + h + 'h' : '') : (h ? h + 'h ' : '') + (mins % 60) + 'm'}` : ''; en.hidden = !(end > 0); }
+    if (end !== null && end <= 0) { t = 'This coupon code has expired. Please remove it.'; cls = 'bad'; }
+    else if (T.t0 !== null && coupon.min > 0 && T.t0 < coupon.min) t = `Add ${aed(Math.round((coupon.min - T.t0) * 100) / 100)} more to use this code (for orders of ${aed(coupon.min)} or more).`;
     else if (T.useC) { t = `You save ${money2(T.cs)} with this code.`; cls = 'ok'; }
     else if (T.dc.amount > 0) t = `Your multi-buy discount saves more, so we kept it. Coupons and multi-buy don't add up.`;
     m.textContent = t; m.className = 'co-cp-m' + (cls ? ' ' + cls : ''); m.hidden = !t;

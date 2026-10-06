@@ -33,7 +33,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 14) return;
+  if ($ver >= 15) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -98,6 +98,11 @@ function fomaxo_db_schema($pdo) {
   try { $pdo->exec("ALTER TABLE fx_orders ADD COLUMN coupon VARCHAR(30) NULL"); } catch (Throwable $e) {}
   if (!$pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'coupon'")->fetch()) return;
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '14')");
+  /* v15: time-limited coupons: a start and an end date + time (Dubai); a code made with only an expiry day ends at 23:59 that day */
+  try { $pdo->exec("ALTER TABLE fx_coupons ADD COLUMN starts DATETIME NULL, ADD COLUMN ends DATETIME NULL"); } catch (Throwable $e) {}
+  if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'ends'")->fetch()) return;
+  $pdo->exec("UPDATE fx_coupons SET ends = CONCAT(expires, ' 23:59:59') WHERE expires IS NOT NULL AND ends IS NULL");
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '15')");
 }
 function fomaxo_coupons_table($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_coupons (code VARCHAR(30) NOT NULL PRIMARY KEY, kind VARCHAR(3) NOT NULL DEFAULT 'pct', amount DECIMAL(10,2) NOT NULL,
@@ -285,10 +290,13 @@ function fomaxo_coupon_find($code) {
   try { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$code]); $c = $s->fetch(); }
   catch (Throwable $e) { error_log('FOMAXO coupon: ' . $e->getMessage()); return ['error' => 'Coupons are not available right now. Please try again later.']; }
   if (!$c || !(int)$c['active'] || (float)$c['amount'] <= 0) return ['error' => 'This coupon code is not valid.'];
-  if ($c['expires'] && $c['expires'] < (new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('Y-m-d')) return ['error' => 'This coupon code has expired.'];
+  $now = (new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('Y-m-d H:i:s');
+  $ends = $c['ends'] ?? ($c['expires'] ? $c['expires'] . ' 23:59:59' : null);
+  if (!empty($c['starts']) && $c['starts'] > $now) return ['error' => 'This coupon code starts on ' . date('d/m/Y \a\t g:i a', strtotime($c['starts'])) . '.'];
+  if ($ends && $ends < $now) return ['error' => 'This coupon code has expired.'];
   if ($c['max_uses'] !== null && fomaxo_coupon_uses($pdo, $code) >= (int)$c['max_uses']) return ['error' => 'This coupon code has been fully used.'];
   return ['code' => $c['code'], 'kind' => $c['kind'] === 'aed' ? 'aed' : 'pct', 'amount' => (float)$c['amount'], 'min' => $c['min_order'] !== null ? (float)$c['min_order'] : 0,
-          'label' => fomaxo_coupon_label($c)];
+          'label' => fomaxo_coupon_label($c), 'ends' => $ends ? str_replace(' ', 'T', $ends) . '+04:00' : null];
 }
 /* What the code saves on a bag of $subFils (fils, before any discount). Returns ['error' => …] or the coupon plus 'saveFils'. */
 function fomaxo_coupon_apply($code, $subFils) {

@@ -891,30 +891,41 @@ if (isset($_GET['coupons'])) {
     $kind = ($_POST['kind'] ?? '') === 'aed' ? 'aed' : 'pct';
     $num = fn($k) => trim((string)($_POST[$k] ?? '')) === '' ? null : (float)str_replace(',', '.', (string)$_POST[$k]);
     $amt = $num('amount'); $min = $num('min_order'); $uses = trim((string)($_POST['max_uses'] ?? '')) === '' ? null : (int)$_POST['max_uses'];
-    $exp = (string)($_POST['expires'] ?? '');
+    /* time limit: start and end date + time (Dubai); a date without a time starts at 00:00 and ends at 23:59 */
+    $when = function ($d, $t, $def) { $d = (string)($_POST[$d] ?? ''); $t = (string)($_POST[$t] ?? '');
+      if ($d === '') return ''; if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) || ($t !== '' && !preg_match('/^\d{2}:\d{2}$/', $t))) return false;
+      return "$d " . ($t !== '' ? "$t:00" : $def); };
+    $st = $when('start_d', 'start_t', '00:00:00'); $en = $when('end_d', 'end_t', '23:59:59');
     if (strlen($code) < 3) { flash('Please type a code of at least 3 letters or numbers (no spaces).'); go(['coupons' => 1]); }
     if ($amt === null || $amt <= 0 || ($kind === 'pct' && $amt > 100)) { flash($kind === 'pct' ? 'Please type a % between 1 and 100.' : 'Please type the AED amount.'); go(['coupons' => 1]); }
-    if ($exp !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $exp)) { flash('Please type the expiry date as dd/mm/yyyy.'); go(['coupons' => 1]); }
+    if ($st === false || $en === false) { flash('Please type the dates as dd/mm/yyyy.'); go(['coupons' => 1]); }
+    if ($st !== '' && $en !== '' && $en <= $st) { flash('The end must be after the start.'); go(['coupons' => 1]); }
     $had = $pdo->prepare('SELECT 1 FROM fx_coupons WHERE code = ?'); $had->execute([$code]); $had = (bool)$had->fetchColumn();
-    $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, max_uses, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, NOW())
-                   ON DUPLICATE KEY UPDATE kind = VALUES(kind), amount = VALUES(amount), min_order = VALUES(min_order), expires = VALUES(expires), max_uses = VALUES(max_uses), active = 1')
-        ->execute([$code, $kind, round($amt, 2), $min !== null && $min > 0 ? round($min, 2) : null, $exp !== '' ? $exp : null, $uses !== null && $uses > 0 ? $uses : null]);
-    flash("Coupon $code " . ($had ? 'updated' : 'saved') . '. Customers can use it now.', true); go(['coupons' => 1]);
+    $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, 1, NOW())
+                   ON DUPLICATE KEY UPDATE kind = VALUES(kind), amount = VALUES(amount), min_order = VALUES(min_order), expires = NULL, starts = VALUES(starts), ends = VALUES(ends), max_uses = VALUES(max_uses), active = 1')
+        ->execute([$code, $kind, round($amt, 2), $min !== null && $min > 0 ? round($min, 2) : null, $st !== '' ? $st : null, $en !== '' ? $en : null, $uses !== null && $uses > 0 ? $uses : null]);
+    flash("Coupon $code " . ($had ? 'updated' : 'saved') . '. ' . ($st !== '' && $st > date('Y-m-d H:i:s') ? 'It starts ' . date('d/m/Y, g:i a', strtotime($st)) . '.' : 'Customers can use it now.'), true); go(['coupons' => 1]);
   }
   $list = $pdo->query('SELECT * FROM fx_coupons ORDER BY active DESC, created_at DESC')->fetchAll();
   /* how often each code was used (placed orders, not cancelled or refunded) and what it saved customers */
   $used = [];
   foreach ($pdo->query("SELECT coupon, COUNT(*) n, COALESCE(SUM(discount), 0) d, COALESCE(SUM(total), 0) t FROM fx_orders WHERE coupon IS NOT NULL AND test = 0
                         AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') GROUP BY coupon") as $r) $used[$r['coupon']] = $r;
-  $today = date('Y-m-d'); $tr = '';
+  $now = date('Y-m-d H:i:s'); $tr = '';
+  $dt = fn($v) => date('d/m/Y, g:i a', strtotime($v));
+  $left = function ($v) { $m = (int)floor((strtotime($v) - time()) / 60); $d = intdiv($m, 1440); $h = intdiv($m % 1440, 60);
+    return $d ? "$d day" . ($d > 1 ? 's' : '') . ($h ? " {$h}h" : '') . ' left' : ($h ? "{$h}h " : '') . ($m % 60) . 'm left'; };
   foreach ($list as $c) {
     $u = $used[$c['code']] ?? ['n' => 0, 'd' => 0, 't' => 0]; $n = (int)$u['n'];
-    $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($c['expires'] && $c['expires'] < $today ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled'] : ['On', 'p-Paid']));
-    $rules = array_filter([(float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['expires'] ? 'Until ' . date('d/m/Y', strtotime($c['expires'])) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
+    $ends = $c['ends'] ?? ($c['expires'] ? $c['expires'] . ' 23:59:59' : null); $starts = $c['starts'] ?? null;
+    $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($ends && $ends < $now ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled']
+           : ($starts && $starts > $now ? ['Scheduled', 's-New'] : ['On', 'p-Paid'])));
+    $time = $starts && $starts > $now ? 'Starts ' . $dt($starts) . ($ends ? ' · ends ' . $dt($ends) : '') : ($ends ? 'Ends ' . $dt($ends) . ($state[0] === 'On' ? ' · ' . $left($ends) : '') : '');
+    $rules = array_filter([(float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
     $btn = fn($name, $val, $label, $ask = '') => '<form method="post" style="margin:0"' . ($ask ? ' onsubmit="return confirm(\'' . h($ask) . '\')"' : '') . '>' . csrf_field()
       . '<input type="hidden" name="code" value="' . h($c['code']) . '"><button class="btn line sm" name="' . $name . '" value="' . $val . '">' . $label . '</button></form>';
     $tr .= '<div class="cprow"><div><b class="cpcode">' . h($c['code']) . '</b> <span class="tag ' . $state[1] . '">' . $state[0] . '</span>'
-      . '<div class="muted small">' . h(fomaxo_coupon_label($c)) . ($rules ? ' · ' . h(implode(' · ', $rules)) : '') . '</div></div>'
+      . '<div class="muted small">' . h(fomaxo_coupon_label($c)) . ($rules ? ' · ' . h(implode(' · ', $rules)) : '') . '</div>' . ($time ? '<div class="small cptime">' . h($time) . '</div>' : '') . '</div>'
       . '<div class="cpused"><b>Used ' . $n . ' time' . ($n === 1 ? '' : 's') . '</b>' . ($n ? '<div class="muted small">Saved customers ' . money($u['d']) . ' · sales ' . money($u['t']) . '</div>' : '') . '</div>'
       . '<div class="cpacts">' . ((int)$c['active'] ? $btn('toggle', 'off', 'Turn off') : $btn('toggle', 'on', 'Turn on'))
       . $btn('delete', '1', 'Delete', 'Delete coupon ' . $c['code'] . '? Orders that used it keep the code.') . '</div></div>';
@@ -922,16 +933,20 @@ if (isset($_GET['coupons'])) {
   page('Coupons', '<div class="pagehead"><h1>Coupons</h1></div>' . flash()
     . '<style>.cpcode{letter-spacing:.06em}.cpin{text-transform:uppercase;letter-spacing:.06em}.cpin::placeholder{text-transform:none;letter-spacing:0}'
     . '.cplist{background:var(--panel);border:1px solid var(--line);border-radius:10px}.cprow{display:grid;grid-template-columns:1fr auto auto;gap:6px 24px;align-items:center;padding:10px 12px}.cprow+.cprow{border-top:1px solid var(--line)}'
-    . '.cpused{text-align:right}.cpacts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}@media (max-width:759px){.cprow{grid-template-columns:1fr;padding:12px 14px}.cpused{text-align:left}.cpacts{grid-column:1/-1;justify-content:flex-start}}</style>'
+    . '.cpused{text-align:right}.cptime{color:var(--gold);margin-top:2px}.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.g4{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}@media (min-width:760px){.g4{grid-template-columns:1.3fr 1fr 1.3fr 1fr}}.cpacts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}@media (max-width:759px){.cprow{grid-template-columns:1fr;padding:12px 14px}.cpused{text-align:left}.cpacts{grid-column:1/-1;justify-content:flex-start}}</style>'
     . '<form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Make a coupon</h2>'
     . '<div class="g3"><div><label for="code">Code</label><input id="code" class="cpin" name="code" maxlength="30" placeholder="e.g. WELCOME10" autocapitalize="characters" autocomplete="off" required></div>'
     . '<div><label for="kind">Type</label><select id="kind" name="kind"><option value="pct">% off</option><option value="aed">AED off</option></select></div>'
     . '<div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" placeholder="e.g. 10" required></div></div>'
     . '<div class="g3"><div><label for="min_order">Minimum order AED (optional)</label><input id="min_order" type="number" min="0" step="0.01" inputmode="decimal" name="min_order"></div>'
-    . '<div><label for="expires">Expires (optional)</label><input id="expires" type="date" name="expires"></div>'
     . '<div><label for="max_uses">Max uses (optional)</label><input id="max_uses" type="number" min="1" step="1" inputmode="numeric" name="max_uses"></div></div>'
+    . '<label>Time limit (optional)</label><div class="cpq" role="group" aria-label="Quick time limit"><button type="button" data-h="24">24 hours</button><button type="button" data-h="48">48 hours</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button><button type="button" data-h="0">No limit</button></div>'
+    . '<div class="g4"><div><label for="start_d">Starts</label><input id="start_d" type="date" name="start_d"></div><div><label for="start_t">Start time</label><input id="start_t" type="time" name="start_t"></div>'
+    . '<div><label for="end_d">Ends</label><input id="end_d" type="date" name="end_d"></div><div><label for="end_t">End time</label><input id="end_t" type="time" name="end_t"></div></div>'
     . '<p style="margin:12px 0 0"><button class="btn">Save coupon</button></p>'
-    . '<p class="muted small" style="margin:10px 0 0">Saving a code that already exists updates it. A coupon does not add to the multi-buy discount: the customer gets whichever saves more. The free 10ml mini still applies. The code works until the end of its expiry day.</p></form>'
+    . '<p class="muted small" style="margin:10px 0 0">Saving a code that already exists updates it. A coupon does not add to the multi-buy discount: the customer gets whichever saves more. The free 10ml mini still applies. Times are UAE time. Leave the time limit empty for a code with no end.</p></form>'
+    . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var h=+b.dataset.h,f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},d=function(x){return x.getFullYear()+"-"+p(x.getMonth()+1)+"-"+p(x.getDate())},t=function(x){return p(x.getHours())+":"+p(x.getMinutes())};'
+    . 'var n=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000),e=new Date(n.getTime()+h*3600000);if(!h){["start_d","start_t","end_d","end_t"].forEach(function(k){set(k,"")});}else{set("start_d",d(n));set("start_t",t(n));set("end_d",d(e));set("end_t",t(e));}document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}})</script>'
     . '<h2 class="exsum">Your coupons<small>' . count($list) . ' code' . (count($list) === 1 ? '' : 's') . '</small></h2>'
     . '<div class="fill">' . ($list ? '<div class="cplist">' . $tr . '</div>' : '<p class="card muted" style="margin:0">No coupons yet. Make one above.</p>')
     . '<p class="muted small after">"Used" counts placed orders; cancelled, refunded and unpaid card attempts are not counted.</p></div>', true);
