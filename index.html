@@ -1535,7 +1535,7 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-sum .co-cp-f input::placeholder{text-transform:none;letter-spacing:.04em;color:var(--dim)}
 .co-sum .co-cp-f .btn{padding:0 18px}
 .co-was{margin-right:10px;font-size:.55em;color:var(--muted);text-decoration-thickness:1px}
-.co-row.co-save-c{flex-wrap:wrap;justify-content:space-between;align-items:baseline}
+.co-row.co-save-c{flex-direction:column;align-items:flex-start;gap:1px}
 .co-row.co-save-c small{font-weight:400;font-size:12px;letter-spacing:.02em;opacity:.85}
 .co-cp-m.co-cp-saved{padding:10px 14px;border:1px solid currentColor;background:rgba(95,196,140,.08);font-size:14.5px;font-weight:500}
 @media(max-width:900px){.co-cp-f input,.co-cp-f .btn{min-height:48px}}
@@ -1595,6 +1595,9 @@ html[data-mode="light"] .co-img i{color:#fffaf1}
 .co-row.co-save{font-weight:500;letter-spacing:.04em;justify-content:flex-start;gap:6px;margin-top:8px;padding:9px 14px;border:1px solid currentColor;background:rgba(95,196,140,.08)}
 .co-bar-save{display:block;font-weight:500;color:#5fc48c}
 html[data-mode="light"] .co-bar-save{color:#1e7a47}
+/* AJAY: small saved box on the left under Total, closing right after the amount */
+.co-sum .co-row.co-save{width:fit-content;max-width:100%;font-size:13px;margin-top:2px;padding:5px 10px}
+.co-sum .co-row.co-save .price{font-size:15px}
 html[data-mode="light"] .co-row.disc,html[data-mode="light"] .co-row.disc .price,html[data-mode="light"] .co-row.co-save,html[data-mode="light"] .co-row.co-save .price,html[data-mode="light"] .co-free .price{color:#1e7a47}
 .co-free-t{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
 .co-row.tot{margin-top:6px;padding-top:14px;border-top:1px solid var(--line);color:var(--ivory);font-size:16px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;align-items:center}
@@ -1626,8 +1629,8 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   .co-sum-in{padding:4px 16px 18px;border-top:1px solid var(--line)}
   /* phone: the totals and coupon box always show; tapping the bar opens the product list */
   .co-sum:not(.open) .co-items,.co-sum:not(.open) .co-edit-m,.co-sum:not(.open) .co-sum-in>.co-small{display:none}
-  /* each amount once on phone (AJAY: "too many repeat details"): no total or saving in the bar, no second coupon line, no struck total, no "saved in total" */
-  .co-bar .price,.co-bar-save,.co-row.co-cpr,.co-sum .co-was,.co-save-c small{display:none}
+  /* each amount once on phone (AJAY: "too many repeat details"): no total or saving in the bar, no second coupon line, no struck total */
+  .co-bar .price,.co-bar-save,.co-row.co-cpr,.co-sum .co-was{display:none}
   .co-bar::after{margin-left:auto}
   .co-nudge.co-nudge-m{display:flex}
   .co-nudge.co-nudge-d{display:none}
@@ -3345,7 +3348,7 @@ function bindCheckout(q){
         : dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}
-      <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div><div id="coCpSlot"></div>${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>${money2(saved)} saved in total</small>` : ''}</div>` : saved > 0 ? `<div class="co-row co-save"><span>You save</span><span class="price">${moneyHTML(saved, true)}</span></div>` : ''}`;
+      <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>${money2(saved)} saved in total</small>` : ''}</div>` : saved > 0 ? `<div class="co-row co-save"><span>You save</span><span class="price">${moneyHTML(saved, true)}</span></div>` : ''}<div id="coCpSlot"></div>`;
     const nudge = m => `<div class="co-nudge ${m}">${ICON.gift || ''}<span>${qtyNudge(dc)}</span></div>`;   // same offer line as the bag: under the bar on phones, above Subtotal on desktop
     const sum = $('#coSum');
     sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${saved > 0 ? `<b class="co-bar-save">You save ${money2(saved)}</b>` : ''}${coOpen ? 'Tap to hide items' : 'Tap to see items'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>${nudge('co-nudge-m')}
