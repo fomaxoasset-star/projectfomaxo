@@ -1535,11 +1535,16 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-sum .co-cp-f input::placeholder{text-transform:none;letter-spacing:.04em;color:var(--dim)}
 .co-sum .co-cp-f .btn{padding:0 18px}
 .co-was{margin-right:10px;font-size:.55em;color:var(--muted);text-decoration-thickness:1px}
-.co-row.co-save-c{flex-wrap:wrap;justify-content:space-between;align-items:baseline}
+.co-row.co-save-c{flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 12px}
+.co-row.co-save-c small{margin-left:auto}
+/* AJAY: "saved in total" is the bigger line, "after coupon" the smaller one */
+.co-sum .co-row.co-save-c>span{font-size:12px;font-weight:400;opacity:.85}
+.co-sum .co-row.co-save-c>span .price{font-size:13px}
+.co-sum .co-row.co-save-c small{font-size:15px;font-weight:500;letter-spacing:.02em;opacity:1}
 .co-row.co-save-c small{font-weight:400;font-size:12px;letter-spacing:.02em;opacity:.85}
 .co-cp-m.co-cp-saved{padding:10px 14px;border:1px solid currentColor;background:rgba(95,196,140,.08);font-size:14.5px;font-weight:500}
 @media(max-width:900px){.co-cp-f input,.co-cp-f .btn{min-height:48px}}
-.co-cp-f{display:flex;gap:8px;margin-top:8px}
+.co-cp-f{display:flex;gap:8px}
 .form .co-cp-f input{flex:1;min-width:0;padding:12px 14px;text-transform:uppercase;letter-spacing:.08em}
 .form .co-cp-f input::placeholder{text-transform:none;letter-spacing:.04em}
 .co-cp-f .btn{flex:none;padding:0 22px;min-height:0}
@@ -1595,6 +1600,10 @@ html[data-mode="light"] .co-img i{color:#fffaf1}
 .co-row.co-save{font-weight:500;letter-spacing:.04em;justify-content:flex-start;gap:6px;margin-top:8px;padding:9px 14px;border:1px solid currentColor;background:rgba(95,196,140,.08)}
 .co-bar-save{display:block;font-weight:500;color:#5fc48c}
 html[data-mode="light"] .co-bar-save{color:#1e7a47}
+/* AJAY: small saved box on the left under Total, closing right after the amount; after a coupon it sits under the coupon, full width */
+.co-sum .co-row.co-save{width:fit-content;max-width:100%;font-size:13px;margin-top:2px;padding:5px 10px}
+.co-sum .co-row.co-save-c{width:auto;margin-top:0}
+.co-sum .co-row.co-save .price{font-size:15px}
 html[data-mode="light"] .co-row.disc,html[data-mode="light"] .co-row.disc .price,html[data-mode="light"] .co-row.co-save,html[data-mode="light"] .co-row.co-save .price,html[data-mode="light"] .co-free .price{color:#1e7a47}
 .co-free-t{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
 .co-row.tot{margin-top:6px;padding-top:14px;border-top:1px solid var(--line);color:var(--ivory);font-size:16px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;align-items:center}
@@ -1626,9 +1635,10 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   .co-sum-in{padding:4px 16px 18px;border-top:1px solid var(--line)}
   /* phone: the totals and coupon box always show; tapping the bar opens the product list */
   .co-sum:not(.open) .co-items,.co-sum:not(.open) .co-edit-m,.co-sum:not(.open) .co-sum-in>.co-small{display:none}
-  /* each amount once on phone (AJAY: "too many repeat details"): no total or saving in the bar, no second coupon line, no struck total, no "saved in total" */
-  .co-bar .price,.co-bar-save,.co-row.co-cpr,.co-sum .co-was,.co-save-c small{display:none}
-  .co-bar::after{margin-left:auto}
+  /* each amount once on phone (AJAY: "too many repeat details"): no total or saving in the bar, no second coupon line, no struck total */
+  .co-bar .price,.co-bar-save,.co-row.co-cpr,.co-sum .co-was{display:none}
+  /* AJAY: "Tap to see Orders" sits on the right, next to the arrow */
+  .co-bar-tap{margin-left:auto;font-size:12.5px;color:var(--gold);white-space:nowrap}
   .co-nudge.co-nudge-m{display:flex}
   .co-nudge.co-nudge-d{display:none}
   .co-nudge{margin:0 16px 14px;font-size:12.5px;padding:8px 12px}
@@ -1938,7 +1948,7 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   .co-row.tot .price{font-size:26px}
   .co-row.co-save{margin-top:4px;padding:6px 12px}
   .co-sum .co-cp{margin:2px 0;padding:7px 0}
-  .co-sum .co-cp-f{margin-top:5px}
+  .co-sum .co-cp-f{margin-top:0}
   .co-sum .co-cp-f input{padding:7px 10px}
   .co-cp-on{padding:7px 12px}
 }
@@ -3293,7 +3303,7 @@ function bindCheckout(q){
     if (!cpBox) return;
     cpBox.innerHTML = coupon
       ? `<div class="co-cp-on"><span>Coupon <b>${esc(coupon.code)}</b> · ${esc(coupon.label)}<small class="co-cp-end" id="coCpEnd" hidden></small></span><button type="button" class="co-cp-x" id="coCpX">Remove</button></div><p class="co-cp-m" id="coCpM" hidden></p>`
-      : `<label class="co-cp-l" for="coCpIn">Have a coupon?</label><div class="co-cp-f"><input id="coCpIn" maxlength="30" placeholder="Coupon code" aria-label="Coupon code" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn line" id="coCpGo">Apply</button></div><p class="co-cp-m bad" id="coCpM"${cpMsg ? '' : ' hidden'}>${esc(cpMsg)}</p>`;
+      : `<div class="co-cp-f"><input id="coCpIn" maxlength="30" placeholder="Have a coupon?" aria-label="Coupon code" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn line" id="coCpGo">Apply</button></div><p class="co-cp-m bad" id="coCpM"${cpMsg ? '' : ' hidden'}>${esc(cpMsg)}</p>`;
     const x = $('#coCpX'), go2 = $('#coCpGo'), inp = $('#coCpIn');
     if (x) x.onclick = () => { setCoupon(null); cpMsg = ''; drawCoupon(); draw(); };
     if (inp) inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } };
@@ -3339,16 +3349,16 @@ function bindCheckout(q){
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     // You save = crossed-out prices minus paid prices, plus the multi-buy discount or coupon
     const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (T.disc > 0 ? T.disc : 0)) * 100) / 100;
-    const rows = T.after === null ? `<div id="coCpSlot"></div><div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div>` :
-      `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div><div id="coCpSlot"></div>
+    const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div><div id="coCpSlot"></div>` :
+      `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div>
       ${T.useC ? `<div class="co-row disc co-cpr"><span>Coupon ${esc(coupon.code)} (${esc(coupon.label)})</span><span class="price">−${moneyHTML(T.cs, true)}</span></div>`
         : dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}
-      <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>${money2(saved)} saved in total</small>` : ''}</div>` : saved > 0 ? `<div class="co-row co-save"><span>You save</span><span class="price">${moneyHTML(saved, true)}</span></div>` : ''}`;
+      <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${!T.useC && saved > 0 ? `<div class="co-row co-save"><span>You saved <span class="price">${moneyHTML(saved, true)}</span> on this order</span></div>` : ''}<div id="coCpSlot"></div>${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>CONGRATS !! ${money2(saved)} saved in total</small>` : ''}</div>` : ''}`;
     const nudge = m => `<div class="co-nudge ${m}">${ICON.gift || ''}<span>${qtyNudge(dc)}</span></div>`;   // same offer line as the bag: under the bar on phones, above Subtotal on desktop
     const sum = $('#coSum');
-    sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${saved > 0 ? `<b class="co-bar-save">You save ${money2(saved)}</b>` : ''}${coOpen ? 'Tap to hide items' : 'Tap to see items'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>${nudge('co-nudge-m')}
+    sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span>${saved > 0 ? `<small><b class="co-bar-save">You save ${money2(saved)}</b></small>` : ''}</span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}<span class="co-bar-tap">${coOpen ? 'Tap to hide Orders' : 'Tap to see Orders'}</span></button>${nudge('co-nudge-m')}
       <div class="co-sum-in co-tap" id="coSumIn" title="Open your bag to change it"><div class="co-sum-h"><h3>Order summary</h3><button type="button" class="co-edit" id="coEdit">Edit bag</button></div>
       <div class="co-items">${items}${mini}</div>${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
@@ -3365,7 +3375,7 @@ function bindCheckout(q){
     $$('[data-openbag]', sum).forEach(el => { el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBag(); } }; });
     // tapping anywhere in the summary (heading, products, totals) opens the bag; the mini picker and Edit bag keep their own job
     $('#coSumIn').onclick = e => { if (!e.target.closest('select,button,a,input,.co-cp')) openBag(); };
-    // the coupon box sits in the order summary under Subtotal, on laptop and phone
+    // the coupon box sits in the order summary under Total, on laptop and phone ("Have a coupon?" is the placeholder, Apply on the same line)
     const slot = $('#coCpSlot');
     if (cpBox && slot) slot.replaceWith(cpBox);
     const cm = $('#coMini'); if (cm) cm.onchange = () => { try { localStorage.setItem('fomaxo_mini', cm.value); } catch(e) {} renderCart(); };
