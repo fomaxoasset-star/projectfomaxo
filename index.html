@@ -898,13 +898,22 @@ html[data-mode="light"] #el-spend::-webkit-slider-thumb{border-color:#fffaf1;box
 .el-bg{opacity:1;filter:none}
 .el-hero::before{background:radial-gradient(ellipse 44% 40% at 50% 50%,rgba(0,0,0,.55),rgba(0,0,0,.25) 70%,rgba(0,0,0,.05) 100%),linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,0) 25%,rgba(0,0,0,0) 75%,var(--black))}
 .el-hero .wrap{text-shadow:0 2px 24px rgba(0,0,0,.65)}
-html[data-mode="light"] .el-bg{opacity:1}
-html[data-mode="light"] .el-hero::before{background:radial-gradient(ellipse 33% 50% at 50% 52%,rgba(246,240,228,.9),rgba(246,240,228,.62) 62%,rgba(246,240,228,0) 100%),linear-gradient(180deg,rgba(246,240,228,0) 80%,rgba(246,240,228,.85))}
-html[data-mode="light"] .el-hero .wrap{text-shadow:0 1px 18px rgba(246,240,228,.95)}
-@media(max-width:700px){html[data-mode="light"] .el-hero::before{background:radial-gradient(ellipse 95% 38% at 50% 55%,rgba(246,240,228,.9),rgba(246,240,228,.62) 62%,rgba(246,240,228,0) 100%),linear-gradient(180deg,rgba(246,240,228,0) 80%,rgba(246,240,228,.85))}}
 @media(min-width:701px){
-.el-hero::before{background:radial-gradient(ellipse 30% 40% at 50% 52%,rgba(0,0,0,.45),rgba(0,0,0,0) 100%),radial-gradient(ellipse 58% 85% at 50% 50%,rgba(0,0,0,0) 45%,rgba(10,10,10,.7) 80%,var(--black) 100%),linear-gradient(180deg,rgba(0,0,0,0) 80%,var(--black))}
-html[data-mode="light"] .el-hero::before{background:radial-gradient(ellipse 30% 42% at 50% 52%,rgba(246,240,228,.82),rgba(246,240,228,.5) 60%,rgba(246,240,228,0) 100%),radial-gradient(ellipse 58% 85% at 50% 50%,rgba(246,240,228,0) 45%,rgba(246,240,228,.82) 80%,rgba(246,240,228,1) 100%),linear-gradient(180deg,rgba(246,240,228,0) 80%,rgba(246,240,228,.85))}}
+.el-hero::before{background:radial-gradient(ellipse 30% 40% at 50% 52%,rgba(0,0,0,.45),rgba(0,0,0,0) 100%),radial-gradient(ellipse 58% 85% at 50% 50%,rgba(0,0,0,0) 45%,rgba(10,10,10,.7) 80%,var(--black) 100%),linear-gradient(180deg,rgba(0,0,0,0) 80%,var(--black))}}
+/* light mode Elite hero looks the same as dark mode (AJAY) */
+html[data-mode="light"] .el-hero{--black:#050505;--bg-rgb:5,5,5;color:#f2ebdd;border-bottom-color:rgba(215,170,105,.2)}
+html[data-mode="light"] .el-hero .el-bg{opacity:1;filter:none}
+html[data-mode="light"] .el-hero::before{background:radial-gradient(ellipse 44% 40% at 50% 50%,rgba(0,0,0,.55),rgba(0,0,0,.25) 70%,rgba(0,0,0,.05) 100%),linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,0) 25%,rgba(0,0,0,0) 75%,#050505)}
+@media(min-width:701px){html[data-mode="light"] .el-hero::before{background:radial-gradient(ellipse 30% 40% at 50% 52%,rgba(0,0,0,.45),rgba(0,0,0,0) 100%),radial-gradient(ellipse 58% 85% at 50% 50%,rgba(0,0,0,0) 45%,rgba(10,10,10,.7) 80%,#050505 100%),linear-gradient(180deg,rgba(0,0,0,0) 80%,#050505)}}
+html[data-mode="light"] .el-hero .wrap{color:#f2ebdd;text-shadow:0 2px 24px rgba(0,0,0,.65)}
+html[data-mode="light"] .el-hero .crumbs,html[data-mode="light"] .el-hero .crumbs a{color:#b0a690}
+html[data-mode="light"] .el-hero .el-em{color:#d7aa69}
+html[data-mode="light"] .el-hero .eyebrow{color:#d7aa69}
+html[data-mode="light"] .el-hero h1{color:#f2ebdd}
+html[data-mode="light"] .el-hero .metal{background-image:linear-gradient(100deg,#9c7440 0%,#d7aa69 22%,#f3dcb0 38%,#c99a5c 54%,#ecd0a0 70%,#a67d45 88%,#d7aa69 100%)}
+html[data-mode="light"] .el-hero .el-quote{color:#e9d6b2}
+html[data-mode="light"] .el-hero .btn:not(.line){background-image:linear-gradient(100deg,#9c7440 0%,#d7aa69 22%,#f3dcb0 38%,#c99a5c 54%,#ecd0a0 70%,#a67d45 88%,#d7aa69 100%);color:#0a0805}
+html[data-mode="light"] .el-hero .btn.line{color:#e9d6b2;box-shadow:inset 0 0 0 1px rgba(215,170,105,.44)}
 /* footer tagline: first sentence on one line, 'Founded in Dubai.' below */
 @media(min-width:861px){.fgrid{grid-template-columns:minmax(max-content,1.5fr) repeat(3,minmax(0,1fr))}.f-line{white-space:nowrap}}
 @media(max-width:600px){footer .fgrid .lead{font-size:12.5px!important}}
