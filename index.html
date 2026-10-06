@@ -433,6 +433,7 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .line-item img{width:78px;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
 .line-item h4{font-size:15px}
 .line-item .o,.co-item .o{font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.line-item .o-sz,.co-item .o-sz{margin-top:2px}   /* AJAY: checkout summary shows 100ML on top, EAU DE PARFUM below */
 .line-item .o-picks,.co-item .o-picks{text-transform:none;letter-spacing:.02em;color:var(--champagne)}
 .co-item small{margin-top:4px}
 .line-item .q{display:inline-flex;border:1px solid var(--line);margin-top:12px;height:34px}
@@ -2398,7 +2399,7 @@ function addToCart(id, opt, qty=1, silent, picks){
 }
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
 // one look for a product everywhere it is listed (bag and checkout summary, whether it came from Add to bag or Buy now)
-function lineInfo(l){ const p = P[l.id]; return `<h4>${esc(p.name)}</h4><div class="o">${optLabel(p, l.opt)} · ${esc(p.family.split('·')[0])}</div>${l.picks ? `<div class="o o-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</div>` : ''}`; }
+function lineInfo(l, split){ const p = P[l.id]; return `<h4>${esc(p.name)}</h4>${split ? `<div class="o">${optLabel(p, l.opt)}</div><div class="o o-sz">${esc(p.family.split('·')[0])}</div>` : `<div class="o">${optLabel(p, l.opt)} · ${esc(p.family.split('·')[0])}</div>`}${l.picks ? `<div class="o o-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</div>` : ''}`; }
 function orderText(lines, d, pay){
   const rows = lines.map(l => { const p = P[l.id], m = money(p.prices[l.opt]); return `• ${p.name} — ${optLabel(p, l.opt)} × ${l.qty}${m ? ' (' + m + ' each)' : ''}${l.picks ? '\n   Fragrances: ' + l.picks.map(id => P[id] ? P[id].name : id).join(', ') : ''}`; });
   const tot = subtotal(lines), dc = qtyDiscount(lines);
@@ -3418,7 +3419,7 @@ function bindCheckout(q){
     if (coPay !== 'card' && coPay !== 'cod') coPay = CARD_ON ? 'card' : 'cod';
     const T = orderTotals(ls, coPay, true), dc = T.dc;
     // order summary
-    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${SM(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
+    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${SM(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l, true)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
     const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${SM(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b>Free 10ml mini</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     // You save = crossed-out prices minus paid prices, plus the multi-buy discount or coupon
