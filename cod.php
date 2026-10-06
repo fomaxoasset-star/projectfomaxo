@@ -35,7 +35,7 @@ if ($order['gift']) $rows[] = "• FREE 10ml {$order['gift']} mini";
 $body = "NEW CASH ON DELIVERY ORDER  $no\n" . date('d M Y, H:i') . " (Dubai)\n\n"
       . implode("\n", $rows) . "\n\n"
       . 'Subtotal: ' . fomaxo_aed($order['fullFils']) . "\n"
-      . ($order['discountFils'] ? "Multi-buy {$order['pct']}% off: -" . fomaxo_aed($order['discountFils']) . "\n" : '')
+      . ($order['discountFils'] ? "{$order['discLabel']}: -" . fomaxo_aed($order['discountFils']) . "\n" : '')
       . 'Cash on delivery fee: ' . fomaxo_aed($order['feeFils']) . "\n"
       . "Delivery: Free\nTOTAL TO COLLECT IN CASH: $total\n\n"
       . "Name: {$cust['name']}\nPhone: {$cust['phone']}\nEmail: {$cust['email']}\n"

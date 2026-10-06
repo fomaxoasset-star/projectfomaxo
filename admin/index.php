@@ -343,6 +343,7 @@ CSS;
      . (!empty($_SESSION['admin']) ? '<div class="tabsw"><a class="tnav" data-d="-1" aria-label="Previous page" hidden>‹</a><nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
          [['Home', './', !$_GET], ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
           ['Orders', './?orders=1', !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
+          ['Coupons', './?coupons=1', isset($_GET['coupons'])],
           ['Reviews', './?reviews=1', isset($_GET['reviews'])], ['Analytics', './?analytics=1', isset($_GET['analytics'])], ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Reports', './?reports=1', isset($_GET['reports'])],
           ['Members', './?members=1', isset($_GET['members'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav><a class="tnav" data-d="1" aria-label="Next page" hidden>›</a></div>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . ($fit ? ' fit' : '') . '">' . $body . '</main>'
@@ -870,6 +871,70 @@ if (isset($_GET['expenses'])) {
     . '<h2 class="exsum">' . h($rg['r'] === 'all' ? 'All time' : $rg['label']) . '<small>' . money($sum) . ' · ' . count($list) . ' expense' . (count($list) === 1 ? '' : 's') . '</small></h2>'
     . '<div class="fill">' . ($list ? '<table class="exp"><tbody>' . $tr . '</tbody></table>' : '<p class="card muted" style="margin:0">No expenses in this period.</p>')
     . '<p class="muted small after">"Stock purchase" is shown in reports but not taken off profit, because the cost of each bottle is already counted when it sells.</p></div>', true, true);
+}
+
+/* ---- coupons: codes customers type at checkout (% off or AED off, optional minimum, expiry date and number of uses).
+   A coupon never adds to the multi-buy discount: the customer gets whichever saving is bigger. checkout.php and ziina.php check the code on the server. ---- */
+if (isset($_GET['coupons'])) {
+  fomaxo_coupons_table($pdo);
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_ok()) { flash('Please try again.'); go(['coupons' => 1]); }
+    $code = fomaxo_coupon_norm($_POST['code'] ?? '');
+    if (isset($_POST['delete'])) {
+      $pdo->prepare('DELETE FROM fx_coupons WHERE code = ?')->execute([$code]);
+      flash("Coupon $code deleted.", true); go(['coupons' => 1]);
+    }
+    if (isset($_POST['toggle'])) {
+      $pdo->prepare('UPDATE fx_coupons SET active = 1 - active WHERE code = ?')->execute([$code]);
+      flash("Coupon $code switched " . ($_POST['toggle'] === 'on' ? 'on' : 'off') . '.', true); go(['coupons' => 1]);
+    }
+    $kind = ($_POST['kind'] ?? '') === 'aed' ? 'aed' : 'pct';
+    $num = fn($k) => trim((string)($_POST[$k] ?? '')) === '' ? null : (float)str_replace(',', '.', (string)$_POST[$k]);
+    $amt = $num('amount'); $min = $num('min_order'); $uses = trim((string)($_POST['max_uses'] ?? '')) === '' ? null : (int)$_POST['max_uses'];
+    $exp = (string)($_POST['expires'] ?? '');
+    if (strlen($code) < 3) { flash('Please type a code of at least 3 letters or numbers (no spaces).'); go(['coupons' => 1]); }
+    if ($amt === null || $amt <= 0 || ($kind === 'pct' && $amt > 100)) { flash($kind === 'pct' ? 'Please type a % between 1 and 100.' : 'Please type the AED amount.'); go(['coupons' => 1]); }
+    if ($exp !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $exp)) { flash('Please type the expiry date as dd/mm/yyyy.'); go(['coupons' => 1]); }
+    $had = $pdo->prepare('SELECT 1 FROM fx_coupons WHERE code = ?'); $had->execute([$code]); $had = (bool)$had->fetchColumn();
+    $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, max_uses, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, NOW())
+                   ON DUPLICATE KEY UPDATE kind = VALUES(kind), amount = VALUES(amount), min_order = VALUES(min_order), expires = VALUES(expires), max_uses = VALUES(max_uses), active = 1')
+        ->execute([$code, $kind, round($amt, 2), $min !== null && $min > 0 ? round($min, 2) : null, $exp !== '' ? $exp : null, $uses !== null && $uses > 0 ? $uses : null]);
+    flash("Coupon $code " . ($had ? 'updated' : 'saved') . '. Customers can use it now.', true); go(['coupons' => 1]);
+  }
+  $list = $pdo->query('SELECT * FROM fx_coupons ORDER BY active DESC, created_at DESC')->fetchAll();
+  /* how often each code was used (placed orders, not cancelled or refunded) and what it saved customers */
+  $used = [];
+  foreach ($pdo->query("SELECT coupon, COUNT(*) n, COALESCE(SUM(discount), 0) d, COALESCE(SUM(total), 0) t FROM fx_orders WHERE coupon IS NOT NULL AND test = 0
+                        AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') GROUP BY coupon") as $r) $used[$r['coupon']] = $r;
+  $today = date('Y-m-d'); $tr = '';
+  foreach ($list as $c) {
+    $u = $used[$c['code']] ?? ['n' => 0, 'd' => 0, 't' => 0]; $n = (int)$u['n'];
+    $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($c['expires'] && $c['expires'] < $today ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled'] : ['On', 'p-Paid']));
+    $rules = array_filter([(float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['expires'] ? 'Until ' . date('d/m/Y', strtotime($c['expires'])) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
+    $btn = fn($name, $val, $label, $ask = '') => '<form method="post" style="margin:0"' . ($ask ? ' onsubmit="return confirm(\'' . h($ask) . '\')"' : '') . '>' . csrf_field()
+      . '<input type="hidden" name="code" value="' . h($c['code']) . '"><button class="btn line sm" name="' . $name . '" value="' . $val . '">' . $label . '</button></form>';
+    $tr .= '<div class="cprow"><div><b class="cpcode">' . h($c['code']) . '</b> <span class="tag ' . $state[1] . '">' . $state[0] . '</span>'
+      . '<div class="muted small">' . h(fomaxo_coupon_label($c)) . ($rules ? ' · ' . h(implode(' · ', $rules)) : '') . '</div></div>'
+      . '<div class="cpused"><b>Used ' . $n . ' time' . ($n === 1 ? '' : 's') . '</b>' . ($n ? '<div class="muted small">Saved customers ' . money($u['d']) . ' · sales ' . money($u['t']) . '</div>' : '') . '</div>'
+      . '<div class="cpacts">' . ((int)$c['active'] ? $btn('toggle', 'off', 'Turn off') : $btn('toggle', 'on', 'Turn on'))
+      . $btn('delete', '1', 'Delete', 'Delete coupon ' . $c['code'] . '? Orders that used it keep the code.') . '</div></div>';
+  }
+  page('Coupons', '<div class="pagehead"><h1>Coupons</h1></div>' . flash()
+    . '<style>.cpcode{letter-spacing:.06em}.cpin{text-transform:uppercase;letter-spacing:.06em}.cpin::placeholder{text-transform:none;letter-spacing:0}'
+    . '.cplist{background:var(--panel);border:1px solid var(--line);border-radius:10px}.cprow{display:grid;grid-template-columns:1fr auto auto;gap:6px 24px;align-items:center;padding:10px 12px}.cprow+.cprow{border-top:1px solid var(--line)}'
+    . '.cpused{text-align:right}.cpacts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}@media (max-width:759px){.cprow{grid-template-columns:1fr;padding:12px 14px}.cpused{text-align:left}.cpacts{grid-column:1/-1;justify-content:flex-start}}</style>'
+    . '<form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Make a coupon</h2>'
+    . '<div class="g3"><div><label for="code">Code</label><input id="code" class="cpin" name="code" maxlength="30" placeholder="e.g. WELCOME10" autocapitalize="characters" autocomplete="off" required></div>'
+    . '<div><label for="kind">Type</label><select id="kind" name="kind"><option value="pct">% off</option><option value="aed">AED off</option></select></div>'
+    . '<div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" placeholder="e.g. 10" required></div></div>'
+    . '<div class="g3"><div><label for="min_order">Minimum order AED (optional)</label><input id="min_order" type="number" min="0" step="0.01" inputmode="decimal" name="min_order"></div>'
+    . '<div><label for="expires">Expires (optional)</label><input id="expires" type="date" name="expires"></div>'
+    . '<div><label for="max_uses">Max uses (optional)</label><input id="max_uses" type="number" min="1" step="1" inputmode="numeric" name="max_uses"></div></div>'
+    . '<p style="margin:12px 0 0"><button class="btn">Save coupon</button></p>'
+    . '<p class="muted small" style="margin:10px 0 0">Saving a code that already exists updates it. A coupon does not add to the multi-buy discount: the customer gets whichever saves more. The free 10ml mini still applies. The code works until the end of its expiry day.</p></form>'
+    . '<h2 class="exsum">Your coupons<small>' . count($list) . ' code' . (count($list) === 1 ? '' : 's') . '</small></h2>'
+    . '<div class="fill">' . ($list ? '<div class="cplist">' . $tr . '</div>' : '<p class="card muted" style="margin:0">No coupons yet. Make one above.</p>')
+    . '<p class="muted small after">"Used" counts placed orders; cancelled, refunded and unpaid card attempts are not counted.</p></div>', true);
 }
 
 /* ---- analytics: visitors, where they come from, and where sales are lost (filled by track.php on the website) ---- */
@@ -1698,7 +1763,7 @@ if (isset($_GET['o'])) {
     . fx_tracker($o)
     . '<div class="grid2"><div>'
     . '<div class="card"><h2 style="margin-top:0">Items</h2><ul class="items">' . implode('', array_map(fn($i) => '<li>' . h($i) . '</li>', $items)) . '</ul>'
-    . '<dl style="margin-top:14px">' . $row('Subtotal', $o['subtotal'] !== null ? money($o['subtotal']) : '') . $row('Discount', $o['discount'] > 0 ? '-' . money($o['discount']) : '')
+    . '<dl style="margin-top:14px">' . $row('Subtotal', $o['subtotal'] !== null ? money($o['subtotal']) : '') . $row(!empty($o['coupon']) ? 'Coupon ' . $o['coupon'] : 'Discount', $o['discount'] > 0 ? '-' . money($o['discount']) : '')
     . $row('COD fee', $o['fee'] > 0 ? money($o['fee']) : '') . $row('Total', '<b>' . money($o['total']) . '</b>') . $row('Payment', h($o['payment']) . ($o['test'] ? ' (test)' : ''))
     . $row('Ordered', h(date('d M Y, H:i', strtotime($o['created_at'])))) . $row('Paid', $o['paid_at'] ? h(date('d M Y, H:i', strtotime($o['paid_at']))) : '')
     . $row('Card ref', h($o['ref'] ?? '')) . '</dl></div>'
