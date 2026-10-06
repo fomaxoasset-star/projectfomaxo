@@ -894,14 +894,26 @@ body.home header.nav:not(.solid){--ivory:#f6efe2;--muted:#d8ccb4;--champagne:#ec
 .calc-hint{font-size:11px;letter-spacing:.06em;color:var(--dim)}
 html[data-mode="light"] #el-spend::-webkit-slider-thumb{border-color:#fffaf1;box-shadow:0 0 0 1px var(--gold),0 4px 14px rgba(60,40,10,.3)}
 @media(max-width:600px){.track-lab span{font-size:8px;letter-spacing:.14em}}
-/* Elite page hero photo: more visible in both modes */
-.el-bg{opacity:.62;filter:saturate(.9)}
-.el-hero::before{background:radial-gradient(ellipse 60% 70% at 50% 45%,rgba(var(--bg-rgb),.15),rgba(var(--bg-rgb),.55) 70%,var(--black) 100%)}
-.el-hero .wrap{text-shadow:0 2px 24px rgba(0,0,0,.55)}
-html[data-mode="light"] .el-bg{opacity:.8}
-html[data-mode="light"] .el-hero::before{background:radial-gradient(ellipse 40% 44% at 50% 52%,rgba(246,240,228,.86),rgba(246,240,228,.6) 62%,rgba(246,240,228,.12) 100%),linear-gradient(180deg,rgba(246,240,228,.2),rgba(246,240,228,0) 30%,rgba(246,240,228,0) 75%,rgba(246,240,228,.85))}
-html[data-mode="light"] .el-hero .wrap{text-shadow:0 1px 18px rgba(246,240,228,.9)}
-@media(max-width:700px){html[data-mode="light"] .el-hero::before{background:radial-gradient(ellipse 100% 50% at 50% 52%,rgba(246,240,228,.88),rgba(246,240,228,.62) 65%,rgba(246,240,228,.2) 100%),linear-gradient(180deg,rgba(246,240,228,0) 75%,rgba(246,240,228,.85))}}
+/* Elite page hero photo: shown clearly, soft glow only behind the text */
+.el-bg{opacity:1;filter:none}
+.el-hero::before{background:radial-gradient(ellipse 75% 46% at 50% 52%,rgba(0,0,0,.85),rgba(0,0,0,.62) 55%,rgba(0,0,0,.15) 100%),linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,0) 25%,rgba(0,0,0,0) 75%,var(--black))}
+.el-hero .wrap{text-shadow:0 2px 24px rgba(0,0,0,.65)}
+@media(min-width:701px){
+.el-hero::before{background:radial-gradient(ellipse 42% 52% at 50% 52%,rgba(0,0,0,.85),rgba(0,0,0,.65) 50%,rgba(0,0,0,.15) 100%),radial-gradient(ellipse 58% 85% at 50% 50%,rgba(0,0,0,0) 45%,rgba(10,10,10,.7) 80%,var(--black) 100%),linear-gradient(180deg,rgba(0,0,0,0) 80%,var(--black))}}
+/* light mode Elite hero looks the same as dark mode (AJAY) */
+html[data-mode="light"] .el-hero{--black:#050505;--bg-rgb:5,5,5;color:#f2ebdd;border-bottom-color:rgba(215,170,105,.2)}
+html[data-mode="light"] .el-hero .el-bg{opacity:1;filter:none}
+html[data-mode="light"] .el-hero::before{background:radial-gradient(ellipse 75% 46% at 50% 52%,rgba(0,0,0,.85),rgba(0,0,0,.62) 55%,rgba(0,0,0,.15) 100%),linear-gradient(180deg,rgba(0,0,0,.2),rgba(0,0,0,0) 25%,rgba(0,0,0,0) 75%,#050505)}
+@media(min-width:701px){html[data-mode="light"] .el-hero::before{background:radial-gradient(ellipse 42% 52% at 50% 52%,rgba(0,0,0,.85),rgba(0,0,0,.65) 50%,rgba(0,0,0,.15) 100%),radial-gradient(ellipse 58% 85% at 50% 50%,rgba(0,0,0,0) 45%,rgba(10,10,10,.7) 80%,#050505 100%),linear-gradient(180deg,rgba(0,0,0,0) 80%,#050505)}}
+html[data-mode="light"] .el-hero .wrap{color:#f2ebdd;text-shadow:0 2px 24px rgba(0,0,0,.65)}
+html[data-mode="light"] .el-hero .crumbs,html[data-mode="light"] .el-hero .crumbs a{color:#b0a690}
+html[data-mode="light"] .el-hero .el-em{color:#d7aa69}
+html[data-mode="light"] .el-hero .eyebrow{color:#d7aa69}
+html[data-mode="light"] .el-hero h1{color:#f2ebdd}
+html[data-mode="light"] .el-hero .metal{background-image:linear-gradient(100deg,#9c7440 0%,#d7aa69 22%,#f3dcb0 38%,#c99a5c 54%,#ecd0a0 70%,#a67d45 88%,#d7aa69 100%)}
+html[data-mode="light"] .el-hero .el-quote{color:#e9d6b2}
+html[data-mode="light"] .el-hero .btn:not(.line){background-image:linear-gradient(100deg,#9c7440 0%,#d7aa69 22%,#f3dcb0 38%,#c99a5c 54%,#ecd0a0 70%,#a67d45 88%,#d7aa69 100%);color:#0a0805}
+html[data-mode="light"] .el-hero .btn.line{color:#e9d6b2;box-shadow:inset 0 0 0 1px rgba(215,170,105,.44)}
 /* footer tagline: first sentence on one line, 'Founded in Dubai.' below */
 @media(min-width:861px){.fgrid{grid-template-columns:minmax(max-content,1.5fr) repeat(3,minmax(0,1fr))}.f-line{white-space:nowrap}}
 @media(max-width:600px){footer .fgrid .lead{font-size:12.5px!important}}
