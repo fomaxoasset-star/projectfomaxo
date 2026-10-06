@@ -33,7 +33,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 11) return;
+  if ($ver >= 12) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -76,9 +76,16 @@ function fomaxo_db_schema($pdo) {
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '10')");
   }
   /* v11: King's new fragrance notes (top, heart and base) */
-  $get->execute(['king']); $d = json_decode((string)$get->fetchColumn(), true);
-  if (is_array($d)) { $d['notes'] = ['top' => 'Almond', 'heart' => 'Cinnamon · Tunisian Orange Blossom · Turkish Rose', 'base' => 'Tonka Bean · Vanilla · Amberwood']; $set->execute([fomaxo_json($d), 'king']); }
-  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '11')");
+  if ($ver < 11) {
+    $get->execute(['king']); $d = json_decode((string)$get->fetchColumn(), true);
+    if (is_array($d)) { $d['notes'] = ['top' => 'Almond', 'heart' => 'Cinnamon · Tunisian Orange Blossom · Turkish Rose', 'base' => 'Tonka Bean · Vanilla · Amberwood']; $set->execute([fomaxo_json($d), 'king']); }
+    $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '11')");
+  }
+  /* v12: when a visitor was last seen on each page, for Analytics → Pages (time spent on a page) */
+  try { $pdo->exec("ALTER TABLE fx_events ADD COLUMN left_at DATETIME NULL"); } catch (Throwable $e) {}
+  if (!$pdo->query("SHOW COLUMNS FROM fx_events LIKE 'left_at'")->fetch()) return;
+  if (!fomaxo_setting($pdo, 'time_since')) fomaxo_setting($pdo, 'time_since', date('Y-m-d'));
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '12')");
 }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (

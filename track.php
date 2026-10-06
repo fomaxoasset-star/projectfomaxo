@@ -23,7 +23,10 @@ date_default_timezone_set('Asia/Dubai');
 try {
   $page = $t('p', 80);
   $pdo->prepare('REPLACE INTO fx_live (vid, seen, page) VALUES (?, NOW(), ?)')->execute([$vid, $page]);
-  if ($ev === 'ping') exit;
+  if ($ev === 'ping') {   // still on the page: note it on the latest page of this visit, for the time spent on each page
+    try { $pdo->prepare("UPDATE fx_events SET left_at = NOW() WHERE sid = ? AND ev = 'view' ORDER BY id DESC LIMIT 1")->execute([$sid]); } catch (Throwable $e) {}
+    exit;
+  }
 
   if ($ev === 'lead') {   // checkout details, kept only once the customer typed a name or mobile
     $stages = ['details' => 1, 'payment' => 2, 'card' => 3];
