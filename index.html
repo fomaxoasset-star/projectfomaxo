@@ -2286,9 +2286,12 @@ function bagRecs(){
       <a href="#/product/${p.id}?size=${sz}" data-close><img src="${SM(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></a>
       <button type="button" class="rec-add" data-recadd="${p.id}" data-recsz="${sz}" aria-label="Add ${esc(p.name)} ${sz}ml to your bag">+</button></div>`).join('')}</div></div>`;
 }
-// one tap to reach the next multi-buy level: a fragrance the customer doesn't have yet, in its usual size (King and sets never)
+// one tap to reach the next multi-buy level: Royal Candy 50ml first; if it's in the bag or sold out, a fragrance the customer doesn't have yet, in its usual size (King and sets never)
 function nextTierAdd(dc){
   if (dc.units < 1 || dc.units >= QTY_TIERS[QTY_TIERS.length - 1].n) return '';
+  const rc = P.royalcandy;
+  if (rc && !rc.hidden && rc.prices && hasPrice(rc.prices[50]) && rc.sizes.includes(50) && !cart.some(l => l.id === 'royalcandy' && String(l.opt) === '50') && stockLeft('royalcandy', 50) !== 0)
+    return `<button type="button" class="qd-add" data-recadd="royalcandy" data-recsz="50">+ Add ${esc(rc.name)} ${optLabel(rc, 50)} · ${moneyHTML(rc.prices[50])}</button>`;
   const have = new Set(cart.map(l => l.id));
   const p = S.products.find(p => p.kind !== 'set' && !p.hidden && p.prices && !QTY_DISCOUNT_SKIP.includes(p.id) && p.tier !== 'elite' && !have.has(p.id) && hasPrice(p.prices[defaultSize(p)]) && stockLeft(p.id, defaultSize(p)) !== 0);
   if (!p) return '';
