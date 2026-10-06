@@ -319,6 +319,7 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .buy{display:flex;flex-direction:column;gap:26px}
 .buy h1{font-size:clamp(34px,3.6vw,56px);letter-spacing:.12em}
 .buy .sub{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold)}
+.buy .pd-name h1{margin:0}.buy .pd-name .sub{display:block;margin-top:8px}
 .buy .pprice{font-family:var(--serif);font-size:34px;color:var(--gold-hi)}
 .buy .pprice.na{font-family:var(--sans);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
 .opt-label{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between}
@@ -1805,6 +1806,30 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   #cart .dr-body{flex:none;overflow:visible}
   #cart .dr-foot{flex:none;margin-top:auto}
 }
+/* laptop product page: same layout, tighter spacing so it fits one screen */
+@media(min-width:961px){
+  .crumbs[style]{padding-top:18px!important}
+  .pdp{padding-top:14px}
+  .buy{gap:10px}
+  .buy>div:first-child{gap:6px!important}
+  .buy h1{font-size:clamp(32px,2.8vw,40px)}
+  .buy .pd-name .sub{margin-top:2px}
+  .buy .lead{font-size:15px;line-height:1.5;margin:0}
+  .buy .pprice:has(.was){font-size:34px}
+  .buy .pprice .was{margin-bottom:0}
+  .p-save{margin-top:-2px}
+  .pdp-offer{padding:8px 14px}
+  .buy .opt-label{margin-bottom:8px}
+  .sizes button{padding:9px 8px;gap:2px}
+  .qtyrow>*,.buy>.btn{min-height:44px;height:44px;padding-top:0;padding-bottom:0}
+  .pdp-pay{margin:-4px 0 -2px;font-size:11.5px;white-space:nowrap}
+  .perks div{padding:7px 14px;font-size:12.5px;align-items:center}
+  .acc summary{padding:9px 0;line-height:1.2}
+  .acc summary::after{line-height:1}
+  .perks div{line-height:1.3}
+  .acc .body{padding-bottom:12px;font-size:13.5px;line-height:1.6}
+  .acc .body p+p{margin-top:6px}
+}
 </style>
 </head>
 <body>
@@ -1959,7 +1984,7 @@ window.STORE = {
       url: ""
     },
     {
-      id: "gold", name: "Gold", family: "Eau de Parfum", tag: "Signature", tier: "signature",
+      id: "gold", name: "Gold", family: "Eau de Parfum · Unisex", tag: "Signature", tier: "signature",
       short: "Arabic heritage meets French style — strong, seductive and unmistakably luxurious.",
       description: [
         "Introducing Gold by FOMAXO — an extraordinary fusion of Arabic heritage and French style, designed to make you fall in love with the essence of the Arab world.",
@@ -1984,7 +2009,7 @@ window.STORE = {
       url: "https://fomaxo.com/fomaxo-old-money"
     },
     {
-      id: "royalcandy", name: "Royal Candy", family: "Eau de Parfum", tag: "Prestige", tier: "prestige",
+      id: "royalcandy", name: "Royal Candy", family: "Eau de Parfum · Unisex", tag: "Prestige", tier: "prestige",
       short: "A deliciously bold treat for the senses, fit for modern royalty.",
       description: [
         "FOMAXO Royal Candy is a deliciously bold Eau de Parfum, freshly launched in the UAE.",
@@ -1996,7 +2021,7 @@ window.STORE = {
       url: "https://fomaxo.com/fomaxo-royal-candy"
     },
     {
-      id: "dollar", name: "Dollar", family: "Eau de Parfum", tag: "Signature", tier: "signature",
+      id: "dollar", name: "Dollar", family: "Eau de Parfum · Unisex", tag: "Signature", tier: "signature",
       short: "The ultimate fragrance for the winter season — fresh and confident all day long.",
       description: [
         "Introducing Dollar by FOMAXO — the ultimate fragrance for the winter season.",
@@ -2008,7 +2033,7 @@ window.STORE = {
       url: ""
     },
     {
-      id: "matchacoco", name: "Matcha Coco", family: "Eau de Parfum", tag: "Prestige", tier: "prestige",
+      id: "matchacoco", name: "Matcha Coco", family: "Eau de Parfum · Unisex", tag: "Prestige", tier: "prestige",
       short: "Crisp matcha and creamy coconut — a sense of serenity and tropical escape.",
       description: [
         "Immerse yourself in the exotic blend of matcha tea and creamy coconut with the FOMAXO Matcha Coco Eau de Parfum.",
@@ -2020,7 +2045,7 @@ window.STORE = {
       url: ""
     },
     {
-      id: "passionsin", name: "Passion Sin", family: "Eau de Parfum", tag: "Prestige", tier: "prestige",
+      id: "passionsin", name: "Passion Sin", family: "Eau de Parfum · Unisex", tag: "Prestige", tier: "prestige",
       short: "Bold and seductive, with a warm, magnetic trail that lingers long after dark.",
       description: [
         "Passion Sin by FOMAXO is a bold, seductive fragrance that blends juicy passion fruit, crisp lemon and apple in the top notes for an irresistible first impression.",
@@ -2094,6 +2119,7 @@ let P = {}, FRAG = [], productsJSON = JSON.stringify(S.products);
 function useProducts(list){
   const all = (Array.isArray(list) ? list : []).filter(p => p && p.id && Array.isArray(p.sizes) && p.sizes.length && p.prices && Array.isArray(p.images) && p.images.length);
   if (!all.length) return false;
+  all.forEach(p => { if (p.kind !== 'set') p.family = String(p.family || 'Eau de Parfum').replace(/\s*·?\s*unisex\s*/ig, ' ').trim().replace(/\s*·$/, '') + ' · Unisex'; });   // every fragrance is unisex
   P = Object.fromEntries(all.map(p => [p.id, p]));   // hidden products stay in P so old links don't break, but are not listed or sold
   S.products = all.filter(p => !p.hidden);
   FRAG = S.products.filter(p => p.kind !== 'set');
@@ -2612,8 +2638,8 @@ function product(id, q){
       </div>
       <div class="buy">
         <div style="display:flex;flex-direction:column;gap:14px">
-          <span class="sub">${tierOf(p) ? `<a href="#/collections/tier-${p.tier}">${esc(tierOf(p).name)}</a> · ` : ''}${esc(p.family)}</span>
-          <h1>${esc(p.name)}</h1>
+          ${tierOf(p) ? `<span class="sub"><a href="#/collections/tier-${p.tier}">${esc(tierOf(p).name)}</a></span>` : ''}
+          <div class="pd-name"><h1>${esc(p.name)}</h1><span class="sub">${esc(p.family)}</span></div>
           <button type="button" class="rw-head" id="rwHead" hidden></button>
           <div id="pstk">${stockHTML(p.id, size)}</div>
           <p class="lead" style="max-width:none">${esc(p.short)}</p>
@@ -2634,7 +2660,7 @@ function product(id, q){
         <p class="pdp-pay">${CO_ICON.lock}<span>Secure checkout · ${CARD_ON ? 'Card, Apple Pay, Google Pay · ' : ''}Cash on delivery over ${aed(COD_MIN)} · Free UAE delivery</span></p>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
-          <details open><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
+          <details${matchMedia('(min-width:961px)').matches ? '' : ' open'}><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
           ${p.notes && p.notes.key ? `<details open><summary>Fragrance notes</summary><div class="body notes-list"><div><b>Key notes</b><span>${esc(p.notes.key)}</span></div></div></details>` : ''}${p.notes && !p.notes.key ? `<details><summary>Fragrance notes</summary><div class="body notes-list"><div><b>Top</b><span>${esc(p.notes.top)}</span></div><div><b>Heart</b><span>${esc(p.notes.heart)}</span></div><div><b>Base</b><span>${esc(p.notes.base)}</span></div></div></details>` : ''}
           <details><summary>Shipping &amp; delivery</summary><div class="body">${ship}</div></details>
           <details><summary>Gifting &amp; personalisation</summary><div class="body"><p>Designed as the perfect gift for weddings, functions and special occasions. Premium packaging makes it ready to gift without extra effort.</p><p>Custom engraving is available on bottles for names, initials or special messages.</p><p><a class="link ext" href="#/collections/name" aria-label="Explore Exclusive Personalized Gifting">Explore Exclusive Personalized Gifting<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a></p></div></details>
