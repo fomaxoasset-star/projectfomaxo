@@ -120,7 +120,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .todo.hot{border-color:var(--gold)}.todo.hot b{color:var(--gold)}
 .dash{display:grid;gap:14px}@media (min-width:860px){.dash{grid-template-columns:3fr 2fr}}.dash>*{min-width:0}
 .chart{width:100%;display:block;flex:1 1 auto;min-height:0;height:100%;overflow:visible}.chart .bar{fill:var(--gold)}.chart .grid,.chart .axis{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
-.chart .hit{fill:transparent;cursor:pointer}.chart .hit.on{fill:rgba(143,107,55,.16)}
+.chart .ln{fill:none;stroke:var(--gold);stroke-width:2;stroke-linejoin:round;vector-effect:non-scaling-stroke}.chart .dots{fill:none;stroke:var(--gold);stroke-width:6;stroke-linecap:round;vector-effect:non-scaling-stroke}.chart .hit{fill:transparent;cursor:pointer}.chart .hit.on{fill:rgba(143,107,55,.16)}
 .graph{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;width:100%}.graph[hidden]{display:none}
 .cmax{font-size:11.5px;color:var(--muted);line-height:1.2;margin:0 0 3px;font-variant-numeric:tabular-nums}
 .clab{display:grid;font-size:11.5px;color:var(--muted);margin-top:4px;text-align:center;line-height:1.2}.clab span{white-space:nowrap;overflow:hidden}.clab.ends{display:flex;justify-content:space-between}
@@ -350,15 +350,18 @@ CSS;
   exit;
 }
 /* bar graph for the Dashboard and Analytics: bars stretch to fill the box; the amounts and dates are normal text so they stay readable */
-function fx_graph($pts, $aria, $hidden = false, $fmt = 'money') {
+function fx_graph($pts, $aria, $hidden = false, $fmt = 'money', $line = false) {   // $line: a line with a dot per point instead of bars
   $W = 600; $H = 100; $n = count($pts); $slot = $W / $n; $bw = min(44, max(6, round($slot * .6, 1)));
-  $max = max(array_column($pts, 'v')); $out = ''; $lab = '';
+  $max = max(array_column($pts, 'v')); $out = ''; $lab = ''; $path = ''; $dots = '';
   foreach ($pts as $i => $p) {
     $h = $max > 0 ? round(($H - 2) * $p['v'] / $max, 1) : 0;
-    if ($h > 0) $out .= '<rect class="bar" x="' . round($i * $slot + ($slot - $bw) / 2, 1) . '" y="' . ($H - $h) . '" width="' . $bw . '" height="' . $h . '"/>';
+    $cx = round($i * $slot + $slot / 2, 1);
+    if ($line) { $path .= ($i ? ' L' : 'M') . $cx . ' ' . ($H - $h); $dots .= 'M' . $cx . ' ' . ($H - $h) . 'h0'; }
+    elseif ($h > 0) $out .= '<rect class="bar" x="' . round($i * $slot + ($slot - $bw) / 2, 1) . '" y="' . ($H - $h) . '" width="' . $bw . '" height="' . $h . '"/>';
     $out .= '<rect class="hit" x="' . round($i * $slot, 1) . '" y="0" width="' . round($slot, 1) . '" height="' . $H . '" data-t="' . h($p['t']) . '"><title>' . h($p['t']) . '</title></rect>';
     if ($n <= 12 || in_array($i, [0, intdiv($n, 2), $n - 1], true)) $lab .= '<span>' . h($p['l']) . '</span>';
   }
+  if ($line) $out = '<path class="ln" d="' . $path . '"/><path class="dots" d="' . $dots . '"/>' . $out;
   return '<div class="graph"' . ($hidden ? ' hidden' : '') . '><div class="cmax">' . h($fmt($max)) . '</div>'
     . '<svg class="chart" viewBox="0 0 ' . $W . ' ' . $H . '" preserveAspectRatio="none" role="img" aria-label="' . h($aria) . '">'
     . '<line class="grid" x1="0" x2="' . $W . '" y1="1" y2="1"/>' . $out . '<line class="axis" x1="0" x2="' . $W . '" y1="' . $H . '" y2="' . $H . '"/></svg>'
@@ -1277,14 +1280,14 @@ if (isset($_GET['reports'])) {
   foreach ($gl as $m => $l) {
     $pts = [];
     foreach ($prd as $k => $r) $pts[] = ['v' => max(0, (float)$r[$m]), 'l' => $rg['span'] ? date($byM ? 'M' : ($nDays <= 7 ? 'D' : 'j M'), strtotime($byM ? "$k-01" : $k)) : (string)$k, 't' => $prdLabel($k) . ': ' . $gv($m, $r[$m])];
-    $graphs .= str_replace('<div class="graph"', '<div class="graph" data-g="' . $m . '"', fx_graph($pts, $l . ' ' . $rg['label'], $m !== $g, $m === 'orders' ? fn($v) => (int)$v . ' orders' : 'money'));
+    $graphs .= str_replace('<div class="graph"', '<div class="graph" data-g="' . $m . '"', fx_graph($pts, $l . ' ' . $rg['label'], $m !== $g, $m === 'orders' ? fn($v) => (int)$v . ' orders' : 'money', true));
     $gtot .= '<span data-g="' . $m . '"' . ($m === $g ? '' : ' hidden') . '>' . $gv($m, $P[$m] ?? 0) . '</span>';
   }
   $dmy = fn($d) => date('d/m/Y', strtotime($d));
   $gfrom = $rg['span'] ? $rg['d1'] : ($prd ? array_key_first($prd) . '-01-01' : date('Y-m-d')); $gto = $rg['span'] ? $rg['d2'] : date('Y-m-d');
   $gcard = '<section class="card rgraph"><div class="ch"><div class="seg" role="group" aria-label="Graph">' . implode('', array_map(fn($m, $l) => '<button type="button" data-g="' . $m . '"' . ($m === $g ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($gl), $gl)) . '</div>'
     . '<span class="gdates">From <b>' . $dmy($gfrom) . '</b> to <b>' . $dmy($gto) . '</b><a class="gx" href="' . h(self_url(['reports' => 1, 'y' => $year])) . '" aria-label="Close graph">×</a></span></div>'
-    . '<div class="chartbox">' . $graphs . '</div><p class="sub"><span class="tip">Tap a bar to see the details</span><b class="tot">' . $gtot . '</b></p></section>';
+    . '<div class="chartbox">' . $graphs . '</div><p class="sub"><span class="tip">Tap a point to see the details</span><b class="tot">' . $gtot . '</b></p></section>';
   $yOpts = implode('', array_map(fn($y) => '<option' . ((int)$y === $year ? ' selected' : '') . '>' . (int)$y . '</option>', $years));
   page('Reports', '<div class="pagehead rg"><h1>Profit &amp; loss</h1>' . adm_range_form($rg, ['reports' => 1]) . '</div>'
     . ($thisM ? '<div class="stats rstats">' . $box(money($thisM['sales']), 'Sales this month', $mHref(date('Y-m'), 'sales'), $isM && $g === 'sales') . $box($pf($thisM['profit']), 'Profit this month', $mHref(date('Y-m'), 'profit'), $isM && $g === 'profit', $thisM['profit'] < 0 ? 'lvl-out' : 'lvl-ok')
@@ -1297,7 +1300,7 @@ if (isset($_GET['reports'])) {
     . ($rg['r'] === 'all' ? '' : '<h2>By year</h2>' . $table($all, fn($k) => (string)$k, null, $yHref))
     . '<p class="muted small after">Sales are what customers paid (VAT included, COD fee included) for New, Paid and Delivered orders; cancelled orders, unpaid card attempts and test payments are left out. Cost of goods is the cost price of the bottles sold, including free minis. Profit = sales − cost of goods − expenses. In ' . $year . ': discounts given ' . money($T['discount'] ?? 0) . ', COD fees ' . money($T['fees'] ?? 0) . ', stock bought ' . money($T['stock_bought'] ?? 0) . ' (not taken off profit).</p></div>'
     . '<script>document.querySelectorAll(".rgraph").forEach(function(c){var tip=c.querySelector(".tip");c.querySelectorAll(".hit").forEach(function(r){var s=function(){tip.textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});'
-    . 'c.querySelectorAll(".seg button").forEach(function(b){b.addEventListener("click",function(){c.querySelectorAll(".seg button").forEach(function(x){x.classList.toggle("on",x===b)});c.querySelectorAll(".graph,.tot span").forEach(function(x){x.hidden=x.dataset.g!==b.dataset.g});tip.textContent="Tap a bar to see the details"})})});</script>', true, true);
+    . 'c.querySelectorAll(".seg button").forEach(function(b){b.addEventListener("click",function(){c.querySelectorAll(".seg button").forEach(function(x){x.classList.toggle("on",x===b)});c.querySelectorAll(".graph,.tot span").forEach(function(x){x.hidden=x.dataset.g!==b.dataset.g});tip.textContent="Tap a point to see the details"})})});</script>', true, true);
 }
 
 /* one order */
