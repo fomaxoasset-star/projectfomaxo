@@ -1296,9 +1296,6 @@ html{scroll-padding-top:calc(var(--ann-h,40px) + 80px)}
   #cart .dr-foot .qd-nudge svg{width:18px;height:18px}
 }
 /* bag: one-tap add for the next multi-buy level */
-.qd-add{display:table;margin-top:8px;padding:2px 0;color:var(--gold-hi);font-size:12.5px;letter-spacing:.04em;text-align:left;line-height:1.35;border-bottom:1px solid var(--line-2);transition:.3s}
-.qd-add:hover{border-color:var(--gold)}
-.qd-add .amt{font-size:1em}
 /* product cards: no stars until a product has its first real review (faint empty stars read as a low rating) */
 .card .crate.none{display:none}
 /* checkout: no shop links or newsletter in the footer, so nothing pulls the customer away from paying */
@@ -1788,9 +1785,10 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   #cart .dr-foot .sub-row{font-size:10.5px;letter-spacing:.12em}
   #cart .dr-foot .sub-row .price{font-size:14px}
   #cart .dr-foot .sub-row:not(.total-row):not(.qd-row){display:none}
-  #cart .dr-foot .qd-nudge{margin:0;padding:0 0 6px;border:0;border-bottom:1px solid var(--line);background:none;font-size:12px;line-height:1.4;gap:8px}
+  #cart .dr-foot .qd-nudge{margin:0;padding:0 0 6px;border:0;border-bottom:1px solid var(--line);background:none;font-size:min(12px,2.9vw);line-height:1.4;gap:8px}
   #cart .dr-foot .qd-nudge svg{width:15px;height:15px}
-  #cart .dr-foot .qd-add{margin-top:3px;font-size:12px}
+  #cart .dr-foot .qd-nudge>span{white-space:nowrap;letter-spacing:0;font-size:min(12px,2.75vw)}
+  #cart .dr-foot .qd-nudge .qd-note{white-space:normal}
   #cart .dr-foot .total-row{padding-top:6px;margin-top:0!important}
   #cart .dr-foot .total-row>span:first-child{font-size:13px}
   #cart .dr-foot .total-row .price{font-size:20px}
@@ -1801,15 +1799,17 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   #cart .dr-foot .mini-pick select{padding:6px 10px;font-size:13px}
   #cart .dr-foot .mini-pick .price{font-size:12px}
 }
-.pn-del{display:none}
-@media(max-width:600px){#cart .pn-del{display:inline}}
-/* phones: the whole bag scrolls as one page (items, offer, total, checkout), so nothing is stuck and every product is easy to reach */
+/* bag buttons: Checkout, pay line, then Continue shopping at the bottom */
+.dr-btns{display:contents} .dr-btns .btn.line{order:2} .dr-foot .pay-note{order:1}
+.ph-sub{display:none!important}
 @media(max-width:600px){
-  #cart{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-  #cart .dr-head{position:sticky;top:0;z-index:2;background:var(--black-2);flex:none}
-  #cart .dr-body{flex:none;overflow:visible}
-  #cart .dr-foot{flex:none;margin-top:auto}
+  #cart .dr-foot .sub-row.ph-sub{display:flex!important}
+  #cart .co-amt{display:none}
+  #cart .dr-body{overscroll-behavior:contain}
+  #cart .dr-foot .ph-sub .gold{color:var(--gold)}
+  #cart .dr-foot .pay-note{margin:0}
 }
+
 /* laptop product page: same layout, tighter spacing so it fits one screen */
 @media(min-width:961px){
   .crumbs[style]{padding-top:18px!important}
@@ -2268,26 +2268,18 @@ function buyNow(line){
 function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'); } catch(e) {} }
 // a Buy now item left from before this change goes into the bag too (unless we're back from paying for it)
 if (buyLines.length && !/src=buy/.test(location.hash)) { buyLines.forEach(l => { const key = (l.picks || []).join('|'); if (!cart.some(x => x.id === l.id && String(x.opt) === String(l.opt) && (x.picks || []).join('|') === key)) cart.push(l); }); clearBuy(); try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} }
-// "You may also like" in the bag: up to 4 small products the customer doesn't have yet (everyday fragrances first, then King; the Discovery Set has its own "Not sure yet?" link)
+// "You may also like" in the bag: products the customer doesn't have yet (everyday fragrances, then 10ml minis, King always last; the Discovery Set has its own "Not sure yet?" link)
 function bagRecs(){
   const have = new Set(cart.map(l => l.id)), haveSz = new Set(cart.map(l => l.id + '/' + l.opt));
   const frag = S.products.filter(p => p.kind !== 'set' && p.prices).sort((a, b) => (a.tier === 'elite') - (b.tier === 'elite'));
   // full-size fragrances the customer doesn't have, then the 10ml minis they don't have yet
   const recs = frag.filter(p => !have.has(p.id) && hasPrice(p.prices[defaultSize(p)])).map(p => [p, defaultSize(p)])
-    .concat(frag.filter(p => p.sizes.includes(10) && hasPrice(p.prices[10]) && !haveSz.has(p.id + '/10')).map(p => [p, 10]));
+    .concat(frag.filter(p => p.sizes.includes(10) && hasPrice(p.prices[10]) && !haveSz.has(p.id + '/10')).map(p => [p, 10]))
+    .sort((a, b) => (a[0].id === 'king') - (b[0].id === 'king'));
   if (!recs.length) return '';
   return `<div class="recs"><div class="recs-h"><h5>You may also like</h5><span class="recs-nav"><button type="button" data-recscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-recscroll="1" aria-label="Scroll for more">›</button></span></div><div class="recs-row">${recs.map(([p, sz]) => `<div class="rec">
       <a href="#/product/${p.id}?size=${sz}" data-close><img src="${SM(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></a>
       <button type="button" class="rec-add" data-recadd="${p.id}" data-recsz="${sz}" aria-label="Add ${esc(p.name)} ${sz}ml to your bag">+</button></div>`).join('')}</div></div>`;
-}
-// one tap to reach the next multi-buy level: a fragrance the customer doesn't have yet, in its usual size (King and sets never)
-function nextTierAdd(dc){
-  if (dc.units < 1 || dc.units >= QTY_TIERS[QTY_TIERS.length - 1].n) return '';
-  const have = new Set(cart.map(l => l.id));
-  const p = S.products.find(p => p.kind !== 'set' && !p.hidden && p.prices && !QTY_DISCOUNT_SKIP.includes(p.id) && p.tier !== 'elite' && !have.has(p.id) && hasPrice(p.prices[defaultSize(p)]) && stockLeft(p.id, defaultSize(p)) !== 0);
-  if (!p) return '';
-  const sz = defaultSize(p);
-  return `<button type="button" class="qd-add" data-recadd="${p.id}" data-recsz="${sz}">+ Add ${esc(p.name)} ${optLabel(p, sz)} · ${moneyHTML(p.prices[sz])}</button>`;
 }
 function renderCart(){
   const n = cart.reduce((a, l) => a + l.qty, 0);
@@ -2306,12 +2298,12 @@ function renderCart(){
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${SM('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`) + bagRecs();
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
-  const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${qdBar(dc)}${nextTierAdd(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
+  const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${qdBar(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
   const mini = dc.mini ? `<div class="mini-pick qd-row"><label for="miniSel">Free 10ml mini</label><select id="miniSel" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select><span class="price">FREE</span></div>` : '';
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
-  foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
-    ${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? ' · ' + money2(t) : ''}</a>`}<p class="pay-note"><span class="pn-del">Free UAE delivery · </span>${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
+  foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row ph-sub"><span>Subtotal · <span class="gold">Free delivery</span></span><span class="price">${moneyHTML(t0, true)}</span></div><div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
+    <div class="dr-btns"><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? '<span class="co-amt"> · ' + money2(t) + '</span>' : ''}</a>`}</div><p class="pay-note">${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p>`;
   const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} coRefresh && coRefresh(); };
   coRefresh && coRefresh();
 }
@@ -2383,6 +2375,11 @@ function afterBuyRecs(lines){
 const scrim = $('#scrim');
 function openPanel(el){ closePanels(); el.classList.add('open'); el.setAttribute('aria-hidden','false'); if (el.id === 'cart') scrim.classList.add('open'); document.body.classList.add('lock'); }
 function closePanels(){ $$('.drawer.open,.search.open,.mnav.open').forEach(x => { x.classList.remove('open'); x.setAttribute('aria-hidden','true'); }); scrim.classList.remove('open'); document.body.classList.remove('lock'); }
+/* phones: a swipe anywhere in the bag (top bar, totals, buttons) moves only the products list; the page behind never moves */
+(() => { const cart = document.getElementById('cart'); if (!cart) return; let y = null;
+  cart.addEventListener('touchstart', e => { const b = cart.querySelector('.dr-body'); y = b && !b.contains(e.target) && !e.target.closest('select,input,textarea') ? e.touches[0].clientY : null; }, {passive: true});
+  cart.addEventListener('touchmove', e => { if (y === null) return; const b = cart.querySelector('.dr-body'), ny = e.touches[0].clientY; b.scrollTop += y - ny; y = ny; e.preventDefault(); }, {passive: false});
+})();
 $('#openCart').onclick = () => { $('#toast').classList.remove('show'); renderCart(); openPanel($('#cart')); };
 $('#openMenu').onclick = () => openPanel($('#mnav'));
 $('#openSearch').onclick = () => { openPanel($('#search')); runSearch(''); setTimeout(() => $('#q').focus(), 80); };
@@ -2521,7 +2518,7 @@ function home(){
 
   <section class="sec" style="padding-top:0" id="tiers"><div class="wrap">
     ${secHead('The fragrance collection', 'Distinct <em class="metal">blends</em>', '<p class="lead">Four fragrances that define the house of FOMAXO.</p>')}
-    ${['king','gold','oldmoney','royalcandy'].map(id => P[id]).filter(p => p && !p.hidden).map((p,i) => `<div class="ed ${i%2?'rev':''}">
+    ${['gold','dollar','oldmoney','royalcandy'].map(id => P[id]).filter(p => p && !p.hidden).map((p,i) => `<div class="ed ${i%2?'rev':''}">
       <a class="ed-media rv-up" href="#/product/${p.id}"><img data-parallax="0.08" src="${IMG(p.images[0])}" alt="FOMAXO ${esc(p.name)}" loading="lazy"></a>
       <div class="ed-copy rv-up d1">
         <span class="num">0${i+1}</span>
@@ -2632,7 +2629,7 @@ function product(id, q){
   const perks = isSet
     ? [[ICON.drop,'Try before you buy'],[ICON.travel,'Pocket-friendly, ideal for travel'],[ICON.gift,'Luxury mini-box, ready to gift'],[ICON.truck,'Free delivery anywhere in UAE']]
     : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.pen,'Custom engraving on request'],[ICON.truck,'Free delivery anywhere in UAE']];
-  const related = S.products.filter(x => x.id !== p.id);   // every product on sale except this one, in a sideways swipe row
+  const related = S.products.filter(x => x.id !== p.id).sort((a, b) => (a.id === 'king') - (b.id === 'king'));   // every product on sale except this one, in a sideways swipe row, King last
   const ship = S.shipping.length ? S.shipping.map(s => `<p>${esc(s)}</p>`).join('') : `<p class="ph">Add your delivery &amp; returns information in assets/data.js.</p>`;
   document.title = `${p.name} — FOMAXO`;
   return `<div class="wrap page-fade">
@@ -3683,7 +3680,8 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   [[.06, .55, .006], [.14, .42, .011], [.26, .32, .018]].forEach(([par, sz, sp], li) => {
     for (let i = 0; i < (phone ? 2 : 4); i++) clouds.push({x: Math.random(), y: Math.random(), par, sz: sz * rnd(.8, 1.25), sp: sp * (Math.random() < .5 ? -1 : 1), ph: rnd(0, 6.28), a: [.75, .9, 1][li]});
   });
-  function size(){ D = Math.min(devicePixelRatio || 1, 1.5); W = cv.width = innerWidth * D; H = cv.height = innerHeight * D; }
+  /* phones: the soft mist and dust are drawn at screen size and 30 times a second, which looks the same but leaves the phone free for taps and scrolling */
+  function size(){ D = phone ? 1 : Math.min(devicePixelRatio || 1, 1.5); W = cv.width = innerWidth * D; H = cv.height = innerHeight * D; }
   size(); addEventListener('resize', size);
   /* phones: soft light follows the tilt where the device allows it */
   if (!finePointer && window.DeviceOrientationEvent){
@@ -3695,6 +3693,8 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   }
   let last = performance.now(), sy = scrollY, vel = 0, emKey = '';
   function frame(t){
+    requestAnimationFrame(frame);
+    if (phone && (t - last < 30 || document.body.classList.contains('lock'))) return;   // phones: skip every other frame, and pause while the bag or menu covers the screen
     const dt = Math.min((t - last) / 1000, .05); last = t;
     if (!document.hidden){
       mouse.x += (mouse.tx - mouse.x) * .04; mouse.y += (mouse.ty - mouse.y) * .04;
@@ -3746,9 +3746,10 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
       }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     }
-    requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  /* start once the page has shown, so the first screen paints sooner */
+  const go = () => requestAnimationFrame(t => { last = t; frame(t); });
+  if (document.readyState === 'complete') go(); else addEventListener('load', go, {once: true});
 })();
 
 /* premium cursor: gold dot + trailing ring */
