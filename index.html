@@ -319,6 +319,7 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 .buy{display:flex;flex-direction:column;gap:26px}
 .buy h1{font-size:clamp(34px,3.6vw,56px);letter-spacing:.12em}
 .buy .sub{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold)}
+.buy .pd-name h1{margin:0}.buy .pd-name .sub{display:block;margin-top:8px}
 .buy .pprice{font-family:var(--serif);font-size:34px;color:var(--gold-hi)}
 .buy .pprice.na{font-family:var(--sans);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
 .opt-label{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between}
@@ -1959,7 +1960,7 @@ window.STORE = {
       url: ""
     },
     {
-      id: "gold", name: "Gold", family: "Eau de Parfum", tag: "Signature", tier: "signature",
+      id: "gold", name: "Gold", family: "Eau de Parfum · Unisex", tag: "Signature", tier: "signature",
       short: "Arabic heritage meets French style — strong, seductive and unmistakably luxurious.",
       description: [
         "Introducing Gold by FOMAXO — an extraordinary fusion of Arabic heritage and French style, designed to make you fall in love with the essence of the Arab world.",
@@ -1984,7 +1985,7 @@ window.STORE = {
       url: "https://fomaxo.com/fomaxo-old-money"
     },
     {
-      id: "royalcandy", name: "Royal Candy", family: "Eau de Parfum", tag: "Prestige", tier: "prestige",
+      id: "royalcandy", name: "Royal Candy", family: "Eau de Parfum · Unisex", tag: "Prestige", tier: "prestige",
       short: "A deliciously bold treat for the senses, fit for modern royalty.",
       description: [
         "FOMAXO Royal Candy is a deliciously bold Eau de Parfum, freshly launched in the UAE.",
@@ -1996,7 +1997,7 @@ window.STORE = {
       url: "https://fomaxo.com/fomaxo-royal-candy"
     },
     {
-      id: "dollar", name: "Dollar", family: "Eau de Parfum", tag: "Signature", tier: "signature",
+      id: "dollar", name: "Dollar", family: "Eau de Parfum · Unisex", tag: "Signature", tier: "signature",
       short: "The ultimate fragrance for the winter season — fresh and confident all day long.",
       description: [
         "Introducing Dollar by FOMAXO — the ultimate fragrance for the winter season.",
@@ -2008,7 +2009,7 @@ window.STORE = {
       url: ""
     },
     {
-      id: "matchacoco", name: "Matcha Coco", family: "Eau de Parfum", tag: "Prestige", tier: "prestige",
+      id: "matchacoco", name: "Matcha Coco", family: "Eau de Parfum · Unisex", tag: "Prestige", tier: "prestige",
       short: "Crisp matcha and creamy coconut — a sense of serenity and tropical escape.",
       description: [
         "Immerse yourself in the exotic blend of matcha tea and creamy coconut with the FOMAXO Matcha Coco Eau de Parfum.",
@@ -2020,7 +2021,7 @@ window.STORE = {
       url: ""
     },
     {
-      id: "passionsin", name: "Passion Sin", family: "Eau de Parfum", tag: "Prestige", tier: "prestige",
+      id: "passionsin", name: "Passion Sin", family: "Eau de Parfum · Unisex", tag: "Prestige", tier: "prestige",
       short: "Bold and seductive, with a warm, magnetic trail that lingers long after dark.",
       description: [
         "Passion Sin by FOMAXO is a bold, seductive fragrance that blends juicy passion fruit, crisp lemon and apple in the top notes for an irresistible first impression.",
@@ -2094,6 +2095,7 @@ let P = {}, FRAG = [], productsJSON = JSON.stringify(S.products);
 function useProducts(list){
   const all = (Array.isArray(list) ? list : []).filter(p => p && p.id && Array.isArray(p.sizes) && p.sizes.length && p.prices && Array.isArray(p.images) && p.images.length);
   if (!all.length) return false;
+  all.forEach(p => { if (p.kind !== 'set') p.family = String(p.family || 'Eau de Parfum').replace(/\s*·?\s*unisex\s*/ig, ' ').trim().replace(/\s*·$/, '') + ' · Unisex'; });   // every fragrance is unisex
   P = Object.fromEntries(all.map(p => [p.id, p]));   // hidden products stay in P so old links don't break, but are not listed or sold
   S.products = all.filter(p => !p.hidden);
   FRAG = S.products.filter(p => p.kind !== 'set');
@@ -2612,8 +2614,8 @@ function product(id, q){
       </div>
       <div class="buy">
         <div style="display:flex;flex-direction:column;gap:14px">
-          <span class="sub">${tierOf(p) ? `<a href="#/collections/tier-${p.tier}">${esc(tierOf(p).name)}</a> · ` : ''}${esc(p.family)}</span>
-          <h1>${esc(p.name)}</h1>
+          ${tierOf(p) ? `<span class="sub"><a href="#/collections/tier-${p.tier}">${esc(tierOf(p).name)}</a></span>` : ''}
+          <div class="pd-name"><h1>${esc(p.name)}</h1><span class="sub">${esc(p.family)}</span></div>
           <button type="button" class="rw-head" id="rwHead" hidden></button>
           <div id="pstk">${stockHTML(p.id, size)}</div>
           <p class="lead" style="max-width:none">${esc(p.short)}</p>
