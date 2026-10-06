@@ -1683,6 +1683,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-sug[hidden]{display:none}
 .rw-sug button{display:block;width:100%;text-align:left;padding:12px 16px;min-height:44px;border:0;border-bottom:1px solid var(--line-2);background:transparent;color:var(--ivory);font-size:15px;letter-spacing:0;text-transform:none;cursor:pointer}
 .rw-sug button:last-child{border-bottom:0}
+.rw-sug button.rw-sug-end{border-bottom:1px solid var(--gold-hi)}
 .rw-sug button:hover,.rw-sug button:focus-visible{background:rgba(215,170,105,.14);color:var(--gold-hi);outline:none}
 .rw-clr:hover{color:var(--ivory)}
 .rw-clr:focus-visible{outline:1px solid var(--gold-hi);outline-offset:-2px}
@@ -3361,7 +3362,7 @@ const rwStars = (v, cls = '') => `<span class="rw-stars ${cls}" role="img" aria-
 const rwDate = s => { const d = new Date(s + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}); };
 /* state/city + country (optional) shown after the reviewer's name: "Name · Dubai 🇦🇪"; country is an ISO code → flag only */
 const RW_COUNTRIES = 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ');
-const RW_TOP = ['AE', 'SA', 'OM', 'QA', 'KW', 'BH', 'IN', 'PK', 'GB', 'US'];
+const RW_TOP = ['AE', 'IN', 'PK', 'BD', 'PH', 'EG', 'IR', 'NP', 'LK', 'CN', 'GB'];
 /* State / City suggestions (tap one or type any other place); follows the chosen country, UAE when none is chosen */
 const RW_CITIES = {
   AE: 'Dubai|Abu Dhabi|Sharjah|Ajman|Ras Al Khaimah|Fujairah|Umm Al Quwain|Al Ain|Khor Fakkan|Kalba|Dibba|Al Dhafra|Ruwais|Madinat Zayed|Hatta',
@@ -3460,8 +3461,8 @@ function rwBindForm(form, p, link, onDone){
   const naSet = c => { if (form.elements.country.value !== c) { form.elements.country.value = c; form.elements.country.dispatchEvent(new Event('change')); } };
   const naShow = () => {
     const q = na.value.trim().toLowerCase(), all = rwNationList();
-    const hits = (q ? all.filter(c => c[1].toLowerCase().startsWith(q)).concat(all.filter(c => !c[1].toLowerCase().startsWith(q) && (c[1].toLowerCase().includes(q) || c[0].toLowerCase() === q))) : all.filter(c => RW_TOP.includes(c[0]))).filter(c => c[1].toLowerCase() !== q).slice(0, 8);
-    nsug.innerHTML = hits.map(c => `<button type="button" role="option" data-c="${c[0]}">${rwFlag(c[0])} ${esc(c[1])}</button>`).join('');
+    const hits = (q ? all.filter(c => c[1].toLowerCase().startsWith(q)).concat(all.filter(c => !c[1].toLowerCase().startsWith(q) && (c[1].toLowerCase().includes(q) || c[0].toLowerCase() === q))) : all).filter(c => c[1].toLowerCase() !== q).slice(0, q ? 8 : all.length);
+    nsug.innerHTML = hits.map((c, i) => `<button type="button" role="option" data-c="${c[0]}"${!q && i === RW_TOP.length - 1 ? ' class="rw-sug-end"' : ''}>${rwFlag(c[0])} ${esc(c[1])}</button>`).join('');
     nsug.hidden = !hits.length; na.setAttribute('aria-expanded', String(!nsug.hidden));
   };
   const naHide = () => { nsug.hidden = true; na.setAttribute('aria-expanded', 'false'); };
