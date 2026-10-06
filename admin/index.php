@@ -1277,6 +1277,18 @@ if (isset($_GET['reviews'])) {
 
 /* ---- members: customers who keep coming back. Orders are grouped by mobile number (last 9 digits), or by email when there is no mobile ---- */
 if (isset($_GET['members'])) {
+  if (isset($_GET['subs'])) {   // email list from the website sign-up forms (subscribe.php), as a CSV that opens straight in Excel
+    $rows = [];
+    try { fomaxo_subscribers_table($pdo); $rows = $pdo->query('SELECT email, interest, page, created_at, updated_at FROM fx_subscribers ORDER BY created_at DESC')->fetchAll(); } catch (Throwable $e) {}
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="fomaxo-email-list-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
+    $cell = fn($v) => is_string($v) && preg_match('/^[=+\-@]/', $v) ? "'" . $v : $v;
+    fputcsv($out, ['Email', 'Signed up for', 'Page', 'First signed up', 'Last signed up']);
+    foreach ($rows as $s) fputcsv($out, array_map($cell, [$s['email'], $s['interest'], $s['page'], $s['created_at'], $s['updated_at']]));
+    exit;
+  }
+  $subsN = 0; try { fomaxo_subscribers_table($pdo); $subsN = (int)$pdo->query('SELECT COUNT(*) FROM fx_subscribers')->fetchColumn(); } catch (Throwable $e) {}
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['members' => 1]); }
     /* two separate boxes, each saved on its own; an empty box means "no limit" */
@@ -1428,7 +1440,7 @@ if (isset($_GET['members'])) {
          . '<td class="num mv">' . money($c['spent'] / $c['n']) . '<span> avg</span></td>'
          . '<td class="md small">' . h(date('d M Y', strtotime($c['first']))) . ' – ' . h(date('d M Y', strtotime($c['last']))) . '</td></tr>';
   }
-  page('Members', '<div class="pagehead"><h1>Members</h1><a class="btn line sm" href="' . h(self_url(['members' => 1] + ($mq !== '' ? ['mq' => $mq] : []) + ['export' => 1])) . '">Download Excel</a></div>' . flash()
+  page('Members', '<div class="pagehead"><h1>Members</h1><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn line sm" href="' . h(self_url(['members' => 1, 'subs' => 1])) . '">Download email list (' . number_format($subsN) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1] + ($mq !== '' ? ['mq' => $mq] : []) + ['export' => 1])) . '">Download Excel</a></span></div>' . flash()
     . '<div class="mtop"><form class="card mmin" method="post">' . csrf_field() . '<label for="member_min">Orders: at least</label>'
     . '<input id="member_min" type="number" min="0" max="1000" inputmode="numeric" name="member_min" value="' . ($min ?: '') . '" placeholder="any"><span>orders</span><button class="btn sm">Save</button></form>'
     . '<form class="card mmin" method="post">' . csrf_field() . '<label for="member_spend">Spent: at least AED</label><input id="member_spend" class="amt" type="number" min="0" step="1" inputmode="numeric" name="member_spend" value="' . ($spend ?: '') . '" placeholder="any"><button class="btn sm">Save</button></form>'

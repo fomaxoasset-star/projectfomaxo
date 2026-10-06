@@ -127,6 +127,11 @@ function fomaxo_analytics_tables($pdo) {
               emirate VARCHAR(30) NOT NULL DEFAULT '', items VARCHAR(600) NOT NULL DEFAULT '', total DECIMAL(10,2) NULL, order_no VARCHAR(40) NULL,
               KEY (updated_at)) DEFAULT CHARSET=utf8mb4");
 }
+/* email list (subscribe.php writes, fomaxo.com/admin → Members → Download email list reads): one row per email, newest interest wins */
+function fomaxo_subscribers_table($pdo) {
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_subscribers (email VARCHAR(120) NOT NULL PRIMARY KEY, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL,
+              interest VARCHAR(60) NOT NULL DEFAULT '', page VARCHAR(80) NOT NULL DEFAULT '', KEY (created_at)) DEFAULT CHARSET=utf8mb4");
+}
 /* where a visit came from: utm_source first, then the in-app browser (Instagram, TikTok … often send no referrer), then the referring site */
 function fomaxo_source($ref, $utm, $ua) {
   $names = ['instagram' => 'Instagram', 'facebook' => 'Facebook', 'fb' => 'Facebook', 'whatsapp' => 'WhatsApp', 'wa.me' => 'WhatsApp', 'google' => 'Google',

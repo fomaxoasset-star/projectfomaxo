@@ -1692,6 +1692,51 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-op-h b{font-family:var(--serif);font-weight:400;font-size:22px}
 .rw-op .rw-form{margin:16px 0 0}
 @media(max-width:600px){.rw-avg>b{font-size:52px}.rw-text{font-size:19px}.rw-rate button{font-size:38px}}
+/* ===== conversion upgrade (Oct 2026): added-to-bag panel, multi-buy progress, product page savings/offer/payment line, order again, email sign-up ===== */
+.qd-bar{position:relative;display:block;height:3px;margin:12px 6px 20px 0;background:var(--line-2);border-radius:2px}
+.qd-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:2px;transition:width .6s var(--ease)}
+.qd-bar b{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;background:var(--panel);border:1px solid var(--line-2);transform:translate(-50%,-50%)}
+.qd-bar b.on{background:var(--gold);border-color:var(--gold)}
+.qd-bar em{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-style:normal;font-size:10px;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+.qd-bar b:last-child em{left:auto;right:-4px;transform:none}
+.qd-bar b.on em{color:var(--gold)}
+.qd-nudge > span{flex:1;min-width:0}
+.added{position:fixed;right:24px;bottom:24px;z-index:85;width:380px;max-width:calc(100vw - 32px);background:var(--panel);border:1px solid var(--gold);box-shadow:0 24px 60px -24px rgba(0,0,0,.55);padding:18px 18px 16px;display:flex;flex-direction:column;gap:14px;transform:translateY(24px);opacity:0;visibility:hidden;transition:transform .5s var(--ease),opacity .35s,visibility .35s}
+.added.show{transform:none;opacity:1;visibility:visible}
+.added .ad-x{position:absolute;top:6px;right:8px;width:30px;height:30px;background:none;border:0;color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+.added .ad-x:hover{color:var(--gold-hi)}
+.ad-top{display:grid;grid-template-columns:58px 1fr;gap:14px;align-items:center;padding-right:22px}
+.ad-top img{width:58px;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
+.ad-top div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ad-top small{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold)}
+.ad-top b{font-family:var(--brand-font);font-weight:400;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--ivory);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ad-top span{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.ad-offer{font-size:12.5px;line-height:1.45;color:var(--ivory);border-top:1px solid var(--line);padding-top:12px}
+.ad-offer b{font-weight:500;color:var(--gold)}
+.ad-acts{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
+.ad-acts .btn{width:100%;justify-content:center;text-align:center;white-space:nowrap}
+.ad-acts .co-min{grid-column:1/-1;white-space:normal;pointer-events:none;opacity:.75}
+@media(max-width:600px){.added{left:12px;right:12px;bottom:12px;width:auto;max-width:none;padding:16px 14px 14px}.mbuy.show ~ .added{bottom:calc(84px + env(safe-area-inset-bottom))}.ad-acts{grid-template-columns:1.2fr 1fr;gap:8px}.ad-acts > *{min-width:0}.ad-acts .btn{padding-left:8px;padding-right:8px;letter-spacing:.12em;font-size:11px}}
+.p-save{display:block;margin-top:6px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.p-save .amt{font-size:1.25em}
+.pdp-offer{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line-2);background:rgba(215,170,105,.05);font-size:13px;line-height:1.5;color:var(--ivory)}
+.pdp-offer svg{width:20px;height:20px;flex:none;color:var(--gold);margin-top:1px}
+.pdp-offer b{display:block;font-weight:400;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+.pdp-pay{display:flex;gap:8px;align-items:center;justify-content:center;margin:-6px 0 2px;font-size:12px;line-height:1.45;color:var(--muted);text-align:center}
+.pdp-pay svg{width:14px;height:14px;flex:none;color:var(--gold)}
+.reorder{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;border:1px solid var(--line-2);background:var(--panel);padding:14px 18px}
+.reorder .ro-imgs{display:flex}
+.reorder .ro-imgs img{width:46px;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line);background:var(--panel)}
+.reorder .ro-imgs img + img{margin-left:-16px}
+.reorder .ro-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.reorder small{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.reorder b{font-family:var(--display);font-weight:400;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--ivory)}
+.reorder .ro-t span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ro-sec{padding:28px 0 0}
+.reorder.ro-bag{grid-template-columns:auto 1fr;margin-bottom:14px}
+.reorder.ro-bag .btn{grid-column:1/-1;width:100%}
+@media(max-width:600px){.reorder{grid-template-columns:auto 1fr;gap:12px;padding:12px}.reorder .btn{grid-column:1/-1;width:100%}}
+.notify-ok{max-width:460px;padding:15px 18px;border:1px solid var(--line-2);font-size:14px;color:var(--gold)}
 </style>
 </head>
 <body>
@@ -1781,6 +1826,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><a href="#" id="toastView">View bag</a></div>
 <div class="mbuy" id="mbuy"></div>
+<div class="added" id="added" role="dialog" aria-label="Added to your bag" aria-hidden="true"></div>
 
 <script>/* =====================================================================
    FOMAXO STORE CONTENT — edit this file to update the website.
@@ -2025,7 +2071,7 @@ function addToCart(id, opt, qty=1, silent, picks){
   const l = cart.find(x => x.id === id && String(x.opt) === String(opt) && (x.picks || []).join('|') === key);
   if (l) l.qty = Math.min(99, l.qty + qty); else cart.push(picks ? {id, opt, qty, picks} : {id, opt, qty});
   save();
-  if (!silent) toast(`${P[id].name} · ${optLabel(P[id], opt)} added to your bag`);
+  if (!silent) addedPanel(id, opt, qty);
   FXT.send('cart', {id});
   return true;
 }
@@ -2133,7 +2179,7 @@ function renderCart(){
   const cc = $('#cartCount'); cc.textContent = n; cc.classList.toggle('on', n > 0);
   const body = $('#cartBody'), foot = $('#cartFoot');
   if (!cart.length){
-    body.innerHTML = `<div class="empty">${emblem()}<p class="caps" style="font-size:20px;color:var(--ivory)">Your bag is empty</p><p class="small">Not sure where to begin? Start with the Discovery Set.</p></div><div class="qd-nudge qd-empty">${ICON.gift || ''}<span>${qtyNudge({units: 0})}</span></div><a class="empty-ds" href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><small>Start here</small><b>Discovery Set</b><em>Choose 3 for AED 30 or 5 for AED 50 · 2ml vials</em></span><i>→</i></a><div class="empty-acts"><a class="btn sm block" href="#/product/discovery" data-close>Build your Discovery Set</a><a class="btn line sm block" href="#/fragrances" data-close>Shop FOMAXO</a></div>`;
+    body.innerHTML = `<div class="empty">${emblem()}<p class="caps" style="font-size:20px;color:var(--ivory)">Your bag is empty</p><p class="small">Not sure where to begin? Start with the Discovery Set.</p></div>${reorderHTML('ro-bag')}<div class="qd-nudge qd-empty">${ICON.gift || ''}<span>${qtyNudge({units: 0})}</span></div><a class="empty-ds" href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><small>Start here</small><b>Discovery Set</b><em>Choose 3 for AED 30 or 5 for AED 50 · 2ml vials</em></span><i>→</i></a><div class="empty-acts"><a class="btn sm block" href="#/product/discovery" data-close>Build your Discovery Set</a><a class="btn line sm block" href="#/fragrances" data-close>Shop FOMAXO</a></div>`;
     foot.innerHTML = ''; return;
   }
   body.innerHTML = cart.map((l, i) => { const p = P[l.id]; return `<div class="line-item">
@@ -2145,7 +2191,7 @@ function renderCart(){
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`) + bagRecs();
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
-  const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
+  const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${qdBar(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
   const mini = dc.mini ? `<div class="mini-pick qd-row"><label for="miniSel">Free 10ml mini</label><select id="miniSel" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select><span class="price">FREE</span></div>` : '';
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
@@ -2160,7 +2206,62 @@ $('#cartBody').addEventListener('click', e => {
   if (rm){ cart.splice(+rm.dataset.rm, 1); save(); }
   const ra = e.target.closest('[data-recadd]'); if (ra){ const p = P[ra.dataset.recadd]; addToCart(p.id, +ra.dataset.recsz || defaultSize(p)); }
   const rs = e.target.closest('[data-recscroll]'); if (rs){ const row = $('.recs-row'); row.scrollBy({left: +rs.dataset.recscroll * row.clientWidth * .75, behavior: 'smooth'}); }
+  if (e.target.closest('[data-reorder]')) reorder();
 });
+
+/* multi-buy progress bar: 2 items 5% · 3 items 10% + FREE mini · 5+ items 15% (same tiers as QTY_TIERS) */
+function qdBar(dc){
+  const top = QTY_TIERS[QTY_TIERS.length - 1].n, w = Math.min(dc.units, top) / top * 100;
+  return `<span class="qd-bar" aria-hidden="true"><i style="width:${w}%"></i>${QTY_TIERS.map(t => `<b class="${dc.units >= t.n ? 'on' : ''}" style="left:${t.n / top * 100}%"><em>${t.pct}%</em></b>`).join('')}</span>`;
+}
+
+/* "Added to your bag": a small panel with the product, the multi-buy progress and a straight path to checkout.
+   It closes by itself after a few seconds (not while the customer is pointing at or tabbing through it). */
+let addT = 0, addHold = false;
+const addedEl = $('#added');
+function hideAdded(){ clearTimeout(addT); addedEl.classList.remove('show'); addedEl.setAttribute('aria-hidden', 'true'); }
+function addedPanel(id, opt, qty){
+  const p = P[id], dc = qtyDiscount(cart), T = orderTotals(cart, ''), n = cart.reduce((a, l) => a + l.qty, 0);
+  const v = p.prices[opt], ok = T.after === null || T.short <= 0;
+  addedEl.innerHTML = `<button class="ad-x" type="button" data-adclose aria-label="Close">×</button>
+    <div class="ad-top"><img src="${IMG(imgFor(p, opt))}" alt=""><div><small>✓ Added to your bag</small><b>${esc(p.name)}</b><span>${optLabel(p, opt)}${qty > 1 ? ' × ' + qty : ''}${hasPrice(v) ? ' · ' + moneyHTML(v * qty) : ''}</span></div></div>
+    ${dc.units ? `<div class="ad-offer"><span>${qtyNudge(dc)}</span>${qdBar(dc)}</div>` : ''}
+    <div class="ad-acts">${ok ? `<a class="btn sm" href="#/checkout" data-adclose>Checkout${T.after !== null ? ' · ' + aed(T.after) : ''}</a>` : `<span class="btn sm co-min">${minMsg(T.short)}</span>`}<button class="btn line sm" type="button" data-adbag>View bag (${n})</button></div>`;
+  $('#toast').classList.remove('show');
+  addedEl.setAttribute('aria-hidden', 'false'); addedEl.classList.add('show');
+  clearTimeout(addT); const wait = () => { addT = setTimeout(() => addHold ? wait() : hideAdded(), 7000); }; wait();
+}
+addedEl.addEventListener('mouseenter', () => addHold = true);
+addedEl.addEventListener('mouseleave', () => addHold = false);
+addedEl.addEventListener('focusin', () => addHold = true);
+addedEl.addEventListener('focusout', () => addHold = false);
+addedEl.addEventListener('click', e => {
+  if (e.target.closest('[data-adclose]')) hideAdded();
+  if (e.target.closest('[data-adbag]')) { hideAdded(); renderCart(); openPanel($('#cart')); }
+});
+
+/* "Order again": the last completed order is remembered on this device (no account needed), shown on the homepage and in an empty bag */
+function rememberOrder(lines){ try { if (lines && lines.length) localStorage.setItem('fomaxo_last', JSON.stringify({t: Date.now(), lines: lines.map(l => ({id: l.id, opt: l.opt, qty: l.qty, picks: l.picks}))})); } catch(e) {} }
+function lastOrder(){
+  try { const d = JSON.parse(localStorage.getItem('fomaxo_last') || 'null');
+    const ls = d && Array.isArray(d.lines) ? d.lines.filter(l => P[l.id] && !P[l.id].hidden && P[l.id].sizes.map(String).includes(String(l.opt)) && hasPrice(P[l.id].prices[l.opt])) : [];
+    return ls.length ? ls : null; } catch(e) { return null; }
+}
+function reorder(){
+  const ls = lastOrder(); if (!ls) return;
+  let added = 0; ls.forEach(l => { if (addToCart(l.id, l.opt, l.qty, true, l.picks)) added++; });
+  if (added) { hideAdded(); renderCart(); openPanel($('#cart')); }
+}
+const reorderHTML = (cls = '') => { const ls = lastOrder(); if (!ls) return '';
+  return `<div class="reorder ${cls}"><div class="ro-imgs">${ls.slice(0, 3).map(l => `<img src="${IMG(lineImg(l))}" alt="">`).join('')}</div><div class="ro-t"><small>Welcome back</small><b>Order your favourites again</b><span>${ls.map(l => esc(P[l.id].name) + ' ' + optLabel(P[l.id], l.opt)).join(' · ')}</span></div><button class="btn sm" type="button" data-reorder>Add to bag</button></div>`; };
+
+/* after a purchase: three fragrances the customer does not have yet, so the next order is one tap away */
+function afterBuyRecs(lines){
+  const have = new Set((lines || []).map(l => l.id));
+  const list = FRAG.filter(p => !have.has(p.id) && p.id !== 'king' && hasPrice(p.prices[defaultSize(p)])).slice(0, 3);
+  if (!list.length) return '';
+  return `<section class="sec" style="padding-top:0"><div class="wrap">${secHead('While you wait', 'Complete your <em class="metal">collection</em>')}<div class="grid">${list.map((p, i) => card(p, {d: 'd' + i})).join('')}</div></div></section>`;
+}
 
 /* ============================ OVERLAYS ============================ */
 const scrim = $('#scrim');
@@ -2281,6 +2382,7 @@ function home(){
     <div>${ICON.pen}<span><b>Custom engraving</b>On request</span></div>
     <div>${ICON.drop}<span><b>Try first</b><span class="perk-line">Discovery Set from ${P.discovery ? moneyHTML(Math.min(...Object.values(P.discovery.prices))) : ''}</span></span></div>
   </div></div>
+  ${lastOrder() ? `<section class="sec ro-sec"><div class="wrap">${reorderHTML('ro-home')}</div></section>` : ''}
 
   <section class="sec"><div class="wrap">
     <div class="sec-head"><div class="t rv-up"><span class="eyebrow">Shop the collection</span><h2>Featured <em class="metal">FOMAXO</em></h2></div><a class="link rv-up" href="#/fragrances">View all →</a></div>
@@ -2397,6 +2499,12 @@ function fragrances(q){
   </div></section>` + finalCTA();
 }
 
+// product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
+const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
+  return priceHTML(p, size, 'pprice') + (hasPrice(v) && hasPrice(c) && +c > +v ? `<span class="p-save">You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span>` : ''); };
+// the multi-buy offer, shown before the customer adds to bag (King and the Discovery Set are not part of it)
+const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
+  `<p class="pdp-offer">${ICON.gift}<span><b>Buy more, save more</b>2 items 5% off · 3 items 10% off + FREE 10ml mini · 5+ items 15% off</span></p>`;
 function product(id, q){
   const p = P[id]; if (!p || p.hidden) return notFound();
   let size = q.get('size') ? (q.get('size') === 'set' ? 'set' : +q.get('size')) : defaultSize(p);
@@ -2423,7 +2531,8 @@ function product(id, q){
           <button type="button" class="rw-head" id="rwHead" hidden></button>
           <div id="pstk">${stockHTML(p.id, size)}</div>
           <p class="lead" style="max-width:none">${esc(p.short)}</p>
-          <div id="pprice">${priceHTML(p, size, 'pprice')}</div>
+          <div id="pprice">${pdpPrice(p, size)}</div>
+          ${pdpOffer(p)}
         </div>
         ${p.sizes.length > 1 ? `<div><div class="opt-label"><span>${isSet ? 'Choose your set' : 'Size'}</span><span id="sizeName">${optLabel(p, size)}</span></div>
           <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · Travel':s===50?'Everyday':'Supreme'}</small></button>`).join('')}</div></div>`
@@ -2436,6 +2545,7 @@ function product(id, q){
           <button class="btn" id="addBtn">Add to bag</button>
         </div>
         <button class="btn line block" id="buyBtn">Buy now</button>
+        <p class="pdp-pay">${CO_ICON.lock}<span>Secure checkout · ${CARD_ON ? 'Card, Apple Pay, Google Pay · ' : ''}Cash on delivery over ${aed(COD_MIN)} · Free UAE delivery</span></p>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
           <details open><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
@@ -2465,7 +2575,7 @@ function bindProduct(p){
   $$('.thumbs button').forEach(b => b.onclick = () => setImg(b.dataset.g));
   $$('#sizes button').forEach(b => b.onclick = () => {
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
-    $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = priceHTML(p, size, 'pprice');
+    $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = pdpPrice(p, size);
     setImg(imgFor(p, size));
     renderMbuy(); pdpStock();
   });
@@ -2495,7 +2605,8 @@ function bindProduct(p){
     $$('#sizes button').forEach(b => b.classList.toggle('so', stockLeft(p.id, b.dataset.s) === 0)); };
   pdpStock();
   const addBtn = $('#addBtn');
-  mobileBarCheck = () => { const r = addBtn.getBoundingClientRect(); mb.classList.toggle('show', r.bottom < 0 && $('#reviews').getBoundingClientRect().top > innerHeight*.6); };
+  mobileBarCheck = () => { const r = addBtn.getBoundingClientRect(), off = r.bottom < 0 || r.top > innerHeight - 70; mb.classList.toggle('show', off && $('#reviews').getBoundingClientRect().top > innerHeight*.6); };
+  setTimeout(() => mobileBarCheck && mobileBarCheck(), 400);
   rwLoad(p);
 }
 let mobileBarCheck = null;
@@ -2988,6 +3099,7 @@ function bindCheckout(q){
     if (r.url){ FXT.lead('card', d, ls, orderTotals(ls, coPay).total, true); FXT.send('card'); location.href = r.url; return; }
     if (r.order){
       FXT.send('buy', {o: r.order});
+      rememberOrder(ls);
       if (buy) clearBuy(); else { cart = []; save(); }
       if (r.review) rwAddLink(r.review);
       location.hash = `#/order-confirmed?no=${encodeURIComponent(r.order)}&total=${encodeURIComponent(r.total)}${r.review ? '&rv=' + r.review : ''}`;
@@ -3006,7 +3118,7 @@ function orderConfirmed(q){
     <p class="co-small">Delivery is free anywhere in the UAE. Questions? WhatsApp us on <a href="https://wa.me/${S.checkout.whatsapp}" target="_blank" rel="noopener">${esc((S.contact.phones[0] || {}).number || '')}</a>.</p>
   </div>
   ${rwInvite(q.get('rv'))}
-  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:30px"><a class="btn" href="#/fragrances">Continue shopping</a><a class="btn line" href="#/contact">Contact us</a></div></div></section>`;
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:30px"><a class="btn" href="#/fragrances">Continue shopping</a><a class="btn line" href="#/contact">Contact us</a></div></div></section>` + afterBuyRecs(lastOrder());
 }
 
 /* after paying on Ziina's page: ask ziina.php for the real status before showing the order as paid */
@@ -3023,12 +3135,14 @@ async function verifyZiina(id, buy, tries = 0){
   const show = (eyebrow, title, lead, body) => { const h = $('.phead'); if (h) h.outerHTML = pageHead(eyebrow, title, lead); $('#ziBox').innerHTML = body; };
   if (d.status === 'paid') {
     FXT.once('buy', {o: d.order || ''});
+    rememberOrder(buy ? buyLines : cart);
     if (buy) clearBuy(); else { cart = []; save(); }
     if (d.review) rwAddLink(d.review);
     document.title = 'Order confirmed — FOMAXO';
     show('Order confirmed', `Thank <em class="metal">you</em>${d.name ? ', ' + esc(d.name.split(' ')[0]) : ''}`, `Your payment was successful.${d.email ? ' A confirmation is on its way to ' + esc(d.email) + '.' : ''} We will call or WhatsApp you to arrange delivery.`,
       `<div class="co-done">${d.order ? `<div><small>Order number</small><b>${esc(d.order)}</b></div>` : ''}${d.total > 0 ? `<div><small>Amount paid</small><b class="price">${moneyHTML(d.total, true)}</b></div>` : ''}<p class="co-small">Delivery is free anywhere in the UAE.</p></div>${rwInvite(d.review)}
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:30px"><a class="btn" href="#/fragrances">Continue shopping</a>${wa}</div>`);
+    const zs = $('#ziBox').closest('section'); if (zs && !$('#afterBuy')) { zs.insertAdjacentHTML('afterend', `<div id="afterBuy">${afterBuyRecs(lastOrder())}</div>`); bindCommon(); applyStock(); }
   } else if (d.status === 'failed') {
     show('Payment not completed', 'Payment did not <em class="metal">go through</em>', 'No money was taken. Your order is saved, so you can try again or choose another way to pay.',
       `<div style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="#/checkout${buy ? '?buy=1' : ''}">Try again</a>${wa}</div>`);
@@ -3313,7 +3427,7 @@ function route(){
   const raw = location.hash.replace(/^#/, '') || '/';
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
   const seg = path.split('/').filter(Boolean);
-  clearInterval(heroTimer); mobileBarCheck = null; coRefresh = null; pdpStock = null; $('#mbuy').classList.remove('show');
+  clearInterval(heroTimer); mobileBarCheck = null; coRefresh = null; pdpStock = null; $('#mbuy').classList.remove('show'); hideAdded();
   document.title = 'FOMAXO — The House of Modern Luxury';
   let html, after;
   switch (seg[0]){
@@ -3330,7 +3444,7 @@ function route(){
     case 'order-confirmed': html = orderConfirmed(q); break;
     case 'review': html = reviewPage(); after = () => bindReviewPage(q); break;
     case 'thank-you': if (q.get('ziina')) { html = ziinaThanks(); after = () => verifyZiina(q.get('ziina'), q.get('src') === 'buy'); break; }
-      if (q.get('src') === 'buy') clearBuy(); else { cart = []; save(); } html = pageHead('Order confirmed', 'Thank <em class="metal">you</em>', 'Your payment was successful. A receipt is on its way to your email, and we will contact you shortly to arrange delivery.') + `<section class="sec" style="padding-top:40px"><div class="wrap" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="#/fragrances">Continue shopping</a><a class="btn line" href="#/contact">Contact us</a></div></section>`; break;
+      rememberOrder(q.get('src') === 'buy' ? buyLines : cart); if (q.get('src') === 'buy') clearBuy(); else { cart = []; save(); } html = pageHead('Order confirmed', 'Thank <em class="metal">you</em>', 'Your payment was successful. A receipt is on its way to your email, and we will contact you shortly to arrange delivery.') + `<section class="sec" style="padding-top:40px"><div class="wrap" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="#/fragrances">Continue shopping</a><a class="btn line" href="#/contact">Contact us</a></div></section>` + afterBuyRecs(lastOrder()); break;
     default: html = notFound();
   }
   if (html === '') return;
@@ -3358,6 +3472,7 @@ function bindHome(){
   const sb = $('.story-bg[data-bg]');   // boutique photo loads when the story section comes near
   if (sb){ const o = new IntersectionObserver(es => { if (es[0].isIntersecting){ sb.style.backgroundImage = `url('${sb.dataset.bg}')`; o.disconnect(); } }, {rootMargin: '600px 0px'}); o.observe(sb); }
   $$('[data-quickadd]').forEach(b => b.onclick = () => { const p = P[b.dataset.quickadd]; addToCart(p.id, defaultSize(p)); });
+  $$('[data-reorder]', app).forEach(b => b.onclick = reorder);
 }
 function bindHomeOld(){
   const imgs = $$('#arch img'), dots = $$('#heroDots button'), ids = ['king','oldmoney','royalcandy','matchacoco','passionsin','gold'];
@@ -3383,8 +3498,14 @@ function bindCommon(){
   io && io.disconnect();
   io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold: .12, rootMargin: '0px 0px -40px 0px'});
   $$('.rv-up').forEach(el => io.observe(el));
-  $$('form.notify').forEach(f => f.onsubmit = e => { e.preventDefault(); const em = $('input', f).value;
-    location.href = `mailto:${S.contact.email}?subject=${encodeURIComponent('Register interest: ' + (f.dataset.interest || 'FOMAXO launches'))}&body=${encodeURIComponent('Please notify me: ' + em)}`; });
+  /* email sign-ups are saved on our server (subscribe.php → admin → Members → Download email list); if that fails, the old email route still works */
+  $$('form.notify').forEach(f => f.onsubmit = async e => { e.preventDefault(); const em = $('input', f).value.trim(), btn = $('button', f), interest = f.dataset.interest || 'FOMAXO launches';
+    if (btn.disabled) return; btn.disabled = true;
+    let ok = false;
+    try { const r = await fetch('subscribe.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email: em, interest, page: (location.hash || '#/').slice(1, 81)})}); ok = r.ok && !!(await r.json().catch(() => ({}))).ok; } catch(x) {}
+    if (ok) { f.outerHTML = `<p class="notify-ok" role="status">✓ Thank you. You are on the FOMAXO list${f.dataset.interest ? ' for ' + esc(f.dataset.interest) : ''}.</p>`; return; }
+    btn.disabled = false;
+    location.href = `mailto:${S.contact.email}?subject=${encodeURIComponent('Register interest: ' + interest)}&body=${encodeURIComponent('Please notify me: ' + em)}`; });
 }
 
 /* scroll effects: header, parallax, mobile buy bar */
