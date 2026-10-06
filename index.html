@@ -1518,6 +1518,17 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co .form label.co-opt.off{cursor:not-allowed;border-color:var(--line)}
 .co-opt.off .co-opt-t b,.co-opt.off .co-opt-i{opacity:.5}
 .co-cp{margin:0 0 16px}
+.co-sum .co-cp{margin:4px 0 6px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.co-sum .co-cp-l{display:block;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.co-sum .co-cp-f input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line-2);background:transparent;color:var(--ivory);font:inherit;font-size:14px;text-transform:uppercase;letter-spacing:.08em;outline:0;border-radius:0}
+.co-sum .co-cp-f input:focus{border-color:var(--gold)}
+.co-sum .co-cp-f input::placeholder{text-transform:none;letter-spacing:.04em;color:var(--dim)}
+.co-sum .co-cp-f .btn{padding:0 18px}
+.co-was{margin-right:10px;font-size:.55em;color:var(--muted);text-decoration-thickness:1px}
+.co-row.co-save-c{flex-wrap:wrap;justify-content:space-between;align-items:baseline}
+.co-row.co-save-c small{font-weight:400;font-size:12px;letter-spacing:.02em;opacity:.85}
+.co-cp-m.co-cp-saved{padding:10px 14px;border:1px solid currentColor;background:rgba(95,196,140,.08);font-size:14.5px;font-weight:500}
+@media(max-width:900px){.co-cp-f input,.co-cp-f .btn{min-height:48px}}
 .co-cp-f{display:flex;gap:8px;margin-top:8px}
 .form .co-cp-f input{flex:1;min-width:0;padding:12px 14px;text-transform:uppercase;letter-spacing:.08em}
 .form .co-cp-f input::placeholder{text-transform:none;letter-spacing:.04em}
@@ -1881,6 +1892,38 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   .co-rows{gap:6px;padding-top:12px}
   .co-row{font-size:13.5px}
   .co-row .price{font-size:15px}
+}
+/* laptop checkout format: each step in a card like the order summary, fields in three even columns
+   with one-line labels, and the two ways to pay side by side */
+@media(min-width:961px){
+  .co-grid{grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:32px}
+  .co-main{gap:16px}
+  .co-step{border:1px solid var(--line-2);background:var(--panel);padding:16px 22px 18px}
+  .co-step h2{border-bottom-color:var(--line-2)}
+  .co-r3{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px}
+  .co .form .co-r3 label{white-space:nowrap;letter-spacing:.12em}
+  .co .form .co-r3 label>span{overflow:hidden;text-overflow:ellipsis}
+  .co .form .co-r3 label .co-opt-l{letter-spacing:.02em}
+  .co-pay{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .co-pay>.co-lock{grid-column:1/-1}
+  .co .form label.co-opt{padding:10px 14px}
+  .co-cp{margin:0 0 4px}
+  .co-trust{justify-content:center;border-top:0;padding-top:4px}
+}
+@media(min-width:961px) and (max-width:1360px){.co .form .co-r3 label{letter-spacing:.07em}}
+/* laptop checkout: order summary as a black panel with gold prices (AJAY picked option 2) */
+@media(min-width:961px){
+ .co-sum{--ivory:#f2ebdd;--muted:#c9bfa9;--gold:#d7aa69;--gold-hi:#f0d3a0;--champagne:#e9d6b2;--line:rgba(215,170,105,.25);--line-2:rgba(215,170,105,.45);--panel:#0e0d0b;--panel-2:#13110e;background:#0b0a08!important;color:var(--ivory);border-color:#0b0a08!important;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+ .co-sum *{color:inherit}
+ .co-sum h3,.co-sum .co-item b{color:var(--ivory)!important}
+ .co-sum .price,.co-sum .co-row.tot .price{color:var(--gold-hi)!important}
+ .co-sum small,.co-sum .co-row{color:var(--muted)!important}
+ .co-sum .co-row.disc,.co-sum .co-row.disc .price,.co-sum .co-row.co-save,.co-sum .co-row.co-save .price,.co-sum .co-free .price{color:#5fc48c!important}
+ .co-sum .co-row.tot span:first-child{color:var(--ivory)!important}
+ .co-sum .co-nudge{background:rgba(215,170,105,.08)!important;border-color:var(--gold)!important;color:var(--champagne)!important}
+ .co-sum .co-nudge b{color:var(--gold-hi)!important}
+ .co-sum select{background:#13110e!important;color:var(--ivory)!important;border-color:var(--line-2)!important}
+ .co-sum a{color:var(--champagne)!important}
 }
 /* laptop product page: same layout, tighter spacing so it fits one screen */
 @media(min-width:961px){
@@ -2320,6 +2363,7 @@ async function sendOrder(lines, pay, details, src){
 /* coupon code typed at checkout (made on fomaxo.com/admin → Coupons). checkout.php and ziina.php check it again before charging.
    It never adds to the multi-buy discount: the customer gets whichever saving is bigger (the free 10ml mini still applies). */
 let coupon = null;
+const CP_WIDE = matchMedia('(min-width:901px)');
 try { coupon = JSON.parse(sessionStorage.getItem('fomaxo_coupon') || 'null'); } catch(e) { coupon = null; }
 function setCoupon(c){ coupon = c || null; try { c ? sessionStorage.setItem('fomaxo_coupon', JSON.stringify(c)) : sessionStorage.removeItem('fomaxo_coupon'); } catch(e) {} }
 function couponSave(t0){
@@ -3187,7 +3231,7 @@ function checkoutPage(q){
         </section>
         <section class="co-step">
           <h2><span>2</span>Payment</h2>
-          <div class="co-cp" id="coCp"></div>
+          <div class="co-cp" id="coCp"></div><span id="coCpHome" hidden></span>
           <div class="co-pay" id="coPay" role="radiogroup" aria-label="Payment method"></div>
           <p class="co-err" id="coErr" role="alert" hidden></p>
           <button class="btn block co-go" id="coGo" type="submit"></button>
@@ -3218,6 +3262,7 @@ function bindCheckout(q){
   let busy = false;
   // coupon box: "Have a coupon?" with an empty code box always open; Apply asks coupon.php, then the totals show the saving
   const cpBox = $('#coCp'); let cpMsg = '';
+  CP_WIDE.onchange = () => { if ($('#coSum')) draw(); };
   function drawCoupon(){
     if (!cpBox) return;
     cpBox.innerHTML = coupon
@@ -3248,7 +3293,7 @@ function bindCheckout(q){
       en.textContent = end > 0 ? `Ends in ${d ? d + (d > 1 ? ' days' : ' day') + (h ? ' ' + h + 'h' : '') : (h ? h + 'h ' : '') + (mins % 60) + 'm'}` : ''; en.hidden = !(end > 0); }
     if (end !== null && end <= 0) { t = 'This coupon code has expired. Please remove it.'; cls = 'bad'; }
     else if (T.t0 !== null && coupon.min > 0 && T.t0 < coupon.min) t = `Add ${aed(Math.round((coupon.min - T.t0) * 100) / 100)} more to use this code (for orders of ${aed(coupon.min)} or more).`;
-    else if (T.useC) { t = `You save ${money2(T.cs)} with this code.`; cls = 'ok'; }
+    else if (T.useC) { if (!CP_WIDE.matches) { t = `You saved ${money2(T.cs)} after coupon · new total ${money2(T.total)}`; cls = 'ok co-cp-saved'; } }
     else if (T.dc.amount > 0) t = `Your multi-buy discount saves more, so we kept it. Coupons and multi-buy don't add up.`;
     m.textContent = t; m.className = 'co-cp-m' + (cls ? ' ' + cls : ''); m.hidden = !t;
   }
@@ -3267,13 +3312,13 @@ function bindCheckout(q){
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     // You save = crossed-out prices minus paid prices, plus the multi-buy discount or coupon
     const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (T.disc > 0 ? T.disc : 0)) * 100) / 100;
-    const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div>` :
-      `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div>
+    const rows = T.after === null ? `<div id="coCpSlot"></div><div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div>` :
+      `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div><div id="coCpSlot"></div>
       ${T.useC ? `<div class="co-row disc"><span>Coupon ${esc(coupon.code)} (${esc(coupon.label)})</span><span class="price">−${moneyHTML(T.cs, true)}</span></div>`
         : dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}
-      <div class="co-row tot"><span>Total</span><span class="price">${moneyHTML(T.total, true)}</span></div>${saved > 0 ? `<div class="co-row co-save"><span>You save</span><span class="price">${moneyHTML(saved, true)}</span></div>` : ''}`;
+      <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>${money2(saved)} saved in total</small>` : ''}</div>` : saved > 0 ? `<div class="co-row co-save"><span>You save</span><span class="price">${moneyHTML(saved, true)}</span></div>` : ''}`;
     const nudge = m => `<div class="co-nudge ${m}">${ICON.gift || ''}<span>${qtyNudge(dc)}</span></div>`;   // same offer line as the bag: under the bar on phones, above Subtotal on desktop
     const sum = $('#coSum');
     sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${saved > 0 ? `<b class="co-bar-save">You save ${money2(saved)}</b>` : ''}${coOpen ? 'Tap to close' : 'Tap to open'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>${nudge('co-nudge-m')}
@@ -3292,7 +3337,10 @@ function bindCheckout(q){
     // tapping a product in the summary opens the bag so the customer can change it
     $$('[data-openbag]', sum).forEach(el => { el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBag(); } }; });
     // tapping anywhere in the summary (heading, products, totals) opens the bag; the mini picker and Edit bag keep their own job
-    $('#coSumIn').onclick = e => { if (!e.target.closest('select,button,a')) openBag(); };
+    $('#coSumIn').onclick = e => { if (!e.target.closest('select,button,a,input,.co-cp')) openBag(); };
+    // laptop: the coupon box sits in the order summary under Subtotal; phone: it stays in the Payment step, next to the pay button
+    const slot = $('#coCpSlot'), home = $('#coCpHome');
+    if (cpBox && slot && CP_WIDE.matches) slot.replaceWith(cpBox); else if (cpBox && home && cpBox.nextSibling !== home) home.before(cpBox);
     const cm = $('#coMini'); if (cm) cm.onchange = () => { try { localStorage.setItem('fomaxo_mini', cm.value); } catch(e) {} renderCart(); };
     cpNote(T);
     // payment options
