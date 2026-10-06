@@ -2560,7 +2560,7 @@ function home(){
 
   <section class="sec" style="padding-top:0" id="tiers"><div class="wrap">
     ${secHead('The fragrance collection', 'Distinct <em class="metal">blends</em>', '<p class="lead">Four fragrances that define the house of FOMAXO.</p>')}
-    ${['king','gold','oldmoney','royalcandy'].map(id => P[id]).filter(p => p && !p.hidden).map((p,i) => `<div class="ed ${i%2?'rev':''}">
+    ${['gold','dollar','oldmoney','royalcandy'].map(id => P[id]).filter(p => p && !p.hidden).map((p,i) => `<div class="ed ${i%2?'rev':''}">
       <a class="ed-media rv-up" href="#/product/${p.id}"><img data-parallax="0.08" src="${IMG(p.images[0])}" alt="FOMAXO ${esc(p.name)}" loading="lazy"></a>
       <div class="ed-copy rv-up d1">
         <span class="num">0${i+1}</span>
