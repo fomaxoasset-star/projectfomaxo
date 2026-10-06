@@ -762,6 +762,15 @@ if (isset($_GET['settings'])) {
       else flash('Saved. A test email was sent to ' . fomaxo_orders_email() . '.', true);
       go(['settings' => 1]);
     }
+    if (isset($_POST['sale_end_d'])) {   // limited-time sale countdown on the website (UAE time); prices are not changed
+      if (isset($_POST['sale_off'])) { fomaxo_setting($pdo, 'sale_ends', ''); flash('The sale countdown is off.', true); go(['settings' => 1]); }
+      $d = (string)$_POST['sale_end_d']; $t = (string)($_POST['sale_end_t'] ?? '');
+      if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) || ($t !== '' && !preg_match('/^\d{2}:\d{2}$/', $t))) { flash('Please type the end date as dd/mm/yyyy.'); go(['settings' => 1]); }
+      $end = strtotime("$d " . ($t !== '' ? "$t:00" : '23:59:59'));
+      if (!$end || $end <= time()) { flash('The end must be in the future.'); go(['settings' => 1]); }
+      fomaxo_setting($pdo, 'sale_ends', (string)$end);
+      flash('Sale countdown saved. It ends ' . date('d/m/Y, g:i a', $end) . '.', true); go(['settings' => 1]);
+    }
     $email = trim((string)($_POST['orders_email'] ?? ''));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { flash('Please type a valid email address.'); go(['settings' => 1]); }
     fomaxo_setting($pdo, 'orders_email', $email);   // the "Only X left" level is set on the Stock page
@@ -773,6 +782,17 @@ if (isset($_GET['settings'])) {
     . '<label for="orders_email">Store emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
     . '<p class="muted small" style="margin:6px 0 0">New cash and card orders, new reviews and admin password reset links are all emailed here.</p>'
     . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
+    . (function () use ($pdo) { $e = (int)fomaxo_setting($pdo, 'sale_ends'); $on = $e > time(); $l = $e - time();
+        return '<form class="card" method="post">' . csrf_field()
+        . '<h2 style="margin-top:0">Sale countdown</h2>'
+        . '<style>.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.sg2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}</style>'
+        . '<p class="small" style="margin:0 0 8px">' . ($on ? '<span class="lvl-ok">●</span> On: ends ' . date('d/m/Y, g:i a', $e) . ' (' . ($l >= 86400 ? floor($l / 86400) . 'd ' : '') . floor($l % 86400 / 3600) . 'h ' . floor($l % 3600 / 60) . 'm left).' : '<span class="lvl-low">●</span> Off: no countdown on the website.') . '</p>'
+        . '<div class="cpq sq" role="group" aria-label="Quick end"><button type="button" data-h="24">24 hours</button><button type="button" data-h="48">48 hours</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button></div>'
+        . '<div class="sg2"><div><label for="sale_end_d">Ends</label><input id="sale_end_d" type="date" name="sale_end_d" required value="' . ($on ? date('Y-m-d', $e) : '') . '"></div><div><label for="sale_end_t">End time</label><input id="sale_end_t" type="time" name="sale_end_t" value="' . ($on ? date('H:i', $e) : '') . '"></div></div>'
+        . '<p class="muted small" style="margin:6px 0 0">Shows "Limited time offer · ends in …" on every size that has an old price. It hides by itself at the end; prices are not changed. UAE time.</p>'
+        . '<p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Save</button>' . ($on ? '<button class="btn line" name="sale_off" value="1" formnovalidate>Turn off</button>' : '') . '</p>'
+        . '<script>document.querySelectorAll(".cpq.sq button").forEach(function(b){b.onclick=function(){var f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},e=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000+b.dataset.h*3600000);'
+        . 'set("sale_end_d",e.getFullYear()+"-"+p(e.getMonth()+1)+"-"+p(e.getDate()));set("sale_end_t",p(e.getHours())+":"+p(e.getMinutes()));document.querySelectorAll(".cpq.sq button").forEach(function(x){x.classList.toggle("on",x===b)})}})</script></form>'; })()
     . '<form class="card" method="post">' . csrf_field()
     . '<h2 style="margin-top:0">Email sending</h2>'
     . (fomaxo_mail_config()

@@ -11,4 +11,7 @@ foreach (fomaxo_product_rows() ?: [] as $r) {
   $p->hidden = true;   // still sent, so links to it don't break, but not listed or sold
   $out[] = fomaxo_json($p);
 }
-echo $out ? '{"products":[' . implode(',', $out) . ']}' : '{"products":null}';
+/* limited-time sale: when it ends (Unix time), as set on fomaxo.com/admin → Settings; null = no countdown */
+$saleEnds = null;
+if ($pdo = fomaxo_db()) { try { $v = (int)fomaxo_setting($pdo, 'sale_ends'); if ($v > time()) $saleEnds = $v; } catch (Throwable $e) {} }
+echo '{"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . '}';
