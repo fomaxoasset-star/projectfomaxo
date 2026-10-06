@@ -1781,7 +1781,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   #cart .dr-foot .sub-row{font-size:10.5px;letter-spacing:.12em}
   #cart .dr-foot .sub-row .price{font-size:14px}
   #cart .dr-foot .sub-row:not(.total-row):not(.qd-row){display:none}
-  #cart .dr-foot .qd-nudge{margin:0;padding:0 0 6px;border:0;border-bottom:1px solid var(--line);background:none;font-size:12px;line-height:1.4;gap:8px}
+  #cart .dr-foot .qd-nudge{margin:0;padding:0 0 6px;border:0;border-bottom:1px solid var(--line);background:none;font-size:min(12px,2.9vw);line-height:1.4;gap:8px}
   #cart .dr-foot .qd-nudge svg{width:15px;height:15px}
   #cart .dr-foot .total-row{padding-top:6px;margin-top:0!important}
   #cart .dr-foot .total-row>span:first-child{font-size:13px}
@@ -2224,7 +2224,7 @@ function qtyNudge(dc){
   const u = dc.units, item = n => `${n} more item${n > 1 ? 's' : ''}`, noMini = dc.has10 && u >= 2;
   const freeMini = noMini ? '' : ' + FREE 10ml mini';
   if (u === 0) return 'Buy more, save more: <b>2 items 5% off</b> · <b>3 items 10% off + FREE 10ml mini</b> · <b>5+ items 15% off + FREE 10ml mini</b>';
-  if (u === 1) return `Add <b>1 more item</b> for <b>5% off</b>`;
+  if (u === 1) return `Add <b>1 more item</b> for <b>5% off</b> (3 items: 10% off + FREE 10ml mini)`;
   if (u === 2) return `<b>5% off</b> unlocked · Add <b>1 more item</b> for <b>10% off${noMini ? '' : ' + a FREE 10ml mini'}</b>`;
   if (u < 5) return `<b>10% off${freeMini}</b> unlocked · Add <b>${item(5 - u)}</b> for <b>15% off</b>`;
   return `<b>15% off${freeMini}</b> unlocked · You have our best price`;
