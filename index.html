@@ -1805,6 +1805,13 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 }
 .pn-del{display:none}
 @media(max-width:600px){#cart .pn-del{display:inline}}
+/* phones: the whole bag scrolls as one page (items, offer, total, checkout), so nothing is stuck and every product is easy to reach */
+@media(max-width:600px){
+  #cart{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  #cart .dr-head{position:sticky;top:0;z-index:2;background:var(--black-2);flex:none}
+  #cart .dr-body{flex:none;overflow:visible}
+  #cart .dr-foot{flex:none;margin-top:auto}
+}
 </style>
 </head>
 <body>
