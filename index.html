@@ -1278,6 +1278,18 @@ html{scroll-padding-top:calc(var(--ann-h,40px) + 80px)}
   .mnav .top{margin-bottom:24px}
 }
 @media(max-width:380px){:root{--pad:16px}.perks-strip .wrap>div{padding:14px 8px}}
+/* phones: the shop filters sit in one swipeable row, so the first fragrance shows sooner */
+@media(max-width:700px){
+  .filters:not(.home-filters){flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 calc(-1 * var(--pad));padding:16px var(--pad) 20px;scroll-padding:0 var(--pad)}
+  .filters:not(.home-filters)::-webkit-scrollbar{display:none}
+  .filters:not(.home-filters) .chip{flex:none;height:36px;padding:0 14px}
+  .shop-head .phead{padding:28px 0 20px}
+  .shop-head .phead .wrap{gap:12px}
+}
+/* checkout: no shop links or newsletter in the footer, so nothing pulls the customer away from paying */
+body.co-page footer .fgrid{display:none}
+body.co-page footer{padding:28px 0 24px}
+body.co-page footer .fbase{border-top:0;padding-top:0}
 /* ===== readable colours in both modes ===== */
 :root{--dim:#948a77}
 html[data-mode="light"]{--gold:#8d621f;--dim:#6e6555;--muted:#5a5143}
@@ -2204,7 +2216,7 @@ function renderCart(){
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
   foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
-    ${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout</a>`}<p class="pay-note">${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
+    ${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? ' · ' + money2(t) : ''}</a>`}<p class="pay-note">${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
   const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} coRefresh && coRefresh(); };
   coRefresh && coRefresh();
 }
@@ -2500,7 +2512,7 @@ function fragrances(q){
   if (['elite','signature','prestige'].includes(f)) list = list.filter(p => p.tier === f);
   else if (f === 'set') list = list.filter(p => p.kind === 'set');
   else if (['10','50','100'].includes(f)) { list = list.filter(p => p.sizes.includes(+f)); sizeOverride = +f; }
-  return pageHead('Fragrances', 'The <em class="metal">Fragrances</em>', 'Fragrances crafted in the spirit of Dubai. Select a size, add to your bag, or buy instantly.') +
+  return `<div class="shop-head">${pageHead('Fragrances', 'The <em class="metal">Fragrances</em>', 'Fragrances crafted in the spirit of Dubai. Select a size, add to your bag, or buy instantly.')}</div>` +
   `<section style="padding-bottom:120px"><div class="wrap">
     <div class="filters">${filters.map(x => `<a class="chip${x[0]===f?' on':''}" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
     <div class="grid">${list.map((p,i) => card(p, {d:'d'+(i%3), size: sizeOverride})).join('')}</div>
@@ -3457,12 +3469,14 @@ function route(){
   }
   if (html === '') return;
   document.body.classList.toggle('home', !seg[0]);
+  document.body.classList.toggle('co-page', seg[0] === 'checkout');
   app.innerHTML = `<div class="page-fade">${html}</div>`;
   FXT.view(seg);
   $$('#menu a').forEach(a => a.classList.toggle('on', a.dataset.r === seg[0] || (a.dataset.r === 'fragrances' && seg[0] === 'product')));
   closePanels();
   window.scrollTo({top: 0, left: 0, behavior: 'instant'});
   after && after();
+  const fc = $('.filters:not(.home-filters) .chip.on'); if (fc && fc.parentNode.scrollWidth > fc.parentNode.clientWidth) fc.parentNode.scrollLeft = fc.offsetLeft - fc.parentNode.offsetLeft - 16;
   applyStock();
   bindCommon();
 }
