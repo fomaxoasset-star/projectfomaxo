@@ -2224,7 +2224,7 @@ function qtyNudge(dc){
   const u = dc.units, item = n => `${n} more item${n > 1 ? 's' : ''}`, noMini = dc.has10 && u >= 2;
   const freeMini = noMini ? '' : ' + FREE 10ml mini';
   if (u === 0) return 'Buy more, save more: <b>2 items 5% off</b> · <b>3 items 10% off + FREE 10ml mini</b> · <b>5+ items 15% off + FREE 10ml mini</b>';
-  if (u === 1) return `Add <b>1 more item</b> for <b>5% off</b> (3 items: 10% off + FREE 10ml mini)`;
+  if (u === 1) return `Add <b>1 more item</b> for <b>5% off</b>`;
   if (u === 2) return `<b>5% off</b> unlocked · Add <b>1 more item</b> for <b>10% off${noMini ? '' : ' + a FREE 10ml mini'}</b>`;
   if (u < 5) return `<b>10% off${freeMini}</b> unlocked · Add <b>${item(5 - u)}</b> for <b>15% off</b>`;
   return `<b>15% off${freeMini}</b> unlocked · You have our best price`;
