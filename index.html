@@ -1799,6 +1799,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 @media(max-width:600px){
   #cart .dr-foot .sub-row.ph-sub{display:flex!important}
   #cart .co-amt{display:none}
+  #cart .dr-body{overscroll-behavior:contain}
   #cart .dr-foot .ph-sub .gold{color:var(--gold)}
   #cart .dr-foot .pay-note{margin:0}
 }
@@ -2368,6 +2369,11 @@ function afterBuyRecs(lines){
 const scrim = $('#scrim');
 function openPanel(el){ closePanels(); el.classList.add('open'); el.setAttribute('aria-hidden','false'); if (el.id === 'cart') scrim.classList.add('open'); document.body.classList.add('lock'); }
 function closePanels(){ $$('.drawer.open,.search.open,.mnav.open').forEach(x => { x.classList.remove('open'); x.setAttribute('aria-hidden','true'); }); scrim.classList.remove('open'); document.body.classList.remove('lock'); }
+/* phones: a swipe anywhere in the bag (top bar, totals, buttons) moves only the products list; the page behind never moves */
+(() => { const cart = document.getElementById('cart'); if (!cart) return; let y = null;
+  cart.addEventListener('touchstart', e => { const b = cart.querySelector('.dr-body'); y = b && !b.contains(e.target) && !e.target.closest('select,input,textarea') ? e.touches[0].clientY : null; }, {passive: true});
+  cart.addEventListener('touchmove', e => { if (y === null) return; const b = cart.querySelector('.dr-body'), ny = e.touches[0].clientY; b.scrollTop += y - ny; y = ny; e.preventDefault(); }, {passive: false});
+})();
 $('#openCart').onclick = () => { $('#toast').classList.remove('show'); renderCart(); openPanel($('#cart')); };
 $('#openMenu').onclick = () => openPanel($('#mnav'));
 $('#openSearch').onclick = () => { openPanel($('#search')); runSearch(''); setTimeout(() => $('#q').focus(), 80); };
