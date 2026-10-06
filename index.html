@@ -1595,19 +1595,10 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-help.on svg{fill:currentColor}
 /* compact review cards: 4 reviews + arrows fit on one laptop screen */
 .reviews .rw-item{padding:14px 0;gap:6px}
-.reviews .rw-item{gap:9px}
-.rw-item .rw-text{font-size:22px;line-height:1.4}
-.rw-foot{display:flex;align-items:center;justify-content:space-between;gap:8px 14px}
-.rw-by{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;min-width:0}
-.rw-by .rw-stars{font-size:10.5px;align-self:center}
-.rw-by .rw-name{font-size:11px;letter-spacing:.06em;font-weight:500}
-.rw-by .rw-loc{font-size:11px}
-.rw-by .rw-flag{font-size:12px}
-.rw-by .rw-ver{font-size:8px;letter-spacing:.18em;gap:5px}
-.rw-by .rw-ver svg{width:12px;height:12px}
-.rw-date{font-size:10.5px!important;color:var(--muted)}
-.rw-item .rw-help{padding:3px 9px;font-size:9.5px;flex:none}
-@media(max-width:600px){.rw-item .rw-text{font-size:20px}.rw-foot{align-items:flex-end}}
+.rw-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px}
+.rw-item .rw-text{font-size:17px;line-height:1.4}
+.rw-item .rw-help{padding:3px 9px;font-size:9.5px;margin-left:auto;align-self:center}
+@media(max-width:600px){.rw-item .rw-help{margin-left:0}.rw-meta{gap:6px 12px}}
 @media(min-width:861px){.reviews:has(#rwList){padding:56px 0}}
 .rw-item .rw-photos button{width:56px;height:56px}
 .rw-pager{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:14px}
@@ -3063,12 +3054,13 @@ const rwCountryOptions = () => { const all = RW_COUNTRIES.map(c => [c, rwCountry
 const RW_EMO = ['😍', '🔥', '✨', '💯', '👌', '❤️', '🌹', '👍'];
 const rwHelpLabel = n => `${RW_HEART}<span>Helpful${n ? ` · ${n}` : ''}</span>`;
 
-function rwItem(r){   // the review itself first, then who wrote it (stars, name, place, badge, date) in a small line under it
+function rwItem(r){
   const voted = (rwGet('fomaxo_helpful') || []).includes(r.id);
-  return `<article class="rv rw-item"><p class="rw-text">“${esc(r.text)}”</p>
-    ${r.photos.length ? `<div class="rw-photos">${r.photos.map(u => `<button type="button" data-rwph="${esc(u)}" aria-label="Open customer photo"><img src="${esc(u)}" alt="Customer photo of ${esc(r.name)}" loading="lazy"></button>`).join('')}</div>` : ''}
-    <div class="rw-foot"><div class="rw-by">${rwStars(r.rating)}<span class="rw-who"><b class="rw-name">${esc(capWords(r.name || ''))}</b>${rwPlace(r)}</span>${r.verified ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}<span class="small rw-date">${rwDate(r.date)}</span></div><button type="button" class="rw-help${voted ? ' on' : ''}" data-rwh="${r.id}"${voted ? ' disabled' : ''}>${rwHelpLabel(r.helpful)}</button></div>
-    ${r.reply ? `<div class="rw-reply"><b>Reply from FOMAXO</b><p>${esc(r.reply)}</p></div>` : ''}</article>`;
+  return `<article class="rv rw-item"><div class="rw-top"><span class="rw-who"><b class="rw-name">${esc(capWords(r.name || ''))}</b>${rwPlace(r)}</span><span class="small">${rwDate(r.date)}</span></div>
+    <div class="rw-meta">${rwStars(r.rating)}${r.verified ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}<button type="button" class="rw-help${voted ? ' on' : ''}" data-rwh="${r.id}"${voted ? ' disabled' : ''}>${rwHelpLabel(r.helpful)}</button></div>
+    <p class="rw-text">“${esc(r.text)}”</p>
+    ${r.reply ? `<div class="rw-reply"><b>Reply from FOMAXO</b><p>${esc(r.reply)}</p></div>` : ''}
+    ${r.photos.length ? `<div class="rw-photos">${r.photos.map(u => `<button type="button" data-rwph="${esc(u)}" aria-label="Open customer photo"><img src="${esc(u)}" alt="Customer photo of ${esc(r.name)}" loading="lazy"></button>`).join('')}</div>` : ''}</article>`;
 }
 function rwSection(p, d){   // d = null while the reviews are loading: the text and the note still show
   const n = d ? d.count : 0;
