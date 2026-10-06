@@ -1296,9 +1296,6 @@ html{scroll-padding-top:calc(var(--ann-h,40px) + 80px)}
   #cart .dr-foot .qd-nudge svg{width:18px;height:18px}
 }
 /* bag: one-tap add for the next multi-buy level */
-.qd-add{display:table;margin-top:8px;padding:2px 0;color:var(--gold-hi);font-size:12.5px;letter-spacing:.04em;text-align:left;line-height:1.35;border-bottom:1px solid var(--line-2);transition:.3s}
-.qd-add:hover{border-color:var(--gold)}
-.qd-add .amt{font-size:1em}
 /* product cards: no stars until a product has its first real review (faint empty stars read as a low rating) */
 .card .crate.none{display:none}
 /* checkout: no shop links or newsletter in the footer, so nothing pulls the customer away from paying */
@@ -1786,7 +1783,6 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   #cart .dr-foot .sub-row:not(.total-row):not(.qd-row){display:none}
   #cart .dr-foot .qd-nudge{margin:0;padding:0 0 6px;border:0;border-bottom:1px solid var(--line);background:none;font-size:12px;line-height:1.4;gap:8px}
   #cart .dr-foot .qd-nudge svg{width:15px;height:15px}
-  #cart .dr-foot .qd-add{margin-top:3px;font-size:12px}
   #cart .dr-foot .total-row{padding-top:6px;margin-top:0!important}
   #cart .dr-foot .total-row>span:first-child{font-size:13px}
   #cart .dr-foot .total-row .price{font-size:20px}
@@ -2286,15 +2282,6 @@ function bagRecs(){
       <a href="#/product/${p.id}?size=${sz}" data-close><img src="${SM(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></a>
       <button type="button" class="rec-add" data-recadd="${p.id}" data-recsz="${sz}" aria-label="Add ${esc(p.name)} ${sz}ml to your bag">+</button></div>`).join('')}</div></div>`;
 }
-// one tap to reach the next multi-buy level: a fragrance the customer doesn't have yet, in its usual size (King and sets never)
-function nextTierAdd(dc){
-  if (dc.units < 1 || dc.units >= QTY_TIERS[QTY_TIERS.length - 1].n) return '';
-  const have = new Set(cart.map(l => l.id));
-  const p = S.products.find(p => p.kind !== 'set' && !p.hidden && p.prices && !QTY_DISCOUNT_SKIP.includes(p.id) && p.tier !== 'elite' && !have.has(p.id) && hasPrice(p.prices[defaultSize(p)]) && stockLeft(p.id, defaultSize(p)) !== 0);
-  if (!p) return '';
-  const sz = defaultSize(p);
-  return `<button type="button" class="qd-add" data-recadd="${p.id}" data-recsz="${sz}">+ Add ${esc(p.name)} ${optLabel(p, sz)} · ${moneyHTML(p.prices[sz])}</button>`;
-}
 function renderCart(){
   const n = cart.reduce((a, l) => a + l.qty, 0);
   const cc = $('#cartCount'); cc.textContent = n; cc.classList.toggle('on', n > 0);
@@ -2312,7 +2299,7 @@ function renderCart(){
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${SM('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`) + bagRecs();
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
-  const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${qdBar(dc)}${nextTierAdd(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
+  const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${qdBar(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
   const mini = dc.mini ? `<div class="mini-pick qd-row"><label for="miniSel">Free 10ml mini</label><select id="miniSel" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select><span class="price">FREE</span></div>` : '';
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
