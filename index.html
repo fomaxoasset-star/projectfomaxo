@@ -1616,6 +1616,7 @@ html[data-mode="light"] .co-row.disc,html[data-mode="light"] .co-row.disc .price
 .co-nudge{display:flex;align-items:center;gap:12px;margin:18px 0 0;padding:10px 14px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:13.5px;line-height:1.45;color:var(--ivory)}
 .co-nudge svg{flex:none;width:20px;height:20px;color:var(--gold)}
 .co-nudge b{color:var(--gold);font-weight:600}
+.co-nudge>span{flex:1;min-width:0;text-align:center;margin-right:32px}   /* AJAY: words centred, gift icon stays left */
 .co-done{display:flex;flex-wrap:wrap;gap:16px 56px;align-items:flex-end;padding:28px;border:1px solid var(--line-2);background:var(--panel);max-width:760px}
 .co-done small{display:block;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 .co-done b{font-family:var(--display);font-weight:400;font-size:26px;letter-spacing:.08em;color:var(--gold-hi)}
@@ -1778,6 +1779,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .qd-bar b:last-child em{left:auto;right:-4px;transform:none}
 .qd-bar b.on em{color:var(--gold)}
 .qd-nudge > span{flex:1;min-width:0}
+.dr-foot .qd-nudge>span{text-align:center;margin-right:36px}   /* AJAY: words centred, gift icon stays left */
 .qn-more{display:inline-block;white-space:nowrap}   /* the bracket part drops to its own line when the offer line has no room */
 .qn-dot{display:none}.qn-line{display:block}   /* "Add 1 more item" on its own line under "5% off unlocked" (no dangling dot) */
 .added{position:fixed;right:24px;bottom:24px;z-index:85;width:380px;max-width:calc(100vw - 32px);background:var(--panel);border:1px solid var(--gold);box-shadow:0 24px 60px -24px rgba(0,0,0,.55);padding:18px 18px 16px;display:flex;flex-direction:column;gap:14px;transform:translateY(24px);opacity:0;visibility:hidden;transition:transform .5s var(--ease),opacity .35s,visibility .35s}
@@ -1857,7 +1859,7 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   #cart .dr-foot .qd-nudge svg{width:15px;height:15px}
   #cart .dr-foot .qd-nudge{justify-content:center}
   #cart .dr-foot .qd-nudge .qn-dot{display:inline}#cart .dr-foot .qd-nudge .qn-line{display:inline}   /* phone bag stays one line */
-  #cart .dr-foot .qd-nudge>span{flex:0 1 auto;white-space:nowrap;letter-spacing:0;font-size:min(12px,2.75vw)}
+  #cart .dr-foot .qd-nudge>span{flex:0 1 auto;margin-right:0;text-align:left;white-space:nowrap;letter-spacing:0;font-size:min(12px,2.75vw)}
   #cart .dr-foot .qd-nudge .qd-note{white-space:normal}
   #cart .dr-foot .total-row{padding-top:6px;margin-top:0!important}
   #cart .dr-foot .total-row>span:first-child{font-size:13px}
