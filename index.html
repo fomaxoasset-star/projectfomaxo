@@ -1890,9 +1890,6 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   .acc .body{padding-bottom:12px;font-size:13.5px;line-height:1.6}
   .acc .body p+p{margin-top:6px}
 }
-/* product page Buy now: solid colour (black with gold letters on light, ivory with black letters on dark) */
-.buy #buyBtn{background:#f2ebdd;color:#0a0805;box-shadow:none}
-html[data-mode="light"] .buy #buyBtn{background:#0a0805;color:#e6c38a}
 </style>
 </head>
 <body>
@@ -2716,9 +2713,9 @@ function product(id, q){
           <p class="small" id="pickHint" style="margin-top:12px">Select ${size} fragrances to continue.</p></div>` : ''}
         <div class="qtyrow">
           <div class="qty"><button id="qm" aria-label="Decrease quantity">−</button><input id="qty" value="1" inputmode="numeric" aria-label="Quantity"><button id="qp" aria-label="Increase quantity">+</button></div>
-          <button class="btn" id="addBtn">Add to bag</button>
+          <button class="btn line" id="addBtn">Add to bag</button>
         </div>
-        <button class="btn line block" id="buyBtn">Buy now</button>
+        <button class="btn block" id="buyBtn">Buy now</button>
         <p class="pdp-pay">${CO_ICON.lock}<span>Secure checkout · ${CARD_ON ? 'Card, Apple Pay, Google Pay · ' : ''}Cash on delivery over ${aed(COD_MIN)} · Free UAE delivery</span></p>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
