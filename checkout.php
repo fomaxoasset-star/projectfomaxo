@@ -45,6 +45,18 @@ if (!is_array($in)) $in = [];
 $pay = ($in['pay'] ?? 'card') === 'cod' ? 'cod' : 'card';
 if ($pay === 'card' && (!$key || strpos($key, 'sk_') !== 0)) fail(500, 'Card payments are not set up yet.');
 
+if (!function_exists('fomaxo_phone_ok')) {
+/* a real-looking phone number, any country — same rules as phoneOk() in index.html and store-lib.php */
+function fomaxo_phone_ok($v) {
+  $v = trim((string)$v); if (!preg_match('/^\+?[\d\s\-()]+$/', $v)) return false;
+  $d = preg_replace('/\D/', '', $v); if (strpos($d, '00') === 0) $d = substr($d, 2);
+  $n = strlen($d);
+  if ($n < 9 || $n > 15 || preg_match('/^(\d)\1+$/', $d) || strpos('01234567890123456789', $d) !== false || strpos('98765432109876543210', $d) !== false) return false;
+  if (strpos($d, '971') === 0) return (bool)preg_match('/^9710?[1-9]\d{7,8}$/', $d);
+  if (strpos($d, '05') === 0) return $n === 10;
+  return true;
+}
+}
 /* customer details from the checkout page (required for cash on delivery) */
 $EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
 $cu = is_array($in['customer'] ?? null) ? $in['customer'] : null;
@@ -63,7 +75,7 @@ if ($cu) {
   } else {
     $ok = mb_strlen($cu['address']) >= 5;   // older page with a single address box
   }
-  if (!$ok || mb_strlen($cu['name']) < 2 || strlen(preg_replace('/\D/', '', $cu['phone'])) < 7 || ($cu['email'] !== '' && !filter_var($cu['email'], FILTER_VALIDATE_EMAIL))
+  if (!$ok || mb_strlen($cu['name']) < 2 || !fomaxo_phone_ok($cu['phone']) || ($cu['email'] !== '' && !filter_var($cu['email'], FILTER_VALIDATE_EMAIL))
       || !in_array($cu['emirate'], $EMIRATES, true)) fail(400, 'Please check your delivery details and try again.');
 } elseif ($pay === 'cod') {
   fail(400, 'Please add your delivery details.');

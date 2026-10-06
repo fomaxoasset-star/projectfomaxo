@@ -2989,6 +2989,17 @@ function notFound(){ return pageHead('Not found', 'Page <em class="metal">not fo
 
 /* ============================ CHECKOUT PAGE ============================ */
 const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
+/* a real-looking phone number, any country (same rules in store-lib.php fomaxo_phone_ok):
+   only digits, spaces, - ( ) and a leading +; 9 to 15 digits; not one digit repeated or a 123456789 run;
+   UAE numbers: 05x xxx xxxx (10 digits) or +971 / 00971 followed by 8-9 digits without a 0 */
+function phoneOk(v){
+  v = String(v || '').trim(); if (!/^\+?[\d\s\-()]+$/.test(v)) return false;
+  let d = v.replace(/\D/g, ''); if (d.startsWith('00')) d = d.slice(2);
+  if (d.length < 9 || d.length > 15 || /^(\d)\1+$/.test(d) || '01234567890123456789'.includes(d) || '98765432109876543210'.includes(d)) return false;
+  if (d.startsWith('971')) return /^9710?[1-9]\d{7,8}$/.test(d);
+  if (d.startsWith('05')) return d.length === 10;
+  return true;
+}
 const CO_FIELDS = ['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'note'];
 // one-line delivery address from the separate boxes
 const CO_CAPS = ['name', 'building', 'room', 'street', 'area', 'note'];
@@ -3132,8 +3143,8 @@ function bindCheckout(q){
   function check(d){
     const bad = [];
     if (d.name.length < 2) bad.push(['name', 'full name']);
-    if (d.phone.replace(/\D/g, '').length < 7) bad.push(['phone', 'mobile number']);
-    if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) bad.push(['email', 'a valid email']);   // email is optional; checked only when typed
+    if (!phoneOk(d.phone)) bad.push(['phone', d.phone ? 'correct mobile number' : 'mobile number']);
+    if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) bad.push(['email', 'correct email']);   // email is optional; checked only when typed
     if (!EMIRATES.includes(d.emirate)) bad.push(['emirate', 'emirate']);
     if (!d.building) bad.push(['building', 'villa / building no']);
     if (d.street.length < 2) bad.push(['street', 'street']);
