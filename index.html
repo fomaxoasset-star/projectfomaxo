@@ -2011,6 +2011,14 @@ const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 const app = $('#app');
 const IMG = k => `assets/img/${k}.webp`;
+/* lighter copies of the photos for faster loading: t/ is 720px wide (product cards on laptops), s/ is 240px (small pictures in the bag,
+   search, lists). Only the photos listed here have them; a photo uploaded later on the admin just uses the full photo. */
+const IMG_W = {"atelier":1027,"boutique-hq":1200,"boutique-people":848,"boutique":984,"discovery-1":800,"discovery-2":961,"discovery-3":984,"dollar-1":1114,"dollar-2":1043,"dollar-3":1398,"dollar-4":1394,"dollar-main":819,"dollar-main2":819,"elite-card":865,"elite-lounge-hq":848,"elite-lounge":862,"gift-1":984,"gift-2-hq":884,"gift-2":984,"gift-set-1-hq":986,"gift-set-1":1300,"gift-set-2-hq":925,"gift-set-2":1300,"gift-set-3-hq":857,"gift-set-3":1218,"gift-set-4-hq":841,"gift-set-4":1112,"gift-set-5-hq":856,"gift-set-5":1083,"gift-set-6-hq":860,"gift-set-6":1300,"gift-set-7-hq":1047,"gift-set-7":1300,"gold-1":1046,"gold-2":1046,"gold-3":1110,"gold-main":819,"gold-main2":819,"king-1":1048,"king-2":1048,"king-3":1048,"king-4":1048,"king-5":1400,"king-main":819,"matchacoco-1":1400,"matchacoco-10-1":1013,"matchacoco-10-2":1004,"matchacoco-100":799,"matchacoco-2":785,"matchacoco-3":773,"matchacoco-main":819,"matchacoco-main2":819,"oldmoney-1":1250,"oldmoney-10-1":782,"oldmoney-10-2":859,"oldmoney-100":953,"oldmoney-100b":1153,"oldmoney-2":912,"oldmoney-3":917,"oldmoney-main":819,"passionsin-1":896,"passionsin-10-1":933,"passionsin-10-2":924,"passionsin-10-3":912,"passionsin-2":934,"passionsin-3":1400,"passionsin-main":819,"personal-care-poster":1024,"personal-care":842,"royalcandy-1":832,"royalcandy-10-1":764,"royalcandy-10-2":858,"royalcandy-10-3":867,"royalcandy-100":1300,"royalcandy-2":1002,"royalcandy-main":819,"runway":805};
+const SM = k => IMG_W[k] ? `assets/img/s/${k}.webp` : IMG(k);
+const CARD_SIZES = '(max-width:600px) 92vw, (max-width:1100px) 46vw, min(31vw, 500px)';
+const cardPic = k => `src="${IMG(k)}"` + (IMG_W[k] ? ` srcset="assets/img/t/${k}.webp 720w, ${IMG(k)} ${IMG_W[k]}w" sizes="${CARD_SIZES}"` : '');
+function setPic(im, k){ if (IMG_W[k]) { im.srcset = `assets/img/t/${k}.webp 720w, ${IMG(k)} ${IMG_W[k]}w`; im.sizes = CARD_SIZES; } else im.removeAttribute('srcset'); im.src = IMG(k); }
+const HOVER = matchMedia('(hover:hover)').matches;   // the second card photo only shows on mouse hover, so phones skip loading it
 /* products: the list in window.STORE is only the fallback. The live list is edited on fomaxo.com/admin → Products,
    comes from products.php and is remembered on this device so the next visit opens with it straight away. */
 const TIER0 = S.tiers.map(t => t.products.slice()), MINI0 = S.mini.products.slice();
@@ -2171,7 +2179,7 @@ function bagRecs(){
     .concat(frag.filter(p => p.sizes.includes(10) && hasPrice(p.prices[10]) && !haveSz.has(p.id + '/10')).map(p => [p, 10]));
   if (!recs.length) return '';
   return `<div class="recs"><div class="recs-h"><h5>You may also like</h5><span class="recs-nav"><button type="button" data-recscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-recscroll="1" aria-label="Scroll for more">›</button></span></div><div class="recs-row">${recs.map(([p, sz]) => `<div class="rec">
-      <a href="#/product/${p.id}?size=${sz}" data-close><img src="${IMG(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></a>
+      <a href="#/product/${p.id}?size=${sz}" data-close><img src="${SM(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></a>
       <button type="button" class="rec-add" data-recadd="${p.id}" data-recsz="${sz}" aria-label="Add ${esc(p.name)} ${sz}ml to your bag">+</button></div>`).join('')}</div></div>`;
 }
 function renderCart(){
@@ -2179,16 +2187,16 @@ function renderCart(){
   const cc = $('#cartCount'); cc.textContent = n; cc.classList.toggle('on', n > 0);
   const body = $('#cartBody'), foot = $('#cartFoot');
   if (!cart.length){
-    body.innerHTML = `<div class="empty">${emblem()}<p class="caps" style="font-size:20px;color:var(--ivory)">Your bag is empty</p><p class="small">Not sure where to begin? Start with the Discovery Set.</p></div>${reorderHTML('ro-bag')}<div class="qd-nudge qd-empty">${ICON.gift || ''}<span>${qtyNudge({units: 0})}</span></div><a class="empty-ds" href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><small>Start here</small><b>Discovery Set</b><em>Choose 3 for AED 30 or 5 for AED 50 · 2ml vials</em></span><i>→</i></a><div class="empty-acts"><a class="btn sm block" href="#/product/discovery" data-close>Build your Discovery Set</a><a class="btn line sm block" href="#/fragrances" data-close>Shop FOMAXO</a></div>`;
+    body.innerHTML = `<div class="empty">${emblem()}<p class="caps" style="font-size:20px;color:var(--ivory)">Your bag is empty</p><p class="small">Not sure where to begin? Start with the Discovery Set.</p></div>${reorderHTML('ro-bag')}<div class="qd-nudge qd-empty">${ICON.gift || ''}<span>${qtyNudge({units: 0})}</span></div><a class="empty-ds" href="#/product/discovery" data-close><img src="${SM('discovery-1')}" alt=""><span><small>Start here</small><b>Discovery Set</b><em>Choose 3 for AED 30 or 5 for AED 50 · 2ml vials</em></span><i>→</i></a><div class="empty-acts"><a class="btn sm block" href="#/product/discovery" data-close>Build your Discovery Set</a><a class="btn line sm block" href="#/fragrances" data-close>Shop FOMAXO</a></div>`;
     foot.innerHTML = ''; return;
   }
   body.innerHTML = cart.map((l, i) => { const p = P[l.id]; return `<div class="line-item">
-      <a href="#/product/${p.id}" data-close><img src="${IMG(lineImg(l))}" alt="${esc(p.name)}"></a>
+      <a href="#/product/${p.id}" data-close><img src="${SM(lineImg(l))}" alt="${esc(p.name)}"></a>
       <div>${lineInfo(l)}
         <div class="qrow"><div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase">+</button></div>
         ${linePriceHTML(p, l)}</div>
         <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
-      `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${IMG('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`) + bagRecs();
+      `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${SM('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`) + bagRecs();
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
   const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${qdBar(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
@@ -2224,7 +2232,7 @@ function addedPanel(id, opt, qty){
   const p = P[id], dc = qtyDiscount(cart), T = orderTotals(cart, ''), n = cart.reduce((a, l) => a + l.qty, 0);
   const v = p.prices[opt], ok = T.after === null || T.short <= 0;
   addedEl.innerHTML = `<button class="ad-x" type="button" data-adclose aria-label="Close">×</button>
-    <div class="ad-top"><img src="${IMG(imgFor(p, opt))}" alt=""><div><small>✓ Added to your bag</small><b>${esc(p.name)}</b><span>${optLabel(p, opt)}${qty > 1 ? ' × ' + qty : ''}${hasPrice(v) ? ' · ' + moneyHTML(v * qty) : ''}</span></div></div>
+    <div class="ad-top"><img src="${SM(imgFor(p, opt))}" alt=""><div><small>✓ Added to your bag</small><b>${esc(p.name)}</b><span>${optLabel(p, opt)}${qty > 1 ? ' × ' + qty : ''}${hasPrice(v) ? ' · ' + moneyHTML(v * qty) : ''}</span></div></div>
     ${dc.units ? `<div class="ad-offer"><span>${qtyNudge(dc)}</span>${qdBar(dc)}</div>` : ''}
     <div class="ad-acts">${ok ? `<a class="btn sm" href="#/checkout" data-adclose>Checkout${T.after !== null ? ' · ' + aed(T.after) : ''}</a>` : `<span class="btn sm co-min">${minMsg(T.short)}</span>`}<button class="btn line sm" type="button" data-adbag>View bag (${n})</button></div>`;
   $('#toast').classList.remove('show');
@@ -2253,7 +2261,7 @@ function reorder(){
   if (added) { hideAdded(); renderCart(); openPanel($('#cart')); }
 }
 const reorderHTML = (cls = '') => { const ls = lastOrder(); if (!ls) return '';
-  return `<div class="reorder ${cls}"><div class="ro-imgs">${ls.slice(0, 3).map(l => `<img src="${IMG(lineImg(l))}" alt="">`).join('')}</div><div class="ro-t"><small>Welcome back</small><b>Order your favourites again</b><span>${ls.map(l => esc(P[l.id].name) + ' ' + optLabel(P[l.id], l.opt)).join(' · ')}</span></div><button class="btn sm" type="button" data-reorder>Add to bag</button></div>`; };
+  return `<div class="reorder ${cls}"><div class="ro-imgs">${ls.slice(0, 3).map(l => `<img src="${SM(lineImg(l))}" alt="">`).join('')}</div><div class="ro-t"><small>Welcome back</small><b>Order your favourites again</b><span>${ls.map(l => esc(P[l.id].name) + ' ' + optLabel(P[l.id], l.opt)).join(' · ')}</span></div><button class="btn sm" type="button" data-reorder>Add to bag</button></div>`; };
 
 /* after a purchase: three fragrances the customer does not have yet, so the next order is one tap away */
 function afterBuyRecs(lines){
@@ -2280,7 +2288,7 @@ let tt; function toast(msg){ $('#toastMsg').textContent = msg; const t = $('#toa
 function runSearch(q){
   q = q.trim().toLowerCase();
   const res = [...S.products].sort((a, b) => (b.id === 'discovery') - (a.id === 'discovery')).filter(p => !q || [p.name, p.short, p.family, ...(p.notes ? Object.values(p.notes) : [])].join(' ').toLowerCase().includes(q));
-  $('#sres').innerHTML = res.length ? res.map(p => `<a href="#/product/${p.id}" data-close><img src="${IMG(p.images[0])}" alt="" loading="lazy"><b>${esc(p.name)}</b><small>${esc(p.notes ? (p.notes.key || p.notes.top) : p.family)}</small></a>`).join('')
+  $('#sres').innerHTML = res.length ? res.map(p => `<a href="#/product/${p.id}" data-close><img src="${SM(p.images[0])}" alt="" loading="lazy"><b>${esc(p.name)}</b><small>${esc(p.notes ? (p.notes.key || p.notes.top) : p.family)}</small></a>`).join('')
     : `<p class="small">No results for “${esc(q)}”. Try a note such as bergamot, amber or vanilla.</p>`;
 }
 $('#q').addEventListener('input', e => runSearch(e.target.value));
@@ -2315,8 +2323,8 @@ function card(p, opts={}){
   return `<article class="card rv-up ${opts.d||''}" data-id="${p.id}" data-sel="${size}">
     <a class="media" href="#/product/${p.id}${opts.size ? '?size=' + opts.size : ''}" aria-label="${esc(p.name)}">
       ${p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ''}
-      <img src="${IMG(img)}" alt="FOMAXO ${esc(p.name)}" loading="lazy">
-      ${alt ? `<img class="alt" src="${IMG(alt)}" alt="" loading="lazy">` : ''}
+      <img ${cardPic(img)} alt="FOMAXO ${esc(p.name)}" loading="lazy">
+      ${alt && HOVER ? `<img class="alt" ${cardPic(alt)} alt="" loading="lazy">` : ''}
       <span class="quick"><span class="btn line sm block" style="background:rgba(5,5,5,.7)">View details</span></span>
     </a>
     <div class="row1"><h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3><span data-price>${priceHTML(p, size)}</span></div>
@@ -2331,8 +2339,8 @@ app.addEventListener('click', e => {
   const p = P[c.dataset.id];
   const chip = e.target.closest('[data-size]');
   if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s);
-    const im = $('.media img', c); const src = IMG(imgFor(p, s)); if (im.getAttribute('src') !== src) im.src = src;
-    const al = $('.media img.alt', c), ak = altFor(p, s); if (al) { if (ak) { al.src = IMG(ak); al.hidden = false; } else al.hidden = true; }
+    const im = $('.media img', c); const k = imgFor(p, s); if (im.getAttribute('src') !== IMG(k)) setPic(im, k);
+    const al = $('.media img.alt', c), ak = altFor(p, s); if (al) { if (ak) { setPic(al, ak); al.hidden = false; } else al.hidden = true; }
     applyStock(); }
   const sel = c.dataset.sel === 'set' ? 'set' : +c.dataset.sel;
   if (p.kind === 'set' && e.target.closest('[data-add],[data-buy]')) { location.hash = `#/product/${p.id}?size=${sel}`; return; }
@@ -2521,7 +2529,7 @@ function product(id, q){
     <div class="crumbs" style="padding-top:34px"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; <a href="#/fragrances">Fragrances</a> &nbsp;/&nbsp; ${esc(p.name)}</div>
     <div class="pdp">
       <div class="gallery">
-        <div class="thumbs">${gallery.map((g,i) => `<button class="${i?'':'on'}" data-g="${g}" aria-label="Image ${i+1}"><img src="${IMG(g)}" alt="" loading="lazy"></button>`).join('')}</div>
+        <div class="thumbs">${gallery.map((g,i) => `<button class="${i?'':'on'}" data-g="${g}" aria-label="Image ${i+1}"><img src="${SM(g)}" alt="" loading="lazy"></button>`).join('')}</div>
         <div class="stage" id="stage"><img id="stageImg" src="${IMG(imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}"></div>
       </div>
       <div class="buy">
@@ -2538,7 +2546,7 @@ function product(id, q){
           <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · Travel':s===50?'Everyday':'Supreme'}</small></button>`).join('')}</div></div>`
           : `<div class="opt-label" style="margin:0"><span>Size</span><span>${isSet ? '2ml vials' : sizeLabel(size)}</span></div>`}
         ${isSet ? `<div id="picker"><div class="opt-label"><span>Choose your fragrances</span><span id="pickCount">0 / ${size}</span></div>
-          <div class="picks">${pickable(p).map(f => `<button type="button" class="pick" data-pick="${f.id}" aria-pressed="false"><img src="${IMG(f.images[0])}" alt="" loading="lazy"><span>${esc(f.name)}</span><i>✓</i></button>`).join('')}</div>
+          <div class="picks">${pickable(p).map(f => `<button type="button" class="pick" data-pick="${f.id}" aria-pressed="false"><img src="${SM(f.images[0])}" alt="" loading="lazy"><span>${esc(f.name)}</span><i>✓</i></button>`).join('')}</div>
           <p class="small" id="pickHint" style="margin-top:12px">Select ${size} fragrances to continue.</p></div>` : ''}
         <div class="qtyrow">
           <div class="qty"><button id="qm" aria-label="Decrease quantity">−</button><input id="qty" value="1" inputmode="numeric" aria-label="Quantity"><button id="qp" aria-label="Increase quantity">+</button></div>
@@ -2614,7 +2622,7 @@ let mobileBarCheck = null;
 const tierOf = p => S.tiers.find(t => t.id === p.tier);
 function tierRow(t, i){
   const ps = t.products.map(id => P[id]);
-  const list = ps.map(p => `<a class="tier-item" href="#/product/${p.id}"><img src="${IMG(p.images[0])}" alt="" loading="lazy"><span><b>${esc(p.name)}</b><small>${esc(p.notes ? (p.notes.key || p.notes.top) : p.family)}</small></span>${fromHTML(p)}</a>`).join('');
+  const list = ps.map(p => `<a class="tier-item" href="#/product/${p.id}"><img src="${SM(p.images[0])}" alt="" loading="lazy"><span><b>${esc(p.name)}</b><small>${esc(p.notes ? (p.notes.key || p.notes.top) : p.family)}</small></span>${fromHTML(p)}</a>`).join('');
   return `<div class="ed tier-row t-${t.id} ${i%2?'rev':''}" id="tier-row-${t.id}">
     <a class="ed-media rv-up" href="#/collections/tier-${t.id}"><img data-parallax="0.08" src="${IMG(t.image)}" alt="${esc(t.name)}" loading="lazy"><span class="tier-badge">${['I','II','III'][i]}</span></a>
     <div class="ed-copy rv-up d1">
@@ -3016,8 +3024,8 @@ function bindCheckout(q){
     if (coPay !== 'card' && coPay !== 'cod') coPay = CARD_ON ? 'card' : 'cod';
     const T = orderTotals(ls, coPay), dc = T.dc;
     // order summary
-    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${IMG(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
-    const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${IMG(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b>Free 10ml mini</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
+    const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${SM(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
+    const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${SM(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b>Free 10ml mini</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div>` :
       `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div>
@@ -3366,7 +3374,7 @@ async function bindReviewPage(q){
   if (!Array.isArray(d.products)) { box.innerHTML = `<p class="co-small">${esc(d.error || 'We could not open your review link. Please check your connection and try again.')}</p><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px"><a class="btn" href="#/fragrances">Shop FOMAXO</a></div>`; return; }
   rwSaveLink(t, d);
   const link = {t, no: d.order}, items = d.products.filter(x => P[x.id]);
-  box.innerHTML = `<p class="small rw-ord">Order ${esc(d.order)}</p>` + items.map(x => { const p = P[x.id]; return `<div class="rw-op" data-op="${p.id}"><div class="rw-op-h"><img src="${IMG(p.images[0])}" alt=""><div><b>${esc(p.name)}</b><span class="small">${esc(p.family)}</span></div>${x.done ? `<span class="rw-ver">${RW_TICK}Reviewed</span>` : `<button class="btn sm" data-opw="${p.id}">Write a review</button>`}</div><div class="rw-op-f"></div></div>`; }).join('')
+  box.innerHTML = `<p class="small rw-ord">Order ${esc(d.order)}</p>` + items.map(x => { const p = P[x.id]; return `<div class="rw-op" data-op="${p.id}"><div class="rw-op-h"><img src="${SM(p.images[0])}" alt=""><div><b>${esc(p.name)}</b><span class="small">${esc(p.family)}</span></div>${x.done ? `<span class="rw-ver">${RW_TICK}Reviewed</span>` : `<button class="btn sm" data-opw="${p.id}">Write a review</button>`}</div><div class="rw-op-f"></div></div>`; }).join('')
     + `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px"><a class="btn line" href="#/fragrances">Continue shopping</a></div>`;
   const open = id => { const row = $(`[data-op="${id}"]`, box), p = P[id], f = $('.rw-op-f', row), b = $('[data-opw]', row); if (!b || $('form', f)) return; b.hidden = true; f.innerHTML = rwForm(p, link);
     rwBindForm($('form', f), p, link, () => { f.innerHTML = `<p class="rw-ok" style="margin:16px 0 0">Thank you. Your review of ${esc(p.name)} is now live. <a class="link" href="#/product/${p.id}">See it</a></p>`; b.outerHTML = `<span class="rw-ver">${RW_TICK}Reviewed</span>`; }); };
