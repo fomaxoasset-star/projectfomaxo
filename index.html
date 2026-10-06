@@ -1623,11 +1623,15 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   .co-bar .price{margin-left:auto;font-size:22px}
   .co-bar::after{content:"";flex:none;width:8px;height:8px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg);margin:-4px 2px 0 4px;transition:transform .3s}
   .co-sum.open .co-bar::after{transform:rotate(-135deg);margin-top:4px}
-  .co-sum-in{display:none;padding:4px 16px 18px;border-top:1px solid var(--line)}
+  .co-sum-in{padding:4px 16px 18px;border-top:1px solid var(--line)}
+  /* phone: the totals and coupon box always show; tapping the bar opens the product list */
+  .co-sum:not(.open) .co-items,.co-sum:not(.open) .co-edit-m,.co-sum:not(.open) .co-sum-in>.co-small{display:none}
+  /* each amount once on phone (AJAY: "too many repeat details"): no total or saving in the bar, no second coupon line, no struck total, no "saved in total" */
+  .co-bar .price,.co-bar-save,.co-row.co-cpr,.co-sum .co-was,.co-save-c small{display:none}
+  .co-bar::after{margin-left:auto}
   .co-nudge.co-nudge-m{display:flex}
   .co-nudge.co-nudge-d{display:none}
   .co-nudge{margin:0 16px 14px;font-size:12.5px;padding:8px 12px}
-  .co-sum.open .co-sum-in{display:block}
   .co-sum-h{display:none}
   .co-items{padding-top:16px}
   .co-edit-m{display:inline-block;margin-top:16px}
@@ -1875,6 +1879,9 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   .co-r3>label{min-width:0}
   .co-r3 .row2,.co-r3 .co-ar1,.co-r3 .co-ar2{display:contents}
   .co-r3 label{grid-template-rows:auto auto}
+  /* AJAY: on laptop the Note sits on its own full-width line under Street + Area */
+  .co-r3.co-r3c{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .co-r3c>label{grid-column:1/-1}
   .co-small{font-size:12px;line-height:1.4}
   .co-lock{padding:7px 12px;font-size:13px}
   .co-pay{gap:8px}
@@ -2384,7 +2391,6 @@ function fitCo(){
   if (need > avail) co.style.zoom = Math.max(.82, avail / need).toFixed(3);
 }
 addEventListener('resize', () => requestAnimationFrame(fitCo));
-const CP_WIDE = matchMedia('(min-width:901px)');
 try { coupon = JSON.parse(sessionStorage.getItem('fomaxo_coupon') || 'null'); } catch(e) { coupon = null; }
 function setCoupon(c){ coupon = c || null; try { c ? sessionStorage.setItem('fomaxo_coupon', JSON.stringify(c)) : sessionStorage.removeItem('fomaxo_coupon'); } catch(e) {} }
 function couponSave(t0){
@@ -3252,7 +3258,7 @@ function checkoutPage(q){
         </section>
         <section class="co-step">
           <h2><span>2</span>Payment</h2>
-          <div class="co-cp" id="coCp"></div><span id="coCpHome" hidden></span>
+          <div class="co-cp" id="coCp"></div>
           <div class="co-pay" id="coPay" role="radiogroup" aria-label="Payment method"></div>
           <p class="co-err" id="coErr" role="alert" hidden></p>
           <button class="btn block co-go" id="coGo" type="submit"></button>
@@ -3283,7 +3289,6 @@ function bindCheckout(q){
   let busy = false;
   // coupon box: "Have a coupon?" with an empty code box always open; Apply asks coupon.php, then the totals show the saving
   const cpBox = $('#coCp'); let cpMsg = '';
-  CP_WIDE.onchange = () => { if ($('#coSum')) draw(); };
   function drawCoupon(){
     if (!cpBox) return;
     cpBox.innerHTML = coupon
@@ -3314,7 +3319,7 @@ function bindCheckout(q){
       en.textContent = end > 0 ? `Ends in ${d ? d + (d > 1 ? ' days' : ' day') + (h ? ' ' + h + 'h' : '') : (h ? h + 'h ' : '') + (mins % 60) + 'm'}` : ''; en.hidden = !(end > 0); }
     if (end !== null && end <= 0) { t = 'This coupon code has expired. Please remove it.'; cls = 'bad'; }
     else if (T.t0 !== null && coupon.min > 0 && T.t0 < coupon.min) t = `Add ${aed(Math.round((coupon.min - T.t0) * 100) / 100)} more to use this code (for orders of ${aed(coupon.min)} or more).`;
-    else if (T.useC) { if (!CP_WIDE.matches) { t = `You saved ${money2(T.cs)} after coupon · new total ${money2(T.total)}`; cls = 'ok co-cp-saved'; } }
+    else if (T.useC) t = '';   // the order summary shows the coupon line, struck old total and "You saved"
     else if (T.dc.amount > 0) t = `Your multi-buy discount saves more, so we kept it. Coupons and multi-buy don't add up.`;
     m.textContent = t; m.className = 'co-cp-m' + (cls ? ' ' + cls : ''); m.hidden = !t;
   }
@@ -3336,14 +3341,14 @@ function bindCheckout(q){
     const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (T.disc > 0 ? T.disc : 0)) * 100) / 100;
     const rows = T.after === null ? `<div id="coCpSlot"></div><div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div>` :
       `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div><div id="coCpSlot"></div>
-      ${T.useC ? `<div class="co-row disc"><span>Coupon ${esc(coupon.code)} (${esc(coupon.label)})</span><span class="price">−${moneyHTML(T.cs, true)}</span></div>`
+      ${T.useC ? `<div class="co-row disc co-cpr"><span>Coupon ${esc(coupon.code)} (${esc(coupon.label)})</span><span class="price">−${moneyHTML(T.cs, true)}</span></div>`
         : dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}
       <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>${money2(saved)} saved in total</small>` : ''}</div>` : saved > 0 ? `<div class="co-row co-save"><span>You save</span><span class="price">${moneyHTML(saved, true)}</span></div>` : ''}`;
     const nudge = m => `<div class="co-nudge ${m}">${ICON.gift || ''}<span>${qtyNudge(dc)}</span></div>`;   // same offer line as the bag: under the bar on phones, above Subtotal on desktop
     const sum = $('#coSum');
-    sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${saved > 0 ? `<b class="co-bar-save">You save ${money2(saved)}</b>` : ''}${coOpen ? 'Tap to close' : 'Tap to open'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>${nudge('co-nudge-m')}
+    sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span><small>${saved > 0 ? `<b class="co-bar-save">You save ${money2(saved)}</b>` : ''}${coOpen ? 'Tap to hide items' : 'Tap to see items'}</small></span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}</button>${nudge('co-nudge-m')}
       <div class="co-sum-in co-tap" id="coSumIn" title="Open your bag to change it"><div class="co-sum-h"><h3>Order summary</h3><button type="button" class="co-edit" id="coEdit">Edit bag</button></div>
       <div class="co-items">${items}${mini}</div>${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
@@ -3360,9 +3365,9 @@ function bindCheckout(q){
     $$('[data-openbag]', sum).forEach(el => { el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openBag(); } }; });
     // tapping anywhere in the summary (heading, products, totals) opens the bag; the mini picker and Edit bag keep their own job
     $('#coSumIn').onclick = e => { if (!e.target.closest('select,button,a,input,.co-cp')) openBag(); };
-    // laptop: the coupon box sits in the order summary under Subtotal; phone: it stays in the Payment step, next to the pay button
-    const slot = $('#coCpSlot'), home = $('#coCpHome');
-    if (cpBox && slot && CP_WIDE.matches) slot.replaceWith(cpBox); else if (cpBox && home && cpBox.nextSibling !== home) home.before(cpBox);
+    // the coupon box sits in the order summary under Subtotal, on laptop and phone
+    const slot = $('#coCpSlot');
+    if (cpBox && slot) slot.replaceWith(cpBox);
     const cm = $('#coMini'); if (cm) cm.onchange = () => { try { localStorage.setItem('fomaxo_mini', cm.value); } catch(e) {} renderCart(); };
     cpNote(T);
     // payment options
