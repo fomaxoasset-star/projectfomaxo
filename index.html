@@ -1810,7 +1810,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .pp-row .p-save .amt{font-size:1.15em}
 html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483;background:rgba(92,196,131,.1)}
 .pp-row .pp-line .was{font-size:22px}
-/* limited-time sale: a real countdown to the end date set on fomaxo.com/admin → Settings (hidden when none is set or it has passed) */
+/* limited-time sale: a real countdown to the end date set on fomaxo.com/admin → Offer (hidden when none is set or it has passed) */
 .sale-cd{display:flex;align-items:center;gap:7px;margin:8px 0 0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);line-height:1.2}
 .sale-cd[hidden]{display:none}
 .sale-cd svg{width:14px;height:14px;flex:none}
@@ -2330,15 +2330,16 @@ const money2 = v => `${S.currency} ${Number(v).toLocaleString('en-US', {minimumF
 const moneyHTML = (v, dec) => hasPrice(v) ? `<span class="amt"><span class="cur">${S.currency}</span>&nbsp;${Number(v).toLocaleString('en-US', dec ? {minimumFractionDigits:2, maximumFractionDigits:2} : undefined)}</span>` : null;
 const wasHTML = (p, size) => { const c = p.compareAt && p.compareAt[size]; return hasPrice(c) && c > p.prices[size] ? `<s class="was">${moneyHTML(c)}</s> ` : ''; };
 const priceHTML = (p, size, cls='price') => { const m = moneyHTML(p.prices[size]); return m ? `<span class="${cls}">${wasHTML(p, size)}${m}</span>` : `<span class="${cls} na">Price on request</span>`; };
-/* limited-time sale countdown: SALE_END comes from products.php (set on fomaxo.com/admin → Settings); on products / sizes with an old price */
-let SALE_END = 0, SALE_ALWAYS = false; try { SALE_END = +localStorage.getItem('fomaxo_sale_end') || 0; SALE_ALWAYS = localStorage.getItem('fomaxo_sale_always') === '1'; } catch(e) {}   // SALE_ALWAYS: offer on with no timer
+/* limited-time sale countdown: SALE_END comes from products.php (set on fomaxo.com/admin → Offer); on products / sizes with an old price */
+let SALE_END = 0, SALE_ALWAYS = false, SALE_POPUP = true, SALE_LINE = true;   // SALE_ALWAYS: offer on with no timer; popup / line: what shows (admin → Offer)
+try { const v = JSON.parse(localStorage.getItem('fomaxo_sale') || '{}'); SALE_END = +v.e || 0; SALE_ALWAYS = !!v.a; SALE_POPUP = v.p !== false; SALE_LINE = v.l !== false; } catch(e) {}
 const onSale = (p, s) => { const v = p.prices[s], c = p.compareAt && p.compareAt[s]; return hasPrice(v) && hasPrice(c) && +c > +v; };
 const saleLeft = () => { const ms = SALE_END - Date.now(); if (ms <= 0) return ''; const t = Math.floor(ms / 1000), d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), x = t % 60, p = n => String(n).padStart(2, '0');
   return (d ? `${d}d ` : '') + `${p(h)}h ${p(m)}m ${p(x)}s`; };
-const saleCD = on => { const l = on ? saleLeft() : ''; return `<p class="sale-cd" data-cd${on ? ' data-on' : ''}${l || (on && SALE_ALWAYS) ? '' : ' hidden'}>${ICON.lasting}<span>Limited time offer</span><span class="cd-t"${l ? '' : ' hidden'}>Ends in <b>${l}</b></span></p>`; };
+const saleCD = on => { const l = on ? saleLeft() : ''; return `<p class="sale-cd" data-cd${on ? ' data-on' : ''}${SALE_LINE && (l || (on && SALE_ALWAYS)) ? '' : ' hidden'}>${ICON.lasting}<span>Limited time offer</span><span class="cd-t"${l ? '' : ' hidden'}>Ends in <b>${l}</b></span></p>`; };
 function saleTick(){ const l = saleLeft(); const ms = SALE_END - Date.now(), pm = document.querySelector('.promo');
   if (pm && !pm.classList.contains('al')) { if (!l) pm.remove(); else { const t = Math.floor(ms / 1000), v = {Days: Math.floor(t / 86400), Hours: Math.floor(t % 86400 / 3600), Min: Math.floor(t % 3600 / 60), Sec: t % 60}; pm.querySelectorAll('[data-pm]').forEach(b => b.textContent = String(v[b.dataset.pm]).padStart(2, '0')); } }
-  document.querySelectorAll('[data-cd]').forEach(e => { const show = (!!l || SALE_ALWAYS) && e.hasAttribute('data-on'); e.hidden = !show; e.querySelector('.cd-t').hidden = !l; if (l) e.querySelector('b').textContent = l; }); }
+  document.querySelectorAll('[data-cd]').forEach(e => { const show = SALE_LINE && (!!l || SALE_ALWAYS) && e.hasAttribute('data-on'); e.hidden = !show; e.querySelector('.cd-t').hidden = !l; if (l) e.querySelector('b').textContent = l; }); }
 setInterval(saleTick, 1000);
 /* offer popup: a few seconds after someone arrives, once per visit, only while the countdown runs (not on checkout) */
 let promoT = 0;
@@ -2346,7 +2347,7 @@ function promoMaybe(){
   clearTimeout(promoT);
   try { if (sessionStorage.getItem('fomaxo_promo')) return; } catch(e) {}
   promoT = setTimeout(() => {
-    const al = !saleLeft() && SALE_ALWAYS; if ((!saleLeft() && !al) || /^#\/checkout/.test(location.hash) || document.querySelector('.promo')) return;
+    const al = !saleLeft() && SALE_ALWAYS; if (!SALE_POPUP || (!saleLeft() && !al) || /^#\/checkout/.test(location.hash) || document.querySelector('.promo')) return;
     let pct = 0; S.products.forEach(p => p.sizes.forEach(z => { if (onSale(p, z)) pct = Math.max(pct, Math.round((p.compareAt[z] - p.prices[z]) / p.compareAt[z] * 100)); }));
     if (!pct) return;
     try { sessionStorage.setItem('fomaxo_promo', '1'); } catch(e) {}
@@ -4143,7 +4144,7 @@ footShop();
 /* the live product list (fomaxo.com/admin → Products); the page is only redrawn when it differs from what is showing */
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
-  if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; try { localStorage.setItem('fomaxo_sale_end', String(SALE_END)); localStorage.setItem('fomaxo_sale_always', SALE_ALWAYS ? '1' : ''); } catch(e) {} saleTick(); promoMaybe(); }
+  if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE})); } catch(e) {} saleTick(); promoMaybe(); }
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
   const js = JSON.stringify(d.products);
   try { localStorage.setItem('fomaxo_products', js); } catch(e) {}

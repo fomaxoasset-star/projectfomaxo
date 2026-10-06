@@ -343,7 +343,7 @@ CSS;
      . (!empty($_SESSION['admin']) ? '<div class="tabsw"><a class="tnav" data-d="-1" aria-label="Previous page" hidden>‹</a><nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
          [['Home', './', !$_GET], ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
           ['Orders', './?orders=1', !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
-          ['Coupons', './?coupons=1', isset($_GET['coupons'])],
+          ['Coupons', './?coupons=1', isset($_GET['coupons'])], ['Offer', './?offer=1', isset($_GET['offer'])],
           ['Reviews', './?reviews=1', isset($_GET['reviews'])], ['Analytics', './?analytics=1', isset($_GET['analytics'])], ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Reports', './?reports=1', isset($_GET['reports'])],
           ['Members', './?members=1', isset($_GET['members'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav><a class="tnav" data-d="1" aria-label="Next page" hidden>›</a></div>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . ($fit ? ' fit' : '') . '">' . $body . '</main>'
@@ -735,6 +735,52 @@ if (isset($_GET['products'])) {
     . '<div class="savebar"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true);
 }
 
+/* ---- offer: the website's offer popup, its timer and the "Limited time offer" line by sale prices (prices themselves are set on Products) ---- */
+if (isset($_GET['offer'])) {
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!csrf_ok()) { flash('Please try again.'); go(['offer' => 1]); }
+    $mode = (string)($_POST['mode'] ?? 'off');
+    if (isset($_POST['all_off'])) $mode = 'off';
+    if ($mode === 'date') {   // a real end date (UAE time); the popup and line hide by themselves when it passes
+      $d = (string)($_POST['sale_end_d'] ?? ''); $t = (string)($_POST['sale_end_t'] ?? '');
+      if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) || ($t !== '' && !preg_match('/^\d{2}:\d{2}$/', $t))) { flash('Please type the end date as dd/mm/yyyy.'); go(['offer' => 1]); }
+      $end = strtotime("$d " . ($t !== '' ? "$t:00" : '23:59:59'));
+      if (!$end || $end <= time()) { flash('The end must be in the future.'); go(['offer' => 1]); }
+      fomaxo_setting($pdo, 'sale_ends', (string)$end); fomaxo_setting($pdo, 'sale_always', '');
+    } elseif ($mode === 'always') { fomaxo_setting($pdo, 'sale_ends', ''); fomaxo_setting($pdo, 'sale_always', '1'); }
+    else { fomaxo_setting($pdo, 'sale_ends', ''); fomaxo_setting($pdo, 'sale_always', ''); }
+    if (!isset($_POST['all_off'])) { fomaxo_setting($pdo, 'sale_popup', isset($_POST['popup']) ? '1' : '0'); fomaxo_setting($pdo, 'sale_line', isset($_POST['line']) ? '1' : '0'); }
+    flash($mode === 'off' ? 'The offer is off: no popup and no line on the website.' : 'Offer saved.', true); go(['offer' => 1]);
+  }
+  $e = (int)fomaxo_setting($pdo, 'sale_ends'); $on = $e > time(); $l = $e - time(); $al = (string)fomaxo_setting($pdo, 'sale_always') === '1';
+  $mode = $on ? 'date' : ($al ? 'always' : 'off');
+  $pop = (string)fomaxo_setting($pdo, 'sale_popup') !== '0'; $line = (string)fomaxo_setting($pdo, 'sale_line') !== '0';
+  $what = array_filter([$pop ? 'popup' : '', $line ? 'line by prices' : '']);
+  $state = $mode === 'off' ? '<span class="lvl-low">●</span> Off: nothing shows on the website.'
+    : '<span class="lvl-ok">●</span> On' . ($mode === 'date' ? ': ends ' . date('d/m/Y, g:i a', $e) . ' (' . ($l >= 86400 ? floor($l / 86400) . 'd ' : '') . floor($l % 86400 / 3600) . 'h ' . floor($l % 3600 / 60) . 'm left)' : ': always on, no timer') . '. Showing: ' . ($what ? implode(' + ', $what) : 'nothing (both switches off)') . '.';
+  $radio = fn($v, $t, $sub) => '<label class="om"><input type="radio" name="mode" value="' . $v . '"' . ($mode === $v ? ' checked' : '') . '><span><b>' . $t . '</b><small>' . $sub . '</small></span></label>';
+  $box = fn($n, $c, $t, $sub) => '<label class="om"><input type="checkbox" name="' . $n . '" value="1"' . ($c ? ' checked' : '') . '><span><b>' . $t . '</b><small>' . $sub . '</small></span></label>';
+  page('Offer', '<h1>Offer</h1>' . flash()
+    . '<style>.om{text-transform:none;letter-spacing:normal;font-size:14px;color:var(--ink);display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin:0 0 8px;border:1px solid var(--line);border-radius:10px;cursor:pointer}.om input{margin:3px 0 0;width:auto;flex:none;accent-color:var(--gold)}.om b{display:block;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}.om small{display:block;color:var(--muted);font-size:13px;line-height:1.4;margin-top:3px}.om:has(input:checked){border-color:var(--gold)}'
+    . '.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.sg2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}.odate{margin:-2px 0 10px 34px}</style>'
+    . '<form class="card" method="post" style="max-width:640px">' . csrf_field()
+    . '<p class="small" style="margin:0 0 14px">' . $state . '</p>'
+    . '<h2 style="margin-top:0">Timer</h2>'
+    . $radio('date', 'Countdown to an end date', 'Days / hours / minutes / seconds count down; everything hides by itself at the end.')
+    . '<div class="odate"><div class="cpq" role="group" aria-label="Quick end"><button type="button" data-h="24">24 hours</button><button type="button" data-h="48">48 hours</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button></div>'
+    . '<div class="sg2"><div><label for="sale_end_d">Ends</label><input id="sale_end_d" type="date" name="sale_end_d" value="' . ($on ? date('Y-m-d', $e) : '') . '"></div><div><label for="sale_end_t">End time (UAE)</label><input id="sale_end_t" type="time" name="sale_end_t" value="' . ($on ? date('H:i', $e) : '') . '"></div></div></div>'
+    . $radio('always', 'Always on (no timer)', '"Limited time offer · HURRY UP!!!" with no clock, until you turn it off.')
+    . $radio('off', 'Off', 'Nothing shows on the website.')
+    . '<h2>What shows</h2>'
+    . $box('popup', $pop, 'Popup', 'The box with × that opens a few seconds after someone arrives (once per visit, never on checkout).')
+    . $box('line', $line, 'Line by sale prices', '"Limited time offer · Ends in …" on the product page and shop cards of items with an old price.')
+    . '<p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Save</button>' . ($mode !== 'off' ? '<button class="btn line" name="all_off" value="1">Turn everything off</button>' : '') . '</p>'
+    . '<p class="muted small" style="margin:10px 0 0">The popup shows the biggest real saving among products with an old price (set on Products). Prices are not changed here.</p></form>'
+    . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},e=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000+b.dataset.h*3600000);'
+    . 'set("sale_end_d",e.getFullYear()+"-"+p(e.getMonth()+1)+"-"+p(e.getDate()));set("sale_end_t",p(e.getHours())+":"+p(e.getMinutes()));f.querySelector("input[name=mode][value=date]").checked=true;document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}});'
+    . 'document.querySelectorAll(".odate input").forEach(function(i){i.addEventListener("input",function(){document.querySelector("input[name=mode][value=date]").checked=true})})</script>');
+}
+
 /* ---- settings: admin password, where order emails go, low stock warning ---- */
 if (isset($_GET['settings'])) {
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -762,16 +808,6 @@ if (isset($_GET['settings'])) {
       else flash('Saved. A test email was sent to ' . fomaxo_orders_email() . '.', true);
       go(['settings' => 1]);
     }
-    if (isset($_POST['sale_end_d'])) {   // limited-time sale countdown on the website (UAE time); prices are not changed
-      if (isset($_POST['sale_off'])) { fomaxo_setting($pdo, 'sale_ends', ''); fomaxo_setting($pdo, 'sale_always', ''); flash('The offer popup is off.', true); go(['settings' => 1]); }
-      if (isset($_POST['sale_always'])) { fomaxo_setting($pdo, 'sale_ends', ''); fomaxo_setting($pdo, 'sale_always', '1'); flash('The offer popup is on, with no timer, until you turn it off.', true); go(['settings' => 1]); }
-      $d = (string)$_POST['sale_end_d']; if ($d === '') { flash('Please pick an end date, or tap Always on.'); go(['settings' => 1]); } $t = (string)($_POST['sale_end_t'] ?? '');
-      if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) || ($t !== '' && !preg_match('/^\d{2}:\d{2}$/', $t))) { flash('Please type the end date as dd/mm/yyyy.'); go(['settings' => 1]); }
-      $end = strtotime("$d " . ($t !== '' ? "$t:00" : '23:59:59'));
-      if (!$end || $end <= time()) { flash('The end must be in the future.'); go(['settings' => 1]); }
-      fomaxo_setting($pdo, 'sale_ends', (string)$end); fomaxo_setting($pdo, 'sale_always', '');
-      flash('Sale countdown saved. It ends ' . date('d/m/Y, g:i a', $end) . '.', true); go(['settings' => 1]);
-    }
     $email = trim((string)($_POST['orders_email'] ?? ''));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { flash('Please type a valid email address.'); go(['settings' => 1]); }
     fomaxo_setting($pdo, 'orders_email', $email);   // the "Only X left" level is set on the Stock page
@@ -783,17 +819,6 @@ if (isset($_GET['settings'])) {
     . '<label for="orders_email">Store emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
     . '<p class="muted small" style="margin:6px 0 0">New cash and card orders, new reviews and admin password reset links are all emailed here.</p>'
     . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
-    . (function () use ($pdo) { $e = (int)fomaxo_setting($pdo, 'sale_ends'); $on = $e > time(); $l = $e - time(); $al = (string)fomaxo_setting($pdo, 'sale_always') === '1';
-        return '<form class="card" method="post">' . csrf_field()
-        . '<h2 style="margin-top:0">Offer popup and countdown</h2>'
-        . '<style>.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.sg2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}</style>'
-        . '<p class="small" style="margin:0 0 8px">' . ($al ? '<span class="lvl-ok">●</span> On: always on, no timer, until you turn it off.' : '') . (!$al && $on ? '<span class="lvl-ok">●</span> On: ends ' . date('d/m/Y, g:i a', $e) . ' (' . ($l >= 86400 ? floor($l / 86400) . 'd ' : '') . floor($l % 86400 / 3600) . 'h ' . floor($l % 3600 / 60) . 'm left).' : ($al ? '' : '<span class="lvl-low">●</span> Off: no popup or countdown on the website.')) . '</p>'
-        . '<div class="cpq sq" role="group" aria-label="Quick end"><button type="button" data-h="24">24 hours</button><button type="button" data-h="48">48 hours</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button></div>'
-        . '<div class="sg2"><div><label for="sale_end_d">Ends</label><input id="sale_end_d" type="date" name="sale_end_d" value="' . ($on ? date('Y-m-d', $e) : '') . '"></div><div><label for="sale_end_t">End time</label><input id="sale_end_t" type="time" name="sale_end_t" value="' . ($on ? date('H:i', $e) : '') . '"></div></div>'
-        . '<p class="muted small" style="margin:6px 0 0">With an end date: the popup and "Limited time offer · ends in …" count down to it and hide by themselves at the end (UAE time). Always on: the same popup with no timer. Prices are not changed.</p>'
-        . '<p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Save end date</button>' . ($al ? '' : '<button class="btn line" name="sale_always" value="1" formnovalidate>Always on (no timer)</button>') . ($on || $al ? '<button class="btn line" name="sale_off" value="1" formnovalidate>Turn off</button>' : '') . '</p>'
-        . '<script>document.querySelectorAll(".cpq.sq button").forEach(function(b){b.onclick=function(){var f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},e=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000+b.dataset.h*3600000);'
-        . 'set("sale_end_d",e.getFullYear()+"-"+p(e.getMonth()+1)+"-"+p(e.getDate()));set("sale_end_t",p(e.getHours())+":"+p(e.getMinutes()));document.querySelectorAll(".cpq.sq button").forEach(function(x){x.classList.toggle("on",x===b)})}})</script></form>'; })()
     . '<form class="card" method="post">' . csrf_field()
     . '<h2 style="margin-top:0">Email sending</h2>'
     . (fomaxo_mail_config()
