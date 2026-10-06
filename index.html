@@ -2871,7 +2871,9 @@ function bindCheckout(q){
   CO_CAPS.forEach(k => form.elements[k] && form.elements[k].setAttribute('autocapitalize', 'words'));
   const details = () => Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()]));
   const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad');
-    const t = e.target; if (CO_CAPS.includes(t.name)) { const v = capWords(t.value); if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} } } try { localStorage.setItem('fomaxo_details', JSON.stringify(details())); } catch(x) {} if (!busy) draw(); };
+    const t = e.target; if (CO_CAPS.includes(t.name)) { const v = capWords(t.value); if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} } } const key = JSON.stringify(details()); try { localStorage.setItem('fomaxo_details', key); } catch(x) {} if (!busy && key !== drawnKey) { drawnKey = key; draw(); } };
+  // redraw only when a detail really changed: leaving a box (change) would otherwise rebuild the payment options under the customer's finger and swallow that tap
+  let drawnKey = '';
   form.addEventListener('input', remember);
   form.addEventListener('change', remember);
   let busy = false;
