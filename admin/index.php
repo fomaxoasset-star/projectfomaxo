@@ -1016,7 +1016,7 @@ if (isset($_GET['analytics'])) {
     $k = date($mode === 'day' ? 'Y-m-d' : 'Y-m', $t);
     $pts[] = ['v' => $per[$k] ?? 0, 'l' => date($mode === 'day' ? ($nDays <= 7 ? 'D' : 'j M') : 'M y', $t), 't' => date($mode === 'day' ? 'D j M' : 'F Y', $t) . ': ' . ($per[$k] ?? 0) . ' visitors'];
   }
-  $chart = fx_graph($pts, 'Visitors per ' . $mode, false, fn($v) => number_format($v) . ' visitors');
+  $chart = fx_graph($pts, 'Visitors per ' . $mode, false, fn($v) => number_format($v) . ' visitors', true);
 
   /* where visits come from (the first page of each visit), and how many of them bought */
   $src = '';
@@ -1279,7 +1279,7 @@ if (isset($_GET['analytics'])) {
     . ($cv ? $cvGrid : '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
     . '<div class="dgrid agrid">'
     . '<section class="card a-funnel on" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
-    . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a bar to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p>' . ($devAll ? '<div class="dstrip" title="Tap for the full devices table">' . implode('', array_map(fn($k, $l) => '<button type="button" data-open="devices"><span>' . $l . '</span><b>' . $pctT($pct($devR[$k]['visits'], $devAll)) . '</b><span>' . number_format($devR[$k]['bought']) . ' bought</span></button>', array_keys($devN), $devN)) . '</div>' : '') . '</section>'
+    . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a point to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p>' . ($devAll ? '<div class="dstrip" title="Tap for the full devices table">' . implode('', array_map(fn($k, $l) => '<button type="button" data-open="devices"><span>' . $l . '</span><b>' . $pctT($pct($devR[$k]['visits'], $devAll)) . '</b><span>' . number_format($devR[$k]['bought']) . ' bought</span></button>', array_keys($devN), $devN)) . '</div>' : '') . '</section>'
     . $retCard
     . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout</h2><a class="btn line sm" href="./?analytics=1&amp;leads=1">Excel</a></div>' . (array_sum($leftN) ? '<p class="muted small" style="margin:0 0 4px">' . implode(' · ', array_map(fn($k) => $leftN[$k] . ' at ' . strtolower($stageName[$k]), array_keys(array_filter($leftN)))) . '</p>' : '')
     . ($left ? '<ul class="list leads lxl">' . $left . '</ul>' : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
@@ -1830,7 +1830,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   /* laptop: a Sales graph and a Visitors graph; phone: one graph with a Sales / Visitors switch (the Visitors card is hidden) */
   $graphs = []; $tots = [];
   foreach ($pts as $m => $set) {
-    $graphs[$m] = str_replace('<div class="graph"', '<div class="graph" data-k="' . $m . '-x"', fx_graph($set, ucfirst($m) . ' ' . strtolower($rg['label']), false, $m === 'sales' ? 'money' : fn($v) => $people((int)$v)));
+    $graphs[$m] = str_replace('<div class="graph"', '<div class="graph" data-k="' . $m . '-x"', fx_graph($set, ucfirst($m) . ' ' . strtolower($rg['label']), false, $m === 'sales' ? 'money' : fn($v) => $people((int)$v), $m === 'visitors'));
     $tots[$m] = '<span data-k="' . $m . '-x">' . h($tot[$m]) . '</span>';
   }
   $hideV = fn($html) => preg_replace('/(<(?:div class="graph"|span) data-k="visitors-[a-z]+")(?: hidden)?/', '$1 hidden', $html);
@@ -1869,7 +1869,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     . '<p class="sub"><span class="tip">Tap a bar to see the details</span><b class="tot">' . $tots['sales'] . $hideV($tots['visitors']) . '</b></p></section>'
     . '<section class="card c-visits" data-m="visitors" data-r="x"><div class="ch wrap2"><h2>Visitors</h2></div>'
     . '<div class="chartbox">' . $graphs['visitors'] . '</div>'
-    . '<p class="sub"><span class="tip">Tap a bar to see the details</span><b class="tot">' . $tots['visitors'] . '</b></p></section>'
+    . '<p class="sub"><span class="tip">Tap a point to see the details</span><b class="tot">' . $tots['visitors'] . '</b></p></section>'
     . '<div class="lists"><section class="card c-orders"><div class="ch"><h2>Latest orders</h2><a href="./?orders=1">All orders</a></div>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted empty">No orders yet.</p>') . '</section>'
     . '<section class="card c-stock"><div class="ch"><h2>Stock alerts</h2><a href="./?stock=1">Stock</a></div>' . ($alerts ? '<ul class="list">' . $alerts . '</ul>' : '<p class="muted empty">No size is running low.</p>') . '</section></div>'
     . '</div>'
@@ -1878,7 +1878,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
     . '</div>'
     . '<script>document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});'
     . 'document.querySelectorAll(".c-sales .seg button,.c-visits .seg button").forEach(function(b){b.addEventListener("click",function(){var c=b.closest(".card"),g=b.parentNode;g.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b)});if(b.dataset.m)c.dataset.m=b.dataset.m;if(b.dataset.r)c.dataset.r=b.dataset.r;var k=c.dataset.m+"-"+c.dataset.r;'
-    . 'c.querySelectorAll(".chartbox .graph,.tot span").forEach(function(x){x.hidden=x.dataset.k!==k});c.querySelector(".tip").textContent="Tap a bar to see the details";c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")})})});</script>', true, true);
+    . 'c.querySelectorAll(".chartbox .graph,.tot span").forEach(function(x){x.hidden=x.dataset.k!==k});c.querySelector(".tip").textContent="Tap a "+(k==="visitors-x"?"point":"bar")+" to see the details";c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")})})});</script>', true, true);
 }
 
 /* list + filters (the same filters are used for the Excel download) */
