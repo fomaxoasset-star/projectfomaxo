@@ -1656,6 +1656,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-pg{min-width:64px;text-align:center;font-size:13px;letter-spacing:.14em;color:var(--muted)}
 .rw-head{display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.06em;color:var(--muted);align-self:flex-start;padding:0}
 .rw-head:hover{color:var(--gold-hi)}
+.rw-head .rw-none{opacity:.45}
 .rw-form{border:1px solid var(--line-2);background:var(--panel);padding:clamp(18px,3vw,30px);margin-bottom:22px;gap:18px}
 .rw-fhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
 .rw-fhead b{font-family:var(--serif);font-weight:400;font-size:25px;color:var(--ivory)}
@@ -2698,7 +2699,7 @@ function product(id, q){
         <div style="display:flex;flex-direction:column;gap:14px">
           ${tierOf(p) ? `<span class="sub"><a href="#/collections/tier-${p.tier}">${esc(tierOf(p).name)}</a></span>` : ''}
           <div class="pd-name"><h1>${esc(p.name)}</h1><span class="sub">${esc(p.family)}</span></div>
-          <button type="button" class="rw-head" id="rwHead" hidden></button>
+          <button type="button" class="rw-head" id="rwHead">${rwHeadHTML(RATES && RATES[p.id])}</button>
           <div id="pstk">${stockHTML(p.id, size)}</div>
           <p class="lead" style="max-width:none">${esc(p.short)}</p>
           <div id="pprice">${pdpPrice(p, size)}</div>
@@ -3354,6 +3355,8 @@ async function rwAddLink(t){ if (!/^[a-f0-9]{24}$/.test(t || '')) return; try { 
 const rwVoter = () => { let v = rwGet('fomaxo_voter'); if (!/^[a-z0-9]{12,64}$/.test(v || '')) { v = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); rwSet('fomaxo_voter', v); } return v; };
 /* "ahmed saleh" → "Ahmed Saleh", full name (same rule as reviews.php) */
 const rwShort = v => v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ').slice(0, 60);
+/* star line under the product name: shown straight away (card summary), always visible; no reviews yet = faint stars */
+const rwHeadHTML = d => d && d.count ? `${rwStars(d.avg)}<span>${(+d.avg).toFixed(1)} · ${d.count} review${d.count > 1 ? 's' : ''}</span>` : `<span class="rw-none">${rwStars(0)}</span><span>No reviews yet</span>`;
 const rwStars = (v, cls = '') => `<span class="rw-stars ${cls}" role="img" aria-label="${v} out of 5 stars"><span class="rw-s-bg" aria-hidden="true">★★★★★</span><span class="rw-s-fg" aria-hidden="true" style="width:${Math.max(0, Math.min(5, v)) * 20}%">★★★★★</span></span>`;
 const rwDate = s => { const d = new Date(s + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}); };
 /* state/city + country (optional) shown after the reviewer's name: "Name · Dubai 🇦🇪"; country is an ISO code → flag only */
@@ -3512,7 +3515,7 @@ async function rwLoad(p, msg){
   if (!d || !Array.isArray(d.reviews)) d = {count: 0, avg: 0, dist: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}, reviews: []};
   box.innerHTML = rwSection(p, d);
   const head = $('#rwHead');
-  if (head) { head.hidden = !d.count; head.innerHTML = d.count ? `${rwStars(d.avg)}<span>${d.avg.toFixed(1)} · ${d.count} review${d.count > 1 ? 's' : ''}</span>` : ''; head.onclick = () => box.scrollIntoView({behavior: 'smooth', block: 'start'}); }
+  if (head) { head.innerHTML = rwHeadHTML(d); head.onclick = () => box.scrollIntoView({behavior: 'smooth', block: 'start'}); }
   let sort = 'new', page = 0; const PER = 4;   // 4 reviews at a time, ‹ › (or swipe) for more
   const by = {new: (a, b) => b.date.localeCompare(a.date), help: (a, b) => b.helpful - a.helpful, high: (a, b) => b.rating - a.rating, low: (a, b) => a.rating - b.rating};
   const draw = () => { const L = $('#rwList', box); if (!L) return; const all = d.reviews.map((r, i) => [r, i]).sort((a, b) => by[sort](a[0], b[0]) || a[1] - b[1]).map(x => x[0]); const pages = Math.max(1, Math.ceil(all.length / PER)); page = Math.min(Math.max(page, 0), pages - 1);
