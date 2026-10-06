@@ -1795,12 +1795,14 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 }
 .pn-del{display:none}
 @media(max-width:600px){#cart .pn-del{display:inline}}
-/* phones: the whole bag scrolls as one page (items, offer, total, checkout), so nothing is stuck and every product is easy to reach */
+/* phones (like fomaxo.in): the items get the room and scroll freely; the bottom is one compact block that stays put */
+.sub-free{display:none}
 @media(max-width:600px){
-  #cart{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-  #cart .dr-head{position:sticky;top:0;z-index:2;background:var(--black-2);flex:none}
-  #cart .dr-body{flex:none;overflow:visible}
-  #cart .dr-foot{flex:none;margin-top:auto}
+  #cart .dr-body{min-height:0;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  #cart .dr-foot{flex:none;box-shadow:0 -10px 24px rgba(0,0,0,.18)}
+  #cart .dr-foot .qd-note{display:none}
+  #cart .pn-del{display:none}
+  #cart .dr-foot .sub-free{display:inline;font-size:10px;font-weight:400;letter-spacing:.14em;color:var(--gold)}
 }
 /* laptop product page: same layout, tighter spacing so it fits one screen */
 @media(min-width:961px){
@@ -2294,7 +2296,7 @@ function renderCart(){
   const mini = dc.mini ? `<div class="mini-pick qd-row"><label for="miniSel">Free 10ml mini</label><select id="miniSel" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select><span class="price">FREE</span></div>` : '';
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
-  foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
+  foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total<small class="sub-free"> · Free delivery</small></span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
     ${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? ' · ' + money2(t) : ''}</a>`}<p class="pay-note"><span class="pn-del">Free UAE delivery · </span>${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
   const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} coRefresh && coRefresh(); };
   coRefresh && coRefresh();
