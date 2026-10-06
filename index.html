@@ -1882,6 +1882,24 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   .co-row{font-size:13.5px}
   .co-row .price{font-size:15px}
 }
+/* laptop checkout format: each step in a card like the order summary, fields in three even columns
+   with one-line labels, and the two ways to pay side by side */
+@media(min-width:961px){
+  .co-grid{grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:32px}
+  .co-main{gap:16px}
+  .co-step{border:1px solid var(--line-2);background:var(--panel);padding:16px 22px 18px}
+  .co-step h2{border-bottom-color:var(--line-2)}
+  .co-r3{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px}
+  .co .form .co-r3 label{white-space:nowrap;letter-spacing:.12em}
+  .co .form .co-r3 label>span{overflow:hidden;text-overflow:ellipsis}
+  .co .form .co-r3 label .co-opt-l{letter-spacing:.02em}
+  .co-pay{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .co-pay>.co-lock{grid-column:1/-1}
+  .co .form label.co-opt{padding:10px 14px}
+  .co-cp{margin:0 0 4px}
+  .co-trust{justify-content:center;border-top:0;padding-top:4px}
+}
+@media(min-width:961px) and (max-width:1360px){.co .form .co-r3 label{letter-spacing:.07em}}
 /* laptop product page: same layout, tighter spacing so it fits one screen */
 @media(min-width:961px){
   .crumbs[style]{padding-top:18px!important}
