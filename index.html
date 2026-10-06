@@ -2260,13 +2260,14 @@ function buyNow(line){
 function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'); } catch(e) {} }
 // a Buy now item left from before this change goes into the bag too (unless we're back from paying for it)
 if (buyLines.length && !/src=buy/.test(location.hash)) { buyLines.forEach(l => { const key = (l.picks || []).join('|'); if (!cart.some(x => x.id === l.id && String(x.opt) === String(l.opt) && (x.picks || []).join('|') === key)) cart.push(l); }); clearBuy(); try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} }
-// "You may also like" in the bag: up to 4 small products the customer doesn't have yet (everyday fragrances first, then King; the Discovery Set has its own "Not sure yet?" link)
+// "You may also like" in the bag: products the customer doesn't have yet (everyday fragrances, then 10ml minis, King always last; the Discovery Set has its own "Not sure yet?" link)
 function bagRecs(){
   const have = new Set(cart.map(l => l.id)), haveSz = new Set(cart.map(l => l.id + '/' + l.opt));
   const frag = S.products.filter(p => p.kind !== 'set' && p.prices).sort((a, b) => (a.tier === 'elite') - (b.tier === 'elite'));
   // full-size fragrances the customer doesn't have, then the 10ml minis they don't have yet
   const recs = frag.filter(p => !have.has(p.id) && hasPrice(p.prices[defaultSize(p)])).map(p => [p, defaultSize(p)])
-    .concat(frag.filter(p => p.sizes.includes(10) && hasPrice(p.prices[10]) && !haveSz.has(p.id + '/10')).map(p => [p, 10]));
+    .concat(frag.filter(p => p.sizes.includes(10) && hasPrice(p.prices[10]) && !haveSz.has(p.id + '/10')).map(p => [p, 10]))
+    .sort((a, b) => (a[0].id === 'king') - (b[0].id === 'king'));
   if (!recs.length) return '';
   return `<div class="recs"><div class="recs-h"><h5>You may also like</h5><span class="recs-nav"><button type="button" data-recscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-recscroll="1" aria-label="Scroll for more">›</button></span></div><div class="recs-row">${recs.map(([p, sz]) => `<div class="rec">
       <a href="#/product/${p.id}?size=${sz}" data-close><img src="${SM(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></a>
@@ -2613,7 +2614,7 @@ function product(id, q){
   const perks = isSet
     ? [[ICON.drop,'Try before you buy'],[ICON.travel,'Pocket-friendly, ideal for travel'],[ICON.gift,'Luxury mini-box, ready to gift'],[ICON.truck,'Free delivery anywhere in UAE']]
     : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.pen,'Custom engraving on request'],[ICON.truck,'Free delivery anywhere in UAE']];
-  const related = S.products.filter(x => x.id !== p.id);   // every product on sale except this one, in a sideways swipe row
+  const related = S.products.filter(x => x.id !== p.id).sort((a, b) => (a.id === 'king') - (b.id === 'king'));   // every product on sale except this one, in a sideways swipe row, King last
   const ship = S.shipping.length ? S.shipping.map(s => `<p>${esc(s)}</p>`).join('') : `<p class="ph">Add your delivery &amp; returns information in assets/data.js.</p>`;
   document.title = `${p.name} — FOMAXO`;
   return `<div class="wrap page-fade">
