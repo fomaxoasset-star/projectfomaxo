@@ -1793,18 +1793,8 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   #cart .dr-foot .mini-pick select{padding:6px 10px;font-size:13px}
   #cart .dr-foot .mini-pick .price{font-size:12px}
 }
-/* bag buttons: laptop keeps Checkout, pay line, then Continue shopping; phones put Continue shopping and Checkout side by side (like fomaxo.in) */
-.dr-btns{display:contents} .dr-btns .btn.line{order:2} .dr-foot .pay-note{order:1}
-.ph-sub{display:none!important}
-@media(max-width:600px){
-  #cart .dr-foot .sub-row.ph-sub{display:flex!important}
-  #cart .dr-foot .ph-sub .gold{color:var(--gold)}
-  #cart .dr-btns{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:14px}
-  #cart .dr-btns .btn{width:auto;padding-left:10px;padding-right:10px;letter-spacing:.1em}
-  #cart .dr-btns .btn.line{order:0;padding:4px 0;white-space:nowrap;letter-spacing:.1em}
-  #cart .dr-btns .co-min{white-space:normal;line-height:1.3;padding:6px 10px}
-  #cart .dr-foot .pay-note{margin:0}
-}
+.pn-del{display:none}
+@media(max-width:600px){#cart .pn-del{display:inline}}
 /* phones: the whole bag scrolls as one page (items, offer, total, checkout), so nothing is stuck and every product is easy to reach */
 @media(max-width:600px){
   #cart{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
@@ -2303,8 +2293,8 @@ function renderCart(){
   const mini = dc.mini ? `<div class="mini-pick qd-row"><label for="miniSel">Free 10ml mini</label><select id="miniSel" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select><span class="price">FREE</span></div>` : '';
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
-  foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row ph-sub"><span>Subtotal · <span class="gold">Free delivery</span></span><span class="price">${moneyHTML(t0, true)}</span></div><div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
-    <div class="dr-btns"><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? ' · ' + money2(t) : ''}</a>`}</div><p class="pay-note">${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p>`;
+  foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
+    ${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? ' · ' + money2(t) : ''}</a>`}<p class="pay-note"><span class="pn-del">Free UAE delivery · </span>${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>`;
   const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} coRefresh && coRefresh(); };
   coRefresh && coRefresh();
 }
