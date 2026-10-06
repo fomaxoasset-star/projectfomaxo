@@ -1518,9 +1518,9 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co .form label.co-opt.off{cursor:not-allowed;border-color:var(--line)}
 .co-opt.off .co-opt-t b,.co-opt.off .co-opt-i{opacity:.5}
 .co-cp{margin:0 0 16px}
-.co-cp-t{background:none;border:0;padding:0;font:inherit;font-size:14px;color:var(--champagne);border-bottom:1px solid var(--line-2);padding-bottom:2px;cursor:pointer}
-.co-cp-f{display:flex;gap:8px;margin-top:12px}
+.co-cp-f{display:flex;gap:8px;margin-top:8px}
 .form .co-cp-f input{flex:1;min-width:0;padding:12px 14px;text-transform:uppercase;letter-spacing:.08em}
+.form .co-cp-f input::placeholder{text-transform:none;letter-spacing:.04em}
 .co-cp-f .btn{flex:none;padding:0 22px;min-height:0}
 .co-cp-on{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border:1px dashed var(--gold);font-size:14px}
 .co-cp-on b{letter-spacing:.08em;color:var(--gold-hi)}
@@ -3216,17 +3216,15 @@ function bindCheckout(q){
   form.addEventListener('input', remember);
   form.addEventListener('change', remember);
   let busy = false;
-  // coupon box: "Have a coupon code?" opens a small box; Apply asks coupon.php, then the totals show the saving
-  const cpBox = $('#coCp'); let cpOpen = false, cpMsg = '';
+  // coupon box: "Have a coupon?" with an empty code box always open; Apply asks coupon.php, then the totals show the saving
+  const cpBox = $('#coCp'); let cpMsg = '';
   function drawCoupon(){
     if (!cpBox) return;
     cpBox.innerHTML = coupon
       ? `<div class="co-cp-on"><span>Coupon <b>${esc(coupon.code)}</b> · ${esc(coupon.label)}<small class="co-cp-end" id="coCpEnd" hidden></small></span><button type="button" class="co-cp-x" id="coCpX">Remove</button></div><p class="co-cp-m" id="coCpM" hidden></p>`
-      : cpOpen ? `<div class="co-cp-f"><input id="coCpIn" maxlength="30" placeholder="Coupon code" aria-label="Coupon code" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn line" id="coCpGo">Apply</button></div><p class="co-cp-m bad" id="coCpM"${cpMsg ? '' : ' hidden'}>${esc(cpMsg)}</p>`
-      : `<button type="button" class="co-cp-t" id="coCpOpen">Have a coupon code?</button>`;
-    const x = $('#coCpX'), o = $('#coCpOpen'), go2 = $('#coCpGo'), inp = $('#coCpIn');
-    if (x) x.onclick = () => { setCoupon(null); cpOpen = false; cpMsg = ''; drawCoupon(); draw(); };
-    if (o) o.onclick = () => { cpOpen = true; drawCoupon(); const i = $('#coCpIn'); if (i) i.focus(); };
+      : `<label class="co-cp-l" for="coCpIn">Have a coupon?</label><div class="co-cp-f"><input id="coCpIn" maxlength="30" placeholder="Coupon code" aria-label="Coupon code" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="btn line" id="coCpGo">Apply</button></div><p class="co-cp-m bad" id="coCpM"${cpMsg ? '' : ' hidden'}>${esc(cpMsg)}</p>`;
+    const x = $('#coCpX'), go2 = $('#coCpGo'), inp = $('#coCpIn');
+    if (x) x.onclick = () => { setCoupon(null); cpMsg = ''; drawCoupon(); draw(); };
     if (inp) inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } };
     if (go2) go2.onclick = apply;
   }
