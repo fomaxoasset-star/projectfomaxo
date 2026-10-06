@@ -1517,10 +1517,9 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co .form label.co-opt.on{border-color:var(--gold);background:rgba(215,170,105,.08)}
 .co .form label.co-opt.off{cursor:not-allowed;border-color:var(--line)}
 .co-opt.off .co-opt-t b,.co-opt.off .co-opt-i{opacity:.5}
-/* payment boxes: text centred with the icon on top; the chosen one shows a big gold ring dot (AJAY picked "ring dot") */
+/* payment boxes: text centred, icon on the right; the chosen one shows a big gold ring dot (AJAY picked "ring dot") */
 .co .form label.co-opt{flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:4px;position:relative;padding-left:52px;padding-right:52px}
-.co-opt-i{order:-1}
-.co-opt-i svg{width:20px;height:20px}
+.co .form label.co-opt .co-opt-i{position:absolute;right:16px;top:50%;transform:translateY(-50%)}
 .co-opt-t{flex:0 1 auto}
 .co-opt-t small{text-wrap:balance}
 .co-opt input{position:absolute;opacity:0;pointer-events:none}
