@@ -1591,7 +1591,12 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-help:hover:not(:disabled){color:var(--gold-hi);border-color:var(--gold)}
 .rw-help.on{color:var(--gold-hi);border-color:var(--line-2);cursor:default}
 .rw-help.on svg{fill:currentColor}
-.rw-more{align-self:flex-start;margin-top:18px}
+.rw-pager{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:22px}
+.rw-pager[hidden]{display:none}
+.rw-pager button{width:46px;height:46px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line-2);color:var(--gold-hi);font-size:26px;line-height:1;padding:0 0 3px;transition:border-color .3s,color .3s}
+.rw-pager button:hover:not(:disabled){border-color:var(--gold-hi);color:var(--ivory)}
+.rw-pager button:disabled{opacity:.3;cursor:default}
+.rw-pg{min-width:64px;text-align:center;font-size:13px;letter-spacing:.14em;color:var(--muted)}
 .rw-head{display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.06em;color:var(--muted);align-self:flex-start;padding:0}
 .rw-head:hover{color:var(--gold-hi)}
 .rw-form{border:1px solid var(--line-2);background:var(--panel);padding:clamp(18px,3vw,30px);margin-bottom:22px;gap:18px}
@@ -3059,7 +3064,7 @@ function rwSection(p, d){   // d = null while the reviews are loading: the text 
     <p class="rw-note"><span class="rw-ver">${RW_TICK}Verified Purchaser</span> badge appears only on reviews written from the review link after a paid order.</p></div>
   <div class="rw-main"><div id="rwFormBox" hidden></div>
     ${n ? `<div class="rw-tools"><span class="small">${n} review${n > 1 ? 's' : ''}</span><div class="rw-sort">${[['new', 'Newest'], ['help', 'Most helpful'], ['high', 'Highest'], ['low', 'Lowest']].map((x, i) => `<button type="button" class="chip${i ? '' : ' on'}" data-rws="${x[0]}">${x[1]}</button>`).join('')}</div></div>
-      <div id="rwList"></div><button type="button" class="btn line sm rw-more" id="rwMore" hidden>Show more reviews</button>`
+      <div id="rwList"></div><div class="rw-pager" id="rwPager" hidden><button type="button" data-rwp="-1" aria-label="Previous reviews">‹</button><span class="rw-pg"></span><button type="button" data-rwp="1" aria-label="Next reviews">›</button></div>`
       : !d ? '' : `<div class="rv-empty" id="rwEmpty"><h3>Be the first to review ${esc(p.name)}</h3><p class="small">Worn ${esc(p.name)}? Share your experience with the FOMAXO community.</p></div>`}
   </div>`;
 }
@@ -3172,13 +3177,20 @@ async function rwLoad(p, msg){
   box.innerHTML = rwSection(p, d);
   const head = $('#rwHead');
   if (head) { head.hidden = !d.count; head.innerHTML = d.count ? `${rwStars(d.avg)}<span>${d.avg.toFixed(1)} · ${d.count} review${d.count > 1 ? 's' : ''}</span>` : ''; head.onclick = () => box.scrollIntoView({behavior: 'smooth', block: 'start'}); }
-  let sort = 'new', shown = 5;
+  let sort = 'new', page = 0; const PER = 4;   // 4 reviews at a time, ‹ › (or swipe) for more
   const by = {new: (a, b) => b.date.localeCompare(a.date), help: (a, b) => b.helpful - a.helpful, high: (a, b) => b.rating - a.rating, low: (a, b) => a.rating - b.rating};
-  const draw = () => { const L = $('#rwList', box); if (!L) return; const all = d.reviews.map((r, i) => [r, i]).sort((a, b) => by[sort](a[0], b[0]) || a[1] - b[1]).map(x => x[0]); L.innerHTML = all.slice(0, shown).map(rwItem).join(''); $('#rwMore', box).hidden = all.length <= shown; };
+  const draw = () => { const L = $('#rwList', box); if (!L) return; const all = d.reviews.map((r, i) => [r, i]).sort((a, b) => by[sort](a[0], b[0]) || a[1] - b[1]).map(x => x[0]); const pages = Math.max(1, Math.ceil(all.length / PER)); page = Math.min(Math.max(page, 0), pages - 1);
+    L.innerHTML = all.slice(page * PER, page * PER + PER).map(rwItem).join('');
+    const pg = $('#rwPager', box); pg.hidden = pages < 2; $('.rw-pg', pg).textContent = `${page + 1} / ${pages}`;
+    $('[data-rwp="-1"]', pg).disabled = page === 0; $('[data-rwp="1"]', pg).disabled = page === pages - 1; };
+  const turn = n => { const L = $('#rwList', box), before = page; page += n; draw(); if (page !== before && L.getBoundingClientRect().top < 80) L.scrollIntoView({behavior: 'smooth', block: 'start'}); };
   draw();
   if (!msg && /[?&]reviews=1/.test(location.hash)) box.scrollIntoView({behavior: 'smooth', block: 'start'});
-  $$('[data-rws]', box).forEach(b => b.onclick = () => { sort = b.dataset.rws; shown = 5; $$('[data-rws]', box).forEach(x => x.classList.toggle('on', x === b)); draw(); });
-  if ($('#rwMore', box)) $('#rwMore', box).onclick = () => { shown += 10; draw(); };
+  $$('[data-rws]', box).forEach(b => b.onclick = () => { sort = b.dataset.rws; page = 0; $$('[data-rws]', box).forEach(x => x.classList.toggle('on', x === b)); draw(); });
+  $$('[data-rwp]', box).forEach(b => b.onclick = () => turn(+b.dataset.rwp));
+  const L0 = $('#rwList', box); let sx = null, sy = 0;
+  if (L0) { L0.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive: true});
+    L0.addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) turn(dx < 0 ? 1 : -1); }); }
   box.onclick = e => { const h = e.target.closest('[data-rwh]'); if (h && !h.disabled) rwVote(h, d.reviews); const ph = e.target.closest('[data-rwph]'); if (ph) rwLightbox(ph.dataset.rwph); };
   const fb = $('#rwFormBox', box);
   if (msg) { fb.hidden = false; fb.innerHTML = `<p class="rw-ok">${msg}</p>`; }
