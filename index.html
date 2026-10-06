@@ -1798,6 +1798,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .ph-sub{display:none!important}
 @media(max-width:600px){
   #cart .dr-foot .sub-row.ph-sub{display:flex!important}
+  #cart .co-amt{display:none}
   #cart .dr-foot .ph-sub .gold{color:var(--gold)}
   #cart .dr-foot .pay-note{margin:0}
 }
@@ -2295,7 +2296,7 @@ function renderCart(){
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
   foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row ph-sub"><span>Subtotal · <span class="gold">Free delivery</span></span><span class="price">${moneyHTML(t0, true)}</span></div><div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
-    <div class="dr-btns"><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? ' · ' + money2(t) : ''}</a>`}</div><p class="pay-note">${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p>`;
+    <div class="dr-btns"><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? '<span class="co-amt"> · ' + money2(t) + '</span>' : ''}</a>`}</div><p class="pay-note">${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p>`;
   const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} coRefresh && coRefresh(); };
   coRefresh && coRefresh();
 }
