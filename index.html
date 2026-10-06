@@ -1911,6 +1911,20 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   .co-trust{justify-content:center;border-top:0;padding-top:4px}
 }
 @media(min-width:961px) and (max-width:1360px){.co .form .co-r3 label{letter-spacing:.07em}}
+/* laptop checkout: order summary as a black panel with gold prices (AJAY picked option 2) */
+@media(min-width:961px){
+ .co-sum{--ivory:#f2ebdd;--muted:#c9bfa9;--gold:#d7aa69;--gold-hi:#f0d3a0;--champagne:#e9d6b2;--line:rgba(215,170,105,.25);--line-2:rgba(215,170,105,.45);--panel:#0e0d0b;--panel-2:#13110e;background:#0b0a08!important;color:var(--ivory);border-color:#0b0a08!important;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+ .co-sum *{color:inherit}
+ .co-sum h3,.co-sum .co-item b{color:var(--ivory)!important}
+ .co-sum .price,.co-sum .co-row.tot .price{color:var(--gold-hi)!important}
+ .co-sum small,.co-sum .co-row{color:var(--muted)!important}
+ .co-sum .co-row.disc,.co-sum .co-row.disc .price,.co-sum .co-row.co-save,.co-sum .co-row.co-save .price,.co-sum .co-free .price{color:#5fc48c!important}
+ .co-sum .co-row.tot span:first-child{color:var(--ivory)!important}
+ .co-sum .co-nudge{background:rgba(215,170,105,.08)!important;border-color:var(--gold)!important;color:var(--champagne)!important}
+ .co-sum .co-nudge b{color:var(--gold-hi)!important}
+ .co-sum select{background:#13110e!important;color:var(--ivory)!important;border-color:var(--line-2)!important}
+ .co-sum a{color:var(--champagne)!important}
+}
 /* laptop product page: same layout, tighter spacing so it fits one screen */
 @media(min-width:961px){
   .crumbs[style]{padding-top:18px!important}
