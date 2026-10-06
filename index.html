@@ -2617,8 +2617,8 @@ function fragrances(q){
 
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
-  // sale: one clear line, new price first, old price struck next to it, then the % off
-  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-line"><span class="pprice">${moneyHTML(v)}</span><s class="was">${moneyHTML(c)}</s><span class="p-off">${Math.round((c - v) / c * 100)}% off</span></div>`;
+  // sale: one clear line, old price struck, then the new price, then the % off
+  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-line"><s class="was">${moneyHTML(c)}</s><span class="pprice">${moneyHTML(v)}</span><span class="p-off">${Math.round((c - v) / c * 100)}% off</span></div>`;
   return priceHTML(p, size, 'pprice'); };
 // the multi-buy offer, shown before the customer adds to bag (King and the Discovery Set are not part of it)
 const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
