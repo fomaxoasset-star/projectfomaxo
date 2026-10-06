@@ -742,6 +742,13 @@ if (isset($_GET['offer'])) {
     foreach ((array)($p['prices'] ?? []) as $z => $v) { $c = $p['compareAt'][$z] ?? null; if (is_numeric($v) && is_numeric($c) && $c > $v) $realMax = max($realMax, (int)round(($c - $v) / $c * 100)); } }
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['offer' => 1]); }
+    if (isset($_POST['np_save'])) {   // new product popup: "Coming soon" / "Just arrived" + the product name
+      $on = isset($_POST['np_on']); $name = trim(preg_replace('/\s+/', ' ', (string)($_POST['np_name'] ?? ''))); $pid = preg_replace('/[^a-z0-9_-]/i', '', (string)($_POST['np_product'] ?? ''));
+      if ($on && $name === '') { flash('Please type the product name.'); go(['offer' => 1]); }
+      fomaxo_setting($pdo, 'np', fomaxo_json(['on' => $on, 'status' => ($_POST['np_status'] ?? '') === 'arrived' ? 'arrived' : 'soon', 'name' => mb_substr($name, 0, 40),
+        'line' => mb_substr(trim((string)($_POST['np_line'] ?? '')), 0, 90), 'product' => $pid]));
+      flash($on ? 'New product popup saved.' : 'New product popup is off.', true); go(['offer' => 1]);
+    }
     $mode = (string)($_POST['mode'] ?? 'off');
     if (isset($_POST['all_off'])) $mode = 'off';
     if ($mode === 'date') {   // a real end date (UAE time); the popup and line hide by themselves when it passes
@@ -766,6 +773,9 @@ if (isset($_GET['offer'])) {
   $mode = $on ? 'date' : ($al ? 'always' : 'off');
   $pop = (string)fomaxo_setting($pdo, 'sale_popup') !== '0'; $line = (string)fomaxo_setting($pdo, 'sale_line') !== '0';
   $pct = (string)fomaxo_setting($pdo, 'sale_pct');
+  $np = json_decode((string)fomaxo_setting($pdo, 'np'), true) ?: ['on' => false, 'status' => 'soon', 'name' => '', 'line' => '', 'product' => ''];
+  $plist = [];
+  foreach (fomaxo_product_rows($pdo) ?: [] as $r) { $p = json_decode($r['data'], true); if (is_array($p) && !empty($p['id'])) $plist[$p['id']] = ($p['name'] ?? $p['id']) . ($r['hidden'] ? ' (hidden)' : ''); }
   $what = array_filter([$pop ? 'popup' : '', $line ? 'line by prices' : '']);
   $state = $mode === 'off' ? '<span class="lvl-low">●</span> Off: nothing shows on the website.'
     : '<span class="lvl-ok">●</span> On' . ($mode === 'date' ? ': ends ' . date('d/m/Y, g:i a', $e) . ' (' . ($l >= 86400 ? floor($l / 86400) . 'd ' : '') . floor($l % 86400 / 3600) . 'h ' . floor($l % 3600 / 60) . 'm left)' : ': always on, no timer') . '. Showing: ' . ($what ? implode(' + ', $what) : 'nothing (both switches off)') . '.';
@@ -790,6 +800,18 @@ if (isset($_GET['offer'])) {
     . $box('line', $line, 'Line by sale prices', '"Limited time offer · Ends in …" on the product page and shop cards of items with an old price.')
     . '<p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Save</button>' . ($mode !== 'off' ? '<button class="btn line" name="all_off" value="1">Turn everything off</button>' : '') . '</p>'
     . '<p class="muted small" style="margin:10px 0 0">Old prices are set on Products. Prices are not changed here.</p></form>'
+    . '<form class="card" method="post" style="max-width:640px;margin-top:14px">' . csrf_field() . '<input type="hidden" name="np_save" value="1">'
+    . '<h2 style="margin-top:0">New product popup</h2>'
+    . '<p class="small" style="margin:0 0 12px">' . ($np['on'] ? '<span class="lvl-ok">●</span> On: "' . ($np['status'] === 'arrived' ? 'Just arrived' : 'Coming soon') . ' · ' . h($np['name']) . '".' : '<span class="lvl-low">●</span> Off.') . '</p>'
+    . $box('np_on', !empty($np['on']), 'Show the new product popup', 'Shown once to each visitor (the sale popup then shows on their next visit). Never on checkout.')
+    . '<label class="om"><input type="radio" name="np_status" value="soon"' . ($np['status'] !== 'arrived' ? ' checked' : '') . '><span><b>Coming soon</b><small>No button to buy; "Explore FOMAXO" goes to the fragrances.</small></span></label>'
+    . '<label class="om"><input type="radio" name="np_status" value="arrived"' . ($np['status'] === 'arrived' ? ' checked' : '') . '><span><b>Just arrived</b><small>"Shop now" opens the product page.</small></span></label>'
+    . '<label for="np_name">Product name</label><input id="np_name" name="np_name" maxlength="40" value="' . h($np['name']) . '" placeholder="e.g. Oud Royale">'
+    . '<label for="np_line">Short line (optional)</label><input id="np_line" name="np_line" maxlength="90" value="' . h($np['line']) . '" placeholder="e.g. A new Elite fragrance, launching this month">'
+    . '<label for="np_product">Product page and photo (optional)</label><select id="np_product" name="np_product"><option value="">None (no photo)</option>'
+    . implode('', array_map(fn($id, $n) => '<option value="' . h($id) . '"' . ($np['product'] === $id ? ' selected' : '') . '>' . h($n) . '</option>', array_keys($plist), $plist)) . '</select>'
+    . '<p class="muted small" style="margin:6px 0 0">Pick the product once it is added on Products (it can stay hidden until launch). Its first photo is shown in the popup.</p>'
+    . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
     . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},e=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000+b.dataset.h*3600000);'
     . 'set("sale_end_d",e.getFullYear()+"-"+p(e.getMonth()+1)+"-"+p(e.getDate()));set("sale_end_t",p(e.getHours())+":"+p(e.getMinutes()));f.querySelector("input[name=mode][value=date]").checked=true;document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}});'
     . 'document.querySelectorAll(".odate input").forEach(function(i){i.addEventListener("input",function(){document.querySelector("input[name=mode][value=date]").checked=true})})</script>');
