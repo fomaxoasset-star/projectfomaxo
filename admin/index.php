@@ -191,6 +191,14 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 .dtab td b{font-weight:600}.dtab .fb{margin:4px 0 0;height:5px;max-width:140px}.a-devices{container-type:inline-size}.ptab td b{font-weight:600}.ptab .fb{margin:4px 0 0;height:5px;max-width:140px}.a-pages{container-type:inline-size}@container (max-width:380px){.ptab .fb{display:none}.ptab td{padding-top:5px;padding-bottom:5px}}.pswap{display:none}@media (min-width:760px){.pswap{display:flex;margin-left:auto;margin-right:6px}.a-products .ch,.a-pages .ch{gap:6px}.ptab td:first-child{max-width:0;width:50%}.ptab td b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}.card.big .pswap{display:none}.dstrip{display:none}@media (min-width:760px){.dstrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px;flex:none}.dstrip button{font:inherit;text-align:left;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--ink);cursor:pointer;line-height:1.25}.dstrip button:hover{border-color:var(--gold)}.dstrip b{display:block;font-size:15px;font-variant-numeric:tabular-nums}.dstrip span{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}}@media (min-width:760px) and (max-height:540px){.dstrip{display:none}}@container (max-width:380px){.dtab th:nth-child(2),.dtab td:nth-child(2),.dtab th:nth-child(3),.dtab td:nth-child(3),.dtab .fb{display:none}.dtab td{padding-top:4px;padding-bottom:4px}}
 /* phone turned sideways (short screen): Analytics scrolls as a page and each section keeps a readable height */
 @media (min-width:760px) and (max-height:540px){main.fit:has(>.db.an){display:block;overflow:auto}main.fit>.db.an{height:auto;min-height:0}.an .agrid{flex:none;height:auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:290px 290px 290px 230px 320px 360px;grid-template-areas:"funnel visitors" "products sources" "countries emirates" "devices devices" "pages pages" "left left"}.agrid>.a-devices{display:flex}.an .agrid>.a-pages,.an .agrid>.a-products{display:flex!important}.an .agrid .a-pages{grid-area:pages}.pswap{display:none}.tiles.at{grid-template-columns:repeat(4,1fr)}.tiles.at .tile:last-child{grid-column:auto}}
+/* Analytics → Conversion: five reports, same look as the overview (laptop: one screen, 3 columns; phone: one section at a time) */
+.aview a{cursor:pointer}.ctab td b,.mtab td b{font-weight:600}.c-prod,.c-multi,.c-camp{container-type:inline-size}.c-drop .fun li.fx table{margin-top:2px}.c-scroll .fun li{padding:3px 0}.c-camp .cn{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+@media (min-width:760px){.agrid.cv{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.15fr);grid-template-areas:"cprod cdrop ccamp" "cmulti cmulti cscroll"}
+  .c-prod{grid-area:cprod}.c-drop{grid-area:cdrop}.c-camp{grid-area:ccamp}.c-multi{grid-area:cmulti}.c-scroll{grid-area:cscroll}.agrid.cv>.card{display:flex}}
+@container (max-width:420px){.ctab th:nth-child(5),.ctab td:nth-child(5),.mtab th:nth-child(3),.mtab td:nth-child(3),.mtab th:nth-child(5),.mtab td:nth-child(5){display:none}}
+@media (max-width:759px){.aview{display:flex;width:100%;padding:0;gap:0;border-radius:8px;overflow:hidden}.aview a{flex:1;text-align:center;font-size:13px;font-weight:600;padding:7px 0;border-radius:0;color:var(--ink)}.aview a.on{background:var(--gold);color:var(--gold-ink)}.aview a+a{border-left:1px solid var(--line)}
+  .cvpick button:nth-child(n+4){border-bottom:0}.cvpick button:last-child{grid-column:span 2;border-right:0}}
+@media (min-width:760px) and (max-height:540px){.an .agrid.cv{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:330px 330px 300px;grid-template-areas:"cprod cdrop" "ccamp cscroll" "cmulti cmulti"}}
 /* phone: no zooming by itself (iPhone zooms into boxes under 16px, double-tap zooms); two-finger pinch still works */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overflow-x:hidden}
 @media (max-width:759px){input,select,textarea{font-size:16px!important}
@@ -946,6 +954,116 @@ if (isset($_GET['analytics'])) {
   foreach ($devN as $k => $l) { $r0 = $devR[$k]; $sh = $pct($r0['visits'], $devAll);
     $devT .= '<tr><td><b>' . $l . '</b><div class="fb"><i style="width:' . min(100, round($sh, 1)) . '%"></i></div></td><td class="num">' . number_format($r0['visitors']) . '</td><td class="num">' . number_format($r0['visits']) . '</td><td class="num">' . number_format($r0['bought']) . '</td><td class="num">' . $pctT($pct($r0['bought'], $r0['visits'])) . '</td><td class="num"><b>' . $pctT($sh) . '</b></td></tr>'; }
 
+  /* ---- Conversion view (?analytics=1&cv=1): five reports on what turns visits into orders ---- */
+  $cv = isset($_GET['cv']);
+  $cvq = $cv ? ['cv' => 1] : [];
+  $cvGrid = '';
+  if ($cv) {
+    $cvSince = fomaxo_setting($pdo, 'conv_since');
+    $cvNote = 'Counting since ' . ($cvSince ? h(date('j M Y', strtotime($cvSince))) : 'today') . '.';
+    $ok = "status IN ('New', 'Paid', 'Delivered') AND test = 0";
+    $orders = $q("SELECT order_no, subtotal, discount, total, lines_json FROM fx_orders WHERE $ok AND created_at BETWEEN ? AND ?")->fetchAll();
+    $bar = fn($n, $max) => '<div class="fb"><i style="width:' . ($max ? max(1, round($n / $max * 100, 1)) : 0) . '%"></i></div>';
+
+    /* 1. per product: visits that viewed it → added it to the bag → orders that bought it (free minis not counted) */
+    $pf = [];
+    foreach ($q("SELECT product, COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) views, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) adds
+                 FROM fx_events WHERE ev IN ('product', 'cart') AND product IS NOT NULL AND at BETWEEN ? AND ? GROUP BY product") as $row)
+      $pf[$row['product']] = ['v' => (int)$row['views'], 'a' => (int)$row['adds'], 'o' => 0, 'u' => 0];
+    foreach ($orders as $o) {
+      $seen = [];
+      foreach (json_decode((string)$o['lines_json'], true) ?: [] as $l) {
+        if (!is_array($l) || !empty($l['free']) || empty($l['id'])) continue;
+        $pf[$l['id']] ??= ['v' => 0, 'a' => 0, 'o' => 0, 'u' => 0];
+        $pf[$l['id']]['u'] += max(1, (int)($l['qty'] ?? 1));
+        if (!isset($seen[$l['id']])) { $seen[$l['id']] = 1; $pf[$l['id']]['o']++; }
+      }
+    }
+    uasort($pf, fn($a, $b) => [$b['v'], $b['o']] <=> [$a['v'], $a['o']]);
+    $pfT = '';
+    foreach ($pf as $id => $x)
+      $pfT .= '<tr><td><b>' . h($names[$id] ?? $id) . '</b></td><td class="num">' . number_format($x['v']) . '</td><td class="num">' . number_format($x['a']) . '</td><td class="num">' . number_format($x['o'])
+            . '</td><td class="num">' . number_format($x['u']) . '</td><td class="num"><b>' . ($x['v'] ? $pctT($pct($x['o'], $x['v'])) : '–') . '</b></td></tr>';
+
+    /* 2. checkout drop-off: the last step each checkout reached, the boxes left empty by people who did not order, and card payments not finished */
+    $typed = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_leads WHERE created_at BETWEEN ? AND ?")->fetchColumn();
+    $cs = [['Opened checkout', $f['checkout']], ['Typed name or mobile', $typed], ['Reached payment choice', $f['pay']], ['Opened card page', $f['card']], ['Bought', $f['buy']]];
+    $csMax = max(array_column($cs, 1)) ?: 0; $drop = ''; $prev = null;
+    foreach ($cs as [$label, $n]) {
+      $drop .= '<li><div class="fl"><span>' . $label . ($prev !== null && $prev > $n && $label !== 'Opened card page' ? ' <span class="fd">' . number_format($prev - $n) . ' stopped</span>' : '') . '</span><span><b>' . number_format($n) . '</b></span></div>' . $bar($n, $csMax) . '</li>';
+      if ($label !== 'Opened card page') $prev = $n;
+    }
+    $empty = $q("SELECT COUNT(*) n, SUM(name = '') name, SUM(phone = '') phone, SUM(emirate = '') emirate, SUM(" . ($pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'address'")->fetch() ? "address = ''" : '0') . ") address, SUM(email = '') email
+                 FROM fx_leads l WHERE l.updated_at BETWEEN ? AND ? AND l.order_no IS NULL
+                 AND NOT EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
+                                 AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9))")->fetch();
+    $eT = '';
+    foreach (['name' => 'Name', 'phone' => 'Mobile', 'emirate' => 'Emirate', 'address' => 'Address', 'email' => 'Email (optional)'] as $k => $l)
+      $eT .= '<tr><td>' . $l . '</td><td class="num">' . number_format((int)$empty[$k]) . '</td><td class="num muted">' . $pctT($pct((int)$empty[$k], (int)$empty['n'])) . '</td></tr>';
+    $unpaid = $q("SELECT COUNT(*) n, COALESCE(SUM(total), 0) t FROM fx_orders WHERE status = 'Awaiting payment' AND test = 0 AND created_at BETWEEN ? AND ?")->fetch();
+
+    /* 3. campaigns: where each visit came from (utm_source / utm_campaign in the link, else the app or website it came from), and the orders it made */
+    $hasCamp = (bool)$pdo->query("SHOW COLUMNS FROM fx_events LIKE 'campaign'")->fetch();
+    $camp = '';
+    foreach ($q("SELECT x.source, x.campaign, COUNT(*) visits, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND b.ev = 'buy')) bought,
+                   COALESCE(SUM((SELECT SUM(o.total) FROM fx_leads l JOIN fx_orders o ON o.order_no = l.order_no WHERE l.sid = x.sid AND o.$ok)), 0) rev
+                 FROM (SELECT sid, MIN(source) source, " . ($hasCamp ? 'MIN(campaign)' : 'NULL') . " campaign FROM fx_events WHERE ev = 'view' AND source IS NOT NULL AND at BETWEEN ? AND ? GROUP BY sid) x
+                 GROUP BY x.source, x.campaign ORDER BY bought DESC, visits DESC LIMIT 60") as $row)
+      $camp .= '<tr><td><b>' . h($row['source']) . '</b>' . ($row['campaign'] !== null ? '<span class="muted cn">' . h($row['campaign']) . '</span>' : '') . '</td><td class="num">' . number_format($row['visits']) . '</td><td class="num">' . number_format($row['bought'])
+             . '</td><td class="num">' . $pctT($pct($row['bought'], $row['visits'])) . '</td><td class="num">' . ((float)$row['rev'] ? 'AED ' . number_format(round((float)$row['rev'])) : '–') . '</td></tr>';
+
+    /* 4. multi-buy offer: orders by the discount they got (2 items 5%, 3-4 items 10%, 5+ items 15%) and what each level adds per order */
+    $mb = [];
+    foreach ($orders as $o) {
+      $sub = (float)$o['subtotal']; $lvl = $sub > 0 && (float)$o['discount'] > 0 ? (int)round((float)$o['discount'] / $sub * 100) : 0;
+      $lvl = in_array($lvl, [0, 5, 10, 15], true) ? $lvl : -1;
+      $items = 0; $minis = 0;
+      foreach (json_decode((string)$o['lines_json'], true) ?: [] as $l) if (is_array($l)) { if (!empty($l['free'])) $minis++; else $items += max(1, (int)($l['qty'] ?? 1)); }
+      $mb[$lvl] ??= ['n' => 0, 'items' => 0, 't' => 0, 'd' => 0, 'm' => 0];
+      $mb[$lvl]['n']++; $mb[$lvl]['items'] += $items; $mb[$lvl]['t'] += (float)$o['total']; $mb[$lvl]['d'] += (float)$o['discount']; $mb[$lvl]['m'] += $minis;
+    }
+    $base = isset($mb[0]) && $mb[0]['n'] ? $mb[0]['t'] / $mb[0]['n'] : null;
+    $mbT = ''; $extra = 0;
+    foreach ([0 => 'No offer (1 item)', 5 => '5% (2 items)', 10 => '10% + mini (3-4)', 15 => '15% + mini (5+)', -1 => 'Other'] as $k => $l) {
+      if (!isset($mb[$k]) && $k === -1) continue;
+      $x = $mb[$k] ?? ['n' => 0, 'items' => 0, 't' => 0, 'd' => 0, 'm' => 0]; $avg = $x['n'] ? $x['t'] / $x['n'] : 0;
+      $more = $k > 0 && $base !== null && $x['n'] ? ($avg - $base) * $x['n'] : null; if ($more) $extra += $more;
+      $mbT .= '<tr><td><b>' . $l . '</b></td><td class="num">' . number_format($x['n']) . '</td><td class="num">' . ($x['n'] ? number_format($x['items'] / $x['n'], 1) : '–') . '</td><td class="num">' . ($x['n'] ? 'AED ' . number_format(round($avg)) : '–')
+            . '</td><td class="num">' . ($x['d'] ? 'AED ' . number_format(round($x['d'])) : '–') . '</td><td class="num">' . ($more !== null ? ($more < 0 ? '−' : '+') . 'AED ' . number_format(abs(round($more))) : '–') . '</td></tr>';
+    }
+    $mbN = array_sum(array_column(array_filter($mb, fn($k) => $k > 0, ARRAY_FILTER_USE_KEY), 'n'));
+
+    /* 5. homepage scroll: of the visits that opened the homepage, how many scrolled to 25 / 50 / 75 / 100 % of it */
+    $sc = ''; $home = 0;
+    try {
+      $from = max($span[0], ($cvSince ?: date('Y-m-d')) . ' 00:00:00');
+      $home = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_events WHERE ev = 'view' AND page IN ('', '/') AND at BETWEEN ? AND ?", [$from, $span[1]])->fetchColumn();
+      $dd = []; foreach ($q("SELECT depth, COUNT(DISTINCT sid) n FROM fx_events WHERE ev = 'scroll' AND at BETWEEN ? AND ? GROUP BY depth", [$from, $span[1]]) as $row) $dd[(int)$row['depth']] = (int)$row['n'];
+      foreach ([0 => 'Opened the homepage', 25 => 'Scrolled 25%', 50 => 'Scrolled 50%', 75 => 'Scrolled 75%', 100 => 'Reached the bottom'] as $m => $l) {
+        $n = $m ? min($home, $dd[$m] ?? 0) : $home;
+        $sc .= '<li><div class="fl"><span>' . $l . '</span><span><b>' . number_format($n) . '</b> <span class="muted">' . $pctT($pct($n, $home)) . '</span></span></div>' . $bar($n, $home) . '</li>';
+      }
+    } catch (Throwable $e) {}
+
+    $cvPanes = ['cprod' => 'Products', 'cdrop' => 'Checkout', 'ccamp' => 'Campaigns', 'cmulti' => 'Multi-buy', 'cscroll' => 'Homepage scroll'];
+    $cvGrid = '<nav class="apick cvpick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'cprod' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($cvPanes), $cvPanes)) . '</nav>'
+      . '<div class="dgrid agrid cv">'
+      . '<section class="card c-prod on" data-p="cprod"><div class="ch"><h2>Products: viewed → bag → bought</h2></div>'
+      . ($pfT ? '<div class="list"><table class="mini ctab"><thead><tr><th>Product</th><th class="num">Viewed</th><th class="num">To bag</th><th class="num">Orders</th><th class="num">Units</th><th class="num">Buy rate</th></tr></thead><tbody>' . $pfT . '</tbody></table></div><p class="muted small gnote">Visits that viewed or added each product, and the orders that bought it. Buy rate: orders ÷ views.</p>' : '<p class="muted empty">No product views in these dates.</p>') . '</section>'
+      . '<section class="card c-drop" data-p="cdrop"><div class="ch"><h2>Checkout drop-off</h2></div><ul class="list fun">' . $drop
+      . '<li class="fx"><table class="mini"><thead><tr><th>Box left empty</th><th class="num">People</th><th class="num">Share</th></tr></thead><tbody>' . $eT . '</tbody></table>'
+      . '<p class="muted small" style="margin:6px 0 0">Of ' . number_format((int)$empty['n']) . ' ' . ((int)$empty['n'] === 1 ? 'person' : 'people') . ' who typed details and did not order. Card payments not finished: <b>' . number_format((int)$unpaid['n']) . '</b>' . ((int)$unpaid['n'] ? ' (AED ' . number_format(round((float)$unpaid['t'])) . ')' : '') . '.</p></li></ul></section>'
+      . '<section class="card c-camp" data-p="ccamp"><div class="ch"><h2>Campaigns</h2></div>'
+      . ($camp ? '<div class="list"><table class="mini"><thead><tr><th>Source / campaign</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th><th class="num">Revenue</th></tr></thead><tbody>' . $camp . '</tbody></table></div>' : '<p class="muted empty">No visits in these dates.</p>')
+      . '<p class="muted small gnote">Tag a post or ad link: fomaxo.com/?utm_source=instagram&amp;utm_campaign=eid-post. Campaign names ' . lcfirst($cvNote) . '</p></section>'
+      . '<section class="card c-multi" data-p="cmulti"><div class="ch"><h2>Multi-buy offer</h2><span class="val">' . ($extra > 0 ? '+AED ' . number_format(round($extra)) : '') . '</span></div>'
+      . ($orders ? '<div class="list"><table class="mini mtab"><thead><tr><th>Offer</th><th class="num">Orders</th><th class="num">Items</th><th class="num">Avg. order</th><th class="num">Discount</th><th class="num">Extra</th></tr></thead><tbody>' . $mbT . '</tbody></table></div>'
+                 . '<p class="muted small gnote">' . $pctT($pct($mbN, count($orders))) . ' of orders used the offer. Extra: how much more those orders brought than the same number of one-item orders' . ($base !== null ? ' (AED ' . number_format(round($base)) . ' each)' : '') . '.</p>' : '<p class="muted empty">No orders in these dates.</p>') . '</section>'
+      . '<section class="card c-scroll" data-p="cscroll"><div class="ch"><h2>Homepage scroll</h2></div>'
+      . ($home ? '<ul class="list fun">' . $sc . '</ul>' : '<p class="muted empty">No homepage visits counted yet.</p>') . '<p class="muted small gnote">' . $cvNote . '</p></section>'
+      . '</div>';
+  }
+
   /* where visitors are: country of each visit, and the emirate for the UAE (looked up from the IP address when the visit starts; the address is not kept) */
   require_once dirname(__DIR__) . '/geo-lib.php';
   $gr = ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'year' => 'Year'];
@@ -1030,8 +1148,8 @@ if (isset($_GET['analytics'])) {
                : '<p class="muted empty">No repeat orders in these dates.</p>')
     . '<p class="muted small gnote">Orders in these dates from a mobile that had ordered before.</p></section>';
   page('Analytics', '<div class="db an">'
-    . '<div class="pagehead"><h1>Analytics</h1><form class="arange" method="get"><input type="hidden" name="analytics" value="1"><div class="seg">'
-    . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
+    . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== '7' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== '7' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . '<div class="seg">'
+    . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k] + $cvq)) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
     . '<input type="hidden" name="r" value="custom"><input type="date" name="d1" value="' . h($d1) . '" aria-label="From"><input type="date" name="d2" value="' . h($d2) . '" aria-label="To"><button class="btn sm' . ($r === 'custom' ? '' : ' line') . '">Show</button></form></div>'
     . '<div class="tiles at">'
     . $tile(number_format($f['visitors']), 'Visitors<span class="dk"> · ' . number_format($f['visits']) . ' visits</span>', '', number_format($f['visits']) . ' visits')
@@ -1044,7 +1162,7 @@ if (isset($_GET['analytics'])) {
             $retN . ($retN === 1 ? ' person' : ' people') . ($retD !== null ? ' · reorder in ' . $retD . ($retD === 1 ? ' day' : ' days') : ''))
     . $tile('AED ' . number_format(round((float)$ord['t'])), 'Revenue', 'rev', 'AED ' . number_format((int)$ord['n'] ? round((float)$ord['t'] / (int)$ord['n']) : 0) . ' per order')
     . '</div>'
-    . '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
+    . ($cv ? $cvGrid : '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
     . '<div class="dgrid agrid">'
     . '<section class="card a-funnel on" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
     . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a bar to see its visitors</span><b>' . number_format($f['visitors']) . '</b></p>' . ($devAll ? '<div class="dstrip" title="Tap for the full devices table">' . implode('', array_map(fn($k, $l) => '<button type="button" data-open="devices"><span>' . $l . '</span><b>' . $pctT($pct($devR[$k]['visits'], $devAll)) . '</b><span>' . number_format($devR[$k]['bought']) . ' bought</span></button>', array_keys($devN), $devN)) . '</div>' : '') . '</section>'
@@ -1061,7 +1179,7 @@ if (isset($_GET['analytics'])) {
     . '<section class="card a-emirates" data-p="emirates"><div class="ch"><h2>UAE visitors by emirate</h2>' . $gSeg . '</div>' . $gEmirates . '<p class="muted small gnote">Approximate: phone networks often show Dubai or Abu Dhabi. ' . $gNote . '</p></section>'
     . '<section class="card a-devices" data-p="devices"><div class="ch"><h2>Devices</h2></div>'
     . ($devAll ? '<div class="list"><table class="mini dtab"><thead><tr><th>Device</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th><th class="num">Share</th></tr></thead><tbody>' . $devT . '</tbody></table></div>' : '<p class="muted empty">No visits in these dates.</p>') . '</section>'
-    . '</div></div>'
+    . '</div>') . '</div>'
     . '<script>document.querySelectorAll(".gseg button").forEach(function(b){b.addEventListener("click",function(){var c=b.closest(".card");c.querySelectorAll(".gseg button").forEach(function(x){x.classList.toggle("on",x===b)});c.querySelectorAll(".list[data-r]").forEach(function(x){x.hidden=x.dataset.r!==b.dataset.r})})});'
     . '(function(){var open=null,back=null;function shut(){if(!open)return;open.classList.remove("big");open.querySelector(".zoom").textContent="⤢";open.querySelector(".zoom").setAttribute("aria-label","Open bigger");back.remove();open=null;document.body.classList.remove("zoomed")}'
     . 'function show(c){shut();open=c;c.classList.add("big");var z=c.querySelector(".zoom");z.textContent="×";z.setAttribute("aria-label","Close");back=document.createElement("div");back.className="zback";back.onclick=shut;document.body.appendChild(back);document.body.classList.add("zoomed");c.scrollTop=0}'

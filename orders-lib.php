@@ -33,7 +33,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 12) return;
+  if ($ver >= 13) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -82,10 +82,17 @@ function fomaxo_db_schema($pdo) {
     $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '11')");
   }
   /* v12: when a visitor was last seen on each page, for Analytics → Pages (time spent on a page) */
-  try { $pdo->exec("ALTER TABLE fx_events ADD COLUMN left_at DATETIME NULL"); } catch (Throwable $e) {}
-  if (!$pdo->query("SHOW COLUMNS FROM fx_events LIKE 'left_at'")->fetch()) return;
-  if (!fomaxo_setting($pdo, 'time_since')) fomaxo_setting($pdo, 'time_since', date('Y-m-d'));
-  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '12')");
+  if ($ver < 12) {
+    try { $pdo->exec("ALTER TABLE fx_events ADD COLUMN left_at DATETIME NULL"); } catch (Throwable $e) {}
+    if (!$pdo->query("SHOW COLUMNS FROM fx_events LIKE 'left_at'")->fetch()) return;
+    if (!fomaxo_setting($pdo, 'time_since')) fomaxo_setting($pdo, 'time_since', date('Y-m-d'));
+    $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '12')");
+  }
+  /* v13: the campaign name of a visit (utm_campaign) and how far down the homepage it scrolled, for Analytics → Conversion */
+  try { $pdo->exec("ALTER TABLE fx_events ADD COLUMN campaign VARCHAR(60) NULL, ADD COLUMN depth TINYINT NULL"); } catch (Throwable $e) {}
+  if (!$pdo->query("SHOW COLUMNS FROM fx_events LIKE 'depth'")->fetch()) return;
+  if (!fomaxo_setting($pdo, 'conv_since')) fomaxo_setting($pdo, 'conv_since', date('Y-m-d'));
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '13')");
 }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (

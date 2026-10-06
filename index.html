@@ -3583,9 +3583,17 @@ const FXT = (() => {
     if (!sid || now - lastT > 18e5) { sid = rid(); first = true; for (const k in sent) delete sent[k]; }
     lastT = now; try { localStorage.setItem('fomaxo_sid', JSON.stringify({id: sid, t: now})); } catch(x) {}
     const body = Object.assign({v: vid, s: sid, e, p: (location.hash || '#/').slice(1, 81)}, data);
-    if (e === 'view' && first) { first = false; body.first = 1; body.r = ref; ref = ''; try { body.u = new URLSearchParams(location.search).get('utm_source') || ''; } catch(x) {} }
+    if (e === 'view' && first) { first = false; body.first = 1; body.r = ref; ref = ''; try { const q = new URLSearchParams(location.search); body.u = q.get('utm_source') || ''; body.c = q.get('utm_campaign') || ''; } catch(x) {} }
     post(body);
   };
+  // how far down the homepage a visit scrolls (25 / 50 / 75 / 100 %), once each per homepage visit
+  let depth = {};
+  addEventListener('scroll', () => {
+    if ((location.hash || '#/') !== '#/' || !sid) return;
+    const h = document.documentElement.scrollHeight; if (h < 10) return;
+    const pc = (scrollY + innerHeight) / h * 100;
+    for (const m of [25, 50, 75, 100]) if (pc >= (m === 100 ? 98 : m) && !depth[m]) { depth[m] = 1; send('scroll', {d: m}); }
+  }, {passive: true});
   setInterval(() => { if (!document.hidden && sid && Date.now() - lastT < 18e5) post({v: vid, s: sid, e: 'ping', p: (location.hash || '#/').slice(1, 81)}); }, 6e4);
   return {
     send,
@@ -3594,7 +3602,7 @@ const FXT = (() => {
       const k = location.hash, now = Date.now();
       if (k === lastView && now - lastViewT < 2000) return;
       lastView = k; lastViewT = now;
-      send('view');
+      send('view'); if (k === '' || k === '#/') depth = {};
       if (seg[0] === 'product' && P[seg[1]] && !P[seg[1]].hidden) send('product', {id: seg[1]});
       if (seg[0] === 'checkout' && (cart.length || buyLines.length)) send('checkout');
     },
