@@ -1875,6 +1875,9 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   .co-r3>label{min-width:0}
   .co-r3 .row2,.co-r3 .co-ar1,.co-r3 .co-ar2{display:contents}
   .co-r3 label{grid-template-rows:auto auto}
+  /* AJAY: on laptop the Note sits on its own full-width line under Street + Area */
+  .co-r3.co-r3c{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .co-r3c>label{grid-column:1/-1}
   .co-small{font-size:12px;line-height:1.4}
   .co-lock{padding:7px 12px;font-size:13px}
   .co-pay{gap:8px}
