@@ -337,8 +337,6 @@ section.sec{padding:clamp(90px,11vw,160px) 0}
 @keyframes bvShine{0%,55%{left:-60%}100%{left:130%}}
 @media (prefers-reduced-motion:reduce){.sizes .bv::after{display:none}}
 .qtyrow{display:grid;grid-template-columns:140px 1fr;gap:10px}
-.qtyrow #buyBtn{grid-column:1/-1}
-.acc-tabs{display:none}
 .qty{display:flex;border:1px solid var(--line-2);height:52px}
 .qty button{width:44px;font-size:18px;color:var(--champagne)}
 .qty input{flex:1;min-width:0;text-align:center;background:transparent;border:0;outline:none;font-size:15px}
@@ -1808,43 +1806,29 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
   #cart .dr-body{flex:none;overflow:visible}
   #cart .dr-foot{flex:none;margin-top:auto}
 }
-/* laptop product page: everything from the name down to Gifting & personalisation fits on one screen */
+/* laptop product page: same layout, tighter spacing so it fits one screen */
 @media(min-width:961px){
-  .pdp{padding-top:22px}
-  .buy{gap:14px}
-  .buy>div:first-child{gap:8px!important}
-  .buy h1{font-size:clamp(34px,3vw,46px)}
-  .buy .pd-name .sub{margin-top:4px}
-  .buy .lead{font-size:15px;line-height:1.55;margin:0}
-  .buy #pprice{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 16px}
-  .buy .pprice:has(.was){flex-direction:row;align-items:baseline;gap:14px;font-size:40px}
-  .buy .pprice .was{margin:0}
-  .pdp-offer{padding:9px 14px}
-  .qtyrow{grid-template-columns:120px 1fr 1fr}
-  .qtyrow #buyBtn{grid-column:auto}
-  .buy .qtyrow>*{min-height:46px;height:46px;padding-top:0;padding-bottom:0}
-  .pdp-pay{font-size:11.5px;white-space:nowrap}
-  .crumbs+.pdp,.pdp{padding-top:14px}
-  .acc .body{font-size:13.5px;line-height:1.6}
-  .pdp-pay{margin:-4px 0 0}
-  .perks div{padding:10px 14px;font-size:12.5px;align-items:center}
-  .acc-tabs{display:flex;gap:22px;border-bottom:1px solid var(--line)}
-  .acc-tabs button{background:none;border:0;padding:13px 0 11px;margin-bottom:-1px;border-bottom:2px solid transparent;cursor:pointer;font:500 11.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
-  .acc-tabs button.on,.acc-tabs button:hover{color:var(--ivory)}
-  .acc-tabs button.on{border-bottom-color:var(--gold)}
-  .acc{border-top:0}
-  .acc details{display:none;border-bottom:0}
-  .acc details.tab-on{display:block}
-  .acc details>summary{display:none}
-  .acc details>.body{padding-top:12px}
-  .perks{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .perks div{padding:9px 10px;gap:8px;font-size:11.5px;line-height:1.35}
-  .perks svg{width:15px;height:15px}
   .crumbs[style]{padding-top:18px!important}
-  .sizes button{padding:9px 8px;gap:2px}
+  .pdp{padding-top:14px}
+  .buy{gap:10px}
+  .buy>div:first-child{gap:6px!important}
+  .buy h1{font-size:clamp(32px,2.8vw,40px)}
+  .buy .pd-name .sub{margin-top:2px}
+  .buy .lead{font-size:15px;line-height:1.5;margin:0}
+  .buy .pprice:has(.was){font-size:34px}
+  .buy .pprice .was{margin-bottom:0}
+  .p-save{margin-top:-2px}
+  .pdp-offer{padding:8px 14px}
   .buy .opt-label{margin-bottom:8px}
-  .acc .body{padding-bottom:14px;font-size:14px;line-height:1.65}
-  .acc .body p+p{margin-top:8px}
+  .sizes button{padding:9px 8px;gap:2px}
+  .qtyrow>*,.buy>.btn{min-height:44px;height:44px;padding-top:0;padding-bottom:0}
+  .pdp-pay{margin:-4px 0 -2px;font-size:11.5px;white-space:nowrap}
+  .perks div{padding:7px 14px;font-size:12.5px;align-items:center}
+  .acc summary{padding:9px 0;line-height:1.2}
+  .acc summary::after{line-height:1}
+  .perks div{line-height:1.3}
+  .acc .body{padding-bottom:12px;font-size:13.5px;line-height:1.6}
+  .acc .body p+p{margin-top:6px}
 }
 </style>
 </head>
@@ -2671,13 +2655,12 @@ function product(id, q){
         <div class="qtyrow">
           <div class="qty"><button id="qm" aria-label="Decrease quantity">−</button><input id="qty" value="1" inputmode="numeric" aria-label="Quantity"><button id="qp" aria-label="Increase quantity">+</button></div>
           <button class="btn" id="addBtn">Add to bag</button>
-          <button class="btn line block" id="buyBtn">Buy now</button>
         </div>
+        <button class="btn line block" id="buyBtn">Buy now</button>
         <p class="pdp-pay">${CO_ICON.lock}<span>Secure checkout · ${CARD_ON ? 'Card, Apple Pay, Google Pay · ' : ''}Cash on delivery over ${aed(COD_MIN)} · Free UAE delivery</span></p>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
-          <div class="acc-tabs"></div>
-          <details open><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
+          <details${matchMedia('(min-width:961px)').matches ? '' : ' open'}><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
           ${p.notes && p.notes.key ? `<details open><summary>Fragrance notes</summary><div class="body notes-list"><div><b>Key notes</b><span>${esc(p.notes.key)}</span></div></div></details>` : ''}${p.notes && !p.notes.key ? `<details><summary>Fragrance notes</summary><div class="body notes-list"><div><b>Top</b><span>${esc(p.notes.top)}</span></div><div><b>Heart</b><span>${esc(p.notes.heart)}</span></div><div><b>Base</b><span>${esc(p.notes.base)}</span></div></div></details>` : ''}
           <details><summary>Shipping &amp; delivery</summary><div class="body">${ship}</div></details>
           <details><summary>Gifting &amp; personalisation</summary><div class="body"><p>Designed as the perfect gift for weddings, functions and special occasions. Premium packaging makes it ready to gift without extra effort.</p><p>Custom engraving is available on bottles for names, initials or special messages.</p><p><a class="link ext" href="#/collections/name" aria-label="Explore Exclusive Personalized Gifting">Explore Exclusive Personalized Gifting<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a></p></div></details>
@@ -2724,13 +2707,6 @@ function bindProduct(p){
   $$('.pick').forEach(b => b.onclick = () => { const id = b.dataset.pick; if (picks.includes(id)) picks = picks.filter(x => x !== id); else if (picks.length < size) picks.push(id); updPicks(); });
   updPicks();
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
-  { // laptop: the four info sections sit as one row of tabs so the whole product fits on one screen (phone keeps the + / × list)
-    const ds = $$('.buy .acc details'), tabs = $('.buy .acc-tabs'), short = {'Shipping & delivery':'Delivery','Fragrance notes':'Notes'};
-    const show = i => { ds.forEach((d, k) => { d.classList.toggle('tab-on', k === i); if (k === i) d.open = true; }); tabs.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i)); };
-    tabs.innerHTML = ds.map((d, i) => { const t = d.querySelector('summary').textContent; return `<button type="button" data-t="${i}">${esc(short[t] || t)}</button>`; }).join('');
-    tabs.onclick = e => { const b = e.target.closest('button'); if (b) show(+b.dataset.t); };
-    show(0);
-  }
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
   function renderMbuy(){ mb.innerHTML = `<div class="n"><b>${esc(p.name)}</b><small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) || 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
