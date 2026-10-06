@@ -12,6 +12,6 @@ foreach (fomaxo_product_rows() ?: [] as $r) {
   $out[] = fomaxo_json($p);
 }
 /* limited-time sale: when it ends (Unix time), as set on fomaxo.com/admin → Settings; null = no countdown */
-$saleEnds = null;
-if ($pdo = fomaxo_db()) { try { $v = (int)fomaxo_setting($pdo, 'sale_ends'); if ($v > time()) $saleEnds = $v; } catch (Throwable $e) {} }
-echo '{"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . '}';
+$saleEnds = null; $saleAlways = false;   // saleAlways: the offer popup is on with no timer, until it is turned off on the admin
+if ($pdo = fomaxo_db()) { try { $v = (int)fomaxo_setting($pdo, 'sale_ends'); if ($v > time()) $saleEnds = $v; $saleAlways = (string)fomaxo_setting($pdo, 'sale_always') === '1'; } catch (Throwable $e) {} }
+echo '{"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . '}';
