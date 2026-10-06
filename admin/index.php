@@ -24,6 +24,29 @@ function self_url($q = []) { return './' . ($q ? '?' . http_build_query($q) : ''
 function csrf_ok() { return hash_equals($_SESSION['csrf'] ?? '', (string)($_POST['csrf'] ?? '')); }
 function client_ip() { return substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45); }
 function go($q = []) { header('Location: ' . self_url($q), true, 303); exit; }
+/* the period on Home, Expenses, Reviews and Members, like Analytics: Today / 7 days / 30 days (/ Year / All) or From–To dates; each page remembers its last choice */
+function adm_range($pg, $def, $presets) {
+  $day = fn($v) => is_string($v) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $v) && strtotime($v);
+  $in = isset($_GET['r']) ? ['r' => (string)$_GET['r'], 'd1' => $_GET['d1'] ?? null, 'd2' => $_GET['d2'] ?? null] : ($_SESSION['rng'][$pg] ?? ['r' => $def]);
+  $r = $in['r'];
+  if ($r === 'custom' && $day($in['d1'] ?? null) && $day($in['d2'] ?? null)) { $d1 = min($in['d1'], $in['d2']); $d2 = max($in['d1'], $in['d2']); }
+  else {
+    if (!isset($presets[$r])) $r = $def;
+    $d2 = date('Y-m-d');
+    $d1 = $r === 'all' ? null : ($r === 'year' ? date('Y-m-01', strtotime(date('Y-m-01') . ' -11 month')) : date('Y-m-d', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')));
+  }
+  $_SESSION['rng'][$pg] = ['r' => $r, 'd1' => $d1, 'd2' => $d2];
+  $f = fn($d) => date(substr($d, 0, 4) === date('Y') ? 'j M' : 'j M Y', strtotime($d));
+  return ['r' => $r, 'd1' => $d1, 'd2' => $d2, 'presets' => $presets, 'span' => $d1 === null ? null : [$d1 . ' 00:00:00', $d2 . ' 23:59:59'],
+          'label' => $r === 'custom' ? $f($d1) . ($d1 === $d2 ? '' : ' – ' . $f($d2)) : $presets[$r]];
+}
+function adm_range_form($rg, $base) {
+  $hid = ''; foreach ($base as $k => $v) $hid .= '<input type="hidden" name="' . h($k) . '" value="' . h($v) . '">';
+  return '<form class="arange" method="get">' . $hid . '<div class="seg">'
+    . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url($base + ['r' => (string)$k])) . '"' . ($rg['r'] === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rg['presets']), $rg['presets'])) . '</div>'
+    . '<input type="hidden" name="r" value="custom"><input type="date" name="d1" value="' . h($rg['d1'] ?? '') . '" aria-label="From" required><input type="date" name="d2" value="' . h($rg['d2']) . '" aria-label="To" required>'
+    . '<button class="btn sm' . ($rg['r'] === 'custom' ? '' : ' line') . '">Show</button></form>';
+}
 
 function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
   $css = <<<'CSS'
@@ -164,7 +187,7 @@ label.mini{display:none}
 @media (max-width:759px){.ems.track{gap:6px}.ems.track .em{flex-direction:column;align-items:center;gap:1px;padding:6px 2px;font-size:10.5px;white-space:normal;text-align:center;line-height:1.2}.ems.track .em b{font-size:16px}}
 /* analytics */
 .seg a{font-size:11.5px;font-weight:600;color:var(--muted);padding:3px 9px;border-radius:20px;text-decoration:none;white-space:nowrap}.seg a.on{background:var(--gold);color:var(--gold-ink)}
-.an .pagehead{flex-wrap:wrap;margin-bottom:8px;gap:6px 10px}.arange{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}.arange input[type=date]{width:auto;padding:4px 7px;font-size:12.5px}
+.an .pagehead,.pagehead.rg{flex-wrap:wrap;margin-bottom:8px;gap:6px 10px}.arange{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}.arange input[type=date]{width:auto;padding:4px 7px;font-size:12.5px}
 .apick{display:none}
 .agrid{grid-template-rows:minmax(0,1fr)}
 .fun li{display:block;padding:5px 0;border-bottom:0}.fl{display:flex;justify-content:space-between;gap:8px;font-size:13px}.fb{height:7px;background:var(--line);border-radius:4px;margin:3px 0 0;overflow:hidden}.fb i{display:block;height:100%;background:var(--gold);border-radius:4px}
@@ -180,7 +203,7 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
   .apick{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 8px}.apick::-webkit-scrollbar{display:none}
   .apick button{flex:none;font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:20px;padding:5px 11px;cursor:pointer}.apick button.on{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}
   .agrid>.card{display:none}.agrid>.card.on{display:flex}
-  .an .pagehead{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:6px}.an .pagehead h1{margin:0}.arange{display:contents}
+  .an .pagehead,.pagehead.rg{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:6px}.an .pagehead h1,.pagehead.rg h1{margin:0}.arange{display:contents}
   .arange .seg{grid-column:2/5;justify-self:end}.arange .seg a{padding:3px 8px}.arange input[name=d1]{grid-column:1/3;width:100%}.arange .dmy:has(input[name=d1]){grid-column:1/3}.arange input[name=d2]{width:100%}
   .tiles.at .tile:last-child{grid-column:span 2}
 }
@@ -202,7 +225,7 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 /* phone: no zooming by itself (iPhone zooms into boxes under 16px, double-tap zooms); two-finger pinch still works */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overflow-x:hidden}
 @media (max-width:759px){input,select,textarea{font-size:16px!important}
-  .an .pagehead{display:flex;flex-wrap:wrap}.an .pagehead h1{flex:none}.arange .seg{margin-left:auto}.arange input[type=date]{flex:1 1 35%;min-width:0;width:auto!important;padding:4px 6px}.arange .dmy{flex:1 1 35%;min-width:0}.arange .btn{flex:none}}
+  .an .pagehead,.pagehead.rg{display:flex;flex-wrap:wrap}.an .pagehead h1,.pagehead.rg h1{flex:none}.arange .seg{margin-left:auto}.arange input[type=date]{flex:1 1 35%;min-width:0;width:auto!important;padding:4px 6px}.arange .dmy{flex:1 1 35%;min-width:0}.arange .btn{flex:none}}
 .tile .tn,.tile .mo,.lmob{display:none}.tile span .dk{display:inline;font:inherit;letter-spacing:inherit;color:inherit}
 /* analytics: tap a box or section to open it bigger */
 .zoom{flex:none;font:inherit;font-size:15px;line-height:1;border:1px solid var(--line);background:none;color:var(--muted);border-radius:6px;width:26px;height:26px;padding:0;cursor:pointer;order:9}.zoom:hover{color:var(--gold);border-color:var(--gold)}
@@ -216,7 +239,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:
 .agrid>.card.big .leads .small,.agrid>.card.big .ltab td span{font-size:13.5px}.agrid>.card.big .rsum b{font-size:28px}
 /* phone analytics: same layout as fomaxo.in */
 @media (max-width:759px){
-  .an .pagehead h1{display:none}.an .pagehead{gap:6px;margin-bottom:6px}.arange{display:flex;width:100%;gap:6px}
+  .an .pagehead h1,.pagehead.rg h1{display:none}.an .pagehead,.pagehead.rg{gap:6px;margin-bottom:6px}.arange{display:flex;width:100%;gap:6px}
   .arange .seg{display:flex;width:100%;margin:0;padding:0;gap:0;border-radius:8px;overflow:hidden}.arange .seg a{flex:1;text-align:center;font-size:13px;font-weight:500;padding:7px 0;border-radius:0;color:var(--ink)}
   .arange .seg a.on{background:rgba(201,169,97,.16);color:var(--gold)}.arange .seg a+a{border-left:1px solid var(--line)}
   .arange input[type=date]{flex:1 1 0!important;padding:5px 8px!important;border-radius:8px}.arange .dmy{flex:1 1 0!important}.arange .btn{border-radius:8px;padding:6px 12px}
@@ -242,6 +265,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:
 .dmy{position:relative;display:block;min-width:0}.arange .dmy{display:inline-block}.dmy>input.dt{width:100%!important;padding-right:30px!important;font-variant-numeric:tabular-nums}
 .dmy>input[type=date]{position:absolute!important;right:0;top:0;bottom:0;width:30px!important;min-width:0!important;height:100%;padding:0!important;margin:0;border:0!important;opacity:0;cursor:pointer;flex:none!important}.dmy>input[type=date]::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:auto;height:auto;opacity:0;cursor:pointer}
 .arange .dmy>input.dt{padding:4px 7px;font-size:12.5px;width:118px!important}@media (max-width:759px){.arange .dmy>input.dt{width:100%!important;padding:5px 30px 5px 8px!important;border-radius:8px}}.dmy>svg{position:absolute;right:9px;top:50%;width:14px;height:14px;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
+.exsum{margin:14px 0 8px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.exsum small{font-family:Manrope,sans-serif;font-size:14px;letter-spacing:0;text-transform:none;color:var(--muted)}@media (max-width:759px){.tile.wr span{white-space:normal;line-height:1.25}}.rgbar{display:flex;justify-content:flex-end;margin:0 0 10px}.rgbar .arange,.pagehead.rg .arange{justify-content:flex-end}@media (max-width:759px){.rgbar{margin-bottom:8px}.rgbar .arange{width:100%}}
 /* app layout: header and tabs stay put, the page never scrolls, long lists scroll inside their own panel */
 html,body{height:100%}
 body{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
@@ -813,36 +837,35 @@ if (isset($_GET['stock'])) {
 
 /* ---- expenses: money going out that is not a bottle sold (ads, delivery, packaging, rent …) ---- */
 if (isset($_GET['expenses'])) {
-  $month = preg_match('/^\d{4}-\d{2}$/', (string)($_GET['m'] ?? '')) ? $_GET['m'] : date('Y-m');
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!csrf_ok()) { flash('Please try again.'); go(['expenses' => 1, 'm' => $month]); }
+    if (!csrf_ok()) { flash('Please try again.'); go(['expenses' => 1]); }
     if (isset($_POST['delete'])) {
       $pdo->prepare('DELETE FROM fx_expenses WHERE id = ?')->execute([(int)$_POST['delete']]);
-      flash('Expense deleted.', true); go(['expenses' => 1, 'm' => $month]);
+      flash('Expense deleted.', true); go(['expenses' => 1]);
     }
     $day = (string)($_POST['day'] ?? ''); $cat = (string)($_POST['category'] ?? ''); $amt = (float)str_replace(',', '.', (string)($_POST['amount'] ?? ''));
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) || !in_array($cat, FX_EXPENSE_TYPES, true) || $amt <= 0) { flash('Please fill in the date, type and amount.'); go(['expenses' => 1, 'm' => $month]); }
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) || !in_array($cat, FX_EXPENSE_TYPES, true) || $amt <= 0) { flash('Please fill in the date, type and amount.'); go(['expenses' => 1]); }
     $pdo->prepare('INSERT INTO fx_expenses (day, category, amount, note, created_at) VALUES (?, ?, ?, ?, NOW())')->execute([$day, $cat, round($amt, 2), mb_substr(trim((string)($_POST['note'] ?? '')), 0, 200)]);
-    flash('Expense added.', true); go(['expenses' => 1, 'm' => substr($day, 0, 7)]);
+    flash('Expense added.', true); go(['expenses' => 1]);
   }
-  $s = $pdo->prepare('SELECT * FROM fx_expenses WHERE day >= ? AND day < ? ORDER BY day DESC, id DESC');
-  $s->execute(["$month-01", date('Y-m-d', strtotime("$month-01 +1 month"))]); $list = $s->fetchAll();
+  $rg = adm_range('expenses', '30', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
+  $s = $pdo->prepare('SELECT * FROM fx_expenses' . ($rg['span'] ? ' WHERE day BETWEEN ? AND ?' : '') . ' ORDER BY day DESC, id DESC');
+  $s->execute($rg['span'] ? [$rg['d1'], $rg['d2']] : []); $list = $s->fetchAll();
   $sum = array_sum(array_map(fn($e) => (float)$e['amount'], $list));
   $opts = implode('', array_map(fn($c) => '<option>' . h($c) . '</option>', FX_EXPENSE_TYPES));
   $tr = '';
-  foreach ($list as $e) $tr .= '<tr class="row"><td><b>' . h($e['category']) . '</b><div class="muted small">' . h(date('d M', strtotime($e['day']))) . ($e['note'] !== '' ? ' · ' . h($e['note']) : '') . '</div></td>'
+  foreach ($list as $e) $tr .= '<tr class="row"><td><b>' . h($e['category']) . '</b><div class="muted small">' . h(date(substr($e['day'], 0, 4) === date('Y') ? 'd M' : 'd M Y', strtotime($e['day']))) . ($e['note'] !== '' ? ' · ' . h($e['note']) : '') . '</div></td>'
     . '<td class="num">' . money($e['amount']) . '</td><td class="num"><form method="post" style="margin:0" onsubmit="return confirm(\'Delete this expense?\')">' . csrf_field()
     . '<input type="hidden" name="delete" value="' . (int)$e['id'] . '"><button class="btn line sm">Delete</button></form></td></tr>';
-  $prev = date('Y-m', strtotime("$month-01 -1 month")); $next = date('Y-m', strtotime("$month-01 +1 month"));
-  page('Expenses', '<h1>Expenses</h1>' . flash()
+  page('Expenses', '<div class="pagehead rg"><h1>Expenses</h1>' . adm_range_form($rg, ['expenses' => 1]) . '</div>' . flash()
     . '<form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Add an expense</h2>'
     . '<div class="g3"><div><label for="day">Date</label><input id="day" type="date" name="day" value="' . h(date('Y-m-d')) . '" required></div>'
     . '<div><label for="category">Type</label><select id="category" name="category">' . $opts . '</select></div>'
     . '<div><label for="amount">Amount (AED)</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" required></div></div>'
     . '<label for="note">Note (optional)</label><input id="note" name="note" maxlength="200" placeholder="e.g. Instagram ads, Aramex invoice">'
     . '<p style="margin:12px 0 0"><button class="btn">Add expense</button></p></form>'
-    . '<div class="monthnav"><a class="btn line" href="' . h(self_url(['expenses' => 1, 'm' => $prev])) . '">←</a><h2>' . h(date('F Y', strtotime("$month-01"))) . '<small>' . money($sum) . '</small></h2><a class="btn line" href="' . h(self_url(['expenses' => 1, 'm' => $next])) . '">→</a></div>'
-    . '<div class="fill">' . ($list ? '<table class="exp"><tbody>' . $tr . '</tbody></table>' : '<p class="card muted" style="margin:0">No expenses this month.</p>')
+    . '<h2 class="exsum">' . h($rg['r'] === 'all' ? 'All time' : $rg['label']) . '<small>' . money($sum) . ' · ' . count($list) . ' expense' . (count($list) === 1 ? '' : 's') . '</small></h2>'
+    . '<div class="fill">' . ($list ? '<table class="exp"><tbody>' . $tr . '</tbody></table>' : '<p class="card muted" style="margin:0">No expenses in this period.</p>')
     . '<p class="muted small after">"Stock purchase" is shown in reports but not taken off profit, because the cost of each bottle is already counted when it sells.</p></div>', true, true);
 }
 
@@ -1269,6 +1292,9 @@ if (isset($_GET['reviews'])) {
     go($back);
   }
   $all = rv_all(); usort($all, fn($a, $b) => strcmp($b['created'], $a['created']));
+  $rg = adm_range('reviews', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
+  if ($rg['span']) $all = array_values(array_filter($all, fn($r) => substr((string)$r['created'], 0, 10) >= $rg['d1'] && substr((string)$r['created'], 0, 10) <= $rg['d2']));
+  $rbar = '<div class="rgbar">' . adm_range_form($rg, ['reviews' => 1] + array_filter(['v' => (string)($_GET['v'] ?? ''), 'rp' => (string)($_GET['rp'] ?? ''), 'rq' => (string)($_GET['rq'] ?? ''), 'vf' => (string)($_GET['vf'] ?? '')], fn($x) => $x !== '')) . '</div>';
   $v = in_array($_GET['v'] ?? '', ['products', 'people'], true) ? $_GET['v'] : 'all';
   $rp = (string)($_GET['rp'] ?? ''); if ($rp !== '' && !isset($CATALOG[$rp])) $rp = '';
   $live = array_filter($all, fn($r) => empty($r['hidden']));
@@ -1358,7 +1384,7 @@ if (isset($_GET['reviews'])) {
           . '<div class="fill">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="card muted" style="margin:0">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>')
           . '<p class="muted small after">Remove takes a review off the website and out of the star rating. It stays here, so you can put it back.</p></div>';
   }
-  $mob = '<div class="pagehead"><h1>Reviews</h1>' . $seg . '</div>'
+  $mob = '<div class="pagehead"><h1>Reviews</h1>' . $seg . '</div>' . $rbar
     . '<div class="stats up"><div class="stat"><span>On website</span><b>' . count($live) . '</b></div><div class="stat"><span>Average stars</span><b>' . number_format($avg, 1) . ' ★</b></div>'
     . '<div class="stat"><span>Verified</span><b>' . count(array_filter($live, fn($r) => !empty($r['verified']))) . '</b></div><div class="stat"><span>Removed</span><b>' . (count($all) - count($live)) . '</b></div></div>'
     . $body;
@@ -1434,7 +1460,7 @@ if (isset($_GET['reviews'])) {
           . '<section class="card rprodc"><h2>Stars By Product</h2><div class="cscroll">' . $bodyP . '</div></section>'
           . '<section class="card rpplc"><div class="ch"><h2>Top Reviewers</h2>' . $formR . '</div><div class="cscroll">' . $bodyR . '</div></section></div>';
   }
-  page('Reviews', flash() . '<div class="rmob">' . $mob . '</div><div class="rdesk">' . $body . '</div>', true, true);
+  page('Reviews', flash() . '<div class="rmob">' . $mob . '</div><div class="rdesk">' . $rbar . $body . '</div>', true, true);
 }
 
 /* ---- members: customers who keep coming back. Orders are grouped by mobile number (last 9 digits), or by email when there is no mobile ---- */
@@ -1472,6 +1498,8 @@ if (isset($_GET['members'])) {
   /* every real order (not cancelled, not unpaid card, not a test), oldest first so the latest name and address win */
   $all = $pdo->query("SELECT order_no, created_at, payment, status, total, name, phone, email, emirate, building, room, street, area, address, items, test
                       FROM fx_orders WHERE status IN ('New','Paid','Delivered') AND test = 0 ORDER BY created_at, id")->fetchAll();
+  $rg = isset($_GET['c']) ? null : adm_range('members', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
+  if ($rg && $rg['span']) $all = array_values(array_filter($all, fn($o) => $o['created_at'] >= $rg['span'][0] && $o['created_at'] <= $rg['span'][1]));   // the list counts only orders in the period
   $cust = []; $allSales = 0;
   foreach ($all as $o) {
     $allSales += (float)$o['total'];
@@ -1603,15 +1631,16 @@ if (isset($_GET['members'])) {
          . '<td class="md small">' . h(date('d M Y', strtotime($c['first']))) . ' – ' . h(date('d M Y', strtotime($c['last']))) . '</td></tr>';
   }
   page('Members', '<div class="pagehead"><h1>Members</h1><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn line sm" href="' . h(self_url(['members' => 1, 'subs' => 1])) . '">Download email list (' . number_format($subsN) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1] + ($mq !== '' ? ['mq' => $mq] : []) + ['export' => 1])) . '">Download Excel</a></span></div>' . flash()
+    . '<div class="rgbar">' . adm_range_form($rg, ['members' => 1] + ($mq !== '' ? ['mq' => $mq] : [])) . '</div>'
     . '<div class="mtop"><form class="card mmin" method="post">' . csrf_field() . '<label for="member_min">Orders: at least</label>'
     . '<input id="member_min" type="number" min="0" max="1000" inputmode="numeric" name="member_min" value="' . ($min ?: '') . '" placeholder="any"><span>orders</span><button class="btn sm">Save</button></form>'
     . '<form class="card mmin" method="post">' . csrf_field() . '<label for="member_spend">Spent: at least AED</label><input id="member_spend" class="amt" type="number" min="0" step="1" inputmode="numeric" name="member_spend" value="' . ($spend ?: '') . '" placeholder="any"><button class="btn sm">Save</button></form>'
     . '<form class="mq" method="get"><input type="hidden" name="members" value="1"><input name="mq" value="' . h($mq) . '" placeholder="Search name, mobile, email or area" aria-label="Search members"><button class="btn line sm">Search</button></form></div>'
     . '<div class="stats up"><div class="stat"><span>Members</span><b>' . count($mem) . '</b></div><div class="stat"><span>Members spent</span><b>' . money($memSpent) . '</b></div>'
-    . '<div class="stat"><span>Share of all sales</span><b>' . ($allSales > 0 ? round($memSpent / $allSales * 100) : 0) . '%</b></div>'
+    . '<div class="stat"><span>Share of ' . ($rg['span'] ? 'sales' : 'all sales') . '</span><b>' . ($allSales > 0 ? round($memSpent / $allSales * 100) : 0) . '%</b></div>'
     . '<div class="stat"><span>Average per member</span><b>' . money($mem ? $memSpent / count($mem) : 0) . '</b></div></div>'
     . '<div class="fill">' . ($list ? '<table class="mlist"><thead><tr><th>Member</th><th>Latest address</th><th class="num">Orders</th><th class="num">Spent</th><th class="num">Average</th><th>First – last order</th></tr></thead><tbody>' . $tr . '</tbody></table>'
-         : '<p class="card muted" style="margin:0">' . ($mq !== '' ? 'No members match.' : 'No customer matches ' . ($min ? $min . ' or more orders' : '') . ($min && $spend ? ' and ' : '') . ($spend ? 'AED ' . number_format($spend) . ' or more spent' : '') . ($min || $spend ? '' : 'yet') . '.') . '</p>')
+         : '<p class="card muted" style="margin:0">' . ($mq !== '' ? 'No members match.' : 'No customer matches ' . ($min ? $min . ' or more orders' : '') . ($min && $spend ? ' and ' : '') . ($spend ? 'AED ' . number_format($spend) . ' or more spent' : '') . ($min || $spend ? '' : 'yet') . ($rg['span'] ? ' in this period' : '') . '.') . '</p>')
     . '<p class="muted small after">Orders from the same mobile number (or the same email when there is no mobile) count as one customer. Cancelled orders, unpaid card attempts and test payments are left out. Tap a member to see every order.</p></div>', true, true);
 }
 
@@ -1650,57 +1679,42 @@ if (isset($_GET['o'])) {
 if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'status', 'pay', 'from', 'to', 'p', 'export']))) {
   require_once dirname(__DIR__) . '/store-lib.php';
   $real = "status IN ('New', 'Paid', 'Delivered') AND test = 0";
-  $s = $pdo->prepare("SELECT COUNT(*) n, COALESCE(SUM(total), 0) sales FROM fx_orders WHERE $real AND created_at >= ?");
-  $s->execute([date('Y-m-d') . ' 00:00:00']); $today = $s->fetch();
   $yr = fomaxo_report($pdo, (int)date('Y')); $month = $yr[date('Y-m')];
   $todo = $pdo->query("SELECT SUM(status = 'New' OR (status = 'Paid' AND payment = 'Cash on delivery')) cod, SUM(status = 'Paid' AND payment <> 'Cash on delivery') card FROM fx_orders WHERE test = 0")->fetch();
-  /* sales graphs: one with a Today / 7 days / 30 days switch, one by year (by month while there is only one year of sales) */
+  /* Sales and Visitors graphs for the period picked at the top: by hour for one day, by day up to three months, by month for longer */
   $orders = fn($n) => $n ? money($n[0]) . ' · ' . $n[1] . ' order' . ($n[1] > 1 ? 's' : '') : 'no sales';
-  $hours = array_fill(0, 24, [0.0, 0]);
-  $s = $pdo->prepare("SELECT HOUR(created_at) h, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY HOUR(created_at)");
-  $s->execute([date('Y-m-d') . ' 00:00:00']);
-  foreach ($s as $r) $hours[(int)$r['h']] = [(float)$r['t'], (int)$r['n']];
-  $days = []; for ($i = 29; $i >= 0; $i--) $days[date('Y-m-d', strtotime("-$i day"))] = [0.0, 0];
-  $s = $pdo->prepare("SELECT DATE(created_at) d, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY DATE(created_at)");
-  $s->execute([array_key_first($days) . ' 00:00:00']);
-  foreach ($s as $r) if (isset($days[$r['d']])) $days[$r['d']] = [(float)$r['t'], (int)$r['n']];
-  $months = []; for ($i = 11; $i >= 0; $i--) $months[date('Y-m', strtotime(date('Y-m-01') . " -$i month"))] = [0.0, 0];
-  $s = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%Y-%m') m, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at >= ? GROUP BY m");
-  $s->execute([array_key_first($months) . '-01 00:00:00']);
-  foreach ($s as $r) if (isset($months[$r['m']])) $months[$r['m']] = [(float)$r['t'], (int)$r['n']];
-  $pt = fn($v, $label, $tip) => ['v' => $v[0], 'l' => $label, 't' => $tip . ': ' . $orders($v[1] ? $v : null)];
-  $series = [
-    'day' => array_map(fn($h, $v) => $pt($v, date('ga', mktime($h, 0)), date('ga', mktime($h, 0)) . '–' . date('ga', mktime($h + 1, 0))), array_keys($hours), $hours),
-    'week' => array_map(fn($d, $v) => $pt($v, date('D', strtotime($d)), date('D j M', strtotime($d))), array_keys($days), $days),
-    'month' => array_map(fn($d, $v) => $pt($v, date('j M', strtotime($d)), date('D j M', strtotime($d))), array_keys($days), $days),
-  ];
-  $series['week'] = array_slice($series['week'], -7);
-  $series['year'] = array_map(fn($m, $v) => $pt($v, date('M', strtotime("$m-01")), date('F Y', strtotime("$m-01"))), array_keys($months), $months);   // last 12 months
-  $sum = fn($k) => money(array_sum(array_column($series[$k], 'v')));
-  $ranges = ['day' => 'Today', 'week' => '7 days', 'month' => '30 days', 'year' => 'Year'];
-  /* visitors (from track.php) for the same periods: different people per hour, day or month */
-  $vis = ['day' => [], 'week' => [], 'month' => [], 'year' => []];
-  $count = function ($fmt, $from) use ($pdo) { $o = []; $s = $pdo->prepare("SELECT DATE_FORMAT(at, '$fmt') k, COUNT(DISTINCT vid) n FROM fx_events WHERE at >= ? GROUP BY k"); $s->execute([$from]); foreach ($s as $r) $o[$r['k']] = (int)$r['n']; return $o; };
-  $vt = []; $people = fn($n) => $n . ' visitor' . ($n === 1 ? '' : 's');
+  $rg = adm_range('home', '30', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'year' => 'Year']);
+  $d1 = $rg['d1']; $d2 = $rg['d2']; $nDays = (int)round((strtotime($d2) - strtotime($d1)) / 86400) + 1;
+  $mode = $nDays === 1 ? 'hour' : ($nDays <= 92 ? 'day' : 'month');
+  $fmt = ['hour' => '%H', 'day' => '%Y-%m-%d', 'month' => '%Y-%m'][$mode];
+  $slots = [];   // bar key => [bar label, label in the tip]
+  if ($mode === 'hour') for ($h = 0; $h < 24; $h++) $slots[sprintf('%02d', $h)] = [date('ga', mktime($h, 0)), date('ga', mktime($h, 0)) . '–' . date('ga', mktime($h + 1, 0))];
+  else for ($t = strtotime($d1); $t <= strtotime($d2); $t = strtotime($mode === 'day' ? '+1 day' : 'first day of next month', $t))
+    $slots[date($mode === 'day' ? 'Y-m-d' : 'Y-m', $t)] = [date($mode === 'day' ? ($nDays <= 7 ? 'D' : 'j M') : ($nDays > 366 ? 'M y' : 'M'), $t), date($mode === 'day' ? 'D j M' : 'F Y', $t)];
+  $sales = [];
+  $s = $pdo->prepare("SELECT DATE_FORMAT(created_at, '$fmt') k, SUM(total) t, COUNT(*) n FROM fx_orders WHERE $real AND created_at BETWEEN ? AND ? GROUP BY k");
+  $s->execute($rg['span']); foreach ($s as $r) $sales[$r['k']] = [(float)$r['t'], (int)$r['n']];
+  $sumT = array_sum(array_column($sales, 0)); $sumN = array_sum(array_column($sales, 1));
+  /* visitors (from track.php): different people per bar; the total counts each person once */
+  $people = fn($n) => $n . ' visitor' . ($n === 1 ? '' : 's');
+  $vc = []; $tot = ['sales' => money($sumT), 'visitors' => $people(0)]; $hasV = true;
   try {
-    $c = $count('%H', date('Y-m-d') . ' 00:00:00');
-    foreach (array_keys($hours) as $h) $vis['day'][] = ['v' => $c[sprintf('%02d', $h)] ?? 0, 'l' => date('ga', mktime($h, 0)), 't' => date('ga', mktime($h, 0)) . '–' . date('ga', mktime($h + 1, 0)) . ': ' . $people($c[sprintf('%02d', $h)] ?? 0)];
-    $c = $count('%Y-%m-%d', array_key_first($days) . ' 00:00:00');
-    foreach (array_keys($days) as $d) $vis['month'][] = ['v' => $c[$d] ?? 0, 'l' => date('j M', strtotime($d)), 't' => date('D j M', strtotime($d)) . ': ' . $people($c[$d] ?? 0)];
-    foreach (array_slice(array_keys($days), -7) as $d) $vis['week'][] = ['v' => $c[$d] ?? 0, 'l' => date('D', strtotime($d)), 't' => date('D j M', strtotime($d)) . ': ' . $people($c[$d] ?? 0)];
-    $c = $count('%Y-%m', array_key_first($months) . '-01 00:00:00');
-    foreach (array_keys($months) as $m) $vis['year'][] = ['v' => $c[$m] ?? 0, 'l' => date('M', strtotime("$m-01")), 't' => date('F Y', strtotime("$m-01")) . ': ' . $people($c[$m] ?? 0)];
-    /* totals count each person once per period, not once per bar */
-    foreach (['day' => date('Y-m-d') . ' 00:00:00', 'week' => date('Y-m-d', strtotime('-6 day')) . ' 00:00:00', 'month' => array_key_first($days) . ' 00:00:00', 'year' => array_key_first($months) . '-01 00:00:00'] as $k => $from) {
-      $s = $pdo->prepare('SELECT COUNT(DISTINCT vid) FROM fx_events WHERE at >= ?'); $s->execute([$from]); $vt[$k] = $people((int)$s->fetchColumn()); }
-  } catch (Throwable $e) { foreach ($vis as $k => $v) { $vis[$k] = $series[$k]; foreach ($vis[$k] as &$p) { $p['v'] = 0; $p['t'] = 'No visitor data yet'; } unset($p); $vt[$k] = $people(0); } }
-  /* laptop: a Sales graph and a Visitors graph; phone: one graph with a Sales / Visitors switch (the Visitors card is hidden) */
-  $graphs = ['sales' => '', 'visitors' => '']; $tots = ['sales' => '', 'visitors' => ''];
-  foreach (['sales' => $series, 'visitors' => $vis] as $m => $set) foreach ($ranges as $k => $l) {
-    $graphs[$m] .= str_replace('<div class="graph"', '<div class="graph" data-k="' . $m . '-' . $k . '"', fx_graph($set[$k], ucfirst($m) . ' ' . strtolower($l), $k !== 'month', $m === 'sales' ? 'money' : fn($v) => $people((int)$v)));
-    $tots[$m] .= '<span data-k="' . $m . '-' . $k . '"' . ($k === 'month' ? '' : ' hidden') . '>' . h($m === 'sales' ? $sum($k) : $vt[$k]) . '</span>';
+    $s = $pdo->prepare("SELECT DATE_FORMAT(at, '$fmt') k, COUNT(DISTINCT vid) n FROM fx_events WHERE at BETWEEN ? AND ? GROUP BY k"); $s->execute($rg['span']);
+    foreach ($s as $r) $vc[$r['k']] = (int)$r['n'];
+    $s = $pdo->prepare('SELECT COUNT(DISTINCT vid) FROM fx_events WHERE at BETWEEN ? AND ?'); $s->execute($rg['span']); $tot['visitors'] = $people((int)$s->fetchColumn());
+  } catch (Throwable $e) { $hasV = false; }
+  $pts = ['sales' => [], 'visitors' => []];
+  foreach ($slots as $k => [$l, $t]) {
+    $v = $sales[$k] ?? [0.0, 0];
+    $pts['sales'][] = ['v' => $v[0], 'l' => $l, 't' => $t . ': ' . $orders($v[1] ? $v : null)];
+    $pts['visitors'][] = ['v' => $vc[$k] ?? 0, 'l' => $l, 't' => $t . ': ' . ($hasV ? $people($vc[$k] ?? 0) : 'No visitor data yet')];
   }
-  $rangeSeg = '<div class="seg" role="group" aria-label="Period">' . implode('', array_map(fn($k, $l) => '<button type="button" data-r="' . $k . '"' . ($k === 'month' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($ranges), $ranges)) . '</div>';
+  /* laptop: a Sales graph and a Visitors graph; phone: one graph with a Sales / Visitors switch (the Visitors card is hidden) */
+  $graphs = []; $tots = [];
+  foreach ($pts as $m => $set) {
+    $graphs[$m] = str_replace('<div class="graph"', '<div class="graph" data-k="' . $m . '-x"', fx_graph($set, ucfirst($m) . ' ' . strtolower($rg['label']), false, $m === 'sales' ? 'money' : fn($v) => $people((int)$v)));
+    $tots[$m] = '<span data-k="' . $m . '-x">' . h($tot[$m]) . '</span>';
+  }
   $hideV = fn($html) => preg_replace('/(<(?:div class="graph"|span) data-k="visitors-[a-z]+")(?: hidden)?/', '$1 hidden', $html);
   /* stock running low (counted sizes at or below the warning level) */
   $low = fomaxo_low_stock(); $alerts = '';
@@ -1722,19 +1736,20 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   $aed = fn($v) => 'AED ' . number_format(round((float)$v));   // whole dirhams on the tiles; exact amounts are on Orders and Reports
   $plural = fn($n, $w) => (int)$n . ' ' . $w . ((int)$n === 1 ? '' : 's');
   page('Home', '<div class="db">' . flash()
+    . '<div class="rgbar">' . adm_range_form($rg, []) . '</div>'
     . '<div class="tiles">'
     . $tile((int)$todo['cod'], 'Cash to deliver', 'todo' . ($todo['cod'] ? ' hot' : ''), self_url(['orders' => 1, 'status' => 'New']))
     . $tile((int)$todo['card'], 'Card to deliver', 'todo' . ($todo['card'] ? ' hot' : ''), self_url(['orders' => 1, 'status' => 'Paid']))
-    . $tile($aed($today['sales']), 'Today · ' . $plural($today['n'], 'order'))
+    . $tile($aed($sumT), h($rg['label']) . ' · ' . $plural($sumN, 'order'), 'wr')
     . $tile($aed($month['sales']), date('M') . ' · ' . $plural($month['orders'], 'order'))
     . $tile(($profit < 0 ? '−' : '') . $aed(abs($profit)), ($profit < 0 ? 'Loss ' : 'Profit ') . date('M'), '', self_url(['reports' => 1]), $profit < 0 ? 'lvl-out' : 'lvl-ok')
     . '</div>'
     . ($month['no_cost'] ? '<p class="muted note">' . $plural($month['no_cost'], 'order') . ' this month ha' . ($month['no_cost'] > 1 ? 've' : 's') . ' no cost price, so profit shows too high. <a href="./?stock=1">Add costs</a></p>' : '')
     . '<div class="dgrid">'
-    . '<section class="card c-sales" data-m="sales" data-r="month"><div class="ch wrap2"><h2 class="dt">Sales</h2><div class="seg met" role="group" aria-label="Show"><button type="button" data-m="sales" class="on">Sales</button><button type="button" data-m="visitors">Visitors</button></div>' . $rangeSeg . '</div>'
+    . '<section class="card c-sales" data-m="sales" data-r="x"><div class="ch wrap2"><h2 class="dt">Sales</h2><div class="seg met" role="group" aria-label="Show"><button type="button" data-m="sales" class="on">Sales</button><button type="button" data-m="visitors">Visitors</button></div></div>'
     . '<div class="chartbox">' . $graphs['sales'] . $hideV($graphs['visitors']) . '</div>'
     . '<p class="sub"><span class="tip">Tap a bar to see the details</span><b class="tot">' . $tots['sales'] . $hideV($tots['visitors']) . '</b></p></section>'
-    . '<section class="card c-visits" data-m="visitors" data-r="month"><div class="ch wrap2"><h2>Visitors</h2>' . $rangeSeg . '</div>'
+    . '<section class="card c-visits" data-m="visitors" data-r="x"><div class="ch wrap2"><h2>Visitors</h2></div>'
     . '<div class="chartbox">' . $graphs['visitors'] . '</div>'
     . '<p class="sub"><span class="tip">Tap a bar to see the details</span><b class="tot">' . $tots['visitors'] . '</b></p></section>'
     . '<div class="lists"><section class="card c-orders"><div class="ch"><h2>Latest orders</h2><a href="./?orders=1">All orders</a></div>' . ($latest ? '<ul class="list orders">' . $latest . '</ul>' : '<p class="muted empty">No orders yet.</p>') . '</section>'
@@ -1823,7 +1838,13 @@ $qs = ['orders' => 1] + array_filter($f, fn($v) => $v !== '');
 $pager = ($pg > 1 ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg - 1])) . '">Newer</a>' : '')
        . ($sum['n'] > $pg * $per ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg + 1])) . '">Older</a>' : '');
 
-page('Orders', '<h1>Orders</h1>' . flash()
+$oq = $qs; unset($oq['from'], $oq['to'], $oq['p']);   // Today / 7 days / 30 days / All fill the From and To dates below
+$oseg = '';
+foreach (['today' => 0, '7' => 6, '30' => 29, 'all' => null] as $k => $back) {
+  $fr = $back === null ? '' : date('Y-m-d', strtotime("-$back day")); $to = $back === null ? '' : date('Y-m-d');
+  $oseg .= '<a href="' . h(self_url($oq + ($back === null ? [] : ['from' => $fr, 'to' => $to]))) . '"' . ($f['from'] === $fr && $f['to'] === $to ? ' class="on"' : '') . '>' . ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All'][$k] . '</a>';
+}
+page('Orders', '<div class="pagehead rg"><h1>Orders</h1><div class="arange"><div class="seg">' . $oseg . '</div></div></div>' . flash()
   . '<form class="filters card" method="get"><input type="hidden" name="orders" value="1">' . ($f['em'] !== '' ? '<input type="hidden" name="em" value="' . h($f['em']) . '">' : '')
   . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile, email or product"></div>'
   . '<div><label for="status" class="phx">Status</label>' . $sel('status', $stOpts) . '</div>'
