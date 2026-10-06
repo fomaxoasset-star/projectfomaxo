@@ -2377,8 +2377,8 @@ function qtyNudge(dc){
   if (u === 0) return 'Buy more, save more: <b>2 items 5% off</b> · <b>3 items 10% off + FREE 10ml mini</b> · <b>5+ items 15% off + FREE 10ml mini</b>';
   if (u === 1) return `Add <b>1 more item</b> for <b>5% off</b> <span class="qn-more">(3 items: 10% off + FREE 10ml mini)</span>`;
   if (u === 2) return `<b>5% off</b> unlocked<span class="qn-dot"> · </span><span class="qn-line">Add <b>1 more item</b> for <b>10% off${noMini ? '' : ' + a FREE 10ml mini'}</b></span>`;
-  if (u < 5) return `<b>10% off${freeMini}</b> unlocked · Add <b>${item(5 - u)}</b> for <b>15% off</b>`;
-  return `<b>15% off${freeMini}</b> unlocked · You have our best price`;
+  if (u < 5) return `<b>10% off${freeMini}</b> unlocked<span class="qn-dot"> · </span><span class="qn-line">Add <b>${item(5 - u)}</b> for <b>15% off</b></span>`;
+  return `<b>15% off${freeMini}</b> unlocked<span class="qn-dot"> · </span><span class="qn-line">You have our best price</span>`;
 }
 const pctTxt = v => String(v).replace(/\.0$/, '');
 function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) return null; t += Number(v) * l.qty; } return t; }
