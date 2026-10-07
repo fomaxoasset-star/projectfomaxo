@@ -245,22 +245,71 @@ function fomaxo_save_order($o) {
   if (!empty($o['wa_optin'])) { $cols[] = 'wa_optin'; $o['wa_optin'] = 1; }   // ticked "Send me offers and updates on WhatsApp"
   $vals = []; foreach ($cols as $c) $vals[] = is_bool($o[$c] ?? null) ? (int)$o[$c] : ($o[$c] ?? '');
   foreach (['subtotal', 'discount', 'fee', 'cost', 'items', 'lines_json', 'free_mini', 'ref'] as $c) if ($o[$c] === null) $vals[array_search($c, $cols)] = null;
-  $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ') VALUES (?' . str_repeat(', ?', count($cols)) . ')');
-  for ($try = 0; $try < 5; $try++) {   // the number is the row id; if an older order already uses that number, take the next one
-    $id = 0;
+  /* the number is given in the same step that saves the order (the highest FMX number + 1), so a save that fails never uses up a number */
+  $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ") SELECT CONCAT('FMX-', GREATEST(1000, COALESCE(MAX(CAST(SUBSTRING(order_no, 5) AS UNSIGNED)), 0)) + 1)"
+                       . str_repeat(', ?', count($cols)) . " FROM fx_orders WHERE order_no REGEXP '^FMX-[0-9]+$'");
+  for ($try = 0; $try < 5; $try++) {   // two orders at the same moment: the second one takes the next number
     try {
-      $ins->execute(array_merge(['new-' . bin2hex(random_bytes(8))], $vals));
-      $id = (int)$pdo->lastInsertId();
-      $no = 'FMX-' . $id;
-      $pdo->prepare('UPDATE fx_orders SET order_no = ? WHERE id = ?')->execute([$no, $id]);
-      return $no;
+      $ins->execute($vals);
+      $s = $pdo->prepare('SELECT order_no FROM fx_orders WHERE id = ?'); $s->execute([(int)$pdo->lastInsertId()]);
+      return (string)$s->fetchColumn() ?: null;
     } catch (Throwable $e) {
-      if ($id) { try { $pdo->prepare('DELETE FROM fx_orders WHERE id = ?')->execute([$id]); } catch (Throwable $e2) {} }
       error_log('FOMAXO save order: ' . $e->getMessage());
-      if (!$id) return null;
+      if (!($e instanceof PDOException) || (int)($e->errorInfo[1] ?? 0) !== 1062) return null;
     }
   }
   return null;
+}
+
+/* Orders written to the order files (one level above the website) that are not in the order list: kept when the database could not take them.
+   Only from the day the order list started, newest first. */
+function fomaxo_log_missing($pdo) {
+  $dir = dirname(__DIR__) . '/fomaxo-orders'; $out = [];
+  $since = (string)$pdo->query('SELECT MIN(created_at) FROM fx_orders')->fetchColumn();
+  $read = function ($file, $map) use (&$out) {
+    if (!is_file($file) || !($fh = @fopen($file, 'r'))) return;
+    if (fread($fh, 3) !== "\xEF\xBB\xBF") rewind($fh);   // the Excel mark at the start of the file
+    while (($r = fgetcsv($fh)) !== false) {
+      $no = trim($r[1] ?? '');
+      if (!preg_match('/^(FMX|FX)[-0-9A-Z]+$/', $no) || !strtotime($r[0] ?? '')) continue;   // the heading row and broken lines
+      $x = $map($r); $x['no'] = $no; $x['date'] = date('Y-m-d H:i:s', strtotime($r[0]));
+      $out[$no] = isset($out[$no]) ? array_merge($out[$no], array_filter($x, fn($v) => $v !== '')) : $x;   // a card order's later "PAID" line wins
+    }
+    fclose($fh);
+  };
+  $num = fn($v) => (float)preg_replace('/[^0-9.]/', '', (string)$v);
+  $read("$dir/cash-on-delivery-orders.csv", fn($r) => ['payment' => 'Cash on delivery', 'status' => 'New', 'name' => $r[2] ?? '', 'phone' => $r[3] ?? '', 'email' => $r[4] ?? '',
+        'emirate' => $r[5] ?? '', 'address' => $r[6] ?? '', 'note' => $r[7] ?? '', 'items' => $r[8] ?? '', 'subtotal' => $num($r[9] ?? ''), 'discount' => $num($r[10] ?? ''),
+        'fee' => $num($r[11] ?? ''), 'total' => $num($r[12] ?? ''), 'building' => $r[13] ?? '', 'room' => $r[14] ?? '', 'street' => $r[15] ?? '', 'area' => $r[16] ?? '']);
+  $read("$dir/orders.csv", fn($r) => ['payment' => str_starts_with((string)($r[2] ?? ''), 'Ziina') ? 'Card (Ziina)' : 'Cash on delivery',
+        'status' => str_contains((string)($r[2] ?? ''), 'PAID') ? 'Paid' : (str_contains((string)($r[2] ?? ''), 'awaiting') ? 'Awaiting payment' : 'New'),
+        'test' => str_contains((string)($r[2] ?? ''), 'TEST') ? 1 : 0, 'total' => $num($r[3] ?? ''), 'name' => $r[4] ?? '', 'phone' => $r[5] ?? '', 'email' => $r[6] ?? '',
+        'emirate' => $r[7] ?? '', 'address' => $r[8] ?? '', 'note' => $r[9] ?? '', 'items' => $r[10] ?? '']);
+  if (!$out) return [];
+  $have = [];
+  foreach (array_chunk(array_keys($out), 500) as $ch) {
+    $s = $pdo->prepare('SELECT order_no FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($ch), '?')) . ')'); $s->execute($ch);
+    foreach ($s->fetchAll(PDO::FETCH_COLUMN) as $n) $have[$n] = 1;
+  }
+  $out = array_filter($out, fn($x) => !isset($have[$x['no']]) && ($since === '' || $x['date'] >= $since));
+  uasort($out, fn($a, $b) => strcmp($b['date'], $a['date']));
+  return array_values($out);
+}
+
+/* Puts one order from the order files into the order list with its own number (nothing else changes: stock is not moved). */
+function fomaxo_log_add($pdo, $no) {
+  foreach (fomaxo_log_missing($pdo) as $x) {
+    if ($x['no'] !== $no) continue;
+    $x += ['subtotal' => null, 'discount' => null, 'fee' => null, 'building' => '', 'room' => '', 'street' => '', 'area' => '', 'test' => 0];
+    $cols = ['order_no', 'created_at', 'payment', 'status', 'subtotal', 'discount', 'fee', 'total', 'name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'address', 'note', 'items', 'test', 'source', 'admin_note'];
+    $vals = [$no, $x['date'], $x['payment'], $x['status'], $x['subtotal'], $x['discount'], $x['fee'], $x['total'], mb_substr($x['name'], 0, 80), mb_substr($x['phone'], 0, 25), mb_substr($x['email'], 0, 120),
+             mb_substr($x['emirate'], 0, 30), mb_substr($x['building'], 0, 40), mb_substr($x['room'], 0, 20), mb_substr($x['street'], 0, 100), mb_substr($x['area'], 0, 80), mb_substr($x['address'], 0, 300),
+             mb_substr($x['note'], 0, 300), $x['items'], (int)$x['test'], 'file', 'Added from the order file.'];
+    if ($x['status'] === 'Paid') { $cols[] = 'paid_at'; $vals[] = $x['date']; }
+    try { $pdo->prepare('INSERT INTO fx_orders (' . implode(', ', $cols) . ') VALUES (' . implode(',', array_fill(0, count($cols), '?')) . ')')->execute($vals); return true; }
+    catch (Throwable $e) { error_log('FOMAXO add logged order: ' . $e->getMessage()); return false; }
+  }
+  return false;
 }
 
 /* Changes a few fields of an order (ref, status …). */

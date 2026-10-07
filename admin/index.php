@@ -102,7 +102,7 @@ tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgb
 .oacts{display:flex;gap:5px;flex-wrap:wrap;margin:0}.oacts form{margin:0}.oacts button{font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}.oacts button:hover{border-color:var(--gold)}.oacts .a-paid{border-color:var(--gold);color:var(--gold)}.oacts .a-delivered{border-color:var(--ok);color:var(--ok)}.oacts .a-cancel,.oacts .a-refund{color:var(--bad)}.tag.p-Unpaid{color:var(--warn);border-style:dashed}.wait{display:block;font-size:11px;color:var(--muted);margin-top:3px}.wait.late{color:var(--bad);font-weight:600}.track{list-style:none;display:flex;margin:0 0 14px;padding:0;max-width:640px}.track li{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;font-size:12px;color:var(--muted)}.track li+li::before{content:'';position:absolute;top:13px;right:calc(50% + 16px);left:calc(-50% + 16px);height:2px;background:var(--line)}.track li.done+li.done::before{background:var(--gold)}.track li.bad::before{background:var(--bad)!important}.track i{font-style:normal;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:12px;color:var(--muted)}.track .done i{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.track .bad i{background:var(--bad);border-color:var(--bad);color:#fff}.track b{color:var(--ink);font-size:12.5px;font-weight:600}.track .done span{color:var(--ink)}@media (min-width:760px){.olist.acts td:nth-child(8){white-space:nowrap;width:1%}.olist.acts .oacts{flex-wrap:nowrap}.olist.acts td:nth-child(6) .tags{flex-wrap:nowrap}}.tag.p-Paid{color:var(--gold)}.tags{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.oacts button:disabled{opacity:.35;cursor:default}.oacts button.done:disabled{opacity:1}.oacts .a-paid.done{background:var(--gold);color:var(--gold-ink)}.oacts .a-delivered.done{background:var(--ok);border-color:var(--ok);color:var(--gold-ink)}.order-acts{margin:0 0 14px}.order-acts button{font-size:12.5px;padding:7px 14px}
 /* order buttons: three equal square buttons (Paid or Refund, Mark delivered, Cancel order); small on laptop, big enough to tap on phone */
 .oacts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr) minmax(0,1fr);gap:6px;min-width:330px}.oacts form{display:flex}.oacts button{width:100%;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;letter-spacing:.02em;border:1px solid var(--line);background:transparent;color:var(--ink);text-align:center;overflow:hidden;text-overflow:ellipsis}.oacts .a-paid{border-color:var(--gold);color:var(--ink)}.oacts .a-refund,.oacts .a-cancel{border-color:var(--bad);color:var(--bad)}.oacts .a-delivered{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.oacts .a-paid.done{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.oacts .a-delivered.done{background:var(--ok);border-color:var(--ok);color:var(--gold-ink)}.oacts button:disabled{opacity:1;border-color:var(--line);color:var(--muted);background:transparent;opacity:.55;cursor:default}.oacts button.done:disabled{opacity:1}.oacts button:not(:disabled):hover{filter:brightness(1.12)}.stsel{font-weight:700;border-width:2px}.stsel.s-New,.stsel.s-Paid{border-color:var(--gold)}.stsel.s-Delivered{border-color:var(--ok)}.stsel.s-Cancelled,.stsel.s-Refunded{border-color:var(--bad)}/* a coloured edge on each order row (gold pending, green delivered, red cancelled/refunded) */
-.olist.acts tr.row>td:first-child{border-left:4px solid transparent}.olist.acts tr.st-New>td:first-child,.olist.acts tr.st-Paid>td:first-child{border-left-color:var(--gold)}.olist.acts tr.st-Delivered>td:first-child{border-left-color:var(--ok)}.olist.acts tr.st-Cancelled>td:first-child,.olist.acts tr.st-Refunded>td:first-child{border-left-color:var(--bad)}.olist.acts tr.st-Delivered{background:color-mix(in srgb,var(--ok) 7%,transparent)}@media (max-width:759px){.olist.acts tr.row>td:first-child{border-left:0}.olist.acts tr.row{border-left:4px solid transparent}.olist.acts tr.st-New,.olist.acts tr.st-Paid{border-left-color:var(--gold)}.olist.acts tr.st-Delivered{border-left-color:var(--ok)}.olist.acts tr.st-Cancelled,.olist.acts tr.st-Refunded{border-left-color:var(--bad)}}.order-acts{max-width:460px}.order-acts button{font-size:13px;padding:9px 10px}
+.olist.acts tr.row>td:first-child{border-left:4px solid transparent}.olist.acts tr.st-Awaiting>td{opacity:.55}.olist.acts tr.st-New>td:first-child,.olist.acts tr.st-Paid>td:first-child{border-left-color:var(--gold)}.olist.acts tr.st-Delivered>td:first-child{border-left-color:var(--ok)}.olist.acts tr.st-Cancelled>td:first-child,.olist.acts tr.st-Refunded>td:first-child{border-left-color:var(--bad)}.olist.acts tr.st-Delivered{background:color-mix(in srgb,var(--ok) 7%,transparent)}@media (max-width:759px){.olist.acts tr.row>td:first-child{border-left:0}.olist.acts tr.row{border-left:4px solid transparent}.olist.acts tr.st-New,.olist.acts tr.st-Paid{border-left-color:var(--gold)}.olist.acts tr.st-Delivered{border-left-color:var(--ok)}.olist.acts tr.st-Cancelled,.olist.acts tr.st-Refunded{border-left-color:var(--bad)}}.order-acts{max-width:460px}.order-acts button{font-size:13px;padding:9px 10px}
 /* status tags in the same colours */
 .tags .tag{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px}.tags .s-New{color:var(--gold)}.tags .s-Delivered{color:#3f78b5}.tags .p-Paid{color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}.tags .p-Unpaid{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);border-style:solid;border-color:color-mix(in srgb,var(--warn) 35%,transparent)}.tags .s-Refunded{border-style:dashed}@media (prefers-color-scheme:dark){.tags .s-Delivered{color:#7fb0ea}}@media (max-width:759px){.oacts{min-width:0;gap:8px}.oacts button{min-height:42px;font-size:12.5px;letter-spacing:0;padding:8px 4px}.olist td:nth-child(8) .oacts{margin-top:8px}}
 @media (max-width:759px){
@@ -495,6 +495,14 @@ if (empty($_SESSION['admin'])) {
 
 /* ================= 3) logged in: orders ================= */
 
+/* an order that is only in the order files (the database could not take it): put it in the list with its own number */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['log_add'])) {
+  if (!csrf_ok()) { flash('Please try again.'); go(['orders' => 1]); }
+  $no = (string)$_POST['log_add'];
+  if (fomaxo_log_add($pdo, $no)) flash($no . ' is now in Orders. Stock was not changed.', true); else flash('Could not add ' . $no . '. Please try again.');
+  go(['orders' => 1]);
+}
+
 /* save a change to one order */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
   /* one-tap buttons send "quick" and go back to the list they came from */
@@ -533,7 +541,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
 /* an order is Pending until it is delivered; cash orders are Unpaid (status New) until marked paid or delivered */
 function fx_tags($o) {
   $st = $o['status'];
-  $d = in_array($st, ['New', 'Paid'], true) ? '<span class="tag s-New">Pending</span>' : '<span class="tag s-' . h(strtok($st, ' ')) . '">' . h($st) . '</span>';
+  $d = in_array($st, ['New', 'Paid'], true) ? '<span class="tag s-New">Pending</span>' : '<span class="tag s-' . h(strtok($st, ' ')) . '">' . h($st === 'Awaiting payment' ? 'Card not paid' : $st) . '</span>';
   $p = in_array($st, ['New', 'Paid', 'Delivered'], true) ? ($st === 'New' ? '<span class="tag p-Unpaid">Unpaid</span>' : '<span class="tag p-Paid">Paid</span>') : '';
   $days = in_array($st, ['New', 'Paid'], true) ? (int)floor((time() - strtotime($o['created_at'])) / 86400) : 0;
   return '<span class="tags">' . $d . $p . '</span>' . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '');
@@ -2336,8 +2344,8 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
 $f = ['q' => trim((string)($_GET['q'] ?? '')), 'status' => (string)($_GET['status'] ?? ''), 'pay' => (string)($_GET['pay'] ?? ''),
       'from' => (string)($_GET['from'] ?? ''), 'to' => (string)($_GET['to'] ?? ''), 'em' => mb_substr(trim((string)($_GET['em'] ?? '')), 0, 30)];
 $where = []; $args = [];
-if ($f['status'] === '') $where[] = "status <> 'Awaiting payment'";            // default: every real order
-elseif ($f['status'] === 'pending') $where[] = "status IN ('New', 'Paid')";
+/* default: every order number, so the list reads in sequence (card payments not finished show greyed as "Card not paid") */
+if ($f['status'] === 'pending') $where[] = "status IN ('New', 'Paid')";
 elseif ($f['status'] === 'unpaid') $where[] = "status = 'New' AND payment = 'Cash on delivery'";
 elseif ($f['status'] !== 'all' && in_array($f['status'], FX_STATUSES, true)) { $where[] = 'status = ?'; $args[] = $f['status']; }
 if ($f['pay'] === 'cod') $where[] = "payment = 'Cash on delivery'"; elseif ($f['pay'] === 'card') $where[] = "payment LIKE 'Card%'";
@@ -2380,7 +2388,7 @@ $s->execute($args); $rows = $s->fetchAll();
 
 $sel = fn($name, $opts) => '<select id="' . $name . '" name="' . $name . '">' . implode('', array_map(fn($k, $v) => '<option value="' . h($k) . '"' . ((string)$f[$name] === (string)$k ? ' selected' : '') . '>' . h($v) . '</option>', array_keys($opts), $opts)) . '</select>';
 $stOpts = ['' => 'All orders', 'pending' => 'Pending (not delivered)', 'unpaid' => 'Unpaid cash', 'New' => 'Pending · unpaid cash', 'Paid' => 'Pending · paid',
-           'Delivered' => 'Delivered', 'Cancelled' => 'Cancelled', 'Refunded' => 'Refunded', 'Awaiting payment' => 'Card not paid', 'all' => 'Everything (incl. unpaid card)'];
+           'Delivered' => 'Delivered', 'Cancelled' => 'Cancelled', 'Refunded' => 'Refunded', 'Awaiting payment' => 'Card not paid'];
 /* tracking chips: how many orders sit in each step (search, payment and dates apply; the status filter does not) */
 $tw = array_values(array_filter($where, fn($w) => !str_starts_with($w, 'status')));
 $s = $pdo->prepare("SELECT COALESCE(SUM(status IN ('New','Paid')), 0) pending, COALESCE(SUM(status = 'New' AND payment = 'Cash on delivery'), 0) unpaid,
@@ -2408,6 +2416,23 @@ $qs = ['orders' => 1] + array_filter($f, fn($v) => $v !== '');
 $pager = ($pg > 1 ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg - 1])) . '">Newer</a>' : '')
        . ($sum['n'] > $pg * $per ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg + 1])) . '">Older</a>' : '');
 
+/* orders kept only in the order files (the database could not take them at the time): listed so nothing is missing from your records */
+$logCard = '';
+try { $miss = fomaxo_log_missing($pdo); } catch (Throwable $e) { $miss = []; }
+if ($miss) {
+  $lr = '';
+  foreach ($miss as $x)
+    $lr .= '<tr><td class="no" data-l=""><b>' . h($x['no']) . '</b>' . (!empty($x['test']) ? ' <span class="muted small">test</span>' : '') . '</td><td data-l="">' . h(date('d/m/Y, H:i', strtotime($x['date']))) . '</td>'
+         . '<td data-l="">' . hx($x['name']) . '<div class="muted small">' . h($x['phone']) . ($x['emirate'] !== '' ? ' · ' . h($x['emirate']) : '') . '</div></td>'
+         . '<td class="small" data-l="">' . h(mb_strimwidth(str_replace(' | ', ', ', (string)$x['items']), 0, 90, '…')) . '</td>'
+         . '<td data-l="">' . h($x['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . ' · ' . h(['New' => 'Unpaid', 'Paid' => 'Paid', 'Awaiting payment' => 'Card not paid'][$x['status']] ?? $x['status']) . '</td>'
+         . '<td class="num" data-l="">' . money($x['total']) . '</td>'
+         . '<td data-l=""><form method="post">' . csrf_field() . '<input type="hidden" name="log_add" value="' . h($x['no']) . '"><button class="btn sm">Add to Orders</button></form></td></tr>';
+  $logCard = '<section class="card logmiss"><h2>Not in this list yet <span class="muted small">' . count($miss) . '</span></h2>'
+    . '<p class="muted small" style="margin:0 0 8px">These orders were kept in the order file because the database could not take them at that moment. Add each one so your records are complete (stock is not changed).</p>'
+    . '<div class="cscroll"><table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th class="num">Total</th><th></th></tr></thead><tbody>' . $lr . '</tbody></table></div></section>';
+}
+
 $oq = $qs; unset($oq['from'], $oq['to'], $oq['p']);   // Today / 7 days / 30 days / All fill the From and To dates below
 $oseg = '';
 foreach (['today' => 0, '7' => 6, '30' => 29, 'all' => null] as $k => $back) {
@@ -2434,4 +2459,5 @@ page('Orders', '<div class="pagehead rg"><h1>Orders</h1><div class="arange"><div
   . '<div class="fill">' . ($rows ? '<table class="olist acts"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
-  . '<p class="muted small after">The boxes count pending and delivered orders and leave out cancelled and refunded orders and test payments. "Waiting" shows how many days a pending order has not been delivered (red from 3 days). Unpaid card attempts are hidden unless you pick "Everything".</p></div>', true, true);
+  . $logCard
+  . '<p class="muted small after">The boxes count pending and delivered orders and leave out cancelled and refunded orders and test payments. "Waiting" shows how many days a pending order has not been delivered (red from 3 days). Card payments that were started but not finished show greyed as "Card not paid", so every order number is in the list.</p></div>', true, true);
