@@ -3869,7 +3869,7 @@ function rwBindForm(form, p, link, onDone){
 const rwPhotoList = d => d.reviews.slice().sort((a, b) => b.date.localeCompare(a.date)).flatMap(r => (r.photos || []).map(src => ({src, r})));
 function rwGallery(d){
   const L = rwPhotoList(d); if (!L.length) return '';
-  return `<div class="rw-gal"><span class="rw-gal-h">Customer photos <span>(${L.length})</span></span><div class="rw-gal-row">${L.map(x => `<button type="button" data-rwph="${esc(x.src)}" aria-label="Open photo from ${esc(capWords(x.r.name || ''))}"><img src="${esc(x.src)}" alt="Customer photo of ${esc(x.r.name)}" loading="lazy"></button>`).join('')}</div></div>`;
+  return `<div class="rw-gal" role="group" aria-label="Customer photos"><div class="rw-gal-row">${L.map(x => `<button type="button" data-rwph="${esc(x.src)}" aria-label="Open photo from ${esc(capWords(x.r.name || ''))}"><img src="${esc(x.src)}" alt="Customer photo of ${esc(x.r.name)}" loading="lazy"></button>`).join('')}</div></div>`;
 }
 /* tap a customer photo: the photo large, with its review; ‹ › for the other photos */
 function rwLightbox(src, list){
