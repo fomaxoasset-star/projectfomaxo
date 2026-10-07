@@ -8,9 +8,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_
 require __DIR__ . '/store-lib.php';
 
 $STORE_EMAIL = 'fomaxoasset@gmail.com';
-$COD_FEE = 10;    // AED added to every cash on delivery order — keep in sync with index.html (codFee)
 require_once __DIR__ . '/orders-lib.php';
-[$COD_MIN, $COD_MAX] = fomaxo_cod_limits();   // AED minimum and maximum (after discount, before the fee), set on admin → Settings; max 0 = no limit
+[$COD_MIN, $COD_MAX, $COD_FEE] = fomaxo_cod_limits();   // AED minimum and maximum (after discount, before the fee) and the fee, set on admin → Settings; max 0 = no limit
 
 $in = json_decode(file_get_contents('php://input'), true) ?: [];
 if (!empty($in['website'])) { echo json_encode(['order' => 'FMX-0']); exit; }   // spam trap (hidden field)

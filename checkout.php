@@ -20,7 +20,7 @@ $key = $cfg['secret_key'] ?? '';
 
 /* ---- minimum order + cash on delivery (AED) — keep in sync with the website ----
    Minimums count the total after the multi-buy discount. The cash on delivery fee is added on top. */
-$MIN_ORDER = 30; $COD_FEE = 10;   // cash on delivery minimum and maximum: admin → Settings → Cash on delivery (read below)
+$MIN_ORDER = 30;   // cash on delivery minimum, maximum and fee: admin → Settings → Cash on delivery (read below)
 function fail($code, $msg) { http_response_code($code); echo json_encode(['error' => $msg]); exit; }
 function aed($fils) { return 'AED ' . number_format($fils / 100, 2, '.', ','); }
 function aed_short($fils) { return 'AED ' . ($fils % 100 ? number_format($fils / 100, 2, '.', ',') : number_format($fils / 100, 0, '.', ',')); }
@@ -39,7 +39,7 @@ $CATALOG = [
 /* products added or edited on fomaxo.com/admin → Products win; the list above is only used when the database is down */
 require_once __DIR__ . '/orders-lib.php';
 if ($dbCatalog = fomaxo_catalog_db()) $CATALOG = $dbCatalog;
-[$COD_MIN, $COD_MAX] = fomaxo_cod_limits();   // $COD_MAX 0 = no upper limit
+[$COD_MIN, $COD_MAX, $COD_FEE] = fomaxo_cod_limits();   // $COD_MAX 0 = no upper limit, $COD_FEE 0 = no fee
 
 $in = json_decode(file_get_contents('php://input'), true);
 if (!is_array($in)) $in = [];
@@ -160,7 +160,7 @@ if ($pay === 'cod') {
   $rows = $summary;
   if ($discFils > 0) $rows[] = "$discLabel: -" . aed($discFils);
   if ($miniName) $rows[] = "FREE 10ml mini: $miniName";
-  $rows[] = 'Cash on delivery fee: ' . aed($COD_FEE * 100);
+  if ($COD_FEE > 0) $rows[] = 'Cash on delivery fee: ' . aed($COD_FEE * 100);
   /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
   require_once __DIR__ . '/orders-lib.php';
   $saveLines = array_map(fn($l) => ['id' => $l['id'] ?? '', 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? []))], $lines);
@@ -205,7 +205,7 @@ if ($pay === 'cod') {
   fomaxo_en_many([$cu['name'], $cu['address'], $cu['note']]);   // Arabic typed by the customer: English in this email and in admin
   $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) . "\n\n" . implode("\n", $rows)
         . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\n$discLabel: -" . aed($discFils) : '')
-        . "\nCash on delivery fee: " . aed($COD_FEE * 100) . "\nTotal: " . aed($totalFils)
+        . ($COD_FEE > 0 ? "\nCash on delivery fee: " . aed($COD_FEE * 100) : '') . "\nTotal: " . aed($totalFils)
         . "\n\nName: " . fomaxo_en_both($cu['name']) . "\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: " . fomaxo_en_both($cu['address']) . ($cu['note'] !== '' ? "\nNote: " . fomaxo_en_both($cu['note']) : '') . "\nWhatsApp offers: " . ($cu['wa'] ? 'Yes' : 'No') . $waLines;
   $mailed = fomaxo_mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
                   "From: FOMAXO Orders <mail@fomaxo.com>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");

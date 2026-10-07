@@ -1109,7 +1109,10 @@ if (isset($_GET['settings'])) {
       if (!ctype_digit($mn) || (int)$mn > 1000000) { flash('Please type the cash on delivery minimum in AED (numbers only, 0 for none).'); go(['settings' => 1]); }
       if ($mx !== '' && (!ctype_digit($mx) || (int)$mx > 1000000)) { flash('Please type the cash on delivery maximum in AED (numbers only), or leave it empty for no limit.'); go(['settings' => 1]); }
       if ((int)$mx > 0 && (int)$mx <= (int)$mn) { flash('The maximum must be more than the minimum.'); go(['settings' => 1]); }
-      fomaxo_setting($pdo, 'cod', json_encode(['min' => (int)$mn, 'max' => (int)$mx]));
+      $fe = trim((string)($_POST['cod_fee'] ?? ''));
+      if ($fe === '') $fe = '0';
+      if (!ctype_digit($fe) || (int)$fe > 1000) { flash('Please type the cash on delivery fee in AED (numbers only, 0 for no fee).'); go(['settings' => 1]); }
+      fomaxo_setting($pdo, 'cod', json_encode(['min' => (int)$mn, 'max' => (int)$mx, 'fee' => (int)$fe]));
       flash('Cash on delivery saved. It shows on the website within a minute.', true); go(['settings' => 1]);
     }
     $email = trim((string)($_POST['orders_email'] ?? ''));
@@ -1118,7 +1121,7 @@ if (isset($_GET['settings'])) {
     flash('Settings saved.', true); go(['settings' => 1]);
   }
   $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) ?: [];
-  [$codMin, $codMax] = fomaxo_cod_limits($pdo);
+  [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo);
   $adOn = fn($k) => ($ads[$k] ?? '') !== '' ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>';
   $adRow = fn($k, $label, $ph, $where) => '<label for="ads_' . $k . '" class="ads-l"><span>' . $label . '</span><small>' . $adOn($k) . '</small></label><input id="ads_' . $k . '" name="ads_' . $k . '" class="ads-in" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" value="' . h($ads[$k] ?? '') . '"><p class="muted small" style="margin:4px 0 0">' . $where . '</p>';
   page('Settings', '<h1>Settings</h1>' . flash()
@@ -1131,7 +1134,8 @@ if (isset($_GET['settings'])) {
     . '<h2 style="margin-top:0">Cash on delivery</h2>'
     . '<label for="cod_min">Minimum order (AED)</label><input id="cod_min" name="cod_min" inputmode="numeric" pattern="[0-9]*" required value="' . $codMin . '">'
     . '<label for="cod_max">Maximum order (AED)</label><input id="cod_max" name="cod_max" inputmode="numeric" pattern="[0-9]*" placeholder="Empty = no limit" value="' . ($codMax ?: '') . '">'
-    . '<p class="muted small" style="margin:6px 0 0">Cash on delivery works from the minimum up to just under the maximum (order after discounts, before the AED 10 fee). Customers only see the maximum once their order reaches it; then they pay by card. Leave the maximum empty for no limit.</p>'
+    . '<label for="cod_fee">Cash on delivery fee (AED)</label><input id="cod_fee" name="cod_fee" inputmode="numeric" pattern="[0-9]*" placeholder="0 = no fee" value="' . $codFee . '">'
+    . '<p class="muted small" style="margin:6px 0 0">Cash on delivery works from the minimum up to just under the maximum (order after discounts, before the fee). Customers only see the maximum once their order reaches it; then they pay by card. Leave the maximum empty for no limit. The fee is added to every cash on delivery order; 0 = no fee.</p>'
     . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
     . '<form class="card" method="post">' . csrf_field()
     . '<h2 style="margin-top:0">Email sending</h2>'
