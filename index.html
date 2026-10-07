@@ -1875,12 +1875,13 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
 .reorder{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;border:1px solid var(--line-2);background:var(--panel);padding:14px 18px}
 .reorder .ro-imgs{display:flex}
 .reorder .ro-imgs img{width:46px;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line);background:var(--panel)}
-.reorder .ro-imgs img + img{margin-left:-16px}
+.reorder .ro-imgs img + img{margin-inline-start:-16px}
 .reorder .ro-t{display:flex;flex-direction:column;gap:2px;min-width:0}
 .reorder small{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
 .reorder b{font-family:var(--display);font-weight:400;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--ivory)}
 .reorder .ro-t span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ro-sec{padding:28px 0 0}
+section.sec.ro-sec{padding:clamp(20px,3vw,32px) 0 0}
+.ro-sec+section.sec{padding-top:clamp(36px,5vw,64px)}
 .reorder.ro-bag{grid-template-columns:auto 1fr;margin-bottom:14px}
 .reorder.ro-bag .btn{grid-column:1/-1;width:100%}
 @media(max-width:600px){.reorder{grid-template-columns:auto 1fr;gap:12px;padding:12px}.reorder .btn{grid-column:1/-1;width:100%}}
