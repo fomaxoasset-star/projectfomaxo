@@ -781,40 +781,40 @@ if (isset($_GET['offer'])) {
     : '<span class="lvl-ok">●</span> On' . ($mode === 'date' ? ': ends ' . date('d/m/Y, g:i a', $e) . ' (' . ($l >= 86400 ? floor($l / 86400) . 'd ' : '') . floor($l % 86400 / 3600) . 'h ' . floor($l % 3600 / 60) . 'm left)' : ': always on, no timer') . '. Showing: ' . ($what ? implode(' + ', $what) : 'nothing (both switches off)') . '.';
   $radio = fn($v, $t, $sub) => '<label class="om"><input type="radio" name="mode" value="' . $v . '"' . ($mode === $v ? ' checked' : '') . '><span><b>' . $t . '</b><small>' . $sub . '</small></span></label>';
   $box = fn($n, $c, $t, $sub) => '<label class="om"><input type="checkbox" name="' . $n . '" value="1"' . ($c ? ' checked' : '') . '><span><b>' . $t . '</b><small>' . $sub . '</small></span></label>';
-  page('Offer', '<h1>Offer</h1>' . flash()
+  page('Offer', '<h1>Offer</h1>' . flash() . '<div class="ofg">'
     . '<style>.om{text-transform:none;letter-spacing:normal;font-size:14px;color:var(--ink);display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin:0 0 8px;border:1px solid var(--line);border-radius:10px;cursor:pointer}.om input{margin:3px 0 0;width:auto;flex:none;accent-color:var(--gold)}.om b{display:block;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}.om small{display:block;color:var(--muted);font-size:13px;line-height:1.4;margin-top:3px}.om:has(input:checked){border-color:var(--gold)}'
-    . '.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.sg2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}.odate{margin:-2px 0 10px 34px}</style>'
-    . '<form class="card" method="post" style="max-width:640px">' . csrf_field()
-    . '<p class="small" style="margin:0 0 14px">' . $state . '</p>'
+    . '.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.sg2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}.odate{margin:-2px 0 10px 34px}.ofg{display:grid;gap:14px;max-width:640px}.ofst{margin:0 0 12px}.ofbt{margin:12px 0 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}@media (max-width:759px){.om{padding:8px 10px;margin-bottom:6px}.om small{display:none}.om.keep small{display:block}.npr{display:grid;grid-template-columns:1fr 1fr;gap:0 6px}.cpq{flex-wrap:nowrap}.cpq button{padding:5px 9px;font-size:12px}.ofg h2{margin:12px 0 6px}.odate{margin-left:26px}}@media (min-width:1000px){.ofg{max-width:none;grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start}.ofc{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.ofg .card{padding:12px 16px;margin:0}.ofg h2{font-size:15px;margin:10px 0 6px}.ofst{margin-bottom:8px}.om{padding:7px 10px;margin-bottom:6px;font-size:13.5px}.om small{font-size:12px;line-height:1.35;margin-top:1px}.odate{margin:-2px 0 8px 26px}.odate label{margin-top:4px}.ofg input,.ofg select{padding-top:6px;padding-bottom:6px}.ofg label{margin-top:6px}.ofbt{margin-top:8px}.npr{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}}</style>'
+    . '<form class="card ofs" method="post">' . csrf_field()
+    . '<p class="small ofst">' . $state . '</p><div class="ofc"><div>'
     . '<h2 style="margin-top:0">Timer</h2>'
     . $radio('date', 'Countdown to an end date', 'Days / hours / minutes / seconds count down; everything hides by itself at the end.')
     . '<div class="odate"><div class="cpq" role="group" aria-label="Quick end"><button type="button" data-h="24">24 hours</button><button type="button" data-h="48">48 hours</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button></div>'
     . '<div class="sg2"><div><label for="sale_end_d">Ends</label><input id="sale_end_d" type="date" name="sale_end_d" value="' . ($on ? date('Y-m-d', $e) : '') . '"></div><div><label for="sale_end_t">End time (UAE)</label><input id="sale_end_t" type="time" name="sale_end_t" value="' . ($on ? date('H:i', $e) : '') . '"></div></div></div>'
     . $radio('always', 'Always on (no timer)', '"Limited time offer · HURRY UP!!!" with no clock, until you turn it off.')
     . $radio('off', 'Off', 'Nothing shows on the website.')
-    . '<h2>Discount %</h2>'
-    . '<label class="om" style="cursor:default;align-items:center"><span style="flex:1"><b>% shown in the popup</b><small>Leave empty to show the biggest real saving' . ($realMax ? ' (now ' . $realMax . '%)' : '') . '. It can\'t be more than that: set the old prices on Products first.</small></span>'
+    . '</div><div><h2 style="margin-top:0">Discount %</h2>'
+    . '<label class="om keep" style="cursor:default;align-items:center"><span style="flex:1"><b>% shown in the popup</b><small>Leave empty to show the biggest real saving' . ($realMax ? ' (now ' . $realMax . '%)' : '') . '. It can\'t be more than that: set the old prices on Products first.</small></span>'
     . '<span style="display:flex;align-items:center;gap:6px;flex:none"><input name="pct" type="number" min="1" max="' . ($realMax ?: 99) . '" step="1" inputmode="numeric" value="' . h($pct) . '" placeholder="' . ($realMax ?: '') . '" style="width:84px;margin:0;text-align:center">%</span></label>'
     . '<h2>What shows</h2>'
     . $box('popup', $pop, 'Popup', 'The box with × that opens a few seconds after someone arrives (once per visit, never on checkout).')
     . $box('line', $line, 'Line by sale prices', '"Limited time offer · Ends in …" on the product page and shop cards of items with an old price.')
-    . '<p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Save</button>' . ($mode !== 'off' ? '<button class="btn line" name="all_off" value="1">Turn everything off</button>' : '') . '</p>'
-    . '<p class="muted small" style="margin:10px 0 0">Old prices are set on Products. Prices are not changed here.</p></form>'
-    . '<form class="card" method="post" style="max-width:640px;margin-top:14px">' . csrf_field() . '<input type="hidden" name="np_save" value="1">'
+    . '</div></div><p class="ofbt"><button class="btn">Save</button>' . ($mode !== 'off' ? '<button class="btn line" name="all_off" value="1">Turn everything off</button>' : '') . '</p>'
+    . '<span class="muted small">Old prices are set on Products. Prices are not changed here.</span></p></form>'
+    . '<form class="card ofn" method="post">' . csrf_field() . '<input type="hidden" name="np_save" value="1">'
     . '<h2 style="margin-top:0">New product popup</h2>'
-    . '<p class="small" style="margin:0 0 12px">' . ($np['on'] ? '<span class="lvl-ok">●</span> On: "' . ($np['status'] === 'arrived' ? 'Just arrived' : 'Coming soon') . ' · ' . h($np['name']) . '".' : '<span class="lvl-low">●</span> Off.') . '</p>'
+    . '<p class="small ofst">' . ($np['on'] ? '<span class="lvl-ok">●</span> On: "' . ($np['status'] === 'arrived' ? 'Just arrived' : 'Coming soon') . ' · ' . h($np['name']) . '".' : '<span class="lvl-low">●</span> Off.') . '</p>'
     . $box('np_on', !empty($np['on']), 'Show the new product popup', 'Shown once to each visitor (the sale popup then shows on their next visit). Never on checkout.')
-    . '<label class="om"><input type="radio" name="np_status" value="soon"' . ($np['status'] !== 'arrived' ? ' checked' : '') . '><span><b>Coming soon</b><small>No button to buy; "Explore FOMAXO" goes to the fragrances.</small></span></label>'
-    . '<label class="om"><input type="radio" name="np_status" value="arrived"' . ($np['status'] === 'arrived' ? ' checked' : '') . '><span><b>Just arrived</b><small>"Shop now" opens the product page.</small></span></label>'
+    . '<div class="npr"><label class="om"><input type="radio" name="np_status" value="soon"' . ($np['status'] !== 'arrived' ? ' checked' : '') . '><span><b>Coming soon</b><small>No button to buy; "Explore FOMAXO" goes to the fragrances.</small></span></label>'
+    . '<label class="om"><input type="radio" name="np_status" value="arrived"' . ($np['status'] === 'arrived' ? ' checked' : '') . '><span><b>Just arrived</b><small>"Shop now" opens the product page.</small></span></label></div>'
     . '<label for="np_name">Product name</label><input id="np_name" name="np_name" maxlength="40" value="' . h($np['name']) . '" placeholder="e.g. Oud Royale">'
     . '<label for="np_line">Short line (optional)</label><input id="np_line" name="np_line" maxlength="90" value="' . h($np['line']) . '" placeholder="e.g. A new Elite fragrance, launching this month">'
     . '<label for="np_product">Product page and photo (optional)</label><select id="np_product" name="np_product"><option value="">None (no photo)</option>'
     . implode('', array_map(fn($id, $n) => '<option value="' . h($id) . '"' . ($np['product'] === $id ? ' selected' : '') . '>' . h($n) . '</option>', array_keys($plist), $plist)) . '</select>'
     . '<p class="muted small" style="margin:6px 0 0">Pick the product once it is added on Products (it can stay hidden until launch). Its first photo is shown in the popup.</p>'
-    . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
+    . '<p class="ofbt"><button class="btn">Save</button></p></form></div>'
     . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},e=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000+b.dataset.h*3600000);'
     . 'set("sale_end_d",e.getFullYear()+"-"+p(e.getMonth()+1)+"-"+p(e.getDate()));set("sale_end_t",p(e.getHours())+":"+p(e.getMinutes()));f.querySelector("input[name=mode][value=date]").checked=true;document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}});'
-    . 'document.querySelectorAll(".odate input").forEach(function(i){i.addEventListener("input",function(){document.querySelector("input[name=mode][value=date]").checked=true})})</script>');
+    . 'document.querySelectorAll(".odate input").forEach(function(i){i.addEventListener("input",function(){document.querySelector("input[name=mode][value=date]").checked=true})})</script>', true);
 }
 
 /* ---- settings: admin password, where order emails go, low stock warning ---- */
