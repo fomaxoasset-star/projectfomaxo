@@ -2052,6 +2052,9 @@ html[lang=ar] .amt,html[lang=ar] .mode-switch,html[lang=ar] .acro{direction:ltr;
 @media(max-width:430px){.nav-in>.icons{gap:0}.nav-in>.icons .icon{width:36px}}   /* phone: عربي sits next to search; slimmer icons keep the header inside the screen */
 html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 [data-mode=light] .lang-sw{box-shadow:0 0 0 1px rgba(143,107,55,.5),0 2px 8px rgba(143,107,55,.3)}
+/* phone: the page always fits the screen. Nothing can push it sideways, and typing boxes use 16px text so iPhones don't zoom in when a box is tapped */
+@supports (overflow:clip){html,body{overflow-x:clip}}
+@media(max-width:900px){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}}
 </style>
 </head>
 <body>
