@@ -471,6 +471,14 @@ function fomaxo_mail_save_password($pass) {
   return $ok;
 }
 /* $subject may be plain text or already =?UTF-8?B?…?= encoded; $headers is the usual "From: …\r\nReply-To: …" block. Returns true when sent. */
+/* answer the shopper right away, then keep working (emails, Arabic → English) after the page has its reply.
+   Hostinger runs PHP on LiteSpeed (litespeed_finish_request); elsewhere fastcgi_finish_request; with neither, the reply simply goes out at the end as before. */
+function fomaxo_reply_now(array $answer) {
+  echo json_encode($answer);
+  ignore_user_abort(true);
+  if (function_exists('litespeed_finish_request')) litespeed_finish_request();
+  elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+}
 function fomaxo_mail($to, $subject, $body, $headers, &$err = null) {
   if (!preg_match('/^=\?UTF-8\?B\?/i', $subject) && preg_match('/[^\x20-\x7e]/', $subject)) $subject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
   $err = null;
