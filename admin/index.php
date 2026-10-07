@@ -1748,8 +1748,17 @@ if (isset($_GET['reviews'])) {
     }
     if (isset($_POST['reply'])) {   // the shop's public answer under a review; empty or Delete removes it
       $id = (string)($_POST['id'] ?? ''); $txt = isset($_POST['del']) ? '' : trim(str_replace("\r", '', mb_substr((string)$_POST['reply'], 0, 2000)));
-      $ok = rv_change(function (&$list) use ($id, $txt) { foreach ($list as &$r) if ($r['id'] === $id) { if ($txt === '') unset($r['reply'], $r['reply_at']); else { $r['reply'] = $txt; $r['reply_at'] = date('c'); } return true; } return false; });
-      flash($ok ? ($txt === '' ? 'Reply deleted.' : 'Reply saved. It shows under the review on the website.') : 'That reply could not be saved. Please try again.', (bool)$ok);
+      /* Arabic review: written in English here, the customer gets it in Arabic (the ready reply's own Arabic when it was not changed) */
+      $en = null; $warn = '';
+      if ($txt !== '' && !empty($_POST['ar']) && !fx_has_ar($txt)) {
+        $en = $txt;
+        $norm = fn($s) => preg_replace('/\s+/u', ' ', trim((string)$s));
+        if ($norm($txt) === $norm($_POST['ready_en'] ?? '') && fx_has_ar((string)($_POST['ready_ar'] ?? ''))) $txt = trim((string)$_POST['ready_ar']);
+        elseif (($ar = fomaxo_ar($txt)) !== null) $txt = $ar;
+        else $warn = ' Arabic translation is not available right now, so it was saved in English. Tap Edit reply and save again later.';
+      }
+      $ok = rv_change(function (&$list) use ($id, $txt, $en) { foreach ($list as &$r) if ($r['id'] === $id) { unset($r['reply_en']); if ($txt === '') unset($r['reply'], $r['reply_at']); else { $r['reply'] = $txt; $r['reply_at'] = date('c'); if ($en !== null) $r['reply_en'] = $en; } return true; } return false; });
+      flash($ok ? ($txt === '' ? 'Reply deleted.' : ($en !== null && $warn === '' ? 'Reply saved in Arabic. It shows under the review on the website.' : 'Reply saved. It shows under the review on the website.' . $warn)) : 'That reply could not be saved. Please try again.', (bool)$ok && $warn === '');
       go($back);
     }
     $id = (string)($_POST['id'] ?? ''); $hide = ($_POST['hide'] ?? '') === '1';
@@ -1808,12 +1817,15 @@ if (isset($_GET['reviews'])) {
   };
   $replyBox = function ($r) use ($hidden, $suggest) {   // your reply under a review: shown, then a box to write, change or delete it
     $rep = (string)($r['reply'] ?? ''); $keep = '';
+    $isAr = fx_has_ar((string)($r['text'] ?? ''));   // Arabic review: you write in English, the customer gets Arabic
+    $val = $rep !== '' ? ($isAr && fx_has_ar($rep) ? (string)($r['reply_en'] ?? fomaxo_en($rep)) : $rep) : preg_replace('/\s{2,}/u', ' ', $suggest($r, $isAr));
     foreach (['rp', 'rq', 'vf', 'rs', 'v'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
-    return ($rep !== '' ? '<div class="rrep"><b>Reply from FOMAXO</b><p>' . nl2br(h($rep)) . '</p></div>' : '')
+    return ($rep !== '' ? '<div class="rrep"><b>Reply from FOMAXO</b><p>' . (($r['reply_en'] ?? '') !== '' && fx_has_ar($rep) ? nl2br(h($r['reply_en'])) . '<span class="arx" dir="rtl" lang="ar">' . nl2br(h($rep)) . '</span>' : hx($rep, true)) . '</p></div>' : '')
       . '<div class="racts"><details class="rrf"><summary class="btn line sm">' . ($rep !== '' ? 'Edit reply' : 'Reply') . '</summary><form method="post">' . csrf_field() . $hidden('id', $r['id']) . $keep
-      . '<textarea name="reply" dir="auto" rows="4" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($rep !== '' ? $rep : preg_replace('/\s{2,}/u', ' ', $suggest($r))) . '</textarea>'
-      . ($rep === '' ? '<p class="muted small rsug">Ready reply for this review. Change anything before you save.'
-          . (preg_match('/\p{Arabic}/u', (string)($r['text'] ?? '')) ? '<br><b>In English:</b> ' . h(preg_replace('/\s{2,}/u', ' ', $suggest($r, true))) : '') . '</p>' : '')
+      . ($isAr ? $hidden('ar', '1') . ($rep === '' ? $hidden('ready_en', $val) . $hidden('ready_ar', preg_replace('/\s{2,}/u', ' ', $suggest($r))) : '') : '')
+      . '<textarea name="reply" dir="auto" rows="4" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($val) . '</textarea>'
+      . ($isAr ? '<p class="muted small rsug"><b>Arabic review:</b> write in English, the customer gets your reply in Arabic.' . ($rep === '' ? ' This is a ready reply, change anything before you save.' : '') . '</p>'
+        : ($rep === '' ? '<p class="muted small rsug">Ready reply for this review. Change anything before you save.</p>' : ''))
       . '<div class="emo" aria-label="Add an emoji" onclick="var b=event.target.closest(\'button\');if(!b)return;var t=this.closest(\'form\').querySelector(\'textarea\'),s=t.selectionStart,e=t.selectionEnd,x=b.textContent;t.value=t.value.slice(0,s)+x+t.value.slice(e);t.focus();t.selectionStart=t.selectionEnd=s+x.length">'
       . implode('', array_map(fn($e) => '<button type="button">' . $e . '</button>', ['🙏', '❤️', '😊', '✨', '🎁', '👍', '😍', '🥰', '🌸', '💐', '🤗', '😢'])) . '</div>'
       . '<div class="rrb"><button class="btn sm">Save reply</button>' . ($rep !== '' ? '<button class="btn line sm danger" name="del" value="1" onclick="return confirm(\'Delete your reply?\')">Delete reply</button>' : '') . '</div></form></details>';

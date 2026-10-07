@@ -570,5 +570,23 @@ function fomaxo_en_many(array $texts) {
   return $out;
 }
 function fomaxo_en($s) { $s = (string)$s; return $s === '' ? '' : fomaxo_en_many([$s])[$s]; }
+/* English → Arabic for the shop's reply to an Arabic review (written in English in admin). Same free service; null when it can't be reached */
+function fomaxo_ar($s) {
+  $s = trim((string)$s); if ($s === '' || !function_exists('curl_init')) return null;
+  $out = [];
+  foreach (preg_split('/(?<=[.!?\n])\s*/u', $s, -1, PREG_SPLIT_NO_EMPTY) as $p) {
+    while (strlen($p) > 450) { $cut = mb_strcut($p, 0, 450); $out[] = $cut; $p = substr($p, strlen($cut)); }
+    $out[] = $p;
+  }
+  foreach ($out as &$p) {
+    $c = curl_init('https://api.mymemory.translated.net/get?' . http_build_query(['q' => $p, 'langpair' => 'en|ar']));
+    curl_setopt_array($c, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_CONNECTTIMEOUT => 3]);
+    $j = json_decode((string)curl_exec($c), true); curl_close($c);
+    $t = trim(html_entity_decode((string)($j['responseData']['translatedText'] ?? ''), ENT_QUOTES, 'UTF-8'));
+    if ((int)($j['responseStatus'] ?? 0) !== 200 || $t === '' || stripos($t, 'MYMEMORY WARNING') !== false || !fx_has_ar($t)) return null;
+    $p = $t;
+  }
+  return implode(' ', $out);
+}
 /* for emails and Excel: "English (Arabic as typed)" when the customer typed Arabic, else the text as it is */
 function fomaxo_en_both($s) { $s = (string)$s; if (!fx_has_ar($s)) return strtr($s, FX_AR_DIGITS); $en = fomaxo_en($s); return $en === strtr($s, FX_AR_DIGITS) ? $s : "$en ($s)"; }
