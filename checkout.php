@@ -96,8 +96,11 @@ foreach ($lines as $l) {
   $id  = is_string($l['id'] ?? null) ? $l['id'] : '';
   $opt = (string)($l['opt'] ?? '');
   $qty = (int)($l['qty'] ?? 0);
-  if (!isset($CATALOG[$id]) || !isset($CATALOG[$id]['prices'][$opt]) || $qty < 1 || $qty > 20) {
+  if (!isset($CATALOG[$id]) || !isset($CATALOG[$id]['prices'][$opt]) || $qty < 1) {
     http_response_code(400); echo json_encode(['error'=>'An item in your bag is no longer available. Please refresh and try again.']); exit;
+  }
+  if ($qty > 99) {   // same limit as the bag (99 of one item); was 20 here, which refused big cash orders with the wrong message
+    http_response_code(400); echo json_encode(['error'=>'You can order up to 99 of one item online. For a bigger order, please message us on WhatsApp.']); exit;
   }
   $p = $CATALOG[$id];
   $isSet = $p['kind'] === 'set';
