@@ -508,7 +508,6 @@ footer{border-top:1px solid var(--line);background:var(--deep);padding:80px 0 34
 .fgrid a{display:block;color:var(--muted);font-size:14px;margin-bottom:12px;transition:color .3s}
 .fgrid a:hover{color:var(--gold-hi)}
 .fpriv{margin:14px 0 0;font-size:11px;color:var(--dim)}
-.fpriv a{color:var(--muted);border-bottom:1px solid var(--line-2)}
 .fbase{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);border-top:1px solid var(--line);padding-top:26px}
 @media(max-width:860px){.fgrid{grid-template-columns:1fr 1fr}.fgrid>div:first-child{grid-column:1/-1}}
 
@@ -2035,36 +2034,6 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   .acc .body{padding-bottom:12px;font-size:13.5px;line-height:1.6}
   .acc .body p+p{margin-top:6px}
 }
-/* privacy page */
-.pol.pol-one{grid-template-columns:minmax(0,1fr)}
-section.sec.pol-sec{padding-top:clamp(36px,5vw,64px)}
-.pol{display:grid;grid-template-columns:220px minmax(0,1fr);gap:clamp(28px,5vw,80px);align-items:start}
-.pol-nav{display:flex;flex-direction:column;gap:4px;position:sticky;top:110px}
-.pol-nav a{padding:10px 14px;border-inline-start:2px solid var(--line);font-size:14px;color:var(--muted)}
-.pol-nav a.on{border-color:var(--gold);color:var(--ivory)}
-.pol-body{display:flex;flex-direction:column;gap:34px;max-width:760px;min-width:0}
-.pol-body h2{font-size:clamp(22px,2.4vw,30px);margin-bottom:10px}
-.pol-body p{color:var(--muted);font-size:16px;line-height:1.8;margin:0 0 10px}
-.pol-c{display:flex;flex-wrap:wrap;gap:10px 26px}
-.pol-c a,.pdp-ship a{color:var(--champagne);border-bottom:1px solid var(--line-2)}
-.pol-biz{display:grid;border-top:1px solid var(--line)}
-.pol-biz>div{display:flex;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px solid var(--line);font-size:15px}
-.pol-biz small{color:var(--muted);font-size:13px;letter-spacing:.06em;flex:none}
-.pol-biz b,.pol-biz a{color:var(--ivory);font-weight:400;text-align:end;overflow-wrap:anywhere}
-.flegal{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 26px;margin:0 0 22px;font-size:13px}
-.flegal a{color:var(--muted)}
-.flegal a:hover,.pol-nav a:hover{color:var(--gold)}
-.pdp-ship a{flex:none}
-@media(max-width:860px){
-  .pol{grid-template-columns:minmax(0,1fr);gap:22px}
-  .pol-nav{position:static;flex-direction:row;flex-wrap:wrap;gap:8px}
-  .pol-nav a{border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12.5px}
-  .pol-body{gap:26px}
-  .pol-body p{font-size:15px;line-height:1.7}
-  .pol-biz>div{flex-direction:column;gap:4px}
-  .pol-biz b,.pol-biz a{text-align:start}
-  .flegal{gap:6px 18px;font-size:12px}
-}
 /* ===== Arabic (عربي) — the site turns right-to-left; English text is swapped by assets/i18n-ar.js ===== */
 html.i18n-wait body{visibility:hidden}
 html[lang=ar]{--serif:"Cormorant Garamond","Amiri","Times New Roman",serif;--display:"Jost","Tajawal","Helvetica Neue",Arial,sans-serif;--sans:"Jost","Tajawal","Helvetica Neue",Arial,sans-serif}
@@ -2153,7 +2122,7 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
       <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">Personal Care</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
     </div>
     <div class="fbase"><span>© 2026 FOMAXO™. All rights reserved.</span><span>Inspire greatness</span></div>
-    <p class="fpriv">We count anonymous visits to improve the store. <a href="#/privacy">Privacy</a></p>
+    <p class="fpriv">We count anonymous visits (no cookies, nothing shared) to improve the store.</p>
   </div>
 </footer>
 
@@ -3365,30 +3334,6 @@ function bindPartner(){
     location.href = `mailto:${S.contact.email}?subject=${encodeURIComponent('FOMAXO Franchise enquiry — ' + f.get('country'))}&body=${encodeURIComponent(body)}`; };
 }
 function notFound(){ return pageHead('Not found', 'Page <em class="metal">not found</em>', 'The page you are looking for does not exist.') + `<section class="sec"><div class="wrap"><a class="btn" href="#/">Return home</a></div></section>`; }
-/* ---------- privacy page: #/privacy ----------
-   Plain paragraphs only (no bold or links inside), so the Arabic site can swap each one whole (assets/i18n-ar.js). */
-const POL = {
-  privacy: { title: 'Privacy', lead: 'We only collect what we need to deliver your order and run our store. We never sell your information.', sec: [
-    ['What we collect when you order', ['Your name, mobile number, delivery address, the items you ordered and, if you give them, your email and delivery note.', 'We keep this in our secure order database so we can deliver your order, contact you about it and help you afterwards.']],
-    ['Checkout details', ['If you type your name or mobile at checkout but do not finish, we may keep those details so we can help you complete your order.', 'Your details are also remembered on your own device, so you do not have to type them again next time.']],
-    ['Card payments', ['Card payments are handled by Ziina. We never see or store your card number.']],
-    ['Visit counting', ['We count visits to improve the store. Each browser gets a random anonymous number. We note the pages viewed, the type of device and the country or emirate of the visit.', 'We do not keep your IP address. This counting uses no cookies, and these stats stay on our own server.']],
-    ['Advertising and analytics', ['We use the Meta Pixel, the TikTok Pixel and Google tags (Google Analytics and Google Ads). They set cookies or similar identifiers and send these partners the pages and products you view, items added to bag, checkouts started and completed purchases (order number, products and amount in AED).', 'We do not send them your name, mobile number, email or address.', 'These partners use this to measure our ads and to show FOMAXO ads to people who visited our store, under their own privacy policies.', 'You can limit this in your browser cookie settings, your device advertising settings or the ad settings of your Meta, TikTok or Google account.'], [['Meta privacy policy', 'https://www.facebook.com/privacy/policy/'], ['TikTok privacy policy', 'https://www.tiktok.com/legal/page/row/privacy-policy/en'], ['Google privacy policy', 'https://policies.google.com/privacy']]],
-    ['Emails and reviews', ['If you join our email list, we keep your email to send you launches and previews. You can ask us to remove it at any time.', 'If you write a review, your name, country and review are shown on our website.']],
-    ['Who we share it with', ['We only share your details with the courier who delivers your order and with Ziina when you pay by card. We never sell or rent your information.']],
-    ['Your choices', ['You can ask us to show, correct or delete your details at any time by emailing us or messaging us on WhatsApp.']]
-  ]}
-};
-function policyPage(k){
-  const P0 = POL[k], C = S.contact;
-  document.title = P0.title + ' — FOMAXO';
-  const body = P0.sec.map(([h, ps, links]) => `<section><h2>${esc(h)}</h2>${ps.map(p => `<p>${esc(p)}</p>`).join('')}${links ? `<p class="pol-c">${links.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)}</a>`).join('')}</p>` : ''}</section>`).join('');
-  const help = `<section><h2>Questions?</h2><p>Message us on WhatsApp or email us. We are happy to help.</p><p class="pol-c"><a href="https://wa.me/${C.phones[0].number.replace(/\D/g,'')}" target="_blank" rel="noopener">WhatsApp <span data-no-tr>${esc(C.phones[0].number)}</span></a><a href="mailto:${C.email}" data-no-tr>${esc(C.email)}</a></p></section>`;
-  return pageHead(esc(P0.title), esc(P0.title), esc(P0.lead)) + `
-  <section class="sec pol-sec"><div class="wrap pol pol-one">
-    <div class="pol-body">${body}${help}</div>
-  </div></section>`;
-}
 
 /* ============================ CHECKOUT PAGE ============================ */
 const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
@@ -3991,7 +3936,6 @@ function route(){
     case 'collections': html = collections(seg[1]); if (seg[1] === 'elite') after = bindElite; if (seg[1] === 'fragrance') after = bindFragColl; break;
     case 'personal-care': html = personalCare(); break;
     case 'about': html = about(); break;
-    case 'privacy': html = policyPage(seg[0]); break;
     case 'contact': html = contact(q); after = bindContact; break;
     case 'partnership': location.replace('#/franchise'); return;
     case 'franchise': html = partnership(); after = bindPartner; break;
@@ -4283,5 +4227,5 @@ renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); p
 (function(){var ar=document.documentElement.lang==="ar";
 document.querySelectorAll(".lang-sw").forEach(function(b){if(ar){b.textContent="EN";b.lang="en";b.setAttribute("aria-label","English");b.title="English"}
 b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href)location.reload();else location.replace(u)}});
-if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=4";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
+if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=3";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
 </body></html>
