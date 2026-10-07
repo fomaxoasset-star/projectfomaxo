@@ -2039,6 +2039,16 @@ html[dir=rtl] .reorder.ro-home{background:linear-gradient(270deg,rgba(215,170,10
   .co-row{font-size:13.5px}
   .co-row .price{font-size:15px}
 }
+/* laptop order summary: compact product rows (size · type on one line); a long list scrolls inside the box so totals, coupon and "You saved" stay on screen */
+@media(min-width:961px){
+  .co-item{grid-template-columns:40px minmax(0,1fr) auto;gap:12px}
+  .co-img{width:40px}
+  .co-item h4{font-size:15px}
+  .co-item .o,.co-item .o-sz{display:inline;margin-top:0}
+  .co-item .o-sz::before{content:" · "}
+  .co-item .o-picks{display:block;margin-top:2px}
+  .co-items{max-height:max(150px,calc(100vh - var(--ann-h,40px) - 560px));overflow-y:auto;overscroll-behavior:contain;padding:8px 8px 10px 9px;margin:-8px -8px 0 -9px;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+}
 /* laptop checkout on screens up to 920px high (720, 768, 864, 900...): tighter spacing so it fits one screen; fitCo() scales the rest */
 @media(min-width:961px) and (max-height:920px){
   .co{padding-top:6px;padding-bottom:16px}
