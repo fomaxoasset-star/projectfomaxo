@@ -20,7 +20,7 @@ $key = $cfg['secret_key'] ?? '';
 
 /* ---- minimum order + cash on delivery (AED) — keep in sync with the website ----
    Minimums count the total after the multi-buy discount. The cash on delivery fee is added on top. */
-$MIN_ORDER = 30; $COD_MIN = 200; $COD_FEE = 10; $COD_MAX = 2000;   // COD only under AED 2,000 (same as index.html COD_MAX)
+$MIN_ORDER = 30; $COD_FEE = 10;   // cash on delivery minimum and maximum: admin → Settings → Cash on delivery (read below)
 function fail($code, $msg) { http_response_code($code); echo json_encode(['error' => $msg]); exit; }
 function aed($fils) { return 'AED ' . number_format($fils / 100, 2, '.', ','); }
 function aed_short($fils) { return 'AED ' . ($fils % 100 ? number_format($fils / 100, 2, '.', ',') : number_format($fils / 100, 0, '.', ',')); }
@@ -39,6 +39,7 @@ $CATALOG = [
 /* products added or edited on fomaxo.com/admin → Products win; the list above is only used when the database is down */
 require_once __DIR__ . '/orders-lib.php';
 if ($dbCatalog = fomaxo_catalog_db()) $CATALOG = $dbCatalog;
+[$COD_MIN, $COD_MAX] = fomaxo_cod_limits();   // $COD_MAX 0 = no upper limit
 
 $in = json_decode(file_get_contents('php://input'), true);
 if (!is_array($in)) $in = [];
@@ -142,7 +143,7 @@ $afterFils = $subFils - $discFils;               // total after the multi-buy di
 /* minimum order: checked here too, so it can't be bypassed */
 if ($afterFils < $MIN_ORDER * 100) fail(400, 'Minimum order ' . aed_short($MIN_ORDER * 100) . ' · add ' . aed_short($MIN_ORDER * 100 - $afterFils) . ' more.');
 if ($pay === 'cod' && $afterFils < $COD_MIN * 100) fail(400, 'Cash on delivery is available for orders above ' . aed_short($COD_MIN * 100) . '. Add ' . aed_short($COD_MIN * 100 - $afterFils) . ' more to activate COD.');
-if ($pay === 'cod' && $afterFils >= $COD_MAX * 100) fail(400, 'Cash on delivery is for orders under ' . aed_short($COD_MAX * 100) . '. Please pay by card.');
+if ($pay === 'cod' && $COD_MAX > 0 && $afterFils >= $COD_MAX * 100) fail(400, 'Cash on delivery is for orders under ' . aed_short($COD_MAX * 100) . '. Please pay by card.');
 
 /* FREE 10ml mini: the customer's pick if it comes in 10ml, otherwise the first scent that does */
 $miniName = null;

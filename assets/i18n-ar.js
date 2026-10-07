@@ -761,6 +761,7 @@
     [/^(·\s*)?(\d+)% off$/, function(m){ return (m[1] || '') + 'خصم ' + m[2] + '%'; }],
     [/^(\d+) items? (\d+)% off$/, function(m){ return cnt(m[1], 'قطعة', 'قطعتان', 'قطع', 'قطعة') + ' خصم ' + m[2] + '%'; }],
     [/^(\d+) vials$/, function(m){ return m[1] + ' قوارير'; }],
+    [/^Secure checkout · (Card, Apple Pay, Google Pay · )?Cash on delivery over (AED [\d,.]+) · Free UAE delivery$/, function(m){ return 'دفع آمن · ' + (m[1] ? 'بطاقة، Apple Pay، Google Pay · ' : '') + 'الدفع عند الاستلام للطلبات فوق ' + m[2] + ' · توصيل مجاني داخل الإمارات'; }],
     [/^For orders above (AED [\d,.]+) · (AED [\d,.]+) fee$/, function(m){ return 'للطلبات فوق ' + m[1] + ' · رسوم ' + m[2]; }],
     [/^Cash on delivery is for orders under (AED [\d,.]+)\. Please pay by card\.$/, function(m){ return 'الدفع عند الاستلام متاح للطلبات أقل من ' + m[1] + '. يرجى الدفع بالبطاقة.'; }],
     [/^Cash on delivery is for orders (under|above) (AED [\d,.]+)$/, function(m){ return 'الدفع عند الاستلام متاح للطلبات ' + (m[1] === 'under' ? 'أقل من ' : 'فوق ') + m[2]; }],
