@@ -1849,6 +1849,11 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
 .promo .pm-name{display:block;margin:16px 0 6px;font-family:var(--display);font-weight:300;font-size:30px;line-height:1.1;letter-spacing:.12em;text-transform:uppercase;color:var(--ivory)}
 .promo .pm-line{margin:0 0 4px;font-size:14px;line-height:1.5;color:var(--muted)}
 .promo.pnew .btn{margin-top:18px}
+.promo .pm-items{display:flex;gap:10px;margin:14px -6px 0;padding:2px 6px 6px;overflow-x:auto;justify-content:safe center;scrollbar-width:thin}
+.promo .pm-item{flex:0 0 96px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ivory);text-decoration:none}
+.promo .pm-item img{width:96px;height:112px;object-fit:cover;border:1px solid var(--line-2)}
+.promo .pm-item b{font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.25}
+.promo .pm-item span{font-size:12px;color:var(--gold-hi)}.promo .pm-item s{color:var(--muted);font-size:10.5px}
 .promo .pm-no{display:inline-block;margin-top:12px;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 @media (max-width:600px){.promo-box{max-width:340px;padding:30px 18px 18px}.promo .pm-big{font-size:44px}.pm-cd{gap:6px}.pm-cd span{min-width:0;flex:1;font-size:21px}}
 .p-off{align-self:center;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#e04a3f;padding:6px 9px;line-height:1}
@@ -2362,13 +2367,14 @@ const moneyHTML = (v, dec) => hasPrice(v) ? `<span class="amt"><span class="cur"
 const wasHTML = (p, size) => { const c = p.compareAt && p.compareAt[size]; return hasPrice(c) && c > p.prices[size] ? `<s class="was">${moneyHTML(c)}</s> ` : ''; };
 const priceHTML = (p, size, cls='price') => { const m = moneyHTML(p.prices[size]); return m ? `<span class="${cls}">${wasHTML(p, size)}${m}</span>` : `<span class="${cls} na">Price on request</span>`; };
 /* limited-time sale countdown: SALE_END comes from products.php (set on fomaxo.com/admin → Offer); on products / sizes with an old price */
-let SALE_END = 0, SALE_ALWAYS = false, SALE_POPUP = true, SALE_LINE = true, SALE_PCT = 0, NEW_POP = null;   // NEW_POP: {status: soon|arrived, name, line, product} from admin → Offer   // SALE_PCT: % typed on the admin (never more than the real saving)
+let SALE_END = 0, SALE_ALWAYS = false, SALE_POPUP = true, SALE_LINE = true, SALE_PCT = 0, NEW_POP = null, SALE_ITEMS = [], SALE_WORDS = {};   // SALE_ITEMS: the products in the offer (none = all on sale); SALE_WORDS: {title, sub, btn} typed on the admin   // NEW_POP: {status: soon|arrived, name, line, product} from admin → Offer   // SALE_PCT: % typed on the admin (never more than the real saving)
    // SALE_ALWAYS: offer on with no timer; popup / line: what shows (admin → Offer)
-try { const v = JSON.parse(localStorage.getItem('fomaxo_sale') || '{}'); SALE_END = +v.e || 0; SALE_ALWAYS = !!v.a; SALE_POPUP = v.p !== false; SALE_LINE = v.l !== false; SALE_PCT = +v.pc || 0; NEW_POP = v.np || null; } catch(e) {}
+try { const v = JSON.parse(localStorage.getItem('fomaxo_sale') || '{}'); SALE_END = +v.e || 0; SALE_ALWAYS = !!v.a; SALE_POPUP = v.p !== false; SALE_LINE = v.l !== false; SALE_PCT = +v.pc || 0; NEW_POP = v.np || null; SALE_ITEMS = Array.isArray(v.it) ? v.it : []; SALE_WORDS = v.w || {}; } catch(e) {}
+const inOffer = p => !SALE_ITEMS.length || SALE_ITEMS.includes(p.id);
 const onSale = (p, s) => { const v = p.prices[s], c = p.compareAt && p.compareAt[s]; return hasPrice(v) && hasPrice(c) && +c > +v; };
 const saleLeft = () => { const ms = SALE_END - Date.now(); if (ms <= 0) return ''; const t = Math.floor(ms / 1000), d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), x = t % 60, p = n => String(n).padStart(2, '0');
   return (d ? `${d}d ` : '') + `${p(h)}h ${p(m)}m ${p(x)}s`; };
-const saleCD = on => { const l = on ? saleLeft() : ''; return `<p class="sale-cd" data-cd${on ? ' data-on' : ''}${SALE_LINE && (l || (on && SALE_ALWAYS)) ? '' : ' hidden'}>${ICON.lasting}<span>Limited time offer</span><span class="cd-t"${l ? '' : ' hidden'}>Ends in <b>${l}</b></span></p>`; };
+const saleCD = on => { const l = on ? saleLeft() : ''; return `<p class="sale-cd" data-cd${on ? ' data-on' : ''}${SALE_LINE && (l || (on && SALE_ALWAYS)) ? '' : ' hidden'}>${ICON.lasting}<span>${esc(SALE_WORDS.title || 'Limited time offer')}</span><span class="cd-t"${l ? '' : ' hidden'}>Ends in <b>${l}</b></span></p>`; };
 function saleTick(){ const l = saleLeft(); const ms = SALE_END - Date.now(), pm = document.querySelector('.promo');
   if (pm && !pm.classList.contains('al')) { if (!l) pm.remove(); else { const t = Math.floor(ms / 1000), v = {Days: Math.floor(t / 86400), Hours: Math.floor(t % 86400 / 3600), Min: Math.floor(t % 3600 / 60), Sec: t % 60}; pm.querySelectorAll('[data-pm]').forEach(b => b.textContent = String(v[b.dataset.pm]).padStart(2, '0')); } }
   document.querySelectorAll('[data-cd]').forEach(e => { const show = SALE_LINE && (!!l || SALE_ALWAYS) && e.hasAttribute('data-on'); e.hidden = !show; e.querySelector('.cd-t').hidden = !l; if (l) e.querySelector('b').textContent = l; }); }
@@ -2381,25 +2387,29 @@ function promoMaybe(){
   promoT = setTimeout(() => {
     if (/^#\/checkout/.test(location.hash) || document.querySelector('.promo')) return;
     /* the new product popup first, once per visitor and product; the sale popup then shows on their next visit */
-    const np = NEW_POP, npKey = np ? np.status + '|' + np.name : '';
+    const np = NEW_POP, npKey = np ? (np.label || np.status) + '|' + np.name : '';
     let npSeen = ''; try { npSeen = localStorage.getItem('fomaxo_np_seen') || ''; } catch(e) {}
     if (np && npSeen !== npKey) {
       try { sessionStorage.setItem('fomaxo_promo', '1'); localStorage.setItem('fomaxo_np_seen', npKey); } catch(e) {}
-      const p = np.product && P[np.product], arr = np.status === 'arrived', pic = p && p.images && p.images[0];
-      return promoOpen(`<div class="promo pnew" role="dialog" aria-modal="true" aria-label="${arr ? 'Just arrived' : 'Coming soon'}"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
-        <span class="pm-eye">${arr ? 'Just arrived' : 'Coming soon'}</span>${pic ? `<img class="pm-img" ${cardPic(pic)} alt="">` : ''}<b class="pm-name">${esc(np.name)}</b>${np.line ? `<p class="pm-line">${esc(np.line)}</p>` : ''}
-        <a class="btn" href="${arr && p && !p.hidden ? '#/product/' + p.id : '#/fragrances'}" data-pm-close>${arr ? 'Shop now' : 'Explore FOMAXO'}</a><button type="button" class="pm-no" data-pm-close>Close</button></div></div>`);
+      const p = np.product && P[np.product], arr = !!(p && !p.hidden), pic = p && p.images && p.images[0], lab = np.label || (np.status === 'arrived' ? 'Just arrived' : 'Coming soon');
+      return promoOpen(`<div class="promo pnew" role="dialog" aria-modal="true" aria-label="${esc(lab)}"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
+        <span class="pm-eye">${esc(lab)}</span>${pic ? `<img class="pm-img" ${cardPic(pic)} alt="">` : ''}<b class="pm-name">${esc(np.name)}</b>${np.line ? `<p class="pm-line">${esc(np.line)}</p>` : ''}
+        <a class="btn" href="${arr ? '#/product/' + p.id : '#/fragrances'}" data-pm-close>${arr ? 'Shop now' : 'Explore FOMAXO'}</a><button type="button" class="pm-no" data-pm-close>Close</button></div></div>`);
     }
     const al = !saleLeft() && SALE_ALWAYS; if (!SALE_POPUP || (!saleLeft() && !al)) return;
-    let pct = 0; S.products.forEach(p => p.sizes.forEach(z => { if (onSale(p, z)) pct = Math.max(pct, Math.round((p.compareAt[z] - p.prices[z]) / p.compareAt[z] * 100)); }));
+    const off = (p, z) => onSale(p, z) ? Math.round((p.compareAt[z] - p.prices[z]) / p.compareAt[z] * 100) : 0;
+    const picked = SALE_ITEMS.map(id => P[id]).filter(p => p && !p.hidden && p.sizes.some(z => onSale(p, z)));
+    let pct = 0; (picked.length ? picked : S.products).forEach(p => p.sizes.forEach(z => { pct = Math.max(pct, off(p, z)); }));
     if (!pct) return;
     if (SALE_PCT > 0 && SALE_PCT < pct) pct = SALE_PCT;
     try { sessionStorage.setItem('fomaxo_promo', '1'); } catch(e) {}
     const u = ['Days', 'Hours', 'Min', 'Sec'].map(l => `<span><b data-pm="${l}">00</b><small>${l}</small></span>`).join('');
     promoOpen(`<div class="promo${al ? ' al' : ''}" role="dialog" aria-modal="true" aria-label="Limited time offer"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
-      <span class="pm-eye">Limited time offer</span><b class="pm-big">${pct}<span class="pm-pc">%</span> OFF</b><p class="pm-sub">on selected fragrances</p>
+      <span class="pm-eye">${esc(SALE_WORDS.title || 'Limited time offer')}</span><b class="pm-big">${pct}<span class="pm-pc">%</span> OFF</b><p class="pm-sub">${esc(SALE_WORDS.sub || 'on selected fragrances')}</p>
+      ${picked.length ? `<div class="pm-items">${picked.map(p => { const z = p.sizes.reduce((a, b) => off(p, b) > off(p, a) ? b : a, p.sizes[0]);
+        return `<a class="pm-item" href="#/product/${p.id}" data-pm-close>${p.images && p.images[0] ? `<img src="${SM(p.images[0])}" alt="">` : ''}<b>${esc(p.name)}</b><span><s>${moneyHTML(p.compareAt[z])}</s> ${moneyHTML(p.prices[z])}</span></a>`; }).join('')}</div>` : ''}
       ${al ? '' : `<div class="pm-cd">${u}</div>`}<p class="pm-hurry">HURRY UP!!!</p>
-      <a class="btn" href="#/fragrances" data-pm-close>Shop the offer</a><button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
+      <a class="btn" href="#/fragrances" data-pm-close>${esc(SALE_WORDS.btn || 'Shop the offer')}</a><button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
   }, 2500);
 }
 function promoOpen(html){
@@ -2716,7 +2726,7 @@ function card(p, opts={}){
       <span class="quick"><span class="btn line sm block" style="background:rgba(5,5,5,.7)">View details</span></span>
     </a>
     <div class="row1"><h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3><span data-price>${priceHTML(p, size)}</span></div>
-    ${saleCD(p.sizes.some(s => onSale(p, s)))}
+    ${saleCD(inOffer(p) && p.sizes.some(s => onSale(p, s)))}
     <p class="desc">${esc(p.short)}</p>
     <div class="rate-row">${chips}${rateHTML(p)}</div>
     <p class="stk-line" data-stk>${stockHTML(p.id, size)}</p>
@@ -2899,7 +2909,7 @@ function fragrances(q){
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
   // sale: old price struck on top, new price below it, on the left; the saving in a small green box on the right
-  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><div class="pp-line"><s class="was">${moneyHTML(c)}</s><span class="pprice">${moneyHTML(v)}</span></div><span class="p-save">You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span></div>${saleCD(true)}`;
+  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><div class="pp-line"><s class="was">${moneyHTML(c)}</s><span class="pprice">${moneyHTML(v)}</span></div><span class="p-save">You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span></div>${saleCD(inOffer(p))}`;
   return priceHTML(p, size, 'pprice'); };
 // the multi-buy offer, shown before the customer adds to bag (King and the Discovery Set are not part of it)
 const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
@@ -4192,7 +4202,7 @@ footShop();
 /* the live product list (fomaxo.com/admin → Products); the page is only redrawn when it differs from what is showing */
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
-  if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP})); } catch(e) {} saleTick(); promoMaybe(); }
+  if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS})); } catch(e) {} saleTick(); promoMaybe(); }
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
   const js = JSON.stringify(d.products);
   try { localStorage.setItem('fomaxo_products', js); } catch(e) {}
@@ -4213,5 +4223,5 @@ renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); p
 (function(){var ar=document.documentElement.lang==="ar";
 document.querySelectorAll(".lang-sw").forEach(function(b){if(ar){b.textContent="EN";b.lang="en";b.setAttribute("aria-label","English");b.title="English"}
 b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href)location.reload();else location.replace(u)}});
-if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=1";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
+if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=2";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
 </body></html>
