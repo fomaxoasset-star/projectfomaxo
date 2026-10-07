@@ -538,6 +538,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
   }
   if (!in_array($st, FX_STATUSES, true)) { flash('Unknown status.'); go(['o' => $_POST['order']]); }
   $s = $pdo->prepare('SELECT status FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_POST['order']]); $was = $s->fetchColumn();
+  if ($was === 'Awaiting payment' && in_array($st, ['New', 'Paid', 'Delivered'], true)) {   // a card attempt you mark as paid becomes an order: it gets its FMX number now
+    $_POST['order'] = fomaxo_order_number((string)$_POST['order']); if (isset($back['o'])) $back['o'] = $_POST['order'];
+  }
   $pdo->prepare("UPDATE fx_orders SET status = ?, admin_note = ?, updated_at = NOW(),
                  paid_at = CASE WHEN ? IN ('Paid', 'Delivered') AND paid_at IS NULL THEN NOW() ELSE paid_at END WHERE order_no = ?")
       ->execute([$st, mb_substr(trim((string)($_POST['admin_note'] ?? '')), 0, 2000), $st, (string)$_POST['order']]);
@@ -2355,8 +2358,8 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
 $f = ['q' => trim((string)($_GET['q'] ?? '')), 'status' => (string)($_GET['status'] ?? ''), 'pay' => (string)($_GET['pay'] ?? ''),
       'from' => (string)($_GET['from'] ?? ''), 'to' => (string)($_GET['to'] ?? ''), 'em' => mb_substr(trim((string)($_GET['em'] ?? '')), 0, 30)];
 $where = []; $args = [];
-/* default: every order number, so the list reads in sequence (card payments not finished show greyed as "Card not paid") */
-if ($f['status'] === 'pending') $where[] = "status IN ('New', 'Paid')";
+if ($f['status'] === '') $where[] = "status <> 'Awaiting payment' AND order_no NOT LIKE 'CARD-%'";   // default: real orders only (a card payment not made is not an order; see "Card not paid")
+elseif ($f['status'] === 'pending') $where[] = "status IN ('New', 'Paid')";
 elseif ($f['status'] === 'unpaid') $where[] = "status = 'New' AND payment = 'Cash on delivery'";
 elseif ($f['status'] !== 'all' && in_array($f['status'], FX_STATUSES, true)) { $where[] = 'status = ?'; $args[] = $f['status']; }
 if ($f['pay'] === 'cod') $where[] = "payment = 'Cash on delivery'"; elseif ($f['pay'] === 'card') $where[] = "payment LIKE 'Card%'";
@@ -2478,4 +2481,4 @@ page('Orders', '<div class="pagehead rg"><h1>Orders</h1><div class="arange"><div
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
   . $logCard
-  . '<p class="muted small after">The boxes count pending and delivered orders and leave out cancelled and refunded orders and test payments. "Waiting" shows how many days a pending order has not been delivered (red from 3 days). Card payments that were started but not finished show greyed as "Card not paid", so every order number is in the list.</p></div>', true, true);
+  . '<p class="muted small after">The boxes count pending and delivered orders and leave out cancelled and refunded orders and test payments. "Waiting" shows how many days a pending order has not been delivered (red from 3 days). A card payment that was started but not paid is not an order and gets no order number; pick "Card not paid" to see those attempts.</p></div>', true, true);

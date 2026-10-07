@@ -98,6 +98,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
   if ($status === 'completed' && $rec && empty($rec['paid'])) {
     $paidFils = (int)($pi['amount'] ?? 0);
     $rec['paid'] = date('Y-m-d H:i');
+    require_once __DIR__ . '/orders-lib.php';
+    $rec['no'] = fomaxo_order_number($rec['no']);   // paid: now it is an order and gets its FMX number
+    $out['order'] = $rec['no'];
     require_once __DIR__ . '/whatsapp-lib.php';   // private "review your order" link → Verified Purchaser reviews, asked for on WhatsApp
     if (!empty($rec['pids'])) $rec['review'] = fomaxo_review_link($rec['no'], $rec['pids']);
     file_put_contents($file, json_encode($rec), LOCK_EX);
@@ -143,10 +146,10 @@ require_once __DIR__ . '/orders-lib.php';
 $lineIn = array_map(fn($l) => ['id' => (string)($l['id'] ?? ''), 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? []))], (array)($in['lines'] ?? []));
 if ($msg = fomaxo_stock_problem($lineIn, $CATALOG)) { http_response_code(409); echo json_encode(['error' => $msg]); exit; }
 if ($order['gift']) foreach ($CATALOG as $cid => $c) if ($c['name'] === $order['gift']) { $lineIn[] = ['id' => $cid, 'opt' => '10', 'qty' => 1, 'free' => true]; break; }
-$no = fomaxo_save_order(['payment' => 'Card (Ziina)', 'status' => 'Awaiting payment', 'subtotal' => $order['fullFils'] / 100, 'discount' => $order['discountFils'] / 100,
+$no = fomaxo_save_order(['temp' => true, 'payment' => 'Card (Ziina)', 'status' => 'Awaiting payment', 'subtotal' => $order['fullFils'] / 100, 'discount' => $order['discountFils'] / 100,
         'fee' => 0, 'total' => $order['totalFils'] / 100, 'items' => implode(' | ', $order['summary']), 'free_mini' => $order['gift'], 'coupon' => $order['coupon'], 'wa_optin' => $cust['wa'], 'lines' => $lineIn, 'test' => $testMode]
         + array_intersect_key($cust, array_flip(['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'address', 'note'])))
-      ?? 'FMX-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
+      ?? 'CARD-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));   // not an order yet: the FMX number is given once it is paid
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 $host = preg_replace('/[^A-Za-z0-9.\-:]/', '', $_SERVER['HTTP_HOST'] ?? '');
 $dir  = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
@@ -158,7 +161,7 @@ $count = array_sum(array_map(fn($it) => $it['qty'], $order['items']));
 [$code, $pi, $raw] = ziina_call('POST', "$API/payment_intent", $token, [
   'amount'        => $order['totalFils'],          // AED in fils (base units)
   'currency_code' => 'AED',
-  'message'       => mb_substr("FOMAXO order $no · $count item" . ($count > 1 ? 's' : '') . ($order['gift'] ? " + FREE 10ml {$order['gift']} mini" : ''), 0, 200),
+  'message'       => mb_substr("FOMAXO · $count item" . ($count > 1 ? 's' : '') . ($order['gift'] ? " + FREE 10ml {$order['gift']} mini" : ''), 0, 200),
   'success_url'   => $back . '{PAYMENT_INTENT_ID}' . $src,
   'cancel_url'    => $back . 'cancel' . $src,
   'failure_url'   => $back . 'failed' . $src,
