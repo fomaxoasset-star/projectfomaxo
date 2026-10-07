@@ -11,6 +11,7 @@
 <meta property="og:title" content="FOMAXO — The House of Modern Luxury">
 <meta property="og:description" content="For Outstanding Minds, Acquiring Xtraordinary Opulence. Luxury, founded in Dubai.">
 <meta property="og:image" content="assets/img/oldmoney-1.jpg">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"FOMAXO","url":"https://fomaxo.com/","logo":"https://fomaxo.com/apple-touch-icon.png","sameAs":["https://www.instagram.com/fo_maxo/","https://www.tiktok.com/@fomaxoperfumes","https://www.youtube.com/@fomaxo_F","https://ae.linkedin.com/company/fomaxo-group","https://www.pinterest.com/fomaxofashion/"]}</script>
 <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon-192.png">
@@ -2933,7 +2934,7 @@ function product(id, q){
     : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.pen,'Custom engraving on request'],[ICON.truck,'Free delivery anywhere in UAE']];
   const related = S.products.filter(x => x.id !== p.id).sort((a, b) => (a.id === 'king') - (b.id === 'king'));   // every product on sale except this one, in a sideways swipe row, King last
   const ship = S.shipping.length ? S.shipping.map(s => `<p>${esc(s)}</p>`).join('') : `<p class="ph">Add your delivery &amp; returns information in assets/data.js.</p>`;
-  document.title = `${p.name} — FOMAXO`;
+  document.title = `${p.name} ${p.family || ''} | FOMAXO Dubai`;
   return `<div class="wrap page-fade">
     <div class="crumbs" style="padding-top:34px"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; <a href="#/fragrances">Fragrances</a> &nbsp;/&nbsp; ${esc(p.name)}</div>
     <div class="pdp">

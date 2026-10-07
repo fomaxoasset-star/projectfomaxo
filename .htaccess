@@ -4,6 +4,15 @@ RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# product addresses for Google: fomaxo.com/fomaxo-gold → product.php; fomaxo.com/sitemap.xml → sitemap.php
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^fomaxo-([A-Za-z0-9-]+)/$ /fomaxo-$1 [L,R=301]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^fomaxo-([A-Za-z0-9-]+)$ product.php?p=$1 [L,QSA]
+
 # keep the Stripe, Ziina and database key files private
 <FilesMatch "^(?i:stripe|ziina|whatsapp|fomaxo-db)-config.*\.php$">
   Require all denied
