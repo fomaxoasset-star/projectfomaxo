@@ -35,7 +35,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 17) return;
+  if ($ver >= 18) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -114,6 +114,9 @@ function fomaxo_db_schema($pdo) {
   try { $pdo->exec("ALTER TABLE fx_orders ADD COLUMN wa_optin TINYINT(1) NOT NULL DEFAULT 0"); } catch (Throwable $e) {}
   if (!$pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'wa_optin'")->fetch()) return;
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '17')");
+  /* v18: softer Dollar line in the saved product text (UAE consumer rules: no "lasts longer than any other perfume" claim) */
+  $pdo->exec("UPDATE fx_products SET data = REPLACE(data, 'Dollar lasts longer than any other perfume in the market.', 'Dollar is made to last from morning to night.')");
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '18')");
 }
 function fomaxo_coupons_table($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_coupons (code VARCHAR(30) NOT NULL PRIMARY KEY, kind VARCHAR(3) NOT NULL DEFAULT 'pct', amount DECIMAL(10,2) NOT NULL,
