@@ -335,7 +335,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
-     . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Manrope:wght@400;500;600;700&display=swap">'
+     . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Jost:wght@300;400;500&family=Manrope:wght@400;500;600;700&display=swap">'
      . "<style>$css</style></head><body>"
      . '<header class="top"><a class="brand" href="./">FOMAXO<small>ADMIN</small></a>'
      . (!empty($_SESSION['admin']) ? '<div class="hacts"><a class="btn line sm" href="../" target="_blank" rel="noopener"><span class="vw">View </span>website ↗</a><form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Sign out</button></form></div>' : '')
@@ -735,22 +735,204 @@ if (isset($_GET['products'])) {
     . '<div class="savebar"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true);
 }
 
+/* Offer page styles and script (the Preview draws the popups with the website's colours) */
+const OFFER_CSS = <<<'CSS'
+.osw{display:none}.ogrid{display:grid;gap:14px;align-items:start}@media (min-width:960px){.ogrid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}}
+.ob h2{margin-top:0;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ost{margin:0 0 12px;padding:8px 12px;border:1px solid var(--line);border-radius:7px;font-weight:600;font-size:13.5px}.ost-on{border-color:var(--ok);color:var(--ok)}.ost-off{color:var(--muted)}
+.orow{display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;align-items:center;margin:0 0 12px}.orow[hidden]{display:none}.orow>b{font-size:12.5px;font-weight:600}.orow:has(.owords)>b,.orow:has(.opick)>b{align-self:start;padding-top:12px}
+.oseg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}.oseg label{flex:1;margin:0;text-align:center;cursor:pointer;text-transform:none;letter-spacing:normal;font-size:13.5px;color:var(--ink)}.oseg label{position:relative}.oseg input{position:absolute;inset:0;width:1px;height:1px;opacity:0;pointer-events:none}.oseg span{display:block;padding:8px 6px}.oseg label+label{border-left:1px solid var(--line)}.oseg label:has(input:checked){background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold);font-weight:600}
+.oendin{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.cpq{display:flex;gap:6px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--gold);background:transparent;color:var(--gold);cursor:pointer}.cpq button.on,.cpq button:hover{background:color-mix(in srgb,var(--gold) 14%,transparent)}
+.od{display:grid;grid-template-columns:150px 110px;gap:8px}.od input{margin:0}
+.owords{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px 10px}.owords label{margin:0}.ob label input,.ob label select{margin-top:4px}
+.opick{display:flex;flex-direction:column;gap:8px}.oadd{max-width:420px}
+.ofits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.ofit{display:flex;align-items:center;gap:8px;margin:0;padding:6px 8px;border:1px solid var(--gold);border-radius:8px;text-transform:none;letter-spacing:normal;font-size:13px;color:var(--ink);cursor:pointer;min-width:0}.ofit:not(:has(input:checked)){display:none}
+.ofit input{width:16px;height:16px;flex:none;margin:0;accent-color:var(--gold)}.ofit img,.ofit i{width:30px;height:30px;object-fit:cover;border-radius:5px;flex:none;background:var(--line)}.ofit span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ofit small{color:var(--ok);white-space:nowrap}.onone{grid-column:1/-1}.ofits:has(input:checked) .onone{display:none}
+.obtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}.otks{display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap;margin-right:auto}.otks b{font-size:12.5px;font-weight:600}
+.otk{display:inline-flex;align-items:center;gap:7px;margin:0;text-transform:none;letter-spacing:normal;font-size:14px;color:var(--ink);cursor:pointer}.otk input{width:17px;height:17px;margin:0;accent-color:var(--gold)}.ohd{font-family:Manrope,sans-serif;font-weight:500}
+.btn.oofff{color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}
+@media (max-width:759px){.osw{display:flex;margin:0 0 12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}.osw button{flex:1;font:inherit;font-size:14px;padding:10px;border:0;background:var(--panel);color:var(--muted);cursor:pointer}.osw button+button{border-left:1px solid var(--line)}.osw button.on{background:color-mix(in srgb,var(--gold) 14%,var(--panel));color:var(--gold);font-weight:600}
+.ob:not(.on){display:none}.orow{grid-template-columns:1fr;gap:6px}.orow:has(.owords)>b,.orow:has(.opick)>b{padding-top:0}.oendin{flex-direction:column;align-items:stretch}.cpq{display:grid;grid-template-columns:repeat(4,1fr)}.cpq button{padding:9px 2px}.od{grid-template-columns:minmax(0,1fr) 110px}
+.owords{grid-template-columns:minmax(0,1fr) 92px}.owords label:nth-of-type(n+3){grid-column:1/-1}.ofits{grid-template-columns:1fr}.otks{flex-basis:100%}.obtns .btn{flex:1}.obtns .oofff{flex-basis:100%}}
+.pvw{position:fixed;inset:0;z-index:60;background:rgba(6,5,4,.94);display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 16px;overflow:auto}
+.pv-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}.pv-bar .pvseg{display:inline-flex;border:1px solid #3a3326;border-radius:7px;overflow:hidden;background:#0e0d0b}.pvseg button{font:inherit;font-size:13px;padding:7px 12px;border:0;background:none;color:#cfc6b3;cursor:pointer}.pvseg button+button{border-left:1px solid #3a3326}.pvseg button.on{background:#2a2416;color:#d7aa69}.pv-bar{align-self:stretch}.pv-bar .pvseg{max-width:100%}@media (max-width:759px){.pvseg button{padding:8px 9px;font-size:12px}}
+.pv-note{margin:0;max-width:380px;padding:8px 12px;border-radius:8px;background:#2a2416;color:#e0a85a;font-size:13px;text-align:center}
+.pv-foot{margin:0;text-align:center}
+.orow{grid-template-columns:96px minmax(0,1fr)}.orow:has(.opick){align-items:start}.olab{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding-top:12px}.olab b{font-size:12.5px;font-weight:600;line-height:1.25}.ocol{display:flex;flex-direction:column;gap:12px;min-width:0}
+.oaddrow{display:flex;gap:8px;align-items:center;max-width:540px}.oaddrow .oadd{flex:1;min-width:0;max-width:none;margin:0}.oaddrow .btn{white-space:nowrap;flex:none;margin:0}
+.pv-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}.pv-cards .pv-card{width:auto;min-width:0}.pv-cards .pv-card img,.pv-cards .pv-card .pv-noimg{width:100%;height:auto;aspect-ratio:6/7}.pv-cards+.pv-lab{margin-top:20px!important}
+.pv-site:has(.pv-cards){max-width:min(640px,100%)}.pv-box.pv-plain:has(.pv-cards){width:auto}.pv-plain .boxl{max-width:340px}
+@media (max-width:759px){.orow{grid-template-columns:1fr}.olab{flex-direction:row;align-items:center;padding-top:0;gap:12px}.pv-cards{gap:10px}}
+.pv-site{--bk:#050505;--pn:#0e0d0b;--iv:#f2ebdd;--mu:#9a917f;--gd:#d7aa69;--gh:#f0d3a0;--ln:rgba(215,170,105,.44);--red:#e5483d;--metal:linear-gradient(100deg,#9c7440 0%,#d7aa69 22%,#f3dcb0 38%,#c99a5c 54%,#ecd0a0 70%,#a67d45 88%,#d7aa69 100%);
+  width:100%;max-width:380px;margin:auto 0;font-family:Jost,"Helvetica Neue",Arial,sans-serif;font-weight:300}
+.pv-site.light{--bk:#f6f0e4;--pn:#fffaf1;--iv:#1b1712;--mu:#635a4b;--gd:#a8792f;--gh:#8a5f1f;--ln:rgba(140,98,38,.45);--red:#c4291f;--metal:linear-gradient(100deg,#7a5420 0%,#b08036 22%,#d9b26a 38%,#9d7030 54%,#c99a50 70%,#7f5a24 88%,#a8792f 100%)}
+.pv-box{position:relative;padding:30px 24px 20px;text-align:center;background:var(--pn);color:var(--iv);border-radius:6px;box-shadow:0 0 0 1px var(--ln),0 30px 80px -20px rgba(0,0,0,.8)}
+.pv-box p{margin:0}.pv-x{position:absolute;top:6px;right:12px;font-size:26px;color:var(--mu)}
+.pv-k{font-size:12px;font-weight:500;letter-spacing:.32em;text-transform:uppercase;color:var(--gd)}
+.pv-pct{margin-top:6px!important;font-weight:500;font-size:54px;line-height:1;text-transform:uppercase;background:var(--metal);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pv-on{margin-top:8px!important;font-size:15px;line-height:1.5}
+.pv-name{margin-top:14px!important;font-weight:500;font-size:28px;line-height:1.15;letter-spacing:.12em;text-transform:uppercase;color:var(--gh);overflow-wrap:anywhere}
+.pv-img{display:block;width:140px;height:175px;margin:16px auto 0;object-fit:cover;border-radius:6px;box-shadow:0 0 0 1px var(--ln)}
+.pv-items{display:flex;gap:8px;margin:14px -6px 0;padding:2px 6px 6px;overflow-x:auto;justify-content:safe center}
+.pv-item{flex:0 0 92px;display:flex;flex-direction:column;align-items:center;gap:4px}.pv-item img,.pv-noimg{width:92px;height:106px;object-fit:cover;border-radius:4px;box-shadow:0 0 0 1px var(--ln);display:block}
+.pv-item b{font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.25}.pv-item span{font-size:12px;color:var(--gh)}.pv-item s{color:var(--mu);font-size:10.5px}
+.pv-cd{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}.pv-cd div{padding:9px 0 7px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--ln);background:var(--bk)}
+.pv-cd b{display:block;font-size:24px;font-weight:500;line-height:1;color:var(--gh)}.pv-cd span{display:block;margin-top:5px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
+.pv-hurry{margin-top:14px!important;font-size:16px;font-weight:700;letter-spacing:.14em;color:var(--red)}
+.pv-go{display:flex;align-items:center;justify-content:center;min-height:46px;margin-top:14px;background:var(--metal);color:#0a0805;font-size:11px;font-weight:500;letter-spacing:.3em;text-transform:uppercase}
+.pv-site.light .pv-go{color:#fff}
+.pv-no{display:inline-block;margin-top:12px;font-size:13px;color:var(--mu);text-decoration:underline;text-underline-offset:3px}
+@media (max-width:820px){.pv-site{max-width:340px}.pv-pct{font-size:46px}.pv-box{padding:26px 16px 16px}}
+/* preview: the line by sale prices, on a shop card and on the product page */
+.pv-box.pv-plain{text-align:left;padding:20px 22px 22px;width:340px;max-width:100%}
+.pv-lab{margin:0 0 8px!important;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--mu)}.pv-card+.pv-lab{margin-top:20px!important}
+.pv-card{display:flex;flex-direction:column;gap:6px;width:180px}.pv-card img,.pv-card .pv-noimg{width:180px;height:210px;object-fit:cover;border-radius:4px;box-shadow:0 0 0 1px var(--ln);display:block}
+.pv-card>b{font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase}
+.pv-price{margin:0;font-size:15px;color:var(--gh)}.pv-price s{color:var(--mu);font-size:12px;margin-right:4px}.pv-price.big{font-size:28px;margin-bottom:10px!important}.pv-price.big s{font-size:16px;color:var(--red)}
+.pv-ofl{display:flex;align-items:center;justify-content:space-between;gap:4px 12px;font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;line-height:1.2;color:var(--gd)}
+.pv-ofl span{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}.pv-ofl svg{width:14px;height:14px;flex:none}.pv-ofl b{font-weight:600;color:var(--gh);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pv-ofl.boxl{padding:8px 12px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--gd)}.pv-ofl.boxl.nocd{justify-content:flex-start}
+.pv-ofl.cardl{flex-direction:column;align-items:flex-start;font-size:9px;letter-spacing:.08em;margin-top:4px}
+.pv-ofl.boxl{flex-wrap:wrap}
+@media (max-width:820px){.pv-ofl.boxl{font-size:10px;letter-spacing:.1em;padding:7px 10px}}
+CSS;
+const OFFER_JS = <<<'JS'
+(function () {
+  var sale = document.getElementById('offerForm'), newp = document.getElementById('newpForm');
+  /* phones: Sale offer / New product switch */
+  document.querySelectorAll('[data-ow]').forEach(function (b) { b.onclick = function () {
+    document.querySelectorAll('[data-ow]').forEach(function (x) { x.classList.toggle('on', x === b); });
+    document.querySelectorAll('[data-ob]').forEach(function (f) { f.classList.toggle('on', f.dataset.ob === b.dataset.ow); }); }; });
+  if (sale) {
+    var mode = function () { return (sale.querySelector('input[name=mode]:checked') || {}).value; };
+    sale.addEventListener('change', function (e) { if (e.target.name === 'mode') sale.querySelector('.oend').hidden = mode() !== 'date'; });
+    /* quick end: now + 24h / 48h / 3 days / 7 days, in UAE time */
+    sale.querySelectorAll('.cpq button').forEach(function (b) { b.onclick = function () {
+      var p = function (n) { return ('0' + n).slice(-2); }, e = new Date(Date.now() + (new Date().getTimezoneOffset() + 240) * 60000 + b.dataset.h * 3600000);
+      sale.querySelector('input[name=sale_end_d]').value = e.getFullYear() + '-' + p(e.getMonth() + 1) + '-' + p(e.getDate());
+      sale.querySelector('input[name=sale_end_t]').value = p(e.getHours()) + ':' + p(e.getMinutes());
+      sale.querySelectorAll('.cpq button').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
+    /* Products (popup and line): type or pick a name to add it; untick a picked one to take it out */
+    sale.querySelectorAll('.opick').forEach(function (pk) {
+      var add = pk.querySelector('.oadd');
+      add.addEventListener('input', function () {
+        var v = add.value.trim().toLowerCase(), hit = [].slice.call(pk.querySelectorAll('.ofit input')).filter(function (i) { return i.dataset.name.toLowerCase() === v; })[0];
+        if (hit) { hit.checked = true; add.value = ''; }
+      });
+    });
+    /* Line by prices: "Same as popup" picks the popup's products */
+    var same = sale.querySelector('[data-osame]');
+    if (same) same.addEventListener('click', function () {
+      sale.querySelectorAll('input[name="lines[]"]').forEach(function (i) { i.checked = !!sale.querySelector('input[name="items[]"][value="' + i.value + '"]:checked'); });
+    });
+  }
+  /* Preview: the popups and the line as shoppers will see them, from what is typed and ticked now (nothing is saved) */
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); };
+  var val = function (f, n) { var e = f.querySelector('[name="' + n + '"]'); return e ? e.value.trim() : ''; };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var dark = true, which = 'sale', box = null, tick = null;
+  var endAt = function () {   /* the end typed on the page (UAE time) as a moment, or 0 */
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(val(sale, 'sale_end_d')); if (!m) return 0;
+    var t = /^(\d{2}):(\d{2})$/.exec(val(sale, 'sale_end_t')) || [0, '23', '59'];
+    return Date.UTC(+m[1], +m[2] - 1, +m[3], +t[1], +t[2]) - 240 * 60000;
+  };
+  var cdText = function (left) { return 'Ends in ' + (left >= 86400 ? Math.floor(left / 86400) + 'd ' : '') + pad(Math.floor(left % 86400 / 3600)) + 'h ' + pad(Math.floor(left % 3600 / 60)) + 'm ' + pad(left % 60) + 's'; };
+  var saleHTML = function () {
+    var md = (sale.querySelector('input[name=mode]:checked') || {}).value;
+    var picked = [].slice.call(sale.querySelectorAll('input[name="items[]"]:checked'));
+    var best = picked.length ? Math.max.apply(null, picked.map(function (i) { return +i.dataset.pct; })) : +sale.dataset.best;
+    var typed = parseInt(val(sale, 'pct'), 10), pct = typed > 0 ? Math.min(typed, best) : best;
+    var note = md === 'off' ? 'The timer is Off, so this popup will not show.' : !sale.querySelector('input[name=popup]').checked ? 'Popup is not ticked, so this popup will not show.' : typed > best ? 'You typed ' + typed + '%, but the biggest real saving is ' + best + '%, so it shows ' + best + '%.' : '';
+    var end = endAt(), left = Math.max(0, Math.floor((end - Date.now()) / 1000));
+    var cd = md === 'date' ? '<div class="pv-cd">' + [Math.floor(left / 86400), pad(Math.floor(left % 86400 / 3600)), pad(Math.floor(left % 3600 / 60)), pad(left % 60)].map(function (n, i) {
+      return '<div><b>' + (end ? n : '–') + '</b><span>' + ['Days', 'Hours', 'Min', 'Sec'][i] + '</span></div>'; }).join('') + '</div>' : '';
+    var items = picked.length ? '<div class="pv-items">' + picked.map(function (i) { var d = i.dataset;
+      return '<div class="pv-item">' + (d.img ? '<img src="' + esc(d.img) + '" alt="">' : '<span class="pv-noimg"></span>') + '<b>' + esc(d.name) + '</b><span>' + (d.was ? '<s>' + esc(d.was) + '</s> ' : '') + esc(d.price) + '</span></div>'; }).join('') + '</div>' : '';
+    return [note, '<p class="pv-k">' + esc(val(sale, 'title') || 'Limited time offer') + '</p>'
+      + (best ? '<p class="pv-pct">' + pct + '% off</p>' : '<p class="pv-on">No product has an old price yet, so this popup stays hidden.</p>')
+      + '<p class="pv-on">' + esc(val(sale, 'sub') || 'on selected fragrances') + '</p>' + items + cd
+      + '<p class="pv-hurry">HURRY UP!!!</p><span class="pv-go">' + esc(val(sale, 'btn') || 'Shop the offer') + '</span><span class="pv-no">No thanks</span>'];
+  };
+  var lineHTML = function () {   /* a shop card for each product picked for the line, and a product page */
+    var md = (sale.querySelector('input[name=mode]:checked') || {}).value;
+    var picked = [].slice.call(sale.querySelectorAll('input[name="lines[]"]:checked'));
+    var note = md === 'off' ? 'The timer is Off, so the line will not show.' : !picked.length ? 'No product is picked for the line, so it will not show.' : '';
+    if (!picked.length) return [note, '<p class="pv-on">Pick products under Line by prices.</p>'];
+    var end = endAt(), left = Math.max(0, Math.floor((end - Date.now()) / 1000));
+    var cd = md === 'date' ? '<b>' + cdText(left) + '</b>' : '';
+    var clock = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+    var ln = function (cls) { return '<div class="pv-ofl ' + cls + (cd ? '' : ' nocd') + '"><span>' + clock + esc(val(sale, 'title') || 'Limited time offer') + '</span>' + cd + '</div>'; };
+    var price = function (d) { return '<s>' + esc(d.was) + '</s> <span>' + esc(d.price) + '</span>'; };
+    return [note, '<p class="pv-lab">Shop cards (' + picked.length + ' product' + (picked.length > 1 ? 's' : '') + ')</p><div class="pv-cards">' + picked.map(function (i) { var d = i.dataset;
+        return '<div class="pv-card">' + (d.img ? '<img src="' + esc(d.img) + '" alt="">' : '<span class="pv-noimg"></span>') + '<b>' + esc(d.name) + '</b><p class="pv-price">' + price(d) + '</p>' + ln('cardl') + '</div>'; }).join('') + '</div>'
+      + '<p class="pv-lab">Product page</p><p class="pv-price big">' + price(picked[0].dataset) + '</p>' + ln('boxl')];
+  };
+  var newHTML = function () {
+    var sel = newp.querySelector('select[name=np_product]'), opt = sel.options[sel.selectedIndex], img = opt ? opt.dataset.img : '';
+    var shop = !!(opt && opt.value && !/ \(hidden\)$/.test(opt.textContent)), name = val(newp, 'np_name') || (opt && opt.value ? opt.textContent.replace(/ \(hidden\)$/, '') : '');
+    var note = !newp.querySelector('input[name=np_on]').checked ? 'On is not ticked, so this popup will not show.' : !name ? 'Write the product name, or pick the product.' : '';
+    return [note, '<p class="pv-k">' + esc(val(newp, 'np_label') || 'Coming soon') + '</p>' + (img ? '<img class="pv-img" src="' + esc(img) + '" alt="">' : '')
+      + '<p class="pv-name">' + esc(name || 'Product name') + '</p>' + (val(newp, 'np_line') ? '<p class="pv-on">' + esc(val(newp, 'np_line')) + '</p>' : '')
+      + '<span class="pv-go">' + (shop ? 'Shop now' : 'Explore FOMAXO') + '</span><span class="pv-no">Close</span>'];
+  };
+  var draw = function () {
+    if (!box) return;
+    var r = which === 'sale' ? saleHTML() : which === 'line' ? lineHTML() : newHTML();
+    box.querySelector('.pv-note').textContent = r[0]; box.querySelector('.pv-note').hidden = !r[0];
+    var site = box.querySelector('.pv-site'), pb = site.querySelector('.pv-box'); site.classList.toggle('light', !dark);
+    pb.classList.toggle('pv-plain', which === 'line'); pb.innerHTML = (which === 'line' ? '' : '<span class="pv-x">×</span>') + r[1];
+    box.querySelectorAll('[data-pvmode]').forEach(function (b) { b.classList.toggle('on', (b.dataset.pvmode === 'dark') === dark); });
+    box.querySelectorAll('[data-pvwhich]').forEach(function (b) { b.classList.toggle('on', b.dataset.pvwhich === which); });
+  };
+  var close = function () { if (box) { box.remove(); box = null; clearInterval(tick); document.removeEventListener('keydown', key); } };
+  var key = function (e) { if (e.key === 'Escape') close(); };
+  var open = function (w) {
+    which = w; close();
+    box = document.createElement('div'); box.className = 'pvw';
+    box.innerHTML = '<div class="pv-bar"><span class="pvseg"><button type="button" data-pvwhich="sale">Sale popup</button><button type="button" data-pvwhich="line">Line by prices</button><button type="button" data-pvwhich="new">New product popup</button>'
+      + '</span><span class="pvseg"><button type="button" data-pvmode="dark">Dark</button><button type="button" data-pvmode="light">Light</button></span><button type="button" class="btn" data-pvclose>Close preview</button></div>'
+      + '<p class="pv-note"></p><div class="pv-site"><div class="pv-box"></div></div><p class="small pv-foot" style="color:#9a917f">Preview only. Press Save on the page to put it on the website.</p>';
+    box.addEventListener('click', function (e) {
+      var t = e.target.closest('button'); if (e.target === box || (t && t.hasAttribute('data-pvclose'))) { close(); return; }
+      if (t && t.dataset.pvmode) { dark = t.dataset.pvmode === 'dark'; draw(); }
+      if (t && t.dataset.pvwhich) { which = t.dataset.pvwhich; draw(); }
+    });
+    document.body.appendChild(box); document.addEventListener('keydown', key); draw();
+    tick = setInterval(function () { if (which !== 'new') draw(); }, 1000);
+  };
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-preview]'); if (b) open(b.dataset.preview); });
+})();
+JS;
 /* ---- offer: the website's offer popup, its timer and the "Limited time offer" line by sale prices (prices themselves are set on Products) ---- */
 if (isset($_GET['offer'])) {
-  $realMax = 0;   // the biggest real saving on the website: old price vs price, shown products only
-  foreach (fomaxo_product_rows($pdo) ?: [] as $r) { if ($r['hidden']) continue; $p = json_decode($r['data'], true); if (!is_array($p)) continue;
-    foreach ((array)($p['prices'] ?? []) as $z => $v) { $c = $p['compareAt'][$z] ?? null; if (is_numeric($v) && is_numeric($c) && $c > $v) $realMax = max($realMax, (int)round(($c - $v) / $c * 100)); } }
+  /* products that can be in the offer: shown, with an old price; the biggest saving each one has, and what the preview needs */
+  $sale = []; $plist = [];
+  foreach (fomaxo_product_rows($pdo) ?: [] as $r) { $p = json_decode($r['data'], true); if (!is_array($p) || empty($p['id'])) continue;
+    $plist[$p['id']] = ['name' => ($p['name'] ?? $p['id']), 'hidden' => (bool)$r['hidden'], 'img' => !empty($p['images'][0]) ? '/assets/img/' . $p['images'][0] . '.webp' : ''];
+    if ($r['hidden']) continue; $n = 0; $bz = null; $bn = -1;
+    foreach ((array)($p['prices'] ?? []) as $z => $v) { $c = $p['compareAt'][$z] ?? null;
+      $k = is_numeric($v) && is_numeric($c) && $c > $v ? ($c - $v) / $c : 0; if ($k > $bn) [$bn, $bz] = [$k, $z]; if ($k) $n = max($n, (int)round($k * 100)); }
+    if ($n) $sale[$p['id']] = ['pct' => $n, 'name' => $p['name'] ?? $p['id'], 'img' => $plist[$p['id']]['img'], 'price' => 'AED ' . number_format((float)$p['prices'][$bz]), 'was' => 'AED ' . number_format((float)$p['compareAt'][$bz])];
+  }
+  uasort($sale, fn($a, $b) => $b['pct'] <=> $a['pct']);
+  $items = array_values(array_filter(json_decode((string)fomaxo_setting($pdo, 'sale_items'), true) ?: [], fn($id) => isset($sale[$id])));
+  /* the products with the line by prices; saved before they had their own list: the popup's products, or all with an old price */
+  $lv = fomaxo_setting($pdo, 'sale_lines');
+  $lines = $lv !== null ? array_values(array_filter(json_decode((string)$lv, true) ?: [], fn($id) => isset($sale[$id]))) : ((string)fomaxo_setting($pdo, 'sale_line') !== '0' ? ($items ?: array_keys($sale)) : []);
+  $bestOf = fn(array $ids) => max(array_merge([0], array_map(fn($x) => $x['pct'], $ids ? array_intersect_key($sale, array_flip($ids)) : $sale)));
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['offer' => 1]); }
-    if (isset($_POST['np_save'])) {   // new product popup: "Coming soon" / "Just arrived" + the product name
-      $on = isset($_POST['np_on']); $name = trim(preg_replace('/\s+/', ' ', (string)($_POST['np_name'] ?? ''))); $pid = preg_replace('/[^a-z0-9_-]/i', '', (string)($_POST['np_product'] ?? ''));
-      if ($on && $name === '') { flash('Please type the product name.'); go(['offer' => 1]); }
-      fomaxo_setting($pdo, 'np', fomaxo_json(['on' => $on, 'status' => ($_POST['np_status'] ?? '') === 'arrived' ? 'arrived' : 'soon', 'name' => mb_substr($name, 0, 40),
-        'line' => mb_substr(trim((string)($_POST['np_line'] ?? '')), 0, 90), 'product' => $pid]));
-      flash($on ? 'New product popup saved.' : 'New product popup is off.', true); go(['offer' => 1]);
+    $clean = fn($k, $n) => mb_substr(trim(preg_replace('/\s+/u', ' ', (string)($_POST[$k] ?? ''))), 0, $n);
+    if (isset($_POST['np_save'])) {   // new product popup: its type (typed or picked) + the product name
+      $on = isset($_POST['np_on']); $name = $clean('np_name', 40); $pid = preg_replace('/[^a-z0-9_-]/i', '', (string)($_POST['np_product'] ?? ''));
+      if ($pid !== '' && !isset($plist[$pid])) $pid = '';
+      if ($name === '' && $pid !== '') $name = mb_substr($plist[$pid]['name'], 0, 40);
+      if ($on && $name === '') { flash('Please type the product name, or pick the product.'); go(['offer' => 1]); }
+      $label = $clean('np_label', 24) ?: 'Coming soon';
+      fomaxo_setting($pdo, 'np', fomaxo_json(['on' => $on, 'label' => $label, 'status' => $pid !== '' && !$plist[$pid]['hidden'] ? 'arrived' : 'soon', 'name' => $name, 'line' => $clean('np_line', 90), 'product' => $pid]));
+      flash($on ? "The “{$label}” popup for $name is on. Each visitor sees it once." : 'New product popup is off.', true); go(['offer' => 1]);
     }
-    $mode = (string)($_POST['mode'] ?? 'off');
-    if (isset($_POST['all_off'])) $mode = 'off';
+    $mode = isset($_POST['all_off']) ? 'off' : (string)($_POST['mode'] ?? 'off');
     if ($mode === 'date') {   // a real end date (UAE time); the popup and line hide by themselves when it passes
       $d = (string)($_POST['sale_end_d'] ?? ''); $t = (string)($_POST['sale_end_t'] ?? '');
       if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) || ($t !== '' && !preg_match('/^\d{2}:\d{2}$/', $t))) { flash('Please type the end date as dd/mm/yyyy.'); go(['offer' => 1]); }
@@ -759,62 +941,81 @@ if (isset($_GET['offer'])) {
       fomaxo_setting($pdo, 'sale_ends', (string)$end); fomaxo_setting($pdo, 'sale_always', '');
     } elseif ($mode === 'always') { fomaxo_setting($pdo, 'sale_ends', ''); fomaxo_setting($pdo, 'sale_always', '1'); }
     else { fomaxo_setting($pdo, 'sale_ends', ''); fomaxo_setting($pdo, 'sale_always', ''); }
-    $capped = false;
-    if (!isset($_POST['all_off'])) {   // the % in the popup: empty = the biggest real saving; never more than that
+    $capped = 0;
+    if (!isset($_POST['all_off'])) {
+      $items = array_values(array_unique(array_filter(array_map('strval', (array)($_POST['items'] ?? [])), fn($id) => isset($sale[$id]))));
+      fomaxo_setting($pdo, 'sale_items', $items ? fomaxo_json($items) : '');
+      $realMax = $bestOf($items);   // the % in the popup: empty = the biggest real saving of the picked products; never more than that
       $pc = trim((string)($_POST['pct'] ?? ''));
       if ($pc !== '' && (!ctype_digit($pc) || (int)$pc < 1 || (int)$pc > 99)) { flash('Please type a % between 1 and 99, or leave it empty.'); go(['offer' => 1]); }
-      if ($pc !== '' && $realMax && (int)$pc > $realMax) { $pc = (string)$realMax; $capped = true; }
+      if ($pc !== '' && $realMax && (int)$pc > $realMax) { $pc = (string)$realMax; $capped = $realMax; }
       fomaxo_setting($pdo, 'sale_pct', $pc);
+      fomaxo_setting($pdo, 'sale_words', fomaxo_json(['title' => $clean('title', 30), 'sub' => $clean('sub', 40), 'btn' => $clean('btn', 24)]));
+      $lines = array_values(array_unique(array_filter(array_map('strval', (array)($_POST['lines'] ?? [])), fn($id) => isset($sale[$id]))));
+      fomaxo_setting($pdo, 'sale_lines', fomaxo_json($lines));
+      fomaxo_setting($pdo, 'sale_popup', isset($_POST['popup']) ? '1' : '0'); fomaxo_setting($pdo, 'sale_line', $lines ? '1' : '0');
     }
-    if (!isset($_POST['all_off'])) { fomaxo_setting($pdo, 'sale_popup', isset($_POST['popup']) ? '1' : '0'); fomaxo_setting($pdo, 'sale_line', isset($_POST['line']) ? '1' : '0'); }
-    flash($mode === 'off' ? 'The offer is off: no popup and no line on the website.' : 'Offer saved.' . ($capped ? " The % was set to $realMax%, the biggest real saving on your products (old price vs price)." : ''), true); go(['offer' => 1]);
+    flash($mode === 'off' ? 'The offer is off: no popup and no line on the website.' : 'Offer saved.' . ($capped ? " The % was set to $capped%, the biggest real saving on the products in the offer." : ''), true); go(['offer' => 1]);
   }
   $e = (int)fomaxo_setting($pdo, 'sale_ends'); $on = $e > time(); $l = $e - time(); $al = (string)fomaxo_setting($pdo, 'sale_always') === '1';
   $mode = $on ? 'date' : ($al ? 'always' : 'off');
-  $pop = (string)fomaxo_setting($pdo, 'sale_popup') !== '0'; $line = (string)fomaxo_setting($pdo, 'sale_line') !== '0';
-  $pct = (string)fomaxo_setting($pdo, 'sale_pct');
-  $np = json_decode((string)fomaxo_setting($pdo, 'np'), true) ?: ['on' => false, 'status' => 'soon', 'name' => '', 'line' => '', 'product' => ''];
-  $plist = [];
-  foreach (fomaxo_product_rows($pdo) ?: [] as $r) { $p = json_decode($r['data'], true); if (is_array($p) && !empty($p['id'])) $plist[$p['id']] = ($p['name'] ?? $p['id']) . ($r['hidden'] ? ' (hidden)' : ''); }
-  $what = array_filter([$pop ? 'popup' : '', $line ? 'line by prices' : '']);
-  $state = $mode === 'off' ? '<span class="lvl-low">●</span> Off: nothing shows on the website.'
-    : '<span class="lvl-ok">●</span> On' . ($mode === 'date' ? ': ends ' . date('d/m/Y, g:i a', $e) . ' (' . ($l >= 86400 ? floor($l / 86400) . 'd ' : '') . floor($l % 86400 / 3600) . 'h ' . floor($l % 3600 / 60) . 'm left)' : ': always on, no timer') . '. Showing: ' . ($what ? implode(' + ', $what) : 'nothing (both switches off)') . '.';
-  $radio = fn($v, $t, $sub) => '<label class="om"><input type="radio" name="mode" value="' . $v . '"' . ($mode === $v ? ' checked' : '') . '><span><b>' . $t . '</b><small>' . $sub . '</small></span></label>';
-  $box = fn($n, $c, $t, $sub) => '<label class="om"><input type="checkbox" name="' . $n . '" value="1"' . ($c ? ' checked' : '') . '><span><b>' . $t . '</b><small>' . $sub . '</small></span></label>';
+  $pop = (string)fomaxo_setting($pdo, 'sale_popup') !== '0';
+  $pct = (string)fomaxo_setting($pdo, 'sale_pct'); $best = $bestOf($items);
+  $W = (json_decode((string)fomaxo_setting($pdo, 'sale_words'), true) ?: []) + ['title' => '', 'sub' => '', 'btn' => ''];
+  $np = (json_decode((string)fomaxo_setting($pdo, 'np'), true) ?: []) + ['on' => false, 'status' => 'soon', 'name' => '', 'line' => '', 'product' => ''];
+  $np['label'] = ($np['label'] ?? '') !== '' ? $np['label'] : ($np['status'] === 'arrived' ? 'Just arrived' : 'Coming soon');
+  $what = implode(' + ', array_filter([$pop ? 'popup' : '', $lines ? 'line by prices on ' . count($lines) . ' product' . (count($lines) > 1 ? 's' : '') : '']));
+  [$sk, $state] = match (true) {
+    $mode === 'off' => ['off', 'Off. Nothing shows on the website.'],
+    $what === '' => ['off', 'Nothing shows: tick Popup, or pick products for the line.'],
+    $mode === 'date' => ['on', 'On until ' . date('d/m/Y, g:i a', $e) . ' (' . ($l >= 86400 ? floor($l / 86400) . 'd ' . floor($l % 86400 / 3600) . 'h' : floor($l / 3600) . 'h ' . floor($l % 3600 / 60) . 'm') . ' left): ' . $what . '.'],
+    default => ['on', 'On, no timer: ' . $what . '.'],
+  };
+  $radio = fn($v, $t) => '<label><input type="radio" name="mode" value="' . $v . '"' . ($mode === $v ? ' checked' : '') . '><span>' . $t . '</span></label>';
+  $tick = fn($n, $c, $t) => '<label class="otk"><input type="checkbox" name="' . $n . '" value="1"' . ($c ? ' checked' : '') . '><span>' . $t . '</span></label>';
+  $word = fn($k, $label, $max, $std, $list, $v) => '<label>' . $label . '<input name="' . $k . '" maxlength="' . $max . '" list="ow-' . $k . '" value="' . h($v) . '" placeholder="' . h($std) . '" autocomplete="off"></label>'
+    . '<datalist id="ow-' . $k . '">' . implode('', array_map(fn($x) => '<option value="' . h($x) . '">', $list)) . '</datalist>';
+  /* a product picker: type or pick a name to add it; only the picked ones show, untick to take one out */
+  $picker = function ($k, $on, $none, $ph, $extra = '') use ($sale) {
+    $c = '';
+    foreach ($sale as $id => $s) $c .= '<label class="ofit" title="' . h($s['name']) . '"><input type="checkbox" name="' . $k . '[]" value="' . h($id) . '" data-pct="' . $s['pct'] . '" data-name="' . h($s['name']) . '" data-img="' . h($s['img']) . '" data-price="' . h($s['price']) . '" data-was="' . h($s['was']) . '"' . (in_array($id, $on, true) ? ' checked' : '') . '>'
+      . ($s['img'] ? '<img src="' . h($s['img']) . '" alt="">' : '<i></i>') . '<span>' . h($s['name']) . '</span><small>' . $s['pct'] . '% off</small></label>';
+    return '<div class="opick"><div class="oaddrow"><input class="oadd" list="ow-items" placeholder="' . $ph . '" autocomplete="off" aria-label="' . $ph . '">' . $extra . '</div>'
+      . '<div class="ofits">' . $c . '<span class="onone muted small">' . $none . '</span></div></div>'; };
+  $opts = '<option value="">No product (no photo)</option>' . implode('', array_map(fn($id, $p) => '<option value="' . h($id) . '" data-img="' . h($p['img']) . '"' . ($np['product'] === $id ? ' selected' : '') . '>' . h($p['name']) . ($p['hidden'] ? ' (hidden)' : '') . '</option>', array_keys($plist), $plist));
   page('Offer', '<h1>Offer</h1>' . flash()
-    . '<style>.om{text-transform:none;letter-spacing:normal;font-size:14px;color:var(--ink);display:flex;gap:10px;align-items:flex-start;padding:10px 12px;margin:0 0 8px;border:1px solid var(--line);border-radius:10px;cursor:pointer}.om input{margin:3px 0 0;width:auto;flex:none;accent-color:var(--gold)}.om b{display:block;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}.om small{display:block;color:var(--muted);font-size:13px;line-height:1.4;margin-top:3px}.om:has(input:checked){border-color:var(--gold)}'
-    . '.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.sg2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}.odate{margin:-2px 0 10px 34px}</style>'
-    . '<form class="card" method="post" style="max-width:640px">' . csrf_field()
-    . '<p class="small" style="margin:0 0 14px">' . $state . '</p>'
-    . '<h2 style="margin-top:0">Timer</h2>'
-    . $radio('date', 'Countdown to an end date', 'Days / hours / minutes / seconds count down; everything hides by itself at the end.')
-    . '<div class="odate"><div class="cpq" role="group" aria-label="Quick end"><button type="button" data-h="24">24 hours</button><button type="button" data-h="48">48 hours</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button></div>'
-    . '<div class="sg2"><div><label for="sale_end_d">Ends</label><input id="sale_end_d" type="date" name="sale_end_d" value="' . ($on ? date('Y-m-d', $e) : '') . '"></div><div><label for="sale_end_t">End time (UAE)</label><input id="sale_end_t" type="time" name="sale_end_t" value="' . ($on ? date('H:i', $e) : '') . '"></div></div></div>'
-    . $radio('always', 'Always on (no timer)', '"Limited time offer · HURRY UP!!!" with no clock, until you turn it off.')
-    . $radio('off', 'Off', 'Nothing shows on the website.')
-    . '<h2>Discount %</h2>'
-    . '<label class="om" style="cursor:default;align-items:center"><span style="flex:1"><b>% shown in the popup</b><small>Leave empty to show the biggest real saving' . ($realMax ? ' (now ' . $realMax . '%)' : '') . '. It can\'t be more than that: set the old prices on Products first.</small></span>'
-    . '<span style="display:flex;align-items:center;gap:6px;flex:none"><input name="pct" type="number" min="1" max="' . ($realMax ?: 99) . '" step="1" inputmode="numeric" value="' . h($pct) . '" placeholder="' . ($realMax ?: '') . '" style="width:84px;margin:0;text-align:center">%</span></label>'
-    . '<h2>What shows</h2>'
-    . $box('popup', $pop, 'Popup', 'The box with × that opens a few seconds after someone arrives (once per visit, never on checkout).')
-    . $box('line', $line, 'Line by sale prices', '"Limited time offer · Ends in …" on the product page and shop cards of items with an old price.')
-    . '<p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Save</button>' . ($mode !== 'off' ? '<button class="btn line" name="all_off" value="1">Turn everything off</button>' : '') . '</p>'
-    . '<p class="muted small" style="margin:10px 0 0">Old prices are set on Products. Prices are not changed here.</p></form>'
-    . '<form class="card" method="post" style="max-width:640px;margin-top:14px">' . csrf_field() . '<input type="hidden" name="np_save" value="1">'
-    . '<h2 style="margin-top:0">New product popup</h2>'
-    . '<p class="small" style="margin:0 0 12px">' . ($np['on'] ? '<span class="lvl-ok">●</span> On: "' . ($np['status'] === 'arrived' ? 'Just arrived' : 'Coming soon') . ' · ' . h($np['name']) . '".' : '<span class="lvl-low">●</span> Off.') . '</p>'
-    . $box('np_on', !empty($np['on']), 'Show the new product popup', 'Shown once to each visitor (the sale popup then shows on their next visit). Never on checkout.')
-    . '<label class="om"><input type="radio" name="np_status" value="soon"' . ($np['status'] !== 'arrived' ? ' checked' : '') . '><span><b>Coming soon</b><small>No button to buy; "Explore FOMAXO" goes to the fragrances.</small></span></label>'
-    . '<label class="om"><input type="radio" name="np_status" value="arrived"' . ($np['status'] === 'arrived' ? ' checked' : '') . '><span><b>Just arrived</b><small>"Shop now" opens the product page.</small></span></label>'
-    . '<label for="np_name">Product name</label><input id="np_name" name="np_name" maxlength="40" value="' . h($np['name']) . '" placeholder="e.g. Oud Royale">'
-    . '<label for="np_line">Short line (optional)</label><input id="np_line" name="np_line" maxlength="90" value="' . h($np['line']) . '" placeholder="e.g. A new Elite fragrance, launching this month">'
-    . '<label for="np_product">Product page and photo (optional)</label><select id="np_product" name="np_product"><option value="">None (no photo)</option>'
-    . implode('', array_map(fn($id, $n) => '<option value="' . h($id) . '"' . ($np['product'] === $id ? ' selected' : '') . '>' . h($n) . '</option>', array_keys($plist), $plist)) . '</select>'
-    . '<p class="muted small" style="margin:6px 0 0">Pick the product once it is added on Products (it can stay hidden until launch). Its first photo is shown in the popup.</p>'
-    . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
-    . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},e=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000+b.dataset.h*3600000);'
-    . 'set("sale_end_d",e.getFullYear()+"-"+p(e.getMonth()+1)+"-"+p(e.getDate()));set("sale_end_t",p(e.getHours())+":"+p(e.getMinutes()));f.querySelector("input[name=mode][value=date]").checked=true;document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}});'
-    . 'document.querySelectorAll(".odate input").forEach(function(i){i.addEventListener("input",function(){document.querySelector("input[name=mode][value=date]").checked=true})})</script>');
+    . '<style>' . OFFER_CSS . '</style>'
+    . '<div class="osw" role="group" aria-label="Show"><button type="button" class="on" data-ow="sale">Sale offer</button><button type="button" data-ow="new">New product</button></div>'
+    . '<div class="ogrid">'
+    /* box 1: the sale offer */
+    . '<form class="card ob on" data-ob="sale" method="post" id="offerForm" data-best="' . $bestOf([]) . '">' . csrf_field()
+    . '<h2>Sale offer</h2><p class="ost ost-' . $sk . '">' . h($state) . '</p>'
+    . '<div class="orow"><b>Timer</b><span class="oseg">' . $radio('date', 'Countdown') . $radio('always', 'Always on') . $radio('off', 'Off') . '</span></div>'
+    . '<div class="orow oend"' . ($mode === 'date' ? '' : ' hidden') . '><b>Ends</b><div class="oendin"><span class="cpq" role="group" aria-label="Quick end"><button type="button" data-h="24">24h</button><button type="button" data-h="48">48h</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button></span>'
+    . '<span class="od"><input type="date" name="sale_end_d" aria-label="End date" value="' . ($on ? date('Y-m-d', $e) : '') . '"><input type="time" name="sale_end_t" aria-label="End time (UAE)" title="UAE time; empty = 11:59 pm" value="' . ($on ? date('H:i', $e) : '') . '"></span></div></div>'
+    . '<div class="orow"><div class="olab"><b>Popup</b>' . $tick('popup', $pop, 'On') . '</div><div class="ocol"><div class="owords">'
+    . $word('title', 'Top line', 30, 'LIMITED TIME OFFER', ['Limited time offer', 'Flash sale', 'Festive sale', 'Eid offer', 'National Day offer', 'Weekend sale', 'Mega sale', 'Special offer', 'New launch offer'], $W['title'])
+    . '<label>% off<input name="pct" type="number" min="1" max="' . ($best ?: 99) . '" step="1" inputmode="numeric" value="' . h($pct) . '" placeholder="' . ($best ? "max $best" : 'No old prices') . '"' . ($best ? '' : ' disabled') . '></label>'
+    . $word('sub', 'Under the %', 40, 'on selected fragrances', ['on selected fragrances', 'on selected products', 'on all fragrances', 'on perfumes', 'on gift sets', 'on everything', 'on your first order'], $W['sub'])
+    . $word('btn', 'Button', 24, 'Shop the offer', ['Shop the offer', 'Shop now', 'Grab the deal', 'Shop fragrances', 'See the offer'], $W['btn'])
+    . '</div>' . ($sale ? $picker('items', $items, 'None picked: the popup counts every product with an old price.', 'Add a product to the popup') : '<p class="small" style="margin:0;color:var(--warn)">No product has an old price on Products yet, so the popup stays hidden.</p>') . '</div></div>'
+    . '<div class="orow"><div class="olab"><b>Line by prices</b></div>'
+    . ($sale ? $picker('lines', $lines, 'None picked: no line shows.', 'Add a product', '<button type="button" class="btn line sm" data-osame title="Pick the same products as the popup">Same as popup</button>') : '<p class="small muted" style="margin:0">Needs products with an old price.</p>') . '</div>'
+    . ($sale ? '<datalist id="ow-items">' . implode('', array_map(fn($s) => '<option value="' . h($s['name']) . '" label="' . $s['pct'] . '% off">', $sale)) . '</datalist>' : '')
+    . '<div class="obtns">'
+    . '<button class="btn">Save</button><button type="button" class="btn line" data-preview="sale">Preview</button>' . ($mode !== 'off' ? '<button class="btn line oofff" name="all_off" value="1">Turn off</button>' : '') . '</div></form>'
+    /* box 2: the New product popup */
+    . '<form class="card ob" data-ob="new" method="post" id="newpForm">' . csrf_field() . '<input type="hidden" name="np_save" value="1">'
+    . '<h2>New product popup <label class="otk ohd"><input type="checkbox" name="np_on" value="1"' . (!empty($np['on']) ? ' checked' : '') . '><span>On</span></label></h2>'
+    . '<p class="ost ost-' . (!empty($np['on']) ? 'on' : 'off') . '">' . (!empty($np['on']) ? 'On: “' . h($np['label']) . '” for ' . h($np['name']) . '.' : 'Off. No new product popup shows.') . '</p>'
+    . '<label>Type<input name="np_label" maxlength="24" list="ow-np" value="' . h($np['label']) . '" placeholder="Coming soon" autocomplete="off"></label>'
+    . '<datalist id="ow-np">' . implode('', array_map(fn($x) => '<option value="' . h($x) . '">', ['Coming soon', 'Just arrived', 'New launch', 'Launching soon', 'Back in stock', 'Now available', 'Only at FOMAXO'])) . '</datalist>'
+    . '<label>Product<select name="np_product">' . $opts . '</select></label>'
+    . '<label>Name<input name="np_name" maxlength="40" value="' . h($np['name']) . '" placeholder="e.g. Oud Royale"></label>'
+    . '<label>Short line<input name="np_line" maxlength="90" value="' . h($np['line']) . '" placeholder="Optional"></label>'
+    . '<div class="obtns"><button class="btn">Save</button><button type="button" class="btn line" data-preview="new">Preview</button></div>'
+    . '<p class="muted small" style="margin:10px 0 0">Shows once per visitor, before the sale popup.</p></form></div>'
+    . '<script>' . OFFER_JS . '</script>', true);
 }
 
 /* ---- settings: admin password, where order emails go, low stock warning ---- */
