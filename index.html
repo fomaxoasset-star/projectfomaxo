@@ -1993,6 +1993,9 @@ html[dir=rtl] .reorder.ro-home{background:linear-gradient(270deg,rgba(215,170,10
   .co{padding-top:14px;padding-bottom:40px}
   .co-h{font-size:28px;margin:4px 0 10px}
   .co-grid{gap:48px}
+  .co:has(>.co-grid){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);grid-template-rows:auto auto 1fr;grid-template-areas:"crumbs ." "h sum" "main sum";column-gap:48px;align-items:start}
+  .co>.crumbs{grid-area:crumbs}.co>.co-h{grid-area:h}.co>.co-grid{display:contents}
+  .co:has(>.co-grid) .co-sum{margin-top:4px}
   .co-main{gap:18px}
   .co-step{gap:8px}
   .co-step h2{font-size:21px;gap:10px;padding-bottom:7px;margin-bottom:0}
