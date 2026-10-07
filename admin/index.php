@@ -1827,7 +1827,7 @@ if (isset($_GET['reviews'])) {
       $what = $late && $fault ? 'التوصيل تأخر وأن ' . $pr . ' كان معيباً' : ($late ? 'التوصيل تأخر فعلاً' : $pr . ' كان معيباً فعلاً');
       $cpn = $pk(['سترسل لك FOMAXO كوبون خصم لطلبك القادم على واتساب تعويضاً عن ذلك', 'سترسل لك FOMAXO على واتساب كوبون خصم لطلبك القادم اعتذاراً منا', 'ستتواصل معك FOMAXO على واتساب بكوبون خصم لطلبك القادم']) . ' 🙏';
       if ($late || $fault) return ($st >= 4 ? $pk(['شكراً جزيلاً ', 'نقدّر كلماتك ', 'شكراً لك ']) . $hi . '، ونعتذر عن الإزعاج. لقد راجعنا طلبك وتأكدنا أن ' . $what . '، و' : $pk(['نعتذر منك ', 'نعتذر بصدق ', 'نقدم لك اعتذارنا الصادق ']) . $hi . '، لقد راجعنا طلبك وتأكدنا أن ' . $what . '. ') . $cpn;
-      $gift = $pk(['سترسل لك FOMAXO كوبون خصم لطلبك القادم على واتساب', 'سترسل لك FOMAXO على واتساب كوبون خصم لطلبك القادم', 'تعويضاً لك، سترسل لك FOMAXO كوبون خصم لطلبك القادم على واتساب']) . ' 🙏';
+      $gift = 'لقد راجعنا طلبك وتأكدنا أن ملاحظتك في محلها، لذلك ' . $pk(['سترسل لك FOMAXO كوبون خصم لطلبك القادم على واتساب', 'سترسل لك FOMAXO على واتساب كوبون خصم لطلبك القادم', 'سترسل لك FOMAXO كوبون خصم لطلبك القادم على واتساب تعويضاً عن ذلك']) . ' 🙏';
       if ($st >= 4) return $pk([($st === 5 ? 'شكراً جزيلاً ' : 'شكراً '), 'نقدّر كلماتك الجميلة ', 'شكراً على تقييمك ']) . $hi . '! ' . ($fav ? 'يسعد FOMAXO أن ' . $pr . ' أصبح المفضل لديك' : $pk(['يسعد FOMAXO أن ' . $pr . ' أعجبك', 'سعادتنا كبيرة بأن ' . $pr . ' نال إعجابك', 'يسرّ FOMAXO أنك تستمتع بـ ' . $pr]))
         . ($good ? '، خاصة ' . implode(' و', $good) : '') . ($bad ? '، وستساعد ملاحظتك FOMAXO على أن يصبح أفضل' : '') . ' 🙏';
       $why = $bad[0] ?? 'لم تكن تجربتك مع ' . $pr . ' كما توقعت';
@@ -1838,7 +1838,7 @@ if (isset($_GET['reviews'])) {
     $cpn = $pk(['FOMAXO will send a coupon for your next order to your WhatsApp to make it up to you', 'FOMAXO will send you a coupon on WhatsApp for your next order as our apology', 'FOMAXO will be in touch on WhatsApp with a coupon for your next order']) . ' 🙏';
     $sorry = $pk(['We sincerely apologize', 'We truly apologize', 'We deeply apologize']);
     if ($late || $fault) return ($st >= 4 ? $pk(['Thank you so much', 'We really appreciate your review', 'Thank you for your kind words']) . $hi . ', and we apologize for the trouble. We checked your order and found ' . $what . ', so ' : $sorry . $hi . '. We checked your order and found ' . $what . ', so ') . $cpn;
-    $gift = $pk(['FOMAXO will send a coupon for your next order to your WhatsApp', 'FOMAXO will send you a coupon on WhatsApp for your next order', 'To make it up to you, FOMAXO will send a coupon for your next order to your WhatsApp']) . ' 🙏';
+    $gift = 'We checked your order and found your concern was real, so ' . $pk(['FOMAXO will send a coupon for your next order to your WhatsApp', 'FOMAXO will send you a coupon on WhatsApp for your next order', 'FOMAXO will send a coupon for your next order to your WhatsApp to make it up to you']) . ' 🙏';
     if ($st >= 4) return $pk([($st === 5 ? 'Thank you so much' : 'Thank you'), 'We really appreciate your review', 'Thank you for the lovely words']) . $hi . '! ' . ($fav ? 'FOMAXO is so glad ' . $pr . ' is your favourite' : $pk(['FOMAXO is thrilled you love ' . $pr, "We're so happy " . $pr . ' is a hit with you', 'It means a lot to FOMAXO that you enjoy ' . $pr]))
       . ($good ? ', especially ' . implode(' and ', $good) : '') . ($bad ? ', and your note will help us make it even better' : '') . ' 🙏';
     $why = $bad[0] ?? 'your experience with ' . $pr . " wasn't what you expected";
