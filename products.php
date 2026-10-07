@@ -11,7 +11,17 @@ foreach (fomaxo_product_rows() ?: [] as $r) {
   $p->hidden = true;   // still sent, so links to it don't break, but not listed or sold
   $out[] = fomaxo_json($p);
 }
-/* limited-time sale: when it ends (Unix time), as set on fomaxo.com/admin → Offer; null = no countdown */
-$saleEnds = null; $saleAlways = false; $salePopup = true; $saleLine = true; $salePct = 0; $newPop = null;   // newPop: the "Coming soon" / "Just arrived" popup   // saleAlways: on with no timer until turned off; popup / line: what shows (admin → Offer)
-if ($pdo = fomaxo_db()) { try { $v = (int)fomaxo_setting($pdo, 'sale_ends'); if ($v > time()) $saleEnds = $v; $saleAlways = (string)fomaxo_setting($pdo, 'sale_always') === '1'; $salePopup = (string)fomaxo_setting($pdo, 'sale_popup') !== '0'; $saleLine = (string)fomaxo_setting($pdo, 'sale_line') !== '0'; $salePct = (int)fomaxo_setting($pdo, 'sale_pct'); $np = json_decode((string)fomaxo_setting($pdo, 'np'), true); if (is_array($np) && !empty($np['on']) && ($np['name'] ?? '') !== '') $newPop = ['status' => $np['status'], 'name' => $np['name'], 'line' => $np['line'] ?? '', 'product' => $np['product'] ?? '']; } catch (Throwable $e) {} }
-echo '{"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . '}';
+/* limited-time sale, as set on fomaxo.com/admin → Offer: when it ends (Unix time; null = no countdown), always on (no timer), the popup's words and products, which products show the line by prices */
+$saleEnds = null; $saleAlways = false; $salePopup = true; $saleLine = true; $salePct = 0; $newPop = null;
+$saleTxt = ['saleTop' => 'Limited time offer', 'saleUnder' => 'on selected fragrances', 'saleBtn' => 'Shop the offer']; $popIds = []; $lineIds = null;   // lineIds null = every product with an old price (before the product list was set)
+$ids = fn($v) => is_array($a = json_decode((string)$v, true)) ? array_values(array_filter($a, 'is_string')) : null;
+if ($pdo = fomaxo_db()) { try {
+  $v = (int)fomaxo_setting($pdo, 'sale_ends'); if ($v > time()) $saleEnds = $v; $saleAlways = (string)fomaxo_setting($pdo, 'sale_always') === '1';
+  $salePopup = (string)fomaxo_setting($pdo, 'sale_popup') !== '0'; $saleLine = (string)fomaxo_setting($pdo, 'sale_line') !== '0'; $salePct = (int)fomaxo_setting($pdo, 'sale_pct');
+  foreach (['saleTop' => 'sale_top', 'saleUnder' => 'sale_under', 'saleBtn' => 'sale_btn'] as $o => $k) { $t = trim((string)fomaxo_setting($pdo, $k)); if ($t !== '') $saleTxt[$o] = $t; }
+  $popIds = $ids(fomaxo_setting($pdo, 'sale_pop_ids')) ?: []; $lineIds = $ids(fomaxo_setting($pdo, 'sale_line_ids'));
+  $np = json_decode((string)fomaxo_setting($pdo, 'np'), true);   // the new product popup ("Coming soon", "Just arrived" …)
+  if (is_array($np) && !empty($np['on']) && ($np['name'] ?? '') !== '') $newPop = ['type' => $np['type'] ?? (($np['status'] ?? '') === 'arrived' ? 'Just arrived' : 'Coming soon'), 'name' => $np['name'], 'line' => $np['line'] ?? '', 'product' => $np['product'] ?? ''];
+} catch (Throwable $e) {} }
+echo '{"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null')
+  . ',"saleText":' . fomaxo_json($saleTxt) . ',"salePopIds":' . fomaxo_json($popIds) . ',"saleLineIds":' . ($lineIds === null ? 'null' : fomaxo_json($lineIds)) . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . '}';
