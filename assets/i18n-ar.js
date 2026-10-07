@@ -161,6 +161,7 @@
 "Mini Collection": "مجموعة الميني",
 "© 2026 FOMAXO™. All rights reserved.": "© 2026 FOMAXO™. جميع الحقوق محفوظة.",
 "We count anonymous visits (no cookies, nothing shared) to improve the store.": "نحسب الزيارات بشكل مجهول (بدون ملفات تعريف ارتباط، ولا نشارك أي شيء) لتحسين المتجر.",
+"We use cookies, including from our ad partners, to improve the store and our ads.": "نستخدم ملفات تعريف الارتباط، ومنها ملفات شركائنا الإعلانيين، لتحسين المتجر وإعلاناتنا.",
 "Your Bag": "حقيبتك",
 "Your bag is empty": "حقيبتك فارغة",
 "Not sure where to begin? Start with the Discovery Set.": "لست متأكداً من أين تبدأ؟ ابدأ بمجموعة الاكتشاف.",
