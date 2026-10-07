@@ -1884,6 +1884,18 @@ section.sec.ro-sec{padding:clamp(20px,3vw,32px) 0 0}
 .ro-sec+section.sec{padding-top:clamp(36px,5vw,64px)}
 .reorder.ro-bag{grid-template-columns:auto 1fr;margin-bottom:14px}
 .reorder.ro-bag .btn{grid-column:1/-1;width:100%}
+/* desktop home: bigger, easier to read Welcome back box with a gold edge */
+@media(min-width:901px){
+.reorder.ro-home{gap:32px;padding:26px 34px;border-inline-start:3px solid var(--gold);background:linear-gradient(90deg,rgba(215,170,105,.13),rgba(215,170,105,0) 65%),var(--panel)}
+.reorder.ro-home .ro-imgs img{width:84px;box-shadow:0 8px 22px rgba(0,0,0,.28)}
+.reorder.ro-home .ro-imgs img + img{margin-inline-start:-26px}
+.reorder.ro-home .ro-t{gap:8px}
+.reorder.ro-home small{font-size:12.5px;letter-spacing:.32em}
+.reorder.ro-home b{font-size:28px;letter-spacing:.08em;line-height:1.15}
+.reorder.ro-home .ro-t span{font-size:16px;color:var(--ivory);opacity:.85}
+.reorder.ro-home .btn{min-height:54px;padding:0 38px;font-size:13px;letter-spacing:.18em}
+html[dir=rtl] .reorder.ro-home{background:linear-gradient(270deg,rgba(215,170,105,.13),rgba(215,170,105,0) 65%),var(--panel)}
+}
 @media(max-width:600px){.reorder{grid-template-columns:auto 1fr;gap:12px;padding:12px}.reorder .btn{grid-column:1/-1;width:100%}}
 .notify-ok{max-width:460px;padding:15px 18px;border:1px solid var(--line-2);font-size:14px;color:var(--gold)}
 /* phones: a compact bag, so the products have room and the bottom part never crowds the screen */
