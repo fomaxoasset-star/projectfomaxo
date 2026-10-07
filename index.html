@@ -1528,7 +1528,7 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-opt-t b{font-weight:500;font-size:15.5px;line-height:1.3}
 .co-opt-t small{font-size:13px;line-height:1.4;color:var(--muted)}
 .co-opt-more{display:block;margin-top:8px;color:var(--champagne)}
-.co-opt-1l,.co-opt-2l{display:block}.co-opt-1l{white-space:nowrap}html[lang=ar] .co-opt-1l{white-space:normal}   /* Arabic is longer, so it may wrap on small phones. AJAY: "Pay in Cash When Order Arrives" / "Fee AED X" and, over the COD maximum, "COD for orders under AED X" on one line, "Please pay by card." under it */
+.co-opt-1l,.co-opt-2l{display:block}.co-opt-1l{white-space:nowrap}html[lang=ar] .co-opt-1l{white-space:normal}@media(min-width:901px){.co-opt-1l,.co-opt-2l{display:inline}.co-opt-2l::before{content:" · "}}   /* Arabic is longer, so it may wrap on small phones; laptop: one straight line with " · ". AJAY: "Pay in Cash When Order Arrives" / "Fee AED X" and, over the COD maximum, "COD for orders under AED X" on one line, "Please pay by card." under it */
 .co-opt-i{flex:none;color:var(--gold)}
 .co-opt-i svg{width:24px;height:24px;display:block}
 .co .form label.co-opt.on{border-color:var(--gold);background:rgba(215,170,105,.08)}
