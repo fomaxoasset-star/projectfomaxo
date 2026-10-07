@@ -150,7 +150,8 @@ $miniName = null;
 if (qty_mini($discUnits) && !$has10) {
   $ok = fn($x) => is_string($x) && isset($CATALOG[$x]) && !in_array($x, $QTY_DISCOUNT_SKIP, true) && isset($CATALOG[$x]['prices']['10']);
   $mini = $in['mini'] ?? null;
-  if (!$ok($mini)) $mini = array_values(array_filter(array_keys($CATALOG), $ok))[0];
+  $inStock = fn($x) => $ok($x) && fomaxo_mini_ok($x);   // never a mini that is out of stock, unless every 10ml is
+  if (!$inStock($mini)) $mini = array_values(array_filter(array_keys($CATALOG), $inStock))[0] ?? ($ok($mini) ? $mini : array_values(array_filter(array_keys($CATALOG), $ok))[0]);
   $miniName = $CATALOG[$mini]['name'];
 }
 

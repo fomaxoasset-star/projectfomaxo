@@ -2558,7 +2558,9 @@ function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.co
 const QTY_DISCOUNT_SKIP = ['discovery', 'king'];
 const QTY_TIERS = [{n: 2, pct: 5, mini: false}, {n: 3, pct: 10, mini: true}, {n: 5, pct: 15, mini: true}];
 const qtyTier = n => QTY_TIERS.filter(t => n >= t.n).pop() || {n: 0, pct: 0, mini: false};
-const miniScents = () => Object.values(P).filter(p => !p.hidden && !QTY_DISCOUNT_SKIP.includes(p.id) && p.sizes.map(String).includes('10'));
+const miniAll = () => Object.values(P).filter(p => !p.hidden && !QTY_DISCOUNT_SKIP.includes(p.id) && p.sizes.map(String).includes('10'));
+// free mini choices: out-of-stock 10ml sizes are left out (all of them only if every 10ml is out)
+const miniScents = () => { const all = miniAll(), ok = all.filter(p => { const n = stockLeft(p.id, 10); return n === null || n > 0; }); return ok.length ? ok : all; };
 function miniPick(){
   let saved = null; try { saved = localStorage.getItem('fomaxo_mini'); } catch(e) {}
   const ok = miniScents().map(p => p.id);
@@ -2800,6 +2802,7 @@ function applyStock(){
 async function loadStock(){
   try { const r = await fetch('stock.php', {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.stock) STOCK = d.stock; } } catch(e) {}
   applyStock();
+  renderCart(); coRefresh && coRefresh();   // the free 10ml mini skips sizes that are out of stock
 }
 function card(p, opts={}){
   const size = opts.size || defaultSize(p);
