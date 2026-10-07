@@ -19,6 +19,13 @@ session_start();
 if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
 
 function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+/* text a customer typed: Arabic shows in English for FOMAXO, with the Arabic as typed in small underneath (for the driver); Arabic digits become 0-9 */
+function hx($v, $nl = false, $inline = false) {
+  $f = fn($s) => $nl ? nl2br(h($s)) : h($s); $v = (string)$v; $d = strtr($v, FX_AR_DIGITS);
+  if (!fx_has_ar($v)) return $f($d);
+  $en = fomaxo_en($v);
+  return $en === $d ? '<span dir="auto">' . $f($v) . '</span>' : $f($en) . '<span class="arx' . ($inline ? ' in' : '') . '" dir="rtl" lang="ar">' . $f($v) . '</span>';
+}
 function money($v) { return 'AED ' . number_format((float)$v, 2); }
 function self_url($q = []) { return './' . ($q ? '?' . http_build_query($q) : ''); }
 function csrf_ok() { return hash_equals($_SESSION['csrf'] ?? '', (string)($_POST['csrf'] ?? '')); }
@@ -50,6 +57,8 @@ function adm_range_form($rg, $base) {
 
 function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
   $css = <<<'CSS'
+.arx{display:block;font-size:.86em;font-weight:400;opacity:.72;line-height:1.5;margin-top:2px;font-family:Tahoma,Arial,sans-serif}
+.arx.in{display:inline;margin:0 0 0 6px;unicode-bidi:isolate}
 :root{--bg:#f7f3ec;--panel:#fff;--ink:#16130f;--muted:#5d554a;--line:#e3d9c8;--gold:#8f6b37;--gold-ink:#fff;--ok:#2f6b3a;--warn:#9a5b12;--bad:#9b2c2c}
 @media (prefers-color-scheme:dark){:root{--bg:#050505;--panel:#0e0d0b;--ink:#f2ebdd;--muted:#b5aa98;--line:#2a251e;--gold:#d7aa69;--gold-ink:#000;--ok:#7fc48b;--warn:#e0a85a;--bad:#ef8a8a}}
 *{box-sizing:border-box}html{color-scheme:light dark}
@@ -1291,7 +1300,7 @@ if (isset($_GET['analytics'])) {
     $stageName = ['details' => 'Delivery details', 'payment' => 'Payment choice', 'card' => 'Card payment page'];
     $cell = fn($v) => is_string($v) && preg_match('/^[=+\-@]/', $v) && !preg_match('/^\+?[\d\s()\-]+$/', $v) ? "'" . $v : $v;   // typed by visitors: never let Excel run it as a formula
     foreach ($pdo->query("SELECT l.*, $addr addr, $ordered ordered FROM fx_leads l ORDER BY l.updated_at DESC") as $l)
-      fputcsv($out, array_map($cell, [$l['created_at'], $l['updated_at'], $l['name'], $l['phone'], $l['email'], $l['emirate'], $l['addr'], $l['items'],
+      fputcsv($out, array_map($cell, [$l['created_at'], $l['updated_at'], fomaxo_en_both($l['name']), $l['phone'], $l['email'], $l['emirate'], fomaxo_en_both($l['addr']), $l['items'],
                      $l['total'] === null ? '' : number_format((float)$l['total'], 2, '.', ''), $stageName[$l['stage']] ?? $l['stage'], $l['ordered'] ? 'Yes' . ($l['order_no'] ? ' (' . $l['order_no'] . ')' : '') : 'No']));
     exit;
   }
@@ -1565,12 +1574,12 @@ if (isset($_GET['analytics'])) {
     $wa = preg_replace('/\D/', '', $l['phone']); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1);
     $recent = strtotime($l['updated_at']) > time() - 900;
     /* one line per person (name, emirate, bag value, WhatsApp); tap the line for everything else */
-    $left .= '<li class="lx"><details><summary><span class="ln"><b>' . h($l['name'] ?: 'No name') . '</b>' . ($l['emirate'] !== '' ? ' <span class="muted">' . h($l['emirate']) . '</span>' : '') . '</span>'
+    $left .= '<li class="lx"><details><summary><span class="ln"><b>' . hx($l['name'] ?: 'No name') . '</b>' . ($l['emirate'] !== '' ? ' <span class="muted">' . h($l['emirate']) . '</span>' : '') . '</span>'
            . '<span class="lv">' . ($l['total'] !== null ? money($l['total']) : '') . '</span>'
            . ($l['phone'] !== '' ? '<a class="wa" href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener" aria-label="WhatsApp ' . h($l['name'] ?: $l['phone']) . '"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg><span>WhatsApp</span></a>' : '<span class="wa none"></span>') . '</summary>'
            . '<div class="ld small"><div><span class="tag stage-' . h($l['stage']) . '">Left at ' . h($stageName[$l['stage']] ?? $l['stage']) . '</span> <span class="muted">' . h(date('d M, H:i', strtotime($l['updated_at']))) . ($recent ? ' · may still be checking out' : '') . '</span></div>'
            . '<div>' . h($l['phone']) . ($l['email'] !== '' ? ' · ' . h($l['email']) : '') . '</div>'
-           . (($l['address'] ?? '') !== '' ? '<div>' . h($l['address']) . '</div>' : '')
+           . (($l['address'] ?? '') !== '' ? '<div>' . hx($l['address']) . '</div>' : '')
            . ($l['items'] !== '' ? '<div class="muted">' . h($l['items']) . '</div>' : '') . '</div></details></li>';
   }
 
@@ -1823,14 +1832,15 @@ if (isset($_GET['reviews'])) {
       });
     }
     $items = '';
+    fomaxo_en_many(array_merge(array_column($list, 'text'), array_column($list, 'name'), array_map(fn($r) => trim($r['city'] ?? ''), $list)));
     foreach ($list as $r) {
-      $off = !empty($r['hidden']); $where = trim(($r['city'] ?? '') . ' ' . ($r['country'] ?? ''));
+      $off = !empty($r['hidden']); $where = trim($r['city'] ?? ''); $cc = (string)($r['country'] ?? '');
       $ph = ''; foreach ($r['photos'] ?? [] as $p) $ph .= '<a href="../reviews.php?photo=' . h(rawurlencode($p)) . '" target="_blank" rel="noopener"><img src="../reviews.php?photo=' . h(rawurlencode($p)) . '" alt="" loading="lazy"></a>';
       $items .= '<li class="rv' . ($off ? ' off' : '') . '"><div class="rh"><b>' . h($pname($r['product'])) . '</b> ' . $stars($r['rating']) . ($off ? ' <span class="tag s-Cancelled">Removed</span>' : '') . '</div>'
-        . '<div class="small muted">' . h($r['name']) . (!empty($r['anon']) ? ' (real name: ' . h($r['real'] ?? '') . ')' : '') . ($where !== '' ? ' · ' . h($where) : '')
+        . '<div class="small muted">' . hx($r['name'], false, true) . (!empty($r['anon']) ? ' (real name: ' . h($r['real'] ?? '') . ')' : '') . ($where . $cc !== '' ? ' · ' . hx($where, false, true) . ($cc !== '' ? ' ' . h($cc) : '') : '')
         . (!empty($tel[$r['order'] ?? '']['phone']) ? ' · ' . h($tel[$r['order']]['phone']) : '')
         . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' . (!empty($r['order']) ? ', ' . h($r['order']) : '') : 'not verified') . ' · ' . h(date('d M Y', strtotime($r['created']))) . '</div>'
-        . '<p>' . nl2br(h($r['text'])) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '') . $replyBox($r)
+        . '<p>' . hx($r['text'], true) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '') . $replyBox($r)
         . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '') . ($vf !== '' ? $hidden('vf', $vf) : '')
         . '<button class="btn sm' . ($off ? ' line' : ' danger') . '">' . ($off ? 'Put back on website' : 'Remove') . '</button></form></div></li>';
     }
@@ -1897,14 +1907,15 @@ if (isset($_GET['reviews'])) {
       });
     }
     $items = '';
+    fomaxo_en_many(array_merge(array_column($list, 'text'), array_column($list, 'name'), array_map(fn($r) => trim($r['city'] ?? ''), $list)));
     foreach ($list as $r) {
-      $off = !empty($r['hidden']); $where = trim(($r['city'] ?? '') . ' ' . ($r['country'] ?? ''));
+      $off = !empty($r['hidden']); $where = trim($r['city'] ?? ''); $cc = (string)($r['country'] ?? '');
       $ph = ''; foreach ($r['photos'] ?? [] as $p) $ph .= '<a href="../reviews.php?photo=' . h(rawurlencode($p)) . '" target="_blank" rel="noopener"><img src="../reviews.php?photo=' . h(rawurlencode($p)) . '" alt="" loading="lazy"></a>';
       $items .= '<li class="rv' . ($off ? ' off' : '') . '"><div class="rh"><b>' . h($pname($r['product'])) . '</b> ' . $stars($r['rating']) . ($off ? ' <span class="tag s-Cancelled">Removed</span>' : '') . '</div>'
-        . '<div class="small muted">' . h($r['name']) . (!empty($r['anon']) ? ' (real name: ' . h($r['real'] ?? '') . ')' : '') . ($where !== '' ? ' · ' . h($where) : '')
+        . '<div class="small muted">' . hx($r['name'], false, true) . (!empty($r['anon']) ? ' (real name: ' . h($r['real'] ?? '') . ')' : '') . ($where . $cc !== '' ? ' · ' . hx($where, false, true) . ($cc !== '' ? ' ' . h($cc) : '') : '')
         . (!empty($tel[$r['order'] ?? '']['phone']) ? ' · ' . h($tel[$r['order']]['phone']) : '')
         . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' . (!empty($r['order']) ? ', ' . h($r['order']) : '') : 'not verified') . ' · ' . h(date('d M Y', strtotime($r['created']))) . '</div>'
-        . '<p>' . nl2br(h($r['text'])) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '') . $replyBox($r)
+        . '<p>' . hx($r['text'], true) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '') . $replyBox($r)
         . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '') . ($vf !== '' ? $hidden('vf', $vf) : '')
         . '<button class="btn sm' . ($off ? ' line' : ' danger') . '">' . ($off ? 'Put back on website' : 'Remove') . '</button></form></div></li>';
     }
@@ -1967,7 +1978,7 @@ if (isset($_GET['members'])) {
     $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
     $cell = fn($v) => is_string($v) && preg_match('/^[=+\-@]/', $v) && !preg_match('/^\+?[\d\s()\-]+$/', $v) ? "'" . $v : $v;
     fputcsv($out, ['Name', 'Mobile', 'WhatsApp number', 'Email', 'Emirate', 'Last order']);
-    foreach ($waOn as $w) fputcsv($out, array_map($cell, [$w['name'], $w['phone'], $waLink($w['phone']), $w['email'], $w['emirate'], date('Y-m-d', strtotime($w['last']))]));
+    foreach ($waOn as $w) fputcsv($out, array_map($cell, [fomaxo_en_both($w['name']), $w['phone'], $waLink($w['phone']), $w['email'], $w['emirate'], date('Y-m-d', strtotime($w['last']))]));
     exit;
   }
   $rg = isset($_GET['c']) ? null : adm_range('members', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
@@ -2033,7 +2044,7 @@ if (isset($_GET['members'])) {
       $u = h(self_url(['o' => $o['order_no']]));
       $tr .= '<tr class="row" onclick="location.href=\'' . $u . '\'"><td class="no"><a href="' . $u . '">' . h($o['order_no']) . '</a></td>'
            . '<td>' . h(date('d M Y, H:i', strtotime($o['created_at']))) . '</td>'
-           . '<td>' . h($o['name']) . '<div class="muted small">' . h($o['emirate']) . '</div></td>'
+           . '<td>' . hx($o['name']) . '<div class="muted small">' . h($o['emirate']) . '</div></td>'
            . '<td class="small">' . h(str_replace(' | ', ', ', (string)$o['items'])) . '</td>'
            . '<td>' . h($o['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . '</td>'
            . '<td><span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span></td>'
@@ -2042,7 +2053,7 @@ if (isset($_GET['members'])) {
     $stars = fn($n) => '<span class="stars">' . str_repeat('★', (int)$n) . '<i>' . str_repeat('★', 5 - (int)$n) . '</i></span>';
     $rv = '';
     foreach ($revs as $r) $rv .= '<li class="rv' . (!empty($r['hidden']) ? ' off' : '') . '"><div class="rh"><b>' . h($CATALOG[$r['product']]['name'] ?? $r['product']) . '</b> ' . $stars($r['rating'])
-      . (!empty($r['hidden']) ? ' <span class="tag s-Cancelled">Removed</span>' : '') . '</div><div class="small muted">' . h(date('d M Y', strtotime($r['created']))) . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' : 'not verified') . '</div><p>' . nl2br(h($r['text'])) . '</p></li>';
+      . (!empty($r['hidden']) ? ' <span class="tag s-Cancelled">Removed</span>' : '') . '</div><div class="small muted">' . h(date('d M Y', strtotime($r['created']))) . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' : 'not verified') . '</div><p>' . hx($r['text'], true) . '</p></li>';
     $act = '';
     if ($web) {
       $act .= '<dl>' . $row('Visits', count($web['ses'])) . $row('Time on site', 'about ' . $dur($web['secs'])) . $row('Pages viewed', (int)$web['pv'])
@@ -2056,7 +2067,7 @@ if (isset($_GET['members'])) {
     } else $act = '<p class="muted small" style="margin:0">No website visits can be linked to this customer yet. Visits are linked once they check out on the website with this mobile number (counting started 5 Oct 2026, and orders placed on WhatsApp have no visits).</p>';
 
     page($c['name'] ?? 'Customer', '<div class="pagehead"><div><p class="small" style="margin:0 0 2px"><a href="./?members=1">← All members</a></p>'
-      . '<h1>' . h($c['name'] ?? 'No name') . ($c['n'] && $c['n'] >= $min && $c['spent'] >= $spend ? ' <span class="tag mtag">Member</span>' : '') . '</h1></div>'
+      . '<h1>' . hx($c['name'] ?? 'No name') . ($c['n'] && $c['n'] >= $min && $c['spent'] >= $spend ? ' <span class="tag mtag">Member</span>' : '') . '</h1></div>'
       . ($wa ? '<a class="btn line sm" href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') . '</div>'
       . '<div class="stats up cstats"><div class="stat"><span>Orders</span><b>' . (int)$c['n'] . '</b></div><div class="stat"><span>Total spent</span><b>' . money($c['spent']) . '</b></div>'
       . '<div class="stat"><span>Average order</span><b>' . money($c['n'] ? $c['spent'] / $c['n'] : 0) . '</b></div><div class="stat"><span>Reviews</span><b>' . count($revs) . '</b></div>'
@@ -2064,7 +2075,7 @@ if (isset($_GET['members'])) {
       . '<div class="cgrid"><section class="card cdet"><h2>Details</h2><dl>' . $row('Mobile', isset($c['phone']) ? h($c['phone']) . ($wa ? ' · <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') : '')
       . $row('WhatsApp offers', !empty($waCust[$ck]['on']) ? '<span class="wtag" style="margin:0">Yes ✓</span>' : 'No')
       . $row('Email', isset($c['email']) ? '<a href="mailto:' . h($c['email']) . '">' . h($c['email']) . '</a>' : '')
-      . $row('Address', h($c['addr'] ?? '')) . $row('Emirate', h($c['emirate'] ?? '')) . $row('First order', h(date('d M Y', strtotime($c['first'])))) . $row('Last order', h(date('d M Y', strtotime($c['last']))))
+      . $row('Address', hx($c['addr'] ?? '')) . $row('Emirate', h($c['emirate'] ?? '')) . $row('First order', h(date('d M Y', strtotime($c['first'])))) . $row('Last order', h(date('d M Y', strtotime($c['last']))))
       . $row('All orders', count($allO) . (count($allO) > $c['n'] ? ' <span class="muted">(' . (count($allO) - $c['n']) . ' cancelled or unpaid)</span>' : '')) . '</dl>'
       . '<h2>On the website</h2>' . $act . '</section>'
       . '<section class="card cord"><h2>Orders <span class="muted small">' . count($allO) . '</span></h2><div class="cscroll"><table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Name</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th></tr></thead><tbody>' . $tr . '</tbody></table></div></section>'
@@ -2086,19 +2097,20 @@ if (isset($_GET['members'])) {
     $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
     $cell = fn($v) => is_string($v) && preg_match('/^[=+\-@]/', $v) && !preg_match('/^\+?[\d\s()\-]+$/', $v) ? "'" . $v : $v;
     fputcsv($out, ['Name', 'Mobile', 'WhatsApp offers', 'Email', 'Emirate', 'Address', 'Orders', 'Total spent (AED)', 'Average order (AED)', 'First order', 'Last order']);
-    foreach ($list as $c) fputcsv($out, array_map($cell, [$c['name'] ?? '', $c['phone'] ?? '', !empty($c['wa']) ? 'Yes' : 'No', $c['email'] ?? '', $c['emirate'] ?? '', $c['addr'] ?? '', $c['n'],
+    foreach ($list as $c) fputcsv($out, array_map($cell, [fomaxo_en_both($c['name'] ?? ''), $c['phone'] ?? '', !empty($c['wa']) ? 'Yes' : 'No', $c['email'] ?? '', $c['emirate'] ?? '', fomaxo_en_both($c['addr'] ?? ''), $c['n'],
       number_format($c['spent'], 2, '.', ''), number_format($c['spent'] / $c['n'], 2, '.', ''), date('Y-m-d', strtotime($c['first'])), date('Y-m-d', strtotime($c['last']))]));
     exit;
   }
 
   $memSpent = array_sum(array_column($mem, 'spent'));
   $tr = '';
+  fomaxo_en_many(array_merge(array_column($list, 'name'), array_column($list, 'addr')));   // Arabic in English, all at once
   foreach ($list as $k => $c) {
     $u = h(self_url(['members' => 1, 'c' => $k])); $wa = $waLink($c['phone'] ?? '');
-    $tr .= '<tr class="row" onclick="location.href=\'' . $u . '\'"><td class="mn"><a href="' . $u . '"><b>' . h($c['name'] ?? 'No name') . '</b></a>' . (!empty($c['wa']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '')
+    $tr .= '<tr class="row" onclick="location.href=\'' . $u . '\'"><td class="mn"><a href="' . $u . '"><b>' . hx($c['name'] ?? 'No name') . '</b></a>' . (!empty($c['wa']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '')
          . '<div class="muted small">' . (isset($c['phone']) ? ($wa ? '<a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' . h($c['phone']) . '</a>' : h($c['phone'])) : '')
          . (isset($c['email']) ? (isset($c['phone']) ? ' · ' : '') . h($c['email']) : '') . '</div></td>'
-         . '<td class="ma small">' . h($c['addr'] ?? '') . (isset($c['emirate']) ? '<div class="muted">' . h($c['emirate']) . '</div>' : '') . '</td>'
+         . '<td class="ma small">' . hx($c['addr'] ?? '') . (isset($c['emirate']) ? '<div class="muted">' . h($c['emirate']) . '</div>' : '') . '</td>'
          . '<td class="num mo"><b>' . (int)$c['n'] . '</b><span> orders</span></td>'
          . '<td class="num ms"><b>' . money($c['spent']) . '</b></td>'
          . '<td class="num mv">' . money($c['spent'] / $c['n']) . '<span> avg</span></td>'
@@ -2139,10 +2151,10 @@ if (isset($_GET['o'])) {
     . $row('Ordered', h(date('d M Y, H:i', strtotime($o['created_at'])))) . $row('Paid', $o['paid_at'] ? h(date('d M Y, H:i', strtotime($o['paid_at']))) : '')
     . $row('Card ref', h($o['ref'] ?? '')) . '</dl></div>'
     . '<div class="card" style="margin-top:14px"><h2 style="margin-top:0">Customer</h2><dl>'
-    . $row('Name', h($o['name'])) . $row('Mobile', h($o['phone']) . ($wa ? ' · <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : ''))
+    . $row('Name', hx($o['name'])) . $row('Mobile', h($o['phone']) . ($wa ? ' · <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : ''))
     . $row('Email', $o['email'] !== '' ? '<a href="mailto:' . h($o['email']) . '">' . h($o['email']) . '</a>' : '')
     . $row('WhatsApp offers', !empty($o['wa_optin']) ? '<span class="wtag" style="margin:0">Yes ✓</span>' : 'No')
-    . $row('Address', h($o['address'])) . $row('Emirate', h($o['emirate'])) . $row('Customer note', h($o['note'])) . '</dl></div>'
+    . $row('Address', hx($o['address'])) . $row('Emirate', h($o['emirate'])) . $row('Customer note', hx($o['note'], true)) . '</dl></div>'
     . '</div><form class="card" method="post" style="align-self:start">' . csrf_field() . '<input type="hidden" name="order" value="' . h($o['order_no']) . '">'
     . '<h2 style="margin-top:0">Status</h2><label for="status">Order status <span class="muted">(saves when you pick)</span></label>'
     . '<select id="status" name="status" class="stsel s-' . h(strtok($o['status'], ' ')) . '" data-was="' . h($o['status']) . '" onchange="var a=this.selectedOptions[0].dataset.ask;if(a&&!confirm(a)){this.value=this.dataset.was;return}this.form.submit()">' . $opts . '</select>'
@@ -2201,7 +2213,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   }
   $latest = '';
   foreach ($pdo->query("SELECT order_no, created_at, status, total, name, payment FROM fx_orders WHERE status <> 'Awaiting payment' ORDER BY created_at DESC, id DESC LIMIT 20") as $o) {
-    $latest .= '<li><a href="' . h(self_url(['o' => $o['order_no']])) . '"><span><b>' . h($o['order_no']) . '</b> ' . h($o['name'])
+    $latest .= '<li><a href="' . h(self_url(['o' => $o['order_no']])) . '"><span><b>' . h($o['order_no']) . '</b> ' . hx($o['name'])
              . '<small class="muted">' . h(date('d M, H:i', strtotime($o['created_at']))) . ' · ' . h($o['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . '</small></span>'
              . '<span class="r"><span class="tag s-' . h(strtok($o['status'], ' ')) . '">' . h($o['status']) . '</span><b>' . money($o['total']) . '</b></span></a></li>';
   }
@@ -2268,8 +2280,8 @@ if (isset($_GET['export'])) {   // CSV that opens straight in Excel
   while ($o = $s->fetch()) {
     $t = strtotime($o['created_at']);
     fputcsv($out, array_map($cell, [$o['order_no'], date('Y-m-d', $t), date('H:i', $t), $o['payment'], $o['status'], $o['paid_at'] ? date('Y-m-d', strtotime($o['paid_at'])) : '',
-      $o['subtotal'], $o['discount'], $o['fee'], $o['total'], $o['name'], $o['phone'], !empty($o['wa_optin']) ? 'Yes' : 'No', $o['email'], $o['emirate'], $o['address'],
-      str_replace(' | ', "\n", (string)$o['items']), $o['free_mini'], $o['note'], $o['admin_note'], $o['ref'], $o['test'] ? 'yes' : '']));
+      $o['subtotal'], $o['discount'], $o['fee'], $o['total'], fomaxo_en_both($o['name']), $o['phone'], !empty($o['wa_optin']) ? 'Yes' : 'No', $o['email'], $o['emirate'], fomaxo_en_both($o['address']),
+      str_replace(' | ', "\n", (string)$o['items']), $o['free_mini'], fomaxo_en_both($o['note']), $o['admin_note'], $o['ref'], $o['test'] ? 'yes' : '']));
   }
   exit;
 }
@@ -2299,11 +2311,12 @@ foreach (['pending' => 'Pending', 'unpaid' => 'Unpaid cash', 'delivered' => 'Del
   $chips .= '<a class="em t-' . $k . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['status' => $v])) . '">' . $lbl . ' <b>' . (int)$track[$k] . '</b></a>';
 }
 $tr = ''; $backQ = http_build_query(['orders' => 1] + array_filter($f, fn($v) => $v !== '') + ($pg > 1 ? ['p' => $pg] : []));
+fomaxo_en_many(array_column($rows, 'name'));   // Arabic names in English, all at once
 foreach ($rows as $o) {
   $u = h(self_url(['o' => $o['order_no']]));
   $tr .= '<tr class="row st-' . h(strtok($o['status'], ' ')) . '" onclick="location.href=\'' . $u . '\'"><td class="no" data-l=""><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['test'] ? ' <span class="muted small">test</span>' : '') . '</td>'
        . '<td data-l="">' . h(date('d M Y, H:i', strtotime($o['created_at']))) . '</td>'
-       . '<td data-l="">' . h($o['name']) . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . '<div class="muted small">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</div></td>'
+       . '<td data-l="">' . hx($o['name']) . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . '<div class="muted small">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</div></td>'
        . '<td class="small" data-l="">' . h(mb_strimwidth(str_replace(' | ', ', ', (string)$o['items']), 0, 90, '…')) . '</td>'
        . '<td data-l="">' . h($o['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . '</td>'
        . '<td data-l="">' . fx_tags($o) . '</td>'

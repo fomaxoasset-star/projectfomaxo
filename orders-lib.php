@@ -500,3 +500,67 @@ function fomaxo_smtp_send($c, $to, $subject, $body, $headers) {
   $cmd('QUIT', 221); fclose($s);
   return null;
 }
+
+/* ---- Arabic → English for FOMAXO (admin, order emails, Excel). What the customer typed is never changed: the English is shown next to it.
+   Free MyMemory translation (no key, about 5,000 characters a day — plenty for orders and reviews); every result is kept in fx_tr so each text is translated once.
+   If the service can't be reached, the Arabic shows as typed (with Arabic digits turned into 0-9) and is tried again next time. */
+function fx_has_ar($s) { return (bool)preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', (string)$s); }
+function fomaxo_en_many(array $texts) {
+  static $memo = [], $budget = 12;   // at most 12 new look-ups per page, so a page never hangs on the service
+  $out = []; $need = [];
+  foreach ($texts as $s) {
+    $s = (string)$s; if (isset($memo[$s])) { $out[$s] = $memo[$s]; continue; }
+    $d = strtr($s, FX_AR_DIGITS);
+    if (!fx_has_ar($d)) { $out[$s] = $memo[$s] = $d; continue; }
+    $out[$s] = $d; $need[sha1($s)] = $s;
+  }
+  if (!$need) return $out;
+  $pdo = fomaxo_db();
+  if ($pdo) {
+    try {
+      static $made = false;
+      if (!$made) { $pdo->exec("CREATE TABLE IF NOT EXISTS fx_tr (h CHAR(40) NOT NULL PRIMARY KEY, en TEXT NOT NULL, created_at DATETIME NULL) DEFAULT CHARSET=utf8mb4"); $made = true; }
+      $q = $pdo->prepare('SELECT h, en FROM fx_tr WHERE h IN (' . implode(',', array_fill(0, count($need), '?')) . ')'); $q->execute(array_keys($need));
+      foreach ($q->fetchAll(PDO::FETCH_KEY_PAIR) as $h => $en) { $s = $need[$h]; $out[$s] = $memo[$s] = $en; unset($need[$h]); }
+    } catch (Throwable $e) { error_log('FOMAXO translate cache: ' . $e->getMessage()); }
+  }
+  if (!$need || $budget <= 0 || !function_exists('curl_multi_init')) return $out;
+  $need = array_slice($need, 0, $budget, true); $budget -= count($need);
+  /* the free service takes about 450 bytes at a time: long reviews go in sentence-sized pieces */
+  $parts = [];
+  foreach ($need as $h => $s) {
+    $buf = ''; $i = 0;
+    foreach (preg_split('/(?<=[.!?؟،,\n])\s*/u', strtr($s, FX_AR_DIGITS), -1, PREG_SPLIT_NO_EMPTY) as $p) {
+      while (strlen($p) > 450) { $cut = mb_strcut($p, 0, 450); if ($buf !== '') { $parts[$h][$i++] = $buf; $buf = ''; } $parts[$h][$i++] = $cut; $p = substr($p, strlen($cut)); }
+      if ($buf !== '' && strlen($buf) + strlen($p) + 1 > 450) { $parts[$h][$i++] = $buf; $buf = ''; }
+      $buf .= ($buf === '' ? '' : ' ') . $p;
+    }
+    if ($buf !== '') $parts[$h][$i++] = $buf;
+  }
+  $mh = curl_multi_init(); $hs = [];
+  foreach ($parts as $h => $list) foreach ($list as $i => $p) {
+    $c = curl_init('https://api.mymemory.translated.net/get?' . http_build_query(['q' => $p, 'langpair' => 'ar|en']));
+    curl_setopt_array($c, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 6, CURLOPT_CONNECTTIMEOUT => 3]);
+    curl_multi_add_handle($mh, $c); $hs[] = [$h, $i, $c];
+  }
+  do { $st = curl_multi_exec($mh, $run); if ($run) curl_multi_select($mh, 1); } while ($run && $st === CURLM_OK);
+  $got = []; $bad = [];
+  foreach ($hs as [$h, $i, $c]) {
+    $j = json_decode((string)curl_multi_getcontent($c), true); curl_multi_remove_handle($mh, $c); curl_close($c);
+    if (!is_array($j)) $budget = 0;   // service not reachable: don't try again on this page
+    $t = trim(html_entity_decode((string)($j['responseData']['translatedText'] ?? ''), ENT_QUOTES, 'UTF-8'));
+    if ((int)($j['responseStatus'] ?? 0) !== 200 || $t === '' || stripos($t, 'MYMEMORY WARNING') !== false || fx_has_ar($t) && mb_strlen(preg_replace('/[^\x{0600}-\x{06FF}]/u', '', $t)) > mb_strlen($t) / 2) $bad[$h] = true;
+    else $got[$h][$i] = $t;
+  }
+  curl_multi_close($mh);
+  foreach ($need as $h => $s) {
+    if (!empty($bad[$h]) || count($got[$h] ?? []) !== count($parts[$h])) continue;
+    ksort($got[$h]); $en = implode(' ', $got[$h]);
+    $out[$s] = $memo[$s] = $en;
+    if ($pdo) { try { $pdo->prepare('REPLACE INTO fx_tr (h, en, created_at) VALUES (?, ?, NOW())')->execute([$h, $en]); } catch (Throwable $e) {} }
+  }
+  return $out;
+}
+function fomaxo_en($s) { $s = (string)$s; return $s === '' ? '' : fomaxo_en_many([$s])[$s]; }
+/* for emails and Excel: "English (Arabic as typed)" when the customer typed Arabic, else the text as it is */
+function fomaxo_en_both($s) { $s = (string)$s; if (!fx_has_ar($s)) return strtr($s, FX_AR_DIGITS); $en = fomaxo_en($s); return $en === strtr($s, FX_AR_DIGITS) ? $s : "$en ($s)"; }

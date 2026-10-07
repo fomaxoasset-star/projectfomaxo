@@ -38,9 +38,9 @@ $body = "NEW CASH ON DELIVERY ORDER  $no\n" . date('d M Y, H:i') . " (Dubai)\n\n
       . ($order['discountFils'] ? "{$order['discLabel']}: -" . fomaxo_aed($order['discountFils']) . "\n" : '')
       . 'Cash on delivery fee: ' . fomaxo_aed($order['feeFils']) . "\n"
       . "Delivery: Free\nTOTAL TO COLLECT IN CASH: $total\n\n"
-      . "Name: {$cust['name']}\nPhone: {$cust['phone']}\nEmail: {$cust['email']}\n"
-      . "Address: {$cust['address']}, {$cust['emirate']}, UAE\n"
-      . ($cust['note'] ? "Note: {$cust['note']}\n" : '');
+      . 'Name: ' . fomaxo_en_both($cust['name']) . "\nPhone: {$cust['phone']}\nEmail: {$cust['email']}\n"
+      . 'Address: ' . fomaxo_en_both($cust['address']) . ", {$cust['emirate']}, UAE\n"
+      . ($cust['note'] ? 'Note: ' . fomaxo_en_both($cust['note']) . "\n" : '');
 
 $logged = fomaxo_log_order([date('Y-m-d H:i'), $no, 'Cash on delivery', $total, $cust['name'], $cust['phone'], $cust['email'],
                             $cust['emirate'], $cust['address'], $cust['note'], implode(' | ', $order['summary'])]);

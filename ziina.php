@@ -110,8 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
     fomaxo_log_order([date('Y-m-d H:i'), $rec['no'], 'Ziina — PAID' . $note, $total, $c['name'], $c['phone'], $c['email'], $c['emirate'], $c['address'], $c['note'], implode(' | ', $rec['summary'])]);
     $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com'));
     $from = "FOMAXO <mail@fomaxo.com>";
+    fomaxo_en_many([$c['name'], $c['address'], $c['note']]);   // Arabic typed by the customer: English in this email and in admin
     $body = "NEW PAID ORDER (Ziina)  {$rec['no']}$note\n" . date('d M Y, H:i') . " (Dubai)\nZiina payment: $id\n\n" . implode("\n", $rec['rows']) . "\n\n"
-          . "TOTAL PAID: $total\nDelivery: Free\n\nName: {$c['name']}\nPhone: {$c['phone']}\n" . ($c['email'] !== '' ? "Email: {$c['email']}\n" : '') . "Address: {$c['address']}, {$c['emirate']}, UAE\n" . ($c['note'] ? "Note: {$c['note']}\n" : '') . $waLines;
+          . "TOTAL PAID: $total\nDelivery: Free\n\nName: " . fomaxo_en_both($c['name']) . "\nPhone: {$c['phone']}\n" . ($c['email'] !== '' ? "Email: {$c['email']}\n" : '') . 'Address: ' . fomaxo_en_both($c['address']) . ", {$c['emirate']}, UAE\n" . ($c['note'] ? 'Note: ' . fomaxo_en_both($c['note']) . "\n" : '') . $waLines;
     fomaxo_mail(fomaxo_orders_email($STORE_EMAIL), '=?UTF-8?B?' . base64_encode("New paid order {$rec['no']} — $total") . '?=', $body, "From: $from\r\n" . ($c['email'] !== '' ? "Reply-To: {$c['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
     $cb = "Thank you for your order, {$c['name']}.\n\nOrder number: {$rec['no']}\n\n" . implode("\n", $rec['rows']) . "\n\nTotal paid: $total\nDelivery: Free, to {$c['address']}, {$c['emirate']}\n\n"
         . "We will call or WhatsApp you on {$c['phone']} to arrange your delivery.\n\n"

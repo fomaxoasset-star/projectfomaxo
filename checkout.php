@@ -195,10 +195,11 @@ if ($pay === 'cod') {
   $waLines = fomaxo_wa_review_request($no, $cu, array_map(fn($id) => $CATALOG[$id]['name'] ?? '', $ids), $review);
   $to = fomaxo_orders_email($cfg['orders_email'] ?? FX_STORE_EMAIL);   // Settings on fomaxo.com/admin, else the key file, else the store inbox
   $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', explode(':', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com')[0])) ?: 'fomaxo.com';
+  fomaxo_en_many([$cu['name'], $cu['address'], $cu['note']]);   // Arabic typed by the customer: English in this email and in admin
   $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) . "\n\n" . implode("\n", $rows)
         . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\n$discLabel: -" . aed($discFils) : '')
         . "\nCash on delivery fee: " . aed($COD_FEE * 100) . "\nTotal: " . aed($totalFils)
-        . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '') . "\nWhatsApp offers: " . ($cu['wa'] ? 'Yes' : 'No') . $waLines;
+        . "\n\nName: " . fomaxo_en_both($cu['name']) . "\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: " . fomaxo_en_both($cu['address']) . ($cu['note'] !== '' ? "\nNote: " . fomaxo_en_both($cu['note']) : '') . "\nWhatsApp offers: " . ($cu['wa'] ? 'Yes' : 'No') . $waLines;
   $mailed = fomaxo_mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
                   "From: FOMAXO Orders <mail@fomaxo.com>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
   if (!$saved && !$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or contact us on WhatsApp.'); }
