@@ -332,6 +332,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .rmob .rseg{display:flex;justify-content:center}.rmob .rseg a{flex:1 1 0;text-align:center}
 @media (min-width:760px){.rmob{display:none!important}}@media (max-width:759px){.rdesk{display:none!important}}
 .stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:14px;max-width:900px}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}@media (min-width:860px){.settings{grid-template-columns:1fr 1fr;align-items:start}}
+.ads .ads-l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:12px}.ads .ads-l small{text-transform:none;letter-spacing:0;font-size:12px;white-space:nowrap}.ads-in{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
@@ -1059,11 +1060,27 @@ if (isset($_GET['settings'])) {
       else flash('Saved. A test email was sent to ' . fomaxo_orders_email() . '.', true);
       go(['settings' => 1]);
     }
+    if (isset($_POST['ads_save'])) {   // Meta Pixel, TikTok Pixel and Google tag IDs for the website; empty = that one is off
+      $v = fn($k) => preg_replace('/\s+/', '', (string)($_POST[$k] ?? ''));
+      $ads = ['meta' => $v('ads_meta'), 'tiktok' => strtoupper($v('ads_tiktok')), 'google' => strtoupper($v('ads_google')), 'gads' => $v('ads_gads')];
+      $bad = [];
+      if ($ads['meta'] !== '' && !preg_match('/^\d{10,20}$/', $ads['meta'])) $bad[] = 'Meta Pixel ID (numbers only)';
+      if ($ads['tiktok'] !== '' && !preg_match('/^[A-Z0-9]{10,30}$/', $ads['tiktok'])) $bad[] = 'TikTok Pixel ID';
+      if ($ads['google'] !== '' && !preg_match('/^(G|AW|GT)-[A-Z0-9]{4,20}$/', $ads['google'])) $bad[] = 'Google tag ID (starts with G- or AW-)';
+      if ($ads['gads'] !== '' && !preg_match('/^AW-\d{4,20}\/[A-Za-z0-9_-]{4,40}$/', $ads['gads'])) $bad[] = 'Google Ads purchase (AW-…/…)';
+      if ($bad) { flash('Please check the ' . implode(', ', $bad) . '.'); go(['settings' => 1]); }
+      if ($ads['google'] === '' && $ads['gads'] !== '') $ads['google'] = explode('/', $ads['gads'])[0];
+      fomaxo_setting($pdo, 'ads', json_encode($ads));
+      flash('Ads tracking saved. It shows on the website within a minute.', true); go(['settings' => 1]);
+    }
     $email = trim((string)($_POST['orders_email'] ?? ''));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { flash('Please type a valid email address.'); go(['settings' => 1]); }
     fomaxo_setting($pdo, 'orders_email', $email);   // the "Only X left" level is set on the Stock page
     flash('Settings saved.', true); go(['settings' => 1]);
   }
+  $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) ?: [];
+  $adOn = fn($k) => ($ads[$k] ?? '') !== '' ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>';
+  $adRow = fn($k, $label, $ph, $where) => '<label for="ads_' . $k . '" class="ads-l"><span>' . $label . '</span><small>' . $adOn($k) . '</small></label><input id="ads_' . $k . '" name="ads_' . $k . '" class="ads-in" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" value="' . h($ads[$k] ?? '') . '"><p class="muted small" style="margin:4px 0 0">' . $where . '</p>';
   page('Settings', '<h1>Settings</h1>' . flash()
     . '<div class="settings"><form class="card" method="post">' . csrf_field()
     . '<h2 style="margin-top:0">Store</h2>'
@@ -1084,7 +1101,16 @@ if (isset($_GET['settings'])) {
     . '<label for="pw_now">Current password</label><input id="pw_now" name="pw_now" type="password" required autocomplete="current-password">'
     . '<label for="pw1">New password</label><input id="pw1" name="pw1" type="password" minlength="8" required autocomplete="new-password">'
     . '<label for="pw2">New password again</label><input id="pw2" name="pw2" type="password" minlength="8" required autocomplete="new-password">'
-    . '<p style="margin:14px 0 0"><button class="btn">Change password</button></p></form></div>', true);
+    . '<p style="margin:14px 0 0"><button class="btn">Change password</button></p></form>'
+    . '<form class="card ads" method="post">' . csrf_field() . '<input type="hidden" name="ads_save" value="1">'
+    . '<h2 style="margin-top:0">Ads tracking</h2>'
+    . '<p class="muted small" style="margin:0 0 6px">Paste your IDs so Meta, TikTok and Google ads can see who views, adds to bag, checks out and buys. Leave a box empty to keep that one off.</p>'
+    . $adRow('meta', 'Meta Pixel ID', 'e.g. 123456789012345', 'Meta Events Manager → Data sources → your pixel')
+    . $adRow('tiktok', 'TikTok Pixel ID', 'e.g. CABC123DEF456GHI', 'TikTok Ads Manager → Tools → Events → Web events')
+    . $adRow('google', 'Google tag ID', 'e.g. G-ABC123XYZ', 'Google Analytics → Admin → Data streams (G-…), or Google Ads (AW-…)')
+    . $adRow('gads', 'Google Ads purchase', 'Optional · AW-123456789/AbCdEf', 'Google Ads → Goals → Conversions → Purchase → Tag setup (ID/label)')
+    . '<p class="muted small" style="margin:10px 0 0">Your own visits from this admin browser are not sent.</p>'
+    . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form></div>', true);
 }
 
 /* ---- stock and cost price: one row per product and size ---- */

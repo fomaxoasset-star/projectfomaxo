@@ -2488,7 +2488,7 @@ function addToCart(id, opt, qty=1, silent, picks){
   if (l) l.qty = Math.min(99, l.qty + qty); else cart.push(picks ? {id, opt, qty, picks} : {id, opt, qty});
   save();
   if (!silent) addedPanel(id, opt, qty);
-  FXT.send('cart', {id});
+  FXT.send('cart', {id}); ADS.cart(id, opt, qty);
   return true;
 }
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
@@ -3657,7 +3657,7 @@ function bindCheckout(q){
     const r = await sendOrder(ls, coPay, d, src);
     if (r.url){ FXT.lead('card', d, ls, orderTotals(ls, coPay, true).total, true); FXT.send('card'); location.href = r.url; return; }
     if (r.order){
-      FXT.send('buy', {o: r.order});
+      FXT.send('buy', {o: r.order}); ADS.buy(r.order, r.total, ls);
       rememberOrder(ls); setCoupon(null);
       if (buy) clearBuy(); else { cart = []; save(); }
       if (r.review) rwAddLink(r.review);
@@ -3693,7 +3693,7 @@ async function verifyZiina(id, buy, tries = 0){
   const wa = `<a class="btn line" href="https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent('Hello FOMAXO, about my order ' + (d.order || ''))}" target="_blank" rel="noopener">Message us on WhatsApp</a>`;
   const show = (eyebrow, title, lead, body) => { const h = $('.phead'); if (h) h.outerHTML = pageHead(eyebrow, title, lead); $('#ziBox').innerHTML = body; };
   if (d.status === 'paid') {
-    FXT.once('buy', {o: d.order || ''});
+    FXT.once('buy', {o: d.order || ''}); ADS.buy(d.order || id, d.total, buy ? buyLines : cart);
     rememberOrder(buy ? buyLines : cart);
     if (buy) clearBuy(); else { cart = []; save(); }
     if (d.review) rwAddLink(d.review);
@@ -3955,6 +3955,62 @@ async function bindReviewPage(q){
 
 /* ============================ ROUTER ============================ */
 let heroTimer;
+/* ads tracking for Meta, TikTok and Google (fomaxo.com/admin → Settings → Ads tracking). Each one loads only when its ID is saved there,
+   after the page has loaded, so ads can learn who views, adds to bag, checks out and buys. Off for the admin's own browser. */
+const ADS = (() => {
+  let ids = null, q = [], ready = false, off = false;
+  try { off = localStorage.getItem('fomaxo_notrack') === '1'; ids = JSON.parse(localStorage.getItem('fomaxo_ads') || 'null'); } catch(e) {}
+  const js = src => { const s = document.createElement('script'); s.async = true; s.src = src; document.head.appendChild(s); };
+  const items = ls => ls.filter(l => P[l.id]).map(l => ({id: l.id, name: P[l.id].name, opt: optLabel(P[l.id], l.opt), qty: l.qty, price: Number(P[l.id].prices[l.opt]) || 0}));
+  const fire = (ev, d) => {
+    const m = ids.meta && window.fbq, t = ids.tiktok && window.ttq, g = ids.google && window.gtag;
+    if (ev === 'page') { m && fbq('track', 'PageView'); t && ttq.page(); return; }   // Google counts each page by itself
+    const it = d.items || [], val = Math.round((d.value || 0) * 100) / 100, cur = S.currency || 'AED';
+    const mc = {content_ids: it.map(x => x.id), content_type: 'product', contents: it.map(x => ({id: x.id, quantity: x.qty, item_price: x.price})), num_items: it.reduce((a, x) => a + x.qty, 0), value: val, currency: cur};
+    const tc = {contents: it.map(x => ({content_id: x.id, content_type: 'product', content_name: x.name, quantity: x.qty, price: x.price})), value: val, currency: cur};
+    const gc = {currency: cur, value: val, items: it.map(x => ({item_id: x.id, item_name: x.name, item_variant: x.opt, price: x.price, quantity: x.qty}))};
+    const n = {view: ['ViewContent', 'ViewContent', 'view_item'], cart: ['AddToCart', 'AddToCart', 'add_to_cart'], checkout: ['InitiateCheckout', 'InitiateCheckout', 'begin_checkout'], buy: ['Purchase', 'CompletePayment', 'purchase']}[ev];
+    if (ev === 'buy') { gc.transaction_id = d.order; mc.order_id = d.order; }
+    m && fbq('track', n[0], mc, d.order ? {eventID: 'order-' + d.order} : undefined);
+    t && ttq.track(n[1], tc, d.order ? {event_id: 'order-' + d.order} : undefined);
+    if (g) { gtag('event', n[2], gc); if (ev === 'buy' && ids.gads) gtag('event', 'conversion', {send_to: ids.gads, value: val, currency: cur, transaction_id: d.order}); }
+  };
+  const start = () => {
+    if (ready || off || !ids || !(ids.meta || ids.tiktok || ids.google)) return;
+    ready = true;
+    if (ids.meta) { const f = window.fbq = function(){ f.callMethod ? f.callMethod.apply(f, arguments) : f.queue.push(arguments); }; if (!window._fbq) window._fbq = f; f.push = f; f.loaded = true; f.version = '2.0'; f.queue = []; f.disablePushState = true; f.allowDuplicatePageViews = true;   // one PageView per page of the shop, sent below
+      js('https://connect.facebook.net/en_US/fbevents.js'); fbq('init', ids.meta); }
+    if (ids.tiktok) { const t = window.ttq = window.ttq || []; t.methods = ['page', 'track', 'identify', 'instances', 'debug', 'on', 'off', 'once', 'ready', 'alias', 'group', 'enableCookie', 'disableCookie', 'holdConsent', 'revokeConsent', 'grantConsent'];
+      t.setAndDefer = (o, m) => { o[m] = function(){ o.push([m].concat(Array.prototype.slice.call(arguments, 0))); }; }; t.methods.forEach(m => t.setAndDefer(t, m));
+      t.instance = id => { const e = t._i[id] || []; t.methods.forEach(m => t.setAndDefer(e, m)); return e; };
+      t.load = (id, o) => { t._i = t._i || {}; t._i[id] = []; t._i[id]._u = 'https://analytics.tiktok.com/i18n/pixel/events.js'; t._t = t._t || {}; t._t[id] = +new Date(); t._o = t._o || {}; t._o[id] = o || {};
+        js('https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=' + id + '&lib=ttq'); };
+      t.load(ids.tiktok); }
+    if (ids.google) { window.dataLayer = window.dataLayer || []; window.gtag = function(){ dataLayer.push(arguments); };
+      js('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ids.google)); gtag('js', new Date());
+      [ids.google, ids.gads && ids.gads.split('/')[0]].filter((v, i, a) => v && a.indexOf(v) === i).forEach(id => gtag('config', id)); }
+    q.splice(0).forEach(a => fire(a[0], a[1]));
+  };
+  // wait until the page has loaded and is idle, so the shop opens just as fast
+  const later = () => { const go = () => (window.requestIdleCallback || setTimeout)(start, {timeout: 3000}); document.readyState === 'complete' ? go() : addEventListener('load', go, {once: true}); };
+  const send = (ev, d) => { if (off) return; if (ready) fire(ev, d || {}); else if (q.length < 30) q.push([ev, d || {}]); };
+  later();
+  return {
+    set(v){ const ok = v && typeof v === 'object' ? v : null; try { if (ok) localStorage.setItem('fomaxo_ads', JSON.stringify(ok)); else localStorage.removeItem('fomaxo_ads'); } catch(e) {} if (!ready) { const was = ids; ids = ok; if (!was && ok) later(); } },   // newest IDs win until the pixels have loaded
+    page(){ send('page'); },
+    view(p){ const s = defaultSize(p); send('view', {items: items([{id: p.id, opt: s, qty: 1}]), value: Number(p.prices[s]) || 0}); },
+    cart(id, opt, qty){ const it = items([{id, opt, qty}]); send('cart', {items: it, value: it.length ? it[0].price * qty : 0}); },
+    checkout(ls){ send('checkout', {items: items(ls), value: orderTotals(ls, '', true).after || 0}); },
+    // the purchase counts once per order number, even if the thank-you page is opened again
+    buy(order, total, ls){
+      const k = String(order || ''); let done = [];
+      try { done = JSON.parse(localStorage.getItem('fomaxo_ads_bought') || '[]'); } catch(e) {}
+      if (!k || done.includes(k)) return;
+      try { localStorage.setItem('fomaxo_ads_bought', JSON.stringify(done.concat(k).slice(-20))); } catch(e) {}
+      send('buy', {order: k, value: Number(total) || 0, items: items(ls || [])});
+    }
+  };
+})();
 /* anonymous visit stats for fomaxo.com/admin → Analytics: sent only to our own server (track.php), no cookies, no outside scripts.
    A visitor is a random id kept in this browser; a visit ends after 30 minutes without activity. */
 const FXT = (() => {
@@ -3995,9 +4051,9 @@ const FXT = (() => {
       const k = location.hash, now = Date.now();
       if (k === lastView && now - lastViewT < 2000) return;
       lastView = k; lastViewT = now;
-      send('view'); if (k === '' || k === '#/') depth = {};
-      if (seg[0] === 'product' && P[seg[1]] && !P[seg[1]].hidden) send('product', {id: seg[1]});
-      if (seg[0] === 'checkout' && (cart.length || buyLines.length)) send('checkout');
+      send('view'); ADS.page(); if (k === '' || k === '#/') depth = {};
+      if (seg[0] === 'product' && P[seg[1]] && !P[seg[1]].hidden) { send('product', {id: seg[1]}); ADS.view(P[seg[1]]); }
+      if (seg[0] === 'checkout' && (cart.length || buyLines.length)) { send('checkout'); ADS.checkout(new URLSearchParams(k.split('?')[1] || '').get('buy') && buyLines.length ? buyLines : cart); }
     },
     // checkout details: kept only once a name or mobile is typed, so the admin can see who left and at which step
     lead(stage, d, ls, total, now) {
@@ -4297,6 +4353,7 @@ footShop();
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES})); } catch(e) {} saleTick(); promoMaybe(); }
+  if (d && 'ads' in d) ADS.set(d.ads);
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
   const js = JSON.stringify(d.products);
   try { localStorage.setItem('fomaxo_products', js); } catch(e) {}
