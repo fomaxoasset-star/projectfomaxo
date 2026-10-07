@@ -1494,7 +1494,7 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-step h2{display:flex;align-items:center;gap:14px;font-size:clamp(24px,2.4vw,32px);padding-bottom:14px;margin-bottom:4px;border-bottom:1px solid var(--line)}
 .co-step h2 span{flex:none;width:32px;height:32px;border:1px solid var(--gold);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--sans);font-size:14px;font-weight:400;color:var(--gold)}
 .co .form label .co-opt-l{letter-spacing:.04em;text-transform:none;color:var(--muted)}
-.co .form label.co-wa{display:flex;flex-direction:row;align-items:center;gap:10px;margin:2px 0 6px;font-size:14px;letter-spacing:.02em;text-transform:none;color:var(--ivory);cursor:pointer;line-height:1.35}
+.co .form label.co-wa{display:flex;flex-direction:row;align-items:center;gap:10px;margin:8px 0 0;font-size:14px;letter-spacing:.02em;text-transform:none;color:var(--ivory);cursor:pointer;line-height:1.35}
 .co .form label.co-wa input{flex:none;width:20px;height:20px;margin:0;padding:0;accent-color:var(--gold);cursor:pointer}
 .co .form textarea.co-addr{min-height:92px}
 .co .form textarea.co-note{min-height:70px}
@@ -3391,7 +3391,6 @@ function checkoutPage(q){
           <div class="co-r3"><label>Full name<input name="name" autocomplete="name" maxlength="80" required></label>
           <div class="row2"><label>Mobile<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971 50 123 4567" maxlength="20" required></label>
             <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></label></div></div>
-          <label class="co-wa"><input type="checkbox" name="wa"><span>Send me offers and updates on WhatsApp</span></label>
           <div class="co-r3 co-r3b"><label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
           <div class="co-ar co-ar1">
             <label class="co-a-b">Villa / building no<input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12" required></label>
@@ -3403,6 +3402,7 @@ function checkoutPage(q){
           </div>
           <label><span>Note <span class="co-opt-l">(optional)</span></span><textarea name="note" class="co-note" maxlength="300" placeholder="Landmark, delivery time or gift message"></textarea></label></div>
           <p class="co-small">We remember these details on this device for your next order. We will WhatsApp you about your delivery and, after it arrives, ask for a quick review.</p>
+          <label class="co-wa"><input type="checkbox" name="wa"><span>Send me offers and updates on WhatsApp</span></label>
         </section>
         <section class="co-step">
           <h2><span>2</span>Payment</h2>
