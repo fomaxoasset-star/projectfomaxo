@@ -232,13 +232,13 @@ function fomaxo_setting($pdo, $k, $v = null) {
   return $v;
 }
 
-/* cash on delivery limits in AED, as set on fomaxo.com/admin → Settings → Cash on delivery: [min, max]; max 0 = no upper limit.
-   Defaults (nothing saved yet, or database down): from AED 200, under AED 2,000. */
+/* cash on delivery in AED, as set on fomaxo.com/admin → Settings → Cash on delivery: [min, max, fee]; max 0 = no upper limit, fee 0 = no fee.
+   Defaults (nothing saved yet, or database down): from AED 200, under AED 2,000, AED 10 fee. */
 function fomaxo_cod_limits($pdo = null) {
-  $min = 200; $max = 2000;
+  $min = 200; $max = 2000; $fee = 10;
   try { $pdo = $pdo ?: fomaxo_db(); $c = $pdo ? json_decode((string)fomaxo_setting($pdo, 'cod'), true) : null;
-    if (is_array($c)) { $min = max(0, (int)($c['min'] ?? $min)); $max = max(0, (int)($c['max'] ?? $max)); } } catch (Throwable $e) {}
-  return [$min, $max];
+    if (is_array($c)) { $min = max(0, (int)($c['min'] ?? $min)); $max = max(0, (int)($c['max'] ?? $max)); $fee = max(0, (int)($c['fee'] ?? $fee)); } } catch (Throwable $e) {}
+  return [$min, $max, $fee];
 }
 
 /* Saves a new order and returns its number (FMX-1001 …), or null if the database is not available.
