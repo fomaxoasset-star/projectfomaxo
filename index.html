@@ -1601,6 +1601,9 @@ html[data-mode="light"] .btn.co-min,html[data-mode="light"] .btn.co-min:hover{co
 .co-edit:hover{color:var(--gold-hi)}
 .co-edit-m{display:none}
 .co-items{display:grid;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+/* free 10ml mini: its own row under the product list (the list may scroll on laptop; the mini always shows) */
+.co-items:has(+.co-mini-fx){border-bottom:0}
+.co-mini-fx{padding-bottom:18px;border-bottom:1px solid var(--line)}
 .co-item{display:grid;grid-template-columns:60px minmax(0,1fr) auto;gap:14px;align-items:center}
 .co-sum-in.co-tap{cursor:pointer}
 .co-sum-in.co-tap select{cursor:pointer}
@@ -2048,6 +2051,13 @@ html[dir=rtl] .reorder.ro-home{background:linear-gradient(270deg,rgba(215,170,10
   .co-item .o-sz::before{content:" · "}
   .co-item .o-picks{display:block;margin-top:2px}
   .co-items{max-height:max(150px,calc(100vh - var(--ann-h,40px) - 560px));overflow-y:auto;overscroll-behavior:contain;padding:8px 8px 10px 9px;margin:-8px -8px 0 -9px;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+  .co-items:has(+.co-mini-fx){max-height:max(120px,calc(100vh - var(--ann-h,40px) - 610px));border-bottom:1px solid var(--line)}
+  /* AJAY: summary box ends level with the bottom of the payment part on the left; the product list takes the room left and scrolls */
+  .co:has(>.co-grid) .co-sum{align-self:stretch;contain:size;display:flex;flex-direction:column}
+  .co:has(>.co-grid) .co-sum-in{flex:1;min-height:0;display:flex;flex-direction:column}
+  .co:has(>.co-grid) .co-sum-in>*{flex:none}
+  .co:has(>.co-grid) .co-sum-in>.co-items{flex:0 1 auto;min-height:96px;max-height:none}
+  .co-mini-fx{padding:10px 0 0;border-bottom:0}
 }
 /* laptop checkout on screens up to 920px high (720, 768, 864, 900...): tighter spacing so it fits one screen; fitCo() scales the rest */
 @media(min-width:961px) and (max-height:920px){
@@ -2069,6 +2079,7 @@ html[dir=rtl] .reorder.ro-home{background:linear-gradient(270deg,rgba(215,170,10
   .co-sum-in{padding:12px 18px 14px}
   .co-sum-h{margin-bottom:6px}
   .co-items{gap:7px;padding-bottom:8px}
+  .co-mini-fx{padding:8px 0 0}
   .co-item{grid-template-columns:36px minmax(0,1fr) auto}
   .co-img{width:36px}
   .co-nudge{margin-top:7px;padding:5px 10px;font-size:12px}
@@ -2612,10 +2623,8 @@ function fitCo(){
   if (innerWidth < 961) return;
   const pf = co.closest('.page-fade'), ty = pf ? new DOMMatrix(getComputedStyle(pf).transform).m42 || 0 : 0;   // ignore the page fade-in slide while measuring
   const top = co.getBoundingClientRect().top + scrollY - ty;
-  // count the cash on delivery fee row even while card is picked, so switching payment never changes the size
-  const cod = $('input[value=cod]', co), row = $('#coSum .co-row', co);
-  const feeSpace = COD_FEE > 0 && cod && !cod.disabled && !$('.co-fee', co) && row ? row.getBoundingClientRect().height + (parseFloat(getComputedStyle(row.parentNode).rowGap) || 0) : 0;
-  const bottom = Math.max(...['#coSum', '.co-main'].map(s => { const e = $(s, co); return e ? e.getBoundingClientRect().bottom + scrollY + (s === '#coSum' ? feeSpace : 0) : 0; }));
+  // the order summary is as tall as the left side on laptop (its product list scrolls), so only the left side sets the size
+  const main = $('.co-main', co), bottom = main ? main.getBoundingClientRect().bottom + scrollY : 0;
   const avail = innerHeight - top - 10, need = bottom - ty - top;
   if (need > avail) co.style.zoom = Math.max(.82, Math.floor(avail / need * 100) / 100);
 }
@@ -3588,7 +3597,7 @@ function bindCheckout(q){
     const sum = $('#coSum');
     sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span>${saved > 0 ? `<small><b class="co-bar-save">You save ${money2(saved)}</b></small>` : ''}</span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}<span class="co-bar-tap">${coOpen ? 'Tap to hide Orders' : 'Tap to see Orders'}</span></button>${nudge('co-nudge-m')}
       <div class="co-sum-in co-tap" id="coSumIn" title="Open your bag to change it"><div class="co-sum-h"><h3>Order summary</h3><button type="button" class="co-edit" id="coEdit">Edit bag</button></div>
-      <div class="co-items">${items}${mini}</div>${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
+      <div class="co-items">${items}</div>${mini ? `<div class="co-mini-fx">${mini}</div>` : ''}${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
     const openBag = () => {
       // Buy now: move the item into the bag (once, not doubled) and switch to the bag checkout, so the customer can change it there
