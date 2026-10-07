@@ -2034,6 +2034,35 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
   .acc .body{padding-bottom:12px;font-size:13.5px;line-height:1.6}
   .acc .body p+p{margin-top:6px}
 }
+/* shop policy pages + footer policy links */
+section.sec.pol-sec{padding-top:clamp(36px,5vw,64px)}
+.pol{display:grid;grid-template-columns:220px minmax(0,1fr);gap:clamp(28px,5vw,80px);align-items:start}
+.pol-nav{display:flex;flex-direction:column;gap:4px;position:sticky;top:110px}
+.pol-nav a{padding:10px 14px;border-inline-start:2px solid var(--line);font-size:14px;color:var(--muted)}
+.pol-nav a.on{border-color:var(--gold);color:var(--ivory)}
+.pol-body{display:flex;flex-direction:column;gap:34px;max-width:760px;min-width:0}
+.pol-body h2{font-size:clamp(22px,2.4vw,30px);margin-bottom:10px}
+.pol-body p{color:var(--muted);font-size:16px;line-height:1.8;margin:0 0 10px}
+.pol-c{display:flex;flex-wrap:wrap;gap:10px 26px}
+.pol-c a,.pdp-ship a{color:var(--champagne);border-bottom:1px solid var(--line-2)}
+.pol-biz{display:grid;border-top:1px solid var(--line)}
+.pol-biz>div{display:flex;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px solid var(--line);font-size:15px}
+.pol-biz small{color:var(--muted);font-size:13px;letter-spacing:.06em;flex:none}
+.pol-biz b,.pol-biz a{color:var(--ivory);font-weight:400;text-align:end;overflow-wrap:anywhere}
+.flegal{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 26px;margin:0 0 22px;font-size:13px}
+.flegal a{color:var(--muted)}
+.flegal a:hover,.pol-nav a:hover{color:var(--gold)}
+.pdp-ship a{flex:none}
+@media(max-width:860px){
+  .pol{grid-template-columns:minmax(0,1fr);gap:22px}
+  .pol-nav{position:static;flex-direction:row;flex-wrap:wrap;gap:8px}
+  .pol-nav a{border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:12.5px}
+  .pol-body{gap:26px}
+  .pol-body p{font-size:15px;line-height:1.7}
+  .pol-biz>div{flex-direction:column;gap:4px}
+  .pol-biz b,.pol-biz a{text-align:start}
+  .flegal{gap:6px 18px;font-size:12px}
+}
 /* ===== Arabic (عربي) — the site turns right-to-left; English text is swapped by assets/i18n-ar.js ===== */
 html.i18n-wait body{visibility:hidden}
 html[lang=ar]{--serif:"Cormorant Garamond","Amiri","Times New Roman",serif;--display:"Jost","Tajawal","Helvetica Neue",Arial,sans-serif;--sans:"Jost","Tajawal","Helvetica Neue",Arial,sans-serif}
@@ -2121,6 +2150,7 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
       <div><h5>Discover</h5><a href="#/collections/fragrance">Fragrance Collection</a><a href="#/collections/mini">Mini Collection</a><a href="#/collections/name">Personalized Gifting</a><a href="#/collections/gifting">Bespoke Gifting</a><a href="#/collections/elite">Elite Membership</a></div>
       <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">Personal Care</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
     </div>
+    <nav class="flegal" aria-label="Shop policies"><a href="#/returns">Refunds &amp; returns</a><a href="#/delivery">Delivery</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a><a href="#/business">Business details</a></nav>
     <div class="fbase"><span>© 2026 FOMAXO™. All rights reserved.</span><span>Inspire greatness</span></div>
     <p class="fpriv">We count anonymous visits (no cookies, nothing shared) to improve the store.</p>
   </div>
@@ -2190,8 +2220,11 @@ window.STORE = {
     website: "www.fomaxo.com"
   },
 
+  // Business details page (fomaxo.com/#/business): each line shows only once it is filled in.
+  business: { legalName: "", licence: "", issuer: "", address: "" },
+
   // Shown on every product page. Add your delivery & returns policy.
-  shipping: ["Free delivery anywhere in the UAE on every order."],
+  shipping: ["Free delivery anywhere in the UAE on every order.", "Orders are delivered in 1–3 days across the UAE.", "Unopened items can be returned within 7 days of delivery."],
 
   /* PRODUCTS ARE EDITED ON fomaxo.com/admin → Products (saved in the database, served by products.php).
      This list is only the fallback for when the database is down — changing it here does NOT change the live shop. */
@@ -2958,7 +2991,8 @@ function product(id, q){
           <button class="btn line" id="addBtn">Add to bag</button>
         </div>
         <button class="btn block" id="buyBtn">Buy now</button>
-        <p class="pdp-pay">${CO_ICON.lock}<span>Secure checkout · ${CARD_ON ? 'Card, Apple Pay, Google Pay · ' : ''}Cash on delivery over ${aed(COD_MIN)} · Free UAE delivery</span></p>
+        <p class="pdp-pay">${CO_ICON.lock}<span>Secure checkout · ${CARD_ON ? 'Card, Apple Pay, Google Pay · ' : ''}Cash on delivery over ${aed(COD_MIN)}</span></p>
+        <p class="pdp-pay pdp-ship">${ICON.truck}<span>Free delivery in 1–3 days across the UAE</span><a href="#/returns">Returns</a></p>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
           <details${matchMedia('(min-width:961px)').matches ? '' : ' open'}><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
@@ -3334,6 +3368,59 @@ function bindPartner(){
     location.href = `mailto:${S.contact.email}?subject=${encodeURIComponent('FOMAXO Franchise enquiry — ' + f.get('country'))}&body=${encodeURIComponent(body)}`; };
 }
 function notFound(){ return pageHead('Not found', 'Page <em class="metal">not found</em>', 'The page you are looking for does not exist.') + `<section class="sec"><div class="wrap"><a class="btn" href="#/">Return home</a></div></section>`; }
+/* ---------- shop policies: #/returns #/delivery #/privacy #/terms #/business ----------
+   Plain paragraphs only (no bold or links inside), so the Arabic site can swap each one whole (assets/i18n-ar.js).
+   Business details (legal name, trade licence, address) come from S.business and only show once filled in. */
+const POL_NAV = [['returns','Refunds & returns'],['delivery','Delivery'],['privacy','Privacy'],['terms','Terms'],['business','Business details']];
+const POL = {
+  returns: { title: 'Refunds & returns', lead: 'If something is not right with your order, we will make it right.', sec: [
+    ['Damaged, faulty or wrong item', ['If your order arrives damaged, leaking or is not what you ordered, message us within 7 days of delivery with a photo of the item and the box.', 'We will replace it or refund you in full, and we collect the item from you at no cost.']],
+    ['Change of mind', ['You can return an unopened item within 7 days of delivery. It must be sealed, unused and in its original packaging.', 'For hygiene and safety reasons, we cannot accept returns of fragrances that have been opened, sprayed or had the seal removed.']],
+    ['Items that cannot be returned', ['Engraved or personalised items, opened Discovery Sets and free gifts cannot be returned unless they arrive damaged or faulty.']],
+    ['How to start a return', ['Message us on WhatsApp or email us with your order number. We will confirm the return and arrange the collection.']],
+    ['Refunds', ['Once we receive and check the item, we refund you within 5 working days.', 'Card payments are refunded to the same card through Ziina. Your bank may take a few more days to show it.', 'Cash on delivery orders are refunded by bank transfer to an account in your name.', 'The cash on delivery fee is refunded only when the item was damaged, faulty or wrong.']]
+  ]},
+  delivery: { title: 'Delivery', lead: 'Free delivery to every emirate, on every order.', sec: [
+    ['Delivery time', ['Orders are delivered in 1–3 days across the UAE.', 'We will WhatsApp you to confirm your order and arrange a delivery time that suits you.']],
+    ['Delivery cost', ['Delivery is free anywhere in the UAE. Cash on delivery has an AED 10 fee and is available for orders of AED 200 or more.']],
+    ['Where we deliver', ['We deliver to all seven emirates: Abu Dhabi, Dubai, Sharjah, Ajman, Umm Al Quwain, Ras Al Khaimah and Fujairah.', 'For orders in India, please visit fomaxo.in.']],
+    ['If you miss your delivery', ['We will arrange a new delivery time with you at no extra cost.']]
+  ]},
+  privacy: { title: 'Privacy', lead: 'We only collect what we need to deliver your order and run our store. We never sell your information.', sec: [
+    ['What we collect when you order', ['Your name, mobile number, delivery address, the items you ordered and, if you give them, your email and delivery note.', 'We keep this in our secure order database so we can deliver your order, contact you about it and help you afterwards.']],
+    ['Checkout details', ['If you type your name or mobile at checkout but do not finish, we may keep those details so we can help you complete your order.', 'Your details are also remembered on your own device, so you do not have to type them again next time.']],
+    ['Card payments', ['Card payments are handled by Ziina. We never see or store your card number.']],
+    ['Visit counting', ['We count visits to improve the store. Each browser gets a random anonymous number. We note the pages viewed, the type of device and the country or emirate of the visit.', 'We do not keep your IP address, and this counting uses no cookies.']],
+    ['Emails and reviews', ['If you join our email list, we keep your email to send you launches and previews. You can ask us to remove it at any time.', 'If you write a review, your name, country and review are shown on our website.']],
+    ['Who we share it with', ['We only share your details with the courier who delivers your order and with Ziina when you pay by card. We never sell or rent your information.']],
+    ['Your choices', ['You can ask us to show, correct or delete your details at any time by emailing us or messaging us on WhatsApp.']]
+  ]},
+  terms: { title: 'Terms', lead: 'These terms apply when you shop on fomaxo.com.', sec: [
+    ['Prices and offers', ['Prices are in UAE dirhams (AED) and include any applicable VAT.', 'Offers and coupons apply only while they are shown and cannot be combined unless we say so. Coupons cannot be combined with multi-buy savings; the bigger saving applies.']],
+    ['Your order', ['Your order is confirmed once we accept it and, for card payments, once payment is received. If an item is out of stock, we will tell you and refund anything you paid for it.']],
+    ['Payment', ['You can pay by card through Ziina for orders of AED 30 or more, or by cash on delivery for orders of AED 200 or more with an AED 10 fee.']],
+    ['Delivery and returns', ['Delivery and returns follow our Delivery and Refunds & returns pages.']],
+    ['Using our fragrances', ['Our fragrances are for external use only. Test on a small area of skin first, avoid eyes and broken skin, keep away from children, heat and flames, and stop use if irritation occurs.']],
+    ['Our brand', ['FOMAXO, our logo, product names, photos and text belong to FOMAXO and may not be copied without our permission.']],
+    ['Law', ['These terms are governed by the laws of the United Arab Emirates and the Emirate of Dubai.', 'We may update these terms from time to time. The version on this page applies to your order.']]
+  ]},
+  business: { title: 'Business details', lead: 'FOMAXO is a luxury house founded in Dubai, United Arab Emirates.' }
+};
+function policyPage(k){
+  const P0 = POL[k], C = S.contact, B = S.business || {};
+  document.title = P0.title + ' — FOMAXO';
+  const row = (label, val, href) => val ? `<div><small>${label}</small>${href ? `<a href="${href}" target="_blank" rel="noopener" data-no-tr>${esc(val)}</a>` : `<b data-no-tr>${esc(val)}</b>`}</div>` : '';
+  const body = k === 'business'
+    ? `<div class="pol-biz">${row('Trading name', 'FOMAXO')}${row('Legal name', B.legalName)}${row('Trade licence no.', B.licence)}${row('Licensed by', B.issuer)}${row('Address', B.address || 'Dubai, United Arab Emirates')}
+        ${row('Email', C.email, 'mailto:' + C.email)}${row('WhatsApp', C.phones[0].number, 'https://wa.me/' + C.phones[0].number.replace(/\D/g,''))}</div>`
+    : P0.sec.map(([h, ps]) => `<section><h2>${esc(h)}</h2>${ps.map(p => `<p>${esc(p)}</p>`).join('')}</section>`).join('');
+  const help = k === 'business' ? '' : `<section><h2>Questions?</h2><p>Message us on WhatsApp or email us. We are happy to help.</p><p class="pol-c"><a href="https://wa.me/${C.phones[0].number.replace(/\D/g,'')}" target="_blank" rel="noopener">WhatsApp <span data-no-tr>${esc(C.phones[0].number)}</span></a><a href="mailto:${C.email}" data-no-tr>${esc(C.email)}</a></p></section>`;
+  return pageHead(esc(P0.title), esc(P0.title), esc(P0.lead)) + `
+  <section class="sec pol-sec"><div class="wrap pol">
+    <nav class="pol-nav" aria-label="Shop policies">${POL_NAV.map(([id, t]) => `<a href="#/${id}"${id === k ? ' class="on" aria-current="page"' : ''}>${esc(t)}</a>`).join('')}</nav>
+    <div class="pol-body">${body}${help}</div>
+  </div></section>`;
+}
 
 /* ============================ CHECKOUT PAGE ============================ */
 const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
@@ -3408,7 +3495,7 @@ function checkoutPage(q){
           <p class="co-err" id="coErr" role="alert" hidden></p>
           <button class="btn block co-go" id="coGo" type="submit"></button>
           <ul class="co-trust">
-            <li>${ICON.truck}<span>Free delivery anywhere in the UAE</span></li>
+            <li>${ICON.truck}<span>Free delivery in 1–3 days across the UAE</span></li>
             ${CARD_ON ? `<li>${CO_ICON.lock}<span>Secure card payments by ${CARD_BY}</span></li>` : ''}
             <li>${CO_ICON.whatsapp}<span>Questions? WhatsApp us on <a href="https://wa.me/${S.checkout.whatsapp}" target="_blank" rel="noopener">${esc(wa)}</a></span></li>
           </ul>
@@ -3936,6 +4023,7 @@ function route(){
     case 'collections': html = collections(seg[1]); if (seg[1] === 'elite') after = bindElite; if (seg[1] === 'fragrance') after = bindFragColl; break;
     case 'personal-care': html = personalCare(); break;
     case 'about': html = about(); break;
+    case 'returns': case 'delivery': case 'privacy': case 'terms': case 'business': html = policyPage(seg[0]); break;
     case 'contact': html = contact(q); after = bindContact; break;
     case 'partnership': location.replace('#/franchise'); return;
     case 'franchise': html = partnership(); after = bindPartner; break;
@@ -4227,5 +4315,5 @@ renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); p
 (function(){var ar=document.documentElement.lang==="ar";
 document.querySelectorAll(".lang-sw").forEach(function(b){if(ar){b.textContent="EN";b.lang="en";b.setAttribute("aria-label","English");b.title="English"}
 b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href)location.reload();else location.replace(u)}});
-if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=3";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
+if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=4";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
 </body></html>
