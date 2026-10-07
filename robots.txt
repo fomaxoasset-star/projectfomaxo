@@ -1,0 +1,5 @@
+# FOMAXO — Google and other search engines may read the whole shop, except the private admin
+User-agent: *
+Disallow: /admin/
+
+Sitemap: https://fomaxo.com/sitemap.xml
