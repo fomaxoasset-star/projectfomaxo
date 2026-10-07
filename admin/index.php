@@ -762,7 +762,16 @@ const OFFER_CSS = <<<'CSS'
 .oaddrow{display:flex;gap:8px;align-items:center;max-width:540px}.oaddrow .oadd{flex:1;min-width:0;max-width:none;margin:0}.oaddrow .btn{white-space:nowrap;flex:none;margin:0}
 .pv-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}.pv-cards .pv-card{width:auto;min-width:0}.pv-cards .pv-card img,.pv-cards .pv-card .pv-noimg{width:100%;height:auto;aspect-ratio:6/7}.pv-cards+.pv-lab{margin-top:20px!important}
 .pv-site:has(.pv-cards){max-width:min(640px,100%)}.pv-box.pv-plain:has(.pv-cards){width:auto}.pv-plain .boxl{max-width:340px}
+.opt{display:none}
 @media (max-width:759px){.orow{grid-template-columns:1fr}.olab{flex-direction:row;align-items:center;padding-top:0;gap:12px}.pv-cards{gap:10px}}
+/* phone: the whole Offer page fits one screen: Sale offer / New product, then Timer / Popup / Line by prices */
+@media (max-width:759px){main h1,.ob[data-ob=sale] h2{display:none}.osw{margin-bottom:8px}.osw button{padding:8px}.ob{padding:10px 12px}.ost{margin:0 0 8px;padding:6px 10px;font-size:12.5px}
+.opt{display:flex;margin:0 0 10px;border:1px solid var(--line);border-radius:999px;padding:3px;gap:3px}.opt button{flex:1;font:inherit;font-size:12.5px;font-weight:600;padding:6px 2px;border:0;border-radius:999px;background:none;color:var(--muted);cursor:pointer;white-space:nowrap}.opt button.on{background:var(--gold);color:var(--gold-ink)}
+.ob[data-ob=sale] .orow[data-op]{display:none}.ob[data-op=t] .orow[data-op=t]:not([hidden]),.ob[data-op=p] .orow[data-op=p],.ob[data-op=l] .orow[data-op=l]{display:grid}
+.orow{margin-bottom:10px}.ocol{gap:8px}.owords{gap:6px 8px}.ofits{grid-template-columns:1fr 1fr}.ofit{padding:5px 6px;gap:6px;font-size:12.5px}.ofit img,.ofit i{width:24px;height:24px}.obtns{margin-top:10px;flex-wrap:nowrap;gap:6px}.obtns .btn,.obtns .oofff{flex:1 1 0;padding-left:4px;padding-right:4px}.ob h2{margin-bottom:6px}.ofits{max-height:132px;overflow-y:auto}}
+@media (max-width:759px) and (max-height:700px){.ofits{max-height:76px}.ost{padding:4px 8px;font-size:12px}.opt{margin-bottom:6px}.orow{margin-bottom:6px}.owords label input{padding-top:5px;padding-bottom:5px}}
+/* laptop: fits one screen down to 1280x720 */
+@media (min-width:960px) and (max-height:800px){.ob{padding-top:12px;padding-bottom:12px}main h1{display:none}.ofits{gap:4px 6px}.ofit{padding:2px 8px!important;font-size:12.5px}.ofit img,.ofit i{width:20px!important;height:20px!important}.ob h2{margin-bottom:8px}.ost{margin-bottom:8px;padding:6px 12px}.orow{margin-bottom:8px}.ocol{gap:8px}.ofit{padding:4px 8px}.ofit img,.ofit i{width:24px;height:24px}.obtns{margin-top:8px}}
 .pv-site{--bk:#050505;--pn:#0e0d0b;--iv:#f2ebdd;--mu:#9a917f;--gd:#d7aa69;--gh:#f0d3a0;--ln:rgba(215,170,105,.44);--red:#e5483d;--metal:linear-gradient(100deg,#9c7440 0%,#d7aa69 22%,#f3dcb0 38%,#c99a5c 54%,#ecd0a0 70%,#a67d45 88%,#d7aa69 100%);
   width:100%;max-width:380px;margin:auto 0;font-family:Jost,"Helvetica Neue",Arial,sans-serif;font-weight:300}
 .pv-site.light{--bk:#f6f0e4;--pn:#fffaf1;--iv:#1b1712;--mu:#635a4b;--gd:#a8792f;--gh:#8a5f1f;--ln:rgba(140,98,38,.45);--red:#c4291f;--metal:linear-gradient(100deg,#7a5420 0%,#b08036 22%,#d9b26a 38%,#9d7030 54%,#c99a50 70%,#7f5a24 88%,#a8792f 100%)}
@@ -802,7 +811,11 @@ const OFFER_JS = <<<'JS'
   /* phones: Sale offer / New product switch */
   document.querySelectorAll('[data-ow]').forEach(function (b) { b.onclick = function () {
     document.querySelectorAll('[data-ow]').forEach(function (x) { x.classList.toggle('on', x === b); });
-    document.querySelectorAll('[data-ob]').forEach(function (f) { f.classList.toggle('on', f.dataset.ob === b.dataset.ow); }); }; });
+    document.querySelectorAll('[data-ob]').forEach(function (f) { f.classList.toggle('on', f.dataset.ob === b.dataset.ow); }); try { sessionStorage.setItem('fx_ow', b.dataset.ow); } catch (e) {} }; });
+  /* phones: Timer / Popup / Line by prices inside the Sale offer; both stay as they were after Save */
+  var part = function (k) { if (!sale) return; sale.dataset.op = k; sale.querySelectorAll('[data-op]').forEach(function (x) { if (x.tagName === 'BUTTON') x.classList.toggle('on', x.dataset.op === k); }); try { sessionStorage.setItem('fx_op', k); } catch (e) {} };
+  document.querySelectorAll('.opt button').forEach(function (b) { b.onclick = function () { part(b.dataset.op); }; });
+  try { part(sessionStorage.getItem('fx_op') || 't'); var w = sessionStorage.getItem('fx_ow'), wb = w && document.querySelector('[data-ow=' + w + ']'); if (wb) wb.click(); } catch (e) { part('t'); }
   if (sale) {
     var mode = function () { return (sale.querySelector('input[name=mode]:checked') || {}).value; };
     sale.addEventListener('change', function (e) { if (e.target.name === 'mode') sale.querySelector('.oend').hidden = mode() !== 'date'; });
@@ -990,16 +1003,17 @@ if (isset($_GET['offer'])) {
     /* box 1: the sale offer */
     . '<form class="card ob on" data-ob="sale" method="post" id="offerForm" data-best="' . $bestOf([]) . '">' . csrf_field()
     . '<h2>Sale offer</h2><p class="ost ost-' . $sk . '">' . h($state) . '</p>'
-    . '<div class="orow"><b>Timer</b><span class="oseg">' . $radio('date', 'Countdown') . $radio('always', 'Always on') . $radio('off', 'Off') . '</span></div>'
-    . '<div class="orow oend"' . ($mode === 'date' ? '' : ' hidden') . '><b>Ends</b><div class="oendin"><span class="cpq" role="group" aria-label="Quick end"><button type="button" data-h="24">24h</button><button type="button" data-h="48">48h</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button></span>'
+    . '<div class="opt" role="group" aria-label="Part"><button type="button" class="on" data-op="t">Timer</button><button type="button" data-op="p">Popup</button><button type="button" data-op="l">Line by prices</button></div>'   // phone: one part at a time, so it fits the screen
+    . '<div class="orow" data-op="t"><b>Timer</b><span class="oseg">' . $radio('date', 'Countdown') . $radio('always', 'Always on') . $radio('off', 'Off') . '</span></div>'
+    . '<div class="orow oend" data-op="t"' . ($mode === 'date' ? '' : ' hidden') . '><b>Ends</b><div class="oendin"><span class="cpq" role="group" aria-label="Quick end"><button type="button" data-h="24">24h</button><button type="button" data-h="48">48h</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button></span>'
     . '<span class="od"><input type="date" name="sale_end_d" aria-label="End date" value="' . ($on ? date('Y-m-d', $e) : '') . '"><input type="time" name="sale_end_t" aria-label="End time (UAE)" title="UAE time; empty = 11:59 pm" value="' . ($on ? date('H:i', $e) : '') . '"></span></div></div>'
-    . '<div class="orow"><div class="olab"><b>Popup</b>' . $tick('popup', $pop, 'On') . '</div><div class="ocol"><div class="owords">'
+    . '<div class="orow" data-op="p"><div class="olab"><b>Popup</b>' . $tick('popup', $pop, 'On') . '</div><div class="ocol"><div class="owords">'
     . $word('title', 'Top line', 30, 'LIMITED TIME OFFER', ['Limited time offer', 'Flash sale', 'Festive sale', 'Eid offer', 'National Day offer', 'Weekend sale', 'Mega sale', 'Special offer', 'New launch offer'], $W['title'])
     . '<label>% off<input name="pct" type="number" min="1" max="' . ($best ?: 99) . '" step="1" inputmode="numeric" value="' . h($pct) . '" placeholder="' . ($best ? "max $best" : 'No old prices') . '"' . ($best ? '' : ' disabled') . '></label>'
     . $word('sub', 'Under the %', 40, 'ON SELECTED FRAGRANCES', ['ON SELECTED PRODUCTS', 'ON SELECTED FRAGRANCES', 'ON SELECTED PERSONAL CARE', 'ON ALL FRAGRANCES', 'ON PERFUMES', 'ON GIFT SETS', 'ON EVERYTHING', 'ON YOUR FIRST ORDER'], $W['sub'])
     . $word('btn', 'Button', 24, 'Shop the offer', ['Shop the offer', 'Shop now', 'Grab the deal', 'Shop fragrances', 'See the offer'], $W['btn'])
     . '</div>' . ($sale ? $picker('items', $items, 'None picked: the popup counts every product with an old price.', 'Add a product to the popup') : '<p class="small" style="margin:0;color:var(--warn)">No product has an old price on Products yet, so the popup stays hidden.</p>') . '</div></div>'
-    . '<div class="orow"><div class="olab"><b>Line by prices</b></div>'
+    . '<div class="orow" data-op="l"><div class="olab"><b>Line by prices</b></div>'
     . ($sale ? $picker('lines', $lines, 'None picked: no line shows.', 'Add a product', '<button type="button" class="btn line sm" data-osame title="Pick the same products as the popup">Same as popup</button>') : '<p class="small muted" style="margin:0">Needs products with an old price.</p>') . '</div>'
     . ($sale ? '<datalist id="ow-items">' . implode('', array_map(fn($s) => '<option value="' . h($s['name']) . '" label="' . $s['pct'] . '% off">', $sale)) . '</datalist>' : '')
     . '<div class="obtns">'
