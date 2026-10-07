@@ -797,8 +797,8 @@ if (isset($_GET['offer'])) {
   $radio = fn($v, $t) => '<label class="om"><input type="radio" name="mode" value="' . $v . '"' . ($mode === $v ? ' checked' : '') . '><b>' . $t . '</b></label>';
   $tp = fn($n, $val, $list, $ph = '') => '<div class="tp"><input name="' . $n . '" value="' . h($val) . '" maxlength="40" autocomplete="off" placeholder="' . h($ph) . '"><button type="button" class="tpb" aria-label="Pick" tabindex="-1">▾</button><div class="tpl" hidden>'
     . implode('', array_map(fn($x) => '<button type="button" data-v="' . h($x) . '">' . h($x) . '</button>', $list)) . '</div></div>';   // type or pick
-  $picker = fn($n, $sel, $empty) => '<div class="tp pk" data-name="' . $n . '[]"><input autocomplete="off" placeholder="Type or pick a product to add"><button type="button" class="tpb" aria-label="Pick" tabindex="-1">▾</button><div class="tpl" hidden></div></div>'
-    . '<div class="pkl" data-empty="' . h($empty) . '">' . implode('', array_map(fn($i) => '<label class="pki"><input type="checkbox" name="' . $n . '[]" value="' . h($i) . '" checked>' . h($prods[$i]['n']) . ($prods[$i]['m'] ? ' <small>' . $prods[$i]['m'] . '%</small>' : ' <small>no old price</small>') . '</label>', $sel)) . '</div>';
+  $picker = fn($n, $sel, $empty) => '<div class="pkr"><div class="tp pk" data-name="' . $n . '[]"><input autocomplete="off" placeholder="Add a product"><button type="button" class="tpb" aria-label="Pick" tabindex="-1">▾</button><div class="tpl" hidden></div></div>'
+    . '<div class="pkl" data-empty="' . h($empty) . '">' . implode('', array_map(fn($i) => '<label class="pki"><input type="checkbox" name="' . $n . '[]" value="' . h($i) . '" checked>' . h($prods[$i]['n']) . ($prods[$i]['m'] ? ' <small>' . $prods[$i]['m'] . '%</small>' : ' <small>no old price</small>') . '</label>', $sel)) . '</div></div>';
   $sale = array_filter($prods, fn($p) => $p['m'] > 0 && !$p['h']);
   $pv = ['p' => $prods, 'sale' => array_keys($sale), 'cap' => $realMax];
   page('Offer', '<h1>Offer</h1>' . flash()
@@ -817,12 +817,13 @@ if (isset($_GET['offer'])) {
     . '.lnk{font:inherit;font-size:12px;font-weight:600;letter-spacing:.04em;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--gold);cursor:pointer;text-transform:none;margin-left:auto}'
     . '.ofbt{margin:12px 0 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.pcr{display:flex;align-items:center;gap:6px}.pcr input{width:84px;text-align:center}'
     . '@media (min-width:1000px){.ofg{grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start}.ofb{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"t p" "l p";gap:0 20px;align-items:start}.ofb>.s-t{grid-area:t}.ofb>.s-p{grid-area:p;border-top:0;margin-top:0;padding-top:0}.ofb>.s-l{grid-area:l}.ofg .card{padding:14px 18px;margin:0}}@media (min-width:1000px) and (max-height:760px){.ofg .card{padding:10px 16px}.ofst{padding:5px 10px;margin-bottom:6px}.ofg label{margin-top:4px}.ofg input,.ofg select{padding-top:5px;padding-bottom:5px}.ofg h3{margin:8px 0 4px}.osec{margin-top:8px;padding-top:8px}.ofbt{margin-top:8px}}'
-    . '.ptab{display:none}@media (max-width:759px){main h1{display:none}.ptab{display:flex;gap:4px;margin:0 0 8px;padding:3px;border:1px solid var(--line);border-radius:999px}.ptab button{flex:1;font:inherit;font-size:12.5px;font-weight:600;padding:7px 4px;border:0;border-radius:999px;background:none;color:var(--muted);cursor:pointer;white-space:nowrap}'
-    . '.ofg[data-v=sale] .vt [data-v=sale],.ofg[data-v=np] .vt [data-v=np],.ptab button.on{background:var(--gold);color:var(--gold-ink)}.ofg{gap:0}.ofg[data-v=sale] .ofn,.ofg[data-v=np] .ofs{display:none}.ofg .card{padding:10px 12px;margin:0}.ofs h2{display:none}.ofn h2{font-size:14px;margin:0 0 2px}'
-    . '.ofst{font-size:12px;line-height:1.35;padding:6px 8px;margin-bottom:8px}.ofb .osec{border-top:0;margin-top:0;padding-top:0}.ofb[data-s=t] .s-p,.ofb[data-s=t] .s-l,.ofb[data-s=p] .s-t,.ofb[data-s=p] .s-l,.ofb[data-s=l] .s-t,.ofb[data-s=l] .s-p{display:none}'
-    . '.ofg label{margin-top:5px;font-size:11px}.ofg input,.ofg select{padding-top:6px;padding-bottom:6px;font-size:15px}.ofg h3{margin:4px 0 5px}.odate h3{margin-top:10px!important}.pkl{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}.pki{flex:none}'
-    . '.ofg .muted.small{font-size:11.5px;line-height:1.3}.ofbt{margin-top:10px}.ofbt .btn{flex:1;text-align:center;padding:9px 6px}.ofs>.muted.small:last-child,.s-l>.muted.small,.ofn .nph{display:none}.pcr input{width:70px}.sg2.pcg p{margin-top:20px!important}'
-    . '.tpl{max-height:180px}.ofn h3{margin-bottom:2px}}@media (max-width:759px) and (max-height:700px){.ofg label{margin-top:2px}.ofg input,.ofg select{padding-top:4px;padding-bottom:4px}.ofst{margin-bottom:5px;padding:4px 8px}.ptab{margin-bottom:5px}.ptab button{padding:5px 4px}.ofbt{margin-top:6px}.s-p h3{margin:0}.pcg p{font-size:11px!important}}'
+    . '@media (max-width:759px){main h1{display:none}.ofg{gap:8px}.ofg .card{padding:8px 10px;margin:0}.ofg h2{font-size:13.5px;margin:0 0 4px}.ofst{font-size:11.5px;line-height:1.3;padding:4px 8px;margin:0 0 6px}'
+    . '.ofg h3{font-size:10.5px;margin:7px 0 3px}.ofg h3:first-child{margin-top:0}.odate h3{display:none}.osec{margin-top:6px;padding-top:6px}.ofg label{margin-top:3px;font-size:10px}.ofg input,.ofg select{padding:4px 8px;font-size:14px;min-height:0}.tp input{padding-right:28px}'
+    . '.om{padding:4px 10px;font-size:12.5px}.cpq{margin:4px 0}.cpq button{padding:3px 9px;font-size:11.5px}.r2{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}.r2a{grid-template-columns:minmax(0,1fr) 96px}.pcg{display:block;margin-top:0!important}.pcg>p{display:none}.pmx{display:inline!important}.pcr input{width:52px}'
+    . '.pkl{flex-wrap:nowrap;overflow-x:auto;margin-top:4px}.pki{flex:none;padding:3px 8px;font-size:11.5px}.pkl:empty::before{font-size:11px}.lnk{padding:2px 8px;font-size:11px}.tick{font-size:11px}.ofg .muted.small{font-size:11px;line-height:1.25}.ofbt{margin-top:7px;gap:6px}.ofbt .btn{flex:1;text-align:center;padding:7px 4px;font-size:11.5px}'
+    . '.ofs>.muted.small:last-child,.s-l>.muted.small,.ofn .nph{display:none}.tpl{max-height:170px}'
+    . '.odate .sg2 label{display:none}.cpq::before{content:"Ends (UAE)";align-self:center;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:2px}.pkr{display:flex;gap:6px;align-items:center}.pkr .tp{flex:0 0 46%}.pkr .pkl{flex:1;min-width:0;margin:0}'
+    . '.nr{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;gap:6px;margin-top:5px}.nr label{margin:0}}'
     /* preview: the website's own look, dark or light */
     . '.pvw{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto}.pvw[hidden]{display:none}.pvp{width:100%;max-width:980px;background:var(--panel);border-radius:12px;padding:12px;border:1px solid var(--line)}'
     . '.pvh{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}.pvh button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}.pvh button.on{border-color:var(--gold);color:var(--gold)}.pvh .sp{flex:1}.pvh .x{font-size:18px;line-height:1;padding:4px 11px}'
@@ -840,18 +841,17 @@ if (isset($_GET['offer'])) {
     . '.pvd{max-width:460px;margin:18px auto 0;background:var(--bk);padding:16px}.pvd .pr{align-items:flex-start;font-size:30px}.pvd .rw{display:flex;justify-content:space-between;align-items:center;gap:10px}.pvd .sv{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4caf6a;border:1px solid rgba(76,175,106,.5);padding:5px 8px}.pvd .sl{margin-top:10px;padding:8px 12px;border:1px solid rgba(201,169,97,.55);background:rgba(201,169,97,.07);font-size:11px}'
     . '.pvs .lb{display:block;margin:0 0 10px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--mu);text-align:center}.pvs .lb.l{margin-top:22px}.pvs .em{text-align:center;color:var(--mu);font-size:13px;padding:30px 0}'
     . '@media (max-width:600px){.pbx{max-width:340px;padding:30px 18px 18px}.pbx .big{font-size:44px}.pbx .cd{gap:6px}.pbx .cd span{min-width:0;flex:1;font-size:21px}.pvc{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.pvc .c{padding:6px}.pvc .r{flex-wrap:wrap}.pvc h4{font-size:14px}.pvs .sl .t{margin-left:0}.pvc .sl{letter-spacing:.06em;font-size:9.5px}.pvs .pr{font-size:19px}.pvs{padding:18px 8px}}</style>'
-    . '<div class="ofg" data-v="sale"><div class="ptab vt" role="tablist"><button type="button" data-v="sale">Sale offer</button><button type="button" data-v="np">New product popup</button></div>'   // phone: one box at a time, so the page fits the screen
+    . '<div class="ofg">'
     . '<form class="card ofs" method="post" id="saleF">' . csrf_field()
-    . '<h2>Sale offer</h2><p class="small ofst">' . $state . '</p><div class="ptab st" role="tablist"><button type="button" data-s="t">Timer</button><button type="button" data-s="p">Popup</button><button type="button" data-s="l">Line by prices</button></div><div class="ofb" data-s="t">'
+    . '<h2>Sale offer</h2><p class="small ofst">' . $state . '</p><div class="ofb">'
     . '<div class="osec s-t"><h3>Timer</h3><div class="omr">' . $radio('date', 'Countdown') . $radio('always', 'Always on') . $radio('off', 'Off') . '</div>'
     . '<div class="odate"' . ($mode === 'date' ? '' : ' hidden') . '><h3>Ends</h3><div class="cpq" role="group" aria-label="Quick end"><button type="button" data-h="24">24h</button><button type="button" data-h="48">48h</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button></div>'
     . '<div class="sg2"><div><label for="sale_end_d">Date</label><input id="sale_end_d" type="date" name="sale_end_d" value="' . ($on ? date('Y-m-d', $e) : '') . '"></div><div><label for="sale_end_t">Time (UAE)</label><input id="sale_end_t" type="time" name="sale_end_t" value="' . ($on ? date('H:i', $e) : '') . '"></div></div></div></div>'
     . '<div class="osec s-p"><h3>Popup <label class="tick"><input type="checkbox" name="popup" value="1"' . ($pop ? ' checked' : '') . '>On</label></h3>'
-    . '<label>Top line</label>' . $tp('top', $top, $TOPS)
-    . '<div class="sg2 pcg" style="margin-top:6px"><div><label for="pct">% off</label><div class="pcr"><input id="pct" name="pct" type="number" min="1" max="' . ($realMax ?: 99) . '" step="1" inputmode="numeric" value="' . h($pct) . '" placeholder="' . ($max ?: '') . '">%</div></div>'
-    . '<p class="muted small" style="margin:24px 0 0">Max ' . ($realMax ? $realMax . '%' : '—') . ': the real biggest saving. Empty = that.</p></div>'
-    . '<label>Under the %</label>' . $tp('under', $under, $UNDERS)
-    . '<label>Button</label>' . $tp('btn', $btn, $BTNS)
+    . '<div class="r2 r2a"><div><label>Top line</label>' . $tp('top', $top, $TOPS) . '</div>'   // phone: two fields per row so the page fits the screen
+    . '<div class="sg2 pcg" style="margin-top:6px"><div><label for="pct">% off</label><div class="pcr"><input id="pct" name="pct" type="number" min="1" max="' . ($realMax ?: 99) . '" step="1" inputmode="numeric" value="' . h($pct) . '" placeholder="' . ($max ?: '') . '">%<small class="muted pmx" style="display:none">max ' . ($realMax ?: '—') . '%</small></div></div>'
+    . '<p class="muted small" style="margin:24px 0 0">Max ' . ($realMax ? $realMax . '%' : '—') . ': the real biggest saving. Empty = that.</p></div></div>'
+    . '<div class="r2"><div><label>Under the %</label>' . $tp('under', $under, $UNDERS) . '</div><div><label>Button</label>' . $tp('btn', $btn, $BTNS) . '</div></div>'
     . '<label>Products in the popup</label>' . $picker('pop_ids', $popIds, 'None picked: every product with an old price.') . '</div>'
     . '<div class="osec s-l"><h3>Line by prices <button type="button" class="lnk" id="samePop">Same as popup</button></h3>'
     . $picker('line_ids', $lineIds, 'None picked: no line.') . '<p class="muted small" style="margin:6px 0 0">Only the picked products show "Limited time offer" by their price.</p></div>'
@@ -859,12 +859,12 @@ if (isset($_GET['offer'])) {
     . '<p class="muted small" style="margin:6px 0 0">Old prices are set on Products. Prices are never changed here.</p></form>'
     . '<form class="card ofn" method="post" id="npF">' . csrf_field() . '<input type="hidden" name="np_save" value="1">'
     . '<h2>New product popup <label class="tick"><input type="checkbox" name="np_on" value="1"' . (!empty($np['on']) ? ' checked' : '') . '>On</label></h2>'
-    . '<p class="muted small" style="margin:0">Shows once per visitor, before the sale popup.</p>'
-    . '<label>Type</label>' . $tp('np_type', $np['type'], $TYPES)
-    . '<label for="np_product">Product</label><select id="np_product" name="np_product"><option value="">None (no photo)</option>'
-    . implode('', array_map(fn($id, $p) => '<option value="' . h($id) . '"' . ($np['product'] === $id ? ' selected' : '') . '>' . h($p['n']) . ($p['h'] ? ' (hidden)' : '') . '</option>', array_keys($prods), $prods)) . '</select>'
-    . '<label for="np_name">Name</label><input id="np_name" name="np_name" maxlength="40" value="' . h($np['name']) . '" placeholder="e.g. Oud Royale">'
-    . '<label for="np_line">Short line</label><input id="np_line" name="np_line" maxlength="90" value="' . h($np['line']) . '" placeholder="e.g. A new Elite fragrance, launching this month">'
+    . '<p class="muted small nph" style="margin:0">Shows once per visitor, before the sale popup.</p>'
+    . '<div class="nr"><label>Type</label>' . $tp('np_type', $np['type'], $TYPES) . '</div>'
+    . '<div class="nr"><label for="np_product">Product</label><select id="np_product" name="np_product"><option value="">None (no photo)</option>'
+    . implode('', array_map(fn($id, $p) => '<option value="' . h($id) . '"' . ($np['product'] === $id ? ' selected' : '') . '>' . h($p['n']) . ($p['h'] ? ' (hidden)' : '') . '</option>', array_keys($prods), $prods)) . '</select></div>'
+    . '<div class="nr"><label for="np_name">Name</label><input id="np_name" name="np_name" maxlength="40" value="' . h($np['name']) . '" placeholder="e.g. Oud Royale"></div>'
+    . '<div class="nr"><label for="np_line">Short line</label><input id="np_line" name="np_line" maxlength="90" value="' . h($np['line']) . '" placeholder="e.g. A new Elite fragrance, launching this month"></div>'
     . '<p class="muted small nph" style="margin:6px 0 0">Button says Shop now when the picked product is on the website (not hidden).</p>'
     . '<p class="ofbt"><button class="btn">Save</button><button type="button" class="btn line" data-pv="np">Preview</button></p></form></div>'
     . '<div class="pvw" id="pvw" hidden><div class="pvp"><div class="pvh"><button type="button" data-t="sale">Sale popup</button><button type="button" data-t="line">Line by prices</button><button type="button" data-t="np">New product popup</button><span class="sp"></span><button type="button" data-m="dk">Dark</button><button type="button" data-m="lt">Light</button><button type="button" class="x" aria-label="Close">×</button></div><div class="pvs" id="pvs"></div></div></div>'
@@ -879,7 +879,7 @@ function show(tp,all){var l=$('.tpl',tp),i=$('input',tp),h=opts(tp);if(h!=null)l
   $$('button',l).forEach(function(b){var ok=!q||(' '+b.firstChild.textContent.toLowerCase()).indexOf(' '+q)>=0;b.hidden=!ok;b.classList.remove('hi');if(ok)n++});l.hidden=!n;}
 function hide(){$$('.tpl').forEach(function(l){l.hidden=true})}
 function add(tp,id){var box=tp.nextElementSibling,ex=$('input[value="'+id+'"]',box);if(ex){ex.checked=true;return}
-  box.insertAdjacentHTML('beforeend','<label class="pki"><input type="checkbox" name="'+tp.dataset.name+'" value="'+id+'" checked>'+E(PV.p[id].n)+' <small>'+(PV.p[id].m?PV.p[id].m+'%':'no old price')+'</small></label>');}
+  box.insertAdjacentHTML('beforeend','<label class="pki"><input type="checkbox" name="'+tp.dataset.name+'" value="'+id+'" checked>'+E(PV.p[id].n)+' <small>'+(PV.p[id].m?PV.p[id].m+'%':'no old price')+'</small></label>');fit();}
 $$('.tp').forEach(function(tp){var i=$('input',tp),l=$('.tpl',tp);
   $('.tpb',tp).onclick=function(){if(l.hidden){hide();show(tp,true);i.focus()}else l.hidden=true};
   i.addEventListener('focus',function(){if(tp.classList.contains('pk'))show(tp,!i.value)});
@@ -901,11 +901,9 @@ $$('input[name=mode]').forEach(function(r){r.addEventListener('change',od)});
 $$('.cpq button').forEach(function(b){b.onclick=function(){var p=function(n){return ('0'+n).slice(-2)},set=function(n,v){var i=F.querySelector('input[name='+n+']');i.value=v;i.dispatchEvent(new Event('change'))},e=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000+b.dataset.h*3600000);
   set('sale_end_d',e.getFullYear()+'-'+p(e.getMonth()+1)+'-'+p(e.getDate()));set('sale_end_t',p(e.getHours())+':'+p(e.getMinutes()));$$('.cpq button').forEach(function(x){x.classList.toggle('on',x===b)})}});
 /* preview: what the website shows, from what is typed now (not yet saved) */
-/* phone tabs: the box and part last used stay open after Save */
-var G=$('.ofg'),B=$('.ofb');function ss(k,v){try{v==null?v=sessionStorage.getItem(k):sessionStorage.setItem(k,v)}catch(e){}return v}
-function tab(v,sv){if(v){G.dataset.v=v;ss('ofv',v)}if(sv){B.dataset.s=sv;ss('ofs',sv)}$$('.st button').forEach(function(b){b.classList.toggle('on',b.dataset.s===B.dataset.s)})}
-$$('.vt button').forEach(function(b){b.onclick=function(){tab(b.dataset.v)}});$$('.st button').forEach(function(b){b.onclick=function(){tab(null,b.dataset.s)}});
-tab(ss('ofv')||'sale',ss('ofs')||'t');
+/* phone: whatever the tighter spacing leaves over is scaled down a little, so both boxes fit one screen */
+function fit(){var g=$('.ofg'),m=g.closest('main')||document.scrollingElement;g.style.zoom='';if(innerWidth>=760)return;var gh=g.getBoundingClientRect().height,over=m.scrollHeight-m.clientHeight;if(over>0)g.style.zoom=Math.max(.72,(gh-over-2)/gh).toFixed(3)}
+fit();addEventListener('resize',function(){requestAnimationFrame(fit)});
 var T='sale',M='dk',tk=0;
 function val(f,n){var i=f.querySelector('[name="'+n+'"]');return i?i.value.trim():''}
 function endMs(){if(!$('input[name=mode][value=date]').checked)return 0;var d=val(F,'sale_end_d'),t=val(F,'sale_end_t')||'23:59';
