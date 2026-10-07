@@ -2376,7 +2376,7 @@ const money = v => hasPrice(v) ? `${S.currency} ${Number(v).toLocaleString('en-U
 // prices on the page: small "AED" + number in the price font, never split across lines
 const money2 = v => `${S.currency} ${Number(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
 const moneyHTML = (v, dec) => hasPrice(v) ? `<span class="amt"><span class="cur">${S.currency}</span>&nbsp;${Number(v).toLocaleString('en-US', dec ? {minimumFractionDigits:2, maximumFractionDigits:2} : undefined)}</span>` : null;
-const wasHTML = (p, size) => { const c = p.compareAt && p.compareAt[size]; return hasPrice(c) && c > p.prices[size] ? `<s class="was">${moneyHTML(c)}</s> ` : ''; };
+const wasHTML = (p, size) => { const c = wasOf(p, size); return hasPrice(c) && c > p.prices[size] ? `<s class="was">${moneyHTML(c)}</s> ` : ''; };
 const priceHTML = (p, size, cls='price') => { const m = moneyHTML(p.prices[size]); return m ? `<span class="${cls}">${wasHTML(p, size)}${m}</span>` : `<span class="${cls} na">Price on request</span>`; };
 /* limited-time sale countdown: SALE_END comes from products.php (set on fomaxo.com/admin → Offer); on products / sizes with an old price */
 let SALE_END = 0, SALE_ALWAYS = false, SALE_POPUP = true, SALE_LINE = true, SALE_PCT = 0, NEW_POP = null, SALE_ITEMS = [], SALE_WORDS = {}, SALE_LINES = null;   // SALE_LINES: the products with the line by prices (null = saved before that: the products in the offer)   // SALE_ITEMS: the products in the offer (none = all on sale); SALE_WORDS: {title, sub, btn} typed on the admin   // NEW_POP: {status: soon|arrived, name, line, product} from admin → Offer   // SALE_PCT: % typed on the admin (never more than the real saving)
@@ -2384,7 +2384,9 @@ let SALE_END = 0, SALE_ALWAYS = false, SALE_POPUP = true, SALE_LINE = true, SALE
 try { const v = JSON.parse(localStorage.getItem('fomaxo_sale') || '{}'); SALE_END = +v.e || 0; SALE_ALWAYS = !!v.a; SALE_POPUP = v.p !== false; SALE_LINE = v.l !== false; SALE_PCT = +v.pc || 0; NEW_POP = v.np || null; SALE_ITEMS = Array.isArray(v.it) ? v.it : []; SALE_WORDS = v.w || {}; SALE_LINES = Array.isArray(v.ln) ? v.ln : null; } catch(e) {}
 const inOffer = p => !SALE_ITEMS.length || SALE_ITEMS.includes(p.id);
 const lineOn = p => SALE_LINES ? SALE_LINES.includes(p.id) : inOffer(p);
-const onSale = (p, s) => { const v = p.prices[s], c = p.compareAt && p.compareAt[s]; return hasPrice(v) && hasPrice(c) && +c > +v; };
+/* the old (crossed-out) price shows only while a dated offer runs (admin → Offer, with an end time) and the product is in it; otherwise just the price */
+const wasOf = (p, s) => SALE_END > Date.now() && inOffer(p) && p.compareAt ? p.compareAt[s] : undefined;
+const onSale = (p, s) => { const v = p.prices[s], c = wasOf(p, s); return hasPrice(v) && hasPrice(c) && +c > +v; };
 const saleLeft = () => { const ms = SALE_END - Date.now(); if (ms <= 0) return ''; const t = Math.floor(ms / 1000), d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), x = t % 60, p = n => String(n).padStart(2, '0');
   return (d ? `${d}d ` : '') + `${p(h)}h ${p(m)}m ${p(x)}s`; };
 const saleCD = on => { const l = on ? saleLeft() : ''; return `<p class="sale-cd" data-cd${on ? ' data-on' : ''}${SALE_LINE && (l || (on && SALE_ALWAYS)) ? '' : ' hidden'}>${ICON.lasting}<span>${esc(SALE_WORDS.title || 'Limited time offer')}</span><span class="cd-t"${l ? '' : ' hidden'}>Ends in <b>${l}</b></span></p>`; };
@@ -2480,7 +2482,7 @@ function orderText(lines, d, pay){
   return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${sums}${who}`;
 }
 // bag line price (unit price × qty), sale price with the crossed-out original on the same line
-function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; if (!hasPrice(v)) return '<span class="price na">Price on request</span>';
+function linePriceHTML(p, l){ const v = p.prices[l.opt], c = wasOf(p, l.opt); if (!hasPrice(v)) return '<span class="price na">Price on request</span>';
   return `<span class="price lp">${hasPrice(c) && c > v ? `<s class="was">${moneyHTML(c * l.qty)}</s> ` : ''}${moneyHTML(v * l.qty)}</span>`; }
 // multi-buy discount + FREE 10ml mini (keep in sync with checkout.php)
 // Counts every unit in the bag except the Discovery Set and King, which are never discounted.
@@ -2920,7 +2922,7 @@ function fragrances(q){
 }
 
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
-const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
+const pdpPrice = (p, size) => { const v = p.prices[size], c = wasOf(p, size);
   // sale: old price struck on top, new price below it, on the left; the saving in a small green box on the right
   if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><div class="pp-line"><s class="was">${moneyHTML(c)}</s><span class="pprice">${moneyHTML(v)}</span></div><span class="p-save">You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span></div>${saleCD(lineOn(p))}`;
   return priceHTML(p, size, 'pprice'); };
@@ -3497,7 +3499,7 @@ function bindCheckout(q){
     const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${SM(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b>Free 10ml mini</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     // You save = crossed-out prices minus paid prices, plus the multi-buy discount or coupon
-    const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (T.disc > 0 ? T.disc : 0)) * 100) / 100;
+    const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = wasOf(p, l.opt); return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (T.disc > 0 ? T.disc : 0)) * 100) / 100;
     const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div><div id="coCpSlot"></div>` :
       `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div>
       ${T.useC ? `<div class="co-row disc co-cpr"><span>Coupon ${esc(coupon.code)} (${esc(coupon.label)})</span><span class="price">−${moneyHTML(T.cs, true)}</span></div>`
@@ -4285,8 +4287,10 @@ footShop();
 /* the live product list (fomaxo.com/admin → Products); the page is only redrawn when it differs from what is showing */
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
+  const saleKey = () => (SALE_END > Date.now()) + '|' + SALE_ITEMS.join(), saleWas = saleKey();   // old prices show only while a dated offer runs: redraw when that changed
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES})); } catch(e) {} saleTick(); promoMaybe(); }
   if (d && 'ads' in d) ADS.set(d.ads);
+  if (saleKey() !== saleWas) { renderCart(); if (!/^#\/checkout/.test(location.hash)) { route(); applyStock(); } }
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
   const js = JSON.stringify(d.products);
   try { localStorage.setItem('fomaxo_products', js); } catch(e) {}
