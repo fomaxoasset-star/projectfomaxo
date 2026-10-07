@@ -73,6 +73,7 @@ $html = preg_replace('#<meta name="description" content="[^"]*">#', '<meta name=
 $html = preg_replace('#<meta property="og:title" content="[^"]*">#', '<meta property="og:title" content="' . $h("FOMAXO $name") . '">', $html, 1);
 $html = preg_replace('#<meta property="og:description" content="[^"]*">#', '<meta property="og:description" content="' . $h($short) . '">', $html, 1);
 if ($images) $html = preg_replace('#<meta property="og:image" content="[^"]*">#', '<meta property="og:image" content="' . $h($images[0]) . '">', $html, 1);
+if ($images) $html = preg_replace(['#<meta property="og:image:(width|height)"[^>]*>\n?#', '#<meta name="twitter:image" content="[^"]*">#'], ['', '<meta name="twitter:image" content="' . $h($images[0]) . '">'], $html);  /* product photo has its own size */
 $html = preg_replace('#(<meta charset="utf-8">\n)#', '$1' . strtr($head, ['\\' => '\\\\', '$' => '\$']), $html, 1);
 /* the same words as plain text, for anything that reads the page without running it */
 $text = '<noscript><div style="max-width:720px;margin:40px auto;padding:0 16px"><h1>FOMAXO ' . $h($name) . '</h1><p>' . $h($family) . '</p><p>' . $h($desc ?: $short) . '</p>'
