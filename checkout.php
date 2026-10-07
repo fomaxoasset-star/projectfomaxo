@@ -66,7 +66,8 @@ $caps = fn($v) => preg_replace_callback('/(^|[\s\-\/(])(\p{Ll})/u', fn($m) => $m
 if ($cu) {
   $cu = ['name' => $clean($cu['name'] ?? '', 80), 'phone' => $clean($cu['phone'] ?? '', 20), 'email' => $clean($cu['email'] ?? '', 120),
          'emirate' => $clean($cu['emirate'] ?? '', 30), 'building' => $clean($cu['building'] ?? '', 40), 'room' => $clean($cu['room'] ?? '', 20),
-         'street' => $clean($cu['street'] ?? '', 100), 'area' => $clean($cu['area'] ?? '', 80), 'address' => $clean($cu['address'] ?? '', 300), 'note' => $clean($cu['note'] ?? '', 300)];
+         'street' => $clean($cu['street'] ?? '', 100), 'area' => $clean($cu['area'] ?? '', 80), 'address' => $clean($cu['address'] ?? '', 300), 'note' => $clean($cu['note'] ?? '', 300),
+         'wa' => !empty($cu['wa'])];   // ticked "Send me offers and updates on WhatsApp"
   foreach (['name', 'building', 'room', 'street', 'area', 'address', 'note'] as $k) $cu[$k] = $caps($cu[$k]);
   /* address in separate boxes: villa/building no, room no / floor (optional), street, area — email is optional (checked only when typed) */
   if ($cu['building'] !== '' || $cu['street'] !== '' || $cu['area'] !== '') {
@@ -164,7 +165,7 @@ if ($pay === 'cod') {
   if ($msg = fomaxo_stock_problem($saveLines, $CATALOG)) fail(409, $msg);
   if ($miniName) $saveLines[] = ['id' => $mini, 'opt' => '10', 'qty' => 1, 'free' => true];
   $no = fomaxo_save_order(['payment' => 'Cash on delivery', 'status' => 'New', 'subtotal' => $subFils / 100, 'discount' => $discFils / 100,
-          'fee' => $COD_FEE, 'total' => $totalFils / 100, 'items' => implode(' | ', $rows), 'free_mini' => $miniName, 'coupon' => $couponCode, 'lines' => $saveLines]
+          'fee' => $COD_FEE, 'total' => $totalFils / 100, 'items' => implode(' | ', $rows), 'free_mini' => $miniName, 'coupon' => $couponCode, 'wa_optin' => $cu['wa'], 'lines' => $saveLines]
           + array_intersect_key($cu, array_flip(['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'address', 'note'])));
   if ($no) fomaxo_stock_move($no);   // stock goes down as soon as a cash order is placed
   else $no = 'FX' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
@@ -172,7 +173,7 @@ if ($pay === 'cod') {
   $order = [date('Y-m-d H:i:s'), $no, $cu['name'], $cu['phone'], $cu['email'], $cu['emirate'], $cu['address'], $cu['note'],
             implode(' | ', $rows), number_format($subFils / 100, 2, '.', ''), number_format($discFils / 100, 2, '.', ''),
             number_format($COD_FEE, 2, '.', ''), number_format($totalFils / 100, 2, '.', ''),
-            $cu['building'], $cu['room'], $cu['street'], $cu['area']];   // new columns go last so older rows still line up
+            $cu['building'], $cu['room'], $cu['street'], $cu['area'], $cu['wa'] ? 'Yes' : 'No'];   // new columns go last so older rows still line up
   $saved = false;
   $dir = dirname(__DIR__) . '/fomaxo-orders';     // one level above public_html: private, kept across deploys
   if (is_dir($dir) || @mkdir($dir, 0700, true)) {
@@ -180,7 +181,7 @@ if ($pay === 'cod') {
     $new = !is_file($file);
     if ($fh = @fopen($file, 'a')) {
       if (flock($fh, LOCK_EX)) {
-        if ($new) fputcsv($fh, ['Date', 'Order', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Note', 'Items', 'Subtotal', 'Discount', 'COD fee', 'Total to collect (AED)', 'Villa/Building no', 'Room No / Floor', 'Street', 'Area']);
+        if ($new) fputcsv($fh, ['Date', 'Order', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Note', 'Items', 'Subtotal', 'Discount', 'COD fee', 'Total to collect (AED)', 'Villa/Building no', 'Room No / Floor', 'Street', 'Area', 'WhatsApp offers']);
         $saved = fputcsv($fh, array_map($cell, $order)) !== false;
         flock($fh, LOCK_UN);
       }
@@ -196,7 +197,7 @@ if ($pay === 'cod') {
   $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) . "\n\n" . implode("\n", $rows)
         . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\n$discLabel: -" . aed($discFils) : '')
         . "\nCash on delivery fee: " . aed($COD_FEE * 100) . "\nTotal: " . aed($totalFils)
-        . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '') . $waLines;
+        . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '') . "\nWhatsApp offers: " . ($cu['wa'] ? 'Yes' : 'No') . $waLines;
   $mailed = fomaxo_mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
                   "From: FOMAXO Orders <mail@fomaxo.com>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
   if (!$saved && !$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or contact us on WhatsApp.'); }

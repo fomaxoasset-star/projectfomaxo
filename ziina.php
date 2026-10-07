@@ -139,7 +139,7 @@ $lineIn = array_map(fn($l) => ['id' => (string)($l['id'] ?? ''), 'opt' => (strin
 if ($msg = fomaxo_stock_problem($lineIn, $CATALOG)) { http_response_code(409); echo json_encode(['error' => $msg]); exit; }
 if ($order['gift']) foreach ($CATALOG as $cid => $c) if ($c['name'] === $order['gift']) { $lineIn[] = ['id' => $cid, 'opt' => '10', 'qty' => 1, 'free' => true]; break; }
 $no = fomaxo_save_order(['payment' => 'Card (Ziina)', 'status' => 'Awaiting payment', 'subtotal' => $order['fullFils'] / 100, 'discount' => $order['discountFils'] / 100,
-        'fee' => 0, 'total' => $order['totalFils'] / 100, 'items' => implode(' | ', $order['summary']), 'free_mini' => $order['gift'], 'coupon' => $order['coupon'], 'lines' => $lineIn, 'test' => $testMode]
+        'fee' => 0, 'total' => $order['totalFils'] / 100, 'items' => implode(' | ', $order['summary']), 'free_mini' => $order['gift'], 'coupon' => $order['coupon'], 'wa_optin' => $cust['wa'], 'lines' => $lineIn, 'test' => $testMode]
         + array_intersect_key($cust, array_flip(['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'address', 'note'])))
       ?? 'FMX-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');

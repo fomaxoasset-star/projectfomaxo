@@ -33,7 +33,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 16) return;
+  if ($ver >= 17) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -108,6 +108,10 @@ function fomaxo_db_schema($pdo) {
   if (!$pdo->query("SHOW COLUMNS FROM fx_events LIKE 'lang'")->fetch()) return;
   if (!fomaxo_setting($pdo, 'lang_since')) fomaxo_setting($pdo, 'lang_since', date('Y-m-d'));
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '16')");
+  /* v17: the customer ticked "Send me offers and updates on WhatsApp" at checkout */
+  try { $pdo->exec("ALTER TABLE fx_orders ADD COLUMN wa_optin TINYINT(1) NOT NULL DEFAULT 0"); } catch (Throwable $e) {}
+  if (!$pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'wa_optin'")->fetch()) return;
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '17')");
 }
 function fomaxo_coupons_table($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_coupons (code VARCHAR(30) NOT NULL PRIMARY KEY, kind VARCHAR(3) NOT NULL DEFAULT 'pct', amount DECIMAL(10,2) NOT NULL,
@@ -232,6 +236,7 @@ function fomaxo_save_order($o) {
          'subtotal' => null, 'discount' => null, 'fee' => null, 'items' => null, 'free_mini' => null, 'ref' => null, 'test' => 0, 'total' => 0];
   $o['cost'] = isset($o['lines']) ? fomaxo_cost_of($o['lines'], fomaxo_cost_map($pdo)) : null;   // cost of goods at today's cost prices (kept, so later price changes don't rewrite old months)
   if (!empty($o['coupon'])) $cols[] = 'coupon';   // the coupon code the order used (only sent when there is one)
+  if (!empty($o['wa_optin'])) { $cols[] = 'wa_optin'; $o['wa_optin'] = 1; }   // ticked "Send me offers and updates on WhatsApp"
   $vals = []; foreach ($cols as $c) $vals[] = is_bool($o[$c] ?? null) ? (int)$o[$c] : ($o[$c] ?? '');
   foreach (['subtotal', 'discount', 'fee', 'cost', 'items', 'lines_json', 'free_mini', 'ref'] as $c) if ($o[$c] === null) $vals[array_search($c, $cols)] = null;
   $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ') VALUES (?' . str_repeat(', ?', count($cols)) . ')');

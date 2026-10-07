@@ -1495,6 +1495,8 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-step h2{display:flex;align-items:center;gap:14px;font-size:clamp(24px,2.4vw,32px);padding-bottom:14px;margin-bottom:4px;border-bottom:1px solid var(--line)}
 .co-step h2 span{flex:none;width:32px;height:32px;border:1px solid var(--gold);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--sans);font-size:14px;font-weight:400;color:var(--gold)}
 .co .form label .co-opt-l{letter-spacing:.04em;text-transform:none;color:var(--muted)}
+.co .form label.co-wa{display:flex;flex-direction:row;align-items:center;gap:10px;margin:2px 0 6px;font-size:14px;letter-spacing:.02em;text-transform:none;color:var(--ivory);cursor:pointer;line-height:1.35}
+.co .form label.co-wa input{flex:none;width:20px;height:20px;margin:0;padding:0;accent-color:var(--gold);cursor:pointer}
 .co .form textarea.co-addr{min-height:92px}
 .co .form textarea.co-note{min-height:70px}
 .co-ar{display:grid;gap:14px}
@@ -3478,6 +3480,7 @@ function checkoutPage(q){
           <div class="co-r3"><label>Full name<input name="name" autocomplete="name" maxlength="80" required></label>
           <div class="row2"><label>Mobile<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971 50 123 4567" maxlength="20" required></label>
             <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></label></div></div>
+          <label class="co-wa"><input type="checkbox" name="wa"><span>Send me offers and updates on WhatsApp</span></label>
           <div class="co-r3 co-r3b"><label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
           <div class="co-ar co-ar1">
             <label class="co-a-b">Villa / building no<input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12" required></label>
@@ -3513,7 +3516,8 @@ function bindCheckout(q){
   const d0 = savedDetails();
   CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = CO_CAPS.includes(k) ? capWords(d0[k]) : d0[k]; });
   CO_CAPS.forEach(k => form.elements[k] && form.elements[k].setAttribute('autocapitalize', 'words'));
-  const details = () => Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()]));
+  if (form.elements.wa) form.elements.wa.checked = d0.wa === '1';   // WhatsApp offers: unticked until the customer ticks it
+  const details = () => Object.assign(Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()])), {wa: form.elements.wa && form.elements.wa.checked ? '1' : ''});
   const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad');
     const t = e.target; if (CO_CAPS.includes(t.name)) { const v = capWords(t.value); if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} } } const key = JSON.stringify(details()); try { localStorage.setItem('fomaxo_details', key); } catch(x) {} if (!busy && key !== drawnKey) { drawnKey = key; draw(); } };
   // redraw only when a detail really changed: leaving a box (change) would otherwise rebuild the payment options under the customer's finger and swallow that tap
