@@ -245,6 +245,15 @@ function fomaxo_save_order($o) {
   if (!empty($o['wa_optin'])) { $cols[] = 'wa_optin'; $o['wa_optin'] = 1; }   // ticked "Send me offers and updates on WhatsApp"
   $vals = []; foreach ($cols as $c) $vals[] = is_bool($o[$c] ?? null) ? (int)$o[$c] : ($o[$c] ?? '');
   foreach (['subtotal', 'discount', 'fee', 'cost', 'items', 'lines_json', 'free_mini', 'ref'] as $c) if ($o[$c] === null) $vals[array_search($c, $cols)] = null;
+  if (!empty($o['temp'])) {   // a card payment not made yet: only a CARD-… reference; the FMX order number comes when it is paid (fomaxo_order_number)
+    $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ') VALUES (?' . str_repeat(', ?', count($cols)) . ')');
+    for ($try = 0; $try < 5; $try++) {
+      $no = 'CARD-' . strtoupper(bin2hex(random_bytes(4)));
+      try { $ins->execute(array_merge([$no], $vals)); return $no; }
+      catch (Throwable $e) { error_log('FOMAXO save card attempt: ' . $e->getMessage()); if (!($e instanceof PDOException) || (int)($e->errorInfo[1] ?? 0) !== 1062) return null; }
+    }
+    return null;
+  }
   /* the number is given in the same step that saves the order (the highest FMX number + 1), so a save that fails never uses up a number */
   $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ") SELECT CONCAT('FMX-', GREATEST(1000, COALESCE(MAX(CAST(SUBSTRING(order_no, 5) AS UNSIGNED)), 0)) + 1)"
                        . str_repeat(', ?', count($cols)) . " FROM fx_orders WHERE order_no REGEXP '^FMX-[0-9]+$'");
@@ -271,7 +280,7 @@ function fomaxo_log_missing($pdo) {
     if (fread($fh, 3) !== "\xEF\xBB\xBF") rewind($fh);   // the Excel mark at the start of the file
     while (($r = fgetcsv($fh)) !== false) {
       $no = trim($r[1] ?? '');
-      if (!preg_match('/^(FMX|FX)[-0-9A-Z]+$/', $no) || !strtotime($r[0] ?? '')) continue;   // the heading row and broken lines
+      if (!preg_match('/^(FMX|FX|CARD)[-0-9A-Z]+$/', $no) || !strtotime($r[0] ?? '')) continue;   // the heading row and broken lines
       $x = $map($r); $x['no'] = $no; $x['date'] = date('Y-m-d H:i:s', strtotime($r[0]));
       $out[$no] = isset($out[$no]) ? array_merge($out[$no], array_filter($x, fn($v) => $v !== '')) : $x;   // a card order's later "PAID" line wins
     }
@@ -291,7 +300,7 @@ function fomaxo_log_missing($pdo) {
     $s = $pdo->prepare('SELECT order_no FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($ch), '?')) . ')'); $s->execute($ch);
     foreach ($s->fetchAll(PDO::FETCH_COLUMN) as $n) $have[$n] = 1;
   }
-  $out = array_filter($out, fn($x) => !isset($have[$x['no']]) && ($since === '' || $x['date'] >= $since));
+  $out = array_filter($out, fn($x) => !isset($have[$x['no']]) && $x['status'] !== 'Awaiting payment' && ($since === '' || $x['date'] >= $since));   // a card payment not made is not an order
   uasort($out, fn($a, $b) => strcmp($b['date'], $a['date']));
   return array_values($out);
 }
@@ -310,6 +319,21 @@ function fomaxo_log_add($pdo, $no) {
     catch (Throwable $e) { error_log('FOMAXO add logged order: ' . $e->getMessage()); return false; }
   }
   return false;
+}
+
+/* A card order is only an order once it is paid: this gives its CARD-… attempt the next FMX number and returns that number
+   (any other number comes back unchanged; on a database problem the CARD-… reference stays). */
+function fomaxo_order_number($no) {
+  if (!str_starts_with((string)$no, 'CARD-')) return $no;
+  $pdo = fomaxo_db(); if (!$pdo) return $no;
+  $s = $pdo->prepare('SELECT id FROM fx_orders WHERE order_no = ?'); $s->execute([$no]); $id = (int)$s->fetchColumn(); if (!$id) return $no;
+  $up = $pdo->prepare("UPDATE fx_orders SET order_no = (SELECT n FROM (SELECT CONCAT('FMX-', GREATEST(1000, COALESCE(MAX(CAST(SUBSTRING(order_no, 5) AS UNSIGNED)), 0)) + 1) n
+                       FROM fx_orders WHERE order_no REGEXP '^FMX-[0-9]+$') t) WHERE id = ?");
+  for ($try = 0; $try < 5; $try++) {
+    try { $up->execute([$id]); $s = $pdo->prepare('SELECT order_no FROM fx_orders WHERE id = ?'); $s->execute([$id]); return (string)$s->fetchColumn() ?: $no; }
+    catch (Throwable $e) { error_log('FOMAXO order number: ' . $e->getMessage()); if (!($e instanceof PDOException) || (int)($e->errorInfo[1] ?? 0) !== 1062) return $no; }
+  }
+  return $no;
 }
 
 /* Changes a few fields of an order (ref, status …). */
