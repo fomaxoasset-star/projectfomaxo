@@ -1802,14 +1802,17 @@ if (isset($_GET['reviews'])) {
       'comp'   => ['compliment|asked me|people ask|مدح|سألني|يسألون|يمدح', ['all the compliments', 'المديح الذي تتلقاه'], null, ''],
       'bottle' => ['bottle|design|looks|زجاجة|تصميم|شكل', ['the bottle', 'زجاجته'], null, ''],
       'box'    => ['box|packag|wrap|تغليف|علبة', ['the box', 'تغليفه'], ["the packaging wasn't right", 'لم يكن التغليف كما يجب'], 'damaged|broken|crushed|leak|مكسور|تالف|مكسورة'],
-      'deliv'  => ['deliver|arriv|shipping|courier|late|توصيل|وصل|تأخر|سريع', ['the quick delivery', 'التوصيل السريع'], ["your delivery didn't go well", 'لم يكن التوصيل كما يجب'], 'late|delay|slow|never arrived|not arrived|تأخر|متأخر|ما وصل|لم يصل'],
+      'deliv'  => ['deliver|arriv|shipping|courier|\\blate\\b|توصيل|وصل|تأخر|سريع', ['the quick delivery', 'التوصيل السريع'], ["your delivery didn't go well", 'لم يكن التوصيل كما يجب'], '\\blate\\b|delay|slow|never arrived|not arrived|تأخر|متأخر|ما وصل|لم يصل'],
       'val'    => ['price|value|worth|يستحق|سعر', ['the value', 'قيمته'], null, ''],
     ];
     $fav = $has('favou?rite|the best|obsessed|المفضل|أفضل');
     $k = $ar ? 1 : 0; $good = []; $bad = [];
     foreach ($topics as $id => $t) if ($has($t[0])) { if ($t[2] && $t[3] !== '' && $has($t[3])) $bad[] = $t[2][$k]; else $good[] = $t[1][$k]; }
     $good = array_slice($good, 0, 2);
-    $late = in_array($topics['deliv'][2][$k], $bad, true);   // late delivery or a faulty product: say we checked, the reason was real, and offer a coupon
+    /* late delivery or a faulty product: say we checked, the reason was real, and offer a coupon */
+    $late = !$has("(not|wasn.t|no|never|without) (any )?(late|delay)|on time|ahead of time|(fast|quick|early) delivery|delivered (fast|quickly|early)|بدون تأخير|في الوقت|توصيل سريع|التوصيل سريع")
+      && ($has("\\blate\\b|delay|never (came|arrived|reached|received)|not (yet )?(received|arrived|delivered|reached)|still (waiting|not)|didn.t (come|arrive|receive|get it)|haven.t (received|got)|تأخر|تاخر|متأخر|تأخير|ما وصل|لم يصل|ما جاني|ما وصلني|لم أستلم")
+        || ($has('deliver|arriv|ship|courier|order|parcel|came|reach|receiv|توصيل|وصل|الطلب|طلبي|المندوب|الشحن') && $has('slow|took (so |too |very )?long|took \\d+|\\d+ days|weeks?|a week|waited|waiting|بطيء|بطء|انتظرت|أسبوع|اسبوع|أيام|ايام')));
     $fault = $has('damaged|broken|crack|leak|defect|faulty|fault|spray(er)? (is )?(not|doesn.t|didn.t|won.t)|nozzle|not working|doesn.t work|(cap|lid|item|tester) (was |is )?missing|missing (cap|lid|item)|half full|wrong (item|product|size|perfume)|fake|مكسور|مكسورة|تالف|يسرب|تسريب|البخاخ|ما يشتغل|لا يعمل|ناقص|فاضي|غلط|خطأ');
     if ($ar) {
       $hi = $nm !== '' ? $nm : 'عزيزنا';
@@ -1838,7 +1841,7 @@ if (isset($_GET['reviews'])) {
     return ($rep !== '' ? '<div class="rrep"><b>Reply from FOMAXO</b><p>' . (($r['reply_en'] ?? '') !== '' && fx_has_ar($rep) ? nl2br(h($r['reply_en'])) . '<span class="arx" dir="rtl" lang="ar">' . nl2br(h($rep)) . '</span>' : hx($rep, true)) . '</p></div>' : '')
       . '<div class="racts"><details class="rrf"><summary class="btn line sm">' . ($rep !== '' ? 'Edit reply' : 'Reply') . '</summary><form method="post">' . csrf_field() . $hidden('id', $r['id']) . $keep
       . ($isAr ? $hidden('ar', '1') . ($rep === '' ? $hidden('ready_en', $val) . $hidden('ready_ar', preg_replace('/\s{2,}/u', ' ', $suggest($r))) : '') : '')
-      . '<textarea name="reply" dir="auto" rows="4" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($val) . '</textarea>'
+      . '<textarea name="reply" dir="auto" rows="5" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($val) . '</textarea>'
       . ($isAr ? '<p class="muted small rsug"><b>Arabic review:</b> write in English, the customer gets your reply in Arabic.' . ($rep === '' ? ' This is a ready reply, change anything before you save.' : '') . '</p>'
         : ($rep === '' ? '<p class="muted small rsug">Ready reply for this review. Change anything before you save.</p>' : ''))
       . '<div class="emo" aria-label="Add an emoji" onclick="var b=event.target.closest(\'button\');if(!b)return;var t=this.closest(\'form\').querySelector(\'textarea\'),s=t.selectionStart,e=t.selectionEnd,x=b.textContent;t.value=t.value.slice(0,s)+x+t.value.slice(e);t.focus();t.selectionStart=t.selectionEnd=s+x.length">'
