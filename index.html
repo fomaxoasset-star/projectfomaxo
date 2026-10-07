@@ -4179,7 +4179,7 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   let last = performance.now(), sy = scrollY, vel = 0, emKey = '';
   function frame(t){
     requestAnimationFrame(frame);
-    if (phone && (t - last < 40 || document.body.classList.contains('lock') || /^#\/checkout/.test(location.hash))) return;   // phones: 24 frames a second, and pause while the bag or menu covers the screen or the shopper is filling in checkout
+    if (/^#\/checkout/.test(location.hash) || phone && (t - last < 40 || document.body.classList.contains('lock'))) return;   // checkout (phone and laptop): the dust rests so typing and paying stay quick; phones: 24 frames a second, and pause while the bag or menu covers the screen
     const dt = Math.min((t - last) / 1000, .05); last = t;
     if (!document.hidden){
       mouse.x += (mouse.tx - mouse.x) * .04; mouse.y += (mouse.ty - mouse.y) * .04;

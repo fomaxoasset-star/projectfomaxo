@@ -108,6 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
     fomaxo_order_paid($rec['no'], $note !== '' ? trim($note) : '');
     fomaxo_stock_move($rec['no']);   // stock goes down once the card payment is confirmed
     fomaxo_log_order([date('Y-m-d H:i'), $rec['no'], 'Ziina — PAID' . $note, $total, $c['name'], $c['phone'], $c['email'], $c['emirate'], $c['address'], $c['note'], implode(' | ', $rec['summary'])]);
+    /* the paid order is recorded: show the shopper their confirmation now, the emails go out right after */
+    if (!empty($rec['review'])) $out['review'] = $rec['review'];
+    fomaxo_reply_now($out); $replied = true;
     $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com'));
     $from = "FOMAXO <mail@fomaxo.com>";
     fomaxo_en_many([$c['name'], $c['address'], $c['note']]);   // Arabic typed by the customer: English in this email and in admin
@@ -121,7 +124,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
     if ($c['email'] !== '') fomaxo_mail($c['email'], '=?UTF-8?B?' . base64_encode("Your FOMAXO order {$rec['no']}") . '?=', $cb, "From: $from\r\nReply-To: " . fomaxo_orders_email($STORE_EMAIL) . "\r\nContent-Type: text/plain; charset=UTF-8");
   }
   if ($status === 'completed' && !empty($rec['review'])) $out['review'] = $rec['review'];
-  echo json_encode($out); exit;
+  if (empty($replied)) echo json_encode($out);
+  exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method not allowed']); exit; }
