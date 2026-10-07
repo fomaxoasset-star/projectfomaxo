@@ -1776,8 +1776,8 @@ if (isset($_GET['reviews'])) {
          ['all', 'products', 'people'], ['Reviews', 'Stars By Product', 'Top Reviewers'])) . '</nav>';
   $hidden = fn($k, $val) => '<input type="hidden" name="' . $k . '" value="' . h($val) . '">';
   /* a ready reply that fits the review (name, product, stars, what they mentioned, English or Arabic); filled into an empty Reply box, edit before saving */
-  $suggest = function ($r) use ($CATALOG) {
-    $txt = (string)($r['text'] ?? ''); $ar = (bool)preg_match('/\p{Arabic}/u', $txt);
+  $suggest = function ($r, $en = false) use ($CATALOG) {   // $en: the English version, shown under an Arabic reply so you know what it says
+    $txt = (string)($r['text'] ?? ''); $ar = !$en && preg_match('/\p{Arabic}/u', $txt);
     $nm = trim(preg_split('/\s+/u', trim((string)($r['name'] ?? '')))[0] ?? ''); $nm = mb_strtoupper(mb_substr($nm, 0, 1)) . mb_substr($nm, 1);
     $pr = $CATALOG[$r['product']]['name'] ?? ($ar ? 'عطرنا' : 'our fragrance'); $st = (int)($r['rating'] ?? 5);
     $has = fn($re) => (bool)preg_match('/' . $re . '/iu', $txt);
@@ -1787,7 +1787,6 @@ if (isset($_GET['reviews'])) {
     $deliv = $has('deliver|arriv|shipping|courier|late|توصيل|وصل|تأخر');
     $box = $has('box|packag|gift|wrap|هدية|تغليف|علبة');
     $val = $has('price|value|worth|cheap|expensive|سعر|يستحق');
-    $wa = '+971 54 314 6334';
     if ($ar) {
       $hi = $nm !== '' ? $nm : 'عزيزنا';
       if ($st >= 4) {
@@ -1795,8 +1794,8 @@ if (isset($_GET['reviews'])) {
                $deliv ? 'سعداء بوصول طلبك بسرعة.' : '', $box ? 'نهتم كثيراً بالتغليف، وكلامك يسعدنا.' : '', $val ? 'سعداء أنك وجدته يستحق كل درهم.' : '']), 0, 2);
         return 'شكراً جزيلاً ' . $hi . '! سعداء جداً أن ' . $pr . ' نال إعجابك. ' . implode(' ', $l) . ($st === 4 ? ' يسعدنا أن نعرف ما الذي يجعلها ٥ نجوم.' : '') . ' ننتظر زيارتك القادمة 🙏';
       }
-      if ($st === 3) return 'شكراً على رأيك الصريح ' . $hi . '. يسعدنا أنك جربت ' . $pr . '، ونتمنى أن تكون تجربتك القادمة ٥ نجوم. تواصل معنا على واتساب ' . $wa . ' وسنساعدك.';
-      return 'نعتذر جداً ' . $hi . '، هذه ليست التجربة التي نريدها لك مع ' . $pr . '. تواصل معنا على واتساب ' . $wa . ' لنصلح الأمر' . ($deliv ? ' ونتابع التوصيل فوراً' : ($long ? ' ونشاركك نصائح ليدوم العطر أطول' : '')) . '.';
+      if ($st === 3) return 'شكراً على رأيك الصريح ' . $hi . '. يسعدنا أنك جربت ' . $pr . '، ونتمنى أن تكون تجربتك القادمة ٥ نجوم. تواصل معنا وسنساعدك.';
+      return 'نعتذر جداً ' . $hi . '، هذه ليست التجربة التي نريدها لك مع ' . $pr . '. تواصل معنا لنصلح الأمر' . ($deliv ? ' ونتابع التوصيل فوراً' : ($long ? ' ونشاركك نصائح ليدوم العطر أطول' : '')) . '.';
     }
     $hi = $nm !== '' ? ', ' . $nm : '';
     if ($st >= 4) {
@@ -1804,8 +1803,8 @@ if (isset($_GET['reviews'])) {
              $deliv ? 'Glad your order arrived quickly.' : '', $box ? 'We put a lot of love into the box, so this means a lot.' : '', $val ? "Luxury should feel worth every dirham, and we're glad it does." : '']), 0, 2);
       return 'Thank you so much' . $hi . "! We're thrilled you love " . $pr . '. ' . implode(' ', $l) . ($st === 4 ? " If anything could make it a 5, we'd love to hear it." : '') . " We can't wait to have you back 🙏";
     }
-    if ($st === 3) return 'Thank you for your honest review' . $hi . ". We're glad you tried " . $pr . " and we'd love to make your next experience a 5-star one. Please WhatsApp us on " . $wa . " and we'll help.";
-    return "We're really sorry" . $hi . ". This isn't the experience we want for you with " . $pr . '. Please WhatsApp us on ' . $wa . ' so we can make it right' . ($deliv ? ' and check what happened with your delivery' : ($long ? ' and share tips to help it last longer' : '')) . '.';
+    if ($st === 3) return 'Thank you for your honest review' . $hi . ". We're glad you tried " . $pr . " and we'd love to make your next experience a 5-star one. Please get in touch and we'll help.";
+    return "We're really sorry" . $hi . ". This isn't the experience we want for you with " . $pr . '. Please get in touch so we can make it right' . ($deliv ? ' and check what happened with your delivery' : ($long ? ' and share tips to help it last longer' : '')) . '.';
   };
   $replyBox = function ($r) use ($hidden, $suggest) {   // your reply under a review: shown, then a box to write, change or delete it
     $rep = (string)($r['reply'] ?? ''); $keep = '';
@@ -1813,7 +1812,8 @@ if (isset($_GET['reviews'])) {
     return ($rep !== '' ? '<div class="rrep"><b>Reply from FOMAXO</b><p>' . nl2br(h($rep)) . '</p></div>' : '')
       . '<div class="racts"><details class="rrf"><summary class="btn line sm">' . ($rep !== '' ? 'Edit reply' : 'Reply') . '</summary><form method="post">' . csrf_field() . $hidden('id', $r['id']) . $keep
       . '<textarea name="reply" dir="auto" rows="4" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($rep !== '' ? $rep : preg_replace('/\s{2,}/u', ' ', $suggest($r))) . '</textarea>'
-      . ($rep === '' ? '<p class="muted small rsug">Ready reply for this review. Change anything before you save.</p>' : '')
+      . ($rep === '' ? '<p class="muted small rsug">Ready reply for this review. Change anything before you save.'
+          . (preg_match('/\p{Arabic}/u', (string)($r['text'] ?? '')) ? '<br><b>In English:</b> ' . h(preg_replace('/\s{2,}/u', ' ', $suggest($r, true))) : '') . '</p>' : '')
       . '<div class="emo" aria-label="Add an emoji" onclick="var b=event.target.closest(\'button\');if(!b)return;var t=this.closest(\'form\').querySelector(\'textarea\'),s=t.selectionStart,e=t.selectionEnd,x=b.textContent;t.value=t.value.slice(0,s)+x+t.value.slice(e);t.focus();t.selectionStart=t.selectionEnd=s+x.length">'
       . implode('', array_map(fn($e) => '<button type="button">' . $e . '</button>', ['🙏', '❤️', '😊', '✨', '🎁', '👍', '😍', '🥰', '🌸', '💐', '🤗', '😢'])) . '</div>'
       . '<div class="rrb"><button class="btn sm">Save reply</button>' . ($rep !== '' ? '<button class="btn line sm danger" name="del" value="1" onclick="return confirm(\'Delete your reply?\')">Delete reply</button>' : '') . '</div></form></details>';
