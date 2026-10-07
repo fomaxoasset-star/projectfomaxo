@@ -508,6 +508,7 @@ footer{border-top:1px solid var(--line);background:var(--deep);padding:80px 0 34
 .fgrid a{display:block;color:var(--muted);font-size:14px;margin-bottom:12px;transition:color .3s}
 .fgrid a:hover{color:var(--gold-hi)}
 .fpriv{margin:14px 0 0;font-size:11px;color:var(--dim)}
+.fpriv a{color:var(--muted);border-bottom:1px solid var(--line-2)}
 .fbase{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);border-top:1px solid var(--line);padding-top:26px}
 @media(max-width:860px){.fgrid{grid-template-columns:1fr 1fr}.fgrid>div:first-child{grid-column:1/-1}}
 
@@ -2152,7 +2153,7 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
     </div>
     <nav class="flegal" aria-label="Shop policies"><a href="#/returns">Refunds &amp; returns</a><a href="#/delivery">Delivery</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a><a href="#/business">Business details</a></nav>
     <div class="fbase"><span>© 2026 FOMAXO™. All rights reserved.</span><span>Inspire greatness</span></div>
-    <p class="fpriv">We count anonymous visits (no cookies, nothing shared) to improve the store.</p>
+    <p class="fpriv">We count anonymous visits to improve the store. <a href="#/privacy">Privacy</a></p>
   </div>
 </footer>
 
@@ -3390,7 +3391,8 @@ const POL = {
     ['What we collect when you order', ['Your name, mobile number, delivery address, the items you ordered and, if you give them, your email and delivery note.', 'We keep this in our secure order database so we can deliver your order, contact you about it and help you afterwards.']],
     ['Checkout details', ['If you type your name or mobile at checkout but do not finish, we may keep those details so we can help you complete your order.', 'Your details are also remembered on your own device, so you do not have to type them again next time.']],
     ['Card payments', ['Card payments are handled by Ziina. We never see or store your card number.']],
-    ['Visit counting', ['We count visits to improve the store. Each browser gets a random anonymous number. We note the pages viewed, the type of device and the country or emirate of the visit.', 'We do not keep your IP address, and this counting uses no cookies.']],
+    ['Visit counting', ['We count visits to improve the store. Each browser gets a random anonymous number. We note the pages viewed, the type of device and the country or emirate of the visit.', 'We do not keep your IP address. This counting uses no cookies, and these stats stay on our own server.']],
+    ['Advertising and analytics', ['We use the Meta Pixel, the TikTok Pixel and Google tags (Google Analytics and Google Ads). They set cookies or similar identifiers and send these partners the pages and products you view, items added to bag, checkouts started and completed purchases (order number, products and amount in AED).', 'We do not send them your name, mobile number, email or address.', 'These partners use this to measure our ads and to show FOMAXO ads to people who visited our store, under their own privacy policies.', 'You can limit this in your browser cookie settings, your device advertising settings or the ad settings of your Meta, TikTok or Google account.'], [['Meta privacy policy', 'https://www.facebook.com/privacy/policy/'], ['TikTok privacy policy', 'https://www.tiktok.com/legal/page/row/privacy-policy/en'], ['Google privacy policy', 'https://policies.google.com/privacy']]],
     ['Emails and reviews', ['If you join our email list, we keep your email to send you launches and previews. You can ask us to remove it at any time.', 'If you write a review, your name, country and review are shown on our website.']],
     ['Who we share it with', ['We only share your details with the courier who delivers your order and with Ziina when you pay by card. We never sell or rent your information.']],
     ['Your choices', ['You can ask us to show, correct or delete your details at any time by emailing us or messaging us on WhatsApp.']]
@@ -3413,7 +3415,7 @@ function policyPage(k){
   const body = k === 'business'
     ? `<div class="pol-biz">${row('Trading name', 'FOMAXO')}${row('Legal name', B.legalName)}${row('Trade licence no.', B.licence)}${row('Licensed by', B.issuer)}${row('Address', B.address || 'Dubai, United Arab Emirates')}
         ${row('Email', C.email, 'mailto:' + C.email)}${row('WhatsApp', C.phones[0].number, 'https://wa.me/' + C.phones[0].number.replace(/\D/g,''))}</div>`
-    : P0.sec.map(([h, ps]) => `<section><h2>${esc(h)}</h2>${ps.map(p => `<p>${esc(p)}</p>`).join('')}</section>`).join('');
+    : P0.sec.map(([h, ps, links]) => `<section><h2>${esc(h)}</h2>${ps.map(p => `<p>${esc(p)}</p>`).join('')}${links ? `<p class="pol-c">${links.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(t)}</a>`).join('')}</p>` : ''}</section>`).join('');
   const help = k === 'business' ? '' : `<section><h2>Questions?</h2><p>Message us on WhatsApp or email us. We are happy to help.</p><p class="pol-c"><a href="https://wa.me/${C.phones[0].number.replace(/\D/g,'')}" target="_blank" rel="noopener">WhatsApp <span data-no-tr>${esc(C.phones[0].number)}</span></a><a href="mailto:${C.email}" data-no-tr>${esc(C.email)}</a></p></section>`;
   return pageHead(esc(P0.title), esc(P0.title), esc(P0.lead)) + `
   <section class="sec pol-sec"><div class="wrap pol">
