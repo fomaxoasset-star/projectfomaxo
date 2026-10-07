@@ -21,7 +21,7 @@ $cust = fomaxo_customer($in);
 if (isset($cust['error'])) { http_response_code(400); echo json_encode(['error' => $cust['error']]); exit; }
 
 if ($order['totalFils'] < $COD_MIN * 100) { http_response_code(400); echo json_encode(['error' => "Cash on delivery is available for orders of AED $COD_MIN or more."]); exit; }
-if ($COD_MAX > 0 && $order['totalFils'] >= $COD_MAX * 100) { http_response_code(400); echo json_encode(['error' => 'Cash on delivery is for orders under AED ' . number_format($COD_MAX) . '. Please pay by card.']); exit; }
+if ($COD_MAX > 0 && $order['totalFils'] >= $COD_MAX * 100) { http_response_code(400); echo json_encode(['error' => 'COD for orders under AED ' . number_format($COD_MAX) . '. Please pay by card.']); exit; }
 $order['feeFils'] = $COD_FEE * 100;
 $order['totalFils'] += $order['feeFils'];
 
