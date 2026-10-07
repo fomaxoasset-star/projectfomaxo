@@ -590,6 +590,7 @@
 "Pay in cash when your order arrives · AED 10 fee": "ادفع نقداً عند وصول طلبك · رسوم AED 10",
 "Fill in your delivery details to continue": "أدخل تفاصيل التوصيل للمتابعة",
 "Free delivery anywhere in the UAE": "توصيل مجاني لجميع أنحاء الإمارات",
+"Delivered in 1–3 days across the UAE": "التوصيل خلال 1–3 أيام في جميع أنحاء الإمارات",
 "Secure card payments by Ziina": "مدفوعات بطاقات آمنة عبر Ziina",
 "Questions? WhatsApp us on": "لديك أسئلة؟ راسلنا على واتساب",
 "Open your bag to change it": "افتح حقيبتك لتعديلها",
