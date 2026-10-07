@@ -1794,11 +1794,11 @@ if (isset($_GET['reviews'])) {
     $topics = [
       'long'   => ['last|longevity|all day|hours|stays|fade|faded|يدوم|ثبات|ثابت|ساعات|يختفي|يروح',
                    ['So happy it lasts all day for you.', 'رائع أنه يدوم معك طوال اليوم.'],
-                   ['Sorry it faded sooner than you hoped. Spraying on pulse points and on clothes helps it last longer.', 'نعتذر أنه لم يدم كما توقعت. رشه على نقاط النبض وعلى الملابس يساعده على الثبات أطول.'],
+                   ["We're sorry it didn't last as long as you hoped, and we've shared this with our team so we can do better.", 'نعتذر أنه لم يدم كما توقعت، وقد شاركنا ملاحظتك مع فريقنا لنتحسن.'],
                    "fade|disappear|(doesn't|does not|didn't|did not|not) last|short|لا يدوم|ما يدوم|يختفي|يروح|ما يثبت"],
       'proj'   => ['projection|sillage|strong|powerful|loud|beast|فواح|قوي|قوية|انتشار',
                    ['Glad you love the projection.', 'سعداء أن الانتشار أعجبك.'],
-                   ['Thanks for the honest note on its strength. One or two sprays is plenty.', 'شكراً على ملاحظتك عن قوته، رشة أو رشتان تكفي.'],
+                   ["Thank you for the honest note on its strength, we've shared it with our team.", 'شكراً على ملاحظتك الصادقة عن قوته، وقد شاركناها مع فريقنا.'],
                    'too strong|very strong|overpower|strong at first|bit strong|headache|قوي جدا|قوي جداً|صداع'],
       'scent'  => ['smell|scent|fragrance|aroma|notes|my style|not for me|my type|رائحة|ريحة|عطر|ما عجبني|لم يعجبني|ما حبيت|ما ناسبني',
                    ["We're glad the scent is just your style.", 'سعداء أن الرائحة أعجبتك.'],
@@ -1820,7 +1820,7 @@ if (isset($_GET['reviews'])) {
                    'damaged|broken|crushed|leak|مكسور|تالف|مكسورة'],
       'deliv'  => ['deliver|arriv|shipping|courier|late|توصيل|وصل|تأخر|سريع',
                    ['Glad your order arrived quickly.', 'سعداء بوصول طلبك بسرعة.'],
-                   ['Sorry about the delivery, we will look into it.', 'نعتذر عن التوصيل وسنتابع الأمر.'],
+                   ["We're sorry about the delivery and we're looking into it.", 'نعتذر عن التوصيل ونتابع الأمر.'],
                    'late|delay|slow|never arrived|not arrived|تأخر|متأخر|ما وصل|لم يصل'],
       'val'    => ['price|value|worth|يستحق|سعر',
                    ["We're glad it feels worth every dirham.", 'سعداء أنك وجدته يستحق كل درهم.'], null],
@@ -1837,8 +1837,8 @@ if (isset($_GET['reviews'])) {
              . ($again ? ' سنكون جاهزين لطلبك القادم 🙏' : ' ننتظر زيارتك القادمة 🙏');
       }
       $fix = array_merge(array_slice(array_values($bad), 0, 2), $good && $st === 3 ? [reset($good)] : []);
-      if ($st === 3) return 'شكراً على رأيك الصريح ' . $hi . '. ' . ($fix ? implode(' ', $fix) . ' ' : '') . 'شكراً لتجربتك ' . $pr . '. تواصل معنا وسنساعدك.';
-      return 'نعتذر جداً ' . $hi . '، هذه ليست التجربة التي نريدها لك مع ' . $pr . '. ' . ($fix ? implode(' ', $fix) . ' ' : '') . 'تواصل معنا لنصلح الأمر.';
+      if ($st === 3) return 'شكراً على رأيك الصريح ' . $hi . '. ' . ($fix ? implode(' ', $fix) . ' ' : '') . 'شكراً لتجربتك ' . $pr . '. تقديراً لملاحظتك، يسعدنا أن نهديك هدية صغيرة مع طلبك القادم. تواصل معنا لنرتبها لك 🙏';
+      return 'نعتذر جداً ' . $hi . '، هذه ليست التجربة التي نريدها لك مع ' . $pr . '. ' . ($fix ? implode(' ', $fix) . ' ' : 'نعمل على التحسن دائماً. ') . 'وكاعتذار منا، يسعدنا أن نهديك هدية صغيرة مع طلبك القادم. تواصل معنا لنرتبها لك 🙏';
     }
     $hi = $nm !== '' ? ', ' . $nm : '';
     if ($st >= 4) {
@@ -1847,8 +1847,8 @@ if (isset($_GET['reviews'])) {
            . ($again ? " We'll be ready for your next order 🙏" : " We can't wait to have you back 🙏");
     }
     $fix = array_merge(array_slice(array_values($bad), 0, 2), $good && $st === 3 ? [str_replace(["We're glad", 'So happy', 'Glad you'], ["We're glad", 'Glad', 'Glad you'], reset($good))] : []);
-    if ($st === 3) return 'Thank you for your honest review' . $hi . '. ' . ($fix ? implode(' ', $fix) . ' ' : '') . "Thank you for trying " . $pr . ". Please get in touch and we'll help.";
-    return "We're really sorry" . $hi . ". This isn't the experience we want for you with " . $pr . '. ' . ($fix ? implode(' ', $fix) . ' ' : '') . 'Please get in touch so we can make it right.';
+    if ($st === 3) return 'Thank you for your honest review' . $hi . '. ' . ($fix ? implode(' ', $fix) . ' ' : '') . "Thank you for trying " . $pr . ". As a thank you for telling us, we'd love to send you a small gift with your next order. Please get in touch and we'll arrange it 🙏";
+    return "We're really sorry" . $hi . ". This isn't the experience we want for you with " . $pr . '. ' . ($fix ? implode(' ', $fix) . ' ' : "We're always working to do better. ") . "As our apology, we'd love to send you a small gift with your next order. Please get in touch and we'll arrange it 🙏";
   };
   $replyBox = function ($r) use ($hidden, $suggest) {   // your reply under a review: shown, then a box to write, change or delete it
     $rep = (string)($r['reply'] ?? ''); $keep = '';
