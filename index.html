@@ -28,8 +28,9 @@
 var mq=window.matchMedia?matchMedia("(prefers-color-scheme: light)"):null;
 function apply(){var light=saved?saved==="light":!!(mq&&mq.matches);if(light)r.dataset.mode="light";else delete r.dataset.mode;var m=document.querySelector("meta[name=theme-color]");if(m)m.content=light?"#f6f0e4":"#050505"}
 apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{saved=localStorage.getItem("fomaxo_mode")}catch(e){}if(!saved){apply();var t=document.getElementById("modeToggle");if(t)t.setAttribute("aria-checked",String(r.dataset.mode!=="light"))}})})();</script>
-<script>/* language: English (default) or Arabic (عربي switch in the top bar, remembered per visitor; ?lang=ar also works) */
+<script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
+if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
