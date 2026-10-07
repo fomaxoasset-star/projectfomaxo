@@ -1585,6 +1585,8 @@ html[data-mode="light"] .btn.co-min,html[data-mode="light"] .btn.co-min:hover{co
 .co-trust li{justify-content:center}
 /* phone: when the WhatsApp line has no room, the whole number drops to its own centred line below */
 .co-trust a{white-space:nowrap;display:inline-block}
+/* phone: the gold icon sits right next to the first words (Questions?), centred on that line; the number wraps below */
+@media(max-width:960px){.co-trust li{display:block}.co-trust svg{display:inline-block;vertical-align:middle;margin:-3px 0 0;margin-inline-end:8px}}
 .co-sum{grid-area:sum;position:sticky;top:calc(var(--ann-h,40px) + 96px);border:1px solid var(--line-2);background:var(--panel)}
 .co-sum-in{padding:24px 26px 26px}
 .co-sum-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:18px}
