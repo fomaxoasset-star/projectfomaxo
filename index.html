@@ -655,7 +655,7 @@ html .pc-poster .pc-photo::after{display:none}
 @media(max-width:760px){.gallery-g{grid-template-columns:minmax(0,1fr)}.gallery-g figure,.gallery-g figure:nth-child(n){grid-column:auto;aspect-ratio:4/3}}
 
 /* ================= 3D LAYER ================= */
-#space{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+#space,#mist{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
 /* layer 1: giant faint emblem, turns in 3D with scroll */
 #bgEmblem{position:fixed;inset:0;z-index:0;pointer-events:none;display:grid;place-items:center;perspective:1800px;overflow:hidden}
 #bgEmblem svg{width:min(118vmin,1150px);height:auto;aspect-ratio:1;color:#d7aa69;opacity:.045;will-change:transform}
@@ -685,7 +685,7 @@ footer{background:rgba(var(--bg-rgb),.92)}
 .exp a .in,.coll a .in{transform:translateZ(50px)}
 .ed-media{transform-style:preserve-3d;will-change:transform}
 .anim-off,.anim-off i{animation-play-state:paused!important}
-@media (prefers-reduced-motion:reduce){#space,#bgEmblem{display:none}.hero-visual,.hero-copy{transform:none}}
+@media (prefers-reduced-motion:reduce){#space,#mist,#bgEmblem{display:none}.hero-visual,.hero-copy{transform:none}}
 
 /* ================= LIGHT MODE ================= */
 html[data-mode="light"]{
@@ -2117,6 +2117,7 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 </div>
 
 <div id="bgEmblem" aria-hidden="true"><svg viewBox="0 0 2507 2506"><use href="#emblem"/></svg></div>
+<canvas id="mist" aria-hidden="true"></canvas>
 <canvas id="space" aria-hidden="true"></canvas>
 <main id="app" tabindex="-1"></main>
 
@@ -4117,6 +4118,8 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   const cv = $('#space'); if (!cv || reduce) return;
   const em = $('#bgEmblem svg');
   const ctx = cv.getContext('2d'); let W, H, D;
+  /* the soft mist and light have their own small canvas (a fifth of screen size, stretched): they are blurry glows, so it looks the same and costs far less to paint */
+  const mc = $('#mist'), mx = mc.getContext('2d'); let MW, MH, MD;
   const phone = innerWidth < 700;
   const N = phone ? 80 : 240, pts = [];
   const rnd = (a, b) => a + Math.random() * (b - a);
@@ -4134,7 +4137,7 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
     for (let i = 0; i < (phone ? 2 : 4); i++) clouds.push({x: Math.random(), y: Math.random(), par, sz: sz * rnd(.8, 1.25), sp: sp * (Math.random() < .5 ? -1 : 1), ph: rnd(0, 6.28), a: [.75, .9, 1][li]});
   });
   /* phones: the soft mist and dust are drawn at half screen size (they are soft glows, so it looks the same) and 24 times a second, which leaves the phone free for taps and scrolling */
-  function size(){ D = phone ? .5 : Math.min(devicePixelRatio || 1, 1.5); W = cv.width = innerWidth * D; H = cv.height = innerHeight * D; }
+  function size(){ D = phone ? .5 : Math.min(devicePixelRatio || 1, 1.5); W = cv.width = innerWidth * D; H = cv.height = innerHeight * D; MD = .2; MW = mc.width = innerWidth * MD; MH = mc.height = innerHeight * MD; }
   size(); addEventListener('resize', size);
   /* phones: soft light follows the tilt where the device allows it */
   if (!finePointer && window.DeviceOrientationEvent){
@@ -4144,7 +4147,7 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
       addEventListener('touchend', function ask(){ removeEventListener('touchend', ask); DeviceOrientationEvent.requestPermission().then(r => { if (r === 'granted') listen(); }).catch(() => {}); });
     } else listen();
   }
-  let last = performance.now(), sy = scrollY, vel = 0, emKey = '';
+  let last = performance.now(), mlast = 0, sy = scrollY, vel = 0, emKey = '';
   function frame(t){
     requestAnimationFrame(frame);
     if (phone && (t - last < 40 || document.body.classList.contains('lock') || /^#\/checkout/.test(location.hash))) return;   // phones: 24 frames a second, and pause while the bag or menu covers the screen or the shopper is filling in checkout
@@ -4161,26 +4164,27 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
         const k = `rotateY(${(sy * .035 % 360).toFixed(2)}deg) rotateX(${(mouse.y * -6 + Math.sin(sy * .0012) * 8).toFixed(2)}deg) rotateZ(${(mouse.x * 3).toFixed(2)}deg)`;
         if (k !== emKey){ em.style.transform = k; emKey = k; }
       }
-      ctx.clearRect(0, 0, W, H);
-
-      /* 2. scent mist at three depths */
-      ctx.globalCompositeOperation = 'source-over';
-      const ms = lightMode ? mistL : mist, mA = lightMode ? .42 : .045;
-      for (const c of clouds){
-        c.x += c.sp * dt; c.ph += dt * .15;
-        const r = c.sz * Math.max(W, H), span = W + r * 2, spanY = H + r * 2;
-        const px = ((c.x * span + mouse.x * -40 * c.par * D) % span + span) % span - r;
-        const py = (((c.y * spanY - sy * c.par * D + Math.sin(c.ph) * 30 * D) % spanY) + spanY) % spanY - r;
-        ctx.globalAlpha = mA * c.a * (.8 + .2 * Math.sin(c.ph * 1.7));
-        ctx.drawImage(ms, px - r, py - r * .7, r * 2, r * 1.4);
+      /* 2–3. mist and soft light, on the small canvas: redrawn every frame while scrolling or the pointer / tilt moves, otherwise 8 times a second (the mist drifts very slowly) */
+      const mdt = Math.min((t - mlast) / 1000, .25);
+      if (ds || Math.abs(mouse.tx - mouse.x) > .002 || Math.abs(mouse.ty - mouse.y) > .002 || mdt > .125){
+        mlast = t;
+        mx.clearRect(0, 0, MW, MH);
+        const ms = lightMode ? mistL : mist, mA = lightMode ? .42 : .045;
+        for (const c of clouds){
+          c.x += c.sp * mdt; c.ph += mdt * .15;
+          const r = c.sz * Math.max(MW, MH), span = MW + r * 2, spanY = MH + r * 2;
+          const px = ((c.x * span + mouse.x * -40 * c.par * MD) % span + span) % span - r;
+          const py = (((c.y * spanY - sy * c.par * MD + Math.sin(c.ph) * 30 * MD) % spanY) + spanY) % spanY - r;
+          mx.globalAlpha = mA * c.a * (.8 + .2 * Math.sin(c.ph * 1.7));
+          mx.drawImage(ms, px - r, py - r * .7, r * 2, r * 1.4);
+        }
+        const lx = MW / 2 + mouse.x * MW * .42, ly = MH / 2 + mouse.y * MH * .42, lr = Math.max(MW, MH) * .42;
+        const lg = mx.createRadialGradient(lx, ly, 0, lx, ly, lr);
+        if (lightMode){ lg.addColorStop(0, 'rgba(255,255,255,.55)'); lg.addColorStop(1, 'rgba(255,255,255,0)'); }
+        else { lg.addColorStop(0, 'rgba(240,211,160,.07)'); lg.addColorStop(1, 'rgba(240,211,160,0)'); }
+        mx.globalAlpha = 1; mx.fillStyle = lg; mx.fillRect(0, 0, MW, MH);
       }
-
-      /* 3. soft light under the pointer (or tilt) */
-      const lx = cx + mouse.x * W * .42, ly = cy + mouse.y * H * .42, lr = Math.max(W, H) * .42;
-      const lg = ctx.createRadialGradient(lx, ly, 0, lx, ly, lr);
-      if (lightMode){ lg.addColorStop(0, 'rgba(255,255,255,.55)'); lg.addColorStop(1, 'rgba(255,255,255,0)'); }
-      else { lg.addColorStop(0, 'rgba(240,211,160,.07)'); lg.addColorStop(1, 'rgba(240,211,160,0)'); }
-      ctx.globalAlpha = 1; ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H);
+      ctx.clearRect(0, 0, W, H);
 
       /* 4. gold dust: near specks shift more on scroll than far ones */
       ctx.globalCompositeOperation = lightMode ? 'source-over' : 'lighter';
