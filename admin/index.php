@@ -1809,8 +1809,12 @@ if (isset($_GET['reviews'])) {
     $k = $ar ? 1 : 0; $good = []; $bad = [];
     foreach ($topics as $id => $t) if ($has($t[0])) { if ($t[2] && $t[3] !== '' && $has($t[3])) $bad[] = $t[2][$k]; else $good[] = $t[1][$k]; }
     $good = array_slice($good, 0, 2);
+    $late = in_array($topics['deliv'][2][$k], $bad, true);   // late delivery or a faulty product: say we checked, the reason was real, and offer a coupon
+    $fault = $has('damaged|broken|crack|leak|defect|faulty|fault|spray(er)? (is )?(not|doesn.t|didn.t|won.t)|nozzle|not working|doesn.t work|(cap|lid|item|tester) (was |is )?missing|missing (cap|lid|item)|half full|wrong (item|product|size|perfume)|fake|مكسور|مكسورة|تالف|يسرب|تسريب|البخاخ|ما يشتغل|لا يعمل|ناقص|فاضي|غلط|خطأ');
     if ($ar) {
       $hi = $nm !== '' ? $nm : 'عزيزنا';
+      $what = $late && $fault ? 'التوصيل تأخر وأن ' . $pr . ' كان معيباً' : ($late ? 'التوصيل تأخر فعلاً' : $pr . ' كان معيباً فعلاً');
+      if ($late || $fault) return ($st >= 4 ? 'شكراً جزيلاً ' . $hi . '، ونعتذر عن الإزعاج. لقد راجعنا طلبك وتأكدنا أن ' . $what . '، و' : 'نعتذر منك ' . $hi . '، لقد راجعنا طلبك وتأكدنا أن ' . $what . '. ') . 'سترسل لك FOMAXO كوبون خصم لطلبك القادم تعويضاً عن ذلك 🙏';
       $gift = 'يسعد FOMAXO أن تهديك هدية صغيرة مع طلبك القادم وسنتواصل معك لترتيبها 🙏';
       if ($st >= 4) return ($st === 5 ? 'شكراً جزيلاً ' : 'شكراً ') . $hi . '! ' . ($fav ? 'يسعد FOMAXO أن ' . $pr . ' أصبح المفضل لديك' : 'يسعد FOMAXO أن ' . $pr . ' أعجبك')
         . ($good ? '، خاصة ' . implode(' و', $good) : '') . ($bad ? '، وستساعد ملاحظتك FOMAXO على أن يصبح أفضل' : '') . ' 🙏';
@@ -1818,6 +1822,8 @@ if (isset($_GET['reviews'])) {
       return ($st === 3 ? 'شكراً على رأيك الصريح ' . $hi . '، ونعتذر لأنه ' : 'نعتذر منك ' . $hi . ' لأنه ') . $why . '. ' . $gift;
     }
     $hi = $nm !== '' ? ', ' . $nm : '';
+    $what = $late && $fault ? 'your delivery was late and your ' . $pr . ' was faulty' : ($late ? 'your delivery was indeed late' : 'your ' . $pr . ' was indeed faulty');
+    if ($late || $fault) return ($st >= 4 ? 'Thank you so much' . $hi . ', and we apologize for the trouble. We checked your order and found ' . $what . ', so FOMAXO' : 'We sincerely apologize' . $hi . '. We checked your order and found ' . $what . ', so FOMAXO') . ' will send you a coupon for your next order to make it up to you 🙏';
     $gift = "FOMAXO would love to send you a small gift with your next order and will be in touch to arrange it 🙏";
     if ($st >= 4) return ($st === 5 ? 'Thank you so much' : 'Thank you') . $hi . '! ' . ($fav ? 'FOMAXO is so glad ' . $pr . ' is your favourite' : 'FOMAXO is thrilled you love ' . $pr)
       . ($good ? ', especially ' . implode(' and ', $good) : '') . ($bad ? ', and your note will help us make it even better' : '') . ' 🙏';
