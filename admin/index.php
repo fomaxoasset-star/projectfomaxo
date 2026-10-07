@@ -320,7 +320,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .savebar{display:flex;align-items:center;gap:14px}.savebar .stock-help{flex:1;margin:0;font-size:12px;line-height:1.45}.savebar .btn{flex:none}
 .rseg{flex-wrap:wrap}.stars{color:var(--gold);letter-spacing:.06em;white-space:nowrap}.stars i{font-style:normal;color:var(--line)}
 .rfilter .vcount{margin:0}.rfilter .vcount .em{font-size:12.5px;padding:4px 11px}.rfilter{margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rfilter select{max-width:240px;width:auto}.rfilter input{flex:1 1 220px;min-width:0;max-width:420px;padding:7px 10px}.rvlist{list-style:none;margin:0;padding:0}.rv{padding:10px 14px;border-bottom:1px solid var(--line);display:grid;gap:3px}.rv:last-child{border-bottom:0}.rv.off{opacity:.55}
-.emo{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.emo button{font:18px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 6px;cursor:pointer;min-width:34px}.emo button:hover{border-color:var(--gold)}.rrep{border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent);padding:6px 10px;border-radius:0 6px 6px 0;margin:2px 0 4px}.rrep b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rrep p{margin:2px 0 0;font-size:13px}.racts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}.racts>form{margin:0 !important;display:flex}.racts .btn.rmrep{background:transparent !important;color:var(--bad) !important;border:1px solid var(--bad) !important}.racts .btn.sm,.racts summary.btn{margin:0 !important;padding:7px 12px;line-height:1.2;box-sizing:border-box;height:32px;display:inline-flex;align-items:center}.rrf{margin:0}.rrf[open]{flex:1 1 100%;order:2}.rrf>summary{list-style:none;display:inline-block;cursor:pointer}.rrf>summary::-webkit-details-marker{display:none}.rrf[open]>summary{display:none}.rrf textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}.rrb{display:flex;gap:8px;margin-top:6px}
+.emo{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.emo button{font:18px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 6px;cursor:pointer;min-width:34px}.emo button:hover{border-color:var(--gold)}.rrep{border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent);padding:6px 10px;border-radius:0 6px 6px 0;margin:2px 0 4px}.rrep b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rrep p{margin:2px 0 0;font-size:13px}.racts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}.racts>form{margin:0 !important;display:flex}.racts .btn.sm,.racts summary.btn{margin:0 !important;padding:7px 12px;line-height:1.2;box-sizing:border-box;height:32px;display:inline-flex;align-items:center}.rrf{margin:0}.rrf[open]{flex:1 1 100%;order:2}.rrf>summary{list-style:none;display:inline-block;cursor:pointer}.rrf>summary::-webkit-details-marker{display:none}.rrf[open]>summary{display:none}.rrf textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}.rrb{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 
 .rv p{margin:2px 0;white-space:normal}.rv form{margin:4px 0 0}.rph{display:flex;gap:6px}.rph img{width:56px;height:56px;object-fit:cover;border-radius:6px;display:block}
 .btn.danger{background:#a33a2c;border-color:#a33a2c;color:#fff}.dist span{margin-right:8px;white-space:nowrap}.dist b{color:var(--ink);font-weight:600}.rprod .ph,.rppl .ph{display:none}
@@ -1785,7 +1785,7 @@ if (isset($_GET['reviews'])) {
          ['all', 'products', 'people'], ['Reviews', 'Stars By Product', 'Top Reviewers'])) . '</nav>';
   $hidden = fn($k, $val) => '<input type="hidden" name="' . $k . '" value="' . h($val) . '">';
   /* a ready reply that fits the review (name, product, stars, what they mentioned, English or Arabic); filled into an empty Reply box, edit before saving */
-  $suggest = function ($r, $en = false) use ($CATALOG) {   // a short ready reply (one or two sentences); $en: the English version of a reply to an Arabic review
+  $suggest = function ($r, $en = false, $v = 0) use ($CATALOG) {   // a short ready reply (one or two sentences); $en: the English version of a reply to an Arabic review
     $txt = (string)($r['text'] ?? ''); $ar = !$en && preg_match('/\p{Arabic}/u', $txt);
     $nm = trim(preg_split('/\s+/u', trim((string)($r['name'] ?? '')))[0] ?? ''); $nm = mb_strtoupper(mb_substr($nm, 0, 1)) . mb_substr($nm, 1);
     $pr = $CATALOG[$r['product']]['name'] ?? ($ar ? 'عطرنا' : 'our fragrance'); $st = (int)($r['rating'] ?? 5);
@@ -1814,40 +1814,46 @@ if (isset($_GET['reviews'])) {
       && ($has("\\blate\\b|delay|never (came|arrived|reached|received)|not (yet )?(received|arrived|delivered|reached)|still (waiting|not)|didn.t (come|arrive|receive|get it)|haven.t (received|got)|تأخر|تاخر|متأخر|تأخير|ما وصل|لم يصل|ما جاني|ما وصلني|لم أستلم")
         || ($has('deliver|arriv|ship|courier|order|parcel|came|reach|receiv|توصيل|وصل|الطلب|طلبي|المندوب|الشحن') && $has('slow|took (so |too |very )?long|took \\d+|\\d+ days|weeks?|a week|waited|waiting|بطيء|بطء|انتظرت|أسبوع|اسبوع|أيام|ايام')));
     $fault = $has('damaged|broken|crack|leak|defect|faulty|fault|spray(er)? (is )?(not|doesn.t|didn.t|won.t)|nozzle|not working|doesn.t work|(cap|lid|item|tester) (was |is )?missing|missing (cap|lid|item)|half full|wrong (item|product|size|perfume)|fake|مكسور|مكسورة|تالف|يسرب|تسريب|البخاخ|ما يشتغل|لا يعمل|ناقص|فاضي|غلط|خطأ');
+    $pk = fn($a) => $a[$v % count($a)];   // $v picks another wording (Another reply button)
     if ($ar) {
       $hi = $nm !== '' ? $nm : 'عزيزنا';
       $what = $late && $fault ? 'التوصيل تأخر وأن ' . $pr . ' كان معيباً' : ($late ? 'التوصيل تأخر فعلاً' : $pr . ' كان معيباً فعلاً');
-      if ($late || $fault) return ($st >= 4 ? 'شكراً جزيلاً ' . $hi . '، ونعتذر عن الإزعاج. لقد راجعنا طلبك وتأكدنا أن ' . $what . '، و' : 'نعتذر منك ' . $hi . '، لقد راجعنا طلبك وتأكدنا أن ' . $what . '. ') . 'سترسل لك FOMAXO كوبون خصم لطلبك القادم تعويضاً عن ذلك 🙏';
-      $gift = 'يسعد FOMAXO أن تهديك هدية صغيرة مع طلبك القادم وسنتواصل معك لترتيبها 🙏';
-      if ($st >= 4) return ($st === 5 ? 'شكراً جزيلاً ' : 'شكراً ') . $hi . '! ' . ($fav ? 'يسعد FOMAXO أن ' . $pr . ' أصبح المفضل لديك' : 'يسعد FOMAXO أن ' . $pr . ' أعجبك')
+      $cpn = $pk(['سترسل لك FOMAXO كوبون خصم لطلبك القادم تعويضاً عن ذلك', 'ستقدم لك FOMAXO كوبون خصم لطلبك القادم اعتذاراً منا', 'ستتواصل معك FOMAXO بكوبون خصم لطلبك القادم']) . ' 🙏';
+      if ($late || $fault) return ($st >= 4 ? $pk(['شكراً جزيلاً ', 'نقدّر كلماتك ', 'شكراً لك ']) . $hi . '، ونعتذر عن الإزعاج. لقد راجعنا طلبك وتأكدنا أن ' . $what . '، و' : $pk(['نعتذر منك ', 'نعتذر بصدق ', 'نقدم لك اعتذارنا الصادق ']) . $hi . '، لقد راجعنا طلبك وتأكدنا أن ' . $what . '. ') . $cpn;
+      $gift = $pk(['يسعد FOMAXO أن تهديك هدية صغيرة مع طلبك القادم وسنتواصل معك لترتيبها', 'ستضيف FOMAXO هدية صغيرة إلى طلبك القادم وسنتواصل معك لترتيبها', 'تعويضاً لك، ستهديك FOMAXO هدية صغيرة مع طلبك القادم وسنتواصل معك']) . ' 🙏';
+      if ($st >= 4) return $pk([($st === 5 ? 'شكراً جزيلاً ' : 'شكراً '), 'نقدّر كلماتك الجميلة ', 'شكراً على تقييمك ']) . $hi . '! ' . ($fav ? 'يسعد FOMAXO أن ' . $pr . ' أصبح المفضل لديك' : $pk(['يسعد FOMAXO أن ' . $pr . ' أعجبك', 'سعادتنا كبيرة بأن ' . $pr . ' نال إعجابك', 'يسرّ FOMAXO أنك تستمتع بـ ' . $pr]))
         . ($good ? '، خاصة ' . implode(' و', $good) : '') . ($bad ? '، وستساعد ملاحظتك FOMAXO على أن يصبح أفضل' : '') . ' 🙏';
       $why = $bad[0] ?? 'لم تكن تجربتك مع ' . $pr . ' كما توقعت';
-      return ($st === 3 ? 'شكراً على رأيك الصريح ' . $hi . '، ونعتذر لأنه ' : 'نعتذر منك ' . $hi . ' لأنه ') . $why . '. ' . $gift;
+      return ($st === 3 ? $pk(['شكراً على رأيك الصريح ', 'شكراً لمشاركتك رأيك ', 'نقدّر ملاحظتك الصادقة ']) . $hi . '، ونعتذر لأنه ' : $pk(['نعتذر منك ', 'نعتذر بصدق ', 'نقدم لك اعتذارنا الصادق ']) . $hi . ' لأنه ') . $why . '. ' . $gift;
     }
     $hi = $nm !== '' ? ', ' . $nm : '';
     $what = $late && $fault ? 'your delivery was late and your ' . $pr . ' was faulty' : ($late ? 'your delivery was indeed late' : 'your ' . $pr . ' was indeed faulty');
-    if ($late || $fault) return ($st >= 4 ? 'Thank you so much' . $hi . ', and we apologize for the trouble. We checked your order and found ' . $what . ', so FOMAXO' : 'We sincerely apologize' . $hi . '. We checked your order and found ' . $what . ', so FOMAXO') . ' will send you a coupon for your next order to make it up to you 🙏';
-    $gift = "FOMAXO would love to send you a small gift with your next order and will be in touch to arrange it 🙏";
-    if ($st >= 4) return ($st === 5 ? 'Thank you so much' : 'Thank you') . $hi . '! ' . ($fav ? 'FOMAXO is so glad ' . $pr . ' is your favourite' : 'FOMAXO is thrilled you love ' . $pr)
+    $cpn = $pk(['FOMAXO will send you a coupon for your next order to make it up to you', 'FOMAXO will send you a coupon for your next order as our apology', 'FOMAXO will be in touch with a coupon for your next order']) . ' 🙏';
+    $sorry = $pk(['We sincerely apologize', 'We truly apologize', 'We deeply apologize']);
+    if ($late || $fault) return ($st >= 4 ? $pk(['Thank you so much', 'We really appreciate your review', 'Thank you for your kind words']) . $hi . ', and we apologize for the trouble. We checked your order and found ' . $what . ', so ' : $sorry . $hi . '. We checked your order and found ' . $what . ', so ') . $cpn;
+    $gift = $pk(['FOMAXO would love to send you a small gift with your next order and will be in touch to arrange it', 'FOMAXO will add a small gift to your next order and will be in touch to arrange it', 'To make it up to you, FOMAXO will include a small gift with your next order and will be in touch']) . ' 🙏';
+    if ($st >= 4) return $pk([($st === 5 ? 'Thank you so much' : 'Thank you'), 'We really appreciate your review', 'Thank you for the lovely words']) . $hi . '! ' . ($fav ? 'FOMAXO is so glad ' . $pr . ' is your favourite' : $pk(['FOMAXO is thrilled you love ' . $pr, "We're so happy " . $pr . ' is a hit with you', 'It means a lot to FOMAXO that you enjoy ' . $pr]))
       . ($good ? ', especially ' . implode(' and ', $good) : '') . ($bad ? ', and your note will help us make it even better' : '') . ' 🙏';
     $why = $bad[0] ?? 'your experience with ' . $pr . " wasn't what you expected";
-    return ($st === 3 ? 'Thank you for your honest review' . $hi . ', and we apologize that ' : 'We sincerely apologize' . $hi . ', that ') . $why . '. ' . $gift;
+    return ($st === 3 ? $pk(['Thank you for your honest review', 'Thank you for sharing your thoughts', 'We appreciate your honest feedback']) . $hi . ', and we apologize that ' : $sorry . $hi . ', that ') . $why . '. ' . $gift;
   };
   $replyBox = function ($r) use ($hidden, $suggest) {   // your reply under a review: shown, then a box to write, change or delete it
     $rep = (string)($r['reply'] ?? ''); $keep = '';
     $isAr = fx_has_ar((string)($r['text'] ?? ''));   // Arabic review: you write in English, the customer gets Arabic
-    $val = $rep !== '' ? ($isAr && fx_has_ar($rep) ? (string)($r['reply_en'] ?? fomaxo_en($rep)) : $rep) : preg_replace('/\s{2,}/u', ' ', $suggest($r, $isAr));
+    $alts = []; for ($i = 0; $i < 3; $i++) $alts[] = [preg_replace('/\s{2,}/u', ' ', $suggest($r, $isAr, $i)), $isAr ? preg_replace('/\s{2,}/u', ' ', $suggest($r, false, $i)) : ''];   // ready replies for Another reply
+    $val = $rep !== '' ? ($isAr && fx_has_ar($rep) ? (string)($r['reply_en'] ?? fomaxo_en($rep)) : $rep) : $alts[0][0];
     foreach (['rp', 'rq', 'vf', 'rs', 'v'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
     return ($rep !== '' ? '<div class="rrep"><b>Reply from FOMAXO</b><p>' . (($r['reply_en'] ?? '') !== '' && fx_has_ar($rep) ? nl2br(h($r['reply_en'])) . '<span class="arx" dir="rtl" lang="ar">' . nl2br(h($rep)) . '</span>' : hx($rep, true)) . '</p></div>' : '')
-      . '<div class="racts"><details class="rrf"><summary class="btn line sm">' . ($rep !== '' ? 'Edit reply' : 'Reply') . '</summary><form method="post">' . csrf_field() . $hidden('id', $r['id']) . $keep
-      . ($isAr ? $hidden('ar', '1') . ($rep === '' ? $hidden('ready_en', $val) . $hidden('ready_ar', preg_replace('/\s{2,}/u', ' ', $suggest($r))) : '') : '')
+      . '<div class="racts"><details class="rrf"><summary class="btn line sm">' . ($rep !== '' ? 'Edit reply' : 'Reply') . '</summary><form method="post" data-i="' . ($rep === '' ? 0 : -1) . '" data-alt="' . h(json_encode($alts, JSON_UNESCAPED_UNICODE)) . '">' . csrf_field() . $hidden('id', $r['id']) . $keep
+      . ($isAr ? $hidden('ar', '1') . $hidden('ready_en', $rep === '' ? $alts[0][0] : '') . $hidden('ready_ar', $rep === '' ? $alts[0][1] : '') : '')
       . '<textarea name="reply" dir="auto" rows="5" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($val) . '</textarea>'
       . ($isAr ? '<p class="muted small rsug"><b>Arabic review:</b> write in English, the customer gets your reply in Arabic.' . ($rep === '' ? ' This is a ready reply, change anything before you save.' : '') . '</p>'
         : ($rep === '' ? '<p class="muted small rsug">Ready reply for this review. Change anything before you save.</p>' : ''))
       . '<div class="emo" aria-label="Add an emoji" onclick="var b=event.target.closest(\'button\');if(!b)return;var t=this.closest(\'form\').querySelector(\'textarea\'),s=t.selectionStart,e=t.selectionEnd,x=b.textContent;t.value=t.value.slice(0,s)+x+t.value.slice(e);t.focus();t.selectionStart=t.selectionEnd=s+x.length">'
       . implode('', array_map(fn($e) => '<button type="button">' . $e . '</button>', ['🙏', '❤️', '😊', '✨', '🎁', '👍', '😍', '🥰', '🌸', '💐', '🤗', '😢'])) . '</div>'
-      . '<div class="rrb"><button class="btn sm">Save reply</button>' . ($rep !== '' ? '<button class="btn line sm danger" name="del" value="1" onclick="return confirm(\'Delete your reply?\')">Delete reply</button>' : '') . '</div></form></details>'
-      . ($rep !== '' ? '<form method="post" onsubmit="return confirm(\'Remove your reply from this review?\')">' . csrf_field() . $hidden('id', $r['id']) . $hidden('reply', '') . $hidden('del', '1') . $keep . '<button class="btn sm rmrep">Remove reply</button></form>' : '');
+      . '<div class="rrb"><button class="btn sm">Save reply</button>'
+        . '<button type="button" class="btn line sm" onclick="var f=this.form,a=JSON.parse(f.dataset.alt),i=(+f.dataset.i+1)%a.length;f.dataset.i=i;f.reply.value=a[i][0];if(f.ready_en){f.ready_en.value=a[i][0];f.ready_ar.value=a[i][1]}">Another reply</button>'
+        . '<button type="button" class="btn line sm" onclick="var t=this.form.reply;t.value=\'\';t.focus()">Clear</button>' . ($rep !== '' ? '<button class="btn line sm danger" name="del" value="1" onclick="return confirm(\'Delete your reply?\')">Delete reply</button>' : '') . '</div></form></details>';
   };
 
   if ($v === 'products') {
