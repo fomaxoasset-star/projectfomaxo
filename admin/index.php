@@ -1161,8 +1161,8 @@ if (isset($_GET['analytics'])) {
     $tip = $lgSince ? ' title="Counted since ' . h(date('j M Y', strtotime($lgSince))) . '"' : '';
     foreach (['en' => 'English site', 'ar' => 'Arabic site'] as $k => $l) { $r0 = $lgR[$k]; $sh = $pct($r0['visits'], $lgAll);
       $langT .= '<tr' . ($k === 'en' ? ' class="lg1"' : '') . $tip . '><td><b>' . $l . '</b><div class="fb"><i style="width:' . min(100, round($sh, 1)) . '%"></i></div></td><td class="num">' . number_format($r0['visitors']) . '</td><td class="num">' . number_format($r0['visits']) . '</td><td class="num">' . number_format($r0['bought']) . '</td><td class="num">' . $pctT($pct($r0['bought'], $r0['visits'])) . '</td><td class="num"><b>' . $pctT($sh) . '</b></td></tr>'; }
-    if ($lgAll) foreach (['en' => 'English', 'ar' => 'Arabic'] as $k => $l)
-      $langS .= '<button type="button" data-open="devices"><span>' . $l . '</span><b>' . $pctT($pct($lgR[$k]['visits'], $lgAll)) . '</b><span>' . number_format($lgR[$k]['bought']) . ' sold</span></button>';
+    foreach (['en' => 'English', 'ar' => 'Arabic'] as $k => $l)   // shown from day one; a dash until the first visit is counted
+      $langS .= '<button type="button" data-open="devices"><span>' . $l . '</span><b>' . ($lgAll ? $pctT($pct($lgR[$k]['visits'], $lgAll)) : '–') . '</b><span>' . number_format($lgR[$k]['bought']) . ' sold</span></button>';
   } catch (Throwable $e) {}   // before the lang column exists
 
   /* ---- Conversion view (?analytics=1&cv=1): five reports on what turns visits into orders ---- */
