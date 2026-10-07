@@ -1811,16 +1811,16 @@ if (isset($_GET['reviews'])) {
     $good = array_slice($good, 0, 2);
     if ($ar) {
       $hi = $nm !== '' ? $nm : 'عزيزنا';
-      $gift = 'يسعدنا أن نهديك هدية صغيرة مع طلبك القادم وسنتواصل معك لترتيبها 🙏';
-      if ($st >= 4) return ($st === 5 ? 'شكراً جزيلاً ' : 'شكراً ') . $hi . '! ' . ($fav ? 'سعداء أن ' . $pr . ' أصبح المفضل لديك' : 'سعداء أن ' . $pr . ' أعجبك')
-        . ($good ? '، خاصة ' . implode(' و', $good) : '') . ($bad ? '، وقد شاركنا ملاحظتك مع فريقنا' : '') . ' 🙏';
+      $gift = 'يسعد FOMAXO أن تهديك هدية صغيرة مع طلبك القادم وسنتواصل معك لترتيبها 🙏';
+      if ($st >= 4) return ($st === 5 ? 'شكراً جزيلاً ' : 'شكراً ') . $hi . '! ' . ($fav ? 'يسعد FOMAXO أن ' . $pr . ' أصبح المفضل لديك' : 'يسعد FOMAXO أن ' . $pr . ' أعجبك')
+        . ($good ? '، خاصة ' . implode(' و', $good) : '') . ($bad ? '، وستساعد ملاحظتك FOMAXO على أن يصبح أفضل' : '') . ' 🙏';
       $why = $bad[0] ?? 'لم تكن تجربتك مع ' . $pr . ' كما توقعت';
       return ($st === 3 ? 'شكراً على رأيك الصريح ' . $hi . '، ونعتذر لأنه ' : 'نعتذر منك ' . $hi . ' لأنه ') . $why . '. ' . $gift;
     }
     $hi = $nm !== '' ? ', ' . $nm : '';
-    $gift = "We'd love to send you a small gift with your next order and will be in touch to arrange it 🙏";
-    if ($st >= 4) return ($st === 5 ? 'Thank you so much' : 'Thank you') . $hi . '! ' . ($fav ? "We're so glad " . $pr . ' is your favourite' : "We're thrilled you love " . $pr)
-      . ($good ? ', especially ' . implode(' and ', $good) : '') . ($bad ? ", and we've shared your note with our team" : '') . ' 🙏';
+    $gift = "FOMAXO would love to send you a small gift with your next order and will be in touch to arrange it 🙏";
+    if ($st >= 4) return ($st === 5 ? 'Thank you so much' : 'Thank you') . $hi . '! ' . ($fav ? 'FOMAXO is so glad ' . $pr . ' is your favourite' : 'FOMAXO is thrilled you love ' . $pr)
+      . ($good ? ', especially ' . implode(' and ', $good) : '') . ($bad ? ', and your note will help us make it even better' : '') . ' 🙏';
     $why = $bad[0] ?? 'your experience with ' . $pr . " wasn't what you expected";
     return ($st === 3 ? 'Thank you for your honest review' . $hi . ', and we apologize that ' : 'We sincerely apologize' . $hi . ', that ') . $why . '. ' . $gift;
   };
