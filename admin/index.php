@@ -1785,70 +1785,44 @@ if (isset($_GET['reviews'])) {
          ['all', 'products', 'people'], ['Reviews', 'Stars By Product', 'Top Reviewers'])) . '</nav>';
   $hidden = fn($k, $val) => '<input type="hidden" name="' . $k . '" value="' . h($val) . '">';
   /* a ready reply that fits the review (name, product, stars, what they mentioned, English or Arabic); filled into an empty Reply box, edit before saving */
-  $suggest = function ($r, $en = false) use ($CATALOG) {   // $en: the English version of a reply to an Arabic review
+  $suggest = function ($r, $en = false) use ($CATALOG) {   // a short ready reply (one or two sentences); $en: the English version of a reply to an Arabic review
     $txt = (string)($r['text'] ?? ''); $ar = !$en && preg_match('/\p{Arabic}/u', $txt);
     $nm = trim(preg_split('/\s+/u', trim((string)($r['name'] ?? '')))[0] ?? ''); $nm = mb_strtoupper(mb_substr($nm, 0, 1)) . mb_substr($nm, 1);
     $pr = $CATALOG[$r['product']]['name'] ?? ($ar ? 'عطرنا' : 'our fragrance'); $st = (int)($r['rating'] ?? 5);
     $has = fn($re) => (bool)preg_match('/' . $re . '/iu', $txt);
-    /* what the customer talked about: [words to spot, thank-you line, line when it was a complaint] in English and Arabic */
+    /* what the customer talked about: [words to spot, what they liked (en, ar), what went wrong (en, ar), words that make it a complaint] */
     $topics = [
-      'long'   => ['last|longevity|all day|hours|stays|fade|faded|يدوم|ثبات|ثابت|ساعات|يختفي|يروح',
-                   ['So happy it lasts all day for you.', 'رائع أنه يدوم معك طوال اليوم.'],
-                   ["We apologize that it didn't last as long as you hoped, and we've shared this with our team so we can do better.", 'نعتذر أنه لم يدم كما توقعت، وقد شاركنا ملاحظتك مع فريقنا لنتحسن.'],
-                   "fade|disappear|(doesn't|does not|didn't|did not|not) last|short|لا يدوم|ما يدوم|يختفي|يروح|ما يثبت"],
-      'proj'   => ['projection|sillage|strong|powerful|loud|beast|فواح|قوي|قوية|انتشار',
-                   ['Glad you love the projection.', 'سعداء أن الانتشار أعجبك.'],
-                   ["Thank you for the honest note on its strength, we've shared it with our team.", 'شكراً على ملاحظتك الصادقة عن قوته، وقد شاركناها مع فريقنا.'],
-                   'too strong|very strong|overpower|strong at first|bit strong|headache|قوي جدا|قوي جداً|صداع'],
-      'scent'  => ['smell|scent|fragrance|aroma|notes|my style|not for me|my type|رائحة|ريحة|عطر|ما عجبني|لم يعجبني|ما حبيت|ما ناسبني',
-                   ["We're glad the scent is just your style.", 'سعداء أن الرائحة أعجبتك.'],
-                   ["We apologize that the scent wasn't for you.", 'نعتذر أن الرائحة لم تناسبك.'],
-                   "not my style|not for me|(don't|didn't|did not|do not) like|not my type|ما عجبني|لم يعجبني|ما حبيت|ما ناسبني"],
-      'lux'    => ['expensive|luxur|classy|elegant|premium|rich|فخم|فخامة|راقي',
-                   ['That luxury feel is exactly what we aim for.', 'هذه الفخامة هي ما نسعى إليه.'], null],
-      'comp'   => ['compliment|asked me|people ask|مدح|سألني|يسألون|يمدح',
-                   ['Enjoy all the compliments!', 'استمتع بكل المديح!'], null],
-      'fav'    => ['favou?rite|the best|love it|obsessed|amazing|perfect|المفضل|أفضل|رائع|ممتاز',
-                   ["Wonderful to hear it's become a favourite.", 'يسعدنا أنه أصبح المفضل لديك.'], null],
-      'bottle' => ['bottle|design|looks|زجاجة|تصميم|شكل',
-                   ['Glad you like the bottle too.', 'سعداء أن الزجاجة أعجبتك أيضاً.'], null],
-      'gift'   => ['gift|present|for my (wife|husband|mom|mum|dad|friend)|هدية|أهديت',
-                   ['We hope it made a lovely gift.', 'نتمنى أنها كانت هدية جميلة.'], null],
-      'box'    => ['box|packag|wrap|تغليف|علبة',
-                   ['We put a lot of love into the box, so this means a lot.', 'نهتم كثيراً بالتغليف، وكلامك يسعدنا.'],
-                   ["We apologize that the packaging wasn't right.", 'نعتذر عن مشكلة التغليف.'],
-                   'damaged|broken|crushed|leak|مكسور|تالف|مكسورة'],
-      'deliv'  => ['deliver|arriv|shipping|courier|late|توصيل|وصل|تأخر|سريع',
-                   ['Glad your order arrived quickly.', 'سعداء بوصول طلبك بسرعة.'],
-                   ["We apologize for the delivery and we're looking into it.", 'نعتذر عن التوصيل ونتابع الأمر.'],
-                   'late|delay|slow|never arrived|not arrived|تأخر|متأخر|ما وصل|لم يصل'],
-      'val'    => ['price|value|worth|يستحق|سعر',
-                   ["We're glad it feels worth every dirham.", 'سعداء أنك وجدته يستحق كل درهم.'], null],
+      'long'   => ['last|longevity|all day|hours|stays|fade|short|يدوم|ثبات|ثابت|ساعات|يختفي|يروح|يثبت', ['how long it lasts', 'ثباته'],
+                   ["$pr didn't last as long as you hoped", "لم يدم $pr كما توقعت"], "fade|disappear|(doesn't|does not|didn't|did not|not) last|short|لا يدوم|ما يدوم|يختفي|يروح|ما يثبت"],
+      'proj'   => ['projection|sillage|strong|powerful|loud|beast|فواح|قوي|قوية|انتشار', ['its projection', 'انتشاره'],
+                   ["$pr felt too strong", "كان $pr قوياً أكثر من اللازم"], 'too strong|very strong|overpower|strong at first|bit strong|headache|قوي جدا|قوي جداً|صداع'],
+      'scent'  => ['smell|scent|fragrance|aroma|notes|my style|not for me|my type|رائحة|ريحة|عطر|ما عجبني|لم يعجبني|ما حبيت|ما ناسبني', ['the scent', 'رائحته'],
+                   ["$pr wasn't for you", "لم يناسبك $pr"], "not my style|not for me|(don't|didn't|did not|do not) like|not my type|ما عجبني|لم يعجبني|ما حبيت|ما ناسبني"],
+      'lux'    => ['expensive|luxur|classy|elegant|premium|rich|فخم|فخامة|راقي', ['its luxury feel', 'فخامته'], null, ''],
+      'comp'   => ['compliment|asked me|people ask|مدح|سألني|يسألون|يمدح', ['all the compliments', 'المديح الذي تتلقاه'], null, ''],
+      'bottle' => ['bottle|design|looks|زجاجة|تصميم|شكل', ['the bottle', 'زجاجته'], null, ''],
+      'box'    => ['box|packag|wrap|تغليف|علبة', ['the box', 'تغليفه'], ["the packaging wasn't right", 'لم يكن التغليف كما يجب'], 'damaged|broken|crushed|leak|مكسور|تالف|مكسورة'],
+      'deliv'  => ['deliver|arriv|shipping|courier|late|توصيل|وصل|تأخر|سريع', ['the quick delivery', 'التوصيل السريع'], ["your delivery didn't go well", 'لم يكن التوصيل كما يجب'], 'late|delay|slow|never arrived|not arrived|تأخر|متأخر|ما وصل|لم يصل'],
+      'val'    => ['price|value|worth|يستحق|سعر', ['the value', 'قيمته'], null, ''],
     ];
-    $again = $has('again|repurchase|next order|another bottle|reorder|مرة ثانية|مرة أخرى|سأشتري|راح اشتري|بشتري');
-    $but = $has('\bbut\b|a bit|a little|\btoo\b|wish|however|لكن|بس |قليلاً|شوي');   // a good review with a small "but"
+    $fav = $has('favou?rite|the best|obsessed|المفضل|أفضل');
     $k = $ar ? 1 : 0; $good = []; $bad = [];
-    foreach ($topics as $id => $t) if ($has($t[0])) { if (!empty($t[3]) && $has($t[3])) $bad[$id] = $t[2][$k]; else $good[$id] = $t[1][$k]; }   // a complaint about it, or a compliment
+    foreach ($topics as $id => $t) if ($has($t[0])) { if ($t[2] && $t[3] !== '' && $has($t[3])) $bad[] = $t[2][$k]; else $good[] = $t[1][$k]; }
+    $good = array_slice($good, 0, 2);
     if ($ar) {
       $hi = $nm !== '' ? $nm : 'عزيزنا';
-      if ($st >= 4) {
-        $l = array_merge(array_slice($good, 0, 3), $bad ? array_slice($bad, 0, 1) : ($st === 4 && $but ? ['شكراً على ملاحظتك الصادقة، نحن دائماً نستمع.'] : []));
-        return ($st === 5 ? 'شكراً جزيلاً ' : 'شكراً ') . $hi . '! سعداء جداً أن ' . $pr . ' نال إعجابك. ' . implode(' ', $l)
-             . ($again ? ' سنكون جاهزين لطلبك القادم 🙏' : ' ننتظر زيارتك القادمة 🙏');
-      }
-      $fix = array_merge(array_slice(array_values($bad), 0, 2), $good && $st === 3 ? [reset($good)] : []);
-      if ($st === 3) return 'شكراً على رأيك الصريح ' . $hi . '. ' . ($fix ? implode(' ', $fix) . ' ' : '') . 'شكراً لتجربتك ' . $pr . '. تقديراً لملاحظتك، يسعدنا أن نهديك هدية صغيرة مع طلبك القادم. وسنتواصل معك لترتيبها 🙏';
-      return 'نعتذر جداً ' . $hi . '، هذه ليست التجربة التي نريدها لك مع ' . $pr . '. ' . ($fix ? implode(' ', $fix) . ' ' : 'نعمل على التحسن دائماً. ') . 'وكاعتذار منا، يسعدنا أن نهديك هدية صغيرة مع طلبك القادم. وسنتواصل معك لترتيبها 🙏';
+      $gift = 'يسعدنا أن نهديك هدية صغيرة مع طلبك القادم وسنتواصل معك لترتيبها 🙏';
+      if ($st >= 4) return ($st === 5 ? 'شكراً جزيلاً ' : 'شكراً ') . $hi . '! ' . ($fav ? 'سعداء أن ' . $pr . ' أصبح المفضل لديك' : 'سعداء أن ' . $pr . ' أعجبك')
+        . ($good ? '، خاصة ' . implode(' و', $good) : '') . ($bad ? '، وقد شاركنا ملاحظتك مع فريقنا' : '') . ' 🙏';
+      $why = $bad[0] ?? 'لم تكن تجربتك مع ' . $pr . ' كما توقعت';
+      return ($st === 3 ? 'شكراً على رأيك الصريح ' . $hi . '، ونعتذر لأنه ' : 'نعتذر منك ' . $hi . ' لأنه ') . $why . '. ' . $gift;
     }
     $hi = $nm !== '' ? ', ' . $nm : '';
-    if ($st >= 4) {
-      $l = array_merge(array_slice($good, 0, 3), $bad ? array_slice($bad, 0, 1) : ($st === 4 && $but ? ["Thanks for the honest feedback too, we're always listening."] : []));
-      return ($st === 5 ? 'Thank you so much' : 'Thank you') . $hi . "! We're thrilled you love " . $pr . '. ' . implode(' ', $l)
-           . ($again ? " We'll be ready for your next order 🙏" : " We can't wait to have you back 🙏");
-    }
-    $fix = array_merge(array_slice(array_values($bad), 0, 2), $good && $st === 3 ? [str_replace(["We're glad", 'So happy', 'Glad you'], ["We're glad", 'Glad', 'Glad you'], reset($good))] : []);
-    if ($st === 3) return 'Thank you for your honest review' . $hi . '. ' . ($fix ? implode(' ', $fix) . ' ' : '') . "Thank you for trying " . $pr . ". As a thank you for telling us, we'd love to send you a small gift with your next order. We'll be in touch with you to arrange it 🙏";
-    return 'We sincerely apologize' . $hi . ". This isn't the experience we want for you with " . $pr . '. ' . ($fix ? implode(' ', $fix) . ' ' : "We're always working to do better. ") . "As our apology, we'd love to send you a small gift with your next order. We'll be in touch with you to arrange it 🙏";
+    $gift = "We'd love to send you a small gift with your next order and will be in touch to arrange it 🙏";
+    if ($st >= 4) return ($st === 5 ? 'Thank you so much' : 'Thank you') . $hi . '! ' . ($fav ? "We're so glad " . $pr . ' is your favourite' : "We're thrilled you love " . $pr)
+      . ($good ? ', especially ' . implode(' and ', $good) : '') . ($bad ? ", and we've shared your note with our team" : '') . ' 🙏';
+    $why = $bad[0] ?? 'your experience with ' . $pr . " wasn't what you expected";
+    return ($st === 3 ? 'Thank you for your honest review' . $hi . ', and we apologize that ' : 'We sincerely apologize' . $hi . ', that ') . $why . '. ' . $gift;
   };
   $replyBox = function ($r) use ($hidden, $suggest) {   // your reply under a review: shown, then a box to write, change or delete it
     $rep = (string)($r['reply'] ?? ''); $keep = '';
