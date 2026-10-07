@@ -3907,11 +3907,16 @@ const ADS = (() => {
     q.splice(0).forEach(a => fire(a[0], a[1]));
   };
   // wait until the page has loaded and is idle, so the shop opens just as fast
+  // the footer privacy line stays "no cookies, nothing shared" only while no ad pixel is switched on
+  let footOn = false;
+  const foot = () => { const on = !!(ids && (ids.meta || ids.tiktok || ids.google)); if (on === footOn) return; footOn = on;
+    document.querySelectorAll('.fpriv').forEach(p => p.textContent = on ? 'We use cookies, including from our ad partners, to improve the store and our ads.' : 'We count anonymous visits (no cookies, nothing shared) to improve the store.'); };
+  foot();
   const later = () => { const go = () => (window.requestIdleCallback || setTimeout)(start, {timeout: 3000}); document.readyState === 'complete' ? go() : addEventListener('load', go, {once: true}); };
   const send = (ev, d) => { if (off) return; if (ready) fire(ev, d || {}); else if (q.length < 30) q.push([ev, d || {}]); };
   later();
   return {
-    set(v){ const ok = v && typeof v === 'object' ? v : null; try { if (ok) localStorage.setItem('fomaxo_ads', JSON.stringify(ok)); else localStorage.removeItem('fomaxo_ads'); } catch(e) {} if (!ready) { const was = ids; ids = ok; if (!was && ok) later(); } },   // newest IDs win until the pixels have loaded
+    set(v){ const ok = v && typeof v === 'object' ? v : null; try { if (ok) localStorage.setItem('fomaxo_ads', JSON.stringify(ok)); else localStorage.removeItem('fomaxo_ads'); } catch(e) {} if (!ready) { const was = ids; ids = ok; foot(); if (!was && ok) later(); } },   // newest IDs win until the pixels have loaded
     page(){ send('page'); },
     view(p){ const s = defaultSize(p); send('view', {items: items([{id: p.id, opt: s, qty: 1}]), value: Number(p.prices[s]) || 0}); },
     cart(id, opt, qty){ const it = items([{id, opt, qty}]); send('cart', {items: it, value: it.length ? it[0].price * qty : 0}); },
@@ -4288,5 +4293,5 @@ renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); p
 (function(){var ar=document.documentElement.lang==="ar";
 document.querySelectorAll(".lang-sw").forEach(function(b){if(ar){b.textContent="EN";b.lang="en";b.setAttribute("aria-label","English");b.title="English"}
 b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href)location.reload();else location.replace(u)}});
-if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=3";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
+if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=4";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
 </body></html>
