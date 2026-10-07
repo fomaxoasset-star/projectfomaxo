@@ -57,7 +57,11 @@ try {
   }
   $device = preg_match('/iPad|Tablet|(Android(?!.*Mobile))/i', $ua) ? 'tablet' : (preg_match('/Mobi|iPhone|Android/i', $ua) ? 'phone' : 'computer');
   $product = $ev === 'product' || $ev === 'cart' ? (preg_match('/^[a-z0-9-]{1,40}$/', (string)($d['id'] ?? '')) ? $d['id'] : null) : null;
+  $lang = $ev === 'view' && in_array($d['l'] ?? '', ['ar', 'en'], true) ? $d['l'] : null;   // English or Arabic site
   try {
+    $pdo->prepare('INSERT INTO fx_events (at, vid, sid, ev, page, product, source, ref, device, country, region, campaign, depth, lang) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$vid, $sid, $ev, $page, $product, $source, $ref, $device, $country, $region, $campaign, $depth, $lang]);
+  } catch (Throwable $e) { try {   // before the lang column exists
     $pdo->prepare('INSERT INTO fx_events (at, vid, sid, ev, page, product, source, ref, device, country, region, campaign, depth) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
         ->execute([$vid, $sid, $ev, $page, $product, $source, $ref, $device, $country, $region, $campaign, $depth]);
   } catch (Throwable $e) { if ($ev === 'scroll') exit; try {   // before the campaign column exists
@@ -66,7 +70,7 @@ try {
   } catch (Throwable $e) {   // before the country columns exist: keep counting the visit without them
     $pdo->prepare('INSERT INTO fx_events (at, vid, sid, ev, page, product, source, ref, device) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)')
         ->execute([$vid, $sid, $ev, $page, $product, $source, $ref, $device]);
-  } }
+  } } }
   if ($ev === 'buy' && ($no = $t('o', 40)) !== '') $pdo->prepare('UPDATE fx_leads SET order_no = ? WHERE sid = ?')->execute([$no, $sid]);
   if (mt_rand(1, 500) === 1) {   // keep the tables small: 400 days of steps, one day of "on the website now" (checkout details are kept for good)
     $pdo->exec('DELETE FROM fx_events WHERE at < NOW() - INTERVAL 400 DAY');
