@@ -434,6 +434,12 @@ function fomaxo_stock_map($pdo) {
   foreach ($pdo->query('SELECT product, size, qty FROM fx_stock WHERE qty IS NOT NULL') as $r) $m[$r['product'] . '|' . $r['size']] = (int)$r['qty'];
   return $m;
 }
+/* Free 10ml mini: false when its 10ml is counted in admin → Stock and none are left (then a different mini is given). */
+function fomaxo_mini_ok($id) {
+  static $m = null;
+  if ($m === null) { $m = []; $pdo = fomaxo_db(); if ($pdo) { try { $m = fomaxo_stock_map($pdo); } catch (Throwable $e) {} } }
+  return !isset($m["$id|10"]) || $m["$id|10"] > 0;
+}
 /* Before an order: returns a message if something in the bag is sold out or there are not enough left, else null.
    The free mini never blocks an order. Works without the database (then nothing is counted). */
 function fomaxo_stock_problem($lines, $catalog) {

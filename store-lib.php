@@ -68,7 +68,11 @@ function fomaxo_price_order($in) {
   if ($count >= $MINI_AT && !$hasMini) {
     $gid = $in['mini'] ?? $in['gift'] ?? '';   // the free mini the customer picked in the bag
     $gid = is_string($gid) ? $gid : '';
-    if (!isset($CATALOG[$gid]['prices']['10'])) { $gid = ''; foreach ($CATALOG as $cid => $c) { if (isset($c['prices']['10'])) { $gid = $cid; break; } } }
+    if (!isset($CATALOG[$gid]['prices']['10']) || !fomaxo_mini_ok($gid)) {   // never a mini that is out of stock, unless every 10ml is
+      $pick = ''; foreach ($CATALOG as $cid => $c) { if (isset($c['prices']['10']) && fomaxo_mini_ok($cid)) { $pick = $cid; break; } }
+      if ($pick === '' && !isset($CATALOG[$gid]['prices']['10'])) foreach ($CATALOG as $cid => $c) { if (isset($c['prices']['10'])) { $pick = $cid; break; } }
+      $gid = $pick !== '' ? $pick : $gid;
+    }
     if ($gid !== '') { $gift = $CATALOG[$gid]['name']; $summary[] = "FREE 10ml $gift mini"; }
   }
   /* coupon code (checked again here, never trusted from the browser): used only when it saves more than the multi-buy discount */
