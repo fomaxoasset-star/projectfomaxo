@@ -91,7 +91,7 @@ function fomaxo_price_order($in) {
 $EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
 /* a real-looking phone number, any country — same rules as phoneOk() in index.html */
 if (!function_exists('fomaxo_phone_ok')) { function fomaxo_phone_ok($v) {
-  $v = trim((string)$v); if (!preg_match('/^\+?[\d\s\-()]+$/', $v)) return false;
+  $v = trim(strtr((string)$v, FX_AR_DIGITS)); if (!preg_match('/^\+?[\d\s\-()]+$/', $v)) return false;
   $d = preg_replace('/\D/', '', $v); if (strpos($d, '00') === 0) $d = substr($d, 2);
   $n = strlen($d);
   if ($n < 9 || $n > 15 || preg_match('/^(\d)\1+$/', $d) || strpos('01234567890123456789', $d) !== false || strpos('98765432109876543210', $d) !== false) return false;
@@ -105,7 +105,7 @@ function fomaxo_customer($in) {
   $t = fn($k, $max) => trim(mb_substr(preg_replace('/[\x00-\x1F\x7F\s]+/u', ' ', is_string($c[$k] ?? null) ? $c[$k] : ''), 0, $max));
   /* capital first letter of every word (the rest is kept as typed) — matches the checkout page */
   $caps = fn($v) => preg_replace_callback('/(^|[\s\-\/(])(\p{Ll})/u', fn($m) => $m[1] . mb_strtoupper($m[2]), $v);
-  $out = ['name' => $t('name', 80), 'phone' => $t('phone', 25), 'email' => $t('email', 120), 'emirate' => $t('emirate', 30),
+  $out = ['name' => $t('name', 80), 'phone' => strtr($t('phone', 25), FX_AR_DIGITS), 'email' => $t('email', 120), 'emirate' => $t('emirate', 30),
           'building' => $t('building', 40), 'room' => $t('room', 20), 'street' => $t('street', 100), 'area' => $t('area', 80),
           'address' => $t('address', 300), 'note' => $t('note', 300), 'wa' => !empty($c['wa'])];   // wa: ticked "Send me offers and updates on WhatsApp"
   foreach (['name', 'building', 'room', 'street', 'area', 'address', 'note'] as $k) $out[$k] = $caps($out[$k]);
@@ -126,7 +126,9 @@ function fomaxo_customer($in) {
 function fomaxo_log_order($row) {
   $dir = dirname(__DIR__) . '/fomaxo-orders';
   if (!is_dir($dir) && !@mkdir($dir, 0700, true)) return false;
+  $new = !is_file($dir . '/orders.csv');
   $f = @fopen($dir . '/orders.csv', 'a'); if (!$f) return false;
+  if ($new) fwrite($f, "\xEF\xBB\xBF");   // so Excel reads Arabic names correctly
   $row = array_map(fn($v) => preg_match('/^[=+\-@]/', (string)$v) && !preg_match('/^\+?[\d\s()\-]+$/', (string)$v) ? "'" . $v : $v, $row);   // stop spreadsheet formulas (phone numbers stay as typed)
   $ok = @fputcsv($f, $row) !== false; fclose($f); return $ok;
 }

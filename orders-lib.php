@@ -7,6 +7,8 @@
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
 
 const FX_STATUSES = ['Awaiting payment', 'New', 'Paid', 'Delivered', 'Cancelled', 'Refunded'];
+/* Arabic (٠١٢…) and Persian (۰۱۲…) digits → 0-9, for phone numbers typed on an Arabic keyboard (names and addresses stay exactly as typed) */
+const FX_AR_DIGITS = ['٠'=>'0','١'=>'1','٢'=>'2','٣'=>'3','٤'=>'4','٥'=>'5','٦'=>'6','٧'=>'7','٨'=>'8','٩'=>'9','۰'=>'0','۱'=>'1','۲'=>'2','۳'=>'3','۴'=>'4','۵'=>'5','۶'=>'6','۷'=>'7','۸'=>'8','۹'=>'9'];
 
 function fomaxo_db_config_file() { return dirname(__DIR__) . '/fomaxo-db-config.php'; }
 function fomaxo_db_connect($c) {

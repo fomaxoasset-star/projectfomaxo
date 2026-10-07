@@ -48,7 +48,7 @@ if ($pay === 'card' && (!$key || strpos($key, 'sk_') !== 0)) fail(500, 'Card pay
 if (!function_exists('fomaxo_phone_ok')) {
 /* a real-looking phone number, any country — same rules as phoneOk() in index.html and store-lib.php */
 function fomaxo_phone_ok($v) {
-  $v = trim((string)$v); if (!preg_match('/^\+?[\d\s\-()]+$/', $v)) return false;
+  $v = trim(strtr((string)$v, FX_AR_DIGITS)); if (!preg_match('/^\+?[\d\s\-()]+$/', $v)) return false;
   $d = preg_replace('/\D/', '', $v); if (strpos($d, '00') === 0) $d = substr($d, 2);
   $n = strlen($d);
   if ($n < 9 || $n > 15 || preg_match('/^(\d)\1+$/', $d) || strpos('01234567890123456789', $d) !== false || strpos('98765432109876543210', $d) !== false) return false;
@@ -64,7 +64,7 @@ $clean = function ($v, $max) { $v = is_string($v) ? trim(preg_replace('/[\x00-\x
 /* capital first letter of every word (the rest is kept as typed) — matches the checkout page */
 $caps = fn($v) => preg_replace_callback('/(^|[\s\-\/(])(\p{Ll})/u', fn($m) => $m[1] . mb_strtoupper($m[2]), $v);
 if ($cu) {
-  $cu = ['name' => $clean($cu['name'] ?? '', 80), 'phone' => $clean($cu['phone'] ?? '', 20), 'email' => $clean($cu['email'] ?? '', 120),
+  $cu = ['name' => $clean($cu['name'] ?? '', 80), 'phone' => strtr($clean($cu['phone'] ?? '', 20), FX_AR_DIGITS), 'email' => $clean($cu['email'] ?? '', 120),
          'emirate' => $clean($cu['emirate'] ?? '', 30), 'building' => $clean($cu['building'] ?? '', 40), 'room' => $clean($cu['room'] ?? '', 20),
          'street' => $clean($cu['street'] ?? '', 100), 'area' => $clean($cu['area'] ?? '', 80), 'address' => $clean($cu['address'] ?? '', 300), 'note' => $clean($cu['note'] ?? '', 300),
          'wa' => !empty($cu['wa'])];   // ticked "Send me offers and updates on WhatsApp"
@@ -181,6 +181,7 @@ if ($pay === 'cod') {
     $new = !is_file($file);
     if ($fh = @fopen($file, 'a')) {
       if (flock($fh, LOCK_EX)) {
+        if ($new) fwrite($fh, "\xEF\xBB\xBF");   // so Excel reads Arabic names correctly
         if ($new) fputcsv($fh, ['Date', 'Order', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Note', 'Items', 'Subtotal', 'Discount', 'COD fee', 'Total to collect (AED)', 'Villa/Building no', 'Room No / Floor', 'Street', 'Area', 'WhatsApp offers']);
         $saved = fputcsv($fh, array_map($cell, $order)) !== false;
         flock($fh, LOCK_UN);

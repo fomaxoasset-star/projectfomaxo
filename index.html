@@ -2046,6 +2046,7 @@ html[lang=ar] .mnav nav a::after{content:"←"}
 html[lang=ar] .co-nudge .qn-line,html[lang=ar] #cart .dr-foot .qd-nudge>span{white-space:normal;text-align:center}
 html[lang=ar] h1,html[lang=ar] h2,html[lang=ar] h3,html[lang=ar] h4{line-height:1.3}
 html[lang=ar] .amt,html[lang=ar] .mode-switch,html[lang=ar] .acro{direction:ltr;unicode-bidi:isolate}
+html[lang=ar] input[type=tel],html[lang=ar] input[type=email]{direction:ltr;text-align:right}
 .lang-sw{flex:none;display:inline-flex;align-items:center;justify-content:center;height:26px;min-width:44px;padding:0 10px;border:0;border-radius:999px;background:linear-gradient(135deg,#f6dfae 0%,#e2b66f 45%,#c08a3e 100%);color:#140f08;font:700 12px/1 "Tajawal","Jost",Arial,sans-serif;letter-spacing:0;text-transform:none;cursor:pointer;box-shadow:0 0 0 1px rgba(240,211,160,.5),0 0 8px rgba(215,170,105,.35);transition:filter .3s,box-shadow .3s}
 .lang-sw:hover{filter:brightness(1.08);box-shadow:0 0 0 1px rgba(240,211,160,.8),0 0 16px rgba(215,170,105,.65)}
 .lang-ph{height:26px;min-width:0;padding:0 10px;font-size:12px;margin-inline-end:6px}   /* the switch sits in the header next to search, phone and laptop */
@@ -3343,8 +3344,10 @@ const EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ra
 /* a real-looking phone number, any country (same rules in store-lib.php fomaxo_phone_ok):
    only digits, spaces, - ( ) and a leading +; 9 to 15 digits; not one digit repeated or a 123456789 run;
    UAE numbers: 05x xxx xxxx (10 digits) or +971 / 00971 followed by 8-9 digits without a 0 */
+// Arabic (٠١٢…) and Persian (۰۱۲…) digits typed on an Arabic keyboard become 0-9, so the number works for WhatsApp and the courier
+const enDigits = v => String(v || '').replace(/[\u0660-\u0669]/g, c => c.charCodeAt(0) - 0x660).replace(/[\u06F0-\u06F9]/g, c => c.charCodeAt(0) - 0x6F0);
 function phoneOk(v){
-  v = String(v || '').trim(); if (!/^\+?[\d\s\-()]+$/.test(v)) return false;
+  v = enDigits(v).trim(); if (!/^\+?[\d\s\-()]+$/.test(v)) return false;
   let d = v.replace(/\D/g, ''); if (d.startsWith('00')) d = d.slice(2);
   if (d.length < 9 || d.length > 15 || /^(\d)\1+$/.test(d) || '01234567890123456789'.includes(d) || '98765432109876543210'.includes(d)) return false;
   if (d.startsWith('971')) return /^9710?[1-9]\d{7,8}$/.test(d);
@@ -3426,12 +3429,13 @@ function bindCheckout(q){
   const form = $('#coForm'); if (!form) return;
   const err = $('#coErr'), err1 = $('#coErr1'), go = $('#coGo');
   const d0 = savedDetails();
-  CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = CO_CAPS.includes(k) ? capWords(d0[k]) : d0[k]; });
+  CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = CO_CAPS.includes(k) ? capWords(d0[k]) : k === 'phone' ? enDigits(d0[k]) : d0[k]; });
   CO_CAPS.forEach(k => form.elements[k] && form.elements[k].setAttribute('autocapitalize', 'words'));
   if (form.elements.wa) form.elements.wa.checked = d0.wa === '1';   // WhatsApp offers: unticked until the customer ticks it
   const details = () => Object.assign(Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()])), {wa: form.elements.wa && form.elements.wa.checked ? '1' : ''});
   const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad');
-    const t = e.target; if (CO_CAPS.includes(t.name)) { const v = capWords(t.value); if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} } } const key = JSON.stringify(details()); try { localStorage.setItem('fomaxo_details', key); } catch(x) {} if (!busy && key !== drawnKey) { drawnKey = key; draw(); } };
+    const t = e.target; if (t.name === 'phone') { const v = enDigits(t.value); if (v !== t.value) { const a = t.selectionStart; t.value = v; try { t.setSelectionRange(a, a); } catch(x) {} } }
+    if (CO_CAPS.includes(t.name)) { const v = capWords(t.value); if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} } } const key = JSON.stringify(details()); try { localStorage.setItem('fomaxo_details', key); } catch(x) {} if (!busy && key !== drawnKey) { drawnKey = key; draw(); } };
   // redraw only when a detail really changed: leaving a box (change) would otherwise rebuild the payment options under the customer's finger and swallow that tap
   let drawnKey = '';
   form.addEventListener('input', remember);
@@ -4294,5 +4298,5 @@ renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); p
 (function(){var ar=document.documentElement.lang==="ar";
 document.querySelectorAll(".lang-sw").forEach(function(b){if(ar){b.textContent="EN";b.lang="en";b.setAttribute("aria-label","English");b.title="English"}
 b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href)location.reload();else location.replace(u)}});
-if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=4";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
+if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=5";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
 </body></html>
