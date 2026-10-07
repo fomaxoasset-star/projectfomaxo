@@ -1528,6 +1528,7 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-opt-t b{font-weight:500;font-size:15.5px;line-height:1.3}
 .co-opt-t small{font-size:13px;line-height:1.4;color:var(--muted)}
 .co-opt-more{display:block;margin-top:8px;color:var(--champagne)}
+.co-opt-1l,.co-opt-2l{display:block}.co-opt-1l{white-space:nowrap}html[lang=ar] .co-opt-1l{white-space:normal}   /* Arabic is longer, so it may wrap on small phones. AJAY: over the COD maximum, "COD for orders under AED X" on one line, "Please pay by card." under it */
 .co-opt-i{flex:none;color:var(--gold)}
 .co-opt-i svg{width:24px;height:24px;display:block}
 .co .form label.co-opt.on{border-color:var(--gold);background:rgba(215,170,105,.08)}
@@ -3592,7 +3593,7 @@ function bindCheckout(q){
     FXT.lead(locked ? 'details' : 'payment', details(), ls, T.total); if (!locked) FXT.once('pay');
     const opt = (id, title, sub, off) => { off = off || locked; return `<label class="co-opt${coPay === id && !locked ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`; };
     $('#coPay').innerHTML = (locked ? `<p class="co-lock">${CO_ICON.lock}<span>Fill in your ${listTxt(missing.map(b => b[1]))} to choose how to pay.</span></p>` : '') + (CARD_ON ? opt('card', 'Card / Apple Pay / Google Pay', `Pay securely now with ${CARD_BY}`) : '') +
-      opt('cod', 'Cash on delivery', codOk ? `Pay in cash when your order arrives · ${aed(COD_FEE)} fee` : codBig ? `COD for orders under ${aed(COD_MAX)}. Please pay by card.` : `For orders above ${aed(COD_MIN)} · ${aed(COD_FEE)} fee<span class="co-opt-more">Add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more to activate COD</span>`, !codOk);
+      opt('cod', 'Cash on delivery', codOk ? `Pay in cash when your order arrives · ${aed(COD_FEE)} fee` : codBig ? `<span class="co-opt-1l">COD for orders under ${aed(COD_MAX)}</span><span class="co-opt-2l">Please pay by card.</span>` : `For orders above ${aed(COD_MIN)} · ${aed(COD_FEE)} fee<span class="co-opt-more">Add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more to activate COD</span>`, !codOk);
     $$('#coPay input').forEach(r => r.onchange = () => { coPay = r.value; err.hidden = true; draw(); });
     // main button
     if (busy) return;
