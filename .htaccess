@@ -4,6 +4,17 @@ RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# link preview picture: Instagram / Facebook show a square, so their link reader gets the square version
+# (WhatsApp and everyone else get the wide 1200x630 one at the same address)
+RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|Instagram|meta-externalagent|Facebot) [NC]
+RewriteRule ^assets/img/link-preview\.jpg$ assets/img/link-preview-square.jpg [L]
+<FilesMatch "^link-preview(-square)?\.jpg$">
+  <IfModule mod_headers.c>
+    Header set Vary "User-Agent"
+    Header set Cache-Control "public, max-age=3600"
+  </IfModule>
+</FilesMatch>
+
 # product addresses for Google: fomaxo.com/fomaxo-gold → product.php; fomaxo.com/sitemap.xml → sitemap.php
 RewriteRule ^sitemap\.xml$ sitemap.php [L]
 RewriteCond %{REQUEST_FILENAME} !-f
