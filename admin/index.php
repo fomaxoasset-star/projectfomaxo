@@ -495,6 +495,14 @@ if (empty($_SESSION['admin'])) {
 
 /* ================= 3) logged in: orders ================= */
 
+/* an order that is only in the order files (the database could not take it): put it in the list with its own number */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['log_add'])) {
+  if (!csrf_ok()) { flash('Please try again.'); go(['orders' => 1, 'status' => 'all']); }
+  $no = (string)$_POST['log_add'];
+  if (fomaxo_log_add($pdo, $no)) flash($no . ' is now in Orders. Stock was not changed.', true); else flash('Could not add ' . $no . '. Please try again.');
+  go(['orders' => 1, 'status' => 'all']);
+}
+
 /* save a change to one order */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
   /* one-tap buttons send "quick" and go back to the list they came from */
@@ -2408,6 +2416,23 @@ $qs = ['orders' => 1] + array_filter($f, fn($v) => $v !== '');
 $pager = ($pg > 1 ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg - 1])) . '">Newer</a>' : '')
        . ($sum['n'] > $pg * $per ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg + 1])) . '">Older</a>' : '');
 
+/* orders kept only in the order files (the database could not take them at the time): listed so nothing is missing from your records */
+$logCard = '';
+try { $miss = fomaxo_log_missing($pdo); } catch (Throwable $e) { $miss = []; }
+if ($miss) {
+  $lr = '';
+  foreach ($miss as $x)
+    $lr .= '<tr><td class="no" data-l=""><b>' . h($x['no']) . '</b>' . (!empty($x['test']) ? ' <span class="muted small">test</span>' : '') . '</td><td data-l="">' . h(date('d/m/Y, H:i', strtotime($x['date']))) . '</td>'
+         . '<td data-l="">' . hx($x['name']) . '<div class="muted small">' . h($x['phone']) . ($x['emirate'] !== '' ? ' · ' . h($x['emirate']) : '') . '</div></td>'
+         . '<td class="small" data-l="">' . h(mb_strimwidth(str_replace(' | ', ', ', (string)$x['items']), 0, 90, '…')) . '</td>'
+         . '<td data-l="">' . h($x['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . ' · ' . h(['New' => 'Unpaid', 'Paid' => 'Paid', 'Awaiting payment' => 'Card not paid'][$x['status']] ?? $x['status']) . '</td>'
+         . '<td class="num" data-l="">' . money($x['total']) . '</td>'
+         . '<td data-l=""><form method="post">' . csrf_field() . '<input type="hidden" name="log_add" value="' . h($x['no']) . '"><button class="btn sm">Add to Orders</button></form></td></tr>';
+  $logCard = '<section class="card logmiss"><h2>Not in this list yet <span class="muted small">' . count($miss) . '</span></h2>'
+    . '<p class="muted small" style="margin:0 0 8px">These orders were kept in the order file because the database could not take them at that moment. Add each one so your records are complete (stock is not changed).</p>'
+    . '<div class="cscroll"><table class="olist"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th class="num">Total</th><th></th></tr></thead><tbody>' . $lr . '</tbody></table></div></section>';
+}
+
 $oq = $qs; unset($oq['from'], $oq['to'], $oq['p']);   // Today / 7 days / 30 days / All fill the From and To dates below
 $oseg = '';
 foreach (['today' => 0, '7' => 6, '30' => 29, 'all' => null] as $k => $back) {
@@ -2434,4 +2459,5 @@ page('Orders', '<div class="pagehead rg"><h1>Orders</h1><div class="arange"><div
   . '<div class="fill">' . ($rows ? '<table class="olist acts"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
+  . $logCard
   . '<p class="muted small after">The boxes count pending and delivered orders and leave out cancelled and refunded orders and test payments. "Waiting" shows how many days a pending order has not been delivered (red from 3 days). Unpaid card attempts are hidden unless you pick "Everything".</p></div>', true, true);
