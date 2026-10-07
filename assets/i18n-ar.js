@@ -389,6 +389,8 @@
 "WhatsApp FOMAXO India +971 56 158 9232": "واتساب FOMAXO الهند +971 56 158 9232",
 "FOMAXO on WhatsApp": "FOMAXO على واتساب",
 "WhatsApp": "واتساب",
+"You can order up to 99 of one item online. For a bigger order, please message us on WhatsApp.": "يمكنك طلب حتى 99 قطعة من المنتج الواحد عبر الموقع. للطلبات الأكبر، يرجى مراسلتنا عبر واتساب.",
+"An item in your bag is no longer available. Please refresh and try again.": "أحد المنتجات في حقيبتك لم يعد متوفراً. يرجى تحديث الصفحة والمحاولة مرة أخرى.",
 "FOMAXO on Instagram": "FOMAXO على إنستغرام",
 "FOMAXO on TikTok": "FOMAXO على تيك توك",
 "FOMAXO on YouTube": "FOMAXO على يوتيوب",
