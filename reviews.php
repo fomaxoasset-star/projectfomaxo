@@ -227,9 +227,10 @@ if ($link) {
 $manage = rv_base() . 'reviews.php?manage&k=' . rv_sign('manage') . '#r-' . $id;
 $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', explode(':', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com')[0])) ?: 'fomaxo.com';
 $pname = $CATALOG[$pid]['name'];
+fomaxo_en_many([$text, $name, trim("$city $country")]);   // Arabic review: English in this email and in admin (the review on the site stays as written)
 $body = "New review on fomaxo.com — it is live now.\n\nProduct: $pname\nRating: " . str_repeat('★', $rating) . str_repeat('☆', 5 - $rating) . " ($rating/5)\n"
-      . "Name shown: $name" . ($anon ? " (real name: $real)" : '') . "\n" . ($city . $country !== '' ? "From: " . trim("$city $country") . "\n" : '') . ($link ? "Verified Purchaser — order {$link['no']}\n" : "Not a verified purchase\n")
-      . 'Photos: ' . count($photos) . "\n\n$text\n\nTo hide this review (or any other), open:\n$manage\n";
+      . 'Name shown: ' . fomaxo_en_both($name) . ($anon ? " (real name: $real)" : '') . "\n" . ($city . $country !== '' ? 'From: ' . fomaxo_en_both(trim("$city $country")) . "\n" : '') . ($link ? "Verified Purchaser — order {$link['no']}\n" : "Not a verified purchase\n")
+      . 'Photos: ' . count($photos) . "\n\n" . (fx_has_ar($text) ? fomaxo_en($text) . "\n\nAs written: $text" : $text) . "\n\nTo hide this review (or any other), open:\n$manage\n";
 fomaxo_mail(fomaxo_orders_email($STORE_EMAIL), '=?UTF-8?B?' . base64_encode("New $rating★ review — $pname") . '?=', $body, "From: FOMAXO Reviews <mail@fomaxo.com>\r\nContent-Type: text/plain; charset=UTF-8");
 
 out(['ok' => true, 'review' => rv_public($rec), 'note' => $photoNote]);

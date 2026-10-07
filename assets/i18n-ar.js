@@ -723,6 +723,10 @@
 "Sec": "ثوانٍ",
 "Total Saved is": "إجمالي ما وفّرته",
 "UAE": "الإمارات",
+"Please enter a valid mobile number.": "يرجى إدخال رقم جوال صحيح.",
+"Please enter your full name.": "يرجى إدخال اسمك الكامل.",
+"Please enter your full delivery address.": "يرجى إدخال عنوان التوصيل كاملاً.",
+"Please choose your emirate.": "يرجى اختيار إمارتك.",
 "10% off + a FREE 10ml mini": "خصم 10% + ميني 10ml مجاناً"
 };
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
@@ -761,8 +765,16 @@
     [/^Add (AED [\d,.]+) more to use this code \(for orders of (AED [\d,.]+) or more\)\.$/, function(m){ return 'أضف ' + m[1] + ' لاستخدام هذا الرمز (للطلبات بقيمة ' + m[2] + ' أو أكثر).'; }],
     [/^(\d+)% off \+ a FREE 10ml mini$/, function(m){ return 'خصم ' + m[1] + '% + ميني 10ml مجاناً'; }],
     [/^(\d+)% off \+ FREE 10ml mini$/, function(m){ return 'خصم ' + m[1] + '% + ميني 10ml مجاناً'; }],
-    [/^Level (I|II|III|IV)$/, function(m){ return 'المستوى ' + m[1]; }]
+    [/^Level (I|II|III|IV)$/, function(m){ return 'المستوى ' + m[1]; }],
+    [/^Pay (AED [\d,.]+ )?securely$/, function(m){ return 'ادفع ' + (m[1] || '') + 'بأمان'; }],
+    [/^Place order · (AED [\d,.]+)$/, function(m){ return 'تأكيد الطلب · ' + m[1]; }],
+    [/^Fill in your (.+) to choose how to pay\.$/, function(m){ var l = fields(m[1]); return l && 'أدخل ' + l + ' لاختيار طريقة الدفع.'; }],
+    [/^Please add your (.+) so we can deliver your order\.$/, function(m){ var l = fields(m[1]); return l && 'يرجى إدخال ' + l + ' لنتمكن من توصيل طلبك.'; }]
   ];
+  // checkout boxes still missing ("full name, mobile number and area") → Arabic list
+  var FLD = {'full name': 'اسمك الكامل', 'mobile number': 'رقم الجوال', 'correct mobile number': 'رقم جوال صحيح', 'correct email': 'بريد إلكتروني صحيح',
+    'emirate': 'الإمارة', 'villa / building no': 'رقم الفيلا / المبنى', 'street': 'الشارع', 'area': 'المنطقة'};
+  function fields(s){ var p = s.split(/, | and /), out = []; for (var i = 0; i < p.length; i++){ if (!FLD[p[i]]) return null; out.push(FLD[p[i]]); } return out.join(' و'); }
   var KEEP = /^(?:[\d\s.,:;·×+%()\/\-–—|•✓✕*#№AED]|ml|FOMAXO|™)*$/;   // numbers, prices, sizes: leave as they are
   function tr(s){
     if (Object.prototype.hasOwnProperty.call(D, s)) return D[s];

@@ -48,7 +48,7 @@ if ($pay === 'card' && (!$key || strpos($key, 'sk_') !== 0)) fail(500, 'Card pay
 if (!function_exists('fomaxo_phone_ok')) {
 /* a real-looking phone number, any country — same rules as phoneOk() in index.html and store-lib.php */
 function fomaxo_phone_ok($v) {
-  $v = trim((string)$v); if (!preg_match('/^\+?[\d\s\-()]+$/', $v)) return false;
+  $v = trim(strtr((string)$v, FX_AR_DIGITS)); if (!preg_match('/^\+?[\d\s\-()]+$/', $v)) return false;
   $d = preg_replace('/\D/', '', $v); if (strpos($d, '00') === 0) $d = substr($d, 2);
   $n = strlen($d);
   if ($n < 9 || $n > 15 || preg_match('/^(\d)\1+$/', $d) || strpos('01234567890123456789', $d) !== false || strpos('98765432109876543210', $d) !== false) return false;
@@ -64,7 +64,7 @@ $clean = function ($v, $max) { $v = is_string($v) ? trim(preg_replace('/[\x00-\x
 /* capital first letter of every word (the rest is kept as typed) — matches the checkout page */
 $caps = fn($v) => preg_replace_callback('/(^|[\s\-\/(])(\p{Ll})/u', fn($m) => $m[1] . mb_strtoupper($m[2]), $v);
 if ($cu) {
-  $cu = ['name' => $clean($cu['name'] ?? '', 80), 'phone' => $clean($cu['phone'] ?? '', 20), 'email' => $clean($cu['email'] ?? '', 120),
+  $cu = ['name' => $clean($cu['name'] ?? '', 80), 'phone' => strtr($clean($cu['phone'] ?? '', 20), FX_AR_DIGITS), 'email' => $clean($cu['email'] ?? '', 120),
          'emirate' => $clean($cu['emirate'] ?? '', 30), 'building' => $clean($cu['building'] ?? '', 40), 'room' => $clean($cu['room'] ?? '', 20),
          'street' => $clean($cu['street'] ?? '', 100), 'area' => $clean($cu['area'] ?? '', 80), 'address' => $clean($cu['address'] ?? '', 300), 'note' => $clean($cu['note'] ?? '', 300),
          'wa' => !empty($cu['wa'])];   // ticked "Send me offers and updates on WhatsApp"
@@ -181,6 +181,7 @@ if ($pay === 'cod') {
     $new = !is_file($file);
     if ($fh = @fopen($file, 'a')) {
       if (flock($fh, LOCK_EX)) {
+        if ($new) fwrite($fh, "\xEF\xBB\xBF");   // so Excel reads Arabic names correctly
         if ($new) fputcsv($fh, ['Date', 'Order', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Note', 'Items', 'Subtotal', 'Discount', 'COD fee', 'Total to collect (AED)', 'Villa/Building no', 'Room No / Floor', 'Street', 'Area', 'WhatsApp offers']);
         $saved = fputcsv($fh, array_map($cell, $order)) !== false;
         flock($fh, LOCK_UN);
@@ -194,10 +195,11 @@ if ($pay === 'cod') {
   $waLines = fomaxo_wa_review_request($no, $cu, array_map(fn($id) => $CATALOG[$id]['name'] ?? '', $ids), $review);
   $to = fomaxo_orders_email($cfg['orders_email'] ?? FX_STORE_EMAIL);   // Settings on fomaxo.com/admin, else the key file, else the store inbox
   $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', explode(':', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com')[0])) ?: 'fomaxo.com';
+  fomaxo_en_many([$cu['name'], $cu['address'], $cu['note']]);   // Arabic typed by the customer: English in this email and in admin
   $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) . "\n\n" . implode("\n", $rows)
         . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\n$discLabel: -" . aed($discFils) : '')
         . "\nCash on delivery fee: " . aed($COD_FEE * 100) . "\nTotal: " . aed($totalFils)
-        . "\n\nName: {$cu['name']}\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: {$cu['address']}" . ($cu['note'] !== '' ? "\nNote: {$cu['note']}" : '') . "\nWhatsApp offers: " . ($cu['wa'] ? 'Yes' : 'No') . $waLines;
+        . "\n\nName: " . fomaxo_en_both($cu['name']) . "\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: " . fomaxo_en_both($cu['address']) . ($cu['note'] !== '' ? "\nNote: " . fomaxo_en_both($cu['note']) : '') . "\nWhatsApp offers: " . ($cu['wa'] ? 'Yes' : 'No') . $waLines;
   $mailed = fomaxo_mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
                   "From: FOMAXO Orders <mail@fomaxo.com>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
   if (!$saved && !$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or contact us on WhatsApp.'); }
