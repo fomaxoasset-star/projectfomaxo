@@ -567,7 +567,6 @@
 "Mobile": "رقم الجوال",
 "(optional)": "(اختياري)",
 "Send me offers and updates on WhatsApp": "أرسلوا لي العروض والتحديثات عبر واتساب",
-"Send me offers and updates": "أرسلوا لي العروض والتحديثات",
 "Emirate": "الإمارة",
 "Choose your emirate": "اختر إمارتك",
 "Abu Dhabi": "أبوظبي",
