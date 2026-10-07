@@ -2052,6 +2052,11 @@ html[dir=rtl] .reorder.ro-home{background:linear-gradient(270deg,rgba(215,170,10
   .co-item .o-picks{display:block;margin-top:2px}
   .co-items{max-height:max(150px,calc(100vh - var(--ann-h,40px) - 560px));overflow-y:auto;overscroll-behavior:contain;padding:8px 8px 10px 9px;margin:-8px -8px 0 -9px;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
   .co-items:has(+.co-mini-fx){max-height:max(120px,calc(100vh - var(--ann-h,40px) - 610px));border-bottom:1px solid var(--line)}
+  /* AJAY: summary box ends level with the bottom of the payment part on the left; the product list takes the room left and scrolls */
+  .co:has(>.co-grid) .co-sum{align-self:stretch;contain:size;display:flex;flex-direction:column}
+  .co:has(>.co-grid) .co-sum-in{flex:1;min-height:0;display:flex;flex-direction:column}
+  .co:has(>.co-grid) .co-sum-in>*{flex:none}
+  .co:has(>.co-grid) .co-sum-in>.co-items{flex:0 1 auto;min-height:96px;max-height:none}
   .co-mini-fx{padding:10px 0 0;border-bottom:0}
 }
 /* laptop checkout on screens up to 920px high (720, 768, 864, 900...): tighter spacing so it fits one screen; fitCo() scales the rest */
@@ -2618,10 +2623,8 @@ function fitCo(){
   if (innerWidth < 961) return;
   const pf = co.closest('.page-fade'), ty = pf ? new DOMMatrix(getComputedStyle(pf).transform).m42 || 0 : 0;   // ignore the page fade-in slide while measuring
   const top = co.getBoundingClientRect().top + scrollY - ty;
-  // count the cash on delivery fee row even while card is picked, so switching payment never changes the size
-  const cod = $('input[value=cod]', co), row = $('#coSum .co-row', co);
-  const feeSpace = COD_FEE > 0 && cod && !cod.disabled && !$('.co-fee', co) && row ? row.getBoundingClientRect().height + (parseFloat(getComputedStyle(row.parentNode).rowGap) || 0) : 0;
-  const bottom = Math.max(...['#coSum', '.co-main'].map(s => { const e = $(s, co); return e ? e.getBoundingClientRect().bottom + scrollY + (s === '#coSum' ? feeSpace : 0) : 0; }));
+  // the order summary is as tall as the left side on laptop (its product list scrolls), so only the left side sets the size
+  const main = $('.co-main', co), bottom = main ? main.getBoundingClientRect().bottom + scrollY : 0;
   const avail = innerHeight - top - 10, need = bottom - ty - top;
   if (need > avail) co.style.zoom = Math.max(.82, Math.floor(avail / need * 100) / 100);
 }
