@@ -2606,7 +2606,7 @@ function couponSave(t0){
   return coupon.kind === 'aed' ? Math.min(t0, coupon.amount) : Math.round(t0 * Math.min(100, coupon.amount)) / 100;
 }
 /* minimum order + cash on delivery (keep in sync with checkout.php). Minimums count the total after the multi-buy discount or coupon. */
-const MIN_ORDER = 30, COD_MIN = 200, COD_FEE = 10;
+const MIN_ORDER = 30, COD_MIN = 200, COD_FEE = 10, COD_MAX = 2000;   // AJAY: cash on delivery only for orders under AED 2,000 (said only once the order reaches it); checkout.php has the same limit
 const aed = v => `${S.currency} ${Number(v).toLocaleString('en-US', {minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2})}`;
 function orderTotals(lines, pay, withCoupon){
   const t0 = subtotal(lines), dc = qtyDiscount(lines);
@@ -3542,7 +3542,8 @@ function bindCheckout(q){
     requestAnimationFrame(fitCo);
     const ls = lines(); if (!ls.length){ route(); return; }
     const base = orderTotals(ls, '', true);
-    const codOk = base.after !== null && base.after >= COD_MIN;
+    const codBig = base.after !== null && base.after >= COD_MAX;
+    const codOk = base.after !== null && base.after >= COD_MIN && !codBig;
     if (coPay === 'cod' && !codOk && CARD_ON) coPay = 'card';
     if (coPay !== 'cod' && !CARD_ON) coPay = 'cod';
     if (coPay !== 'card' && coPay !== 'cod') coPay = CARD_ON ? 'card' : 'cod';
@@ -3590,7 +3591,7 @@ function bindCheckout(q){
     FXT.lead(locked ? 'details' : 'payment', details(), ls, T.total); if (!locked) FXT.once('pay');
     const opt = (id, title, sub, off) => { off = off || locked; return `<label class="co-opt${coPay === id && !locked ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`; };
     $('#coPay').innerHTML = (locked ? `<p class="co-lock">${CO_ICON.lock}<span>Fill in your ${listTxt(missing.map(b => b[1]))} to choose how to pay.</span></p>` : '') + (CARD_ON ? opt('card', 'Card / Apple Pay / Google Pay', `Pay securely now with ${CARD_BY}`) : '') +
-      opt('cod', 'Cash on delivery', codOk ? `Pay in cash when your order arrives · ${aed(COD_FEE)} fee` : `For orders above ${aed(COD_MIN)} · ${aed(COD_FEE)} fee<span class="co-opt-more">Add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more to activate COD</span>`, !codOk);
+      opt('cod', 'Cash on delivery', codOk ? `Pay in cash when your order arrives · ${aed(COD_FEE)} fee` : codBig ? `Cash on delivery is for orders under ${aed(COD_MAX)}. Please pay by card.` : `For orders above ${aed(COD_MIN)} · ${aed(COD_FEE)} fee<span class="co-opt-more">Add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more to activate COD</span>`, !codOk);
     $$('#coPay input').forEach(r => r.onchange = () => { coPay = r.value; err.hidden = true; draw(); });
     // main button
     if (busy) return;
@@ -3598,7 +3599,7 @@ function bindCheckout(q){
     go.disabled = T.short > 0 || noWay;
     go.classList.toggle('co-min', T.short > 0 || locked || noWay);
     go.innerHTML = T.short > 0 ? minMsg(T.short)
-      : noWay ? `Cash on delivery is for orders above ${aed(COD_MIN)}`
+      : noWay ? (codBig ? `Cash on delivery is for orders under ${aed(COD_MAX)}` : `Cash on delivery is for orders above ${aed(COD_MIN)}`)
       : locked ? 'Fill in your delivery details to continue'
       : coPay === 'card' ? `${CO_ICON.lock}Pay ${T.total !== null ? money2(T.total) + ' ' : ''}securely`
       : `Place order · ${money2(T.total)}`;
@@ -3630,7 +3631,7 @@ function bindCheckout(q){
       form.elements[bad[0][0]].focus({preventScroll: true}); $('#coStep1').scrollIntoView({behavior: 'smooth', block: 'start'});
       return;
     }
-    if (orderTotals(ls, coPay, true).short > 0 || (coPay === 'cod' && !(orderTotals(ls, '', true).after >= COD_MIN))) return;
+    if (orderTotals(ls, coPay, true).short > 0 || (coPay === 'cod' && !(orderTotals(ls, '', true).after >= COD_MIN && orderTotals(ls, '', true).after < COD_MAX))) return;
     try { localStorage.setItem('fomaxo_details', JSON.stringify(d)); } catch(x) {}
     busy = true; const old = go.innerHTML; go.disabled = true;
     go.textContent = coPay === 'card' ? 'Opening secure payment…' : 'Placing your order…';
