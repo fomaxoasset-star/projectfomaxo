@@ -1740,7 +1740,7 @@ if (isset($_GET['reviews'])) {
   require_once dirname(__DIR__) . '/reviews-lib.php';
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['reviews' => 1]); }
-    $back = array_filter(['reviews' => 1, 'v' => (string)($_POST['v'] ?? ''), 'rp' => (string)($_POST['rp'] ?? ''), 'rq' => (string)($_POST['rq'] ?? ''), 'vf' => (string)($_POST['vf'] ?? '')], fn($x) => $x !== '');
+    $back = array_filter(['reviews' => 1, 'v' => (string)($_POST['v'] ?? ''), 'rp' => (string)($_POST['rp'] ?? ''), 'rq' => (string)($_POST['rq'] ?? ''), 'vf' => (string)($_POST['vf'] ?? ''), 'rs' => (string)($_POST['rs'] ?? '')], fn($x) => $x !== '');
     if (isset($_POST['reviewer_min'])) {
       $n = trim((string)$_POST['reviewer_min']);
       if (ctype_digit($n) && (int)$n >= 1 && (int)$n <= 1000) { fomaxo_setting($pdo, 'reviewer_min', (string)(int)$n); flash('Saved.', true); }
@@ -1748,8 +1748,17 @@ if (isset($_GET['reviews'])) {
     }
     if (isset($_POST['reply'])) {   // the shop's public answer under a review; empty or Delete removes it
       $id = (string)($_POST['id'] ?? ''); $txt = isset($_POST['del']) ? '' : trim(str_replace("\r", '', mb_substr((string)$_POST['reply'], 0, 2000)));
-      $ok = rv_change(function (&$list) use ($id, $txt) { foreach ($list as &$r) if ($r['id'] === $id) { if ($txt === '') unset($r['reply'], $r['reply_at']); else { $r['reply'] = $txt; $r['reply_at'] = date('c'); } return true; } return false; });
-      flash($ok ? ($txt === '' ? 'Reply deleted.' : 'Reply saved. It shows under the review on the website.') : 'That reply could not be saved. Please try again.', (bool)$ok);
+      /* Arabic review: written in English here, the customer gets it in Arabic (the ready reply's own Arabic when it was not changed) */
+      $en = null; $warn = '';
+      if ($txt !== '' && !empty($_POST['ar']) && !fx_has_ar($txt)) {
+        $en = $txt;
+        $norm = fn($s) => preg_replace('/\s+/u', ' ', trim((string)$s));
+        if ($norm($txt) === $norm($_POST['ready_en'] ?? '') && fx_has_ar((string)($_POST['ready_ar'] ?? ''))) $txt = trim((string)$_POST['ready_ar']);
+        elseif (($ar = fomaxo_ar($txt)) !== null) $txt = $ar;
+        else $warn = ' Arabic translation is not available right now, so it was saved in English. Tap Edit reply and save again later.';
+      }
+      $ok = rv_change(function (&$list) use ($id, $txt, $en) { foreach ($list as &$r) if ($r['id'] === $id) { unset($r['reply_en']); if ($txt === '') unset($r['reply'], $r['reply_at']); else { $r['reply'] = $txt; $r['reply_at'] = date('c'); if ($en !== null) $r['reply_en'] = $en; } return true; } return false; });
+      flash($ok ? ($txt === '' ? 'Reply deleted.' : ($en !== null && $warn === '' ? 'Reply saved in Arabic. It shows under the review on the website.' : 'Reply saved. It shows under the review on the website.' . $warn)) : 'That reply could not be saved. Please try again.', (bool)$ok && $warn === '');
       go($back);
     }
     $id = (string)($_POST['id'] ?? ''); $hide = ($_POST['hide'] ?? '') === '1';
@@ -1760,9 +1769,12 @@ if (isset($_GET['reviews'])) {
   $all = rv_all(); usort($all, fn($a, $b) => strcmp($b['created'], $a['created']));
   $rg = adm_range('reviews', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
   if ($rg['span']) $all = array_values(array_filter($all, fn($r) => substr((string)$r['created'], 0, 10) >= $rg['d1'] && substr((string)$r['created'], 0, 10) <= $rg['d2']));
-  $rbar = '<div class="rgbar">' . adm_range_form($rg, ['reviews' => 1] + array_filter(['v' => (string)($_GET['v'] ?? ''), 'rp' => (string)($_GET['rp'] ?? ''), 'rq' => (string)($_GET['rq'] ?? ''), 'vf' => (string)($_GET['vf'] ?? '')], fn($x) => $x !== '')) . '</div>';
+  $rbar = '<div class="rgbar">' . adm_range_form($rg, ['reviews' => 1] + array_filter(['v' => (string)($_GET['v'] ?? ''), 'rp' => (string)($_GET['rp'] ?? ''), 'rq' => (string)($_GET['rq'] ?? ''), 'vf' => (string)($_GET['vf'] ?? ''), 'rs' => (string)($_GET['rs'] ?? '')], fn($x) => $x !== '')) . '</div>';
   $v = in_array($_GET['v'] ?? '', ['products', 'people'], true) ? $_GET['v'] : 'all';
   $rp = (string)($_GET['rp'] ?? ''); if ($rp !== '' && !isset($CATALOG[$rp])) $rp = '';
+  $rs = (int)($_GET['rs'] ?? 0); if ($rs < 1 || $rs > 5) $rs = 0;   // filter by stars
+  $starSel = '<select name="rs" aria-label="Stars" onchange="this.form.submit()"><option value="">All stars</option>'
+    . implode('', array_map(fn($n) => '<option value="' . $n . '"' . ($rs === $n ? ' selected' : '') . '>' . str_repeat('★', $n) . ' ' . $n . ' star' . ($n > 1 ? 's' : '') . '</option>', [5, 4, 3, 2, 1])) . '</select>';
   $live = array_filter($all, fn($r) => empty($r['hidden']));
   $rq = trim((string)($_GET['rq'] ?? ''));
   $pname = fn($id) => $CATALOG[$id]['name'] ?? $id;
@@ -1772,12 +1784,48 @@ if (isset($_GET['reviews'])) {
   $seg = '<nav class="seg rseg">' . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['reviews' => 1] + ($k !== 'all' ? ['v' => $k] : []))) . '"' . ($v === $k ? ' class="on"' : '') . '>' . $l . '</a>',
          ['all', 'products', 'people'], ['Reviews', 'Stars By Product', 'Top Reviewers'])) . '</nav>';
   $hidden = fn($k, $val) => '<input type="hidden" name="' . $k . '" value="' . h($val) . '">';
-  $replyBox = function ($r) use ($hidden) {   // your reply under a review: shown, then a box to write, change or delete it
+  /* a ready reply that fits the review (name, product, stars, what they mentioned, English or Arabic); filled into an empty Reply box, edit before saving */
+  $suggest = function ($r, $en = false) use ($CATALOG) {   // $en: the English version, shown under an Arabic reply so you know what it says
+    $txt = (string)($r['text'] ?? ''); $ar = !$en && preg_match('/\p{Arabic}/u', $txt);
+    $nm = trim(preg_split('/\s+/u', trim((string)($r['name'] ?? '')))[0] ?? ''); $nm = mb_strtoupper(mb_substr($nm, 0, 1)) . mb_substr($nm, 1);
+    $pr = $CATALOG[$r['product']]['name'] ?? ($ar ? 'عطرنا' : 'our fragrance'); $st = (int)($r['rating'] ?? 5);
+    $has = fn($re) => (bool)preg_match('/' . $re . '/iu', $txt);
+    $long = $has('last|lasting|longevity|fade|hours|all day|stays|يدوم|ثبات|ثابت|ساعات');
+    $scent = $has('smell|scent|fragrance|notes|aroma|رائحة|ريحة|عطر');
+    $comp = $has('compliment|asked me|people ask|مدح|سألني|يسألون');
+    $deliv = $has('deliver|arriv|shipping|courier|late|توصيل|وصل|تأخر');
+    $box = $has('box|packag|gift|wrap|هدية|تغليف|علبة');
+    $val = $has('price|value|worth|cheap|expensive|سعر|يستحق');
+    if ($ar) {
+      $hi = $nm !== '' ? $nm : 'عزيزنا';
+      if ($st >= 4) {
+        $l = array_slice(array_filter([$long ? 'رائع أنه يدوم معك طوال اليوم.' : '', $scent ? 'سعداء أن الرائحة أعجبتك.' : '', $comp ? 'استمتع بكل المديح!' : '',
+               $deliv ? 'سعداء بوصول طلبك بسرعة.' : '', $box ? 'نهتم كثيراً بالتغليف، وكلامك يسعدنا.' : '', $val ? 'سعداء أنك وجدته يستحق كل درهم.' : '']), 0, 2);
+        return 'شكراً جزيلاً ' . $hi . '! سعداء جداً أن ' . $pr . ' نال إعجابك. ' . implode(' ', $l) . ($st === 4 ? ' يسعدنا أن نعرف ما الذي يجعلها ٥ نجوم.' : '') . ' ننتظر زيارتك القادمة 🙏';
+      }
+      if ($st === 3) return 'شكراً على رأيك الصريح ' . $hi . '. يسعدنا أنك جربت ' . $pr . '، ونتمنى أن تكون تجربتك القادمة ٥ نجوم. تواصل معنا وسنساعدك.';
+      return 'نعتذر جداً ' . $hi . '، هذه ليست التجربة التي نريدها لك مع ' . $pr . '. تواصل معنا لنصلح الأمر' . ($deliv ? ' ونتابع التوصيل فوراً' : ($long ? ' ونشاركك نصائح ليدوم العطر أطول' : '')) . '.';
+    }
+    $hi = $nm !== '' ? ', ' . $nm : '';
+    if ($st >= 4) {
+      $l = array_slice(array_filter([$long ? 'So happy it lasts all day for you.' : '', $scent ? "We're glad the scent is just your style." : '', $comp ? 'Enjoy all the compliments!' : '',
+             $deliv ? 'Glad your order arrived quickly.' : '', $box ? 'We put a lot of love into the box, so this means a lot.' : '', $val ? "Luxury should feel worth every dirham, and we're glad it does." : '']), 0, 2);
+      return 'Thank you so much' . $hi . "! We're thrilled you love " . $pr . '. ' . implode(' ', $l) . ($st === 4 ? " If anything could make it a 5, we'd love to hear it." : '') . " We can't wait to have you back 🙏";
+    }
+    if ($st === 3) return 'Thank you for your honest review' . $hi . ". We're glad you tried " . $pr . " and we'd love to make your next experience a 5-star one. Please get in touch and we'll help.";
+    return "We're really sorry" . $hi . ". This isn't the experience we want for you with " . $pr . '. Please get in touch so we can make it right' . ($deliv ? ' and check what happened with your delivery' : ($long ? ' and share tips to help it last longer' : '')) . '.';
+  };
+  $replyBox = function ($r) use ($hidden, $suggest) {   // your reply under a review: shown, then a box to write, change or delete it
     $rep = (string)($r['reply'] ?? ''); $keep = '';
-    foreach (['rp', 'rq', 'vf', 'v'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
-    return ($rep !== '' ? '<div class="rrep"><b>Reply from FOMAXO</b><p>' . nl2br(h($rep)) . '</p></div>' : '')
+    $isAr = fx_has_ar((string)($r['text'] ?? ''));   // Arabic review: you write in English, the customer gets Arabic
+    $val = $rep !== '' ? ($isAr && fx_has_ar($rep) ? (string)($r['reply_en'] ?? fomaxo_en($rep)) : $rep) : preg_replace('/\s{2,}/u', ' ', $suggest($r, $isAr));
+    foreach (['rp', 'rq', 'vf', 'rs', 'v'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
+    return ($rep !== '' ? '<div class="rrep"><b>Reply from FOMAXO</b><p>' . (($r['reply_en'] ?? '') !== '' && fx_has_ar($rep) ? nl2br(h($r['reply_en'])) . '<span class="arx" dir="rtl" lang="ar">' . nl2br(h($rep)) . '</span>' : hx($rep, true)) . '</p></div>' : '')
       . '<div class="racts"><details class="rrf"><summary class="btn line sm">' . ($rep !== '' ? 'Edit reply' : 'Reply') . '</summary><form method="post">' . csrf_field() . $hidden('id', $r['id']) . $keep
-      . '<textarea name="reply" rows="3" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($rep) . '</textarea>'
+      . ($isAr ? $hidden('ar', '1') . ($rep === '' ? $hidden('ready_en', $val) . $hidden('ready_ar', preg_replace('/\s{2,}/u', ' ', $suggest($r))) : '') : '')
+      . '<textarea name="reply" dir="auto" rows="4" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($val) . '</textarea>'
+      . ($isAr ? '<p class="muted small rsug"><b>Arabic review:</b> write in English, the customer gets your reply in Arabic.' . ($rep === '' ? ' This is a ready reply, change anything before you save.' : '') . '</p>'
+        : ($rep === '' ? '<p class="muted small rsug">Ready reply for this review. Change anything before you save.</p>' : ''))
       . '<div class="emo" aria-label="Add an emoji" onclick="var b=event.target.closest(\'button\');if(!b)return;var t=this.closest(\'form\').querySelector(\'textarea\'),s=t.selectionStart,e=t.selectionEnd,x=b.textContent;t.value=t.value.slice(0,s)+x+t.value.slice(e);t.focus();t.selectionStart=t.selectionEnd=s+x.length">'
       . implode('', array_map(fn($e) => '<button type="button">' . $e . '</button>', ['🙏', '❤️', '😊', '✨', '🎁', '👍', '😍', '🥰', '🌸', '💐', '🤗', '😢'])) . '</div>'
       . '<div class="rrb"><button class="btn sm">Save reply</button>' . ($rep !== '' ? '<button class="btn line sm danger" name="del" value="1" onclick="return confirm(\'Delete your reply?\')">Delete reply</button>' : '') . '</div></form></details>';
@@ -1820,6 +1868,7 @@ if (isset($_GET['reviews'])) {
     $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
     $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
     if ($vf !== '') $list = array_filter($list, fn($r) => !empty($r['verified']) === ($vf === '1'));
+    if ($rs) $list = array_filter($list, fn($r) => (int)$r['rating'] === $rs);   // one star rating only
     $tel = [];   // mobile and email of verified reviews, from their order
     $nos = array_values(array_unique(array_filter(array_column($list, 'order'))));
     if ($nos) { $s = $pdo->prepare('SELECT order_no, phone, email FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'); $s->execute($nos); foreach ($s as $o) $tel[$o['order_no']] = $o; }
@@ -1841,13 +1890,13 @@ if (isset($_GET['reviews'])) {
         . (!empty($tel[$r['order'] ?? '']['phone']) ? ' · ' . h($tel[$r['order']]['phone']) : '')
         . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' . (!empty($r['order']) ? ', ' . h($r['order']) : '') : 'not verified') . ' · ' . h(date('d M Y', strtotime($r['created']))) . '</div>'
         . '<p>' . hx($r['text'], true) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '') . $replyBox($r)
-        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '') . ($vf !== '' ? $hidden('vf', $vf) : '')
+        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '') . ($vf !== '' ? $hidden('vf', $vf) : '') . ($rs ? $hidden('rs', $rs) : '')
         . '<button class="btn sm' . ($off ? ' line' : ' danger') . '">' . ($off ? 'Put back on website' : 'Remove') . '</button></form></div></li>';
     }
     $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
-    $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []);
+    $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []) + ($rs ? ['rs' => $rs] : []);
     $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
-    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . '<select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>'
+    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . '<select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>' . $starSel
           . '<input name="rq" value="' . h($rq) . '" placeholder="Search words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
           . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . '</nav></form>'
           . '<div class="fill">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="card muted" style="margin:0">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>')
@@ -1895,6 +1944,7 @@ if (isset($_GET['reviews'])) {
     $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
     $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
     if ($vf !== '') $list = array_filter($list, fn($r) => !empty($r['verified']) === ($vf === '1'));
+    if ($rs) $list = array_filter($list, fn($r) => (int)$r['rating'] === $rs);   // one star rating only
     $tel = [];   // mobile and email of verified reviews, from their order
     $nos = array_values(array_unique(array_filter(array_column($list, 'order'))));
     if ($nos) { $s = $pdo->prepare('SELECT order_no, phone, email FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'); $s->execute($nos); foreach ($s as $o) $tel[$o['order_no']] = $o; }
@@ -1916,13 +1966,13 @@ if (isset($_GET['reviews'])) {
         . (!empty($tel[$r['order'] ?? '']['phone']) ? ' · ' . h($tel[$r['order']]['phone']) : '')
         . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' . (!empty($r['order']) ? ', ' . h($r['order']) : '') : 'not verified') . ' · ' . h(date('d M Y', strtotime($r['created']))) . '</div>'
         . '<p>' . hx($r['text'], true) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '') . $replyBox($r)
-        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '') . ($vf !== '' ? $hidden('vf', $vf) : '')
+        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '') . ($vf !== '' ? $hidden('vf', $vf) : '') . ($rs ? $hidden('rs', $rs) : '')
         . '<button class="btn sm' . ($off ? ' line' : ' danger') . '">' . ($off ? 'Put back on website' : 'Remove') . '</button></form></div></li>';
     }
     $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
-    $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []);
+    $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []) + ($rs ? ['rs' => $rs] : []);
     $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
-    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . ($rp !== '' ? '<input type="hidden" name="rp" value="' . h($rp) . '">' : '')
+    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . ($rp !== '' ? '<input type="hidden" name="rp" value="' . h($rp) . '">' : '') . $starSel
           . '<input name="rq" value="' . h($rq) . '" placeholder="Words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
           . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . '</nav></form>'
           . '<div class="rgrid"><section class="card rlist"><p class="rnote small muted">' . count($list) . ' review' . (count($list) === 1 ? '' : 's') . ($rp !== '' ? ' of ' . h($pname($rp)) . ' · <a href="' . h(self_url(['reviews' => 1] + ($rq !== '' ? ['rq' => $rq] : []) + ($vf !== '' ? ['vf' => $vf] : []))) . '">all products</a>' : '')
