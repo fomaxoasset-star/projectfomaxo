@@ -1786,9 +1786,25 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .form label.rw-add{display:flex;align-items:center;justify-content:center;width:78px;height:78px;border:1px dashed var(--line-2);font-size:10px;letter-spacing:.14em;text-align:center;color:var(--gold);cursor:pointer;line-height:1.4}
 .rw-hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
 .rw-ok{padding:14px 16px;border:1px solid var(--line-2);color:var(--gold-hi);font-size:14px;margin-bottom:18px}
-.rw-box{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:16px}
-.rw-box img{max-width:100%;max-height:88vh;object-fit:contain}
-.rw-box button{position:absolute;top:14px;right:16px;color:#fff;font-size:30px;line-height:1;padding:6px 10px}
+.rw-box{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;padding:24px 64px}
+.rw-bx{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);width:min(1040px,100%);max-height:calc(100vh - 48px);background:var(--panel);border:1px solid var(--line-2)}
+.rw-bx-img{background:#000;display:flex;align-items:center;justify-content:center;min-height:0}
+.rw-bx-img img{width:100%;height:100%;max-height:calc(100vh - 50px);object-fit:contain}
+.rw-bx-rv{padding:28px 26px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.rw-bx-rv .rw-name{font-size:14px}.rw-bx-rv .rw-loc{font-size:12.5px}
+.rw-bx-rv .rw-text{font-family:var(--sans);font-weight:300;font-size:19px;line-height:1.5;margin-top:6px}
+.rw-bx-n{margin-top:auto;padding-top:10px}
+.rw-box .rw-bx-x{position:absolute;top:12px;right:16px;color:#fff;font-size:32px;line-height:1;padding:6px 10px}
+.rw-box .rw-bx-p{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border:1px solid rgba(255,255,255,.35);color:#fff;font-size:28px;line-height:1;padding:0 0 4px;display:inline-flex;align-items:center;justify-content:center}
+.rw-box .rw-bx-p[data-go="-1"]{left:12px}.rw-box .rw-bx-p[data-go="1"]{right:12px}
+.rw-gal{display:flex;flex-direction:column;gap:10px;padding-bottom:16px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.rw-gal-h{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}.rw-gal-h span{color:var(--muted);letter-spacing:.1em}
+.rw-gal-row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.rw-gal-row::-webkit-scrollbar{display:none}
+.rw-gal-row button{flex:none;width:96px;height:96px;padding:0;border:1px solid var(--line);overflow:hidden;scroll-snap-align:start;transition:border-color .3s}
+.rw-gal-row button:hover{border-color:var(--gold)}
+.rw-gal-row img{width:100%;height:100%;object-fit:cover}
+@media(max-width:760px){.rw-box{padding:0;align-items:stretch}.rw-bx{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;max-height:none;height:100%;border:0}.rw-bx-img img{max-height:62vh}.rw-bx-rv{padding:18px 18px 24px;max-height:38vh}.rw-bx-rv .rw-text{font-size:17px}.rw-box .rw-bx-x{top:6px;right:8px;background:rgba(0,0,0,.55);border-radius:50%;width:40px;height:40px;padding:0 0 3px;font-size:28px}.rw-box .rw-bx-p{top:31vh;width:38px;height:38px;background:rgba(0,0,0,.45)}.rw-box .rw-bx-p[data-go="-1"]{left:8px}.rw-box .rw-bx-p[data-go="1"]{right:8px}.rw-gal-row button{width:84px;height:84px}}
 .rw-cta{margin-top:30px;padding:28px;border:1px solid var(--line-2);background:var(--panel);max-width:760px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
 .rw-cta h3{font-family:var(--serif);font-weight:400;font-size:26px}
 .rw-ord{margin-bottom:18px;letter-spacing:.12em}
@@ -3742,7 +3758,7 @@ function rwSection(p, d){   // d = null while the reviews are loading: the text 
     <button class="btn sm" id="rwWrite">${rwLinkFor(p.id) ? 'Review your purchase' : 'Write a review'}</button>
     <p class="rw-note"><span class="rw-ver">${RW_TICK}Verified Purchaser</span> badge appears only on reviews written from the review link after a paid order.</p></div>
   <div class="rw-main"><div id="rwFormBox" hidden></div>
-    ${n ? `<div class="rw-tools"><span class="small">${n} review${n > 1 ? 's' : ''}</span><label class="rw-sort"><span>Sort by</span><select id="rwSort" aria-label="Sort reviews">${[['new', 'Newest'], ['help', 'Most helpful'], ['high', 'Highest rating'], ['low', 'Lowest rating']].map(x => `<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label></div>
+    ${n ? `${rwGallery(d)}<div class="rw-tools"><span class="small">${n} review${n > 1 ? 's' : ''}</span><label class="rw-sort"><span>Sort by</span><select id="rwSort" aria-label="Sort reviews">${[['new', 'Newest'], ['help', 'Most helpful'], ['high', 'Highest rating'], ['low', 'Lowest rating']].map(x => `<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label></div>
       <div id="rwList"></div><div class="rw-pager" id="rwPager" hidden><button type="button" data-rwp="-1" aria-label="Previous reviews">‹</button><span class="rw-pg"></span><button type="button" data-rwp="1" aria-label="Next reviews">›</button></div>`
       : !d ? '' : `<div class="rv-empty" id="rwEmpty"><h3>Be the first to review ${esc(p.name)}</h3><p class="small">Worn ${esc(p.name)}? Share your experience with the FOMAXO community.</p></div>`}
   </div>`;
@@ -3848,10 +3864,27 @@ function rwBindForm(form, p, link, onDone){
     err.textContent = r.error || 'We could not post your review. Please check your connection and try again.'; err.hidden = false;
   };
 }
-function rwLightbox(src){
-  const b = document.createElement('div'); b.className = 'rw-box'; b.innerHTML = `<img src="${esc(src)}" alt="Customer photo"><button type="button" aria-label="Close">×</button>`;
-  const close = () => { b.remove(); removeEventListener('keydown', key); }, key = e => { if (e.key === 'Escape') close(); };
-  b.onclick = e => { if (e.target.tagName !== 'IMG') close(); }; addEventListener('keydown', key);
+/* every customer photo of this product, newest review first */
+const rwPhotoList = d => d.reviews.slice().sort((a, b) => b.date.localeCompare(a.date)).flatMap(r => (r.photos || []).map(src => ({src, r})));
+function rwGallery(d){
+  const L = rwPhotoList(d); if (!L.length) return '';
+  return `<div class="rw-gal"><span class="rw-gal-h">Customer photos <span>(${L.length})</span></span><div class="rw-gal-row">${L.map(x => `<button type="button" data-rwph="${esc(x.src)}" aria-label="Open photo from ${esc(capWords(x.r.name || ''))}"><img src="${esc(x.src)}" alt="Customer photo of ${esc(x.r.name)}" loading="lazy"></button>`).join('')}</div></div>`;
+}
+/* tap a customer photo: the photo large, with its review; ‹ › for the other photos */
+function rwLightbox(src, list){
+  list = list && list.length ? list : [{src, r: null}];
+  let i = Math.max(0, list.findIndex(x => x.src === src));
+  const b = document.createElement('div'); b.className = 'rw-box'; b.setAttribute('role', 'dialog'); b.setAttribute('aria-label', 'Customer photo');
+  const many = list.length > 1;
+  const show = () => { const x = list[i], r = x.r;
+    b.innerHTML = `<div class="rw-bx"><div class="rw-bx-img"><img src="${esc(x.src)}" alt="Customer photo"></div>${r ? `<div class="rw-bx-rv"><div class="rw-top"><span class="rw-who"><b class="rw-name">${esc(capWords(r.name || ''))}</b>${rwPlace(r)}</span><span class="small">${rwDate(r.date)}</span></div><div class="rw-meta">${rwStars(r.rating)}${r.verified ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}</div><p class="rw-text">“${esc(r.text)}”</p>${r.reply ? `<div class="rw-reply"><b>Reply from FOMAXO</b><p>${esc(r.reply)}</p></div>` : ''}${many ? `<p class="small rw-bx-n">${i + 1} / ${list.length}</p>` : ''}</div>` : ''}</div>
+      <button type="button" class="rw-bx-x" aria-label="Close">×</button>${many ? `<button type="button" class="rw-bx-p" data-go="-1" aria-label="Previous photo">‹</button><button type="button" class="rw-bx-p" data-go="1" aria-label="Next photo">›</button>` : ''}`; };
+  const go = n => { i = (i + n + list.length) % list.length; show(); };
+  const close = () => { b.remove(); removeEventListener('keydown', key); document.documentElement.style.overflow = ''; }, key = e => { if (e.key === 'Escape') close(); else if (many && e.key === 'ArrowLeft') go(-1); else if (many && e.key === 'ArrowRight') go(1); };
+  b.onclick = e => { const g = e.target.closest('[data-go]'); if (g) return go(+g.dataset.go); if (e.target.closest('.rw-bx-x') || e.target === b) close(); };
+  let sx = null; b.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, {passive: true});
+  b.addEventListener('touchend', e => { if (sx === null || !many) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); });
+  addEventListener('keydown', key); show(); document.documentElement.style.overflow = 'hidden';
   document.body.appendChild(b);
 }
 async function rwVote(btn, list){
@@ -3886,7 +3919,7 @@ async function rwLoad(p, msg){
   const L0 = $('#rwList', box); let sx = null, sy = 0;
   if (L0) { L0.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive: true});
     L0.addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) turn(dx < 0 ? 1 : -1); }); }
-  box.onclick = e => { const h = e.target.closest('[data-rwh]'); if (h && !h.disabled) rwVote(h, d.reviews); const ph = e.target.closest('[data-rwph]'); if (ph) rwLightbox(ph.dataset.rwph); };
+  box.onclick = e => { const h = e.target.closest('[data-rwh]'); if (h && !h.disabled) rwVote(h, d.reviews); const ph = e.target.closest('[data-rwph]'); if (ph) rwLightbox(ph.dataset.rwph, rwPhotoList(d)); };
   const fb = $('#rwFormBox', box);
   if (msg) { fb.hidden = false; fb.innerHTML = `<p class="rw-ok">${msg}</p>`; }
   $('#rwWrite', box).onclick = () => {
