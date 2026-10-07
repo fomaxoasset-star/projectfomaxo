@@ -1615,8 +1615,11 @@ html[data-mode="light"] .co-img i{color:#fffaf1}
 .co-free select{margin-top:5px;width:100%;max-width:200px;padding:6px 8px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font-size:14px}
 .co-free .price{font-family:var(--sans);font-size:12px;letter-spacing:.2em;color:#5fc48c}
 .co-sum .co-small{margin-top:12px}
-.co-rows{display:grid;gap:10px;padding-top:18px}
+.co-rows{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;padding-top:18px}   /* AJAY: every word and amount stays inside the summary box, even for big orders on phone */
 .co-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:14.5px;color:var(--muted)}
+.co-row:not(.co-save){flex-wrap:wrap;min-width:0}.co-row:not(.co-save)>.price{margin-left:auto;max-width:100%}html[lang=ar] .co-row:not(.co-save)>.price{margin-left:0;margin-right:auto}
+html[lang=ar] .co-img i{right:auto;left:-9px}
+@media(max-width:900px){html[lang=ar] .co-img i{left:-7px}}
 .co-row .price{font-size:17px}
 .co-row.disc,.co-row.disc .price,.co-row.co-save,.co-row.co-save .price{color:#5fc48c}
 .co-row.co-save{font-weight:500;letter-spacing:.04em;justify-content:flex-start;gap:6px;margin-top:8px;padding:9px 14px;border:1px solid currentColor;background:rgba(95,196,140,.08)}
