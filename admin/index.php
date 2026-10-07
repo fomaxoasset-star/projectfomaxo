@@ -103,6 +103,14 @@ tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgb
 /* order buttons: three equal square buttons (Paid or Refund, Mark delivered, Cancel order); small on laptop, big enough to tap on phone */
 .oacts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr) minmax(0,1fr);gap:6px;min-width:330px}.oacts form{display:flex}.oacts button{width:100%;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;letter-spacing:.02em;border:1px solid var(--line);background:transparent;color:var(--ink);text-align:center;overflow:hidden;text-overflow:ellipsis}.oacts .a-paid{border-color:var(--gold);color:var(--ink)}.oacts .a-refund,.oacts .a-cancel{border-color:var(--bad);color:var(--bad)}.oacts .a-delivered{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.oacts .a-paid.done{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.oacts .a-delivered.done{background:var(--ok);border-color:var(--ok);color:var(--gold-ink)}.oacts button:disabled{opacity:1;border-color:var(--line);color:var(--muted);background:transparent;opacity:.55;cursor:default}.oacts button.done:disabled{opacity:1}.oacts button:not(:disabled):hover{filter:brightness(1.12)}.stsel{font-weight:700;border-width:2px}.stsel.s-New,.stsel.s-Paid{border-color:var(--gold)}.stsel.s-Delivered{border-color:var(--ok)}.stsel.s-Cancelled,.stsel.s-Refunded{border-color:var(--bad)}/* a coloured edge on each order row (gold pending, green delivered, red cancelled/refunded) */
 .olist.acts tr.row>td:first-child{border-left:4px solid transparent}.olist.acts tr.st-Awaiting>td{opacity:.55}.olist.acts tr.st-New>td:first-child,.olist.acts tr.st-Paid>td:first-child{border-left-color:var(--gold)}.olist.acts tr.st-Delivered>td:first-child{border-left-color:var(--ok)}.olist.acts tr.st-Cancelled>td:first-child,.olist.acts tr.st-Refunded>td:first-child{border-left-color:var(--bad)}.olist.acts tr.st-Delivered{background:color-mix(in srgb,var(--ok) 7%,transparent)}@media (max-width:759px){.olist.acts tr.row>td:first-child{border-left:0}.olist.acts tr.row{border-left:4px solid transparent}.olist.acts tr.st-New,.olist.acts tr.st-Paid{border-left-color:var(--gold)}.olist.acts tr.st-Delivered{border-left-color:var(--ok)}.olist.acts tr.st-Cancelled,.olist.acts tr.st-Refunded{border-left-color:var(--bad)}}.order-acts{max-width:460px}.order-acts button{font-size:13px;padding:9px 10px}
+/* Orders list: one clean line per order (photo, number, date, customer, total, status, buttons) */
+.oclean td{vertical-align:middle;padding:9px 10px}.oclean tr.row{cursor:pointer}.oclean tr.row+tr.row td{border-top:1px solid var(--line)}
+.oclean .oi{white-space:nowrap}.oclean .oi,.oclean .onb{display:flex;align-items:center;gap:12px}.oclean .onb{flex-direction:column;align-items:flex-start;gap:1px}
+.oclean .oth{flex:none;width:40px;height:40px;border-radius:8px;overflow:hidden;background:var(--line)}.oclean .oth img{width:100%;height:100%;object-fit:cover;display:block}
+.oclean .onb a{font-weight:700;font-size:15px;color:var(--gold);text-decoration:none;letter-spacing:.01em}.oclean .onb .wait{margin:0;font-size:11.5px}
+.oclean .od{color:var(--muted);font-size:13px;white-space:nowrap}.oclean .oc b{font-weight:600;font-size:14.5px}.oclean .op{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap}
+.oclean .ot{text-align:right;white-space:nowrap}.oclean .ot b{display:block;font-weight:700;font-size:15px}.oclean .ot span{color:var(--muted);font-size:12px}
+.oclean .os{white-space:nowrap;text-align:right}.oclean .oa{width:1%}
 /* status tags in the same colours */
 .tags .tag{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px}.tags .s-New{color:var(--gold)}.tags .s-Delivered{color:#3f78b5}.tags .p-Paid{color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}.tags .p-Unpaid{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent);border-style:solid;border-color:color-mix(in srgb,var(--warn) 35%,transparent)}.tags .s-Refunded{border-style:dashed}@media (prefers-color-scheme:dark){.tags .s-Delivered{color:#7fb0ea}}@media (max-width:759px){.oacts{min-width:0;gap:8px}.oacts button{min-height:42px;font-size:12.5px;letter-spacing:0;padding:8px 4px}.olist td:nth-child(8) .oacts{margin-top:8px}}
 @media (max-width:759px){
@@ -305,7 +313,10 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .olist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"no tot" "date st" "cust pay" "items items";gap:1px 10px;padding:8px 12px;margin-bottom:8px}
   .olist td{padding:0}.olist td:nth-child(1){grid-area:no}.olist td:nth-child(2){grid-area:date;color:var(--muted);font-size:12.5px}.olist td:nth-child(3){grid-area:cust;font-size:13.5px}.olist td:nth-child(3) div{display:inline;margin-left:6px}
   .olist td:nth-child(4){grid-area:items;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);font-size:12px}.olist td:nth-child(5){grid-area:pay;text-align:right;font-size:13px}.olist td:nth-child(6){grid-area:st;text-align:right}.olist td:nth-child(7){grid-area:tot;font-weight:600}
-  .olist.acts tr.row{grid-template-areas:"no tot" "date st" "cust pay" "items items" "acts acts"}.olist td:nth-child(8){grid-area:acts}.olist td:nth-child(8) .oacts{margin-top:5px}
+  .olist.acts tr.row{grid-template-areas:"no tot" "date st" "cust pay" "items items" "acts acts"}
+  .olist.acts.oclean tr.row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"oi ot" "oc os" "od od" "oa oa";gap:4px 10px;padding:10px 12px}
+  .olist.oclean td{padding:0;border:0}.olist.oclean td.oi{grid-area:oi}.olist.oclean td.od{grid-area:od;font-size:12px}.olist.oclean td.oc{grid-area:oc;align-self:center}.olist.oclean td.ot{grid-area:ot}
+  .olist.oclean td.os{grid-area:os;align-self:center}.olist.oclean td.oa{grid-area:oa;width:auto}.olist.oclean td.oa .oacts{margin-top:4px}.olist.oclean tr.row+tr.row td{border-top:0}.oclean .oc b{font-size:14px}.olist td:nth-child(8){grid-area:acts}.olist td:nth-child(8) .oacts{margin-top:5px}
   .stock-help{font-size:12px}.lowlvl{padding:8px 12px}.lowlvl label{font-size:13px}.lowlvl input{padding:6px 9px;max-width:72px}
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
@@ -539,12 +550,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
 }
 
 /* an order is Pending until it is delivered; cash orders are Unpaid (status New) until marked paid or delivered */
-function fx_tags($o) {
+function fx_tags($o, $wait = true) {
   $st = $o['status'];
   $d = in_array($st, ['New', 'Paid'], true) ? '<span class="tag s-New">Pending</span>' : '<span class="tag s-' . h(strtok($st, ' ')) . '">' . h($st === 'Awaiting payment' ? 'Card not paid' : $st) . '</span>';
   $p = in_array($st, ['New', 'Paid', 'Delivered'], true) ? ($st === 'New' ? '<span class="tag p-Unpaid">Unpaid</span>' : '<span class="tag p-Paid">Paid</span>') : '';
   $days = in_array($st, ['New', 'Paid'], true) ? (int)floor((time() - strtotime($o['created_at'])) / 86400) : 0;
-  return '<span class="tags">' . $d . $p . '</span>' . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '');
+  return '<span class="tags">' . $d . $p . '</span>' . ($wait && $days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '');
 }
 /* Ordered → Paid → Delivered, with the date of each step (cancelled and refunded orders end in red) */
 function fx_tracker($o) {
@@ -2383,7 +2394,7 @@ $s = $pdo->prepare("SELECT COUNT(*) n,
                     COALESCE(SUM($real AND payment LIKE 'Card%'), 0) card_n, COALESCE(SUM(CASE WHEN $real AND payment LIKE 'Card%' THEN total END), 0) card_t FROM fx_orders $W");
 $s->execute($args); $sum = $s->fetch();
 $per = 100; $pg = max(1, (int)($_GET['p'] ?? 1));
-$s = $pdo->prepare("SELECT order_no, created_at, payment, status, total, name, phone, emirate, items, test, wa_optin FROM fx_orders $W ORDER BY created_at DESC, id DESC LIMIT $per OFFSET " . (($pg - 1) * $per));
+$s = $pdo->prepare("SELECT order_no, created_at, payment, status, total, name, phone, emirate, items, test, wa_optin, lines_json FROM fx_orders $W ORDER BY created_at DESC, id DESC LIMIT $per OFFSET " . (($pg - 1) * $per));
 $s->execute($args); $rows = $s->fetchAll();
 
 $sel = fn($name, $opts) => '<select id="' . $name . '" name="' . $name . '">' . implode('', array_map(fn($k, $v) => '<option value="' . h($k) . '"' . ((string)$f[$name] === (string)$k ? ' selected' : '') . '>' . h($v) . '</option>', array_keys($opts), $opts)) . '</select>';
@@ -2402,15 +2413,22 @@ foreach (['pending' => 'Pending', 'unpaid' => 'Unpaid cash', 'delivered' => 'Del
 }
 $tr = ''; $backQ = http_build_query(['orders' => 1] + array_filter($f, fn($v) => $v !== '') + ($pg > 1 ? ['p' => $pg] : []));
 fomaxo_en_many(array_column($rows, 'name'));   // Arabic names in English, all at once
+$pic = [];   // first photo of each product, from the Products tab
+try { foreach ($pdo->query('SELECT id, data FROM fx_products') as $r) { $d = json_decode($r['data'], true); if (!empty($d['images'][0])) $pic[$r['id']] = $d['images'][0]; } } catch (Throwable $e) {}
 foreach ($rows as $o) {
   $u = h(self_url(['o' => $o['order_no']]));
-  $tr .= '<tr class="row st-' . h(strtok($o['status'], ' ')) . '" onclick="location.href=\'' . $u . '\'"><td class="no" data-l=""><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['test'] ? ' <span class="muted small">test</span>' : '') . '</td>'
-       . '<td data-l="">' . h(date('d M Y, H:i', strtotime($o['created_at']))) . '</td>'
-       . '<td data-l="">' . hx($o['name']) . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . '<div class="muted small">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</div></td>'
-       . '<td class="small" data-l="">' . h(mb_strimwidth(str_replace(' | ', ', ', (string)$o['items']), 0, 90, '…')) . '</td>'
-       . '<td data-l="">' . h($o['payment'] === 'Cash on delivery' ? 'Cash' : 'Card') . '</td>'
-       . '<td data-l="">' . fx_tags($o) . '</td>'
-       . '<td class="num" data-l="">' . money($o['total']) . '</td><td data-l="">' . fx_order_buttons($o, $backQ) . '</td></tr>';
+  $img = '';   // photo of the first perfume in the order
+  foreach (json_decode((string)($o['lines_json'] ?? ''), true) ?: [] as $l) if (is_array($l) && empty($l['free']) && !empty($l['id'])) { $img = $pic[$l['id']] ?? ($CATALOG[$l['id']]['images'][0] ?? ''); break; }
+  $days = in_array($o['status'], ['New', 'Paid'], true) ? (int)floor((time() - strtotime($o['created_at'])) / 86400) : 0;
+  $tr .= '<tr class="row st-' . h(strtok($o['status'], ' ')) . '" onclick="location.href=\'' . $u . '\'">'
+       . '<td class="oi"><span class="oth">' . ($img ? '<img src="../assets/img/t/' . h($img) . '.webp" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'../assets/img/' . h($img) . '.webp\'">' : '') . '</span>'
+       . '<span class="onb"><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['test'] ? ' <span class="muted small">test</span>' : '')
+       . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '') . '</span></td>'
+       . '<td class="od">' . h(date('d M Y, H:i', strtotime($o['created_at']))) . '</td>'
+       . '<td class="oc" title="' . h(str_replace(' | ', ', ', (string)$o['items'])) . '"><b>' . hx($o['name']) . '</b>' . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . '<span class="op">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</span></td>'
+       . '<td class="ot"><b>' . money($o['total']) . '</b><span>' . h($o['payment'] === 'Cash on delivery' ? 'Cash on delivery' : 'Card') . '</span></td>'
+       . '<td class="os">' . fx_tags($o, false) . '</td>'
+       . '<td class="oa">' . fx_order_buttons($o, $backQ) . '</td></tr>';
 }
 $qs = ['orders' => 1] + array_filter($f, fn($v) => $v !== '');
 $pager = ($pg > 1 ? '<a class="btn line" href="' . h(self_url($qs + ['p' => $pg - 1])) . '">Newer</a>' : '')
@@ -2456,7 +2474,7 @@ page('Orders', '<div class="pagehead rg"><h1>Orders</h1><div class="arange"><div
         $e = (string)$r['emirate']; $on = $f['em'] !== '' && $f['em'] === $e; $q = $qs; unset($q['em'], $q['p']);
         return '<a class="em' . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['em' => $e])) . '">' . h($e !== '' ? $e : 'No emirate') . ' <b>' . (int)$r['n'] . '</b></a>';
       }, $byEmirate)) . '</nav>' : '')
-  . '<div class="fill">' . ($rows ? '<table class="olist acts"><thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Pay</th><th>Status</th><th class="num">Total</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
+  . '<div class="fill">' . ($rows ? '<table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
   . $logCard
