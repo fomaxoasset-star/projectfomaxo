@@ -566,6 +566,7 @@
 "Full name": "الاسم الكامل",
 "Mobile": "رقم الجوال",
 "(optional)": "(اختياري)",
+"Send me offers and updates on WhatsApp": "أرسلوا لي العروض والتحديثات عبر واتساب",
 "Emirate": "الإمارة",
 "Choose your emirate": "اختر إمارتك",
 "Abu Dhabi": "أبوظبي",

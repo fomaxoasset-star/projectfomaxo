@@ -107,7 +107,7 @@ function fomaxo_customer($in) {
   $caps = fn($v) => preg_replace_callback('/(^|[\s\-\/(])(\p{Ll})/u', fn($m) => $m[1] . mb_strtoupper($m[2]), $v);
   $out = ['name' => $t('name', 80), 'phone' => $t('phone', 25), 'email' => $t('email', 120), 'emirate' => $t('emirate', 30),
           'building' => $t('building', 40), 'room' => $t('room', 20), 'street' => $t('street', 100), 'area' => $t('area', 80),
-          'address' => $t('address', 300), 'note' => $t('note', 300)];
+          'address' => $t('address', 300), 'note' => $t('note', 300), 'wa' => !empty($c['wa'])];   // wa: ticked "Send me offers and updates on WhatsApp"
   foreach (['name', 'building', 'room', 'street', 'area', 'address', 'note'] as $k) $out[$k] = $caps($out[$k]);
   if (mb_strlen($out['name']) < 2) return ['error' => 'Please enter your full name.'];
   if (!fomaxo_phone_ok($out['phone'])) return ['error' => 'Please enter a valid mobile number.'];
