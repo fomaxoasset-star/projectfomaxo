@@ -18,6 +18,13 @@ RewriteRule ^fomaxo-([A-Za-z0-9-]+)$ product.php?p=$1 [L,QSA]
   Require all denied
 </FilesMatch>
 
+# keep the shop's own working files private: setup notes (.md, .txt except robots.txt), old homepage copies
+# (index-2.html, index-3.html), the product data file, example settings, the -lib.php helpers and hidden dot-files.
+# The site and admin read these on the server, never through the browser, so nothing visible changes.
+<FilesMatch "(?i)(^\.|\.(md|bak|old|orig|sql|log|zip|sh|ini|json)$|^(?!robots\.txt$).*\.txt$|^index-\d+\.html?$|\.example\.php$|-lib\.php$)">
+  Require all denied
+</FilesMatch>
+
 # faster loading: cache photos for 30 days
 <IfModule mod_expires.c>
   ExpiresActive On
