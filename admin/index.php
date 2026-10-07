@@ -1809,8 +1809,10 @@ if (isset($_GET['reviews'])) {
     $k = $ar ? 1 : 0; $good = []; $bad = [];
     foreach ($topics as $id => $t) if ($has($t[0])) { if ($t[2] && $t[3] !== '' && $has($t[3])) $bad[] = $t[2][$k]; else $good[] = $t[1][$k]; }
     $good = array_slice($good, 0, 2);
+    $late = in_array($topics['deliv'][2][$k], $bad, true);   // late delivery: say we checked, the delay was real, and offer a coupon
     if ($ar) {
       $hi = $nm !== '' ? $nm : 'عزيزنا';
+      if ($late) return ($st >= 4 ? 'شكراً جزيلاً ' . $hi . '، ونعتذر عن تأخر التوصيل. لقد راجعنا طلبك وتأكدنا من التأخير، و' : 'نعتذر منك ' . $hi . '، لقد راجعنا طلبك وتأكدنا أن التوصيل تأخر فعلاً. ') . 'سترسل لك FOMAXO كوبون خصم لطلبك القادم تعويضاً عن ذلك 🙏';
       $gift = 'يسعد FOMAXO أن تهديك هدية صغيرة مع طلبك القادم وسنتواصل معك لترتيبها 🙏';
       if ($st >= 4) return ($st === 5 ? 'شكراً جزيلاً ' : 'شكراً ') . $hi . '! ' . ($fav ? 'يسعد FOMAXO أن ' . $pr . ' أصبح المفضل لديك' : 'يسعد FOMAXO أن ' . $pr . ' أعجبك')
         . ($good ? '، خاصة ' . implode(' و', $good) : '') . ($bad ? '، وستساعد ملاحظتك FOMAXO على أن يصبح أفضل' : '') . ' 🙏';
@@ -1818,6 +1820,7 @@ if (isset($_GET['reviews'])) {
       return ($st === 3 ? 'شكراً على رأيك الصريح ' . $hi . '، ونعتذر لأنه ' : 'نعتذر منك ' . $hi . ' لأنه ') . $why . '. ' . $gift;
     }
     $hi = $nm !== '' ? ', ' . $nm : '';
+    if ($late) return ($st >= 4 ? 'Thank you so much' . $hi . ', and we apologize that your delivery was late. We checked your order, and FOMAXO' : 'We sincerely apologize' . $hi . '. We checked your order and your delivery was indeed late, so FOMAXO') . ' will send you a coupon for your next order to make it up to you 🙏';
     $gift = "FOMAXO would love to send you a small gift with your next order and will be in touch to arrange it 🙏";
     if ($st >= 4) return ($st === 5 ? 'Thank you so much' : 'Thank you') . $hi . '! ' . ($fav ? 'FOMAXO is so glad ' . $pr . ' is your favourite' : 'FOMAXO is thrilled you love ' . $pr)
       . ($good ? ', especially ' . implode(' and ', $good) : '') . ($bad ? ', and your note will help us make it even better' : '') . ' 🙏';
