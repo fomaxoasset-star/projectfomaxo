@@ -2406,7 +2406,7 @@ function promoMaybe(){
     try { sessionStorage.setItem('fomaxo_promo', '1'); } catch(e) {}
     const u = ['Days', 'Hours', 'Min', 'Sec'].map(l => `<span><b data-pm="${l}">00</b><small>${l}</small></span>`).join('');
     promoOpen(`<div class="promo${al ? ' al' : ''}" role="dialog" aria-modal="true" aria-label="Limited time offer"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
-      <span class="pm-eye">${esc(SALE_WORDS.title || 'Limited time offer')}</span><b class="pm-big">${pct}<span class="pm-pc">%</span> OFF</b><p class="pm-sub">${esc(SALE_WORDS.sub || 'on selected fragrances')}</p>
+      <span class="pm-eye">${esc(SALE_WORDS.title || 'Limited time offer')}</span><b class="pm-big">${pct}<span class="pm-pc">%</span> OFF</b><p class="pm-sub">${esc((SALE_WORDS.sub || 'on selected fragrances').toUpperCase())}</p>
       ${picked.length ? `<div class="pm-items">${picked.map(p => { const z = p.sizes.reduce((a, b) => off(p, b) > off(p, a) ? b : a, p.sizes[0]);
         return `<a class="pm-item" href="#/product/${p.id}" data-pm-close>${p.images && p.images[0] ? `<img src="${SM(p.images[0])}" alt="">` : ''}<b>${esc(p.name)}</b><span><s>${moneyHTML(p.compareAt[z])}</s> ${moneyHTML(p.prices[z])}</span></a>`; }).join('')}</div>` : ''}
       ${al ? '' : `<div class="pm-cd">${u}</div>`}<p class="pm-hurry">HURRY UP!!!</p>
@@ -4224,5 +4224,5 @@ renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); p
 (function(){var ar=document.documentElement.lang==="ar";
 document.querySelectorAll(".lang-sw").forEach(function(b){if(ar){b.textContent="EN";b.lang="en";b.setAttribute("aria-label","English");b.title="English"}
 b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href)location.reload();else location.replace(u)}});
-if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=2";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
+if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=3";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
 </body></html>

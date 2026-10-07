@@ -49,6 +49,7 @@
 "Special offer": "عرض خاص",
 "New launch offer": "عرض الإطلاق الجديد",
 "on selected products": "على منتجات مختارة",
+"on selected personal care": "على منتجات عناية شخصية مختارة",
 "on all fragrances": "على جميع العطور",
 "on perfumes": "على العطور",
 "on gift sets": "على أطقم الهدايا",
@@ -761,6 +762,7 @@
   var KEEP = /^(?:[\d\s.,:;·×+%()\/\-–—|•✓✕*#№AED]|ml|FOMAXO|™)*$/;   // numbers, prices, sizes: leave as they are
   function tr(s){
     if (Object.prototype.hasOwnProperty.call(D, s)) return D[s];
+    if (/[A-Z]/.test(s) && s === s.toUpperCase() && Object.prototype.hasOwnProperty.call(D, s.toLowerCase())) return D[s.toLowerCase()];   // words typed in CAPITALS
     for (var i = 0; i < R.length; i++){ var m = s.match(R[i][0]); if (m) return R[i][1](m); }
     if (s.indexOf(' · ') > 0){   // "Top · Heart" style lines: translate each part when all parts are known
       var parts = s.split(' · '), ok = true, out = parts.map(function(p){ var t = tr(p); if (t == null){ if (KEEP.test(p)) return p; ok = false; } return t == null ? p : t; });
