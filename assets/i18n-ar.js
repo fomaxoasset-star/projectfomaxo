@@ -762,8 +762,6 @@
     [/^(\d+) items? (\d+)% off$/, function(m){ return cnt(m[1], 'قطعة', 'قطعتان', 'قطع', 'قطعة') + ' خصم ' + m[2] + '%'; }],
     [/^(\d+) vials$/, function(m){ return m[1] + ' قوارير'; }],
     [/^For orders above (AED [\d,.]+) · (AED [\d,.]+) fee$/, function(m){ return 'للطلبات فوق ' + m[1] + ' · رسوم ' + m[2]; }],
-    [/^Cash on delivery is for orders under (AED [\d,.]+)\. Please pay by card\.$/, function(m){ return 'الدفع عند الاستلام متاح للطلبات أقل من ' + m[1] + '. يرجى الدفع بالبطاقة.'; }],
-    [/^Cash on delivery is for orders (under|above) (AED [\d,.]+)$/, function(m){ return 'الدفع عند الاستلام متاح للطلبات ' + (m[1] === 'under' ? 'أقل من ' : 'فوق ') + m[2]; }],
     [/^Add (AED [\d,.]+) more to activate COD$/, function(m){ return 'أضف ' + m[1] + ' لتفعيل الدفع عند الاستلام'; }],
     [/^Minimum order (AED [\d,.]+) · add (AED [\d,.]+) more$/, function(m){ return 'الحد الأدنى للطلب ' + m[1] + ' · أضف ' + m[2]; }],
     [/^Add (AED [\d,.]+) more to use this code \(for orders of (AED [\d,.]+) or more\)\.$/, function(m){ return 'أضف ' + m[1] + ' لاستخدام هذا الرمز (للطلبات بقيمة ' + m[2] + ' أو أكثر).'; }],
