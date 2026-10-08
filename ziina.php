@@ -114,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
     /* the paid order is recorded: show the shopper their confirmation now, the emails go out right after */
     if (!empty($rec['review'])) $out['review'] = $rec['review'];
     fomaxo_reply_now($out); $replied = true;
+    require_once __DIR__ . '/ads-server-lib.php'; fomaxo_ads_server_buy($rec['no']);   // the purchase also goes to Meta / TikTok ads from here (admin → Settings → Ads tracking)
     $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com'));
     $from = "FOMAXO <mail@fomaxo.com>";
     fomaxo_en_many([$c['name'], $c['address'], $c['note']]);   // Arabic typed by the customer: English in this email and in admin

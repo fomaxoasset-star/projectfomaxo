@@ -330,7 +330,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
 .mtop .mmin input{text-align:center}.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
-.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
+.rfauto{padding:8px 14px;margin:0 0 8px}.rfauto summary{cursor:pointer;font-weight:600}.rfauto summary>span:first-child{margin-right:6px}.rfauto label{margin:8px 0 3px}.rfsw{display:inline-flex;margin:10px 0 0;border:1px solid var(--gold);border-radius:999px;overflow:hidden}.rfsw label{margin:0!important;cursor:pointer}.rfsw input{position:absolute;opacity:0;pointer-events:none}.rfsw span{display:block;padding:6px 22px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rfsw input:checked+span{background:var(--gold);color:var(--gold-ink)}.rflist .rd{white-space:nowrap}.rflist .ra{text-align:right;white-space:nowrap}.rstop{font-size:12px;font-weight:600;color:var(--bad);margin-right:6px}.wastop{display:inline;margin:0 0 0 6px}.btn.xs{padding:2px 9px;font-size:10.5px}.rfhook{margin:8px 0 0}.rfhook p{margin:4px 0 0}.rfhook .sel{user-select:all;word-break:break-all}.rsent{font-size:12px;font-weight:600;color:var(--ok);margin-right:6px}.rfstats{grid-template-columns:repeat(2,minmax(0,180px))}.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
 /* Orders like fomaxo.in: coloured top edge on the four boxes, step boxes label left / count right, coupon row, one filter line */
 .ost .stat{border-top:3px solid var(--gold)}.ost .stat.onl{border-top-color:var(--ok)}
 .cpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
@@ -349,6 +349,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
 .ofl .acts{flex-wrap:nowrap}}
 @media (max-width:759px){.mmin{flex:1 1 100%;padding:7px 10px;gap:6px}.mmin label,.mmin span{font-size:12.5px}.mmin input{width:58px;padding:5px 6px}.mmin .btn{margin-left:auto}.mq{flex-basis:100%}
   .mlist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"mn ms" "ma mo" "md mv";gap:2px 10px;padding:8px 12px;margin-bottom:8px}.mlist td{padding:0}
+  .rflist tr.row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"rn ra" "rd ra";align-items:center}.rflist .rn{grid-area:rn}.rflist .rd{grid-area:rd;white-space:normal}.rflist .rd div{display:inline;margin-left:4px}.rflist .ra{grid-area:ra;display:flex;flex-direction:column;align-items:flex-end;gap:3px}.rsent{margin:0}.rfstats{grid-template-columns:1fr 1fr}
   .mlist .mn{grid-area:mn}.mlist .ms{grid-area:ms}.mlist .ma{grid-area:ma;color:var(--muted)}.mlist .ma div{display:inline;margin-left:4px}.mlist .ma div::before{content:"· "}.mlist .mo,.mlist .mv{align-self:end}.mlist .mo{grid-area:mo}.mlist .mo b{font-weight:600}.mlist .md{grid-area:md;font-size:11.5px}.mlist .mv{grid-area:mv;font-size:12px;color:var(--muted)}.mlist td.mo span,.mlist td.mv span{display:inline}
   .mcard{padding:8px 12px}}
 tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:center}.tsearch{flex:1 1 auto;max-width:320px;margin-left:auto;padding:7px 11px}.pagehead .tsearch+.btn{flex:none}.mmin{flex-wrap:wrap}.mmin input.amt{width:96px}
@@ -356,7 +357,8 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .savebar{display:flex;align-items:center;gap:14px}.savebar .stock-help{flex:1;margin:0;font-size:12px;line-height:1.45}.savebar .btn{flex:none}
 .rseg{flex-wrap:wrap}.stars{color:var(--gold);letter-spacing:.06em;white-space:nowrap}.stars i{font-style:normal;color:var(--line)}
 .rfilter .vcount{margin:0}.rfilter .vcount .em{font-size:12.5px;padding:4px 11px}.rfilter{margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rfilter select{max-width:240px;width:auto}.rfilter input{flex:1 1 220px;min-width:0;max-width:420px;padding:7px 10px}.rvlist{list-style:none;margin:0;padding:0}.rv{padding:10px 14px;border-bottom:1px solid var(--line);display:grid;gap:3px}.rv:last-child{border-bottom:0}.rv.off{opacity:.55}
-.emo{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.emo button{font:18px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 6px;cursor:pointer;min-width:34px}.emo button:hover{border-color:var(--gold)}.rrep{border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent);padding:6px 10px;border-radius:0 6px 6px 0;margin:2px 0 4px}.rrep b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rrep p{margin:2px 0 0;font-size:13px}.rrep.off{opacity:.6;border-left-color:var(--muted)}.rrep b span{color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500}.btn.rdel{color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}.racts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}.racts>form{margin:0 !important;display:flex}.racts .btn.sm,.racts summary.btn{margin:0 !important;padding:7px 12px;line-height:1.2;box-sizing:border-box;height:32px;display:inline-flex;align-items:center}.rrf{margin:0}.rrf[open]{flex:1 1 100%;order:2}.rrf>summary{list-style:none;display:inline-block;cursor:pointer}.rrf>summary::-webkit-details-marker{display:none}.rrf[open]>summary{display:none}.rrf textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}.rrb{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.emo{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.emo button{font:18px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 6px;cursor:pointer;min-width:34px}.emo button:hover{border-color:var(--gold)}.rrep{border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent);padding:6px 10px;border-radius:0 6px 6px 0;margin:2px 0 4px}.rrep b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rrep p{margin:2px 0 0;font-size:13px}.rrep.off{opacity:.6;border-left-color:var(--muted)}.rrep b span{color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500}.btn.rdel{color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}.racts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}
+/* Reviews like fomaxo.in: photo, product, stars and a Verified purchaser pill; the text big; name · mobile · date · Customer page small below */@media (max-width:759px){.rmob .ems.vcount{flex-wrap:wrap!important;overflow:visible!important;flex:1 1 100%;min-width:0;max-width:100%}}.rv .rh{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.rthumb{flex:none;width:26px;height:26px;border-radius:5px;overflow:hidden;background:var(--line);display:inline-block}.rthumb img{width:100%;height:100%;object-fit:cover;display:block}.vpill{border:1px solid color-mix(in srgb,var(--ok) 60%,transparent);color:var(--ok);border-radius:999px;padding:1px 9px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.vpill.no{border-color:var(--line);color:var(--muted)}.rv .rtx{font-size:15px;margin:6px 0 4px;line-height:1.45}.rv .rmeta{margin:0 0 8px}.rv .rmeta a{color:inherit;text-decoration:underline}.rv .rdel{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 55%,transparent)}.rprodc .ch{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.rprod td.pn{display:flex;align-items:center;gap:10px}.rprod td.pn .rthumb{width:34px;height:34px;border-radius:7px}.rprod td.pn>span{display:flex;flex-direction:column;min-width:0}.rprod td.pn .small{font-size:12px}.rppl tr.trv a{color:var(--gold);text-decoration:underline}.rppl tr.trv td.num{align-self:center;white-space:nowrap}.racts>form{margin:0 !important;display:flex}.racts .btn.sm,.racts summary.btn{margin:0 !important;padding:7px 12px;line-height:1.2;box-sizing:border-box;height:32px;display:inline-flex;align-items:center}.rrf{margin:0}.rbox{display:none;margin-top:8px}.racts:has(.rrf[open])+.rbox{display:block}.rrf[open]>summary.btn{background:var(--gold);color:#000;box-shadow:none}.rrf>summary{list-style:none;display:inline-block;cursor:pointer}.rrf>summary::-webkit-details-marker{display:none}.rrf textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}.rrb{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 
 .rv p{margin:2px 0;white-space:normal}.rv form{margin:4px 0 0}.rph{display:flex;gap:6px}.rph img{width:56px;height:56px;object-fit:cover;border-radius:6px;display:block}
 .btn.danger{background:#a33a2c;border-color:#a33a2c;color:#fff}.dist span{margin-right:8px;white-space:nowrap}.dist b{color:var(--ink);font-weight:600}.rprod .ph,.rppl .ph{display:none}
@@ -376,8 +378,8 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .rdesk .rfilter input{max-width:none}.rmob,.rdesk{display:flex;flex-direction:column}.rmob>*,.rdesk>*{flex:none;min-width:0}
 .rmob .rseg{display:flex;justify-content:center}.rmob .rseg a{flex:1 1 0;text-align:center}
 @media (min-width:760px){.rmob{display:none!important}}@media (max-width:759px){.rdesk{display:none!important}}
-.stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"a c e" "b d e";align-content:start;align-items:stretch}.settings .card{padding:12px 14px;margin:0}.settings [data-t="1"]{grid-area:a}.settings [data-t="2"]{grid-area:b}.settings [data-t="3"]{grid-area:c}.settings [data-t="4"]{grid-area:d}.settings [data-t="5"]{grid-area:e}.settings h2{font-size:14px;margin:0 0 4px}.settings label{margin:7px 0 3px;font-size:11px}.settings input{padding:6px 10px}.settings .shelp{margin:4px 0 0;font-size:12px;line-height:1.4}.settings .shelp.stop{margin:0 0 2px}.settings .sbtn{margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap}.settings .btn{padding:7px 14px}.srow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 8px}.srow.two{grid-template-columns:1fr 1fr}@media (max-width:1099px) and (min-width:760px){.settings{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"a e" "b e" "c d"}}@media (max-width:759px){.srow.two{grid-template-columns:1fr}}main.fit>.fitbox{flex:1 1 auto;min-height:0}.pform.fitbox{display:grid;gap:10px 14px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"det siz" "det pho" "det save"}.pform .pdet{grid-area:det;margin:0;display:flex;flex-direction:column;padding:12px 16px}.pform .psz{grid-area:siz}.pform .pph{grid-area:pho}.pform .psave{grid-area:save;padding:0}.pform .pdet label{margin:7px 0 3px}.pform .pdet label.chk{margin:0 0 2px}.pform .pdet input,.pform .pdet select{padding:6px 10px}.pform .pdet textarea{flex:1 1 auto;min-height:90px;resize:none}.pside{display:flex;flex-direction:column;min-height:0}.pside>h2{margin:0 0 2px;font-size:15px}.pside>p{margin:0 0 6px}.pside>.card{margin:0;overflow:auto;min-height:0;padding:10px 14px}.pform .szrow{padding:2px 0 8px;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 8px}.pform .szrow .opt{display:none}.pform .szrow label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pform .szrow label{margin:4px 0 3px}.pform .szrow input{padding:6px 10px}.pform .phs{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}.pform .pph .card>label{margin-top:6px}.pform .pph .card>p:last-child{margin:4px 0 0}@media (min-width:760px){.pnotes{grid-template-columns:repeat(4,minmax(0,1fr))}}@media (max-width:759px){.pform.fitbox{display:flex}.pform .pdet{display:none}.ptw[data-t="1"]>.pdet{display:flex}.pform .psave .btn{width:100%}}.odhead{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap}.odhead h1{margin:0 0 4px}.odgrid{display:grid;gap:12px;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.9fr);align-items:start;max-height:100%}.odgrid>.card{padding:12px 16px;max-height:100%}.odgrid h2{font-size:15px;margin-bottom:6px}.odgrid dl{margin-top:10px!important}.odgrid dl{gap:4px 12px}.odgrid .items{margin:0}.odgrid textarea{min-height:90px}.fitbox>*{min-height:0;overflow:auto}.ptabs{display:none}@media (max-width:759px){main.fit:has(>.settings)>h1{display:none}.ptabs{display:flex;flex:none;gap:4px;margin:0 0 10px;border:1px solid var(--line);border-radius:9px;padding:3px;background:var(--panel)}.ptabs button{flex:1 1 0;min-width:0;font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);background:none;border:0;border-radius:6px;padding:8px 2px;cursor:pointer}.ptabs button.on{background:var(--gold);color:var(--gold-ink)}.fitbox.ptw{display:flex;flex-direction:column;gap:8px}.fitbox.ptw>*{flex:0 1 auto;min-height:0;margin:0}.ptw:not([data-t="1"])>[data-t="1"],.ptw:not([data-t="2"])>[data-t="2"],.ptw:not([data-t="3"])>[data-t="3"],.ptw:not([data-t="4"])>[data-t="4"],.ptw:not([data-t="5"])>[data-t="5"],.ptw:not([data-t="6"])>[data-t="6"]{display:none!important}}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}
-.ads .ads-l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:8px}.ads .ads-l small{text-transform:none;letter-spacing:0;font-size:12px;white-space:nowrap}.ads-in{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
+.stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"a c e" "f c e" "b d e";align-content:start;align-items:stretch}.settings .card{padding:12px 14px;margin:0}.settings [data-t="1"]{grid-area:a}.settings [data-t="2"]{grid-area:b}.settings [data-t="3"]{grid-area:c}.settings [data-t="4"]{grid-area:d}.settings [data-t="5"]{grid-area:e}.settings [data-t="6"]{grid-area:f}@media (min-width:1100px){.settings [data-t="5"]{contain:size}}.spages .pgs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px;margin-top:4px}.ptabs:has(>[data-t="6"]) button{flex:1 1 auto;padding:8px 3px}.spages h2 small{font:500 11.5px/1.3 Manrope,system-ui,sans-serif;letter-spacing:0;text-transform:none;margin-left:6px}.spages label.pg{margin:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);cursor:pointer;position:relative}.spages label.pg>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.spages label.pg input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}.spages .sw{flex:none;position:relative;width:52px;height:22px;border-radius:999px;border:1px solid var(--line);background:var(--bg);transition:background .2s}.spages .sw::before{content:"OFF";position:absolute;right:7px;top:50%;transform:translateY(-50%);font:700 9.5px/1 Manrope,system-ui,sans-serif;letter-spacing:.06em;color:var(--muted);font-style:normal}.spages .sw::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:left .2s}.spages input:checked+.sw{background:var(--gold);border-color:var(--gold)}.spages input:checked+.sw::before{content:"ON";right:auto;left:8px;color:var(--gold-ink)}.spages input:checked+.sw::after{left:32px;background:var(--gold-ink)}.spages input:focus-visible+.sw{outline:2px solid var(--gold);outline-offset:2px}.spages label.pg:has(input:not(:checked))>span{color:var(--muted)}@media (min-width:760px){main.fit:has(>.settings)>h1{display:none}}@media (max-width:759px){.spages .pgs{grid-template-columns:1fr}.spages label.pg{padding:9px 0}}.settings h2{font-size:14px;margin:0 0 4px}.settings label{margin:7px 0 3px;font-size:11px}.settings input{padding:6px 10px}.settings .shelp{margin:4px 0 0;font-size:12px;line-height:1.4}.settings .shelp.stop{margin:0 0 2px}.settings .sbtn{margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap}.settings .btn{padding:7px 14px}.srow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 8px}.srow.two{grid-template-columns:1fr 1fr}@media (max-width:1099px) and (min-width:760px){.settings{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"a e" "f e" "b e" "c d"}}@media (max-width:759px){.srow.two{grid-template-columns:1fr}}main.fit>.fitbox{flex:1 1 auto;min-height:0}.pform.fitbox{display:grid;gap:10px 14px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"det siz" "det pho" "det save"}.pform .pdet{grid-area:det;margin:0;display:flex;flex-direction:column;padding:12px 16px}.pform .psz{grid-area:siz}.pform .pph{grid-area:pho}.pform .psave{grid-area:save;padding:0}.pform .pdet label{margin:7px 0 3px}.pform .pdet label.chk{margin:0 0 2px}.pform .pdet input,.pform .pdet select{padding:6px 10px}.pform .pdet textarea{flex:1 1 auto;min-height:90px;resize:none}.pside{display:flex;flex-direction:column;min-height:0}.pside>h2{margin:0 0 2px;font-size:15px}.pside>p{margin:0 0 6px}.pside>.card{margin:0;overflow:auto;min-height:0;padding:10px 14px}.pform .szrow{padding:2px 0 8px;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 8px}.pform .szrow .opt{display:none}.pform .szrow label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pform .szrow label{margin:4px 0 3px}.pform .szrow input{padding:6px 10px}.pform .phs{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}.pform .pph .card>label{margin-top:6px}.pform .pph .card>p:last-child{margin:4px 0 0}@media (min-width:760px){.pnotes{grid-template-columns:repeat(4,minmax(0,1fr))}}@media (max-width:759px){.pform.fitbox{display:flex}.pform .pdet{display:none}.ptw[data-t="1"]>.pdet{display:flex}.pform .psave .btn{width:100%}}.odhead{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap}.odhead h1{margin:0 0 4px}.odgrid{display:grid;gap:12px;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.9fr);align-items:start;max-height:100%}.odgrid>.card{padding:12px 16px;max-height:100%}.odgrid h2{font-size:15px;margin-bottom:6px}.odgrid dl{margin-top:10px!important}.odgrid dl{gap:4px 12px}.odgrid .items{margin:0}.odgrid textarea{min-height:90px}.fitbox>*{min-height:0;overflow:auto}.ptabs{display:none}@media (max-width:759px){main.fit:has(>.settings)>h1{display:none}.ptabs{display:flex;flex:none;gap:4px;margin:0 0 10px;border:1px solid var(--line);border-radius:9px;padding:3px;background:var(--panel)}.ptabs button{flex:1 1 0;min-width:0;font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);background:none;border:0;border-radius:6px;padding:8px 2px;cursor:pointer}.ptabs button.on{background:var(--gold);color:var(--gold-ink)}.fitbox.ptw{display:flex;flex-direction:column;gap:8px}.fitbox.ptw>*{flex:0 1 auto;min-height:0;margin:0}.ptw:not([data-t="1"])>[data-t="1"],.ptw:not([data-t="2"])>[data-t="2"],.ptw:not([data-t="3"])>[data-t="3"],.ptw:not([data-t="4"])>[data-t="4"],.ptw:not([data-t="5"])>[data-t="5"],.ptw:not([data-t="6"])>[data-t="6"]{display:none!important}}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}
+.adpair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}@media (max-width:760px){.adpair{grid-template-columns:1fr}}.ads .ads-l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:8px}.ads .ads-l small{text-transform:none;letter-spacing:0;font-size:12px;white-space:nowrap}.ads-in{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
@@ -1175,10 +1177,20 @@ if (isset($_GET['settings'])) {
       if ($ads['tiktok'] !== '' && !preg_match('/^[A-Z0-9]{10,30}$/', $ads['tiktok'])) $bad[] = 'TikTok Pixel ID';
       if ($ads['google'] !== '' && !preg_match('/^(G|AW|GT)-[A-Z0-9]{4,20}$/', $ads['google'])) $bad[] = 'Google tag ID (starts with G- or AW-)';
       if ($ads['gads'] !== '' && !preg_match('/^AW-\d{4,20}\/[A-Za-z0-9_-]{4,40}$/', $ads['gads'])) $bad[] = 'Google Ads purchase (AW-…/…)';
+      $tk = [];   // access tokens: an empty box keeps the saved one
+      foreach (['meta', 'tiktok'] as $k) if (($t = $v('ads_' . $k . '_token')) !== '') { if (preg_match('/^[A-Za-z0-9_\-]{20,600}$/', $t)) $tk[$k] = $t; else $bad[] = ucfirst($k === 'tiktok' ? 'TikTok' : 'Meta') . ' access token'; }
       if ($bad) { flash('Please check the ' . implode(', ', $bad) . '.'); go(['settings' => 1]); }
+      require_once dirname(__DIR__) . '/ads-server-lib.php';
+      if ($tk && !fomaxo_ads_tokens_save($tk)) { flash('The access token could not be saved. Please try again.'); go(['settings' => 1]); }
       if ($ads['google'] === '' && $ads['gads'] !== '') $ads['google'] = explode('/', $ads['gads'])[0];
       fomaxo_setting($pdo, 'ads', json_encode($ads));
       flash('Ads tracking saved. It shows on the website within a minute.', true); go(['settings' => 1]);
+    }
+    if (isset($_POST['pages_save'])) {   // site pages: ticked = shown on the website; unticked = its links go and its address opens Home
+      $show = array_keys((array)($_POST['pg'] ?? []));
+      $hide = array_values(array_diff(array_keys(FX_SITE_PAGES), $show));
+      fomaxo_setting($pdo, 'hide_pages', json_encode($hide));
+      flash(($hide ? 'Hidden: ' . implode(', ', array_map(fn($k) => FX_SITE_PAGES[$k], $hide)) . '. ' : 'All pages are shown. ') . 'It shows on the website within a minute.', true); go(['settings' => 1]);
     }
     if (isset($_POST['cod_save'])) {   // cash on delivery minimum and maximum (AED); maximum empty or 0 = no upper limit
       $mn = trim((string)($_POST['cod_min'] ?? '')); $mx = trim((string)($_POST['cod_max'] ?? ''));
@@ -1198,15 +1210,28 @@ if (isset($_GET['settings'])) {
   }
   $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) ?: [];
   [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo);
+  $pgOff = json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: [];
   $adOn = fn($k) => ($ads[$k] ?? '') !== '' ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>';
+  require_once dirname(__DIR__) . '/ads-server-lib.php';
+  $adTok = fomaxo_ads_tokens(); $adSent = fomaxo_ads_last($pdo);
+  $tokRow = function ($k, $label, $where) use ($adTok, $adSent, $ads) {
+    $l = $adSent[$k] ?? null;
+    $st = !isset($adTok[$k]) ? '<span class="muted">○ Off</span>' : (($ads[$k] ?? '') === '' ? '<span class="lvl-low">●</span> Add pixel ID'
+        : (!$l ? '<span class="lvl-ok">●</span> On' : ($l['ok'] ? '<span class="lvl-ok">●</span> Sent ' . h($l['no'])
+        : '<span class="lvl-low" title="' . h($l['msg']) . '">●</span> Refused ' . h($l['no']))));
+    return '<label for="ads_' . $k . '_token" class="ads-l"><span>' . $label . '</span><small>' . $st . '</small></label><input id="ads_' . $k . '_token" name="ads_' . $k . '_token" type="password" class="ads-in" autocomplete="new-password" spellcheck="false" placeholder="' . (isset($adTok[$k]) ? 'Saved' : 'Optional') . '"><p class="muted small shelp">' . $where . '</p>'; };
   $adRow = fn($k, $label, $ph, $where) => '<label for="ads_' . $k . '" class="ads-l"><span>' . $label . '</span><small>' . $adOn($k) . '</small></label><input id="ads_' . $k . '" name="ads_' . $k . '" class="ads-in" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" value="' . h($ads[$k] ?? '') . '"><p class="muted small shelp">' . $where . '</p>';
   page('Settings', '<h1>Settings</h1>' . flash()
-    . fx_tabs(['Store', 'Cash', 'Email', 'Password', 'Ads'], 'Settings')
+    . fx_tabs(['Store', 'Cash', 'Email', 'Password', 'Ads', 'Pages'], 'Settings')
     . '<div class="settings fitbox ptw" data-t="1"><form class="card" method="post" data-t="1">' . csrf_field()
     . '<h2>Store</h2>'
     . '<label for="orders_email">Store emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
     . '<p class="muted small shelp">New cash and card orders, new reviews and admin password reset links are all emailed here.</p>'
     . '<p class="sbtn"><button class="btn">Save</button></p></form>'
+    . '<form class="card spages" method="post" data-t="6">' . csrf_field() . '<input type="hidden" name="pages_save" value="1">'
+    . '<h2>Site pages <small class="muted">Off hides a page from the website</small></h2><div class="pgs" onchange="this.closest(\'form\').submit()">'
+    . implode('', array_map(fn($k, $l) => '<label class="pg"><span>' . h($l) . '</span><input type="checkbox" role="switch" name="pg[' . $k . ']" value="1"' . (in_array($k, $pgOff, true) ? '' : ' checked') . ' aria-label="' . h($l) . '"><i class="sw"></i></label>', array_keys(FX_SITE_PAGES), FX_SITE_PAGES))
+    . '</div><noscript><p class="sbtn"><button class="btn">Save</button></p></noscript></form>'
     . '<form class="card" method="post" data-t="2">' . csrf_field() . '<input type="hidden" name="cod_save" value="1">'
     . '<h2>Cash on delivery</h2>'
     . '<div class="srow"><div><label for="cod_min">Minimum (AED)</label><input id="cod_min" name="cod_min" inputmode="numeric" pattern="[0-9]*" required value="' . $codMin . '"></div>'
@@ -1232,11 +1257,13 @@ if (isset($_GET['settings'])) {
     . '<form class="card ads" method="post" data-t="5">' . csrf_field() . '<input type="hidden" name="ads_save" value="1">'
     . '<h2>Ads tracking</h2>'
     . '<p class="muted small shelp stop">Paste your IDs so Meta, TikTok and Google ads can see who views, adds to bag, checks out and buys. Leave a box empty to keep that one off.</p>'
-    . $adRow('meta', 'Meta Pixel ID', 'e.g. 123456789012345', 'Meta Events Manager → Data sources → your pixel')
-    . $adRow('tiktok', 'TikTok Pixel ID', 'e.g. CABC123DEF456GHI', 'TikTok Ads Manager → Tools → Events → Web events')
+    . '<div class="adpair"><div>' . $adRow('meta', 'Meta Pixel ID', 'e.g. 123456789012345', 'Meta Events Manager → Data sources → your pixel') . '</div>'
+    . '<div>' . $tokRow('meta', 'Meta token', 'Pixel → Settings → Conversions API → Generate access token') . '</div></div>'
+    . '<div class="adpair"><div>' . $adRow('tiktok', 'TikTok Pixel ID', 'e.g. CABC123DEF456GHI', 'TikTok Ads Manager → Tools → Events → Web events') . '</div>'
+    . '<div>' . $tokRow('tiktok', 'TikTok token', 'Pixel → Settings → Generate access token') . '</div></div>'
     . $adRow('google', 'Google tag ID', 'e.g. G-ABC123XYZ', 'Google Analytics → Admin → Data streams (G-…), or Google Ads (AW-…)')
     . $adRow('gads', 'Google Ads purchase', 'Optional · AW-123456789/AbCdEf', 'Google Ads → Goals → Conversions → Purchase → Tag setup (ID/label)')
-    . '<p class="muted small shelp">Your own visits from this admin browser are not sent.</p>'
+    . '<p class="muted small shelp">Your own visits from this admin browser are not sent. A token also sends every order straight from fomaxo.com, so ad blockers and iPhones do not hide sales (kept on your server, never shown again).</p>'
     . '<p class="sbtn"><button class="btn">Save</button></p></form></div>', true, true);
 }
 
@@ -1388,7 +1415,7 @@ if (isset($_GET['coupons'])) {
     $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($ends && $ends < $now ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled']
            : ($starts && $starts > $now ? ['Scheduled', 's-New'] : ['On', 'p-Paid'])));
     $time = $starts && $starts > $now ? 'Starts ' . $dt($starts) . ($ends ? ' · ends ' . $dt($ends) : '') : ($ends ? 'Ends ' . $dt($ends) . ($state[0] === 'On' ? ' · ' . $left($ends) : '') : '');
-    $rules = array_filter([!empty($c['phone']) ? 'Goodwill · for ' . $c['phone'] : '', !empty($c['stack']) ? 'Use both' : 'Bigger offer', (float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
+    $rules = array_filter([!empty($c['phone']) ? (str_starts_with($c['code'], 'REFILL-') ? 'Refill' : 'Goodwill') . ' · for ' . $c['phone'] : '', !empty($c['stack']) ? 'Use both' : 'Bigger offer', (float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
     $btn = fn($name, $val, $label, $ask = '') => '<form method="post" style="margin:0"' . ($ask ? ' onsubmit="return confirm(\'' . h($ask) . '\')"' : '') . '>' . csrf_field()
       . '<input type="hidden" name="code" value="' . h($c['code']) . '"><button class="btn line sm" name="' . $name . '" value="' . $val . '">' . $label . '</button></form>';
     $tr .= '<div class="cprow"><div><b class="cpcode">' . h($c['code']) . '</b> <span class="tag ' . $state[1] . '">' . $state[0] . '</span>'
@@ -1931,9 +1958,15 @@ if (isset($_GET['reviews'])) {
       flash($ok ? ($txt === '' ? 'Reply deleted.' : ($en !== null && $warn === '' ? 'Reply saved in Arabic. It shows under the review on the website.' : 'Reply saved. It shows under the review on the website.' . $warn)) : 'That reply could not be saved. Please try again.', (bool)$ok && $warn === '');
       go($back);
     }
-    $id = (string)($_POST['id'] ?? ''); $hide = ($_POST['hide'] ?? '') === '1';
+    $id = (string)($_POST['id'] ?? '');
+    if (isset($_POST['del_review'])) {   // Delete: the review is removed for good (Hide keeps it here)
+      $ok = rv_change(function (&$list) use ($id) { foreach ($list as $i => $r) if ($r['id'] === $id) { array_splice($list, $i, 1); return true; } return false; });
+      flash($ok ? 'Review deleted.' : 'That review could not be deleted. Please try again.', (bool)$ok);
+      go($back);
+    }
+    $hide = ($_POST['hide'] ?? '') === '1';
     $ok = rv_change(function (&$list) use ($id, $hide) { foreach ($list as &$r) if ($r['id'] === $id) { $r['hidden'] = $hide; return true; } return false; });
-    flash($ok ? ($hide ? 'Review removed from the website.' : 'Review is back on the website.') : 'That review could not be changed. Please try again.', (bool)$ok);
+    flash($ok ? ($hide ? 'Review hidden from the website.' : 'Review is back on the website.') : 'That review could not be changed. Please try again.', (bool)$ok);
     go($back);
   }
   $all = rv_all(); usort($all, fn($a, $b) => strcmp($b['created'], $a['created']));
@@ -2007,7 +2040,7 @@ if (isset($_GET['reviews'])) {
     $why = $bad[0] ?? 'your experience with ' . $pr . " wasn't what you expected";
     return ($st === 3 ? $pk(['Thank you for your honest review', 'Thank you for sharing your thoughts', 'We appreciate your honest feedback']) . $hi . ', and we apologize that ' : $sorry . $hi . ', that ') . $why . '. ' . $gift;
   };
-  $replyBox = function ($r) use ($hidden, $suggest) {   // your reply under a review: shown, then a box to write, change or delete it
+  $replyBox = function ($r, $tail = '') use ($hidden, $suggest) {   // your reply under a review: shown, then a box to write, change or delete it
     $rep = (string)($r['reply'] ?? ''); $keep = '';
     $isAr = fx_has_ar((string)($r['text'] ?? ''));   // Arabic review: you write in English, the customer gets Arabic
     $alts = []; for ($i = 0; $i < 3; $i++) $alts[] = [preg_replace('/\s{2,}/u', ' ', $suggest($r, $isAr, $i)), $isAr ? preg_replace('/\s{2,}/u', ' ', $suggest($r, false, $i)) : ''];   // ready replies for Another reply
@@ -2016,17 +2049,41 @@ if (isset($_GET['reviews'])) {
     $roff = $rep !== '' && !empty($r['reply_hidden']);
     $rform = fn($fields, $label, $cls, $ask = '') => '<form method="post"' . ($ask ? ' onsubmit="return confirm(\'' . $ask . '\')"' : '') . '>' . csrf_field() . $hidden('id', $r['id']) . $keep . $fields . '<button class="btn sm ' . $cls . '">' . $label . '</button></form>';
     return ($rep !== '' ? '<div class="rrep' . ($roff ? ' off' : '') . '"><b>Reply from FOMAXO' . ($roff ? ' <span>· Hidden from the website</span>' : '') . '</b><p>' . (($r['reply_en'] ?? '') !== '' && fx_has_ar($rep) ? nl2br(h($r['reply_en'])) . '<span class="arx" dir="rtl" lang="ar">' . nl2br(h($rep)) . '</span>' : hx($rep, true)) . '</p></div>' : '')
-      . '<div class="racts"><details class="rrf"><summary class="btn line sm">' . ($rep !== '' ? 'Edit reply' : 'Reply') . '</summary><form method="post" data-i="' . ($rep === '' ? 0 : -1) . '" data-alt="' . h(json_encode($alts, JSON_UNESCAPED_UNICODE)) . '">' . csrf_field() . $hidden('id', $r['id']) . $keep
+      . '<div class="racts"><details class="rrf"><summary class="btn line sm">' . ($rep !== '' ? 'Edit reply' : 'Reply') . '</summary></details>' . $tail
+      . ($rep !== '' ? ($roff ? $rform($hidden('reply_hide', '0'), 'Show reply', 'line') : '') . $rform($hidden('reply', '') . $hidden('del', '1'), 'Delete reply', 'line rdel', 'Delete this reply? It is removed from the review for good.') : '')
+      . '</div><form class="rbox" method="post" data-i="' . ($rep === '' ? 0 : -1) . '" data-alt="' . h(json_encode($alts, JSON_UNESCAPED_UNICODE)) . '">' . csrf_field() . $hidden('id', $r['id']) . $keep
       . ($isAr ? $hidden('ar', '1') . $hidden('ready_en', $rep === '' ? $alts[0][0] : '') . $hidden('ready_ar', $rep === '' ? $alts[0][1] : '') : '')
       . '<textarea name="reply" dir="auto" rows="5" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($val) . '</textarea>'
-      . ($isAr ? '<p class="muted small rsug"><b>Arabic review:</b> write in English, the customer gets your reply in Arabic.' . ($rep === '' ? ' This is a ready reply, change anything before you save.' : '') . '</p>'
-        : ($rep === '' ? '<p class="muted small rsug">Ready reply for this review. Change anything before you save.</p>' : ''))
+      . ($isAr ? '<p class="muted small rsug">Write in English, the customer gets it in Arabic.</p>'
+        : '')
       . '<div class="emo" aria-label="Add an emoji" onclick="var b=event.target.closest(\'button\');if(!b)return;var t=this.closest(\'form\').querySelector(\'textarea\'),s=t.selectionStart,e=t.selectionEnd,x=b.textContent;t.value=t.value.slice(0,s)+x+t.value.slice(e);t.focus();t.selectionStart=t.selectionEnd=s+x.length">'
       . implode('', array_map(fn($e) => '<button type="button">' . $e . '</button>', ['🙏', '❤️', '😊', '✨', '🎁', '👍', '😍', '🥰', '🌸', '💐', '🤗', '😢'])) . '</div>'
       . '<div class="rrb"><button class="btn sm">Save reply</button>'
         . '<button type="button" class="btn line sm" onclick="var f=this.form,a=JSON.parse(f.dataset.alt),i=(+f.dataset.i+1)%a.length;f.dataset.i=i;f.reply.value=a[i][0];if(f.ready_en){f.ready_en.value=a[i][0];f.ready_ar.value=a[i][1]}">Another reply</button>'
-        . '<button type="button" class="btn line sm" onclick="var t=this.form.reply;t.value=\'\';t.focus()">Clear</button>' . '' . '</div></form></details>'
-      . ($rep !== '' ? $rform($hidden('reply_hide', $roff ? '0' : '1'), $roff ? 'Show reply' : 'Hide reply', 'line') . $rform($hidden('reply', '') . $hidden('del', '1'), 'Delete reply', 'line rdel', 'Delete this reply? It is removed from the review for good.') : '');
+        . '<button type="button" class="btn line sm" onclick="var t=this.form.reply;t.value=\'\';t.focus()">Clear</button>' . '' . '</div></form>';
+  };
+
+  /* product photo (Products tab first, then the built-in list) and one review row like fomaxo.in */
+  $pic = []; try { foreach ($pdo->query('SELECT id, data FROM fx_products') as $q) { $d = json_decode($q['data'], true); if (!empty($d['images'][0])) $pic[$q['id']] = $d['images'][0]; } } catch (Throwable $e) {}
+  $thumb = function ($id) use ($pic, $CATALOG) { $im = $pic[$id] ?? ($CATALOG[$id]['images'][0] ?? ''); return '<span class="rthumb">' . ($im !== '' ? '<img src="../assets/img/t/' . h($im) . '.webp" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'../assets/img/' . h($im) . '.webp\'">' : '') . '</span>'; };
+  $ckey = fn($phone) => strlen($d = preg_replace('/\D/', '', (string)$phone)) >= 7 ? 'm' . substr($d, -9) : '';
+  $telAll = [];   // mobile of every review that has an order (Top reviewers and Customer page links)
+  $nos = array_values(array_unique(array_filter(array_column($all, 'order'))));
+  if ($nos) { $q = $pdo->prepare('SELECT order_no, phone, email FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'); $q->execute($nos); foreach ($q as $o) $telAll[$o['order_no']] = $o; }
+  $rvItem = function ($r, $tel) use ($pname, $stars, $replyBox, $hidden, $thumb, $ckey) {
+    $off = !empty($r['hidden']); $where = trim($r['city'] ?? ''); $cc = (string)($r['country'] ?? '');
+    $keep = ''; foreach (['rp', 'rq', 'vf', 'rs', 'v'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
+    $phone = (string)($tel[$r['order'] ?? '']['phone'] ?? ''); $ck = $ckey($phone);
+    $ph = ''; foreach ($r['photos'] ?? [] as $p) $ph .= '<a href="../reviews.php?photo=' . h(rawurlencode($p)) . '" target="_blank" rel="noopener"><img src="../reviews.php?photo=' . h(rawurlencode($p)) . '" alt="" loading="lazy"></a>';
+    $f = fn($fields, $label, $cls, $ask = '') => '<form method="post"' . ($ask ? ' onsubmit="return confirm(\'' . $ask . '\')"' : '') . '>' . csrf_field() . $hidden('id', $r['id']) . $keep . $fields . '<button class="btn sm ' . $cls . '">' . $label . '</button></form>';
+    return '<li class="rv' . ($off ? ' off' : '') . '"><div class="rh">' . $thumb($r['product']) . '<b>' . h($pname($r['product'])) . '</b> ' . $stars($r['rating'])
+      . (!empty($r['verified']) ? ' <span class="vpill">Verified purchaser</span>' : ' <span class="vpill no">Unverified</span>') . ($off ? ' <span class="tag s-Cancelled">Hidden</span>' : '') . '</div>'
+      . '<p class="rtx">' . hx($r['text'], true) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '')
+      . '<div class="small muted rmeta">' . hx($r['name'], false, true) . (!empty($r['anon']) ? ' (real name: ' . h($r['real'] ?? '') . ')' : '') . ($where . $cc !== '' ? ' · ' . hx($where, false, true) . ($cc !== '' ? ' ' . h($cc) : '') : '')
+      . ($phone !== '' ? ' · ' . h($phone) : '') . (!empty($r['order']) ? ' · ' . h($r['order']) : '') . ' · ' . h(date('d M Y', strtotime($r['created'])))
+      . ($ck !== '' ? ' · <a href="' . h(self_url(['members' => 1, 'c' => $ck])) . '">Customer page</a>' : '') . '</div>'
+      . $replyBox($r, $f($hidden('hide', $off ? '0' : '1'), $off ? 'Show' : 'Hide', 'line')
+        . $f($hidden('del_review', '1'), 'Delete', 'line rdel', 'Delete this review for good? It cannot be brought back.')) . '</li>';
   };
 
   if ($v === 'products') {
@@ -2066,6 +2123,7 @@ if (isset($_GET['reviews'])) {
     $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
     $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
     if ($vf !== '') $list = array_filter($list, fn($r) => !empty($r['verified']) === ($vf === '1'));
+    $nst = []; foreach ([5, 4, 3, 2, 1] as $n) $nst[$n] = count(array_filter($list, fn($r) => (int)$r['rating'] === $n));
     if ($rs) $list = array_filter($list, fn($r) => (int)$r['rating'] === $rs);   // one star rating only
     $tel = [];   // mobile and email of verified reviews, from their order
     $nos = array_values(array_unique(array_filter(array_column($list, 'order'))));
@@ -2080,29 +2138,21 @@ if (isset($_GET['reviews'])) {
     }
     $items = '';
     fomaxo_en_many(array_merge(array_column($list, 'text'), array_column($list, 'name'), array_map(fn($r) => trim($r['city'] ?? ''), $list)));
-    foreach ($list as $r) {
-      $off = !empty($r['hidden']); $where = trim($r['city'] ?? ''); $cc = (string)($r['country'] ?? '');
-      $ph = ''; foreach ($r['photos'] ?? [] as $p) $ph .= '<a href="../reviews.php?photo=' . h(rawurlencode($p)) . '" target="_blank" rel="noopener"><img src="../reviews.php?photo=' . h(rawurlencode($p)) . '" alt="" loading="lazy"></a>';
-      $items .= '<li class="rv' . ($off ? ' off' : '') . '"><div class="rh"><b>' . h($pname($r['product'])) . '</b> ' . $stars($r['rating']) . ($off ? ' <span class="tag s-Cancelled">Removed</span>' : '') . '</div>'
-        . '<div class="small muted">' . hx($r['name'], false, true) . (!empty($r['anon']) ? ' (real name: ' . h($r['real'] ?? '') . ')' : '') . ($where . $cc !== '' ? ' · ' . hx($where, false, true) . ($cc !== '' ? ' ' . h($cc) : '') : '')
-        . (!empty($tel[$r['order'] ?? '']['phone']) ? ' · ' . h($tel[$r['order']]['phone']) : '')
-        . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' . (!empty($r['order']) ? ', ' . h($r['order']) : '') : 'not verified') . ' · ' . h(date('d M Y', strtotime($r['created']))) . '</div>'
-        . '<p>' . hx($r['text'], true) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '') . $replyBox($r)
-        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '') . ($vf !== '' ? $hidden('vf', $vf) : '') . ($rs ? $hidden('rs', $rs) : '')
-        . '<button class="btn sm' . ($off ? ' line' : ' danger') . '">' . ($off ? 'Put back on website' : 'Remove') . '</button></form></div></li>';
-    }
+    foreach ($list as $r) $items .= $rvItem($r, $tel);
     $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
     $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []) + ($rs ? ['rs' => $rs] : []);
     $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
-    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . '<select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>' . $starSel
+    $sq = $vq; unset($sq['rs']); if ($vf !== '') $sq['vf'] = $vf;
+    $schips = implode('', array_map(fn($n) => '<a class="em' . ($rs === $n ? ' on' : '') . '" href="' . h(self_url($rs === $n ? $sq : $sq + ['rs' => $n])) . '">' . $n . '★ <b>' . $nst[$n] . '</b></a>', [5, 4, 3, 2, 1]));
+    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . '<select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>' . ($rs ? '<input type="hidden" name="rs" value="' . $rs . '">' : '')
           . '<input name="rq" value="' . h($rq) . '" placeholder="Search words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
-          . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . '</nav></form>'
+          . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . $schips . '</nav></form>'
           . '<div class="fill">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="card muted" style="margin:0">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>')
-          . '<p class="muted small after">Remove takes a review off the website and out of the star rating. It stays here, so you can put it back.</p></div>';
+          . '<p class="muted small after">Hide takes a review off the website and out of the star rating; Show puts it back. Delete removes a review for good.</p></div>';
   }
   $mob = '<div class="pagehead"><h1>Reviews</h1>' . $seg . '</div>' . $rbar
     . '<div class="stats up"><div class="stat"><span>On website</span><b>' . count($live) . '</b></div><div class="stat"><span>Average stars</span><b>' . number_format($avg, 1) . ' ★</b></div>'
-    . '<div class="stat"><span>Verified</span><b>' . count(array_filter($live, fn($r) => !empty($r['verified']))) . '</b></div><div class="stat"><span>Removed</span><b>' . (count($all) - count($live)) . '</b></div></div>'
+    . '<div class="stat"><span>Verified</span><b>' . count(array_filter($live, fn($r) => !empty($r['verified']))) . '</b></div><div class="stat"><span>Hidden</span><b>' . (count($all) - count($live)) . '</b></div></div>'
     . $body;
 
   // laptop: one screen with the list, Stars by product and Top reviewers side by side (phone keeps the page above)
@@ -2113,8 +2163,8 @@ if (isset($_GET['reviews'])) {
       $a = $n ? round(array_sum(array_column($l, 'rating')) / $n, 1) : 0;
       $dist = ''; foreach ([5, 4, 3, 2, 1] as $s) { $c = count(array_filter($l, fn($r) => (int)$r['rating'] === $s)); $dist .= '<span>' . $s . '★ <b>' . $c . '</b></span>'; }
       if (!$n) continue;
-      $tr .= '<tr class="row' . ($rp === $id ? ' on' : '') . '" onclick="location.href=this.dataset.href" data-href="' . h(self_url(['reviews' => 1] + ($rp === $id ? [] : ['rp' => $id]))) . '"><td><b>' . h($p['name']) . '</b><div class="dist small muted">' . $dist . '</div></td>'
-           . '<td class="num">' . $stars(round($a)) . ' <b>' . number_format($a, 1) . '</b><div class="small muted">' . $n . ' review' . ($n > 1 ? 's' : '') . '</div></td></tr>';
+      $tr .= '<tr class="row' . ($rp === $id ? ' on' : '') . '" onclick="location.href=this.dataset.href" data-href="' . h(self_url(['reviews' => 1] + ($rp === $id ? [] : ['rp' => $id]))) . '"><td class="pn">' . $thumb($id) . '<span><b>' . h($p['name']) . '</b><span class="small muted">' . $n . ' review' . ($n > 1 ? 's' : '') . '</span></span></td>'
+           . '<td class="num">' . $stars(round($a)) . ' <b>' . number_format($a, 1) . '</b></td></tr>';
     }
     $bodyP = $tr ? '<table class="rprod"><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty">No live reviews yet.</p>';
   }
@@ -2124,15 +2174,16 @@ if (isset($_GET['reviews'])) {
       $real = trim((string)(!empty($r['anon']) ? ($r['real'] ?? $r['name']) : $r['name'])); if ($real === '') continue;
       $k = mb_strtolower($real); $c = &$ppl[$k];
       $c['name'] ??= $real; $c['n'] = ($c['n'] ?? 0) + 1; $c['sum'] = ($c['sum'] ?? 0) + (int)$r['rating'];
-      $c['verified'] = ($c['verified'] ?? 0) + (!empty($r['verified']) ? 1 : 0); $c['last'] ??= $r['created'];
+      $c['verified'] = ($c['verified'] ?? 0) + (!empty($r['verified']) ? 1 : 0); $c['last'] ??= $r['created']; if (empty($c['phone']) && !empty($telAll[$r['order'] ?? '']['phone'])) $c['phone'] = $telAll[$r['order']]['phone'];
       $c['products'][$r['product']] = true; unset($c);
     }
     $ppl = array_filter($ppl, fn($c) => $c['n'] >= $rmin);
     uasort($ppl, fn($a, $b) => $b['n'] <=> $a['n'] ?: strcmp($b['last'], $a['last']));
     $tr = '';
-    foreach ($ppl as $c) $tr .= '<tr class="row"><td><b>' . h($c['name']) . '</b><div class="small muted">' . h(implode(', ', array_map($pname, array_keys($c['products'])))) . '</div></td>'
-      . '<td class="num"><b>' . $c['n'] . '</b><span class="ph"> reviews</span></td><td>' . $stars(round($c['sum'] / $c['n'])) . ' <span class="small">' . number_format($c['sum'] / $c['n'], 1) . '</span></td>'
-      . '<td class="small muted">' . ($c['verified'] ? $c['verified'] . ' verified · ' : '') . 'last ' . h(date('d M Y', strtotime($c['last']))) . '</td></tr>';
+    foreach ($ppl as $c) { $ck = $ckey($c['phone'] ?? ''); $nm = '<b>' . h($c['name']) . '</b>';
+      $tr .= '<tr class="row trv"><td>' . ($ck !== '' ? '<a href="' . h(self_url(['members' => 1, 'c' => $ck])) . '">' . $nm . '</a>' : $nm)
+      . '<div class="small muted">' . (($c['phone'] ?? '') !== '' ? h($c['phone']) . ' · ' : '') . 'average ' . number_format($c['sum'] / $c['n'], 1) . ' ★</div></td>'
+      . '<td class="num"><b>' . $c['n'] . '</b> <span class="small muted">review' . ($c['n'] > 1 ? 's' : '') . '</span></td></tr>'; }
     $formR = '<form class="rmin" method="post">' . csrf_field() . '<label for="reviewer_min_d">at least</label>'
           . '<input id="reviewer_min_d" type="number" min="1" max="1000" inputmode="numeric" name="reviewer_min" required value="' . $rmin . '"><span>reviews</span><button class="btn line sm">Save</button></form>';
     $bodyR = $tr ? '<table class="rppl"><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty">Nobody has ' . $rmin . ' or more reviews yet.</p>';
@@ -2142,6 +2193,7 @@ if (isset($_GET['reviews'])) {
     $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
     $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
     if ($vf !== '') $list = array_filter($list, fn($r) => !empty($r['verified']) === ($vf === '1'));
+    $nst = []; foreach ([5, 4, 3, 2, 1] as $n) $nst[$n] = count(array_filter($list, fn($r) => (int)$r['rating'] === $n));
     if ($rs) $list = array_filter($list, fn($r) => (int)$r['rating'] === $rs);   // one star rating only
     $tel = [];   // mobile and email of verified reviews, from their order
     $nos = array_values(array_unique(array_filter(array_column($list, 'order'))));
@@ -2156,26 +2208,18 @@ if (isset($_GET['reviews'])) {
     }
     $items = '';
     fomaxo_en_many(array_merge(array_column($list, 'text'), array_column($list, 'name'), array_map(fn($r) => trim($r['city'] ?? ''), $list)));
-    foreach ($list as $r) {
-      $off = !empty($r['hidden']); $where = trim($r['city'] ?? ''); $cc = (string)($r['country'] ?? '');
-      $ph = ''; foreach ($r['photos'] ?? [] as $p) $ph .= '<a href="../reviews.php?photo=' . h(rawurlencode($p)) . '" target="_blank" rel="noopener"><img src="../reviews.php?photo=' . h(rawurlencode($p)) . '" alt="" loading="lazy"></a>';
-      $items .= '<li class="rv' . ($off ? ' off' : '') . '"><div class="rh"><b>' . h($pname($r['product'])) . '</b> ' . $stars($r['rating']) . ($off ? ' <span class="tag s-Cancelled">Removed</span>' : '') . '</div>'
-        . '<div class="small muted">' . hx($r['name'], false, true) . (!empty($r['anon']) ? ' (real name: ' . h($r['real'] ?? '') . ')' : '') . ($where . $cc !== '' ? ' · ' . hx($where, false, true) . ($cc !== '' ? ' ' . h($cc) : '') : '')
-        . (!empty($tel[$r['order'] ?? '']['phone']) ? ' · ' . h($tel[$r['order']]['phone']) : '')
-        . ' · ' . (!empty($r['verified']) ? 'Verified Purchaser' . (!empty($r['order']) ? ', ' . h($r['order']) : '') : 'not verified') . ' · ' . h(date('d M Y', strtotime($r['created']))) . '</div>'
-        . '<p>' . hx($r['text'], true) . '</p>' . ($ph ? '<div class="rph">' . $ph . '</div>' : '') . $replyBox($r)
-        . '<form method="post" onsubmit="return ' . ($off ? 'true' : 'confirm(\'Remove this review from the website?\')') . '">' . csrf_field() . $hidden('id', $r['id']) . $hidden('hide', $off ? '0' : '1') . ($rp !== '' ? $hidden('rp', $rp) : '') . ($rq !== '' ? $hidden('rq', $rq) : '') . ($vf !== '' ? $hidden('vf', $vf) : '') . ($rs ? $hidden('rs', $rs) : '')
-        . '<button class="btn sm' . ($off ? ' line' : ' danger') . '">' . ($off ? 'Put back on website' : 'Remove') . '</button></form></div></li>';
-    }
+    foreach ($list as $r) $items .= $rvItem($r, $tel);
     $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
     $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []) + ($rs ? ['rs' => $rs] : []);
     $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
-    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . ($rp !== '' ? '<input type="hidden" name="rp" value="' . h($rp) . '">' : '') . $starSel
+    $sq = $vq; unset($sq['rs']); if ($vf !== '') $sq['vf'] = $vf;
+    $schips = implode('', array_map(fn($n) => '<a class="em' . ($rs === $n ? ' on' : '') . '" href="' . h(self_url($rs === $n ? $sq : $sq + ['rs' => $n])) . '">' . $n . '★ <b>' . $nst[$n] . '</b></a>', [5, 4, 3, 2, 1]));
+    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . ($rp !== '' ? '<input type="hidden" name="rp" value="' . h($rp) . '">' : '') . ($rs ? '<input type="hidden" name="rs" value="' . $rs . '">' : '')
           . '<input name="rq" value="' . h($rq) . '" placeholder="Words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
-          . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . '</nav></form>'
+          . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . $schips . '</nav></form>'
           . '<div class="rgrid"><section class="card rlist"><p class="rnote small muted">' . count($list) . ' review' . (count($list) === 1 ? '' : 's') . ($rp !== '' ? ' of ' . h($pname($rp)) . ' · <a href="' . h(self_url(['reviews' => 1] + ($rq !== '' ? ['rq' => $rq] : []) + ($vf !== '' ? ['vf' => $vf] : []))) . '">all products</a>' : '')
-          . '. Removed reviews leave the website and the star rating; Put back shows them again.</p><div class="cscroll">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="muted empty">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>') . '</div></section>'
-          . '<section class="card rprodc"><h2>Stars By Product</h2><div class="cscroll">' . $bodyP . '</div></section>'
+          . '. Hidden reviews leave the website and the star rating; Show puts them back. Delete removes a review for good.</p><div class="cscroll">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="muted empty">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>') . '</div></section>'
+          . '<section class="card rprodc"><div class="ch"><h2>Stars By Product</h2><span class="small muted">Tap a product to see its reviews</span></div><div class="cscroll">' . $bodyP . '</div></section>'
           . '<section class="card rpplc"><div class="ch"><h2>Top Reviewers</h2>' . $formR . '</div><div class="cscroll">' . $bodyR . '</div></section></div>';
   }
   page('Reviews', flash() . '<div class="rmob">' . $mob . '</div><div class="rdesk">' . $rbar . $body . '</div>', true, true);
@@ -2197,6 +2241,31 @@ if (isset($_GET['members'])) {
   $subsN = 0; try { fomaxo_subscribers_table($pdo); $subsN = (int)$pdo->query('SELECT COUNT(*) FROM fx_subscribers')->fetchColumn(); } catch (Throwable $e) {}
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['members' => 1]); }
+    if (isset($_POST['refill_auto'])) {   // Automatic sending box on Refill reminders: WhatsApp Business details (kept above public_html) + On/Off
+      require_once dirname(__DIR__) . '/whatsapp-lib.php'; require_once dirname(__DIR__) . '/refill-lib.php';
+      $v = fn($k) => preg_replace('/\s+/', '', (string)($_POST[$k] ?? ''));
+      $tok = $v('wa_token'); $pid = $v('wa_phone_id'); $sec = $v('wa_secret');
+      if ($sec !== '' && !preg_match('/^[A-Fa-f0-9]{32}$/', $sec)) { flash('Please check the app secret (32 letters and numbers).'); go(['members' => 1, 'refill' => 1]); }
+      if ($sec !== '' && !fx_wa_config_save(['app_secret' => strtolower($sec)])) { flash('Could not save. Please try again.'); go(['members' => 1, 'refill' => 1]); }
+      if (($tok !== '' && !preg_match('/^[A-Za-z0-9_\-]{20,600}$/', $tok)) || ($pid !== '' && !ctype_digit($pid))) { flash('Please check the access token and the phone number ID.'); go(['members' => 1, 'refill' => 1]); }
+      if (($tok !== '' || $pid !== '') && !fx_wa_config_save(['access_token' => $tok, 'phone_number_id' => $pid])) { flash('Could not save. Please try again.'); go(['members' => 1, 'refill' => 1]); }
+      $n = fn($k, $lo, $hi, $def) => ctype_digit($x = trim((string)($_POST[$k] ?? ''))) ? max($lo, min($hi, (int)$x)) : $def;
+      $tm0 = fx_refill_time($pdo); $tf = $n('rf_from', 0, 23, $tm0['from']); $tt = $n('rf_to', 1, 24, $tm0['to']);
+      if ($tt <= $tf) { flash('The end hour must be after the start hour.'); go(['members' => 1, 'refill' => 1]); }
+      fomaxo_setting($pdo, 'refill_time', json_encode(['days' => $n('rf_days', 1, 365, $tm0['days']), 'from' => $tf, 'to' => $tt]));
+      $on = !empty($_POST['auto_on']) && fx_wa_ready();
+      fomaxo_setting($pdo, 'refill_auto', $on ? '1' : '0');
+      flash($on ? 'Automatic refill messages are on.' : (!empty($_POST['auto_on']) ? 'Saved. Add the access token and phone number ID to switch it on.' : 'Automatic refill messages are off.'), true); go(['members' => 1, 'refill' => 1]);
+    }
+    if (isset($_POST['wa_stop'])) {   // Stop button on a customer's page: no more WhatsApp offers or automatic messages
+      require_once dirname(__DIR__) . '/whatsapp-lib.php';
+      fx_wa_stop($pdo, (string)$_POST['wa_stop'], 'admin') ? flash('WhatsApp messages stopped for this customer.', true) : flash('No mobile number for this customer.');
+      go(['members' => 1, 'c' => (string)($_POST['back'] ?? '')]);
+    }
+    if (isset($_POST['refill_sent'])) {   // tapped WhatsApp on the refill reminder list: that order is marked Sent
+      if (preg_match('/^FMX-\d+$/', $no = (string)$_POST['refill_sent'])) { require_once dirname(__DIR__) . '/refill-lib.php'; fx_refill_mark($pdo, $no); }
+      http_response_code(204); exit;
+    }
     /* two separate boxes, each saved on its own; an empty box means "no limit" */
     if (isset($_POST['member_min'])) {
       $n = trim((string)$_POST['member_min']);
@@ -2214,7 +2283,7 @@ if (isset($_GET['members'])) {
   $addr = fn($o) => $o['address'] !== '' ? $o['address'] : implode(', ', array_filter([$o['building'], $o['room'], $o['street'], $o['area']], fn($x) => $x !== ''));
   $waLink = function ($phone) { $wa = preg_replace('/\D/', '', (string)$phone); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); return $wa; };
   /* every real order (not cancelled, not unpaid card, not a test), oldest first so the latest name and address win */
-  $all = $pdo->query("SELECT order_no, created_at, payment, status, total, name, phone, email, emirate, building, room, street, area, address, items, test, wa_optin
+  $all = $pdo->query("SELECT order_no, created_at, payment, status, total, name, phone, email, emirate, building, room, street, area, address, items, test, wa_optin, lines_json
                       FROM fx_orders WHERE status IN ('New','Paid','Delivered') AND test = 0 ORDER BY created_at, id")->fetchAll();
   /* WhatsApp offers: each customer's choice on their latest order wins (all dates, not only members) */
   $waCust = [];
@@ -2228,6 +2297,48 @@ if (isset($_GET['members'])) {
     fputcsv($out, ['Name', 'Mobile', 'WhatsApp number', 'Email', 'Emirate', 'Last order']);
     foreach ($waOn as $w) fputcsv($out, array_map($cell, [fomaxo_en_both($w['name']), $w['phone'], $waLink($w['phone']), $w['email'], $w['emirate'], date('Y-m-d', strtotime($w['last']))]));
     exit;
+  }
+  /* refill reminders: customers whose latest order was about 45 days ago (timing set in Automatic sending) (a 50ml bottle runs low around then), each with a ready WhatsApp message.
+     Tapping WhatsApp notes "Sent" for that order, so nobody is reminded twice for the same order. */
+  require_once dirname(__DIR__) . '/refill-lib.php';
+  $rfDue = fx_refill_due($pdo);
+  if (isset($_GET['refill'])) {
+    fomaxo_en_many(array_column($rfDue, 'name'));
+    $tr = '';
+    foreach ($rfDue as $k => $o) {
+      $pt = fx_refill_parts($pdo, $o); $pn = $pt['perfumes']; $msg = fx_refill_text($pt);
+      $u = h(self_url(['members' => 1, 'c' => $k]));
+      $tr .= '<tr class="row"><td class="rn"><a href="' . $u . '"><b>' . hx($o['name'] ?: 'No name') . '</b></a>' . (!empty($waCust[$k]['on']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '')
+           . '<div class="muted small">' . h($o['phone']) . ($pn !== '' ? ' · ' . h($pn) : '') . '</div></td>'
+           . '<td class="rd small"><b>' . $o['days'] . ' days</b><div class="muted">' . h(date('d/m/Y', strtotime($o['created_at']))) . ' · ' . h($o['order_no']) . '</div></td>'
+           . '<td class="ra">' . ($o['stopped'] ? '<span class="rstop" title="Replied STOP on WhatsApp">Stopped</span></td></tr>' : '') . ($o['stopped'] ? '' : ($o['sent'] ? '<span class="rsent">' . ($o['auto'] ? 'Sent by itself ' : 'Sent ') . h(date('d/m', strtotime($o['sent']))) . '</span> ' : '')
+           . '<a class="btn sm' . ($o['sent'] ? ' line' : '') . '" data-rf="' . h($o['order_no']) . '" href="https://wa.me/' . h($waLink($o['phone'])) . '?text=' . rawurlencode($msg) . '" target="_blank" rel="noopener">WhatsApp</a></td></tr>');
+    }
+    $open = count(array_filter($rfDue, fn($o) => !$o['sent'] && !$o['stopped']));
+    require_once dirname(__DIR__) . '/whatsapp-lib.php';
+    $tm = fx_refill_time($pdo); $hh = fn($x) => (($x % 12) ?: 12) . ' ' . ($x % 24 < 12 ? 'AM' : 'PM');
+    $hsel = fn($nm, $a, $b, $v) => '<select id="' . $nm . '" name="' . $nm . '">' . implode('', array_map(fn($x) => '<option value="' . $x . '"' . ($x == $v ? ' selected' : '') . '>' . (($x % 12) ?: 12) . ' ' . ($x % 24 < 12 ? 'AM' : 'PM') . ($x == 24 ? ' (midnight)' : '') . '</option>', range($a, $b))) . '</select>';
+    $hookOk = trim((string)(fx_wa_config()['app_secret'] ?? '')) !== ''; $nStop = count(fx_wa_stops($pdo));
+    $waOk = fx_wa_ready(); $autoOn = $waOk && fomaxo_setting($pdo, 'refill_auto') === '1'; $err = (string)fomaxo_setting($pdo, 'refill_auto_err');
+    $rfAuto = '<details class="card rfauto"' . ($waOk ? '' : ' ') . '><summary><span>Automatic sending</span> ' . ($autoOn ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>') . '<span class="muted small"> · ' . ($autoOn ? 'sent by itself to customers who ticked WhatsApp offers, ' . $tm['days'] . ' days after the order, ' . $hh($tm['from']) . '–' . $hh($tm['to']) : ($waOk ? 'messages are sent only when you tap WhatsApp' : 'tap to set up')) . '</span></summary>'
+      . '<form method="post">' . csrf_field() . '<input type="hidden" name="refill_auto" value="1">'
+      . '<div class="srow two"><div><label for="wa_token">WhatsApp access token</label><input id="wa_token" name="wa_token" type="password" autocomplete="new-password" placeholder="' . ($waOk ? 'Saved' : 'From Meta → WhatsApp → API Setup') . '"></div>'
+      . '<div><label for="wa_phone_id">Phone number ID</label><input id="wa_phone_id" name="wa_phone_id" inputmode="numeric" autocomplete="off" placeholder="' . ($waOk ? 'Saved' : 'e.g. 123456789012345') . '"></div></div>'
+      . '<div class="rfhook"><label for="wa_secret">App secret <span class="muted">· for STOP replies</span></label><input id="wa_secret" name="wa_secret" type="password" autocomplete="new-password" placeholder="' . ($hookOk ? 'Saved' : 'Meta → your app → App settings → Basic') . '">'
+      . '<p class="muted small">STOP replies switch the customer off by themselves. In Meta → WhatsApp → Configuration → Webhook, paste Callback URL <b class="sel">https://fomaxo.com/whatsapp.php</b> and Verify token <b class="sel">' . h(fx_wa_hook_token()) . '</b>, then subscribe to messages.' . ($nStop ? ' Stopped so far: ' . $nStop . '.' : '') . '</p></div>'
+      . '<div class="srow rftime"><div><label for="rf_days">Days after order</label><input id="rf_days" name="rf_days" type="number" min="1" max="365" inputmode="numeric" value="' . $tm['days'] . '"></div>'
+      . '<div><label for="rf_from">Send from</label>' . $hsel('rf_from', 0, 23, $tm['from']) . '</div>'
+      . '<div><label for="rf_to">Until</label>' . $hsel('rf_to', 1, 24, $tm['to']) . '</div></div>'
+      . '<div class="rfsw" role="radiogroup" aria-label="Automatic sending"><label><input type="radio" name="auto_on" value="1"' . ($autoOn ? ' checked' : '') . '><span>On</span></label><label><input type="radio" name="auto_on" value=""' . ($autoOn ? '' : ' checked') . '><span>Off</span></label></div>'
+      . ($err !== '' && $autoOn ? '<p class="small" style="color:var(--bad);margin:4px 0 0">Last problem: ' . h($err) . '</p>' : '')
+      . '<p class="sbtn" style="margin:8px 0 0"><button class="btn sm">Save</button></p></form></details>';
+    page('Refill reminders', '<div class="pagehead"><div><p class="small" style="margin:0 0 2px"><a href="./?members=1">← All members</a></p><h1>Refill reminders</h1></div></div>'
+      . $rfAuto
+      . '<div class="stats up rfstats"><div class="stat"><span>To remind</span><b>' . $open . '</b></div><div class="stat"><span>Sent</span><b>' . (count($rfDue) - $open) . '</b></div></div>'
+      . '<div class="fill">' . ($tr ? '<table class="mlist rflist"><thead><tr><th>Customer</th><th>Last order</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
+           : '<p class="card muted" style="margin:0">Nobody is due right now. Customers show here ' . $tm['list_from'] . ' to ' . $tm['list_to'] . ' days after their latest order.</p>')
+      . '<p class="muted small after">Customers whose latest order was ' . $tm['list_from'] . ' to ' . $tm['list_to'] . ' days ago. WhatsApp opens with a ready message (Arabic for Arabic names); after you tap it the customer shows Sent. With Automatic sending on, customers marked WhatsApp ✓ get it by itself ' . $tm['days'] . ' days after the order; the rest only when you tap. Once they order again they leave this list.</p></div>'
+      . '<script>document.addEventListener("click",function(e){var a=e.target.closest("[data-rf]");if(!a)return;var f=new FormData();f.append("refill_sent",a.dataset.rf);f.append("csrf",' . json_encode($_SESSION['csrf']) . ');fetch("./?members=1",{method:"POST",body:f,credentials:"same-origin"});a.classList.add("line");var r=a.parentNode;if(!r.querySelector(".rsent"))r.insertAdjacentHTML("afterbegin","<span class=\\"rsent\\">Sent today</span> ")});</script>', true, true);
   }
   $rg = isset($_GET['c']) ? null : adm_range('members', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
   if ($rg && $rg['span']) $all = array_values(array_filter($all, fn($o) => $o['created_at'] >= $rg['span'][0] && $o['created_at'] <= $rg['span'][1]));   // the list counts only orders in the period
@@ -2314,6 +2425,8 @@ if (isset($_GET['members'])) {
       $act .= '<p class="muted small" style="margin:8px 0 0">Visits are linked through the phone or computer this customer used to check out. Visits from other devices, and visits before 5 Oct 2026, cannot be linked. Time on site is approximate.</p>';
     } else $act = '<p class="muted small" style="margin:0">No website visits can be linked to this customer yet. Visits are linked once they check out on the website with this mobile number (counting started 5 Oct 2026, and orders placed on WhatsApp have no visits).</p>';
 
+    require_once dirname(__DIR__) . '/whatsapp-lib.php'; $cStop = isset($c['phone']) ? (string)(fx_wa_stops($pdo)[fomaxo_phone9($c['phone'])] ?? '') : '';
+    if (!empty($waCust[$ck]['on'])) $cStop = '';
     page($c['name'] ?? 'Customer', '<div class="pagehead"><div><p class="small" style="margin:0 0 2px"><a href="./?members=1">← All members</a></p>'
       . '<h1>' . hx($c['name'] ?? 'No name') . ($c['n'] && $c['n'] >= $min && $c['spent'] >= $spend ? ' <span class="tag mtag">Member</span>' : '') . '</h1></div>'
       . ($wa ? '<a class="btn line sm" href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') . '</div>'
@@ -2321,7 +2434,8 @@ if (isset($_GET['members'])) {
       . '<div class="stat"><span>Average order</span><b>' . money($c['n'] ? $c['spent'] / $c['n'] : 0) . '</b></div><div class="stat"><span>Reviews</span><b>' . count($revs) . '</b></div>'
       . '<div class="stat"><span>Visits</span><b>' . ($web ? count($web['ses']) : '—') . '</b></div><div class="stat"><span>Time on site</span><b>' . ($web ? $dur($web['secs']) : '—') . '</b></div></div>'
       . '<div class="cgrid"><section class="card cdet"><h2>Details</h2><dl>' . $row('Mobile', isset($c['phone']) ? h($c['phone']) . ($wa ? ' · <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') : '')
-      . $row('WhatsApp offers', !empty($waCust[$ck]['on']) ? '<span class="wtag" style="margin:0">Yes ✓</span>' : 'No')
+      . $row('WhatsApp offers', (!empty($waCust[$ck]['on']) ? '<span class="wtag" style="margin:0">Yes ✓</span>' : ($cStop ? '<span class="rstop">Stopped ' . h(date('d/m', strtotime(substr($cStop, 0, 16)))) . '</span> <span class="muted small">' . (str_ends_with($cStop, 'reply') ? 'replied STOP' : 'by you') . '</span>' : 'No'))
+          . (isset($c['phone']) && !$cStop || !empty($waCust[$ck]['on']) ? ' <form method="post" class="wastop" onsubmit="return confirm(\'Stop WhatsApp offers and automatic messages for this customer?\')">' . csrf_field() . '<input type="hidden" name="wa_stop" value="' . h($c['phone'] ?? '') . '"><input type="hidden" name="back" value="' . h($ck) . '"><button class="btn line xs">Stop</button></form>' : ''))
       . $row('Email', isset($c['email']) ? '<a href="mailto:' . h($c['email']) . '">' . h($c['email']) . '</a>' : '')
       . $row('Address', hx($c['addr'] ?? '')) . $row('Emirate', h($c['emirate'] ?? '')) . $row('First order', h(date('d M Y', strtotime($c['first'])))) . $row('Last order', h(date('d M Y', strtotime($c['last']))))
       . $row('All orders', count($allO) . (count($allO) > $c['n'] ? ' <span class="muted">(' . (count($allO) - $c['n']) . ' cancelled or unpaid)</span>' : '')) . '</dl>'
@@ -2364,7 +2478,7 @@ if (isset($_GET['members'])) {
          . '<td class="num mv">' . money($c['spent'] / $c['n']) . '<span> avg</span></td>'
          . '<td class="md small">' . h(date('d M Y', strtotime($c['first']))) . ' – ' . h(date('d M Y', strtotime($c['last']))) . '</td></tr>';
   }
-  page('Members', '<div class="pagehead"><h1>Members</h1><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn line sm" href="' . h(self_url(['members' => 1, 'subs' => 1])) . '">Download email list (' . number_format($subsN) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1, 'walist' => 1])) . '">Download WhatsApp list (' . number_format(count($waOn)) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1] + ($mq !== '' ? ['mq' => $mq] : []) + ['export' => 1])) . '">Download Excel</a></span></div>' . flash()
+  page('Members', '<div class="pagehead"><h1>Members</h1><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="./?members=1&amp;refill=1">Refill reminders (' . count(array_filter($rfDue, fn($o) => !$o['sent'] && !$o['stopped'])) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1, 'subs' => 1])) . '">Download email list (' . number_format($subsN) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1, 'walist' => 1])) . '">Download WhatsApp list (' . number_format(count($waOn)) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1] + ($mq !== '' ? ['mq' => $mq] : []) + ['export' => 1])) . '">Download Excel</a></span></div>' . flash()
     . '<div class="rgbar">' . adm_range_form($rg, ['members' => 1] + ($mq !== '' ? ['mq' => $mq] : [])) . '</div>'
     . '<div class="mtop"><form class="card mmin" method="post">' . csrf_field() . '<label for="member_min">Orders: at least</label>'
     . '<input id="member_min" type="number" min="0" max="1000" inputmode="numeric" name="member_min" value="' . ($min ?: '') . '" placeholder="any"><span>orders</span><button class="btn sm">Save</button></form>'
