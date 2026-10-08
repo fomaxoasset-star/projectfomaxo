@@ -210,6 +210,20 @@ function fomaxo_products_table($pdo) {
   foreach ($seed as $i => $p) if (is_object($p) && !empty($p->id)) $ins->execute([$p->id, ($i + 1) * 10, fomaxo_json($p)]);
 }
 function fomaxo_json($v) { return json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); }
+/* Offer popup sizes (admin → Offer → Preview → size bar): each part's [standard, smallest, biggest] on laptop (L) and phone (P).
+   Sale popup: img = product pictures in px; the rest in % of the original size. New product popup: all in %. */
+function fomaxo_popup_spec($new = false) {
+  $pc = fn($a, $b) => ['L' => [100, $a, $b], 'P' => [100, $a, $b]];
+  return $new ? ['title' => $pc(80, 200), 'img' => $pc(60, 200), 'name' => $pc(60, 160), 'line' => $pc(70, 200), 'btn' => $pc(80, 160)]
+    : ['img' => ['L' => [150, 90, 220], 'P' => [120, 80, 160]], 'title' => $pc(80, 200), 'pct' => $pc(60, 160), 'sub' => $pc(70, 200), 'btn' => $pc(80, 160)];
+}
+/* saved sizes, each kept inside its range; missing or not a number = standard */
+function fomaxo_popup_sizes($v, $new = false) {
+  $v = is_array($v) ? $v : []; $out = ['L' => [], 'P' => []];
+  foreach (fomaxo_popup_spec($new) as $k => $s) foreach (['L', 'P'] as $d) { $x = $v[$d][$k] ?? null; [$std, $lo, $hi] = $s[$d];
+    $out[$d][$k] = is_numeric($x) ? max($lo, min($hi, (int)round($x))) : $std; }
+  return $out;
+}
 /* All products in shop order: [['id','pos','hidden','data'(JSON text)]], or null when the database is not available. */
 function fomaxo_product_rows($pdo = null) {
   $pdo = $pdo ?: fomaxo_db(); if (!$pdo) return null;
