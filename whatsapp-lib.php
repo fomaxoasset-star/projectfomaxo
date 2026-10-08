@@ -154,6 +154,25 @@ function fx_wa_config_save(array $new) {
   if ($ok) @chmod($f, 0600);
   return $ok;
 }
+/* STOP: the customer replied STOP on WhatsApp (whatsapp.php webhook) or FOMAXO tapped Stop on their admin page.
+   WhatsApp offers go off on all their orders, so no more automatic messages, until they tick offers again on a new order. */
+function fx_wa_stops($pdo) { return json_decode((string)fomaxo_setting($pdo, 'wa_stop'), true) ?: []; }
+function fx_wa_stop($pdo, $phone, $how) {
+  if (strlen($k = fomaxo_phone9($phone)) < 9) return false;
+  $ids = [];
+  foreach ($pdo->query('SELECT id, phone FROM fx_orders WHERE wa_optin = 1') as $o) if (fomaxo_phone9($o['phone']) === $k) $ids[] = (int)$o['id'];
+  if ($ids) $pdo->exec('UPDATE fx_orders SET wa_optin = 0 WHERE id IN (' . implode(',', $ids) . ')');
+  $s = fx_wa_stops($pdo); $s[$k] = date('Y-m-d H:i') . ' ' . $how;
+  fomaxo_setting($pdo, 'wa_stop', json_encode($s));
+  return true;
+}
+/* the whole reply is a stop word (English or Arabic), so "don't stop" or a longer message never counts */
+function fx_wa_is_stop($t) {
+  $t = trim(mb_strtolower(preg_replace('/[\s\p{P}]+/u', ' ', (string)$t)));
+  return in_array($t, ['stop', 'unsubscribe', 'stop promotions', 'stop messages', 'توقف', 'إيقاف', 'ايقاف', 'الغاء', 'إلغاء', 'الغاء الاشتراك', 'إلغاء الاشتراك', 'stop توقف'], true);
+}
+/* the Verify token FOMAXO pastes into Meta's webhook settings */
+function fx_wa_hook_token() { return rv_sign('wa-hook'); }
 function fomaxo_wa_send_refills($max = 20) {
   require_once __DIR__ . '/refill-lib.php';
   $pdo = fomaxo_db(); if (!$pdo) return ['refills' => 0, 'note' => 'no database'];

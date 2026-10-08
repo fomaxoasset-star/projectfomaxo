@@ -2,7 +2,8 @@
 /* FOMAXO — automatic WhatsApp review requests and refill reminders (see whatsapp-lib.php).
    php whatsapp.php                     → Hostinger cron job (e.g. every 30 minutes): sends the messages that are due
    GET whatsapp.php?status              → set-up check: is whatsapp-config.php found and filled in (never shows the token), messages waiting
-   GET whatsapp.php?skip=ORDER&k=KEY    → stop the message for one order (link in FOMAXO's order email, e.g. for a cancelled order) */
+   GET whatsapp.php?skip=ORDER&k=KEY    → stop the message for one order (link in FOMAXO's order email, e.g. for a cancelled order)
+   GET/POST whatsapp.php (Meta webhook) → customers' replies: STOP switches their WhatsApp offers off (signed with the app secret) */
 require __DIR__ . '/whatsapp-lib.php';
 date_default_timezone_set('Asia/Dubai');
 
@@ -19,6 +20,21 @@ if (isset($_GET['skip'])) {
   else { $m['skipped'] = 'stopped by FOMAXO ' . date('c'); file_put_contents($f, json_encode($m, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX); $msg = "Done. No WhatsApp review message will be sent for order $no."; }
   echo '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>FOMAXO</title><p style="font-family:sans-serif;padding:24px">' . htmlspecialchars($msg) . '</p>';
   exit;
+}
+if (isset($_GET['hub_mode'])) {   // Meta checks the webhook once when FOMAXO saves it
+  if ($_GET['hub_mode'] === 'subscribe' && hash_equals(fx_wa_hook_token(), (string)($_GET['hub_verify_token'] ?? ''))) { header('Content-Type: text/plain'); echo preg_replace('/[^A-Za-z0-9_\-]/', '', (string)($_GET['hub_challenge'] ?? '')); exit; }
+  http_response_code(403); exit;
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {   // a customer's WhatsApp reply
+  $raw = (string)file_get_contents('php://input'); $sec = trim((string)(fx_wa_config()['app_secret'] ?? ''));
+  if ($sec === '' || !hash_equals('sha256=' . hash_hmac('sha256', $raw, $sec), (string)($_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? ''))) { http_response_code(403); exit; }
+  require_once __DIR__ . '/orders-lib.php';
+  $pdo = fomaxo_db(); $j = json_decode($raw, true);
+  foreach ((array)($j['entry'] ?? []) as $e) foreach ((array)($e['changes'] ?? []) as $ch) foreach ((array)($ch['value']['messages'] ?? []) as $m) {
+    $t = (string)($m['text']['body'] ?? $m['button']['text'] ?? $m['interactive']['button_reply']['title'] ?? '');
+    if ($pdo && fx_wa_is_stop($t)) fx_wa_stop($pdo, (string)($m['from'] ?? ''), 'reply');
+  }
+  echo 'ok'; exit;
 }
 if (isset($_GET['status'])) {
   header('Content-Type: application/json');
