@@ -27,6 +27,7 @@
 "Now showing": "المعروض الآن",
 "Discover →": "اكتشف ←",
 "Add to bag": "أضف إلى الحقيبة",
+"Shop all sizes": "تسوّق جميع الأحجام",
 "Free delivery": "توصيل مجاني",
 "Anywhere in UAE": "لجميع أنحاء الإمارات",
 "Ready to gift": "جاهز للإهداء",
