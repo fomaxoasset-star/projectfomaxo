@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=12";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=13";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -255,7 +255,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .exp h3{font-size:19px}
 .exp p{font-size:13.5px;color:var(--champagne);opacity:.8;font-family:var(--serif);font-style:italic;font-size:18px;line-height:1.35}
 .exp .go{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-hi);margin-top:6px}
-@media(max-width:1100px){.exp{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.exp.n3{grid-template-columns:repeat(3,minmax(0,1fr))}@media(max-width:1100px){.exp{grid-template-columns:repeat(2,minmax(0,1fr))}.exp.n3{grid-template-columns:repeat(2,minmax(0,1fr))}.exp.n3 a:first-child{grid-column:span 2;aspect-ratio:3/2.2}}
 @media(max-width:560px){.exp{grid-template-columns:minmax(0,1fr)}.exp a{aspect-ratio:4/3.6}}
 
 /* ---------- smart scent ---------- */
@@ -389,7 +389,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 
 /* collections */
 .coll{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;background:var(--line)}
-.coll a{position:relative;min-height:520px;overflow:hidden;background:#000;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(26px,3vw,48px)}
+.coll a:last-child:nth-child(odd){grid-column:1/-1}.coll a{position:relative;min-height:520px;overflow:hidden;background:#000;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(26px,3vw,48px)}
 .coll img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;transition:transform 2s var(--ease),opacity 1s}
 .coll a:hover img{transform:scale(1.05);opacity:.72}
 .coll a::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.92));z-index:1}
@@ -2495,6 +2495,7 @@ function useProducts(list){
 useProducts(S.products);
 try { const c = localStorage.getItem('fomaxo_products'); if (c && useProducts(JSON.parse(c))) productsJSON = c; } catch(e) {}
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shown = id => !!(P[id] && !P[id].hidden);   // products switched off on admin → Products are left out everywhere
 const imgFor = (p, s) => (p.sizeImages && p.sizeImages[s]) || (s == 10 && p.miniImage ? p.miniImage : p.images[0]);
 const altFor = (p, s) => s == 10 && p.miniImage ? ((p.miniImages && p.miniImages[1]) || null) : p.images[1];
 const sizeLabel = s => s === 'set' ? 'Set' : s + 'ml';
@@ -2731,7 +2732,7 @@ function renderCart(){
   const cc = $('#cartCount'); cc.textContent = n; cc.classList.toggle('on', n > 0);
   const body = $('#cartBody'), foot = $('#cartFoot');
   if (!cart.length){
-    body.innerHTML = `<div class="empty">${emblem()}<p class="caps" style="font-size:20px;color:var(--ivory)">Your bag is empty</p><p class="small">Not sure where to begin? Start with the Discovery Set.</p></div>${reorderHTML('ro-bag')}<div class="qd-nudge qd-empty">${ICON.gift || ''}<span>${qtyNudge({units: 0})}</span></div><a class="empty-ds" href="#/product/discovery" data-close><img src="${SM('discovery-1')}" alt=""><span><small>Start here</small><b>Discovery Set</b><em>Choose 3 for AED 30 or 5 for AED 50 · 2ml vials</em></span><i>→</i></a><div class="empty-acts"><a class="btn sm block" href="#/product/discovery" data-close>Build your Discovery Set</a><a class="btn line sm block" href="#/fragrances" data-close>Shop FOMAXO</a></div>`;
+    body.innerHTML = `<div class="empty">${emblem()}<p class="caps" style="font-size:20px;color:var(--ivory)">Your bag is empty</p><p class="small">${shown('discovery') ? 'Not sure where to begin? Start with the Discovery Set.' : 'Not sure where to begin? Explore our fragrances.'}</p></div>${reorderHTML('ro-bag')}<div class="qd-nudge qd-empty">${ICON.gift || ''}<span>${qtyNudge({units: 0})}</span></div>${shown('discovery') ? `<a class="empty-ds" href="#/product/discovery" data-close><img src="${SM('discovery-1')}" alt=""><span><small>Start here</small><b>Discovery Set</b><em>Choose 3 for AED 30 or 5 for AED 50 · 2ml vials</em></span><i>→</i></a>` : ''}<div class="empty-acts">${shown('discovery') ? '<a class="btn sm block" href="#/product/discovery" data-close>Build your Discovery Set</a>' : ''}<a class="btn line sm block" href="#/fragrances" data-close>Shop FOMAXO</a></div>`;
     foot.innerHTML = ''; return;
   }
   body.innerHTML = cart.map((l, i) => { const p = P[l.id]; return `<div class="line-item">
@@ -2739,7 +2740,7 @@ function renderCart(){
       <div>${lineInfo(l)}
         <div class="qrow"><div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase">+</button></div>
         ${linePriceHTML(p, l)}</div>
-        <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') ? '' :
+        <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') || !shown('discovery') ? '' :
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${SM('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`) + bagRecs();
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
@@ -2919,7 +2920,7 @@ app.addEventListener('click', e => {
 });
 const secHead = (eyebrow, title, extra='', center) => `<div class="sec-head${center?' c':''}"><div class="t rv-up"><span class="eyebrow">${eyebrow}</span><h2>${title}</h2>${extra}</div></div>`;
 const pageHead = (crumb, title, lead='') => `<div class="phead"><div class="wrap"><div class="crumbs"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; ${crumb}</div><h1>${title}</h1>${lead ? `<p class="lead">${lead}</p>` : ''}</div></div>`;
-const finalCTA = () => `<section class="final"><div class="wrap">${emblem('fin-em rv-up')}<span class="eyebrow rv-up">Inspire greatness</span><h2 class="rv-up d1">Define your<br><span class="metal">signature luxury</span></h2><div class="ctas fin-ctas rv-up d2"><a class="btn" href="#/fragrances">Shop FOMAXO</a><a class="btn line" href="#/product/discovery">Try the Discovery Set</a></div></div></section>`;
+const finalCTA = () => `<section class="final"><div class="wrap">${emblem('fin-em rv-up')}<span class="eyebrow rv-up">Inspire greatness</span><h2 class="rv-up d1">Define your<br><span class="metal">signature luxury</span></h2><div class="ctas fin-ctas rv-up d2"><a class="btn" href="#/fragrances">Shop FOMAXO</a>${shown('discovery') ? '<a class="btn line" href="#/product/discovery">Try the Discovery Set</a>' : ''}</div></div></section>`;
 const pyramid = n => n.key ? `<div class="pyramid one"><div>Key notes<span>${esc(n.key)}</span></div></div>` : `<div class="pyramid"><div>Top<span>${esc(n.top)}</span></div><div>Heart<span>${esc(n.heart)}</span></div><div>Base<span>${esc(n.base)}</span></div></div>`;
 
 /* ============================ PAGES ============================ */
@@ -2950,7 +2951,7 @@ function home(){
       <span class="eyebrow hc-kick rv-up"><i aria-hidden="true"></i>Luxury house <em aria-hidden="true">◆</em> Founded in Dubai<i aria-hidden="true"></i></span>
       <h1 class="rv-up d1"><span class="metal">The house of</span><span class="l2">Modern Luxury</span></h1>
       <p class="hc-lead rv-up d2">Every FOMAXO creation is an extension of personal presence<br><span style="display:inline-block;margin-top:6px">— Refined, Expressive And Made To Last.</span></p>
-      <div class="ctas rv-up d3"><a class="btn two" href="#/fragrances"><span>Shop the collection</span><span class="sub">from ${moneyHTML(Math.min(...FRAG.flatMap(p => Object.values(p.prices)).filter(hasPrice)))}</span></a><a class="btn line two" href="#/product/discovery"><span>Discovery Set</span>${P.discovery ? '<span class="sub">from ' + moneyHTML(Math.min(...Object.values(P.discovery.prices))) + '</span>' : ''}</a></div>
+      <div class="ctas rv-up d3"><a class="btn two" href="#/fragrances"><span>Shop the collection</span><span class="sub">from ${moneyHTML(Math.min(...FRAG.flatMap(p => Object.values(p.prices)).filter(hasPrice)))}</span></a>${shown('discovery') ? `<a class="btn line two" href="#/product/discovery"><span>Discovery Set</span><span class="sub">from ${moneyHTML(Math.min(...Object.values(P.discovery.prices)))}</span></a>` : ''}</div>
     </div>
     <div class="hc-bar">
       <div class="hc-nav" id="hcNav">${slides.map((s,i) => `<button class="${i?'':'on'}" data-i="${i}" aria-label="Show ${esc(heroName(s))}"><span class="n">0${i+1}</span><span class="t">${esc(heroName(s))}</span><i></i></button>`).join('')}</div>
@@ -2963,17 +2964,17 @@ function home(){
     <div>${ICON.truck}<span><b>Free delivery</b>Anywhere in UAE</span></div>
     <div>${ICON.gift}<span><b>Ready to gift</b>Luxury packaging</span></div>
     <div>${ICON.pen}<span><b>Custom engraving</b>On request</span></div>
-    <div>${ICON.drop}<span><b>Try first</b><span class="perk-line">Discovery Set from ${P.discovery ? moneyHTML(Math.min(...Object.values(P.discovery.prices))) : ''}</span></span></div>
+    <div>${ICON.drop}<span><b>Try first</b><span class="perk-line">${shown('discovery') ? `Discovery Set from ${moneyHTML(Math.min(...Object.values(P.discovery.prices)))}` : S.mini.products.length ? `Mini 10ml from ${moneyHTML(Math.min(...S.mini.products.map(id => P[id].prices[10]).filter(hasPrice)))}` : 'Ask us for a sample'}</span></span></div>
   </div></div>
   ${lastOrder() ? `<section class="sec ro-sec"><div class="wrap">${orderAgainHTML()}</div></section>` : ''}
 
   <section class="sec"><div class="wrap">
     <div class="sec-head"><div class="t rv-up"><span class="eyebrow">Shop the collection</span><h2>Featured <em class="metal">FOMAXO</em></h2></div><a class="link rv-up" href="#/fragrances">View all →</a></div>
-    <div class="filters home-filters rv-up">${[['all','All'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
+    <div class="filters home-filters rv-up">${[['all','All'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
     <div class="grid">${FRAG.map((p,i) => card(p, {d:'d'+(i%3)})).join('')}</div>
   </div></section>
 
-  ${P.discovery ? `<section class="sec" style="padding-top:0"><div class="wrap">
+  ${shown('discovery') ? `<section class="sec" style="padding-top:0"><div class="wrap">
     <div class="ds-band rv-up">
       <a class="ds-media" href="#/product/discovery"><img src="${IMG(P.discovery.images[0])}" alt="The FOMAXO Discovery Set" loading="lazy"></a>
       <div class="ds-copy">
@@ -3003,11 +3004,11 @@ function home(){
 
   <section class="sec" style="padding-top:0"><div class="wrap">
     ${secHead('The FOMAXO experience', 'More than <span class="metal">luxury</span>', '<p class="lead">FOMAXO represents a modern approach to style — a world of gifting, personalisation and private access, designed around the people who wear it.</p>')}
-    <div class="exp rv-up">
-      <a href="#/product/discovery"><img src="${IMG('discovery-1')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">01</span><h3>Discovery Sets</h3><p>“Experience the FOMAXO collection at home.”</p><span class="go">Shop the set →</span></div></a>
-      <a href="#/collections/name"><img src="${IMG('gift-2-hq')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">02</span><h3>Personalized Gifting</h3><p>“Your gift. Your scent. Your legacy.”</p><span class="go">Discover →</span></div></a>
-      <a href="#/collections/gifting"><img src="${IMG('gift-set-3-hq')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">03</span><h3>Bespoke Gifting</h3><p>“A fragrance of memories.”</p><span class="go">Discover →</span></div></a>
-      <a href="#/collections/elite"><img src="${IMG('elite-card')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">04</span><h3>Elite Membership</h3><p>“For those chosen to experience beyond luxury.”</p><span class="go">Discover →</span></div></a>
+    <div class="exp rv-up${shown('discovery') ? '' : ' n3'}">
+      ${shown('discovery') ? `<a href="#/product/discovery"><img src="${IMG('discovery-1')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">01</span><h3>Discovery Sets</h3><p>“Experience the FOMAXO collection at home.”</p><span class="go">Shop the set →</span></div></a>` : ''}
+      <a href="#/collections/name"><img src="${IMG('gift-2-hq')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">0${2-(shown('discovery') ? 0 : 1)}</span><h3>Personalized Gifting</h3><p>“Your gift. Your scent. Your legacy.”</p><span class="go">Discover →</span></div></a>
+      <a href="#/collections/gifting"><img src="${IMG('gift-set-3-hq')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">0${3-(shown('discovery') ? 0 : 1)}</span><h3>Bespoke Gifting</h3><p>“A fragrance of memories.”</p><span class="go">Discover →</span></div></a>
+      <a href="#/collections/elite"><img src="${IMG('elite-card')}" alt="" loading="lazy"><div class="in"><span class="eyebrow">0${4-(shown('discovery') ? 0 : 1)}</span><h3>Elite Membership</h3><p>“For those chosen to experience beyond luxury.”</p><span class="go">Discover →</span></div></a>
     </div>
   </div></section>
 
@@ -3068,7 +3069,7 @@ function home(){
 
 function fragrances(q){
   const f = q.get('f') || 'all';
-  const filters = [['all','All'],['set','Discovery Sets'],['elite','Elite'],['signature','Signature'],['prestige','Prestige'],['100','100ml'],['50','50ml'],['10','Mini 10ml']];
+  const filters = [['all','All'],['set','Discovery Sets'],['elite','Elite'],['signature','Signature'],['prestige','Prestige'],['100','100ml'],['50','50ml'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : /^\d+$/.test(x[0]) ? FRAG.some(p => p.sizes.map(String).includes(x[0])) : FRAG.some(p => p.tier === x[0])));
   const ORDER = {set:0, signature:1, prestige:2, elite:3};
   const rank = p => ORDER[p.kind === 'set' ? 'set' : p.tier] ?? 9;
   let list = [...S.products].sort((a, b) => rank(a) - rank(b)), sizeOverride = null;
@@ -3201,7 +3202,7 @@ function tierRow(t, i){
   const ps = t.products.map(id => P[id]);
   const list = ps.map(p => `<a class="tier-item" href="#/product/${p.id}"><img src="${SM(p.images[0])}" alt="" loading="lazy"><span><b>${esc(p.name)}</b><small>${esc(p.notes ? (p.notes.key || p.notes.top) : p.family)}</small></span>${fromHTML(p)}</a>`).join('');
   return `<div class="ed tier-row t-${t.id} ${i%2?'rev':''}" id="tier-row-${t.id}">
-    <a class="ed-media rv-up" href="#/collections/tier-${t.id}"><img data-parallax="0.08" src="${IMG(t.image)}" alt="${esc(t.name)}" loading="lazy"><span class="tier-badge">${['I','II','III'][i]}</span></a>
+    <a class="ed-media rv-up" href="#/collections/tier-${t.id}"><img data-parallax="0.08" src="${IMG(shown(t.image.split('-')[0]) || !ps[0] ? t.image : ps[0].images[0])}" alt="${esc(t.name)}" loading="lazy"><span class="tier-badge">${['I','II','III'][i]}</span></a>
     <div class="ed-copy rv-up d1">
       <span class="num">0${i+1}</span>
       <span class="eyebrow">${esc(t.kicker)} · ${esc(t.sizes)}</span>
@@ -3215,14 +3216,14 @@ function tierPage(id){
   const t = S.tiers.find(x => x.id === id); if (!t) return notFound();
   const ps = t.products.map(x => P[x]);
   return pageHead('<a href="#/collections">Collections</a> / ' + esc(t.name), '<em class="metal">' + esc(t.name) + '</em>', esc(t.text)) +
-    `<section style="padding:clamp(40px,4vw,60px) 0 clamp(28px,3vw,40px)"><div class="wrap"><div class="tier-switch">${S.tiers.map(x => `<a class="chip${x.id===id?' on':''}" href="#/collections/tier-${x.id}">${esc(x.name)}<small>${esc(x.sizes)}</small></a>`).join('')}</div>
+    `<section style="padding:clamp(40px,4vw,60px) 0 clamp(28px,3vw,40px)"><div class="wrap"><div class="tier-switch">${S.tiers.filter(x => x.products.length || x.id === id).map(x => `<a class="chip${x.id===id?' on':''}" href="#/collections/tier-${x.id}">${esc(x.name)}<small>${esc(x.sizes)}</small></a>`).join('')}</div>
     <div class="grid${ps.length>3?' four':''}">${ps.map((p,i)=>card(p,{d:'d'+(i%4)})).join('')}</div></div></section>` + finalCTA();
 }
 function collections(sub){
   if (sub && sub.startsWith('tier-')) return tierPage(sub.slice(5));
   if (sub === 'fragrance') return pageHead('<a href="#/collections">Collections</a> / Fragrance Collection', 'Fragrance <em class="metal">Collection</em>', 'Three tiers of luxury — from the pinnacle of the house to refined everyday luxury.') +
-    `<section style="padding:30px 0 40px"><div class="wrap"><div class="tier-switch">${S.tiers.map(x => `<a class="chip" href="#tier-row-${x.id}" data-jump="tier-row-${x.id}">${esc(x.name)}<small>${esc(x.sizes)}</small></a>`).join('')}</div>
-    ${S.tiers.map((t,i) => tierRow(t,i)).join('')}</div></section>` + finalCTA();
+    `<section style="padding:30px 0 40px"><div class="wrap"><div class="tier-switch">${S.tiers.filter(x => x.products.length).map(x => `<a class="chip" href="#tier-row-${x.id}" data-jump="tier-row-${x.id}">${esc(x.name)}<small>${esc(x.sizes)}</small></a>`).join('')}</div>
+    ${S.tiers.filter(t => t.products.length).map((t,i) => tierRow(t,i)).join('')}</div></section>` + finalCTA();
   if (sub === 'signature') return tierPage('signature');
   if (sub === 'mini'){ const m = S.mini; return pageHead('<a href="#/collections">Collections</a> / Mini', `Mini <em class="metal">Collection</em>`, m.text) +
     `<section style="padding:clamp(40px,4vw,60px) 0 0"><div class="wrap"><div class="sec-head"><div class="t rv-up"><span class="eyebrow">10ml · pocket-sized</span><h2>${m.headline}</h2></div></div><div class="grid four">${m.products.map((id,i)=>card(P[id],{d:'d'+(i%4), size:10})).join('')}</div></div></section>` + finalCTA(); }
@@ -3231,15 +3232,15 @@ function collections(sub){
   if (sub === 'elite') return elite();
   if (sub === 'discovery'){ location.hash = '#/product/discovery'; return ''; }
   const tiles = [
-    ['fragrance','Fragrance Collection','Three tiers of luxury: Elite, Signature and Prestige.','king-1'],
-    ['mini','Mini Collection','Luxury redefined in 10ml. Elegance no longer confined to the dressing table.','oldmoney-10-1'],
+    ['fragrance','Fragrance Collection','Three tiers of luxury: Elite, Signature and Prestige.',shown('king') ? 'king-1' : (FRAG[0] ? FRAG[0].images[0] : 'atelier')],
+    ['mini','Mini Collection','Luxury redefined in 10ml. Elegance no longer confined to the dressing table.',shown('oldmoney') ? 'oldmoney-10-1' : (P[S.mini.products[0]] ? imgFor(P[S.mini.products[0]], 10) : 'atelier')],
     ['discovery','Discovery Sets','2ml vials to experience the FOMAXO collection at home before choosing your full-size bottle.','discovery-1'],
     ['gifting','Bespoke Gifting','Luxury gifting for weddings, gatherings and corporate functions.','gift-set-3-hq'],
     ['name','Exclusive Personalized Gifting','Your gift. Your scent. Your legacy. The highest form of personalisation: a perfume gifted after the client themselves.','gift-2-hq'],
     ['elite','FOMAXO Elite','No application, no fee. Your yearly FOMAXO spending unlocks Black, Gold, Elite and Imperial benefits.','elite-card']
   ];
   return pageHead('Collections', 'The <em class="metal">Collections</em>', 'From signature Eau de Parfum to bespoke gifting and private membership — explore the world of FOMAXO.') +
-    `<section style="padding:clamp(40px,4vw,60px) 0 0"><div class="wrap"><div class="coll">${tiles.map(t => `<a class="rv-up" href="#/collections/${t[0]}"><img src="${IMG(t[3])}" alt="" loading="lazy"><div class="in"><span class="eyebrow">Collection</span><h3>${t[1]}</h3><p>${t[2]}</p><span class="link" style="align-self:flex-start">Explore →</span></div></a>`).join('')}</div></div></section>` + finalCTA();
+    `<section style="padding:clamp(40px,4vw,60px) 0 0"><div class="wrap"><div class="coll">${tiles.filter(t => (t[0] !== 'discovery' || shown('discovery')) && (t[0] !== 'mini' || S.mini.products.length)).map(t => `<a class="rv-up" href="#/collections/${t[0]}"><img src="${IMG(t[3])}" alt="" loading="lazy"><div class="in"><span class="eyebrow">Collection</span><h3>${t[1]}</h3><p>${t[2]}</p><span class="link" style="align-self:flex-start">Explore →</span></div></a>`).join('')}</div></div></section>` + finalCTA();
 }
 
 function gifting(){
