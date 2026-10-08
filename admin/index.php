@@ -1307,7 +1307,7 @@ if (isset($_GET['coupons'])) {
   /* WhatsApp to the customer with their goodwill code */
   $goodwillWa = function ($c) { $wa = preg_replace('/\D/', '', (string)$c['phone']); if (str_starts_with($wa, '00')) $wa = substr($wa, 2); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); elseif (strlen($wa) === 9 && $wa[0] === '5') $wa = '971' . $wa;
     $end = $c['ends'] ? date('d/m/Y', strtotime($c['ends'])) : '';
-    return 'https://wa.me/' . $wa . '?text=' . rawurlencode("Hello from FOMAXO 🙏 Thank you for your patience. Here is a goodwill coupon for your next order:\n\n*{$c['code']}* · " . fomaxo_coupon_label($c) . "\n\nUse it once at checkout on fomaxo.com with this mobile number" . ($end ? ", before $end" : '') . '.'); };
+    return 'https://wa.me/' . $wa . '?text=' . rawurlencode("Hello from FOMAXO. Thank you for your patience. Here is a goodwill coupon for your next order:\n\n*{$c['code']}* · " . fomaxo_coupon_label($c) . "\n\nUse it once at checkout on fomaxo.com with this mobile number" . ($end ? ", before $end" : '') . '.'); };
   $made = null; if (!empty($_SESSION['goodwill'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['goodwill']]); $made = $s->fetch() ?: null; unset($_SESSION['goodwill']); }
   $dt = fn($v) => date('d/m/Y, g:i a', strtotime($v));
   $left = function ($v) { $m = (int)floor((strtotime($v) - time()) / 60); $d = intdiv($m, 1440); $h = intdiv($m % 1440, 60);
