@@ -124,7 +124,11 @@ function fomaxo_coupons_table($pdo) {
               min_order DECIMAL(10,2) NULL, expires DATE NULL, max_uses INT NULL, active TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NULL) DEFAULT CHARSET=utf8mb4");
   /* stack = 1: "Use both" (the coupon comes off after the multi-buy discount); 0: "Use the bigger offer" */
   try { if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'stack'")->fetch()) $pdo->exec("ALTER TABLE fx_coupons ADD COLUMN stack TINYINT(1) NOT NULL DEFAULT 0"); } catch (Throwable $e) {}
+  /* phone: a one-time coupon made for one customer (late delivery, faulty product) only works with that mobile number */
+  try { if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'phone'")->fetch()) $pdo->exec("ALTER TABLE fx_coupons ADD COLUMN phone VARCHAR(25) NULL"); } catch (Throwable $e) {}
 }
+/* the same mobile written any way (+971 50…, 050…, Arabic digits) gives the same last 9 digits */
+function fomaxo_phone9($p) { return substr(preg_replace('/\D/', '', strtr((string)$p, FX_AR_DIGITS)), -9); }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -383,7 +387,7 @@ function fomaxo_coupon_label($c) {
   return $c['kind'] === 'aed' ? "AED $n off" : "$n% off";
 }
 /* Finds a code that can be used now. Returns ['error' => …] or ['code', 'kind', 'amount', 'min', 'label'] */
-function fomaxo_coupon_find($code) {
+function fomaxo_coupon_find($code, $phone = null) {
   $code = fomaxo_coupon_norm($code);
   if ($code === '') return ['error' => 'Please type a coupon code.'];
   $pdo = fomaxo_db(); if (!$pdo) return ['error' => 'Coupons are not available right now. Please try again later.'];
@@ -395,13 +399,14 @@ function fomaxo_coupon_find($code) {
   if (!empty($c['starts']) && $c['starts'] > $now) return ['error' => 'This coupon code starts on ' . date('d/m/Y \a\t g:i a', strtotime($c['starts'])) . '.'];
   if ($ends && $ends < $now) return ['error' => 'This coupon code has expired.'];
   if ($c['max_uses'] !== null && fomaxo_coupon_uses($pdo, $code) >= (int)$c['max_uses']) return ['error' => 'This coupon code has been fully used.'];
+  if (!empty($c['phone']) && $phone !== null && fomaxo_phone9($phone) !== fomaxo_phone9($c['phone'])) return ['error' => 'This coupon code is for another mobile number.'];
   return ['code' => $c['code'], 'kind' => $c['kind'] === 'aed' ? 'aed' : 'pct', 'amount' => (float)$c['amount'], 'min' => $c['min_order'] !== null ? (float)$c['min_order'] : 0,
           'label' => fomaxo_coupon_label($c), 'ends' => $ends ? str_replace(' ', 'T', $ends) . '+04:00' : null, 'stack' => !empty($c['stack'])];
 }
 /* What the code saves on a bag of $subFils (fils, before any discount). Returns ['error' => …] or the coupon plus 'saveFils'.
    A "Use both" coupon ('stack') is worked out on the bag after the multi-buy discount ($multiFils); the minimum still counts the bag before any discount. */
-function fomaxo_coupon_apply($code, $subFils, $multiFils = 0) {
-  $c = fomaxo_coupon_find($code); if (isset($c['error'])) return $c;
+function fomaxo_coupon_apply($code, $subFils, $multiFils = 0, $phone = '') {
+  $c = fomaxo_coupon_find($code, (string)$phone); if (isset($c['error'])) return $c;
   if ($c['min'] > 0 && $subFils < (int)round($c['min'] * 100)) return ['error' => 'This coupon code is for orders of AED ' . rtrim(rtrim(number_format($c['min'], 2, '.', ''), '0'), '.') . ' or more.'];
   $base = $c['stack'] ? $subFils - $multiFils : $subFils;
   $c['saveFils'] = $c['kind'] === 'aed' ? min($base, (int)round($c['amount'] * 100)) : (int)round($base * min(100, $c['amount']) / 100);
