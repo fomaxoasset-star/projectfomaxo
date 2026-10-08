@@ -1943,17 +1943,37 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 .wrap>.rv-up:last-child>.acro:last-child{margin-bottom:0}
 .reorder.ro-bag{grid-template-columns:auto 1fr;margin-bottom:14px}
 .reorder.ro-bag .btn{grid-column:1/-1;width:100%}
-/* desktop home: bigger, easier to read Welcome back box with a gold edge */
-@media(min-width:901px){
-.reorder.ro-home{gap:32px;padding:26px 34px;border-inline-start:3px solid var(--gold);background:linear-gradient(90deg,rgba(215,170,105,.13),rgba(215,170,105,0) 65%),var(--panel)}
-.reorder.ro-home .ro-imgs img{width:84px;box-shadow:0 8px 22px rgba(0,0,0,.28)}
-.reorder.ro-home .ro-imgs img + img{margin-inline-start:-26px}
-.reorder.ro-home .ro-t{gap:8px}
-.reorder.ro-home small{font-size:12.5px;letter-spacing:.32em}
-.reorder.ro-home b{font-size:28px;letter-spacing:.08em;line-height:1.15}
-.reorder.ro-home .ro-t span{font-size:16px;color:var(--ivory);opacity:.85}
-.reorder.ro-home .btn{min-height:54px;padding:0 38px;font-size:13px;letter-spacing:.18em}
-html[dir=rtl] .reorder.ro-home{background:linear-gradient(270deg,rgba(215,170,105,.13),rgba(215,170,105,0) 65%),var(--panel)}
+/* home "Order again" row (like fomaxo.in): outlined box, gold label, arrows + Add all to bag, swipeable tiles */
+.oa{border:1px solid var(--line-2);background:var(--panel);padding:18px 22px 20px}
+.oa-head{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-bottom:16px}
+.oa-k{font-family:var(--display);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.oa-n{font-size:13.5px;color:var(--ivory);opacity:.85}
+.oa-acts{margin-inline-start:auto;display:flex;align-items:center;gap:8px}
+.oa-arw{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line-2);background:transparent;color:var(--champagne);font-size:20px;line-height:1;cursor:pointer;padding:0 0 3px}
+.oa-arw:hover{border-color:var(--gold-hi);color:var(--gold-hi)}
+.oa.oa-fit .oa-arw{display:none}
+.oa .btn.sm{min-height:38px;padding:0 18px}
+.oa-row{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.oa-row::-webkit-scrollbar{display:none}
+.oa-t{position:relative;flex:0 0 150px;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column}
+.oa-pic{display:block;aspect-ratio:1;border:1px solid var(--line);background:var(--panel-2);overflow:hidden}
+.oa-pic img{width:100%;height:100%;object-fit:cover;display:block}
+.oa-pw{position:relative}
+.oa-add{position:absolute;inset-inline-end:8px;bottom:8px;width:32px;height:32px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--gold-hi),var(--gold));color:var(--black);font-size:20px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0 0 2px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.oa-t b{font-family:var(--display);font-weight:400;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ivory);margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oa-s{font-size:12.5px;color:var(--muted);margin-top:4px;white-space:nowrap}
+.oa-s .amt{color:var(--ivory)}
+@media(max-width:600px){
+.oa{padding:14px 14px 16px}
+.oa-head{margin-bottom:12px}
+.oa-k{font-size:11px;letter-spacing:.26em}
+.oa-n{font-size:12.5px}
+.oa-acts{order:3;width:100%;margin:6px 0 0}
+.oa-arw{display:none}
+.oa .btn.sm{width:100%}
+.oa-row{gap:10px;margin:0 -14px;padding:0 14px;scroll-padding:0 14px}
+.oa-t{flex-basis:calc((100% - 20px) / 2.4)}
+.oa-add{inset-inline-end:6px;bottom:6px;width:30px;height:30px}
 }
 @media(max-width:600px){.reorder{grid-template-columns:auto 1fr;gap:12px;padding:12px}.reorder .btn{grid-column:1/-1;width:100%}}
 .notify-ok{max-width:460px;padding:15px 18px;border:1px solid var(--line-2);font-size:14px;color:var(--gold)}
@@ -2771,7 +2791,7 @@ addedEl.addEventListener('click', e => {
 function rememberOrder(lines){ try { if (lines && lines.length) localStorage.setItem('fomaxo_last', JSON.stringify({t: Date.now(), lines: lines.map(l => ({id: l.id, opt: l.opt, qty: l.qty, picks: l.picks}))})); } catch(e) {} }
 function lastOrder(){
   try { const d = JSON.parse(localStorage.getItem('fomaxo_last') || 'null');
-    const ls = d && Array.isArray(d.lines) ? d.lines.filter(l => P[l.id] && !P[l.id].hidden && P[l.id].sizes.map(String).includes(String(l.opt)) && hasPrice(P[l.id].prices[l.opt])) : [];
+    const ls = d && Array.isArray(d.lines) ? d.lines.filter(l => P[l.id] && !P[l.id].hidden && P[l.id].sizes.map(String).includes(String(l.opt)) && hasPrice(P[l.id].prices[l.opt]) && stockLeft(l.id, l.opt) !== 0) : [];
     return ls.length ? ls : null; } catch(e) { return null; }
 }
 function reorder(){
@@ -2781,6 +2801,22 @@ function reorder(){
 }
 const reorderHTML = (cls = '') => { const ls = lastOrder(); if (!ls) return '';
   return `<div class="reorder ${cls}"><div class="ro-imgs">${ls.slice(0, 3).map(l => `<img src="${SM(lineImg(l))}" alt="">`).join('')}</div><div class="ro-t"><small>Welcome back</small><b>Order your favourites again</b><span>${ls.map(l => esc(P[l.id].name) + ' ' + optLabel(P[l.id], l.opt)).join(' · ')}</span></div><button class="btn sm" type="button" data-reorder>Add to bag</button></div>`; };
+
+/* homepage "Order again" row (like fomaxo.in): a swipeable tile per item of this device's last order, today's price, out-of-stock sizes left out */
+function orderAgainHTML(){ const ls = lastOrder(); if (!ls) return '';
+  const n = ls.reduce((a, l) => a + (+l.qty || 1), 0);
+  return `<div class="oa" id="orderAgain"><div class="oa-head"><span class="oa-k">Order again</span><span class="oa-n">· ${n} ${n === 1 ? 'item' : 'items'} from your last order</span>
+    <div class="oa-acts"><button class="oa-arw" type="button" data-oa="-1" aria-label="Previous">‹</button><button class="oa-arw" type="button" data-oa="1" aria-label="Next">›</button><button class="btn line sm" type="button" data-reorder>Add all to bag</button></div></div>
+    <div class="oa-row">${ls.map((l, i) => { const p = P[l.id]; return `<div class="oa-t"><div class="oa-pw"><a class="oa-pic" href="#/product/${p.id}"><img src="${SM(lineImg(l))}"${IMG_W[lineImg(l)] ? ` srcset="${SM(lineImg(l))} 240w, assets/img/t/${lineImg(l)}.webp 720w" sizes="150px"` : ''} alt="${esc(p.name)}" loading="lazy"></a><button class="oa-add" type="button" data-oaadd="${i}" aria-label="Add ${esc(p.name)} ${esc(optLabel(p, l.opt))} to your bag">+</button></div><b>${esc(p.name)}</b><span class="oa-s"><span>${esc(optLabel(p, l.opt))}</span> · ${moneyHTML(p.prices[l.opt])}</span></div>`; }).join('')}</div></div>`; }
+function bindOrderAgain(){ const box = $('#orderAgain'); if (!box) return; const row = $('.oa-row', box);
+  const fit = () => box.classList.toggle('oa-fit', row.scrollWidth <= row.clientWidth + 2); fit();
+  $$('[data-oa]', box).forEach(b => b.onclick = () => row.scrollBy({left: +b.dataset.oa * row.clientWidth * .8, behavior: 'smooth'}));
+  $$('[data-oaadd]', box).forEach(b => b.onclick = () => { const l = lastOrder()[+b.dataset.oaadd]; if (l) addToCart(l.id, l.opt, 1, false, l.picks); });
+  $$('[data-reorder]', box).forEach(b => b.onclick = reorder);
+}
+/* stock arrives after the page draws: redraw the row so sold-out sizes drop out (and the whole box goes if nothing is left) */
+function refreshOrderAgain(){ const box = $('#orderAgain'); if (!box) return; const h = orderAgainHTML(), sec = box.closest('.ro-sec');
+  if (!h) { sec && sec.remove(); return; } box.outerHTML = h; bindOrderAgain(); }
 
 /* after a purchase: three fragrances the customer does not have yet, so the next order is one tap away */
 function afterBuyRecs(lines){
@@ -2834,6 +2870,7 @@ function applyStock(){
   $$('.card[data-id]').forEach(c => { const p = P[c.dataset.id]; if (!p) return; const sel = c.dataset.sel, el = $('[data-stk]', c);
     if (el) el.innerHTML = stockHTML(p.id, sel); $$('[data-add],[data-buy]', c).forEach(b => b.disabled = stockLeft(p.id, sel) === 0); });
   pdpStock && pdpStock();
+  refreshOrderAgain();
 }
 async function loadStock(){
   try { const r = await fetch('stock.php', {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.stock) STOCK = d.stock; } } catch(e) {}
@@ -2916,7 +2953,7 @@ function home(){
     <div>${ICON.pen}<span><b>Custom engraving</b>On request</span></div>
     <div>${ICON.drop}<span><b>Try first</b><span class="perk-line">Discovery Set from ${P.discovery ? moneyHTML(Math.min(...Object.values(P.discovery.prices))) : ''}</span></span></div>
   </div></div>
-  ${lastOrder() ? `<section class="sec ro-sec"><div class="wrap">${reorderHTML('ro-home')}</div></section>` : ''}
+  ${lastOrder() ? `<section class="sec ro-sec"><div class="wrap">${orderAgainHTML()}</div></section>` : ''}
 
   <section class="sec"><div class="wrap">
     <div class="sec-head"><div class="t rv-up"><span class="eyebrow">Shop the collection</span><h2>Featured <em class="metal">FOMAXO</em></h2></div><a class="link rv-up" href="#/fragrances">View all →</a></div>
@@ -4181,6 +4218,7 @@ function bindHome(){
   if (sb){ const o = new IntersectionObserver(es => { if (es[0].isIntersecting){ sb.style.backgroundImage = `url('${sb.dataset.bg}')`; o.disconnect(); } }, {rootMargin: '600px 0px'}); o.observe(sb); }
   $$('[data-quickadd]').forEach(b => b.onclick = () => { const p = P[b.dataset.quickadd]; addToCart(p.id, defaultSize(p)); });
   $$('[data-reorder]', app).forEach(b => b.onclick = reorder);
+  bindOrderAgain();
 }
 function bindHomeOld(){
   const imgs = $$('#arch img'), dots = $$('#heroDots button'), ids = ['king','oldmoney','royalcandy','matchacoco','passionsin','gold'];

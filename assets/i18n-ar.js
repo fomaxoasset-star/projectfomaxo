@@ -657,6 +657,9 @@
 "Order placed": "تم تقديم الطلب",
 "Order placed — FOMAXO": "تم تقديم الطلب — FOMAXO",
 "Order your favourites again": "اطلب مفضّلاتك مجدداً",
+"Add all to bag": "أضف الكل إلى الحقيبة",
+"Previous": "السابق",
+"Next": "التالي",
 "Out of Stock — Restocking Soon": "نفد المخزون — يعود قريباً",
 "Out of stock": "نفد المخزون",
 "Payment not completed": "لم تكتمل عملية الدفع",
@@ -739,6 +742,8 @@
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };
   var R = [
+    [/^· (\d+) items? from your last order$/, function(m){ return '· ' + cnt(m[1], 'قطعة واحدة', 'قطعتان', 'قطع', 'قطعة') + ' من طلبك الأخير'; }],
+    [/^Add (.+) (Set of \d+) to your bag$/, function(m){ return 'أضف ' + m[1] + ' ' + (tr(m[2]) || m[2]) + ' إلى حقيبتك'; }],
     [/^\/ (.+)$/, function(m){ return '/ ' + (tr(m[1]) || m[1]); }],
     [/^Enjoying (.+)\? Your honest review helps others choose their experience\.$/, function(m){ return 'هل يعجبك ' + m[1] + '؟ تقييمك الصادق يساعد الآخرين على اختيار تجربتهم.'; }],
     [/^Be the first to review (.+)$/, function(m){ return 'كن أول من يقيّم ' + m[1]; }],
