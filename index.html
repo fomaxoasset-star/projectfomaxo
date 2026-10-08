@@ -2638,9 +2638,11 @@ function fitCo(){
 addEventListener('resize', () => requestAnimationFrame(fitCo));
 try { coupon = JSON.parse(sessionStorage.getItem('fomaxo_coupon') || 'null'); } catch(e) { coupon = null; }
 function setCoupon(c){ coupon = c || null; try { c ? sessionStorage.setItem('fomaxo_coupon', JSON.stringify(c)) : sessionStorage.removeItem('fomaxo_coupon'); } catch(e) {} }
-function couponSave(t0){
+// a "Use both" coupon (coupon.stack, set on admin → Coupons) comes off after the multi-buy discount (multi); the minimum counts the bag before any discount
+function couponSave(t0, multi){
   if (!coupon || t0 === null || (coupon.min > 0 && t0 < coupon.min) || (coupon.ends && Date.parse(coupon.ends) <= Date.now())) return 0;
-  return coupon.kind === 'aed' ? Math.min(t0, coupon.amount) : Math.round(t0 * Math.min(100, coupon.amount)) / 100;
+  const b = coupon.stack ? Math.round((t0 - (multi || 0)) * 100) / 100 : t0;
+  return coupon.kind === 'aed' ? Math.min(b, coupon.amount) : Math.round(b * Math.min(100, coupon.amount)) / 100;
 }
 /* minimum order + cash on delivery (keep in sync with checkout.php). Minimums count the total after the multi-buy discount or coupon. */
 const MIN_ORDER = 30;
@@ -2648,10 +2650,11 @@ let COD_MIN = 200, COD_MAX = 2000, COD_FEE = 10;   // cash on delivery from COD_
 const aed = v => `${S.currency} ${Number(v).toLocaleString('en-US', {minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2})}`;
 function orderTotals(lines, pay, withCoupon){
   const t0 = subtotal(lines), dc = qtyDiscount(lines);
-  const cs = withCoupon ? couponSave(t0) : 0, useC = cs > dc.amount, disc = useC ? cs : dc.amount;   // the bigger saving wins
+  const cs = withCoupon ? couponSave(t0, dc.amount) : 0, both = !!(coupon && coupon.stack), useC = both ? cs > 0 : cs > dc.amount;
+  const disc = both ? dc.amount + cs : useC ? cs : dc.amount;   // the bigger saving wins, or both for a "Use both" coupon
   const after = t0 === null ? null : Math.round((t0 - disc) * 100) / 100;
   const fee = pay === 'cod' ? COD_FEE : 0;
-  return {t0, dc, cs, useC, disc, after, fee, total: after === null ? null : after + fee, short: after === null ? 0 : Math.max(0, Math.round((MIN_ORDER - after) * 100) / 100)};
+  return {t0, dc, cs, useC, both, disc, after, fee, total: after === null ? null : after + fee, short: after === null ? 0 : Math.max(0, Math.round((MIN_ORDER - after) * 100) / 100)};
 }
 const minMsg = short => `Minimum order ${aed(MIN_ORDER)} · add ${aed(short)} more`;
 // "Buy now" puts the product in the bag (not doubled if it's already there) and goes straight to checkout with the whole bag.
@@ -3559,7 +3562,7 @@ function bindCheckout(q){
     let d = {};
     try { const r = await fetch('coupon.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code})}); d = await r.json().catch(() => ({})); }
     catch(e) { d = {error: 'We could not check this code. Please check your connection and try again.'}; }
-    if (d && d.code) { setCoupon({code: d.code, kind: d.kind, amount: +d.amount, min: +d.min || 0, label: d.label, ends: d.ends || null}); cpMsg = ''; drawCoupon(); draw(); return; }
+    if (d && d.code) { setCoupon({code: d.code, kind: d.kind, amount: +d.amount, min: +d.min || 0, label: d.label, ends: d.ends || null, stack: !!d.stack}); cpMsg = ''; drawCoupon(); draw(); return; }
     cpMsg = (d && d.error) || 'This coupon code is not valid.'; drawCoupon(); const i = $('#coCpIn'); if (i) { i.value = code; i.focus(); }
   }
   // the line under an applied code: what it saves, or why it isn't used
@@ -3595,7 +3598,8 @@ function bindCheckout(q){
     const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (T.disc > 0 ? T.disc : 0)) * 100) / 100;
     const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div><div id="coCpSlot"></div>` :
       `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div>
-      ${T.useC ? `<div class="co-row disc co-cpr"><span>Coupon ${esc(coupon.code)} (${esc(coupon.label)})</span><span class="price">−${moneyHTML(T.cs, true)}</span></div>`
+      ${T.both && T.useC && dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
+      ${T.useC ? `<div class="co-row disc${T.both ? '' : ' co-cpr'}"><span>Coupon ${esc(coupon.code)} (${esc(coupon.label)})</span><span class="price">−${moneyHTML(T.cs, true)}</span></div>`
         : dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row co-fee"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}

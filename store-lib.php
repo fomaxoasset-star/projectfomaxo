@@ -78,9 +78,12 @@ function fomaxo_price_order($in) {
   /* coupon code (checked again here, never trusted from the browser): used only when it saves more than the multi-buy discount */
   $coupon = null; $discLabel = "Multi-buy $pct% off";
   if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
-    $cp = fomaxo_coupon_apply($in['coupon'], $fullFils);
+    $cp = fomaxo_coupon_apply($in['coupon'], $fullFils, $fullFils - $netFils);
     if (isset($cp['error'])) return ['error' => $cp['error'] . ' Please remove it and try again.'];
-    if ($cp['saveFils'] > $fullFils - $netFils) {
+    if ($cp['stack'] && $cp['saveFils'] > 0) {   // "Use both": the coupon comes off after the multi-buy discount
+      $netFils -= $cp['saveFils']; $coupon = $cp['code']; $cl = "Coupon {$cp['code']} ({$cp['label']})";
+      $discLabel = ($pct ? "$discLabel + " : '') . $cl; $summary[] = "$cl: -" . fomaxo_aed($cp['saveFils']);
+    } elseif (!$cp['stack'] && $cp['saveFils'] > $fullFils - $netFils) {
       foreach ($items as &$it) { $it['unit'] = $it['full']; $it['pct'] = 0; } unset($it);
       $pct = 0; $netFils = $fullFils - $cp['saveFils']; $coupon = $cp['code']; $discLabel = "Coupon {$cp['code']} ({$cp['label']})";
       $summary[] = "$discLabel: -" . fomaxo_aed($cp['saveFils']);
