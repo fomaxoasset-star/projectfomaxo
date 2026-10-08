@@ -2147,6 +2147,7 @@ html[lang=ar] .co-nudge .qn-line,html[lang=ar] #cart .dr-foot .qd-nudge>span{whi
 html[lang=ar] h1,html[lang=ar] h2,html[lang=ar] h3,html[lang=ar] h4{line-height:1.3}
 html[lang=ar] .amt,html[lang=ar] .mode-switch,html[lang=ar] .acro{direction:ltr;unicode-bidi:isolate}
 html[lang=ar] input[type=tel],html[lang=ar] input[type=email]{direction:ltr;text-align:right}
+html[lang=ar] .promo :is(.pm-line,.pm-name,.pm-eye,.pm-sub){unicode-bidi:plaintext}   /* words typed in English keep their full stop at the end */
 html[lang=ar] .brand{direction:ltr}   /* the logo reads the same in Arabic: emblem, FOMAXO, then ™ right after it */
 html[lang=ar] .rw-s-fg{left:auto;right:0}   /* rating stars: the gold fill sits exactly on the stars and fills right to left in Arabic */
 html[lang=ar] .sub-row .price,html[lang=ar] .co-row .price{direction:ltr;unicode-bidi:isolate}   /* discounts read −AED 43.00, not AED 43.00− */
@@ -4440,5 +4441,5 @@ renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); p
 (function(){var ar=document.documentElement.lang==="ar";
 document.querySelectorAll(".lang-sw").forEach(function(b){if(ar){b.textContent="EN";b.lang="en";b.setAttribute("aria-label","English");b.title="English"}
 b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href)location.reload();else location.replace(u)}});
-if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=10";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
+if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=11";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
 </body></html>
