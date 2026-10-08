@@ -80,10 +80,10 @@ function fx_refill_text($p) {
     . $n2 . 'تقديراً لك، هذا رمزك الخاص للحصول على خصم ' . $p['pct'] . '% على طلبك القادم (لمرة واحدة):' . "\n" . $p['code']
     . $n2 . "يمكنك الطلب من جديد هنا:\nhttps://fomaxo.com/?lang=ar"
     . ($p['review'] ? $n2 . "إن سمح وقتك، يسعدنا تقييمك الصادق، وسيظهر بشارة \"مشتري موثّق\":\n" . $p['review'] : '')
-    . $n2 . 'راسلنا هنا إن احتجت مساعدة في اختيار عطرك القادم.' . $n2 . "شكراً لك،\nFOMAXO";
+    . $n2 . 'راسلنا هنا إن احتجت مساعدة في اختيار عطرك القادم. وأرسل كلمة STOP إن كنت لا ترغب في هذه الرسائل.' . $n2 . "شكراً لك،\nFOMAXO";
   return 'Hi ' . $p['first'] . ',' . $n2 . 'I hope you are enjoying ' . ($p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume') . '. It has been ' . $p['days'] . ' days since your order, so your bottle may be running low.'
     . $n2 . 'As a thank you, here is your personal code for ' . $p['pct'] . '% off your next order (single use):' . "\n" . $p['code']
     . $n2 . "You can reorder anytime here:\nhttps://fomaxo.com"
     . ($p['review'] ? $n2 . "If you have a moment, we would love your honest review. It will show as Verified Purchaser:\n" . $p['review'] : '')
-    . $n2 . 'Just reply here if you would like help choosing your next scent.' . $n2 . "Thank you,\nFOMAXO";
+    . $n2 . 'Just reply here if you would like help choosing your next scent. If you would rather not get these messages, reply STOP.' . $n2 . "Thank you,\nFOMAXO";
 }
