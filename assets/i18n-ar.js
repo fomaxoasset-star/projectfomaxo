@@ -800,6 +800,7 @@
     }
     return null;
   }
+  if (window.FX_TR_ONLY){ window.FX_TR = tr; return; }   // admin → Offer → Preview only borrows the word list, nothing on its page is changed
   var SKIP = 'script,style,textarea,input,code,[contenteditable],[data-no-tr],[role=option],.rw-text,.rw-name,.rw-reply';
   var done = new WeakMap();   // text node → the Arabic we wrote, so our own writes are not translated again
   function doText(n){

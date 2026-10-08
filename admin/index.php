@@ -364,7 +364,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
-     . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Jost:wght@300;400;500&family=Manrope:wght@400;500;600;700&display=swap">'
+     . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Jost:wght@300;400;500&family=Tajawal:wght@400;500;700&family=Manrope:wght@400;500;600;700&display=swap">'
      . "<style>$css</style></head><body>"
      . '<header class="top"><a class="brand" href="./">FOMAXO<small>ADMIN</small></a>'
      . (!empty($_SESSION['admin']) ? '<div class="hacts"><a class="btn line sm" href="../" target="_blank" rel="noopener"><span class="vw">View </span>website ↗</a><form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Sign out</button></form></div>' : '')
@@ -844,6 +844,18 @@ const OFFER_CSS = <<<'CSS'
 .pv-ofl.cardl{flex-direction:column;align-items:flex-start;font-size:9px;letter-spacing:.08em;margin-top:4px}
 .pv-ofl.boxl{flex-wrap:wrap}
 @media (max-width:820px){.pv-ofl.boxl{font-size:10px;letter-spacing:.1em;padding:7px 10px}}
+/* preview: size bar (Laptop | Phone, part, slider, Reset, Save); each part grows or shrinks from its standard size */
+.pv-sz{display:flex;flex-wrap:wrap;gap:8px 10px;justify-content:center;align-items:center;max-width:1200px;padding:8px 10px;border:1px solid #3a3326;border-radius:9px;background:#0e0d0b;color:#cfc6b3}.pv-sz[hidden]{display:none}
+.pv-sz input[type=range]{width:180px;margin:0;padding:0;border:0;background:none;accent-color:#d7aa69}.pv-szv{min-width:96px;font-size:13px;font-weight:600;color:#d7aa69;text-align:center}
+.pv-sz .btn{padding:7px 14px}.pv-sz .pvrs{font:inherit;font-size:12.5px;padding:7px 12px;border:1px solid #3a3326;border-radius:7px;background:none;color:#cfc6b3;cursor:pointer}
+.pv-site.ar .pv-box{font-family:"Jost","Tajawal",Arial,sans-serif;line-height:1.6}.pv-site.ar :is(.pv-k,.pv-pct,.pv-sub,.pv-ln,.pv-go,.pv-no,.pv-hurry,.pv-cd span,.pv-ofl){letter-spacing:0}.pv-site.ar :is(.pv-item span,.pv-price){direction:ltr;unicode-bidi:isolate}.pv-site.ar :is(.pv-ln,.pv-name,.pv-k,.pv-sub){unicode-bidi:plaintext}
+.pv-site .pv-k{font-size:calc(12px*var(--t,100)/100)}.pv-site .pv-pct{font-size:calc(54px*var(--pc,100)/100)}.pv-site.ph .pv-pct{font-size:calc(46px*var(--pc,100)/100)}
+.pv-site .pv-sub{font-size:calc(15px*var(--sb,100)/100)}.pv-site .pv-ln{font-size:calc(15px*var(--sl,100)/100)}.pv-site .pv-name{font-size:calc(28px*var(--nm,100)/100)}
+.pv-site .pv-go{font-size:calc(11px*var(--bt,100)/100);min-height:calc(46px*var(--bt,100)/100);padding:6px 12px;line-height:1.35;text-align:center}
+.pv-site .pv-item{flex:0 0 calc(var(--img,150)*1px)}.pv-site .pv-item img,.pv-site .pv-item .pv-noimg{width:calc(var(--img,150)*1px);height:calc(var(--img,150)*7px/6)}
+.pv-site .pv-img{width:calc(140px*var(--nimg,100)/100);height:calc(175px*var(--nimg,100)/100)}
+.pv-site.szw{max-width:min(100%,max(380px,calc(var(--n,0)*(var(--img,150)*1px + 8px) + 56px)))}.pv-site.ph{max-width:min(100%,360px)!important}.pv-site.ph .pv-box{padding:26px 16px 16px}
+@media (max-width:759px){.pv-sz{gap:6px}.pv-sz input[type=range]{width:100%;order:5}.pv-szv{order:6;min-width:0}.pv-sz .pvrs,.pv-sz .btn{order:7}}
 CSS;
 const OFFER_JS = <<<'JS'
 (function () {
@@ -883,13 +895,31 @@ const OFFER_JS = <<<'JS'
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); };
   var val = function (f, n) { var e = f.querySelector('[name="' + n + '"]'); return e ? e.value.trim() : ''; };
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
-  var dark = true, which = 'sale', box = null, tick = null;
+  var dark = true, which = 'sale', box = null, tick = null, dev = 'L', part = {sale: 'img', new: 'title'}, ar = false;
+  /* EN / عربي: the shopper's words in Arabic, from the website's own list (assets/i18n-ar.js); product names, AED and the notes stay English */
+  var T = function (s) { if (!ar || !window.FX_TR || !s) return s; var t = window.FX_TR(String(s).replace(/\s+/g, ' ').trim()); return t == null ? s : t; };
+  /* sizes: hidden boxes size[L][img] … in the Sale form and fs[L][title] … in the New product form */
+  var SZ_PARTS = {sale: [['img', 'Products'], ['title', 'Top line'], ['pct', '% off'], ['sub', 'Under the %'], ['btn', 'Button']], new: [['title', 'Top line'], ['img', 'Picture'], ['name', 'Name'], ['line', 'Short line'], ['btn', 'Button']]};
+  var VARS = {sale: {img: 'img', title: 't', pct: 'pc', sub: 'sb', btn: 'bt'}, new: {title: 't', img: 'nimg', name: 'nm', line: 'sl', btn: 'bt'}};
+  var szForm = function (w) { return w === 'sale' ? sale : newp; };
+  var szIn = function (w, d, k) { return szForm(w).querySelector('input[name="' + (w === 'sale' ? 'size' : 'fs') + '[' + d + '][' + k + ']"]'); };
+  var szGet = function (w, d, k) { var i = szIn(w, d, k); return i ? +i.value : OFFER_SZ[w][k][d][0]; };
+  var szWord = function (w, k, v) { var s = OFFER_SZ[w][k][dev][0];
+    if (w === 'sale' && k === 'img') return (v === s ? 'Standard' : v < s * .8 ? 'Small' : v < s ? 'Medium' : v <= s * 1.25 ? 'Large' : 'Extra large') + ' · ' + v + 'px';
+    return v + '%' + (v === s ? ' (Standard)' : ''); };
+  var szBar = function () {
+    var bar = box.querySelector('.pv-sz'), w = which === 'line' ? null : which; bar.hidden = !w; if (!w) return;
+    var k = part[w], sp = OFFER_SZ[w][k][dev], r = bar.querySelector('input[type=range]'), v = szGet(w, dev, k);
+    bar.querySelector('.pvparts').innerHTML = SZ_PARTS[w].map(function (p) { return '<button type="button" data-pvpart="' + p[0] + '"' + (p[0] === k ? ' class="on"' : '') + '>' + p[1] + '</button>'; }).join('');
+    bar.querySelectorAll('[data-pvdev]').forEach(function (b) { b.classList.toggle('on', b.dataset.pvdev === dev); });
+    r.min = sp[1]; r.max = sp[2]; r.step = w === 'sale' && k === 'img' ? 2 : 5; r.value = v; r.setAttribute('aria-label', 'Size'); bar.querySelector('.pv-szv').textContent = szWord(w, k, v);
+  };
   var endAt = function () {   /* the end typed on the page (UAE time) as a moment, or 0 */
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(val(sale, 'sale_end_d')); if (!m) return 0;
     var t = /^(\d{2}):(\d{2})$/.exec(val(sale, 'sale_end_t')) || [0, '23', '59'];
     return Date.UTC(+m[1], +m[2] - 1, +m[3], +t[1], +t[2]) - 240 * 60000;
   };
-  var cdText = function (left) { return 'Ends in ' + (left >= 86400 ? Math.floor(left / 86400) + 'd ' : '') + pad(Math.floor(left % 86400 / 3600)) + 'h ' + pad(Math.floor(left % 3600 / 60)) + 'm ' + pad(left % 60) + 's'; };
+  var cdText = function (left) { return T('Ends in') + ' ' + (left >= 86400 ? Math.floor(left / 86400) + 'd ' : '') + pad(Math.floor(left % 86400 / 3600)) + 'h ' + pad(Math.floor(left % 3600 / 60)) + 'm ' + pad(left % 60) + 's'; };
   var saleHTML = function () {
     var md = (sale.querySelector('input[name=mode]:checked') || {}).value;
     var picked = [].slice.call(sale.querySelectorAll('input[name="items[]"]:checked'));
@@ -898,13 +928,13 @@ const OFFER_JS = <<<'JS'
     var note = md === 'off' ? 'The timer is Off, so this popup will not show.' : !sale.querySelector('input[name=popup]').checked ? 'Popup is not ticked, so this popup will not show.' : typed > best ? 'You typed ' + typed + '%, but the biggest real saving is ' + best + '%, so it shows ' + best + '%.' : '';
     var end = endAt(), left = Math.max(0, Math.floor((end - Date.now()) / 1000));
     var cd = md === 'date' ? '<div class="pv-cd">' + [Math.floor(left / 86400), pad(Math.floor(left % 86400 / 3600)), pad(Math.floor(left % 3600 / 60)), pad(left % 60)].map(function (n, i) {
-      return '<div><b>' + (end ? n : '–') + '</b><span>' + ['Days', 'Hours', 'Min', 'Sec'][i] + '</span></div>'; }).join('') + '</div>' : '';
+      return '<div><b>' + (end ? n : '–') + '</b><span>' + T(['Days', 'Hours', 'Min', 'Sec'][i]) + '</span></div>'; }).join('') + '</div>' : '';
     var items = picked.length ? '<div class="pv-items">' + picked.map(function (i) { var d = i.dataset;
       return '<div class="pv-item">' + (d.img ? '<img src="' + esc(d.img) + '" alt="">' : '<span class="pv-noimg"></span>') + '<b>' + esc(d.name) + '</b><span>' + (d.was ? '<s>' + esc(d.was) + '</s> ' : '') + esc(d.price) + '</span></div>'; }).join('') + '</div>' : '';
-    return [note, '<p class="pv-k">' + esc(val(sale, 'title') || 'Limited time offer') + '</p>'
-      + (best ? '<p class="pv-pct">' + pct + '% off</p>' : '<p class="pv-on">No product has an old price yet, so this popup stays hidden.</p>')
-      + '<p class="pv-on">' + esc((val(sale, 'sub') || 'on selected fragrances').toUpperCase()) + '</p>' + items + cd
-      + '<p class="pv-hurry">HURRY UP!!!</p><span class="pv-go">' + esc(val(sale, 'btn') || 'Shop the offer') + '</span><span class="pv-no">No thanks</span>'];
+    return [note, '<p class="pv-k">' + esc(T(val(sale, 'title') || 'Limited time offer')) + '</p>'
+      + (best ? '<p class="pv-pct">' + pct + (ar ? '% ' + T('OFF') : '% off') + '</p>' : '<p class="pv-on">No product has an old price yet, so this popup stays hidden.</p>')
+      + '<p class="pv-on pv-sub">' + esc(T((val(sale, 'sub') || 'on selected fragrances').toUpperCase())) + '</p>' + items + cd
+      + '<p class="pv-hurry">' + T('HURRY UP!!!') + '</p><span class="pv-go">' + esc(T(val(sale, 'btn') || 'Shop the offer')) + '</span><span class="pv-no">' + T('No thanks') + '</span>'];
   };
   var lineHTML = function () {   /* a shop card for each product picked for the line, and a product page */
     var md = (sale.querySelector('input[name=mode]:checked') || {}).value;
@@ -914,7 +944,7 @@ const OFFER_JS = <<<'JS'
     var end = endAt(), left = Math.max(0, Math.floor((end - Date.now()) / 1000));
     var cd = md === 'date' ? '<b>' + cdText(left) + '</b>' : '';
     var clock = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
-    var ln = function (cls) { return '<div class="pv-ofl ' + cls + (cd ? '' : ' nocd') + '"><span>' + clock + esc(val(sale, 'title') || 'Limited time offer') + '</span>' + cd + '</div>'; };
+    var ln = function (cls) { return '<div class="pv-ofl ' + cls + (cd ? '' : ' nocd') + '"><span>' + clock + esc(T(val(sale, 'title') || 'Limited time offer')) + '</span>' + cd + '</div>'; };
     var price = function (d) { return '<s>' + esc(d.was) + '</s> <span>' + esc(d.price) + '</span>'; };
     return [note, '<p class="pv-lab">Shop cards (' + picked.length + ' product' + (picked.length > 1 ? 's' : '') + ')</p><div class="pv-cards">' + picked.map(function (i) { var d = i.dataset;
         return '<div class="pv-card">' + (d.img ? '<img src="' + esc(d.img) + '" alt="">' : '<span class="pv-noimg"></span>') + '<b>' + esc(d.name) + '</b><p class="pv-price">' + price(d) + '</p>' + ln('cardl') + '</div>'; }).join('') + '</div>'
@@ -924,18 +954,23 @@ const OFFER_JS = <<<'JS'
     var sel = newp.querySelector('select[name=np_product]'), opt = sel.options[sel.selectedIndex], img = opt ? opt.dataset.img : '';
     var shop = !!(opt && opt.value && !/ \(hidden\)$/.test(opt.textContent)), name = val(newp, 'np_name') || (opt && opt.value ? opt.textContent.replace(/ \(hidden\)$/, '') : '');
     var note = !newp.querySelector('input[name=np_on]').checked ? 'On is not ticked, so this popup will not show.' : !name ? 'Write the product name, or pick the product.' : '';
-    return [note, '<p class="pv-k">' + esc(val(newp, 'np_label') || 'Coming soon') + '</p>' + (img ? '<img class="pv-img" src="' + esc(img) + '" alt="">' : '')
-      + '<p class="pv-name">' + esc(name || 'Product name') + '</p>' + (val(newp, 'np_line') ? '<p class="pv-on">' + esc(val(newp, 'np_line')) + '</p>' : '')
-      + '<span class="pv-go">' + (shop ? 'Shop now' : 'Explore FOMAXO') + '</span><span class="pv-no">Close</span>'];
+    return [note, '<p class="pv-k">' + esc(T(val(newp, 'np_label') || 'Coming soon')) + '</p>' + (img ? '<img class="pv-img" src="' + esc(img) + '" alt="">' : '')
+      + '<p class="pv-name">' + esc(name || 'Product name') + '</p>' + (val(newp, 'np_line') ? '<p class="pv-on pv-ln">' + esc(T(val(newp, 'np_line'))) + '</p>' : '')
+      + '<span class="pv-go">' + T(shop ? 'Shop now' : 'Explore FOMAXO') + '</span><span class="pv-no">' + T('Close') + '</span>'];
   };
   var draw = function () {
     if (!box) return;
     var r = which === 'sale' ? saleHTML() : which === 'line' ? lineHTML() : newHTML();
     box.querySelector('.pv-note').textContent = r[0]; box.querySelector('.pv-note').hidden = !r[0];
-    var site = box.querySelector('.pv-site'), pb = site.querySelector('.pv-box'); site.classList.toggle('light', !dark);
+    var site = box.querySelector('.pv-site'), pb = site.querySelector('.pv-box'); site.classList.toggle('light', !dark); site.classList.toggle('ar', ar); site.dir = ar ? 'rtl' : 'ltr';
     pb.classList.toggle('pv-plain', which === 'line'); pb.innerHTML = (which === 'line' ? '' : '<span class="pv-x">×</span>') + r[1];
+    /* the sizes picked for Laptop or Phone; on Phone the popup is drawn at phone width */
+    site.classList.toggle('ph', dev === 'P' && which !== 'line'); site.classList.toggle('szw', which === 'sale' && dev === 'L');
+    site.removeAttribute('style'); if (which !== 'line') { var vs = VARS[which]; Object.keys(vs).forEach(function (k) { site.style.setProperty('--' + vs[k], szGet(which, dev, k)); }); }
+    if (which === 'sale') site.style.setProperty('--n', sale.querySelectorAll('input[name="items[]"]:checked').length);
     box.querySelectorAll('[data-pvmode]').forEach(function (b) { b.classList.toggle('on', (b.dataset.pvmode === 'dark') === dark); });
     box.querySelectorAll('[data-pvwhich]').forEach(function (b) { b.classList.toggle('on', b.dataset.pvwhich === which); });
+    box.querySelectorAll('[data-pvlang]').forEach(function (b) { b.classList.toggle('on', (b.dataset.pvlang === 'ar') === ar); });
   };
   var close = function () { if (box) { box.remove(); box = null; clearInterval(tick); document.removeEventListener('keydown', key); } };
   var key = function (e) { if (e.key === 'Escape') close(); };
@@ -943,14 +978,25 @@ const OFFER_JS = <<<'JS'
     which = w; close();
     box = document.createElement('div'); box.className = 'pvw';
     box.innerHTML = '<div class="pv-bar"><span class="pvseg"><button type="button" data-pvwhich="sale">Sale popup</button><button type="button" data-pvwhich="line">Line by prices</button><button type="button" data-pvwhich="new">New product popup</button>'
-      + '</span><span class="pvseg"><button type="button" data-pvmode="dark">Dark</button><button type="button" data-pvmode="light">Light</button></span><button type="button" class="btn" data-pvclose>Close preview</button></div>'
+      + '</span><span class="pvseg"><button type="button" data-pvmode="dark">Dark</button><button type="button" data-pvmode="light">Light</button></span><span class="pvseg"><button type="button" data-pvlang="en">EN</button><button type="button" data-pvlang="ar" lang="ar">عربي</button></span><button type="button" class="btn" data-pvclose>Close preview</button></div>'
+      + '<div class="pv-sz"><span class="pvseg"><button type="button" data-pvdev="L">Laptop</button><button type="button" data-pvdev="P">Phone</button></span><span class="pvseg pvparts"></span>'
+      + '<input type="range"><b class="pv-szv"></b><button type="button" class="pvrs" data-pvreset>Reset</button><button type="button" class="btn" data-pvsave>Save</button></div>'
       + '<p class="pv-note"></p><div class="pv-site"><div class="pv-box"></div></div><p class="small pv-foot" style="color:#9a917f">Preview only. Press Save on the page to put it on the website.</p>';
     box.addEventListener('click', function (e) {
       var t = e.target.closest('button'); if (e.target === box || (t && t.hasAttribute('data-pvclose'))) { close(); return; }
       if (t && t.dataset.pvmode) { dark = t.dataset.pvmode === 'dark'; draw(); }
-      if (t && t.dataset.pvwhich) { which = t.dataset.pvwhich; draw(); }
+      if (t && t.dataset.pvlang) { ar = t.dataset.pvlang === 'ar'; draw(); }
+      if (t && t.dataset.pvwhich) { which = t.dataset.pvwhich; draw(); szBar(); }
+      if (t && t.dataset.pvdev) { dev = t.dataset.pvdev; draw(); szBar(); }
+      if (t && t.dataset.pvpart) { part[which] = t.dataset.pvpart; szBar(); }
+      if (t && t.hasAttribute('data-pvreset')) { var k = part[which], i = szIn(which, dev, k); if (i) i.value = OFFER_SZ[which][k][dev][0]; draw(); szBar(); }
+      if (t && t.hasAttribute('data-pvsave')) { var f = szForm(which); if (f.requestSubmit) f.requestSubmit(); else f.submit(); }
     });
-    document.body.appendChild(box); document.addEventListener('keydown', key); draw();
+    box.addEventListener('input', function (e) {   /* the slider changes the preview as it moves */
+      if (e.target.type !== 'range') return; var k = part[which], i = szIn(which, dev, k); if (!i) return;
+      i.value = e.target.value; box.querySelector('.pv-szv').textContent = szWord(which, k, +i.value); draw();
+    });
+    document.body.appendChild(box); document.addEventListener('keydown', key); draw(); szBar();
     tick = setInterval(function () { if (which !== 'new') draw(); }, 1000);
   };
   document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-preview]'); if (b) open(b.dataset.preview); });
@@ -982,7 +1028,7 @@ if (isset($_GET['offer'])) {
       if ($name === '' && $pid !== '') $name = mb_substr($plist[$pid]['name'], 0, 40);
       if ($on && $name === '') { flash('Please type the product name, or pick the product.'); go(['offer' => 1]); }
       $label = $clean('np_label', 24) ?: 'Coming soon';
-      fomaxo_setting($pdo, 'np', fomaxo_json(['on' => $on, 'label' => $label, 'status' => $pid !== '' && !$plist[$pid]['hidden'] ? 'arrived' : 'soon', 'name' => $name, 'line' => $clean('np_line', 90), 'product' => $pid]));
+      fomaxo_setting($pdo, 'np', fomaxo_json(['on' => $on, 'label' => $label, 'status' => $pid !== '' && !$plist[$pid]['hidden'] ? 'arrived' : 'soon', 'name' => $name, 'line' => $clean('np_line', 90), 'product' => $pid, 'fs' => fomaxo_popup_sizes($_POST['fs'] ?? null, true)]));
       flash($on ? "The “{$label}” popup for $name is on. Each visitor sees it once." : 'New product popup is off.', true); go(['offer' => 1]);
     }
     $mode = isset($_POST['all_off']) ? 'off' : (string)($_POST['mode'] ?? 'off');
@@ -1003,6 +1049,7 @@ if (isset($_GET['offer'])) {
       if ($pc !== '' && (!ctype_digit($pc) || (int)$pc < 1 || (int)$pc > 99)) { flash('Please type a % between 1 and 99, or leave it empty.'); go(['offer' => 1]); }
       if ($pc !== '' && $realMax && (int)$pc > $realMax) { $pc = (string)$realMax; $capped = $realMax; }
       fomaxo_setting($pdo, 'sale_pct', $pc);
+      fomaxo_setting($pdo, 'sale_size', fomaxo_json(fomaxo_popup_sizes($_POST['size'] ?? null)));   // part sizes from Preview → size bar ("Turn off" keeps them)
       fomaxo_setting($pdo, 'sale_words', fomaxo_json(['title' => $clean('title', 30), 'sub' => mb_strtoupper($clean('sub', 40)), 'btn' => $clean('btn', 24)]));
       $lines = array_values(array_unique(array_filter(array_map('strval', (array)($_POST['lines'] ?? [])), fn($id) => isset($sale[$id]))));
       fomaxo_setting($pdo, 'sale_lines', fomaxo_json($lines));
@@ -1035,6 +1082,9 @@ if (isset($_GET['offer'])) {
       . ($s['img'] ? '<img src="' . h($s['img']) . '" alt="">' : '<i></i>') . '<span>' . h($s['name']) . '</span><small>' . $s['pct'] . '% off</small></label>';
     return '<div class="opick"><div class="oaddrow"><input class="oadd" list="ow-items" placeholder="' . $ph . '" autocomplete="off" aria-label="' . $ph . '">' . $extra . '</div>'
       . '<div class="ofits">' . $c . '<span class="onone muted small">' . $none . '</span></div></div>'; };
+  /* popup sizes: hidden boxes in each form, moved by the size bar in Preview and saved with the form */
+  $szSale = fomaxo_popup_sizes(json_decode((string)fomaxo_setting($pdo, 'sale_size'), true)); $szNew = fomaxo_popup_sizes($np['fs'] ?? null, true);
+  $szIn = fn($n, $v) => implode('', array_map(fn($d) => implode('', array_map(fn($k, $x) => '<input type="hidden" name="' . $n . '[' . $d . '][' . $k . ']" value="' . (int)$x . '">', array_keys($v[$d]), $v[$d])), ['L', 'P']));
   $opts = '<option value="">No product (no photo)</option>' . implode('', array_map(fn($id, $p) => '<option value="' . h($id) . '" data-img="' . h($p['img']) . '"' . ($np['product'] === $id ? ' selected' : '') . '>' . h($p['name']) . ($p['hidden'] ? ' (hidden)' : '') . '</option>', array_keys($plist), $plist));
   page('Offer', '<h1>Offer</h1>' . flash()
     . '<style>' . OFFER_CSS . '</style>'
@@ -1056,7 +1106,7 @@ if (isset($_GET['offer'])) {
     . '<div class="orow" data-op="l"><div class="olab"><b>Line by prices</b></div>'
     . ($sale ? $picker('lines', $lines, 'None picked: no line shows.', 'Add a product', '<button type="button" class="btn line sm" data-osame title="Pick the same products as the popup">Same as popup</button>') : '<p class="small muted" style="margin:0">Needs products with an old price.</p>') . '</div>'
     . ($sale ? '<datalist id="ow-items">' . implode('', array_map(fn($s) => '<option value="' . h($s['name']) . '" label="' . $s['pct'] . '% off">', $sale)) . '</datalist>' : '')
-    . '<div class="obtns">'
+    . $szIn('size', $szSale) . '<div class="obtns">'
     . '<button class="btn">Save</button><button type="button" class="btn line" data-preview="sale">Preview</button>' . ($mode !== 'off' ? '<button class="btn line oofff" name="all_off" value="1">Turn off</button>' : '') . '</div></form>'
     /* box 2: the New product popup */
     . '<form class="card ob" data-ob="new" method="post" id="newpForm">' . csrf_field() . '<input type="hidden" name="np_save" value="1">'
@@ -1067,9 +1117,10 @@ if (isset($_GET['offer'])) {
     . '<label>Product<select name="np_product">' . $opts . '</select></label>'
     . '<label>Name<input name="np_name" maxlength="40" value="' . h($np['name']) . '" placeholder="e.g. Oud Royale"></label>'
     . '<label>Short line<input name="np_line" maxlength="90" value="' . h($np['line']) . '" placeholder="Optional"></label>'
-    . '<div class="obtns"><button class="btn">Save</button><button type="button" class="btn line" data-preview="new">Preview</button></div>'
+    . $szIn('fs', $szNew) . '<div class="obtns"><button class="btn">Save</button><button type="button" class="btn line" data-preview="new">Preview</button></div>'
     . '<p class="muted small" style="margin:10px 0 0">Shows once per visitor, before the sale popup.</p></form></div>'
-    . '<script>' . OFFER_JS . '</script>', true);
+    . '<script>window.FX_TR_ONLY=1;' . @file_get_contents(__DIR__ . '/../assets/i18n-ar.js') . '</script>'   /* the website's Arabic words, for the EN / عربي preview */
+    . '<script>var OFFER_SZ=' . fomaxo_json(['sale' => fomaxo_popup_spec(), 'new' => fomaxo_popup_spec(true)]) . ';' . OFFER_JS . '</script>', true);
 }
 
 /* ---- settings: admin password, where order emails go, low stock warning ---- */
