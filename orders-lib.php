@@ -35,7 +35,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 18) return;
+  if ($ver >= 19) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -118,6 +118,12 @@ function fomaxo_db_schema($pdo) {
   try { $pdo->exec("ALTER TABLE fx_leads ADD COLUMN hidden TINYINT(1) NOT NULL DEFAULT 0"); } catch (Throwable $e) {}
   if (!$pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'hidden'")->fetch()) return;
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '18')");
+  /* v19: the new 10ml bottle photos are the main 10ml photo of four perfumes (only where the old 10ml photo is still first) */
+  foreach (['oldmoney', 'royalcandy', 'matchacoco', 'passionsin'] as $id) {
+    $get->execute([$id]); $d = json_decode((string)$get->fetchColumn(), true);
+    if (is_array($d) && ($d['miniImage'] ?? '') === "$id-10-1") { $d['miniImage'] = "$id-10-main"; $d['miniImages'] = array_values(array_unique(array_merge(["$id-10-main"], (array)($d['miniImages'] ?? [])))); $set->execute([fomaxo_json($d), $id]); }
+  }
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '19')");
 }
 function fomaxo_coupons_table($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_coupons (code VARCHAR(30) NOT NULL PRIMARY KEY, kind VARCHAR(3) NOT NULL DEFAULT 'pct', amount DECIMAL(10,2) NOT NULL,
