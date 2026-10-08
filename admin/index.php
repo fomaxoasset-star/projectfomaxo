@@ -351,8 +351,8 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .rdesk .rfilter input{max-width:none}.rmob,.rdesk{display:flex;flex-direction:column}.rmob>*,.rdesk>*{flex:none;min-width:0}
 .rmob .rseg{display:flex;justify-content:center}.rmob .rseg a{flex:1 1 0;text-align:center}
 @media (min-width:760px){.rmob{display:none!important}}@media (max-width:759px){.rdesk{display:none!important}}
-.stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:14px;max-width:900px}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}@media (min-width:860px){.settings{grid-template-columns:1fr 1fr;align-items:start}}
-.ads .ads-l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:12px}.ads .ads-l small{text-transform:none;letter-spacing:0;font-size:12px;white-space:nowrap}.ads-in{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
+.stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"a c e" "b d e";align-content:start;align-items:stretch}main.fit>.settings{flex:1 1 auto;min-height:0;overflow:auto}.settings .card{padding:12px 14px;margin:0}.settings [data-t="1"]{grid-area:a}.settings [data-t="2"]{grid-area:b}.settings [data-t="3"]{grid-area:c}.settings [data-t="4"]{grid-area:d}.settings [data-t="5"]{grid-area:e}.settings h2{font-size:14px;margin:0 0 4px}.settings label{margin:7px 0 3px;font-size:11px}.settings input{padding:6px 10px}.settings .shelp{margin:4px 0 0;font-size:12px;line-height:1.4}.settings .shelp.stop{margin:0 0 2px}.settings .sbtn{margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap}.settings .btn{padding:7px 14px}.srow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 8px}.srow.two{grid-template-columns:1fr 1fr}.stab{display:none}@media (max-width:1099px) and (min-width:760px){.settings{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"a e" "b e" "c d"}}@media (max-width:759px){main.fit>h1{display:none}.stab{display:flex;gap:4px;margin:0 0 10px;border:1px solid var(--line);border-radius:9px;padding:3px;background:var(--panel)}.stab button{flex:1 1 0;min-width:0;font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);background:none;border:0;border-radius:6px;padding:8px 2px;cursor:pointer}.stab button.on{background:var(--gold);color:var(--gold-ink)}.settings{display:block;overflow:auto}.settings>.card{display:none}.settings[data-t="1"]>[data-t="1"],.settings[data-t="2"]>[data-t="2"],.settings[data-t="3"]>[data-t="3"],.settings[data-t="4"]>[data-t="4"],.settings[data-t="5"]>[data-t="5"]{display:block}.srow.two{grid-template-columns:1fr}}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}
+.ads .ads-l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:8px}.ads .ads-l small{text-transform:none;letter-spacing:0;font-size:12px;white-space:nowrap}.ads-in{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
@@ -1123,44 +1123,46 @@ if (isset($_GET['settings'])) {
   $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) ?: [];
   [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo);
   $adOn = fn($k) => ($ads[$k] ?? '') !== '' ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>';
-  $adRow = fn($k, $label, $ph, $where) => '<label for="ads_' . $k . '" class="ads-l"><span>' . $label . '</span><small>' . $adOn($k) . '</small></label><input id="ads_' . $k . '" name="ads_' . $k . '" class="ads-in" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" value="' . h($ads[$k] ?? '') . '"><p class="muted small" style="margin:4px 0 0">' . $where . '</p>';
+  $adRow = fn($k, $label, $ph, $where) => '<label for="ads_' . $k . '" class="ads-l"><span>' . $label . '</span><small>' . $adOn($k) . '</small></label><input id="ads_' . $k . '" name="ads_' . $k . '" class="ads-in" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" value="' . h($ads[$k] ?? '') . '"><p class="muted small shelp">' . $where . '</p>';
   page('Settings', '<h1>Settings</h1>' . flash()
-    . '<div class="settings"><form class="card" method="post">' . csrf_field()
-    . '<h2 style="margin-top:0">Store</h2>'
+    . '<nav class="stab" aria-label="Settings"><button type="button" class="on" data-t="1">Store</button><button type="button" data-t="2">Cash</button><button type="button" data-t="3">Email</button><button type="button" data-t="4">Password</button><button type="button" data-t="5">Ads</button></nav>'
+    . '<div class="settings" data-t="1"><form class="card" method="post" data-t="1">' . csrf_field()
+    . '<h2>Store</h2>'
     . '<label for="orders_email">Store emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
-    . '<p class="muted small" style="margin:6px 0 0">New cash and card orders, new reviews and admin password reset links are all emailed here.</p>'
-    . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
-    . '<form class="card" method="post">' . csrf_field() . '<input type="hidden" name="cod_save" value="1">'
-    . '<h2 style="margin-top:0">Cash on delivery</h2>'
-    . '<label for="cod_min">Minimum order (AED)</label><input id="cod_min" name="cod_min" inputmode="numeric" pattern="[0-9]*" required value="' . $codMin . '">'
-    . '<label for="cod_max">Maximum order (AED)</label><input id="cod_max" name="cod_max" inputmode="numeric" pattern="[0-9]*" placeholder="Empty = no limit" value="' . ($codMax ?: '') . '">'
-    . '<label for="cod_fee">Cash on delivery fee (AED)</label><input id="cod_fee" name="cod_fee" inputmode="numeric" pattern="[0-9]*" placeholder="0 = no fee" value="' . $codFee . '">'
-    . '<p class="muted small" style="margin:6px 0 0">Cash on delivery works from the minimum up to just under the maximum (order after discounts, before the fee). Customers only see the maximum once their order reaches it; then they pay by card. Leave the maximum empty for no limit. The fee is added to every cash on delivery order; 0 = no fee.</p>'
-    . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form>'
-    . '<form class="card" method="post">' . csrf_field()
-    . '<h2 style="margin-top:0">Email sending</h2>'
+    . '<p class="muted small shelp">New cash and card orders, new reviews and admin password reset links are all emailed here.</p>'
+    . '<p class="sbtn"><button class="btn">Save</button></p></form>'
+    . '<form class="card" method="post" data-t="2">' . csrf_field() . '<input type="hidden" name="cod_save" value="1">'
+    . '<h2>Cash on delivery</h2>'
+    . '<div class="srow"><div><label for="cod_min">Minimum (AED)</label><input id="cod_min" name="cod_min" inputmode="numeric" pattern="[0-9]*" required value="' . $codMin . '"></div>'
+    . '<div><label for="cod_max">Maximum (AED)</label><input id="cod_max" name="cod_max" inputmode="numeric" pattern="[0-9]*" placeholder="Empty = no limit" value="' . ($codMax ?: '') . '"></div>'
+    . '<div><label for="cod_fee">Fee (AED)</label><input id="cod_fee" name="cod_fee" inputmode="numeric" pattern="[0-9]*" placeholder="0 = no fee" value="' . $codFee . '"></div></div>'
+    . '<p class="muted small shelp">Cash on delivery works from the minimum up to just under the maximum (order after discounts, before the fee). Customers only see the maximum once their order reaches it; then they pay by card. Leave the maximum empty for no limit. The fee is added to every cash on delivery order; 0 = no fee.</p>'
+    . '<p class="sbtn"><button class="btn">Save</button></p></form>'
+    . '<form class="card" method="post" data-t="3">' . csrf_field()
+    . '<h2>Email sending</h2>'
     . (fomaxo_mail_config()
-        ? '<p class="small" style="margin:0 0 8px"><span class="lvl-ok">●</span> Emails are sent from ' . FX_MAIL_FROM . ' through Hostinger, so they do not land in spam.</p>'
-        : '<p class="small" style="margin:0 0 8px"><span class="lvl-low">●</span> Not set up yet: emails may land in spam. Type the password of the ' . FX_MAIL_FROM . ' mailbox (the one you made in Hostinger → Emails).</p>')
+        ? '<p class="small shelp stop"><span class="lvl-ok">●</span> Emails are sent from ' . FX_MAIL_FROM . ' through Hostinger, so they do not land in spam.</p>'
+        : '<p class="small shelp stop"><span class="lvl-low">●</span> Not set up yet: emails may land in spam. Type the password of the ' . FX_MAIL_FROM . ' mailbox (the one you made in Hostinger → Emails).</p>')
     . '<label for="mail_pass">' . FX_MAIL_FROM . ' password</label><input id="mail_pass" name="mail_pass" type="password" autocomplete="new-password" placeholder="' . (fomaxo_mail_config() ? 'Saved, type again only to change it' : '') . '">'
-    . '<p class="muted small" style="margin:6px 0 0">Kept on your Hostinger server only, never shown again.</p>'
-    . '<p style="margin:14px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Save and send a test</button>'
+    . '<p class="muted small shelp">Kept on your Hostinger server only, never shown again.</p>'
+    . '<p class="sbtn"><button class="btn">Save and send a test</button>'
     . (fomaxo_mail_config() ? '<button class="btn line" name="mail_test" value="1" formnovalidate>Send a test email</button>' : '') . '</p></form>'
-    . '<form class="card" method="post">' . csrf_field()
-    . '<h2 style="margin-top:0">Admin password</h2>'
+    . '<form class="card" method="post" data-t="4">' . csrf_field()
+    . '<h2>Admin password</h2>'
     . '<label for="pw_now">Current password</label><input id="pw_now" name="pw_now" type="password" required autocomplete="current-password">'
-    . '<label for="pw1">New password</label><input id="pw1" name="pw1" type="password" minlength="8" required autocomplete="new-password">'
-    . '<label for="pw2">New password again</label><input id="pw2" name="pw2" type="password" minlength="8" required autocomplete="new-password">'
-    . '<p style="margin:14px 0 0"><button class="btn">Change password</button></p></form>'
-    . '<form class="card ads" method="post">' . csrf_field() . '<input type="hidden" name="ads_save" value="1">'
-    . '<h2 style="margin-top:0">Ads tracking</h2>'
-    . '<p class="muted small" style="margin:0 0 6px">Paste your IDs so Meta, TikTok and Google ads can see who views, adds to bag, checks out and buys. Leave a box empty to keep that one off.</p>'
+    . '<div class="srow two"><div><label for="pw1">New password</label><input id="pw1" name="pw1" type="password" minlength="8" required autocomplete="new-password"></div>'
+    . '<div><label for="pw2">New password again</label><input id="pw2" name="pw2" type="password" minlength="8" required autocomplete="new-password"></div></div>'
+    . '<p class="sbtn"><button class="btn">Change password</button></p></form>'
+    . '<form class="card ads" method="post" data-t="5">' . csrf_field() . '<input type="hidden" name="ads_save" value="1">'
+    . '<h2>Ads tracking</h2>'
+    . '<p class="muted small shelp stop">Paste your IDs so Meta, TikTok and Google ads can see who views, adds to bag, checks out and buys. Leave a box empty to keep that one off.</p>'
     . $adRow('meta', 'Meta Pixel ID', 'e.g. 123456789012345', 'Meta Events Manager → Data sources → your pixel')
     . $adRow('tiktok', 'TikTok Pixel ID', 'e.g. CABC123DEF456GHI', 'TikTok Ads Manager → Tools → Events → Web events')
     . $adRow('google', 'Google tag ID', 'e.g. G-ABC123XYZ', 'Google Analytics → Admin → Data streams (G-…), or Google Ads (AW-…)')
     . $adRow('gads', 'Google Ads purchase', 'Optional · AW-123456789/AbCdEf', 'Google Ads → Goals → Conversions → Purchase → Tag setup (ID/label)')
-    . '<p class="muted small" style="margin:10px 0 0">Your own visits from this admin browser are not sent.</p>'
-    . '<p style="margin:14px 0 0"><button class="btn">Save</button></p></form></div>', true);
+    . '<p class="muted small shelp">Your own visits from this admin browser are not sent.</p>'
+    . '<p class="sbtn"><button class="btn">Save</button></p></form></div>'
+    . '<script>(function(){var n=document.querySelector(".stab"),w=document.querySelector(".settings");if(!n||!w)return;function go(t){w.setAttribute("data-t",t);n.querySelectorAll("button").forEach(function(b){b.classList.toggle("on",b.dataset.t==t)});try{sessionStorage.setItem("fxSetTab",t)}catch(e){}}n.addEventListener("click",function(e){var b=e.target.closest("button");if(b)go(b.dataset.t)});try{var t=sessionStorage.getItem("fxSetTab");if(t)go(t)}catch(e){}})();</script>', true, true);
 }
 
 /* ---- stock and cost price: one row per product and size ---- */
