@@ -2600,6 +2600,14 @@ function addToCart(id, opt, qty=1, silent, picks){
   FXT.send('cart', {id}); ADS.cart(id, opt, qty);
   return true;
 }
+/* the bag as a short code for a link (id.size.qty[.pick-pick]_…): fomaxo.com/#/checkout?bag=… fills the bag and opens checkout (the Left at checkout WhatsApp message) */
+function bagCode(ls){ const c = ls.map(l => [l.id, l.opt, l.qty].concat(l.picks && l.picks.length ? [l.picks.join('-')] : []).join('.')).join('_'); return /^[a-z0-9_.-]*$/i.test(c) && c.length <= 300 ? c : ''; }
+function bagFromCode(c){
+  const ls = String(c || '').split('_').map(x => x.split('.')).filter(a => a.length >= 3 && P[a[0]] && !P[a[0]].hidden && P[a[0]].sizes.map(String).includes(a[1]))
+    .map(a => { const l = {id: a[0], opt: isNaN(+a[1]) ? a[1] : +a[1], qty: Math.min(99, Math.max(1, parseInt(a[2], 10) || 1))}; if (a[3]) l.picks = a[3].split('-').filter(id => P[id]); return l; });
+  if (!ls.length) return false;
+  cart = []; ls.forEach(l => addToCart(l.id, l.opt, l.qty, true, l.picks && l.picks.length ? l.picks : undefined)); return cart.length > 0;
+}
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
 // one look for a product everywhere it is listed (bag and checkout summary, whether it came from Add to bag or Buy now)
 function lineInfo(l, split){ const p = P[l.id]; return `<h4>${esc(p.name)}</h4>${split ? `<div class="o">${optLabel(p, l.opt)}</div><div class="o o-sz">${esc(p.family.split('·')[0])}</div>` : `<div class="o">${optLabel(p, l.opt)} · ${esc(p.family.split('·')[0])}</div>`}${l.picks ? `<div class="o o-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</div>` : ''}`; }
@@ -4177,7 +4185,8 @@ const FXT = (() => {
       clearTimeout(leadTimer);
       const body = {e: 'lead', st: stage, name: d.name, phone: d.phone, email: d.email, emirate: d.emirate, total: total === null ? '' : total,
         addr: [d.room, d.building, d.street, d.area].filter(Boolean).join(', ').slice(0, 300),
-        items: ls.map(l => `${l.qty} × ${P[l.id] ? P[l.id].name + ' ' + optLabel(P[l.id], l.opt) : l.id}`).join(', ').slice(0, 600)};
+        items: ls.map(l => `${l.qty} × ${P[l.id] ? P[l.id].name + ' ' + optLabel(P[l.id], l.opt) : l.id}`).join(', ').slice(0, 600),
+        bag: bagCode(ls)};
       const go = () => { const j = JSON.stringify(body); if (j === lastLead) return; lastLead = j; send('lead', body); };
       if (now) go(); else leadTimer = setTimeout(go, 1500);
     }
@@ -4209,7 +4218,8 @@ function route(){
     case 'contact': html = contact(q); after = bindContact; break;
     case 'partnership': location.replace('#/franchise'); return;
     case 'franchise': html = partnership(); after = bindPartner; break;
-    case 'checkout': html = checkoutPage(q); after = () => bindCheckout(q); break;
+    case 'checkout': if (q.get('bag') !== null) { bagFromCode(q.get('bag')); location.replace('#/checkout'); return; }
+      html = checkoutPage(q); after = () => bindCheckout(q); break;
     case 'order-confirmed': html = orderConfirmed(q); break;
     case 'review': html = reviewPage(); after = () => bindReviewPage(q); break;
     case 'thank-you': if (q.get('ziina')) { html = ziinaThanks(); after = () => verifyZiina(q.get('ziina'), q.get('src') === 'buy'); break; }
