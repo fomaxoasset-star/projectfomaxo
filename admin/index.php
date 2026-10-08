@@ -170,7 +170,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .list.orders li{padding:0}.list.orders a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;color:var(--ink);text-decoration:none;width:100%}
 .list small{display:block}.list .r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
 .prods td{vertical-align:middle}.pimg img{width:52px;height:52px;object-fit:cover;border-radius:7px;display:block}
-@media (max-width:759px){.prods tr.row{display:grid;grid-template-columns:64px 1fr auto;align-items:center;padding:8px 4px}.prods td.pimg{grid-row:span 2}.prods td.num{display:none}}
+.prods .pvis{width:56px;text-align:center;padding-left:6px;padding-right:0}.prods td.pvis form{margin:0;display:flex;justify-content:center}.rdot{width:24px;height:24px;border-radius:50%;border:2px solid var(--muted);background:none;padding:0;margin:0;cursor:pointer;position:relative;flex:none;opacity:.7}.rdot:hover{border-color:var(--gold);opacity:1}.rdot.on{border-color:var(--ok);opacity:1}.rdot.on::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--ok)}@media (max-width:759px){.prods tr.row{display:grid;grid-template-columns:38px 64px 1fr auto;align-items:center;padding:8px 4px}.prods td.pvis{grid-row:span 2;width:auto;padding:0}.prods td.pimg{grid-row:span 2}.prods td.num{display:none}.rdot{width:28px;height:28px}.rdot.on::after{inset:5px}}
 .pform .card{margin-bottom:6px}.opt{text-transform:none;letter-spacing:0}label.sub{margin-top:4px;text-transform:none;letter-spacing:0;font-size:13px}
 .g2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}.g2>div{min-width:0}
 .szrow{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;padding:4px 0 14px;border-bottom:1px solid var(--line)}.szrow:last-child{border:0;padding-bottom:0}.szrow>div{min-width:0}
@@ -654,6 +654,16 @@ if (isset($_GET['products'])) {
   $rows = fomaxo_product_rows($pdo) ?: [];
   $byId = []; foreach ($rows as $r) $byId[$r['id']] = $r;
   $pid = (string)($_GET['p'] ?? '');
+  if ($pid === '' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vis'])) {   // the ring dot in front of a product: one tap shows or hides it on the website
+    $vid = (string)$_POST['vis'];
+    if (csrf_ok() && isset($byId[$vid])) {
+      $hid = empty($_POST['show']) ? 1 : 0;
+      $pdo->prepare('UPDATE fx_products SET hidden = ?, updated_at = NOW() WHERE id = ?')->execute([$hid, $vid]);
+      $nm = (json_decode($byId[$vid]['data'], true) ?: [])['name'] ?? $vid;
+      flash($hid ? $nm . ' is hidden from the website.' : $nm . ' is on the website. It shows within a minute.', true);
+    } else flash('Please try again.');
+    go(['products' => 1]);
+  }
   $isNew = $pid === 'new';
   if ($pid !== '' && !$isNew && !isset($byId[$pid])) go(['products' => 1]);
   $costs = []; foreach ($pdo->query('SELECT product, size, cost FROM fx_stock') as $r) $costs[$r['product'] . '|' . $r['size']] = $r['cost'];
@@ -735,13 +745,14 @@ if (isset($_GET['products'])) {
       $sz = implode(' · ', array_map(fn($s) => ($isSet ? "Set of $s" : "{$s}ml") . ' AED ' . number_format((float)($p['prices'][(string)$s] ?? 0), 0), (array)($p['sizes'] ?? [])));
       $img = $p['images'][0] ?? '';
       $tr .= '<tr class="row" onclick="location.href=this.dataset.href" data-href="' . h(self_url(['products' => 1, 'p' => $r['id']])) . '">'
+           . '<td class="pvis" onclick="event.stopPropagation()"><form method="post">' . csrf_field() . '<input type="hidden" name="vis" value="' . h($r['id']) . '"><button class="rdot' . ($r['hidden'] ? '' : ' on') . '" name="show" value="' . ($r['hidden'] ? '1' : '') . '" title="' . ($r['hidden'] ? 'Hidden. Tap to show on the website' : 'On the website. Tap to hide') . '" aria-label="' . h(($p['name'] ?? $r['id']) . ($r['hidden'] ? ': hidden, tap to show on the website' : ': on the website, tap to hide')) . '"></button></form></td>'
            . '<td class="pimg">' . ($img ? '<img src="../assets/img/' . h($img) . '.webp" alt="">' : '') . '</td>'
            . '<td><b>' . h($p['name'] ?? $r['id']) . '</b><div class="small muted">' . h($sz) . '</div></td>'
            . '<td>' . ($r['hidden'] ? '<span class="tag s-Cancelled">Hidden</span>' : '<span class="tag s-Delivered">On website</span>') . '</td>'
            . '<td class="num"><a class="btn line sm" href="' . h(self_url(['products' => 1, 'p' => $r['id']])) . '">Edit</a></td></tr>';
     }
     page('Products', '<div class="pagehead"><h1>Products</h1><input type="search" class="tsearch" placeholder="Search product" aria-label="Search product"><a class="btn" href="' . h(self_url(['products' => 1, 'p' => 'new'])) . '">Add product</a></div>' . flash()
-      . '<div class="fill">' . ($rows ? '<table class="prods"><thead><tr><th></th><th>Product</th><th>Website</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
+      . '<div class="fill">' . ($rows ? '<table class="prods"><thead><tr><th class="pvis" title="Ring dot: filled = on the website">Show</th><th></th><th>Product</th><th>Website</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
                : '<p class="msg bad">The product list could not be loaded from the database.</p>')
       . '<p class="muted small after">New sizes show up on the Stock page by themselves. Changing a price does not change old orders or reports.</p></div>', true, true);
   }
