@@ -55,6 +55,12 @@ function adm_range_form($rg, $base) {
     . '<button class="btn sm' . ($rg['r'] === 'custom' ? '' : ' line') . '">Show</button></form>';
 }
 
+/* phone: one box at a time with tabs above (the box holder has class "ptw" and data-t="1"; its boxes data-t="1", "2", …); laptop shows all boxes */
+function fx_tabs(array $labels, string $name) {
+  $b = ''; foreach (array_values($labels) as $i => $l) $b .= '<button type="button"' . ($i ? '' : ' class="on"') . ' data-t="' . ($i + 1) . '">' . h($l) . '</button>';
+  return '<nav class="ptabs" aria-label="' . h($name) . '">' . $b . '</nav><script>(function(){var n=document.currentScript.previousElementSibling,k="fxTab"+location.search.split("&")[0].split("=")[0];function go(t){var w=document.querySelector(".ptw");if(!w||!n.querySelector("[data-t=\'"+t+"\']"))return;w.setAttribute("data-t",t);n.querySelectorAll("button").forEach(function(b){b.classList.toggle("on",b.dataset.t==t)});try{sessionStorage.setItem(k,t)}catch(e){}}n.addEventListener("click",function(e){var b=e.target.closest("button");if(b)go(b.dataset.t)});document.addEventListener("invalid",function(e){var p=e.target.closest(".ptw>[data-t]");if(p)go(p.dataset.t)},true);document.addEventListener("DOMContentLoaded",function(){try{var t=sessionStorage.getItem(k);if(t)go(t)}catch(e){}})})();</script>';
+}
+
 function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
   $css = <<<'CSS'
 .arx{display:block;font-size:.86em;font-weight:400;opacity:.72;line-height:1.5;margin-top:2px;font-family:Tahoma,Arial,sans-serif}
@@ -351,7 +357,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .rdesk .rfilter input{max-width:none}.rmob,.rdesk{display:flex;flex-direction:column}.rmob>*,.rdesk>*{flex:none;min-width:0}
 .rmob .rseg{display:flex;justify-content:center}.rmob .rseg a{flex:1 1 0;text-align:center}
 @media (min-width:760px){.rmob{display:none!important}}@media (max-width:759px){.rdesk{display:none!important}}
-.stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"a c e" "b d e";align-content:start;align-items:stretch}main.fit>.settings{flex:1 1 auto;min-height:0;overflow:auto}.settings .card{padding:12px 14px;margin:0}.settings [data-t="1"]{grid-area:a}.settings [data-t="2"]{grid-area:b}.settings [data-t="3"]{grid-area:c}.settings [data-t="4"]{grid-area:d}.settings [data-t="5"]{grid-area:e}.settings h2{font-size:14px;margin:0 0 4px}.settings label{margin:7px 0 3px;font-size:11px}.settings input{padding:6px 10px}.settings .shelp{margin:4px 0 0;font-size:12px;line-height:1.4}.settings .shelp.stop{margin:0 0 2px}.settings .sbtn{margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap}.settings .btn{padding:7px 14px}.srow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 8px}.srow.two{grid-template-columns:1fr 1fr}.stab{display:none}@media (max-width:1099px) and (min-width:760px){.settings{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"a e" "b e" "c d"}}@media (max-width:759px){main.fit>h1{display:none}.stab{display:flex;gap:4px;margin:0 0 10px;border:1px solid var(--line);border-radius:9px;padding:3px;background:var(--panel)}.stab button{flex:1 1 0;min-width:0;font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);background:none;border:0;border-radius:6px;padding:8px 2px;cursor:pointer}.stab button.on{background:var(--gold);color:var(--gold-ink)}.settings{display:block;overflow:auto}.settings>.card{display:none}.settings[data-t="1"]>[data-t="1"],.settings[data-t="2"]>[data-t="2"],.settings[data-t="3"]>[data-t="3"],.settings[data-t="4"]>[data-t="4"],.settings[data-t="5"]>[data-t="5"]{display:block}.srow.two{grid-template-columns:1fr}}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}
+.stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"a c e" "b d e";align-content:start;align-items:stretch}.settings .card{padding:12px 14px;margin:0}.settings [data-t="1"]{grid-area:a}.settings [data-t="2"]{grid-area:b}.settings [data-t="3"]{grid-area:c}.settings [data-t="4"]{grid-area:d}.settings [data-t="5"]{grid-area:e}.settings h2{font-size:14px;margin:0 0 4px}.settings label{margin:7px 0 3px;font-size:11px}.settings input{padding:6px 10px}.settings .shelp{margin:4px 0 0;font-size:12px;line-height:1.4}.settings .shelp.stop{margin:0 0 2px}.settings .sbtn{margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap}.settings .btn{padding:7px 14px}.srow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 8px}.srow.two{grid-template-columns:1fr 1fr}@media (max-width:1099px) and (min-width:760px){.settings{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"a e" "b e" "c d"}}@media (max-width:759px){.srow.two{grid-template-columns:1fr}}main.fit>.fitbox{flex:1 1 auto;min-height:0}.pform.fitbox{display:grid;gap:10px 14px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"det siz" "det pho" "det save"}.pform .pdet{grid-area:det;margin:0;display:flex;flex-direction:column;padding:12px 16px}.pform .psz{grid-area:siz}.pform .pph{grid-area:pho}.pform .psave{grid-area:save;padding:0}.pform .pdet label{margin:7px 0 3px}.pform .pdet label.chk{margin:0 0 2px}.pform .pdet input,.pform .pdet select{padding:6px 10px}.pform .pdet textarea{flex:1 1 auto;min-height:90px;resize:none}.pside{display:flex;flex-direction:column;min-height:0}.pside>h2{margin:0 0 2px;font-size:15px}.pside>p{margin:0 0 6px}.pside>.card{margin:0;overflow:auto;min-height:0;padding:10px 14px}.pform .szrow{padding:2px 0 8px;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 8px}.pform .szrow .opt{display:none}.pform .szrow label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pform .szrow label{margin:4px 0 3px}.pform .szrow input{padding:6px 10px}.pform .phs{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}.pform .pph .card>label{margin-top:6px}.pform .pph .card>p:last-child{margin:4px 0 0}@media (min-width:760px){.pnotes{grid-template-columns:repeat(4,minmax(0,1fr))}}@media (max-width:759px){.pform.fitbox{display:flex}.pform .pdet{display:none}.ptw[data-t="1"]>.pdet{display:flex}.pform .psave .btn{width:100%}}.odhead{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap}.odhead h1{margin:0 0 4px}.odgrid{display:grid;gap:12px;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.9fr);align-items:start;max-height:100%}.odgrid>.card{padding:12px 16px;max-height:100%}.odgrid h2{font-size:15px;margin-bottom:6px}.odgrid dl{margin-top:10px!important}.odgrid dl{gap:4px 12px}.odgrid .items{margin:0}.odgrid textarea{min-height:90px}.fitbox>*{min-height:0;overflow:auto}.ptabs{display:none}@media (max-width:759px){main.fit:has(>.settings)>h1{display:none}.ptabs{display:flex;flex:none;gap:4px;margin:0 0 10px;border:1px solid var(--line);border-radius:9px;padding:3px;background:var(--panel)}.ptabs button{flex:1 1 0;min-width:0;font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);background:none;border:0;border-radius:6px;padding:8px 2px;cursor:pointer}.ptabs button.on{background:var(--gold);color:var(--gold-ink)}.fitbox.ptw{display:flex;flex-direction:column;gap:8px}.fitbox.ptw>*{flex:0 1 auto;min-height:0;margin:0}.ptw:not([data-t="1"])>[data-t="1"],.ptw:not([data-t="2"])>[data-t="2"],.ptw:not([data-t="3"])>[data-t="3"],.ptw:not([data-t="4"])>[data-t="4"],.ptw:not([data-t="5"])>[data-t="5"],.ptw:not([data-t="6"])>[data-t="6"]{display:none!important}}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}
 .ads .ads-l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:8px}.ads .ads-l small{text-transform:none;letter-spacing:0;font-size:12px;white-space:nowrap}.ads-in{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
@@ -743,28 +749,28 @@ if (isset($_GET['products'])) {
       . '<label class="chk"><input type="checkbox" name="drop[]" value="' . h($k) . '"> Remove</label></div>';
   }
   $tiers = ['' => 'None', 'elite' => 'Elite', 'signature' => 'Signature', 'prestige' => 'Prestige'];
-  page($isNew ? 'Add product' : 'Edit ' . ($p['name'] ?? ''), '<p><a href="' . h(self_url(['products' => 1])) . '">← All products</a></p>'
-    . '<h1>' . ($isNew ? 'Add product' : h($p['name'] ?? '')) . '</h1>' . flash()
-    . '<form method="post" enctype="multipart/form-data" class="pform">' . csrf_field()
-    . '<div class="card"><label class="chk big"><input type="checkbox" name="show" value="1"' . ($hidden ? '' : ' checked') . '> Show on the website</label>'
-    . '<label for="name">Name</label><input id="name" name="name" maxlength="60" required value="' . h($p['name'] ?? '') . '" placeholder="e.g. Velvet Oud">'
-    . '<label for="family">Type</label><input id="family" name="family" maxlength="60" value="' . h($p['family'] ?? '') . '" placeholder="e.g. Eau de Parfum · Unisex">'
+  page($isNew ? 'Add product' : 'Edit ' . ($p['name'] ?? ''), '<div class="odhead"><a class="small" href="' . h(self_url(['products' => 1])) . '">← All products</a>'
+    . '<h1>' . ($isNew ? 'Add product' : h($p['name'] ?? '')) . '</h1></div>' . flash() . fx_tabs(['Details', 'Prices', 'Photos'], 'Product')
+    . '<form method="post" enctype="multipart/form-data" class="pform fitbox ptw" data-t="1">' . csrf_field()
+    . '<div class="card pdet" data-t="1"><label class="chk big"><input type="checkbox" name="show" value="1"' . ($hidden ? '' : ' checked') . '> Show on the website</label>'
+    . '<div class="g2"><div><label for="name">Name</label><input id="name" name="name" maxlength="60" required value="' . h($p['name'] ?? '') . '" placeholder="e.g. Velvet Oud"></div>'
+    . '<div><label for="family">Type</label><input id="family" name="family" maxlength="60" value="' . h($p['family'] ?? '') . '" placeholder="e.g. Eau de Parfum · Unisex"></div></div>'
     . (!$isSet ? '<div class="g2"><div><label for="tier">Collection</label><select id="tier" name="tier">' . implode('', array_map(fn($k) => '<option value="' . $k . '"' . (($p['tier'] ?? '') === $k ? ' selected' : '') . '>' . $tiers[$k] . '</option>', array_keys($tiers))) . '</select></div>' : '<div class="g2">')
     . '<div><label for="tag">Badge <span class="opt">(optional)</span></label><input id="tag" name="tag" maxlength="30" value="' . h($p['tag'] ?? '') . '" placeholder="e.g. New"></div></div>'
     . '<label for="short">One-line description</label><input id="short" name="short" maxlength="200" value="' . h($p['short'] ?? '') . '">'
     . '<label for="description">Full description <span class="opt">(leave an empty line between paragraphs)</span></label><textarea id="description" name="description" rows="6">' . h(implode("\n\n", (array)($p['description'] ?? []))) . '</textarea>'
-    . (!$isSet ? '<label>Fragrance notes</label><div class="g2">'
+    . (!$isSet ? '<label>Fragrance notes</label><div class="g2 pnotes">'
         . '<div><label class="sub" for="nt">Top</label><input id="nt" name="note_top" value="' . h($notes['top'] ?? '') . '" placeholder="e.g. Bergamot · Pepper"></div>'
         . '<div><label class="sub" for="nh">Heart</label><input id="nh" name="note_heart" value="' . h($notes['heart'] ?? '') . '"></div>'
         . '<div><label class="sub" for="nb">Base</label><input id="nb" name="note_base" value="' . h($notes['base'] ?? '') . '"></div>'
         . '<div><label class="sub" for="nk">Or key notes only</label><input id="nk" name="note_key" value="' . h($notes['key'] ?? '') . '"></div></div>' : '')
     . '</div>'
-    . '<h2>Sizes and prices</h2><p class="muted small">Prices include VAT. "Was" shows a crossed-out price. Clear a price to remove that size.</p><div class="card">' . $rowsHtml . '</div>'
-    . '<h2>Photos</h2><div class="card">' . ($photos ? '<p class="muted small" style="margin:0 0 8px">The first photo is the main one on the shop. Use ‹ › to change the order, then Save. The product page shows them in this order.</p><div class="phs">' . $photos . '</div>'
+    . '<div class="pside psz" data-t="2"><h2>Sizes and prices</h2><p class="muted small">Prices include VAT. "Was" shows a crossed-out price. Clear a price to remove that size.</p><div class="card">' . $rowsHtml . '</div></div>'
+    . '<div class="pside pph" data-t="3"><h2>Photos</h2><div class="card">' . ($photos ? '<p class="muted small" style="margin:0 0 8px">The first photo is the main one on the shop. Use ‹ › to change the order, then Save. The product page shows them in this order.</p><div class="phs">' . $photos . '</div>'
         . '<script>(function(){var g=document.querySelector(".phs");function fix(){var a=g.querySelectorAll(".ph");a.forEach(function(p,i){p.querySelector(".pno").textContent=i?"Photo "+(i+1):"Main photo";p.classList.toggle("first",!i);p.querySelector("[data-mv=\'-1\']").disabled=!i;p.querySelector("[data-mv=\'1\']").disabled=i==a.length-1;p.querySelector("[data-mv=\'0\']").disabled=!i})}g.addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;var p=b.closest(".ph"),d=+b.dataset.mv;if(d===0)g.prepend(p);else if(d<0&&p.previousElementSibling)g.insertBefore(p,p.previousElementSibling);else if(d>0&&p.nextElementSibling)g.insertBefore(p.nextElementSibling,p);fix()});fix()})()</script>' : '')
     . '<label for="photos">' . ($photos ? 'Add more photos' : 'Add photos') . '</label><input id="photos" type="file" name="photos[]" accept="image/*" multiple>'
-    . '<p class="muted small">Square or portrait photos look best. They are made smaller automatically.</p></div>'
-    . '<div class="savebar"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true);
+    . '<p class="muted small">Square or portrait photos look best. They are made smaller automatically.</p></div></div>'
+    . '<div class="savebar psave"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true, true);
 }
 
 /* Offer page styles and script (the Preview draws the popups with the website's colours) */
@@ -1125,8 +1131,8 @@ if (isset($_GET['settings'])) {
   $adOn = fn($k) => ($ads[$k] ?? '') !== '' ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>';
   $adRow = fn($k, $label, $ph, $where) => '<label for="ads_' . $k . '" class="ads-l"><span>' . $label . '</span><small>' . $adOn($k) . '</small></label><input id="ads_' . $k . '" name="ads_' . $k . '" class="ads-in" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" value="' . h($ads[$k] ?? '') . '"><p class="muted small shelp">' . $where . '</p>';
   page('Settings', '<h1>Settings</h1>' . flash()
-    . '<nav class="stab" aria-label="Settings"><button type="button" class="on" data-t="1">Store</button><button type="button" data-t="2">Cash</button><button type="button" data-t="3">Email</button><button type="button" data-t="4">Password</button><button type="button" data-t="5">Ads</button></nav>'
-    . '<div class="settings" data-t="1"><form class="card" method="post" data-t="1">' . csrf_field()
+    . fx_tabs(['Store', 'Cash', 'Email', 'Password', 'Ads'], 'Settings')
+    . '<div class="settings fitbox ptw" data-t="1"><form class="card" method="post" data-t="1">' . csrf_field()
     . '<h2>Store</h2>'
     . '<label for="orders_email">Store emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
     . '<p class="muted small shelp">New cash and card orders, new reviews and admin password reset links are all emailed here.</p>'
@@ -1161,8 +1167,7 @@ if (isset($_GET['settings'])) {
     . $adRow('google', 'Google tag ID', 'e.g. G-ABC123XYZ', 'Google Analytics → Admin → Data streams (G-…), or Google Ads (AW-…)')
     . $adRow('gads', 'Google Ads purchase', 'Optional · AW-123456789/AbCdEf', 'Google Ads → Goals → Conversions → Purchase → Tag setup (ID/label)')
     . '<p class="muted small shelp">Your own visits from this admin browser are not sent.</p>'
-    . '<p class="sbtn"><button class="btn">Save</button></p></form></div>'
-    . '<script>(function(){var n=document.querySelector(".stab"),w=document.querySelector(".settings");if(!n||!w)return;function go(t){w.setAttribute("data-t",t);n.querySelectorAll("button").forEach(function(b){b.classList.toggle("on",b.dataset.t==t)});try{sessionStorage.setItem("fxSetTab",t)}catch(e){}}n.addEventListener("click",function(e){var b=e.target.closest("button");if(b)go(b.dataset.t)});try{var t=sessionStorage.getItem("fxSetTab");if(t)go(t)}catch(e){}})();</script>', true, true);
+    . '<p class="sbtn"><button class="btn">Save</button></p></form></div>', true, true);
 }
 
 /* ---- stock and cost price: one row per product and size ---- */
@@ -1306,14 +1311,16 @@ if (isset($_GET['coupons'])) {
       . '<div class="cpacts">' . ((int)$c['active'] ? $btn('toggle', 'off', 'Turn off') : $btn('toggle', 'on', 'Turn on'))
       . $btn('delete', '1', 'Delete', 'Delete coupon ' . $c['code'] . '? Orders that used it keep the code.') . '</div></div>';
   }
-  page('Coupons', '<div class="pagehead"><h1>Coupons</h1></div>' . flash()
+  page('Coupons', '<div class="pagehead"><h1>Coupons</h1></div>' . flash() . fx_tabs(['Make a coupon', 'Your coupons (' . count($list) . ')'], 'Coupons')
     . '<style>.cpcode{letter-spacing:.06em}.cpin{text-transform:uppercase;letter-spacing:.06em}.cpin::placeholder{text-transform:none;letter-spacing:0}'
     . '.cplist{background:var(--panel);border:1px solid var(--line);border-radius:10px}.cprow{display:grid;grid-template-columns:1fr auto auto;gap:6px 24px;align-items:center;padding:10px 12px}.cprow+.cprow{border-top:1px solid var(--line)}'
     . '.cpused{text-align:right}.cptime{color:var(--gold);margin-top:2px}.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.g4{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}@media (min-width:760px){.g4{grid-template-columns:1.3fr 1fr 1.3fr 1fr}}.cpacts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}.cpst{display:grid;gap:8px;margin:2px 0 14px}.cpst label{display:flex;gap:10px;align-items:flex-start;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--muted);line-height:1.4}.cpst label:has(input:checked){border-color:var(--gold)}.cpst b{display:block;color:var(--ink);font-size:14px;font-weight:600}.cpst input{flex:none;appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border:1.5px solid var(--gold);border-radius:50%;background:transparent;cursor:pointer}.cpst input:checked{background:var(--gold);box-shadow:inset 0 0 0 4px var(--panel)}@media (max-width:759px){.cprow{grid-template-columns:1fr;padding:12px 14px}.cpused{text-align:left}.cpacts{grid-column:1/-1;justify-content:flex-start}}'
     /* laptop: the form is a tall card on the left, the coupons made so far are listed beside it */
-    . '@media (min-width:900px){.cpgrid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}.cpgrid .card.add{margin:0;position:sticky;top:0}.cpgrid .g3,.cpgrid .g4{grid-template-columns:1fr 1fr}.cpgrid .g4{grid-template-columns:1.25fr 1fr}.cpgrid .cpg1>div:first-child{grid-column:1/-1}.cpgrid .exsum{margin-top:0}'
+    . '.cpgrid .card.add{margin:0;padding:12px 16px}.cpgrid .add h2{font-size:15px;margin-bottom:2px}.cpgrid .add label{margin:7px 0 3px}.cpgrid .add input,.cpgrid .add select{padding:6px 10px}.cpgrid .cpst{grid-template-columns:1fr 1fr;margin:0 0 4px}.cpgrid .cpst label{margin:0;padding:8px 10px}.cpgrid .cpg1>div:last-child{grid-column:auto}.cpgrid .g3:not(.cpg1){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .g3:not(.cpg1)>div:last-child{grid-column:auto}.cpgrid .g4{grid-template-columns:1.3fr 1fr 1.3fr 1fr}.cpgrid .exsum{margin-top:0}.cpgrid .cpr{display:flex;flex-direction:column}.cpgrid .cpr>.fill{overflow:auto;min-height:0}'
+    . '@media (min-width:760px){.cpgrid{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:18px;align-items:start}.cpgrid>*{max-height:100%}.cpgrid .cpg1{grid-template-columns:1.4fr 1fr 1fr}}@media (max-width:759px){main.fit:has(>.cpgrid)>.pagehead,.cpgrid .add h2{display:none}.cpgrid .g4{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .cpr>.exsum{display:none}.cpgrid .cpg1{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.8fr)}.cpgrid .add label{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cpgrid .cpst{grid-template-columns:1fr}.cpgrid .cpst label{white-space:normal;font-size:12px;padding:7px 10px}.cpgrid .cpst b{display:inline;margin-right:6px}.cpgrid .cpq{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.cpgrid .cpq button{padding:6px 2px;font-size:11.5px}}'
+    . '@media (min-width:900px){'
     . '.cpr .cprow{grid-template-columns:1fr auto;gap:6px 16px}.cpr .cpacts{grid-column:2;grid-row:1/3;flex-direction:column;align-items:stretch}.cpr .cpacts .btn{width:100%}.cpr .cpused{text-align:left}}</style>'
-    . '<div class="cpgrid"><div class="cpl"><form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Make a coupon</h2>'
+    . '<div class="cpgrid fitbox ptw" data-t="1"><div class="cpl" data-t="1"><form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Make a coupon</h2>'
     . '<div class="g3 cpg1"><div><label for="code">Code</label><input id="code" class="cpin" name="code" maxlength="30" placeholder="e.g. WELCOME10" autocapitalize="characters" autocomplete="off" required></div>'
     . '<div><label for="kind">Type</label><select id="kind" name="kind"><option value="pct">% off</option><option value="aed">AED off</option></select></div>'
     . '<div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" placeholder="e.g. 10" required></div></div>'
@@ -1325,13 +1332,13 @@ if (isset($_GET['coupons'])) {
     . '<label>Time limit (optional)</label><div class="cpq" role="group" aria-label="Quick time limit"><button type="button" data-h="24">24 hours</button><button type="button" data-h="48">48 hours</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button><button type="button" data-h="0">No limit</button></div>'
     . '<div class="g4"><div><label for="start_d">Starts</label><input id="start_d" type="date" name="start_d"></div><div><label for="start_t">Start time</label><input id="start_t" type="time" name="start_t"></div>'
     . '<div><label for="end_d">Ends</label><input id="end_d" type="date" name="end_d"></div><div><label for="end_t">End time</label><input id="end_t" type="time" name="end_t"></div></div>'
-    . '<p style="margin:12px 0 0"><button class="btn">Save coupon</button></p>'
-    . '<p class="muted small" style="margin:10px 0 0">Saving a code that already exists updates it. A coupon does not add to the multi-buy discount: the customer gets whichever saves more. The free 10ml mini still applies. Times are UAE time. Leave the time limit empty for a code with no end.</p></form>'
+    . '<p style="margin:10px 0 0"><button class="btn">Save coupon</button></p>'
+    . '<p class="muted small" style="margin:8px 0 0">Saving a code that already exists updates it. A coupon does not add to the multi-buy discount: the customer gets whichever saves more. The free 10ml mini still applies. Times are UAE time. Leave the time limit empty for a code with no end.</p></form>'
     . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var h=+b.dataset.h,f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},d=function(x){return x.getFullYear()+"-"+p(x.getMonth()+1)+"-"+p(x.getDate())},t=function(x){return p(x.getHours())+":"+p(x.getMinutes())};'
     . 'var n=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000),e=new Date(n.getTime()+h*3600000);if(!h){["start_d","start_t","end_d","end_t"].forEach(function(k){set(k,"")});}else{set("start_d",d(n));set("start_t",t(n));set("end_d",d(e));set("end_t",t(e));}document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}})</script></div>'
-    . '<div class="cpr"><h2 class="exsum">Your coupons<small>' . count($list) . ' code' . (count($list) === 1 ? '' : 's') . '</small></h2>'
+    . '<div class="cpr" data-t="2"><h2 class="exsum">Your coupons<small>' . count($list) . ' code' . (count($list) === 1 ? '' : 's') . '</small></h2>'
     . '<div class="fill">' . ($list ? '<div class="cplist">' . $tr . '</div>' : '<p class="card muted" style="margin:0">No coupons yet. Make one with the form.</p>')
-    . '<p class="muted small after">"Used" counts placed orders; cancelled, refunded and unpaid card attempts are not counted.</p></div></div></div>', true);
+    . '<p class="muted small after">"Used" counts placed orders; cancelled, refunded and unpaid card attempts are not counted.</p></div></div></div>', true, true);
 }
 
 /* ---- analytics: visitors, where they come from, and where sales are lost (filled by track.php on the website) ---- */
@@ -2270,25 +2277,25 @@ if (isset($_GET['o'])) {
   foreach ($stLabel as $x => $lbl) $opts .= '<option value="' . h($x) . '"' . ($x === $o['status'] ? ' selected' : '') . (isset($stAsk[$x]) ? ' data-ask="' . h($stAsk[$x]) . '"' : '') . '>' . h($lbl) . '' . '</option>';
   $wa = preg_replace('/\D/', '', $o['phone']); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1);
   $row = fn($k, $v) => $v === '' || $v === null ? '' : '<dt>' . h($k) . '</dt><dd>' . $v . '</dd>';
-  page($o['order_no'], '<p class="small"><a href="./?orders=1">← All orders</a></p>'
-    . '<h1>' . h($o['order_no']) . ' ' . fx_tags($o) . '</h1>' . flash()
-    . fx_tracker($o)
-    . '<div class="grid2"><div>'
-    . '<div class="card"><h2 style="margin-top:0">Items</h2><ul class="items">' . implode('', array_map(fn($i) => '<li>' . h($i) . '</li>', $items)) . '</ul>'
+  page($o['order_no'], '<div class="odhead"><a class="small" href="./?orders=1">← All orders</a>'
+    . '<h1>' . h($o['order_no']) . ' ' . fx_tags($o) . '</h1></div>' . flash()
+    . fx_tracker($o) . fx_tabs(['Items', 'Customer', 'Status'], 'Order')
+    . '<div class="odgrid fitbox ptw" data-t="1">'
+    . '<div class="card" data-t="1"><h2 style="margin-top:0">Items</h2><ul class="items">' . implode('', array_map(fn($i) => '<li>' . h($i) . '</li>', $items)) . '</ul>'
     . '<dl style="margin-top:14px">' . $row('Subtotal', $o['subtotal'] !== null ? money($o['subtotal']) : '') . $row(!empty($o['coupon']) ? 'Coupon ' . $o['coupon'] : 'Discount', $o['discount'] > 0 ? '-' . money($o['discount']) : '')
     . $row('COD fee', $o['fee'] > 0 ? money($o['fee']) : '') . $row('Total', '<b>' . money($o['total']) . '</b>') . $row('Payment', h($o['payment']) . ($o['test'] ? ' (test)' : ''))
     . $row('Ordered', h(date('d M Y, H:i', strtotime($o['created_at'])))) . $row('Paid', $o['paid_at'] ? h(date('d M Y, H:i', strtotime($o['paid_at']))) : '')
     . $row('Card ref', h($o['ref'] ?? '')) . '</dl></div>'
-    . '<div class="card" style="margin-top:14px"><h2 style="margin-top:0">Customer</h2><dl>'
+    . '<div class="card" data-t="2"><h2 style="margin-top:0">Customer</h2><dl>'
     . $row('Name', hx($o['name'])) . $row('Mobile', h($o['phone']) . ($wa ? ' · <a href="https://wa.me/' . h($wa) . '" target="_blank" rel="noopener">WhatsApp</a>' : ''))
     . $row('Email', $o['email'] !== '' ? '<a href="mailto:' . h($o['email']) . '">' . h($o['email']) . '</a>' : '')
     . $row('WhatsApp offers', !empty($o['wa_optin']) ? '<span class="wtag" style="margin:0">Yes ✓</span>' : 'No')
     . $row('Address', hx($o['address'])) . $row('Emirate', h($o['emirate'])) . $row('Customer note', hx($o['note'], true)) . '</dl></div>'
-    . '</div><form class="card" method="post" style="align-self:start">' . csrf_field() . '<input type="hidden" name="order" value="' . h($o['order_no']) . '">'
+    . '<form class="card" method="post" data-t="3">' . csrf_field() . '<input type="hidden" name="order" value="' . h($o['order_no']) . '">'
     . '<h2 style="margin-top:0">Status</h2><label for="status">Order status <span class="muted">(saves when you pick)</span></label>'
     . '<select id="status" name="status" class="stsel s-' . h(strtok($o['status'], ' ')) . '" data-was="' . h($o['status']) . '" onchange="var a=this.selectedOptions[0].dataset.ask;if(a&&!confirm(a)){this.value=this.dataset.was;return}this.form.submit()">' . $opts . '</select>'
     . '<label for="admin_note">Your note (only you see this)</label><textarea id="admin_note" name="admin_note">' . h($o['admin_note'] ?? '') . '</textarea>'
-    . '<p style="margin:16px 0 0"><button class="btn">Save</button></p></form></div>', true);
+    . '<p style="margin:12px 0 0"><button class="btn">Save</button></p></form></div>', true, true);
 }
 
 /* ---- dashboard: the home screen — today, this month, what needs doing, stock alerts, latest orders, last 30 days ---- */
