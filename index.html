@@ -3560,7 +3560,7 @@ function bindCheckout(q){
     const code = inp.value.trim().toUpperCase(); if (!code) { inp.focus(); return; }
     b.disabled = true; b.textContent = 'Checking…';
     let d = {};
-    try { const r = await fetch('coupon.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code})}); d = await r.json().catch(() => ({})); }
+    try { const r = await fetch('coupon.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code, phone: (($('#coForm [name=phone]') || {}).value || '').trim()})}); d = await r.json().catch(() => ({})); }
     catch(e) { d = {error: 'We could not check this code. Please check your connection and try again.'}; }
     if (d && d.code) { setCoupon({code: d.code, kind: d.kind, amount: +d.amount, min: +d.min || 0, label: d.label, ends: d.ends || null, stack: !!d.stack}); cpMsg = ''; drawCoupon(); draw(); return; }
     cpMsg = (d && d.error) || 'This coupon code is not valid.'; drawCoupon(); const i = $('#coCpIn'); if (i) { i.value = code; i.focus(); }
@@ -4424,5 +4424,5 @@ renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); p
 (function(){var ar=document.documentElement.lang==="ar";
 document.querySelectorAll(".lang-sw").forEach(function(b){if(ar){b.textContent="EN";b.lang="en";b.setAttribute("aria-label","English");b.title="English"}
 b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href)location.reload();else location.replace(u)}});
-if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=9";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
+if(ar){var s=document.createElement("script");s.src="assets/i18n-ar.js?v=10";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
 </body></html>

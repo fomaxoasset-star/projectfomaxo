@@ -18,6 +18,7 @@ if ($pdo) {
     $pdo->prepare('INSERT INTO fx_login (ip, at) VALUES (?, NOW())')->execute([$ip]);
   } catch (Throwable $e) {}
 }
-$c = fomaxo_coupon_find($in['code'] ?? '');
+$ph = is_string($in['phone'] ?? null) && trim($in['phone']) !== '' ? $in['phone'] : null;   // a one-time customer coupon is checked against the mobile typed at checkout
+$c = fomaxo_coupon_find($in['code'] ?? '', $ph);
 if (isset($c['error'])) { http_response_code(400); echo json_encode(['error' => $c['error']]); exit; }
 echo json_encode($c, JSON_UNESCAPED_UNICODE);

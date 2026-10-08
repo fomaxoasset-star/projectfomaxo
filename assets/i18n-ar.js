@@ -687,6 +687,7 @@
 "The FREE 10ml mini is not included when your order has a 10ml bottle.": "الميني 10ml المجاني لا يُضاف عندما يحتوي طلبك على زجاجة 10ml.",
 "This coupon code has expired. Please remove it.": "انتهت صلاحية رمز الكوبون. يرجى إزالته.",
 "This coupon code is not valid.": "رمز الكوبون غير صالح.",
+"This coupon code is for another mobile number.": "رمز الكوبون هذا لرقم جوال آخر.",
 "This takes a few seconds.": "يستغرق ذلك بضع ثوانٍ.",
 "Try again": "حاول مرة أخرى",
 "Type or pick, e.g. Dubai": "اكتب أو اختر، مثال: دبي",

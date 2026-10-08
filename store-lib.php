@@ -78,7 +78,7 @@ function fomaxo_price_order($in) {
   /* coupon code (checked again here, never trusted from the browser): used only when it saves more than the multi-buy discount */
   $coupon = null; $discLabel = "Multi-buy $pct% off";
   if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
-    $cp = fomaxo_coupon_apply($in['coupon'], $fullFils, $fullFils - $netFils);
+    $cp = fomaxo_coupon_apply($in['coupon'], $fullFils, $fullFils - $netFils, is_string($in['customer']['phone'] ?? null) ? $in['customer']['phone'] : '');
     if (isset($cp['error'])) return ['error' => $cp['error'] . ' Please remove it and try again.'];
     if ($cp['stack'] && $cp['saveFils'] > 0) {   // "Use both": the coupon comes off after the multi-buy discount
       $netFils -= $cp['saveFils']; $coupon = $cp['code']; $cl = "Coupon {$cp['code']} ({$cp['label']})";
