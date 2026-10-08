@@ -142,9 +142,8 @@ function fx_wa_template($to, $name, $lang, array $vars, $c) {
 }
 
 /* ---- automatic refill reminders (admin → Members → Refill reminders → Automatic sending) ----
-   About 45 days after a customer's latest order, sends the approved template 'refill_reminder' (Arabic names: its Arabic version, 'ar').
+   The set number of days after a customer's latest order (fx_refill_time, default 45, 11:00–20:00 Dubai), sends the approved template 'refill_reminder' (Arabic names: its Arabic version, 'ar').
    Template body variables: {{1}} first name, {{2}} perfumes, {{3}} days since the order, {{4}} % off, {{5}} coupon code, {{6}} review link. */
-const FX_REFILL_AUTO_DAYS = 45;
 function fx_wa_config_file() { return dirname(__DIR__) . '/whatsapp-config.php'; }
 /* saves the WhatsApp Business details typed in admin; a key not given keeps its saved value. New files keep the automatic review requests off. */
 function fx_wa_config_save(array $new) {
@@ -162,12 +161,13 @@ function fomaxo_wa_send_refills($max = 20) {
   if (!fx_wa_ready()) return ['refills' => 0, 'note' => 'WhatsApp Business details missing'];
   $c = fx_wa_config();
   $h = (int)(new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('G');
-  if ($h < (int)($c['from_hour'] ?? FX_WA_FROM_HOUR) || $h >= (int)($c['to_hour'] ?? FX_WA_TO_HOUR)) return ['refills' => 0, 'note' => 'outside sending hours'];
+  $tm = fx_refill_time($pdo);
+  if ($h < $tm['from'] || $h >= $tm['to']) return ['refills' => 0, 'note' => 'outside sending hours'];
   $tries = json_decode((string)fomaxo_setting($pdo, 'refill_tries'), true) ?: [];
   $tpl = (string)($c['refill_template'] ?? 'refill_reminder'); $sent = 0; $failed = 0;
   foreach (fx_refill_due($pdo) as $o) {
     if ($sent + $failed >= $max) break;
-    if ($o['sent'] || $o['days'] < FX_REFILL_AUTO_DAYS || ($tries[$o['order_no']] ?? 0) >= 3 || !($to = fx_wa_number($o['phone']))) continue;
+    if ($o['sent'] || empty($o['optin']) || $o['days'] < $tm['days'] || ($tries[$o['order_no']] ?? 0) >= 3 || !($to = fx_wa_number($o['phone']))) continue;
     $p = fx_refill_parts($pdo, $o);
     $vars = [$p['first'] !== '' ? $p['first'] : 'there', $p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume', $p['days'], $p['pct'], $p['code'], $p['review'] ?: 'https://fomaxo.com'];
     [$ok, $info] = fx_wa_template($to, $tpl, $p['ar'] ? 'ar' : (string)($c['refill_language'] ?? 'en'), $vars, $c);
