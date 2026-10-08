@@ -378,7 +378,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .rmob .rseg{display:flex;justify-content:center}.rmob .rseg a{flex:1 1 0;text-align:center}
 @media (min-width:760px){.rmob{display:none!important}}@media (max-width:759px){.rdesk{display:none!important}}
 .stats.up .stat{display:flex;flex-direction:column}.stats.up .stat span{display:block;margin-bottom:2px}.stats.up .stat b{margin-top:auto}.settings{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"a c e" "b d e";align-content:start;align-items:stretch}.settings .card{padding:12px 14px;margin:0}.settings [data-t="1"]{grid-area:a}.settings [data-t="2"]{grid-area:b}.settings [data-t="3"]{grid-area:c}.settings [data-t="4"]{grid-area:d}.settings [data-t="5"]{grid-area:e}.settings h2{font-size:14px;margin:0 0 4px}.settings label{margin:7px 0 3px;font-size:11px}.settings input{padding:6px 10px}.settings .shelp{margin:4px 0 0;font-size:12px;line-height:1.4}.settings .shelp.stop{margin:0 0 2px}.settings .sbtn{margin:10px 0 0;display:flex;gap:8px;flex-wrap:wrap}.settings .btn{padding:7px 14px}.srow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 8px}.srow.two{grid-template-columns:1fr 1fr}@media (max-width:1099px) and (min-width:760px){.settings{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"a e" "b e" "c d"}}@media (max-width:759px){.srow.two{grid-template-columns:1fr}}main.fit>.fitbox{flex:1 1 auto;min-height:0}.pform.fitbox{display:grid;gap:10px 14px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"det siz" "det pho" "det save"}.pform .pdet{grid-area:det;margin:0;display:flex;flex-direction:column;padding:12px 16px}.pform .psz{grid-area:siz}.pform .pph{grid-area:pho}.pform .psave{grid-area:save;padding:0}.pform .pdet label{margin:7px 0 3px}.pform .pdet label.chk{margin:0 0 2px}.pform .pdet input,.pform .pdet select{padding:6px 10px}.pform .pdet textarea{flex:1 1 auto;min-height:90px;resize:none}.pside{display:flex;flex-direction:column;min-height:0}.pside>h2{margin:0 0 2px;font-size:15px}.pside>p{margin:0 0 6px}.pside>.card{margin:0;overflow:auto;min-height:0;padding:10px 14px}.pform .szrow{padding:2px 0 8px;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 8px}.pform .szrow .opt{display:none}.pform .szrow label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pform .szrow label{margin:4px 0 3px}.pform .szrow input{padding:6px 10px}.pform .phs{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}.pform .pph .card>label{margin-top:6px}.pform .pph .card>p:last-child{margin:4px 0 0}@media (min-width:760px){.pnotes{grid-template-columns:repeat(4,minmax(0,1fr))}}@media (max-width:759px){.pform.fitbox{display:flex}.pform .pdet{display:none}.ptw[data-t="1"]>.pdet{display:flex}.pform .psave .btn{width:100%}}.odhead{display:flex;align-items:baseline;gap:6px 16px;flex-wrap:wrap}.odhead h1{margin:0 0 4px}.odgrid{display:grid;gap:12px;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.9fr);align-items:start;max-height:100%}.odgrid>.card{padding:12px 16px;max-height:100%}.odgrid h2{font-size:15px;margin-bottom:6px}.odgrid dl{margin-top:10px!important}.odgrid dl{gap:4px 12px}.odgrid .items{margin:0}.odgrid textarea{min-height:90px}.fitbox>*{min-height:0;overflow:auto}.ptabs{display:none}@media (max-width:759px){main.fit:has(>.settings)>h1{display:none}.ptabs{display:flex;flex:none;gap:4px;margin:0 0 10px;border:1px solid var(--line);border-radius:9px;padding:3px;background:var(--panel)}.ptabs button{flex:1 1 0;min-width:0;font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);background:none;border:0;border-radius:6px;padding:8px 2px;cursor:pointer}.ptabs button.on{background:var(--gold);color:var(--gold-ink)}.fitbox.ptw{display:flex;flex-direction:column;gap:8px}.fitbox.ptw>*{flex:0 1 auto;min-height:0;margin:0}.ptw:not([data-t="1"])>[data-t="1"],.ptw:not([data-t="2"])>[data-t="2"],.ptw:not([data-t="3"])>[data-t="3"],.ptw:not([data-t="4"])>[data-t="4"],.ptw:not([data-t="5"])>[data-t="5"],.ptw:not([data-t="6"])>[data-t="6"]{display:none!important}}.fill.rfill{border:0;background:none;border-radius:0}.fill.rfill>table{border:1px solid var(--line);border-radius:10px}.rfill>h2:first-child{margin-top:0}
-.ads .ads-l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:8px}.ads .ads-l small{text-transform:none;letter-spacing:0;font-size:12px;white-space:nowrap}.ads-in{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
+.adpair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}@media (max-width:760px){.adpair{grid-template-columns:1fr}}.ads .ads-l{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:8px}.ads .ads-l small{text-transform:none;letter-spacing:0;font-size:12px;white-space:nowrap}.ads-in{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
@@ -1176,7 +1176,11 @@ if (isset($_GET['settings'])) {
       if ($ads['tiktok'] !== '' && !preg_match('/^[A-Z0-9]{10,30}$/', $ads['tiktok'])) $bad[] = 'TikTok Pixel ID';
       if ($ads['google'] !== '' && !preg_match('/^(G|AW|GT)-[A-Z0-9]{4,20}$/', $ads['google'])) $bad[] = 'Google tag ID (starts with G- or AW-)';
       if ($ads['gads'] !== '' && !preg_match('/^AW-\d{4,20}\/[A-Za-z0-9_-]{4,40}$/', $ads['gads'])) $bad[] = 'Google Ads purchase (AW-…/…)';
+      $tk = [];   // access tokens: an empty box keeps the saved one
+      foreach (['meta', 'tiktok'] as $k) if (($t = $v('ads_' . $k . '_token')) !== '') { if (preg_match('/^[A-Za-z0-9_\-]{20,600}$/', $t)) $tk[$k] = $t; else $bad[] = ucfirst($k === 'tiktok' ? 'TikTok' : 'Meta') . ' access token'; }
       if ($bad) { flash('Please check the ' . implode(', ', $bad) . '.'); go(['settings' => 1]); }
+      require_once dirname(__DIR__) . '/ads-server-lib.php';
+      if ($tk && !fomaxo_ads_tokens_save($tk)) { flash('The access token could not be saved. Please try again.'); go(['settings' => 1]); }
       if ($ads['google'] === '' && $ads['gads'] !== '') $ads['google'] = explode('/', $ads['gads'])[0];
       fomaxo_setting($pdo, 'ads', json_encode($ads));
       flash('Ads tracking saved. It shows on the website within a minute.', true); go(['settings' => 1]);
@@ -1200,6 +1204,14 @@ if (isset($_GET['settings'])) {
   $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) ?: [];
   [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo);
   $adOn = fn($k) => ($ads[$k] ?? '') !== '' ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>';
+  require_once dirname(__DIR__) . '/ads-server-lib.php';
+  $adTok = fomaxo_ads_tokens(); $adSent = fomaxo_ads_last($pdo);
+  $tokRow = function ($k, $label, $where) use ($adTok, $adSent, $ads) {
+    $l = $adSent[$k] ?? null;
+    $st = !isset($adTok[$k]) ? '<span class="muted">○ Off</span>' : (($ads[$k] ?? '') === '' ? '<span class="lvl-low">●</span> Add pixel ID'
+        : (!$l ? '<span class="lvl-ok">●</span> On' : ($l['ok'] ? '<span class="lvl-ok">●</span> Sent ' . h($l['no'])
+        : '<span class="lvl-low" title="' . h($l['msg']) . '">●</span> Refused ' . h($l['no']))));
+    return '<label for="ads_' . $k . '_token" class="ads-l"><span>' . $label . '</span><small>' . $st . '</small></label><input id="ads_' . $k . '_token" name="ads_' . $k . '_token" type="password" class="ads-in" autocomplete="new-password" spellcheck="false" placeholder="' . (isset($adTok[$k]) ? 'Saved' : 'Optional') . '"><p class="muted small shelp">' . $where . '</p>'; };
   $adRow = fn($k, $label, $ph, $where) => '<label for="ads_' . $k . '" class="ads-l"><span>' . $label . '</span><small>' . $adOn($k) . '</small></label><input id="ads_' . $k . '" name="ads_' . $k . '" class="ads-in" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" value="' . h($ads[$k] ?? '') . '"><p class="muted small shelp">' . $where . '</p>';
   page('Settings', '<h1>Settings</h1>' . flash()
     . fx_tabs(['Store', 'Cash', 'Email', 'Password', 'Ads'], 'Settings')
@@ -1233,11 +1245,13 @@ if (isset($_GET['settings'])) {
     . '<form class="card ads" method="post" data-t="5">' . csrf_field() . '<input type="hidden" name="ads_save" value="1">'
     . '<h2>Ads tracking</h2>'
     . '<p class="muted small shelp stop">Paste your IDs so Meta, TikTok and Google ads can see who views, adds to bag, checks out and buys. Leave a box empty to keep that one off.</p>'
-    . $adRow('meta', 'Meta Pixel ID', 'e.g. 123456789012345', 'Meta Events Manager → Data sources → your pixel')
-    . $adRow('tiktok', 'TikTok Pixel ID', 'e.g. CABC123DEF456GHI', 'TikTok Ads Manager → Tools → Events → Web events')
+    . '<div class="adpair"><div>' . $adRow('meta', 'Meta Pixel ID', 'e.g. 123456789012345', 'Meta Events Manager → Data sources → your pixel') . '</div>'
+    . '<div>' . $tokRow('meta', 'Meta token', 'Pixel → Settings → Conversions API → Generate access token') . '</div></div>'
+    . '<div class="adpair"><div>' . $adRow('tiktok', 'TikTok Pixel ID', 'e.g. CABC123DEF456GHI', 'TikTok Ads Manager → Tools → Events → Web events') . '</div>'
+    . '<div>' . $tokRow('tiktok', 'TikTok token', 'Pixel → Settings → Generate access token') . '</div></div>'
     . $adRow('google', 'Google tag ID', 'e.g. G-ABC123XYZ', 'Google Analytics → Admin → Data streams (G-…), or Google Ads (AW-…)')
     . $adRow('gads', 'Google Ads purchase', 'Optional · AW-123456789/AbCdEf', 'Google Ads → Goals → Conversions → Purchase → Tag setup (ID/label)')
-    . '<p class="muted small shelp">Your own visits from this admin browser are not sent.</p>'
+    . '<p class="muted small shelp">Your own visits from this admin browser are not sent. A token also sends every order straight from fomaxo.com, so ad blockers and iPhones do not hide sales (kept on your server, never shown again).</p>'
     . '<p class="sbtn"><button class="btn">Save</button></p></form></div>', true, true);
 }
 
