@@ -1390,7 +1390,7 @@ if (isset($_GET['coupons'])) {
     $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($ends && $ends < $now ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled']
            : ($starts && $starts > $now ? ['Scheduled', 's-New'] : ['On', 'p-Paid'])));
     $time = $starts && $starts > $now ? 'Starts ' . $dt($starts) . ($ends ? ' · ends ' . $dt($ends) : '') : ($ends ? 'Ends ' . $dt($ends) . ($state[0] === 'On' ? ' · ' . $left($ends) : '') : '');
-    $rules = array_filter([!empty($c['phone']) ? 'Goodwill · for ' . $c['phone'] : '', !empty($c['stack']) ? 'Use both' : 'Bigger offer', (float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
+    $rules = array_filter([!empty($c['phone']) ? (str_starts_with($c['code'], 'REFILL-') ? 'Refill' : 'Goodwill') . ' · for ' . $c['phone'] : '', !empty($c['stack']) ? 'Use both' : 'Bigger offer', (float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
     $btn = fn($name, $val, $label, $ask = '') => '<form method="post" style="margin:0"' . ($ask ? ' onsubmit="return confirm(\'' . h($ask) . '\')"' : '') . '>' . csrf_field()
       . '<input type="hidden" name="code" value="' . h($c['code']) . '"><button class="btn line sm" name="' . $name . '" value="' . $val . '">' . $label . '</button></form>';
     $tr .= '<div class="cprow"><div><b class="cpcode">' . h($c['code']) . '</b> <span class="tag ' . $state[1] . '">' . $state[0] . '</span>'
@@ -2201,6 +2201,12 @@ if (isset($_GET['reviews'])) {
 }
 
 /* ---- members: customers who keep coming back. Orders are grouped by mobile number (last 9 digits), or by email when there is no mobile ---- */
+/* the refill reminder coupon of an order: REFILL- + 5 letters, always the same for that order */
+function fx_refill_code($pdo, $no) {
+  $abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; $hx = hash_hmac('sha256', 'refill|' . $no, (string)fomaxo_setting($pdo, 'admin_hash')); $c = 'REFILL-';
+  for ($i = 0; $i < 5; $i++) $c .= $abc[hexdec(substr($hx, $i * 2, 2)) % strlen($abc)];
+  return $c;
+}
 if (isset($_GET['members'])) {
   if (isset($_GET['subs'])) {   // email list from the website sign-up forms (subscribe.php), as a CSV that opens straight in Excel
     $rows = [];
@@ -2220,6 +2226,10 @@ if (isset($_GET['members'])) {
       if (preg_match('/^FMX-\d+$/', $no = (string)$_POST['refill_sent'])) {
         $rfSent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
         $rfSent[$no] = date('Y-m-d');
+        $s = $pdo->prepare('SELECT phone FROM fx_orders WHERE order_no = ?'); $s->execute([$no]); $ph = (string)$s->fetchColumn();
+        if (strlen(fomaxo_phone9($ph)) >= 9) { fomaxo_coupons_table($pdo);   // single use, only with this customer's mobile, no end date (like a goodwill coupon)
+          $pdo->prepare('INSERT IGNORE INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, phone) VALUES (?, \'pct\', ?, NULL, NULL, NULL, NULL, 1, 1, NOW(), 0, ?)')
+              ->execute([fx_refill_code($pdo, $no), round((float)(fomaxo_setting($pdo, 'refill_pct') ?? 10), 2), mb_substr($ph, 0, 25)]); }
         fomaxo_setting($pdo, 'refill_sent', json_encode(array_filter($rfSent, fn($d) => $d >= date('Y-m-d', strtotime('-120 days')))));
       }
       http_response_code(204); exit;
@@ -2261,6 +2271,9 @@ if (isset($_GET['members'])) {
   $rfLast = [];
   foreach ($all as $o) if (($k = $key($o)) !== '') $rfLast[$k] = $o;   // oldest first, so the latest order wins
   $rfSent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
+  /* each reminder carries a single-use coupon only for that customer's mobile: the code is fixed per order, and saved in Coupons when WhatsApp is tapped */
+  $rfPct = (float)(fomaxo_setting($pdo, 'refill_pct') ?? 10);
+  $rfCode = fn($no) => fx_refill_code($pdo, $no);
   $rfDue = [];
   foreach ($rfLast as $k => $o) {
     $days = (int)floor((strtotime('today') - strtotime(date('Y-m-d', strtotime($o['created_at'])))) / 86400);
@@ -2287,12 +2300,15 @@ if (isset($_GET['members'])) {
     foreach ($rfDue as $k => $o) {
       $pn = $prods($o); $ar = fx_has_ar($o['name']); $nm = $first($o['name']);
       $rv = $rvLink($o); $rvUrl = $rv ? 'https://fomaxo.com/' . ($ar ? '?lang=ar' : '') . '#/review?t=' . $rv : '';
-      $n2 = "\n\n";   // a blank line between each part, so it reads like a personal note
+      $n2 = "\n\n";
+      $cp = $rfCode($o['order_no']); $pctT = rtrim(rtrim(number_format($rfPct, 2, '.', ''), '0'), '.');   // a blank line between each part, so it reads like a personal note
       $msg = $ar ? 'مرحباً ' . $nm . '،' . $n2 . 'نتمنى أن تكون مستمتعاً ' . ($pn !== '' ? 'بعطر ' . $pn : 'بعطرك من FOMAXO') . '. مرّ ' . $o['days'] . ' يوماً على طلبك، وقد يكون عطرك قارب على النفاد.'
+                   . $n2 . 'تقديراً لك، هذا رمزك الخاص للحصول على خصم ' . $pctT . '% على طلبك القادم (لمرة واحدة):' . "\n" . $cp
                    . $n2 . "يمكنك الطلب من جديد هنا:\nhttps://fomaxo.com/?lang=ar"
                    . ($rvUrl ? $n2 . "إن سمح وقتك، يسعدنا تقييمك الصادق، وسيظهر بشارة \"مشتري موثّق\":\n" . $rvUrl : '')
                    . $n2 . 'راسلنا هنا إن احتجت مساعدة في اختيار عطرك القادم.' . $n2 . "شكراً لك،\nFOMAXO"
                  : 'Hi ' . $nm . ',' . $n2 . 'I hope you are enjoying ' . ($pn !== '' ? $pn : 'your FOMAXO perfume') . '. It has been ' . $o['days'] . ' days since your order, so your bottle may be running low.'
+                   . $n2 . 'As a thank you, here is your personal code for ' . $pctT . '% off your next order (single use):' . "\n" . $cp
                    . $n2 . "You can reorder anytime here:\nhttps://fomaxo.com"
                    . ($rvUrl ? $n2 . "If you have a moment, we would love your honest review. It will show as Verified Purchaser:\n" . $rvUrl : '')
                    . $n2 . 'Just reply here if you would like help choosing your next scent.' . $n2 . "Thank you,\nFOMAXO";
