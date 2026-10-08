@@ -207,8 +207,8 @@ label.mini{display:none}
 @media (max-width:759px){.ems{margin-bottom:8px;gap:5px}.ems .em{font-size:11.5px;padding:2px 9px}.stats{margin-bottom:6px}}
 /* order step chips fill the row as equal, evenly spaced boxes */
 .ems.track.swarn{grid-template-columns:repeat(2,minmax(0,1fr))}.ems.track.swarn .t-low b{color:var(--warn)}.ems.track.swarn .t-out b{color:var(--bad)}.ems.track.swarn .t-low:not(.on){border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}.ems.track.swarn .t-out:not(.on){border-color:color-mix(in srgb,var(--bad) 55%,var(--line))}.ems.track.swarn .em.on b{color:var(--gold-ink)}.swnote{margin:-4px 0 8px;flex:none}tr.row.wf{display:none!important}
-.ems.track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;width:100%;max-width:none;box-sizing:border-box}.ems.track.ocp{grid-template-columns:repeat(6,minmax(0,1fr))}.ems.track .em{display:flex;justify-content:center;align-items:baseline;gap:6px;border-radius:10px;padding:8px 10px;font-size:12.5px}.ems.track .em b{margin:0;font-size:15px}
-@media (max-width:759px){.ems.track{gap:6px}.ems.track.ocp{grid-template-columns:repeat(3,minmax(0,1fr))}.ems.track .t-coupon b{color:var(--gold)}.ems.track .t-coupon.on b{color:var(--gold-ink)}.ems.track .em{flex-direction:column;align-items:center;gap:1px;padding:6px 2px;font-size:10.5px;white-space:normal;text-align:center;line-height:1.2}.ems.track .em b{font-size:16px}}
+.ems.track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;width:100%;max-width:none;box-sizing:border-box}.ems.track .em{display:flex;justify-content:center;align-items:baseline;gap:6px;border-radius:10px;padding:8px 10px;font-size:12.5px}.ems.track .em b{margin:0;font-size:15px}
+@media (max-width:759px){.ems.track{gap:6px}.ems.track .em{flex-direction:column;align-items:center;gap:1px;padding:6px 2px;font-size:10.5px;white-space:normal;text-align:center;line-height:1.2}.ems.track .em b{font-size:16px}}
 /* analytics */
 .seg a{font-size:11.5px;font-weight:600;color:var(--muted);padding:3px 9px;border-radius:20px;text-decoration:none;white-space:nowrap}.seg a.on{background:var(--gold);color:var(--gold-ink)}
 .an .pagehead,.pagehead.rg{flex-wrap:wrap;margin-bottom:8px;gap:6px 10px}.arange{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}.arange input[type=date]{width:auto;padding:4px 7px;font-size:12.5px}
@@ -331,6 +331,22 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
 }
 .mtop .mmin input{text-align:center}.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
 .mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
+/* Orders like fomaxo.in: coloured top edge on the four boxes, step boxes label left / count right, coupon row, one filter line */
+.ost .stat{border-top:3px solid var(--gold)}.ost .stat.onl{border-top-color:var(--ok)}
+.cpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
+.cpbar a{text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12px;background:var(--panel);white-space:nowrap}
+.cpbar a b{color:var(--gold);font-weight:700;margin-left:2px}
+.cpbar .cpall{border-radius:8px;border-left:3px solid var(--gold);padding:7px 13px;font-size:13px}
+.cpbar .cpall small{color:var(--muted);font-size:11.5px;margin-left:4px}
+.cpbar .cpc{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600;letter-spacing:.04em;font-size:11.5px}
+.cpbar a.on{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.cpbar a.on b,.cpbar a.on small{color:var(--gold-ink)}
+.oclean .ctag{display:table;margin:3px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace;border-radius:5px;padding:1px 7px;font-size:11px}
+.ofl .dts{grid-column:1/-1}.ofl .dts .seg{display:flex;width:100%;margin:0;box-sizing:border-box}.ofl .dts .seg a{flex:1;text-align:center}
+.ocount{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.ofl{margin:0 0 10px}
+@media (min-width:860px){.ems.track.ocp .em{display:flex;justify-content:space-between;align-items:center;padding-left:14px;padding-right:14px}.ems.track.ocp .em b{font-size:15px}
+.filters.ofl{grid-template-columns:minmax(0,135px) minmax(0,145px) auto minmax(0,128px) minmax(0,128px) minmax(0,1fr) auto;background:none;border:0;padding:0;box-shadow:none}.ofl .dts{grid-column:auto}.ofl .dts .seg{width:auto}.ofl .dts .seg a{padding:6px 10px}
+.ofl .acts{flex-wrap:nowrap}}
 @media (max-width:759px){.mmin{flex:1 1 100%;padding:7px 10px;gap:6px}.mmin label,.mmin span{font-size:12.5px}.mmin input{width:58px;padding:5px 6px}.mmin .btn{margin-left:auto}.mq{flex-basis:100%}
   .mlist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"mn ms" "ma mo" "md mv";gap:2px 10px;padding:8px 12px;margin-bottom:8px}.mlist td{padding:0}
   .mlist .mn{grid-area:mn}.mlist .ms{grid-area:ms}.mlist .ma{grid-area:ma;color:var(--muted)}.mlist .ma div{display:inline;margin-left:4px}.mlist .ma div::before{content:"· "}.mlist .mo,.mlist .mv{align-self:end}.mlist .mo{grid-area:mo}.mlist .mo b{font-weight:600}.mlist .md{grid-area:md;font-size:11.5px}.mlist .mv{grid-area:mv;font-size:12px;color:var(--muted)}.mlist td.mo span,.mlist td.mv span{display:inline}
@@ -2484,7 +2500,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
 
 /* list + filters (the same filters are used for the Excel download) */
 $f = ['q' => trim((string)($_GET['q'] ?? '')), 'status' => (string)($_GET['status'] ?? ''), 'pay' => (string)($_GET['pay'] ?? ''),
-      'from' => (string)($_GET['from'] ?? ''), 'to' => (string)($_GET['to'] ?? ''), 'em' => mb_substr(trim((string)($_GET['em'] ?? '')), 0, 30), 'cp' => !empty($_GET['cp']) ? '1' : ''];
+      'from' => (string)($_GET['from'] ?? ''), 'to' => (string)($_GET['to'] ?? ''), 'em' => mb_substr(trim((string)($_GET['em'] ?? '')), 0, 30), 'cp' => ($cpv = (string)($_GET['cp'] ?? '')) === '1' ? '1' : fomaxo_coupon_norm($cpv)];
 $where = []; $args = [];
 if ($f['status'] === '') $where[] = "status <> 'Awaiting payment' AND order_no NOT LIKE 'CARD-%'";   // default: real orders only (a card payment not made is not an order; see "Card not paid")
 elseif ($f['status'] === 'pending') $where[] = "status IN ('New', 'Paid')";
@@ -2499,8 +2515,9 @@ $s = $pdo->prepare("SELECT emirate, COUNT(*) n FROM fx_orders WHERE status IN ('
 $s->execute($args); $byEmirate = $s->fetchAll();
 if ($f['em'] !== '') { $where[] = 'emirate = ?'; $args[] = $f['em']; }
 /* "Coupon used" chip: how many of these orders used a coupon code (counted before the coupon filter itself) */
-$s = $pdo->prepare("SELECT COUNT(*) FROM fx_orders WHERE test = 0 AND coupon IS NOT NULL AND coupon <> ''" . ($where ? ' AND ' . implode(' AND ', $where) : '')); $s->execute($args); $cpN = (int)$s->fetchColumn();
-if ($f['cp'] !== '') $where[] = "coupon IS NOT NULL AND coupon <> ''";
+$s = $pdo->prepare("SELECT coupon, COUNT(*) n, COALESCE(SUM(discount), 0) off FROM fx_orders WHERE test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') AND coupon IS NOT NULL AND coupon <> ''" . ($where ? ' AND ' . implode(' AND ', $where) : '') . ' GROUP BY coupon ORDER BY n DESC, coupon');
+$s->execute($args); $cpRows = $s->fetchAll(); $cpN = array_sum(array_column($cpRows, 'n')); $cpOff = array_sum(array_column($cpRows, 'off'));
+if ($f['cp'] === '1') $where[] = "coupon IS NOT NULL AND coupon <> ''"; elseif ($f['cp'] !== '') { $where[] = 'coupon = ?'; $args[] = $f['cp']; }
 $W = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 if (isset($_GET['export'])) {   // CSV that opens straight in Excel
@@ -2528,7 +2545,7 @@ $s = $pdo->prepare("SELECT COUNT(*) n,
                     COALESCE(SUM($real AND payment LIKE 'Card%'), 0) card_n, COALESCE(SUM(CASE WHEN $real AND payment LIKE 'Card%' THEN total END), 0) card_t FROM fx_orders $W");
 $s->execute($args); $sum = $s->fetch();
 $per = 100; $pg = max(1, (int)($_GET['p'] ?? 1));
-$s = $pdo->prepare("SELECT order_no, created_at, payment, status, total, name, phone, emirate, items, test, wa_optin, lines_json, coupon FROM fx_orders $W ORDER BY created_at DESC, id DESC LIMIT $per OFFSET " . (($pg - 1) * $per));
+$s = $pdo->prepare("SELECT order_no, created_at, payment, status, total, name, phone, emirate, items, test, wa_optin, lines_json, coupon, discount FROM fx_orders $W ORDER BY created_at DESC, id DESC LIMIT $per OFFSET " . (($pg - 1) * $per));
 $s->execute($args); $rows = $s->fetchAll();
 
 $sel = fn($name, $opts) => '<select id="' . $name . '" name="' . $name . '">' . implode('', array_map(fn($k, $v) => '<option value="' . h($k) . '"' . ((string)$f[$name] === (string)$k ? ' selected' : '') . '>' . h($v) . '</option>', array_keys($opts), $opts)) . '</select>';
@@ -2545,8 +2562,10 @@ foreach (['pending' => 'Pending', 'unpaid' => 'Unpaid cash', 'delivered' => 'Del
   $v = in_array($k, ['pending', 'unpaid'], true) ? $k : ucfirst($k); $on = $f['status'] === $v; $q = ['orders' => 1] + array_filter($f, fn($x) => $x !== ''); unset($q['status'], $q['p']);
   $chips .= '<a class="em t-' . $k . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['status' => $v])) . '">' . $lbl . ' <b>' . (int)$track[$k] . '</b></a>';
 }
+/* coupons like fomaxo.in: "Used a coupon N · AED X off in all", then one chip per code */
 $q = ['orders' => 1] + array_filter($f, fn($x) => $x !== ''); unset($q['cp'], $q['p']);
-$chips .= '<a class="em t-coupon' . ($f['cp'] !== '' ? ' on' : '') . '" href="' . h(self_url($f['cp'] !== '' ? $q : $q + ['cp' => 1])) . '">Coupon used <b>' . $cpN . '</b></a>';
+$cpBar = '<a class="cpall' . ($f['cp'] === '1' ? ' on' : '') . '" href="' . h(self_url($f['cp'] === '1' ? $q : $q + ['cp' => 1])) . '">Used a coupon <b>' . $cpN . '</b>' . ($cpOff > 0 ? ' <small>' . money($cpOff) . ' off in all</small>' : '') . '</a>';
+foreach ($cpRows as $r) { $on = $f['cp'] === $r['coupon']; $cpBar .= '<a class="cpc' . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['cp' => $r['coupon']])) . '">' . h($r['coupon']) . ' <b>' . (int)$r['n'] . '</b></a>'; }
 $tr = ''; $backQ = http_build_query(['orders' => 1] + array_filter($f, fn($v) => $v !== '') + ($pg > 1 ? ['p' => $pg] : []));
 fomaxo_en_many(array_column($rows, 'name'));   // Arabic names in English, all at once
 $pic = [];   // first photo of each product, from the Products tab
@@ -2561,7 +2580,7 @@ foreach ($rows as $o) {
        . '<span class="onb"><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['test'] ? ' <span class="muted small">test</span>' : '')
        . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '') . '</span></td>'
        . '<td class="od">' . h(date('d M Y, H:i', strtotime($o['created_at']))) . '</td>'
-       . '<td class="oc" title="' . h(str_replace(' | ', ', ', (string)$o['items'])) . '"><b>' . hx($o['name']) . '</b>' . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . (!empty($o['coupon']) ? '<span class="ctag" title="Coupon code used">' . h($o['coupon']) . '</span>' : '') . '<span class="op">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</span></td>'
+       . '<td class="oc" title="' . h(str_replace(' | ', ', ', (string)$o['items'])) . '"><b>' . hx($o['name']) . '</b>' . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . '' . '<span class="op">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</span>' . (!empty($o['coupon']) ? '<span class="ctag" title="Coupon code used">' . h($o['coupon']) . ((float)$o['discount'] > 0 ? ' −' . money($o['discount']) : '') . '</span>' : '') . '</td>'
        . '<td class="ot"><b>' . money($o['total']) . '</b><span>' . h($o['payment'] === 'Cash on delivery' ? 'Cash on delivery' : 'Card') . '</span></td>'
        . '<td class="os">' . fx_tags($o, false) . '</td>'
        . '<td class="oa">' . fx_order_buttons($o, $backQ) . '</td></tr>';
@@ -2593,24 +2612,26 @@ foreach (['today' => 0, '7' => 6, '30' => 29, 'all' => null] as $k => $back) {
   $fr = $back === null ? '' : date('Y-m-d', strtotime("-$back day")); $to = $back === null ? '' : date('Y-m-d');
   $oseg .= '<a href="' . h(self_url($oq + ($back === null ? [] : ['from' => $fr, 'to' => $to]))) . '"' . ($f['from'] === $fr && $f['to'] === $to ? ' class="on"' : '') . '>' . ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All'][$k] . '</a>';
 }
-page('Orders', '<div class="pagehead rg"><h1>Orders</h1><div class="arange"><div class="seg">' . $oseg . '</div></div></div>' . flash()
-  . '<form class="filters card" method="get"><input type="hidden" name="orders" value="1">' . ($f['em'] !== '' ? '<input type="hidden" name="em" value="' . h($f['em']) . '">' : '')
-  . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile, email, coupon"></div>'
-  . '<div><label for="status" class="phx">Status</label>' . $sel('status', $stOpts) . '</div>'
-  . '<div><label for="pay" class="phx">Payment</label>' . $sel('pay', ['' => 'All', 'cod' => 'Cash on delivery', 'card' => 'Card']) . '</div>'
-  . '<div><label for="from">From</label><input id="from" type="date" name="from" value="' . h($f['from']) . '"></div>'
-  . '<div><label for="to">To</label><input id="to" type="date" name="to" value="' . h($f['to']) . '"></div>'
-  . '<div class="acts"><button class="btn">Show</button><a class="btn line" href="' . h(self_url($qs + ['export' => 1])) . '">Download Excel</a></div></form>'
-  . '<div class="stats up"><div class="stat"><span>COD orders</span><b>' . (int)$sum['cod_n'] . '</b></div>'
-  . '<div class="stat"><span>Online orders</span><b>' . (int)$sum['card_n'] . '</b></div>'
-  . '<div class="stat"><span>COD amount</span><b>' . money($sum['cod_t']) . '</b></div>'
-  . '<div class="stat"><span>Card amount</span><b>' . money($sum['card_t']) . '</b></div></div>'
+page('Orders', flash()
+  . '<div class="stats up ost"><div class="stat cod"><span>COD orders</span><b>' . (int)$sum['cod_n'] . '</b></div>'
+  . '<div class="stat onl"><span>Online orders</span><b>' . (int)$sum['card_n'] . '</b></div>'
+  . '<div class="stat cod"><span>COD amount</span><b>' . money($sum['cod_t']) . '</b></div>'
+  . '<div class="stat onl"><span>Online amount</span><b>' . money($sum['card_t']) . '</b></div></div>'
   . '<nav class="ems track ocp" aria-label="Orders by step">' . $chips . '</nav>'
+  . ($cpRows || $f['cp'] !== '' ? '<nav class="cpbar" aria-label="Coupons used">' . $cpBar . '</nav>' : '')
   . ($byEmirate ? '<nav class="ems" aria-label="Orders by emirate">' . implode('', array_map(function ($r) use ($f, $qs) {
         $e = (string)$r['emirate']; $on = $f['em'] !== '' && $f['em'] === $e; $q = $qs; unset($q['em'], $q['p']);
         return '<a class="em' . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['em' => $e])) . '">' . h($e !== '' ? $e : 'No emirate') . ' <b>' . (int)$r['n'] . '</b></a>';
       }, $byEmirate)) . '</nav>' : '')
-  . '<div class="fill">' . ($rows ? '<table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
+  . '<form class="filters card ofl" method="get"><input type="hidden" name="orders" value="1">' . ($f['em'] !== '' ? '<input type="hidden" name="em" value="' . h($f['em']) . '">' : '') . ($f['cp'] !== '' ? '<input type="hidden" name="cp" value="' . h($f['cp']) . '">' : '')
+  . '<div><label for="status">Status</label>' . $sel('status', $stOpts) . '</div>'
+  . '<div><label for="pay">Payment</label>' . $sel('pay', ['' => 'COD and online', 'cod' => 'Cash on delivery', 'card' => 'Card']) . '</div>'
+  . '<div class="dts"><label>Dates</label><div class="seg">' . $oseg . '</div></div>'
+  . '<div><label for="from">From</label><input id="from" type="date" name="from" value="' . h($f['from']) . '"></div>'
+  . '<div><label for="to">To</label><input id="to" type="date" name="to" value="' . h($f['to']) . '"></div>'
+  . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile or coupon"></div>'
+  . '<div class="acts"><button class="btn line">Show</button><a class="btn" href="' . h(self_url($qs + ['export' => 1])) . '">Excel</a></div></form>'
+  . '<div class="fill">' . ($rows ? '<p class="ocount">' . (int)$sum['n'] . ' order' . ((int)$sum['n'] === 1 ? '' : 's') . '. Tap a button to update an order, or tap the order to see it.</p><table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
   . $logCard
