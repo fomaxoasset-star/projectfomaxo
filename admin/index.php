@@ -1264,16 +1264,16 @@ if (isset($_GET['coupons'])) {
       $pdo->prepare('DELETE FROM fx_coupons WHERE code = ?')->execute([$code]);
       flash("Coupon $code deleted.", true); go(['coupons' => 1]);
     }
-    /* one-time coupon for one customer (late delivery, faulty product): a new code, 1 use, only with their mobile, no end date (AJAY: till they use it) */
-    if (isset($_POST['sorry'])) {
+    /* goodwill coupon for one customer (late delivery, faulty product): a new code, 1 use, only with their mobile, no end date (AJAY: till they use it) */
+    if (isset($_POST['goodwill'])) {
       $ph = trim(strtr((string)($_POST['phone'] ?? ''), FX_AR_DIGITS)); $pc = (float)str_replace(',', '.', (string)($_POST['pct'] ?? ''));
       if (strlen(fomaxo_phone9($ph)) < 9) { flash('Please type the customer\'s mobile number.'); go(['coupons' => 1]); }
       if ($pc <= 0 || $pc > 100) { flash('Please type a % between 1 and 100.'); go(['coupons' => 1]); }
       $abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; $chk = $pdo->prepare('SELECT 1 FROM fx_coupons WHERE code = ?');
-      do { $new = 'SORRY-'; for ($i = 0; $i < 4; $i++) $new .= $abc[random_int(0, strlen($abc) - 1)]; $chk->execute([$new]); } while ($chk->fetchColumn());
+      do { $new = 'GOODWILL-'; for ($i = 0; $i < 4; $i++) $new .= $abc[random_int(0, strlen($abc) - 1)]; $chk->execute([$new]); } while ($chk->fetchColumn());
       $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, phone) VALUES (?, \'pct\', ?, NULL, NULL, NULL, NULL, 1, 1, NOW(), 0, ?)')
           ->execute([$new, round($pc, 2), mb_substr($ph, 0, 25)]);
-      $_SESSION['sorry'] = $new; go(['coupons' => 1]);
+      $_SESSION['goodwill'] = $new; go(['coupons' => 1]);
     }
     if (isset($_POST['toggle'])) {
       $pdo->prepare('UPDATE fx_coupons SET active = 1 - active WHERE code = ?')->execute([$code]);
@@ -1304,11 +1304,11 @@ if (isset($_GET['coupons'])) {
   foreach ($pdo->query("SELECT coupon, COUNT(*) n, COALESCE(SUM(discount), 0) d, COALESCE(SUM(total), 0) t FROM fx_orders WHERE coupon IS NOT NULL AND test = 0
                         AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') GROUP BY coupon") as $r) $used[$r['coupon']] = $r;
   $now = date('Y-m-d H:i:s'); $tr = '';
-  /* WhatsApp to the customer with their one-time code */
-  $sorryWa = function ($c) { $wa = preg_replace('/\D/', '', (string)$c['phone']); if (str_starts_with($wa, '00')) $wa = substr($wa, 2); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); elseif (strlen($wa) === 9 && $wa[0] === '5') $wa = '971' . $wa;
+  /* WhatsApp to the customer with their goodwill code */
+  $goodwillWa = function ($c) { $wa = preg_replace('/\D/', '', (string)$c['phone']); if (str_starts_with($wa, '00')) $wa = substr($wa, 2); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); elseif (strlen($wa) === 9 && $wa[0] === '5') $wa = '971' . $wa;
     $end = $c['ends'] ? date('d/m/Y', strtotime($c['ends'])) : '';
-    return 'https://wa.me/' . $wa . '?text=' . rawurlencode("Hello from FOMAXO 🙏 We are sorry for the trouble with your order. Here is your coupon for your next order:\n\n*{$c['code']}* · " . fomaxo_coupon_label($c) . "\n\nUse it once at checkout on fomaxo.com with this mobile number" . ($end ? ", before $end" : '') . '.'); };
-  $made = null; if (!empty($_SESSION['sorry'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['sorry']]); $made = $s->fetch() ?: null; unset($_SESSION['sorry']); }
+    return 'https://wa.me/' . $wa . '?text=' . rawurlencode("Hello from FOMAXO 🙏 Thank you for your patience. Here is a goodwill coupon for your next order:\n\n*{$c['code']}* · " . fomaxo_coupon_label($c) . "\n\nUse it once at checkout on fomaxo.com with this mobile number" . ($end ? ", before $end" : '') . '.'); };
+  $made = null; if (!empty($_SESSION['goodwill'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['goodwill']]); $made = $s->fetch() ?: null; unset($_SESSION['goodwill']); }
   $dt = fn($v) => date('d/m/Y, g:i a', strtotime($v));
   $left = function ($v) { $m = (int)floor((strtotime($v) - time()) / 60); $d = intdiv($m, 1440); $h = intdiv($m % 1440, 60);
     return $d ? "$d day" . ($d > 1 ? 's' : '') . ($h ? " {$h}h" : '') . ' left' : ($h ? "{$h}h " : '') . ($m % 60) . 'm left'; };
@@ -1318,13 +1318,13 @@ if (isset($_GET['coupons'])) {
     $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($ends && $ends < $now ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled']
            : ($starts && $starts > $now ? ['Scheduled', 's-New'] : ['On', 'p-Paid'])));
     $time = $starts && $starts > $now ? 'Starts ' . $dt($starts) . ($ends ? ' · ends ' . $dt($ends) : '') : ($ends ? 'Ends ' . $dt($ends) . ($state[0] === 'On' ? ' · ' . $left($ends) : '') : '');
-    $rules = array_filter([!empty($c['phone']) ? 'One time · for ' . $c['phone'] : '', !empty($c['stack']) ? 'Use both' : 'Bigger offer', (float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
+    $rules = array_filter([!empty($c['phone']) ? 'Goodwill · for ' . $c['phone'] : '', !empty($c['stack']) ? 'Use both' : 'Bigger offer', (float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
     $btn = fn($name, $val, $label, $ask = '') => '<form method="post" style="margin:0"' . ($ask ? ' onsubmit="return confirm(\'' . h($ask) . '\')"' : '') . '>' . csrf_field()
       . '<input type="hidden" name="code" value="' . h($c['code']) . '"><button class="btn line sm" name="' . $name . '" value="' . $val . '">' . $label . '</button></form>';
     $tr .= '<div class="cprow"><div><b class="cpcode">' . h($c['code']) . '</b> <span class="tag ' . $state[1] . '">' . $state[0] . '</span>'
       . '<div class="muted small">' . h(fomaxo_coupon_label($c)) . ($rules ? ' · ' . h(implode(' · ', $rules)) : '') . '</div>' . ($time ? '<div class="small cptime">' . h($time) . '</div>' : '') . '</div>'
       . '<div class="cpused"><b>Used ' . $n . ' time' . ($n === 1 ? '' : 's') . '</b>' . ($n ? '<div class="muted small">Saved customers ' . money($u['d']) . ' · sales ' . money($u['t']) . '</div>' : '') . '</div>'
-      . '<div class="cpacts">' . (!empty($c['phone']) && !$n ? '<a class="btn line sm" href="' . h($sorryWa($c)) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') . ((int)$c['active'] ? $btn('toggle', 'off', 'Turn off') : $btn('toggle', 'on', 'Turn on'))
+      . '<div class="cpacts">' . (!empty($c['phone']) && !$n ? '<a class="btn line sm" href="' . h($goodwillWa($c)) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') . ((int)$c['active'] ? $btn('toggle', 'off', 'Turn off') : $btn('toggle', 'on', 'Turn on'))
       . $btn('delete', '1', 'Delete', 'Delete coupon ' . $c['code'] . '? Orders that used it keep the code.') . '</div></div>';
   }
   page('Coupons', '<div class="pagehead"><h1>Coupons</h1></div>' . flash() . fx_tabs(['Make a coupon', 'Your coupons (' . count($list) . ')'], 'Coupons')
@@ -1352,11 +1352,11 @@ if (isset($_GET['coupons'])) {
     . '<p class="muted small" style="margin:8px 0 0">Saving a code that already exists updates it. A coupon does not add to the multi-buy discount: the customer gets whichever saves more. The free 10ml mini still applies. Times are UAE time. Leave the time limit empty for a code with no end.</p></form>'
     . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var h=+b.dataset.h,f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},d=function(x){return x.getFullYear()+"-"+p(x.getMonth()+1)+"-"+p(x.getDate())},t=function(x){return p(x.getHours())+":"+p(x.getMinutes())};'
     . 'var n=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000),e=new Date(n.getTime()+h*3600000);if(!h){["start_d","start_t","end_d","end_t"].forEach(function(k){set(k,"")});}else{set("start_d",d(n));set("start_t",t(n));set("end_d",d(e));set("end_t",t(e));}document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}})</script></div>'
-    . '<div class="cpr" data-t="2"><form class="card cpone" method="post">' . csrf_field() . '<h2>One-time coupon for a customer</h2><p class="muted small">For late delivery or a faulty product. One use, only with this mobile, until they use it.</p>'
+    . '<div class="cpr" data-t="2"><form class="card cpone" method="post">' . csrf_field() . '<h2>Goodwill coupon</h2><p class="muted small">For late delivery or a faulty product. One use, only with this mobile, until they use it.</p>'
     . '<div class="cpone-f"><div><label for="sphone">Mobile</label><input id="sphone" name="phone" type="tel" inputmode="tel" placeholder="050 123 4567" maxlength="20" required></div>'
     . '<div><label for="spct">% off</label><input id="spct" name="pct" type="number" min="1" max="100" step="1" inputmode="numeric" value="10" required></div>'
-    . '<button class="btn" name="sorry" value="1">Make coupon</button></div>'
-    . ($made ? '<div class="cpmade"><span>Made <b class="cpcode">' . h($made['code']) . '</b> · ' . h(fomaxo_coupon_label($made)) . ' · for ' . h($made['phone']) . '</span><a class="btn sm" href="' . h($sorryWa($made)) . '" target="_blank" rel="noopener">Send on WhatsApp</a></div>' : '')
+    . '<button class="btn" name="goodwill" value="1">Make coupon</button></div>'
+    . ($made ? '<div class="cpmade"><span>Made <b class="cpcode">' . h($made['code']) . '</b> · ' . h(fomaxo_coupon_label($made)) . ' · for ' . h($made['phone']) . '</span><a class="btn sm" href="' . h($goodwillWa($made)) . '" target="_blank" rel="noopener">Send on WhatsApp</a></div>' : '')
     . '</form><h2 class="exsum">Your coupons<small>' . count($list) . ' code' . (count($list) === 1 ? '' : 's') . '</small></h2>'
     . '<div class="fill">' . ($list ? '<div class="cplist">' . $tr . '</div>' : '<p class="card muted" style="margin:0">No coupons yet. Make one with the form.</p>')
     . '<p class="muted small after">"Used" counts placed orders; cancelled, refunded and unpaid card attempts are not counted.</p></div></div></div>', true, true);
