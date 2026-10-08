@@ -1944,7 +1944,7 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 .reorder.ro-bag{grid-template-columns:auto 1fr;margin-bottom:14px}
 .reorder.ro-bag .btn{grid-column:1/-1;width:100%}
 /* home "Order again" row (like fomaxo.in): outlined box, gold label, arrows + Add all to bag, swipeable tiles */
-.oa{border:1px solid var(--line-2);background:var(--panel);padding:18px 22px 20px}
+.oa{border:1px solid var(--line-2);background:var(--panel);padding:18px 22px 20px;width:fit-content;max-width:100%;margin-inline:auto}
 .oa-head{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-bottom:16px}
 .oa-k{font-family:var(--display);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
 .oa-n{font-size:13.5px;color:var(--ivory);opacity:.85}
@@ -1955,7 +1955,7 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 .oa .btn.sm{min-height:38px;padding:0 18px}
 .oa-row{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
 .oa-row::-webkit-scrollbar{display:none}
-.oa-t{position:relative;flex:0 0 150px;min-width:0;scroll-snap-align:start;display:flex;flex-direction:column}
+.oa-t{position:relative;flex:0 0 var(--oa-w,160px);min-width:0;scroll-snap-align:start;display:flex;flex-direction:column}
 .oa-pic{display:block;aspect-ratio:1;border:1px solid var(--line);background:var(--panel-2);overflow:hidden}
 .oa-pic img{width:100%;height:100%;object-fit:cover;display:block}
 .oa-pw{position:relative}
@@ -1972,7 +1972,9 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 .oa-arw{display:none}
 .oa .btn.sm{width:100%}
 .oa-row{gap:10px;margin:0 -14px;padding:0 14px;scroll-padding:0 14px}
+.oa{width:auto}
 .oa-t{flex-basis:calc((100% - 20px) / 2.4)}
+.oa-few .oa-t{flex-basis:calc((100% - 10px) / 2)}
 .oa-add{inset-inline-end:6px;bottom:6px;width:30px;height:30px}
 }
 @media(max-width:600px){.reorder{grid-template-columns:auto 1fr;gap:12px;padding:12px}.reorder .btn{grid-column:1/-1;width:100%}}
@@ -2805,9 +2807,10 @@ const reorderHTML = (cls = '') => { const ls = lastOrder(); if (!ls) return '';
 /* homepage "Order again" row (like fomaxo.in): a swipeable tile per item of this device's last order, today's price, out-of-stock sizes left out */
 function orderAgainHTML(){ const ls = lastOrder(); if (!ls) return '';
   const n = ls.reduce((a, l) => a + (+l.qty || 1), 0);
-  return `<div class="oa" id="orderAgain"><div class="oa-head"><span class="oa-k">Order again</span><span class="oa-n">· ${n} ${n === 1 ? 'item' : 'items'} from your last order</span>
+  const k = ls.length, tw = k <= 2 ? 290 : k <= 3 ? 220 : k <= 5 ? 190 : 160;   // fewer items = bigger tiles, and the box hugs them instead of stretching across the page
+  return `<div class="oa${k <= 2 ? ' oa-few' : ''}" id="orderAgain" style="--oa-w:${tw}px"><div class="oa-head"><span class="oa-k">Order again</span><span class="oa-n">· ${n} ${n === 1 ? 'item' : 'items'} from your last order</span>
     <div class="oa-acts"><button class="oa-arw" type="button" data-oa="-1" aria-label="Previous">‹</button><button class="oa-arw" type="button" data-oa="1" aria-label="Next">›</button><button class="btn line sm" type="button" data-reorder>Add all to bag</button></div></div>
-    <div class="oa-row">${ls.map((l, i) => { const p = P[l.id]; return `<div class="oa-t"><div class="oa-pw"><a class="oa-pic" href="#/product/${p.id}"><img src="${SM(lineImg(l))}"${IMG_W[lineImg(l)] ? ` srcset="${SM(lineImg(l))} 240w, assets/img/t/${lineImg(l)}.webp 720w" sizes="150px"` : ''} alt="${esc(p.name)}" loading="lazy"></a><button class="oa-add" type="button" data-oaadd="${i}" aria-label="Add ${esc(p.name)} ${esc(optLabel(p, l.opt))} to your bag">+</button></div><b>${esc(p.name)}</b><span class="oa-s"><span>${esc(optLabel(p, l.opt))}</span> · ${moneyHTML(p.prices[l.opt])}</span></div>`; }).join('')}</div></div>`; }
+    <div class="oa-row">${ls.map((l, i) => { const p = P[l.id]; return `<div class="oa-t"><div class="oa-pw"><a class="oa-pic" href="#/product/${p.id}"><img src="${SM(lineImg(l))}"${IMG_W[lineImg(l)] ? ` srcset="${SM(lineImg(l))} 240w, assets/img/t/${lineImg(l)}.webp 720w" sizes="${tw}px"` : ''} alt="${esc(p.name)}" loading="lazy"></a><button class="oa-add" type="button" data-oaadd="${i}" aria-label="Add ${esc(p.name)} ${esc(optLabel(p, l.opt))} to your bag">+</button></div><b>${esc(p.name)}</b><span class="oa-s"><span>${esc(optLabel(p, l.opt))}</span> · ${moneyHTML(p.prices[l.opt])}</span></div>`; }).join('')}</div></div>`; }
 function bindOrderAgain(){ const box = $('#orderAgain'); if (!box) return; const row = $('.oa-row', box);
   const fit = () => box.classList.toggle('oa-fit', row.scrollWidth <= row.clientWidth + 2); fit();
   $$('[data-oa]', box).forEach(b => b.onclick = () => row.scrollBy({left: +b.dataset.oa * row.clientWidth * .8, behavior: 'smooth'}));
