@@ -1,12 +1,18 @@
 <?php
-/* FOMAXO — refill reminders: customers whose latest order was 40 to 60 days ago get a personal WhatsApp message with a single-use
+/* FOMAXO — refill reminders: customers whose latest order was about 45 days ago (admin can change it) get a personal WhatsApp message with a single-use
    coupon (REFILL-XXXXX, only with their mobile) and their Verified Purchaser review link.
    Used by admin → Members → Refill reminders (one tap per customer) and by whatsapp.php (automatic, through the WhatsApp Business API). */
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
 require_once __DIR__ . '/orders-lib.php';
 require_once __DIR__ . '/reviews-lib.php';
 
-const FX_REFILL_FROM = 40, FX_REFILL_TO = 60;   // days since the customer's latest order
+/* timing, set on admin → Refill reminders → Automatic sending: days after the latest order, and the sending hours (Dubai time).
+   The list shows customers from 5 days before that day until 15 days after it. */
+function fx_refill_time($pdo) {
+  $t = json_decode((string)fomaxo_setting($pdo, 'refill_time'), true) ?: [];
+  $d = max(1, min(365, (int)($t['days'] ?? 45))); $f = max(0, min(23, (int)($t['from'] ?? 11))); $to = max($f + 1, min(24, (int)($t['to'] ?? 20)));
+  return ['days' => $d, 'from' => $f, 'to' => $to, 'list_from' => max(1, $d - 5), 'list_to' => $d + 15];
+}
 
 function fx_refill_pct($pdo) { return (float)(fomaxo_setting($pdo, 'refill_pct') ?? 10); }
 
@@ -30,16 +36,21 @@ function fx_refill_mark($pdo, $no, $how = 'tap') {
   fomaxo_setting($pdo, 'refill_sent', json_encode(array_filter($sent, fn($d) => substr($d, 0, 10) >= date('Y-m-d', strtotime('-120 days')))));
 }
 
-/* every customer (same mobile = one customer) whose latest real order was 40 to 60 days ago, oldest first; 'sent' = date already reminded */
+/* every customer (same mobile = one customer) whose latest real order is in the list window (fx_refill_time), oldest first; 'sent' = date already reminded,
+   'optin' = ticked WhatsApp offers at checkout (only they get automatic messages) */
 function fx_refill_due($pdo) {
   $last = [];
-  foreach ($pdo->query("SELECT order_no, created_at, name, phone, lines_json FROM fx_orders WHERE status IN ('New','Paid','Delivered') AND test = 0 ORDER BY created_at, id") as $o)
-    if (strlen($k = fomaxo_phone9($o['phone'])) >= 9) $last[$k] = $o;   // the latest order wins
+  $opt = $pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'wa_optin'")->fetch() ? 'wa_optin' : '0 AS wa_optin';
+  foreach ($pdo->query("SELECT order_no, created_at, name, phone, lines_json, $opt FROM fx_orders WHERE status IN ('New','Paid','Delivered') AND test = 0 ORDER BY created_at, id") as $o) {
+    if (strlen($k = fomaxo_phone9($o['phone'])) < 9) continue;
+    $o['optin'] = !empty($o['wa_optin']) || !empty($last[$k]['optin']);   // ticked "Send me offers on WhatsApp" on any order
+    $last[$k] = $o;   // the latest order wins
+  }
   $sent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
-  $due = [];
+  $due = []; $tm = fx_refill_time($pdo);
   foreach ($last as $k => $o) {
     $days = (int)floor((strtotime('today') - strtotime(date('Y-m-d', strtotime($o['created_at'])))) / 86400);
-    if ($days >= FX_REFILL_FROM && $days <= FX_REFILL_TO) $due['m' . $k] = $o + ['days' => $days, 'sent' => isset($sent[$o['order_no']]) ? substr($sent[$o['order_no']], 0, 10) : null, 'auto' => str_ends_with((string)($sent[$o['order_no']] ?? ''), 'auto')];
+    if ($days >= $tm['list_from'] && $days <= $tm['list_to']) $due['m' . $k] = $o + ['days' => $days, 'sent' => isset($sent[$o['order_no']]) ? substr($sent[$o['order_no']], 0, 10) : null, 'auto' => str_ends_with((string)($sent[$o['order_no']] ?? ''), 'auto')];
   }
   uasort($due, fn($a, $b) => (int)!empty($a['sent']) <=> (int)!empty($b['sent']) ?: $b['days'] <=> $a['days']);
   return $due;
@@ -66,13 +77,13 @@ function fx_refill_parts($pdo, $o) {
 function fx_refill_text($p) {
   $n2 = "\n\n";
   if ($p['ar']) return 'مرحباً ' . $p['first'] . '،' . $n2 . 'نتمنى أن تكون مستمتعاً ' . ($p['perfumes'] !== '' ? 'بعطر ' . $p['perfumes'] : 'بعطرك من FOMAXO') . '. مرّ ' . $p['days'] . ' يوماً على طلبك، وقد يكون عطرك قارب على النفاد.'
-    . $n2 . 'تقديراً لك، هذا رمزك الخاص للحصول على خصم ' . $p['pct'] . '% على طلبك القادم (لمرة واحدة):' . "\n" . $p['code']
+    . $n2 . 'تقديراً لك، هذا رمزك الخاص للحصول على خصم ' . $p['pct'] . '% على طلبك القادم (لمرة واحدة):' . $n2 . '*' . $p['code'] . '*'
     . $n2 . "يمكنك الطلب من جديد هنا:\nhttps://fomaxo.com/?lang=ar"
     . ($p['review'] ? $n2 . "إن سمح وقتك، يسعدنا تقييمك الصادق، وسيظهر بشارة \"مشتري موثّق\":\n" . $p['review'] : '')
-    . $n2 . 'راسلنا هنا إن احتجت مساعدة في اختيار عطرك القادم.' . $n2 . "شكراً لك،\nFOMAXO";
+    . $n2 . 'راسلنا هنا إن احتجت مساعدة في اختيار عطرك القادم. وأرسل كلمة STOP إن كنت لا ترغب في هذه الرسائل.' . $n2 . "شكراً لك،\nFOMAXO";
   return 'Hi ' . $p['first'] . ',' . $n2 . 'I hope you are enjoying ' . ($p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume') . '. It has been ' . $p['days'] . ' days since your order, so your bottle may be running low.'
-    . $n2 . 'As a thank you, here is your personal code for ' . $p['pct'] . '% off your next order (single use):' . "\n" . $p['code']
+    . $n2 . 'As a thank you, here is your personal code for ' . $p['pct'] . '% off your next order (single use):' . $n2 . '*' . $p['code'] . '*'
     . $n2 . "You can reorder anytime here:\nhttps://fomaxo.com"
     . ($p['review'] ? $n2 . "If you have a moment, we would love your honest review. It will show as Verified Purchaser:\n" . $p['review'] : '')
-    . $n2 . 'Just reply here if you would like help choosing your next scent.' . $n2 . "Thank you,\nFOMAXO";
+    . $n2 . 'Just reply here if you would like help choosing your next scent. If you would rather not get these messages, reply STOP.' . $n2 . "Thank you,\nFOMAXO";
 }
