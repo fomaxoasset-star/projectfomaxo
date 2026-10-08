@@ -2287,8 +2287,15 @@ if (isset($_GET['members'])) {
     foreach ($rfDue as $k => $o) {
       $pn = $prods($o); $ar = fx_has_ar($o['name']); $nm = $first($o['name']);
       $rv = $rvLink($o); $rvUrl = $rv ? 'https://fomaxo.com/' . ($ar ? '?lang=ar' : '') . '#/review?t=' . $rv : '';
-      $msg = $ar ? 'مرحباً ' . $nm . '، معك FOMAXO. مرّ ' . $o['days'] . ' يوماً على طلبك' . ($pn !== '' ? ' (' . $pn . ')' : '') . '. إذا قارب عطرك على النفاد، يمكنك الطلب من جديد هنا: https://fomaxo.com/?lang=ar' . "\n" . ($rvUrl ? 'ونسعد برأيك في العطر، يظهر تقييمك بشارة "مشتري موثّق": ' . $rvUrl . "\n" : '') . 'راسلنا هنا إن احتجت مساعدة في الاختيار. شكراً لك!'
-                 : 'Hi ' . $nm . ', this is FOMAXO. It has been ' . $o['days'] . ' days since your order' . ($pn !== '' ? ' (' . $pn . ')' : '') . '. If your perfume is running low, you can reorder here: https://fomaxo.com' . "\n" . ($rvUrl ? 'We would also love your honest review (it shows Verified Purchaser): ' . $rvUrl . "\n" : '') . 'Reply here if you would like help choosing. Thank you!';
+      $n2 = "\n\n";   // a blank line between each part, so it reads like a personal note
+      $msg = $ar ? 'مرحباً ' . $nm . '،' . $n2 . 'نتمنى أن تكون مستمتعاً ' . ($pn !== '' ? 'بعطر ' . $pn : 'بعطرك من FOMAXO') . '. مرّ ' . $o['days'] . ' يوماً على طلبك، وقد يكون عطرك قارب على النفاد.'
+                   . $n2 . "يمكنك الطلب من جديد هنا:\nhttps://fomaxo.com/?lang=ar"
+                   . ($rvUrl ? $n2 . "إن سمح وقتك، يسعدنا تقييمك الصادق، وسيظهر بشارة \"مشتري موثّق\":\n" . $rvUrl : '')
+                   . $n2 . 'راسلنا هنا إن احتجت مساعدة في اختيار عطرك القادم.' . $n2 . "شكراً لك،\nFOMAXO"
+                 : 'Hi ' . $nm . ',' . $n2 . 'I hope you are enjoying ' . ($pn !== '' ? $pn : 'your FOMAXO perfume') . '. It has been ' . $o['days'] . ' days since your order, so your bottle may be running low.'
+                   . $n2 . "You can reorder anytime here:\nhttps://fomaxo.com"
+                   . ($rvUrl ? $n2 . "If you have a moment, we would love your honest review. It will show as Verified Purchaser:\n" . $rvUrl : '')
+                   . $n2 . 'Just reply here if you would like help choosing your next scent.' . $n2 . "Thank you,\nFOMAXO";
       $u = h(self_url(['members' => 1, 'c' => $k]));
       $tr .= '<tr class="row"><td class="rn"><a href="' . $u . '"><b>' . hx($o['name'] ?: 'No name') . '</b></a>' . (!empty($waCust[$k]['on']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '')
            . '<div class="muted small">' . h($o['phone']) . ($pn !== '' ? ' · ' . h($pn) : '') . '</div></td>'
