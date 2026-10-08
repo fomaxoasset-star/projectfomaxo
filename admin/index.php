@@ -330,7 +330,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
 .mtop .mmin input{text-align:center}.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
-.rflist .rd{white-space:nowrap}.rflist .ra{text-align:right;white-space:nowrap}.rsent{font-size:12px;font-weight:600;color:var(--ok);margin-right:6px}.rfstats{grid-template-columns:repeat(2,minmax(0,180px))}.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
+.rfauto{padding:8px 14px;margin:0 0 8px}.rfauto summary{cursor:pointer;font-weight:600}.rfauto summary>span:first-child{margin-right:6px}.rfauto label{margin:8px 0 3px}.rfauto .rfon{display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:13.5px;color:var(--ink)}.rfauto .rfon input{width:auto}.rflist .rd{white-space:nowrap}.rflist .ra{text-align:right;white-space:nowrap}.rsent{font-size:12px;font-weight:600;color:var(--ok);margin-right:6px}.rfstats{grid-template-columns:repeat(2,minmax(0,180px))}.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
 /* Orders like fomaxo.in: coloured top edge on the four boxes, step boxes label left / count right, coupon row, one filter line */
 .ost .stat{border-top:3px solid var(--gold)}.ost .stat.onl{border-top-color:var(--ok)}
 .cpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
@@ -2201,12 +2201,6 @@ if (isset($_GET['reviews'])) {
 }
 
 /* ---- members: customers who keep coming back. Orders are grouped by mobile number (last 9 digits), or by email when there is no mobile ---- */
-/* the refill reminder coupon of an order: REFILL- + 5 letters, always the same for that order */
-function fx_refill_code($pdo, $no) {
-  $abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; $hx = hash_hmac('sha256', 'refill|' . $no, (string)fomaxo_setting($pdo, 'admin_hash')); $c = 'REFILL-';
-  for ($i = 0; $i < 5; $i++) $c .= $abc[hexdec(substr($hx, $i * 2, 2)) % strlen($abc)];
-  return $c;
-}
 if (isset($_GET['members'])) {
   if (isset($_GET['subs'])) {   // email list from the website sign-up forms (subscribe.php), as a CSV that opens straight in Excel
     $rows = [];
@@ -2222,16 +2216,18 @@ if (isset($_GET['members'])) {
   $subsN = 0; try { fomaxo_subscribers_table($pdo); $subsN = (int)$pdo->query('SELECT COUNT(*) FROM fx_subscribers')->fetchColumn(); } catch (Throwable $e) {}
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['members' => 1]); }
+    if (isset($_POST['refill_auto'])) {   // Automatic sending box on Refill reminders: WhatsApp Business details (kept above public_html) + On/Off
+      require_once dirname(__DIR__) . '/whatsapp-lib.php';
+      $v = fn($k) => preg_replace('/\s+/', '', (string)($_POST[$k] ?? ''));
+      $tok = $v('wa_token'); $pid = $v('wa_phone_id');
+      if (($tok !== '' && !preg_match('/^[A-Za-z0-9_\-]{20,600}$/', $tok)) || ($pid !== '' && !ctype_digit($pid))) { flash('Please check the access token and the phone number ID.'); go(['members' => 1, 'refill' => 1]); }
+      if (($tok !== '' || $pid !== '') && !fx_wa_config_save(['access_token' => $tok, 'phone_number_id' => $pid])) { flash('Could not save. Please try again.'); go(['members' => 1, 'refill' => 1]); }
+      $on = !empty($_POST['auto_on']) && fx_wa_ready();
+      fomaxo_setting($pdo, 'refill_auto', $on ? '1' : '0');
+      flash($on ? 'Automatic refill messages are on.' : (!empty($_POST['auto_on']) ? 'Saved. Add the access token and phone number ID to switch it on.' : 'Automatic refill messages are off.'), true); go(['members' => 1, 'refill' => 1]);
+    }
     if (isset($_POST['refill_sent'])) {   // tapped WhatsApp on the refill reminder list: that order is marked Sent
-      if (preg_match('/^FMX-\d+$/', $no = (string)$_POST['refill_sent'])) {
-        $rfSent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
-        $rfSent[$no] = date('Y-m-d');
-        $s = $pdo->prepare('SELECT phone FROM fx_orders WHERE order_no = ?'); $s->execute([$no]); $ph = (string)$s->fetchColumn();
-        if (strlen(fomaxo_phone9($ph)) >= 9) { fomaxo_coupons_table($pdo);   // single use, only with this customer's mobile, no end date (like a goodwill coupon)
-          $pdo->prepare('INSERT IGNORE INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, phone) VALUES (?, \'pct\', ?, NULL, NULL, NULL, NULL, 1, 1, NOW(), 0, ?)')
-              ->execute([fx_refill_code($pdo, $no), round((float)(fomaxo_setting($pdo, 'refill_pct') ?? 10), 2), mb_substr($ph, 0, 25)]); }
-        fomaxo_setting($pdo, 'refill_sent', json_encode(array_filter($rfSent, fn($d) => $d >= date('Y-m-d', strtotime('-120 days')))));
-      }
+      if (preg_match('/^FMX-\d+$/', $no = (string)$_POST['refill_sent'])) { require_once dirname(__DIR__) . '/refill-lib.php'; fx_refill_mark($pdo, $no); }
       http_response_code(204); exit;
     }
     /* two separate boxes, each saved on its own; an empty box means "no limit" */
@@ -2268,63 +2264,36 @@ if (isset($_GET['members'])) {
   }
   /* refill reminders: customers whose latest order was 40 to 60 days ago (a 50ml bottle runs low around then), each with a ready WhatsApp message.
      Tapping WhatsApp notes "Sent" for that order, so nobody is reminded twice for the same order. */
-  $rfLast = [];
-  foreach ($all as $o) if (($k = $key($o)) !== '') $rfLast[$k] = $o;   // oldest first, so the latest order wins
-  $rfSent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
-  /* each reminder carries a single-use coupon only for that customer's mobile: the code is fixed per order, and saved in Coupons when WhatsApp is tapped */
-  $rfPct = (float)(fomaxo_setting($pdo, 'refill_pct') ?? 10);
-  $rfCode = fn($no) => fx_refill_code($pdo, $no);
-  $rfDue = [];
-  foreach ($rfLast as $k => $o) {
-    $days = (int)floor((strtotime('today') - strtotime(date('Y-m-d', strtotime($o['created_at'])))) / 86400);
-    if ($days >= 40 && $days <= 60 && $waLink($o['phone']) !== '') $rfDue[$k] = $o + ['days' => $days, 'sent' => $rfSent[$o['order_no']] ?? null];
-  }
-  uasort($rfDue, fn($a, $b) => (int)!empty($a['sent']) <=> (int)!empty($b['sent']) ?: $b['days'] <=> $a['days']);
+  require_once dirname(__DIR__) . '/refill-lib.php';
+  $rfDue = fx_refill_due($pdo);
   if (isset($_GET['refill'])) {
-    $first = fn($n) => preg_split('/\s+/u', trim((string)$n))[0] ?? '';
-    $names = []; foreach (fomaxo_product_rows() ?: [] as $r) { $p = json_decode($r['data'], true); $names[$r['id']] = (string)($p['name'] ?? $r['id']); }
-    $prods = function ($o) use ($names) { $n = [];
-      foreach ((array)json_decode((string)($o['lines_json'] ?? ''), true) as $l) if (empty($l['free']) && isset($names[$l['id'] ?? ''])) $n[] = $names[$l['id']];
-      return implode(', ', array_unique($n)); };
     fomaxo_en_many(array_column($rfDue, 'name'));
-    /* the order's private review link (Verified Purchaser): the one made at checkout, or a new one; left out once every product is reviewed */
-    require_once dirname(__DIR__) . '/reviews-lib.php';
-    $rvByNo = [];
-    foreach (glob(rv_dir('links') . '/*.json') ?: [] as $f) { $j = json_decode((string)@file_get_contents($f), true); if (isset($j['no'])) $rvByNo[$j['no']] = ['t' => basename($f, '.json'), 'left' => array_diff((array)($j['products'] ?? []), array_keys((array)($j['done'] ?? [])))]; }
-    $rvLink = function ($o) use ($rvByNo) {
-      if (isset($rvByNo[$o['order_no']])) return $rvByNo[$o['order_no']]['left'] ? $rvByNo[$o['order_no']]['t'] : null;
-      $ids = array_column(array_filter((array)json_decode((string)($o['lines_json'] ?? ''), true), fn($l) => empty($l['free'])), 'id');
-      return fomaxo_review_link($o['order_no'], $ids);
-    };
     $tr = '';
     foreach ($rfDue as $k => $o) {
-      $pn = $prods($o); $ar = fx_has_ar($o['name']); $nm = $first($o['name']);
-      $rv = $rvLink($o); $rvUrl = $rv ? 'https://fomaxo.com/' . ($ar ? '?lang=ar' : '') . '#/review?t=' . $rv : '';
-      $n2 = "\n\n";
-      $cp = $rfCode($o['order_no']); $pctT = rtrim(rtrim(number_format($rfPct, 2, '.', ''), '0'), '.');   // a blank line between each part, so it reads like a personal note
-      $msg = $ar ? 'مرحباً ' . $nm . '،' . $n2 . 'نتمنى أن تكون مستمتعاً ' . ($pn !== '' ? 'بعطر ' . $pn : 'بعطرك من FOMAXO') . '. مرّ ' . $o['days'] . ' يوماً على طلبك، وقد يكون عطرك قارب على النفاد.'
-                   . $n2 . 'تقديراً لك، هذا رمزك الخاص للحصول على خصم ' . $pctT . '% على طلبك القادم (لمرة واحدة):' . "\n" . $cp
-                   . $n2 . "يمكنك الطلب من جديد هنا:\nhttps://fomaxo.com/?lang=ar"
-                   . ($rvUrl ? $n2 . "إن سمح وقتك، يسعدنا تقييمك الصادق، وسيظهر بشارة \"مشتري موثّق\":\n" . $rvUrl : '')
-                   . $n2 . 'راسلنا هنا إن احتجت مساعدة في اختيار عطرك القادم.' . $n2 . "شكراً لك،\nFOMAXO"
-                 : 'Hi ' . $nm . ',' . $n2 . 'I hope you are enjoying ' . ($pn !== '' ? $pn : 'your FOMAXO perfume') . '. It has been ' . $o['days'] . ' days since your order, so your bottle may be running low.'
-                   . $n2 . 'As a thank you, here is your personal code for ' . $pctT . '% off your next order (single use):' . "\n" . $cp
-                   . $n2 . "You can reorder anytime here:\nhttps://fomaxo.com"
-                   . ($rvUrl ? $n2 . "If you have a moment, we would love your honest review. It will show as Verified Purchaser:\n" . $rvUrl : '')
-                   . $n2 . 'Just reply here if you would like help choosing your next scent.' . $n2 . "Thank you,\nFOMAXO";
+      $pt = fx_refill_parts($pdo, $o); $pn = $pt['perfumes']; $msg = fx_refill_text($pt);
       $u = h(self_url(['members' => 1, 'c' => $k]));
       $tr .= '<tr class="row"><td class="rn"><a href="' . $u . '"><b>' . hx($o['name'] ?: 'No name') . '</b></a>' . (!empty($waCust[$k]['on']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '')
            . '<div class="muted small">' . h($o['phone']) . ($pn !== '' ? ' · ' . h($pn) : '') . '</div></td>'
            . '<td class="rd small"><b>' . $o['days'] . ' days</b><div class="muted">' . h(date('d/m/Y', strtotime($o['created_at']))) . ' · ' . h($o['order_no']) . '</div></td>'
-           . '<td class="ra">' . ($o['sent'] ? '<span class="rsent">Sent ' . h(date('d/m', strtotime($o['sent']))) . '</span> ' : '')
+           . '<td class="ra">' . ($o['sent'] ? '<span class="rsent">' . ($o['auto'] ? 'Sent by itself ' : 'Sent ') . h(date('d/m', strtotime($o['sent']))) . '</span> ' : '')
            . '<a class="btn sm' . ($o['sent'] ? ' line' : '') . '" data-rf="' . h($o['order_no']) . '" href="https://wa.me/' . h($waLink($o['phone'])) . '?text=' . rawurlencode($msg) . '" target="_blank" rel="noopener">WhatsApp</a></td></tr>';
     }
     $open = count(array_filter($rfDue, fn($o) => !$o['sent']));
+    require_once dirname(__DIR__) . '/whatsapp-lib.php';
+    $waOk = fx_wa_ready(); $autoOn = $waOk && fomaxo_setting($pdo, 'refill_auto') === '1'; $err = (string)fomaxo_setting($pdo, 'refill_auto_err');
+    $rfAuto = '<details class="card rfauto"' . ($waOk ? '' : ' ') . '><summary><span>Automatic sending</span> ' . ($autoOn ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>') . '<span class="muted small"> · ' . ($autoOn ? 'sent by itself ' . FX_REFILL_AUTO_DAYS . ' days after the order, 11:00–20:00' : 'tap to set up') . '</span></summary>'
+      . '<form method="post">' . csrf_field() . '<input type="hidden" name="refill_auto" value="1">'
+      . '<div class="srow two"><div><label for="wa_token">WhatsApp access token</label><input id="wa_token" name="wa_token" type="password" autocomplete="new-password" placeholder="' . ($waOk ? 'Saved' : 'From Meta → WhatsApp → API Setup') . '"></div>'
+      . '<div><label for="wa_phone_id">Phone number ID</label><input id="wa_phone_id" name="wa_phone_id" inputmode="numeric" autocomplete="off" placeholder="' . ($waOk ? 'Saved' : 'e.g. 123456789012345') . '"></div></div>'
+      . '<label class="rfon"><input type="checkbox" name="auto_on" value="1"' . ($autoOn ? ' checked' : '') . '> Send refill messages automatically (template "refill_reminder", English + Arabic)</label>'
+      . ($err !== '' && $autoOn ? '<p class="small" style="color:var(--bad);margin:4px 0 0">Last problem: ' . h($err) . '</p>' : '')
+      . '<p class="sbtn" style="margin:8px 0 0"><button class="btn sm">Save</button></p></form></details>';
     page('Refill reminders', '<div class="pagehead"><div><p class="small" style="margin:0 0 2px"><a href="./?members=1">← All members</a></p><h1>Refill reminders</h1></div></div>'
+      . $rfAuto
       . '<div class="stats up rfstats"><div class="stat"><span>To remind</span><b>' . $open . '</b></div><div class="stat"><span>Sent</span><b>' . (count($rfDue) - $open) . '</b></div></div>'
       . '<div class="fill">' . ($tr ? '<table class="mlist rflist"><thead><tr><th>Customer</th><th>Last order</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">Nobody is due right now. Customers show here 40 to 60 days after their latest order.</p>')
-      . '<p class="muted small after">Customers whose latest order was 40 to 60 days ago. WhatsApp opens with a ready message (Arabic for Arabic names); after you tap it the customer shows Sent. Once they order again they leave this list.</p></div>'
+      . '<p class="muted small after">Customers whose latest order was 40 to 60 days ago. WhatsApp opens with a ready message (Arabic for Arabic names); after you tap it the customer shows Sent. With Automatic sending on, it goes out by itself 45 days after the order. Once they order again they leave this list.</p></div>'
       . '<script>document.addEventListener("click",function(e){var a=e.target.closest("[data-rf]");if(!a)return;var f=new FormData();f.append("refill_sent",a.dataset.rf);f.append("csrf",' . json_encode($_SESSION['csrf']) . ');fetch("./?members=1",{method:"POST",body:f,credentials:"same-origin"});a.classList.add("line");var r=a.parentNode;if(!r.querySelector(".rsent"))r.insertAdjacentHTML("afterbegin","<span class=\\"rsent\\">Sent today</span> ")});</script>', true, true);
   }
   $rg = isset($_GET['c']) ? null : adm_range('members', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
