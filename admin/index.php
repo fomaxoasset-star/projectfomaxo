@@ -2284,15 +2284,16 @@ if (isset($_GET['members'])) {
     }
     $open = count(array_filter($rfDue, fn($o) => !$o['sent']));
     require_once dirname(__DIR__) . '/whatsapp-lib.php';
-    $tm = fx_refill_time($pdo); $hh = fn($x) => sprintf('%02d:00', $x);
+    $tm = fx_refill_time($pdo); $hh = fn($x) => (($x % 12) ?: 12) . ' ' . ($x % 24 < 12 ? 'AM' : 'PM');
+    $hsel = fn($nm, $a, $b, $v) => '<select id="' . $nm . '" name="' . $nm . '">' . implode('', array_map(fn($x) => '<option value="' . $x . '"' . ($x == $v ? ' selected' : '') . '>' . (($x % 12) ?: 12) . ' ' . ($x % 24 < 12 ? 'AM' : 'PM') . ($x == 24 ? ' (midnight)' : '') . '</option>', range($a, $b))) . '</select>';
     $waOk = fx_wa_ready(); $autoOn = $waOk && fomaxo_setting($pdo, 'refill_auto') === '1'; $err = (string)fomaxo_setting($pdo, 'refill_auto_err');
     $rfAuto = '<details class="card rfauto"' . ($waOk ? '' : ' ') . '><summary><span>Automatic sending</span> ' . ($autoOn ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>') . '<span class="muted small"> · ' . ($autoOn ? 'sent by itself to customers who ticked WhatsApp offers, ' . $tm['days'] . ' days after the order, ' . $hh($tm['from']) . '–' . $hh($tm['to']) : ($waOk ? 'messages are sent only when you tap WhatsApp' : 'tap to set up')) . '</span></summary>'
       . '<form method="post">' . csrf_field() . '<input type="hidden" name="refill_auto" value="1">'
       . '<div class="srow two"><div><label for="wa_token">WhatsApp access token</label><input id="wa_token" name="wa_token" type="password" autocomplete="new-password" placeholder="' . ($waOk ? 'Saved' : 'From Meta → WhatsApp → API Setup') . '"></div>'
       . '<div><label for="wa_phone_id">Phone number ID</label><input id="wa_phone_id" name="wa_phone_id" inputmode="numeric" autocomplete="off" placeholder="' . ($waOk ? 'Saved' : 'e.g. 123456789012345') . '"></div></div>'
       . '<div class="srow rftime"><div><label for="rf_days">Days after order</label><input id="rf_days" name="rf_days" type="number" min="1" max="365" inputmode="numeric" value="' . $tm['days'] . '"></div>'
-      . '<div><label for="rf_from">Send from (hour)</label><input id="rf_from" name="rf_from" type="number" min="0" max="23" inputmode="numeric" value="' . $tm['from'] . '"></div>'
-      . '<div><label for="rf_to">Until (hour)</label><input id="rf_to" name="rf_to" type="number" min="1" max="24" inputmode="numeric" value="' . $tm['to'] . '"></div></div>'
+      . '<div><label for="rf_from">Send from</label>' . $hsel('rf_from', 0, 23, $tm['from']) . '</div>'
+      . '<div><label for="rf_to">Until</label>' . $hsel('rf_to', 1, 24, $tm['to']) . '</div></div>'
       . '<div class="rfsw" role="radiogroup" aria-label="Automatic sending"><label><input type="radio" name="auto_on" value="1"' . ($autoOn ? ' checked' : '') . '><span>On</span></label><label><input type="radio" name="auto_on" value=""' . ($autoOn ? '' : ' checked') . '><span>Off</span></label></div>'
       . ($err !== '' && $autoOn ? '<p class="small" style="color:var(--bad);margin:4px 0 0">Last problem: ' . h($err) . '</p>' : '')
       . '<p class="sbtn" style="margin:8px 0 0"><button class="btn sm">Save</button></p></form></details>';
