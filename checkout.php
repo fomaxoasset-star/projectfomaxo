@@ -134,9 +134,11 @@ $pctTxt = rtrim(rtrim(number_format($discPct, 1, '.', ''), '0'), '.');
 /* coupon code: checked here again (never trusted from the browser); it replaces the multi-buy discount only when it saves more */
 $discLabel = "Multi-buy discount ($pctTxt%)"; $couponCode = null;
 if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
-  $cp = fomaxo_coupon_apply($in['coupon'], $subFils);
+  $cp = fomaxo_coupon_apply($in['coupon'], $subFils, $discFils);
   if (isset($cp['error'])) fail(400, $cp['error'] . ' Please remove it and try again.');
-  if ($cp['saveFils'] > $discFils) { $discFils = $cp['saveFils']; $couponCode = $cp['code']; $discLabel = "Coupon {$cp['code']} ({$cp['label']})"; }
+  if ($cp['stack'] && $cp['saveFils'] > 0) {   // "Use both": the coupon comes off after the multi-buy discount
+    $discLabel = ($discFils > 0 ? "$discLabel + " : '') . "Coupon {$cp['code']} ({$cp['label']})"; $discFils += $cp['saveFils']; $couponCode = $cp['code'];
+  } elseif (!$cp['stack'] && $cp['saveFils'] > $discFils) { $discFils = $cp['saveFils']; $couponCode = $cp['code']; $discLabel = "Coupon {$cp['code']} ({$cp['label']})"; }
 }
 $afterFils = $subFils - $discFils;               // total after the multi-buy discount or the coupon
 

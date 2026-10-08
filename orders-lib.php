@@ -122,6 +122,8 @@ function fomaxo_db_schema($pdo) {
 function fomaxo_coupons_table($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_coupons (code VARCHAR(30) NOT NULL PRIMARY KEY, kind VARCHAR(3) NOT NULL DEFAULT 'pct', amount DECIMAL(10,2) NOT NULL,
               min_order DECIMAL(10,2) NULL, expires DATE NULL, max_uses INT NULL, active TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NULL) DEFAULT CHARSET=utf8mb4");
+  /* stack = 1: "Use both" (the coupon comes off after the multi-buy discount); 0: "Use the bigger offer" */
+  try { if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'stack'")->fetch()) $pdo->exec("ALTER TABLE fx_coupons ADD COLUMN stack TINYINT(1) NOT NULL DEFAULT 0"); } catch (Throwable $e) {}
 }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
@@ -394,13 +396,15 @@ function fomaxo_coupon_find($code) {
   if ($ends && $ends < $now) return ['error' => 'This coupon code has expired.'];
   if ($c['max_uses'] !== null && fomaxo_coupon_uses($pdo, $code) >= (int)$c['max_uses']) return ['error' => 'This coupon code has been fully used.'];
   return ['code' => $c['code'], 'kind' => $c['kind'] === 'aed' ? 'aed' : 'pct', 'amount' => (float)$c['amount'], 'min' => $c['min_order'] !== null ? (float)$c['min_order'] : 0,
-          'label' => fomaxo_coupon_label($c), 'ends' => $ends ? str_replace(' ', 'T', $ends) . '+04:00' : null];
+          'label' => fomaxo_coupon_label($c), 'ends' => $ends ? str_replace(' ', 'T', $ends) . '+04:00' : null, 'stack' => !empty($c['stack'])];
 }
-/* What the code saves on a bag of $subFils (fils, before any discount). Returns ['error' => …] or the coupon plus 'saveFils'. */
-function fomaxo_coupon_apply($code, $subFils) {
+/* What the code saves on a bag of $subFils (fils, before any discount). Returns ['error' => …] or the coupon plus 'saveFils'.
+   A "Use both" coupon ('stack') is worked out on the bag after the multi-buy discount ($multiFils); the minimum still counts the bag before any discount. */
+function fomaxo_coupon_apply($code, $subFils, $multiFils = 0) {
   $c = fomaxo_coupon_find($code); if (isset($c['error'])) return $c;
   if ($c['min'] > 0 && $subFils < (int)round($c['min'] * 100)) return ['error' => 'This coupon code is for orders of AED ' . rtrim(rtrim(number_format($c['min'], 2, '.', ''), '0'), '.') . ' or more.'];
-  $c['saveFils'] = $c['kind'] === 'aed' ? min($subFils, (int)round($c['amount'] * 100)) : (int)round($subFils * min(100, $c['amount']) / 100);
+  $base = $c['stack'] ? $subFils - $multiFils : $subFils;
+  $c['saveFils'] = $c['kind'] === 'aed' ? min($base, (int)round($c['amount'] * 100)) : (int)round($base * min(100, $c['amount']) / 100);
   return $c;
 }
 
