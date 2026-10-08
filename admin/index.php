@@ -2274,11 +2274,21 @@ if (isset($_GET['members'])) {
       foreach ((array)json_decode((string)($o['lines_json'] ?? ''), true) as $l) if (empty($l['free']) && isset($names[$l['id'] ?? ''])) $n[] = $names[$l['id']];
       return implode(', ', array_unique($n)); };
     fomaxo_en_many(array_column($rfDue, 'name'));
+    /* the order's private review link (Verified Purchaser): the one made at checkout, or a new one; left out once every product is reviewed */
+    require_once dirname(__DIR__) . '/reviews-lib.php';
+    $rvByNo = [];
+    foreach (glob(rv_dir('links') . '/*.json') ?: [] as $f) { $j = json_decode((string)@file_get_contents($f), true); if (isset($j['no'])) $rvByNo[$j['no']] = ['t' => basename($f, '.json'), 'left' => array_diff((array)($j['products'] ?? []), array_keys((array)($j['done'] ?? [])))]; }
+    $rvLink = function ($o) use ($rvByNo) {
+      if (isset($rvByNo[$o['order_no']])) return $rvByNo[$o['order_no']]['left'] ? $rvByNo[$o['order_no']]['t'] : null;
+      $ids = array_column(array_filter((array)json_decode((string)($o['lines_json'] ?? ''), true), fn($l) => empty($l['free'])), 'id');
+      return fomaxo_review_link($o['order_no'], $ids);
+    };
     $tr = '';
     foreach ($rfDue as $k => $o) {
       $pn = $prods($o); $ar = fx_has_ar($o['name']); $nm = $first($o['name']);
-      $msg = $ar ? 'مرحباً ' . $nm . '، معك FOMAXO. مرّ ' . $o['days'] . ' يوماً على طلبك' . ($pn !== '' ? ' (' . $pn . ')' : '') . '. إذا قارب عطرك على النفاد، يمكنك الطلب من جديد هنا: https://fomaxo.com/?lang=ar' . "\n" . 'راسلنا هنا إن احتجت مساعدة في الاختيار. شكراً لك!'
-                 : 'Hi ' . $nm . ', this is FOMAXO. It has been ' . $o['days'] . ' days since your order' . ($pn !== '' ? ' (' . $pn . ')' : '') . '. If your perfume is running low, you can reorder here: https://fomaxo.com' . "\n" . 'Reply here if you would like help choosing. Thank you!';
+      $rv = $rvLink($o); $rvUrl = $rv ? 'https://fomaxo.com/' . ($ar ? '?lang=ar' : '') . '#/review?t=' . $rv : '';
+      $msg = $ar ? 'مرحباً ' . $nm . '، معك FOMAXO. مرّ ' . $o['days'] . ' يوماً على طلبك' . ($pn !== '' ? ' (' . $pn . ')' : '') . '. إذا قارب عطرك على النفاد، يمكنك الطلب من جديد هنا: https://fomaxo.com/?lang=ar' . "\n" . ($rvUrl ? 'ونسعد برأيك في العطر، يظهر تقييمك بشارة "مشتري موثّق": ' . $rvUrl . "\n" : '') . 'راسلنا هنا إن احتجت مساعدة في الاختيار. شكراً لك!'
+                 : 'Hi ' . $nm . ', this is FOMAXO. It has been ' . $o['days'] . ' days since your order' . ($pn !== '' ? ' (' . $pn . ')' : '') . '. If your perfume is running low, you can reorder here: https://fomaxo.com' . "\n" . ($rvUrl ? 'We would also love your honest review (it shows Verified Purchaser): ' . $rvUrl . "\n" : '') . 'Reply here if you would like help choosing. Thank you!';
       $u = h(self_url(['members' => 1, 'c' => $k]));
       $tr .= '<tr class="row"><td class="rn"><a href="' . $u . '"><b>' . hx($o['name'] ?: 'No name') . '</b></a>' . (!empty($waCust[$k]['on']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '')
            . '<div class="muted small">' . h($o['phone']) . ($pn !== '' ? ' · ' . h($pn) : '') . '</div></td>'
