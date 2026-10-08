@@ -205,6 +205,7 @@ if ($pay === 'cod') {
   $answer = ['order' => $no, 'total' => number_format($totalFils / 100, 2, '.', ''), 'review' => $review];
   $early = $saved || $inDb;
   if ($early) fomaxo_reply_now($answer);
+  if ($inDb) { require_once __DIR__ . '/ads-server-lib.php'; fomaxo_ads_server_buy($no); }   // the purchase also goes to Meta / TikTok ads from here (admin → Settings → Ads tracking)
   fomaxo_en_many([$cu['name'], $cu['address'], $cu['note']]);   // Arabic typed by the customer: English in this email and in admin
   $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) . "\n\n" . implode("\n", $rows)
         . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\n$discLabel: -" . aed($discFils) : '')
