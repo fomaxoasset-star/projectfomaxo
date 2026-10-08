@@ -389,7 +389,7 @@ CSS;
      . (!empty($_SESSION['admin']) ? '<div class="hacts"><a class="btn line sm" href="../" target="_blank" rel="noopener"><span class="vw">View </span>website ↗</a><form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Sign out</button></form></div>' : '')
      . '</header>'
      . (!empty($_SESSION['admin']) ? '<div class="tabsw"><a class="tnav" data-d="-1" aria-label="Previous page" hidden>‹</a><nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
-         [['Home', './', !$_GET], ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
+         [['Home', './', !$_GET], ['Products', './?products=1', isset($_GET['products'])], ['Stocks', './?stock=1', isset($_GET['stock'])],
           ['Orders', './?orders=1', !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p', 'cp']))],
           ['Reviews', './?reviews=1', isset($_GET['reviews'])], ['Analytics', './?analytics=1', isset($_GET['analytics'])],
           ['Coupons', './?coupons=1', isset($_GET['coupons'])], ['Offers', './?offer=1', isset($_GET['offer'])], ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Sales', './?reports=1', isset($_GET['reports'])],
@@ -1316,7 +1316,7 @@ if (isset($_GET['stock'])) {
          . '<td class="num"><label class="mini">Stock</label><input type="number" min="0" inputmode="numeric" name="q[' . h($id) . '][' . h($opt) . ']" value="' . ($q === null ? '' : (int)$q) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' stock"></td>'
          . '<td class="num"><label class="mini">Cost AED</label><input type="number" min="0" step="0.01" inputmode="decimal" name="c[' . h($id) . '][' . h($opt) . ']" value="' . ($c === null ? '' : h(rtrim(rtrim($c, '0'), '.'))) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' cost price"></td></tr>';
   }
-  page('Stock', '<div class="pagehead"><h1>Stock &amp; cost</h1><input type="search" class="tsearch" placeholder="Search product" aria-label="Search product"></div>' . flash()
+  page('Stocks', '<div class="pagehead"><h1>Stock &amp; cost</h1><input type="search" class="tsearch" placeholder="Search product" aria-label="Search product"></div>' . flash()
     . '<nav class="ems track swarn" aria-label="Stock warnings">' . implode('', array_map(fn($k, $l) => '<a class="em t-' . $k . ($w === $k ? ' on' : '') . '" href="' . h(self_url(['stock' => 1] + ($w === $k ? [] : ['w' => $k]))) . '">' . $l . ' <b>' . $nw[$k] . '</b></a>', ['low', 'out'], ['⚠ Running low', 'Out of stock'])) . '</nav>'
     . ($w !== '' ? '<p class="small muted swnote">Showing only ' . ($w === 'low' ? 'sizes running low (' . fomaxo_low_stock() . ' or fewer left)' : 'sizes out of stock') . ' · <a href="./?stock=1">Show all</a></p>' : '')
     . '<form class="fitform" method="post">' . csrf_field() . ($w !== '' ? '<input type="hidden" name="w" value="' . $w . '">' : '')
