@@ -207,8 +207,8 @@ label.mini{display:none}
 @media (max-width:759px){.ems{margin-bottom:8px;gap:5px}.ems .em{font-size:11.5px;padding:2px 9px}.stats{margin-bottom:6px}}
 /* order step chips fill the row as equal, evenly spaced boxes */
 .ems.track.swarn{grid-template-columns:repeat(2,minmax(0,1fr))}.ems.track.swarn .t-low b{color:var(--warn)}.ems.track.swarn .t-out b{color:var(--bad)}.ems.track.swarn .t-low:not(.on){border-color:color-mix(in srgb,var(--warn) 55%,var(--line))}.ems.track.swarn .t-out:not(.on){border-color:color-mix(in srgb,var(--bad) 55%,var(--line))}.ems.track.swarn .em.on b{color:var(--gold-ink)}.swnote{margin:-4px 0 8px;flex:none}tr.row.wf{display:none!important}
-.ems.track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;width:100%;max-width:none;box-sizing:border-box}.ems.track .em{display:flex;justify-content:center;align-items:baseline;gap:6px;border-radius:10px;padding:8px 10px;font-size:12.5px}.ems.track .em b{margin:0;font-size:15px}
-@media (max-width:759px){.ems.track{gap:6px}.ems.track .em{flex-direction:column;align-items:center;gap:1px;padding:6px 2px;font-size:10.5px;white-space:normal;text-align:center;line-height:1.2}.ems.track .em b{font-size:16px}}
+.ems.track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;width:100%;max-width:none;box-sizing:border-box}.ems.track.ocp{grid-template-columns:repeat(6,minmax(0,1fr))}.ems.track .em{display:flex;justify-content:center;align-items:baseline;gap:6px;border-radius:10px;padding:8px 10px;font-size:12.5px}.ems.track .em b{margin:0;font-size:15px}
+@media (max-width:759px){.ems.track{gap:6px}.ems.track.ocp{grid-template-columns:repeat(3,minmax(0,1fr))}.ems.track .t-coupon b{color:var(--gold)}.ems.track .t-coupon.on b{color:var(--gold-ink)}.ems.track .em{flex-direction:column;align-items:center;gap:1px;padding:6px 2px;font-size:10.5px;white-space:normal;text-align:center;line-height:1.2}.ems.track .em b{font-size:16px}}
 /* analytics */
 .seg a{font-size:11.5px;font-weight:600;color:var(--muted);padding:3px 9px;border-radius:20px;text-decoration:none;white-space:nowrap}.seg a.on{background:var(--gold);color:var(--gold-ink)}
 .an .pagehead,.pagehead.rg{flex-wrap:wrap;margin-bottom:8px;gap:6px 10px}.arange{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}.arange input[type=date]{width:auto;padding:4px 7px;font-size:12.5px}
@@ -330,7 +330,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
 .mtop .mmin input{text-align:center}.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
-.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
+.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
 @media (max-width:759px){.mmin{flex:1 1 100%;padding:7px 10px;gap:6px}.mmin label,.mmin span{font-size:12.5px}.mmin input{width:58px;padding:5px 6px}.mmin .btn{margin-left:auto}.mq{flex-basis:100%}
   .mlist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"mn ms" "ma mo" "md mv";gap:2px 10px;padding:8px 12px;margin-bottom:8px}.mlist td{padding:0}
   .mlist .mn{grid-area:mn}.mlist .ms{grid-area:ms}.mlist .ma{grid-area:ma;color:var(--muted)}.mlist .ma div{display:inline;margin-left:4px}.mlist .ma div::before{content:"· "}.mlist .mo,.mlist .mv{align-self:end}.mlist .mo{grid-area:mo}.mlist .mo b{font-weight:600}.mlist .md{grid-area:md;font-size:11.5px}.mlist .mv{grid-area:mv;font-size:12px;color:var(--muted)}.mlist td.mo span,.mlist td.mv span{display:inline}
@@ -372,7 +372,7 @@ CSS;
      . '</header>'
      . (!empty($_SESSION['admin']) ? '<div class="tabsw"><a class="tnav" data-d="-1" aria-label="Previous page" hidden>‹</a><nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
          [['Home', './', !$_GET], ['Products', './?products=1', isset($_GET['products'])], ['Stock', './?stock=1', isset($_GET['stock'])],
-          ['Orders', './?orders=1', !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p']))],
+          ['Orders', './?orders=1', !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p', 'cp']))],
           ['Reviews', './?reviews=1', isset($_GET['reviews'])], ['Analytics', './?analytics=1', isset($_GET['analytics'])],
           ['Coupons', './?coupons=1', isset($_GET['coupons'])], ['Offer', './?offer=1', isset($_GET['offer'])], ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Sales', './?reports=1', isset($_GET['reports'])],
           ['Members', './?members=1', isset($_GET['members'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav><a class="tnav" data-d="1" aria-label="Next page" hidden>›</a></div>' : '')
@@ -528,7 +528,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order'])) {
   /* one-tap buttons send "quick" and go back to the list they came from */
   $quick = (string)($_POST['quick'] ?? '');
   parse_str((string)($_POST['back'] ?? ''), $back);
-  $back = $quick !== '' && $back ? array_intersect_key($back, array_flip(['orders', 'q', 'status', 'pay', 'from', 'to', 'em', 'p'])) : ['o' => $_POST['order']];
+  $back = $quick !== '' && $back ? array_intersect_key($back, array_flip(['orders', 'q', 'status', 'pay', 'from', 'to', 'em', 'p', 'cp'])) : ['o' => $_POST['order']];
   if (!csrf_ok()) { flash('Please try again.'); go($back); }
   if ($quick !== '') {
     $s = $pdo->prepare('SELECT status, payment, admin_note FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_POST['order']]); $cur = $s->fetch();
@@ -2395,7 +2395,7 @@ if (isset($_GET['o'])) {
 }
 
 /* ---- dashboard: the home screen — today, this month, what needs doing, stock alerts, latest orders, last 30 days ---- */
-if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'status', 'pay', 'from', 'to', 'p', 'export']))) {
+if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'status', 'pay', 'from', 'to', 'p', 'export', 'cp']))) {
   require_once dirname(__DIR__) . '/store-lib.php';
   $real = "status IN ('New', 'Paid', 'Delivered') AND test = 0";
   $yr = fomaxo_report($pdo, (int)date('Y')); $month = $yr[date('Y-m')];
@@ -2484,7 +2484,7 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
 
 /* list + filters (the same filters are used for the Excel download) */
 $f = ['q' => trim((string)($_GET['q'] ?? '')), 'status' => (string)($_GET['status'] ?? ''), 'pay' => (string)($_GET['pay'] ?? ''),
-      'from' => (string)($_GET['from'] ?? ''), 'to' => (string)($_GET['to'] ?? ''), 'em' => mb_substr(trim((string)($_GET['em'] ?? '')), 0, 30)];
+      'from' => (string)($_GET['from'] ?? ''), 'to' => (string)($_GET['to'] ?? ''), 'em' => mb_substr(trim((string)($_GET['em'] ?? '')), 0, 30), 'cp' => !empty($_GET['cp']) ? '1' : ''];
 $where = []; $args = [];
 if ($f['status'] === '') $where[] = "status <> 'Awaiting payment' AND order_no NOT LIKE 'CARD-%'";   // default: real orders only (a card payment not made is not an order; see "Card not paid")
 elseif ($f['status'] === 'pending') $where[] = "status IN ('New', 'Paid')";
@@ -2493,11 +2493,14 @@ elseif ($f['status'] !== 'all' && in_array($f['status'], FX_STATUSES, true)) { $
 if ($f['pay'] === 'cod') $where[] = "payment = 'Cash on delivery'"; elseif ($f['pay'] === 'card') $where[] = "payment LIKE 'Card%'";
 if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['from'])) { $where[] = 'created_at >= ?'; $args[] = $f['from'] . ' 00:00:00'; }
 if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $f['to']))   { $where[] = 'created_at <= ?'; $args[] = $f['to'] . ' 23:59:59'; }
-if ($f['q'] !== '') { $where[] = '(order_no LIKE ? OR name LIKE ? OR phone LIKE ? OR email LIKE ? OR items LIKE ?)'; $like = '%' . addcslashes($f['q'], '%_\\') . '%'; array_push($args, $like, $like, $like, $like, $like); }
+if ($f['q'] !== '') { $where[] = '(order_no LIKE ? OR name LIKE ? OR phone LIKE ? OR email LIKE ? OR items LIKE ? OR coupon LIKE ?)'; $like = '%' . addcslashes($f['q'], '%_\\') . '%'; array_push($args, $like, $like, $like, $like, $like, $like); }
 /* orders per emirate: same filters, but not the emirate itself, so every emirate stays visible */
 $s = $pdo->prepare("SELECT emirate, COUNT(*) n FROM fx_orders WHERE status IN ('New','Paid','Delivered') AND test = 0" . ($where ? ' AND ' . implode(' AND ', $where) : '') . " GROUP BY emirate ORDER BY n DESC, emirate");
 $s->execute($args); $byEmirate = $s->fetchAll();
 if ($f['em'] !== '') { $where[] = 'emirate = ?'; $args[] = $f['em']; }
+/* "Coupon used" chip: how many of these orders used a coupon code (counted before the coupon filter itself) */
+$s = $pdo->prepare("SELECT COUNT(*) FROM fx_orders WHERE test = 0 AND coupon IS NOT NULL AND coupon <> ''" . ($where ? ' AND ' . implode(' AND ', $where) : '')); $s->execute($args); $cpN = (int)$s->fetchColumn();
+if ($f['cp'] !== '') $where[] = "coupon IS NOT NULL AND coupon <> ''";
 $W = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 if (isset($_GET['export'])) {   // CSV that opens straight in Excel
@@ -2507,13 +2510,13 @@ if (isset($_GET['export'])) {   // CSV that opens straight in Excel
   $out = fopen('php://output', 'w');
   fwrite($out, "\xEF\xBB\xBF");   // so Excel reads Arabic names and the dash correctly
   fputcsv($out, ['Order no', 'Date', 'Time', 'Payment', 'Status', 'Paid on', 'Subtotal (AED)', 'Discount (AED)', 'COD fee (AED)', 'Total (AED)',
-                 'Name', 'Mobile', 'WhatsApp offers', 'Email', 'Emirate', 'Address', 'Items', 'Free mini', 'Customer note', 'Your note', 'Card ref', 'Test']);
+                 'Name', 'Mobile', 'WhatsApp offers', 'Email', 'Emirate', 'Address', 'Items', 'Free mini', 'Coupon', 'Customer note', 'Your note', 'Card ref', 'Test']);
   $cell = fn($v) => is_string($v) && preg_match('/^[=+\-@]/', $v) && !preg_match('/^\+?[\d\s()\-]+$/', $v) ? "'" . $v : $v;
   while ($o = $s->fetch()) {
     $t = strtotime($o['created_at']);
     fputcsv($out, array_map($cell, [$o['order_no'], date('Y-m-d', $t), date('H:i', $t), $o['payment'], $o['status'], $o['paid_at'] ? date('Y-m-d', strtotime($o['paid_at'])) : '',
       $o['subtotal'], $o['discount'], $o['fee'], $o['total'], fomaxo_en_both($o['name']), $o['phone'], !empty($o['wa_optin']) ? 'Yes' : 'No', $o['email'], $o['emirate'], fomaxo_en_both($o['address']),
-      str_replace(' | ', "\n", (string)$o['items']), $o['free_mini'], fomaxo_en_both($o['note']), $o['admin_note'], $o['ref'], $o['test'] ? 'yes' : '']));
+      str_replace(' | ', "\n", (string)$o['items']), $o['free_mini'], (string)($o['coupon'] ?? ''), fomaxo_en_both($o['note']), $o['admin_note'], $o['ref'], $o['test'] ? 'yes' : '']));
   }
   exit;
 }
@@ -2525,7 +2528,7 @@ $s = $pdo->prepare("SELECT COUNT(*) n,
                     COALESCE(SUM($real AND payment LIKE 'Card%'), 0) card_n, COALESCE(SUM(CASE WHEN $real AND payment LIKE 'Card%' THEN total END), 0) card_t FROM fx_orders $W");
 $s->execute($args); $sum = $s->fetch();
 $per = 100; $pg = max(1, (int)($_GET['p'] ?? 1));
-$s = $pdo->prepare("SELECT order_no, created_at, payment, status, total, name, phone, emirate, items, test, wa_optin, lines_json FROM fx_orders $W ORDER BY created_at DESC, id DESC LIMIT $per OFFSET " . (($pg - 1) * $per));
+$s = $pdo->prepare("SELECT order_no, created_at, payment, status, total, name, phone, emirate, items, test, wa_optin, lines_json, coupon FROM fx_orders $W ORDER BY created_at DESC, id DESC LIMIT $per OFFSET " . (($pg - 1) * $per));
 $s->execute($args); $rows = $s->fetchAll();
 
 $sel = fn($name, $opts) => '<select id="' . $name . '" name="' . $name . '">' . implode('', array_map(fn($k, $v) => '<option value="' . h($k) . '"' . ((string)$f[$name] === (string)$k ? ' selected' : '') . '>' . h($v) . '</option>', array_keys($opts), $opts)) . '</select>';
@@ -2542,6 +2545,8 @@ foreach (['pending' => 'Pending', 'unpaid' => 'Unpaid cash', 'delivered' => 'Del
   $v = in_array($k, ['pending', 'unpaid'], true) ? $k : ucfirst($k); $on = $f['status'] === $v; $q = ['orders' => 1] + array_filter($f, fn($x) => $x !== ''); unset($q['status'], $q['p']);
   $chips .= '<a class="em t-' . $k . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['status' => $v])) . '">' . $lbl . ' <b>' . (int)$track[$k] . '</b></a>';
 }
+$q = ['orders' => 1] + array_filter($f, fn($x) => $x !== ''); unset($q['cp'], $q['p']);
+$chips .= '<a class="em t-coupon' . ($f['cp'] !== '' ? ' on' : '') . '" href="' . h(self_url($f['cp'] !== '' ? $q : $q + ['cp' => 1])) . '">Coupon used <b>' . $cpN . '</b></a>';
 $tr = ''; $backQ = http_build_query(['orders' => 1] + array_filter($f, fn($v) => $v !== '') + ($pg > 1 ? ['p' => $pg] : []));
 fomaxo_en_many(array_column($rows, 'name'));   // Arabic names in English, all at once
 $pic = [];   // first photo of each product, from the Products tab
@@ -2556,7 +2561,7 @@ foreach ($rows as $o) {
        . '<span class="onb"><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['test'] ? ' <span class="muted small">test</span>' : '')
        . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '') . '</span></td>'
        . '<td class="od">' . h(date('d M Y, H:i', strtotime($o['created_at']))) . '</td>'
-       . '<td class="oc" title="' . h(str_replace(' | ', ', ', (string)$o['items'])) . '"><b>' . hx($o['name']) . '</b>' . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . '<span class="op">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</span></td>'
+       . '<td class="oc" title="' . h(str_replace(' | ', ', ', (string)$o['items'])) . '"><b>' . hx($o['name']) . '</b>' . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . (!empty($o['coupon']) ? '<span class="ctag" title="Coupon code used">' . h($o['coupon']) . '</span>' : '') . '<span class="op">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</span></td>'
        . '<td class="ot"><b>' . money($o['total']) . '</b><span>' . h($o['payment'] === 'Cash on delivery' ? 'Cash on delivery' : 'Card') . '</span></td>'
        . '<td class="os">' . fx_tags($o, false) . '</td>'
        . '<td class="oa">' . fx_order_buttons($o, $backQ) . '</td></tr>';
@@ -2590,7 +2595,7 @@ foreach (['today' => 0, '7' => 6, '30' => 29, 'all' => null] as $k => $back) {
 }
 page('Orders', '<div class="pagehead rg"><h1>Orders</h1><div class="arange"><div class="seg">' . $oseg . '</div></div></div>' . flash()
   . '<form class="filters card" method="get"><input type="hidden" name="orders" value="1">' . ($f['em'] !== '' ? '<input type="hidden" name="em" value="' . h($f['em']) . '">' : '')
-  . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile, email or product"></div>'
+  . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile, email, coupon"></div>'
   . '<div><label for="status" class="phx">Status</label>' . $sel('status', $stOpts) . '</div>'
   . '<div><label for="pay" class="phx">Payment</label>' . $sel('pay', ['' => 'All', 'cod' => 'Cash on delivery', 'card' => 'Card']) . '</div>'
   . '<div><label for="from">From</label><input id="from" type="date" name="from" value="' . h($f['from']) . '"></div>'
@@ -2600,7 +2605,7 @@ page('Orders', '<div class="pagehead rg"><h1>Orders</h1><div class="arange"><div
   . '<div class="stat"><span>Online orders</span><b>' . (int)$sum['card_n'] . '</b></div>'
   . '<div class="stat"><span>COD amount</span><b>' . money($sum['cod_t']) . '</b></div>'
   . '<div class="stat"><span>Card amount</span><b>' . money($sum['card_t']) . '</b></div></div>'
-  . '<nav class="ems track" aria-label="Orders by step">' . $chips . '</nav>'
+  . '<nav class="ems track ocp" aria-label="Orders by step">' . $chips . '</nav>'
   . ($byEmirate ? '<nav class="ems" aria-label="Orders by emirate">' . implode('', array_map(function ($r) use ($f, $qs) {
         $e = (string)$r['emirate']; $on = $f['em'] !== '' && $f['em'] === $e; $q = $qs; unset($q['em'], $q['p']);
         return '<a class="em' . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['em' => $e])) . '">' . h($e !== '' ? $e : 'No emirate') . ' <b>' . (int)$r['n'] . '</b></a>';
