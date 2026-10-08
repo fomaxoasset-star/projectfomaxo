@@ -337,7 +337,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .savebar{display:flex;align-items:center;gap:14px}.savebar .stock-help{flex:1;margin:0;font-size:12px;line-height:1.45}.savebar .btn{flex:none}
 .rseg{flex-wrap:wrap}.stars{color:var(--gold);letter-spacing:.06em;white-space:nowrap}.stars i{font-style:normal;color:var(--line)}
 .rfilter .vcount{margin:0}.rfilter .vcount .em{font-size:12.5px;padding:4px 11px}.rfilter{margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rfilter select{max-width:240px;width:auto}.rfilter input{flex:1 1 220px;min-width:0;max-width:420px;padding:7px 10px}.rvlist{list-style:none;margin:0;padding:0}.rv{padding:10px 14px;border-bottom:1px solid var(--line);display:grid;gap:3px}.rv:last-child{border-bottom:0}.rv.off{opacity:.55}
-.emo{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.emo button{font:18px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 6px;cursor:pointer;min-width:34px}.emo button:hover{border-color:var(--gold)}.rrep{border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent);padding:6px 10px;border-radius:0 6px 6px 0;margin:2px 0 4px}.rrep b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rrep p{margin:2px 0 0;font-size:13px}.racts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}.racts>form{margin:0 !important;display:flex}.racts .btn.sm,.racts summary.btn{margin:0 !important;padding:7px 12px;line-height:1.2;box-sizing:border-box;height:32px;display:inline-flex;align-items:center}.rrf{margin:0}.rrf[open]{flex:1 1 100%;order:2}.rrf>summary{list-style:none;display:inline-block;cursor:pointer}.rrf>summary::-webkit-details-marker{display:none}.rrf[open]>summary{display:none}.rrf textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}.rrb{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.emo{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.emo button{font:18px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 6px;cursor:pointer;min-width:34px}.emo button:hover{border-color:var(--gold)}.rrep{border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent);padding:6px 10px;border-radius:0 6px 6px 0;margin:2px 0 4px}.rrep b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rrep p{margin:2px 0 0;font-size:13px}.rrep.off{opacity:.6;border-left-color:var(--muted)}.rrep b span{color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500}.btn.rdel{color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}.racts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}.racts>form{margin:0 !important;display:flex}.racts .btn.sm,.racts summary.btn{margin:0 !important;padding:7px 12px;line-height:1.2;box-sizing:border-box;height:32px;display:inline-flex;align-items:center}.rrf{margin:0}.rrf[open]{flex:1 1 100%;order:2}.rrf>summary{list-style:none;display:inline-block;cursor:pointer}.rrf>summary::-webkit-details-marker{display:none}.rrf[open]>summary{display:none}.rrf textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}.rrb{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 
 .rv p{margin:2px 0;white-space:normal}.rv form{margin:4px 0 0}.rph{display:flex;gap:6px}.rph img{width:56px;height:56px;object-fit:cover;border-radius:6px;display:block}
 .btn.danger{background:#a33a2c;border-color:#a33a2c;color:#fff}.dist span{margin-right:8px;white-space:nowrap}.dist b{color:var(--ink);font-weight:600}.rprod .ph,.rppl .ph{display:none}
@@ -1828,8 +1828,15 @@ if (isset($_GET['reviews'])) {
       if (ctype_digit($n) && (int)$n >= 1 && (int)$n <= 1000) { fomaxo_setting($pdo, 'reviewer_min', (string)(int)$n); flash('Saved.', true); }
       go($back);
     }
-    if (isset($_POST['reply'])) {   // the shop's public answer under a review; empty or Delete removes it
+    if (isset($_POST['reply_hide'])) {   // Hide reply / Show reply: the reply stays saved, only the website stops showing it
+      $id = (string)($_POST['id'] ?? ''); $off = $_POST['reply_hide'] === '1';
+      $ok = rv_change(function (&$list) use ($id, $off) { foreach ($list as &$r) if ($r['id'] === $id && ($r['reply'] ?? '') !== '') { if ($off) $r['reply_hidden'] = true; else unset($r['reply_hidden']); return true; } return false; });
+      flash($ok ? ($off ? 'Reply hidden from the website. Tap Show reply to bring it back.' : 'Reply is back on the website.') : 'That reply could not be changed. Please try again.', (bool)$ok);
+      go($back);
+    }
+    if (isset($_POST['reply'])) {   // the shop's public answer under a review; only Delete reply removes it
       $id = (string)($_POST['id'] ?? ''); $txt = isset($_POST['del']) ? '' : trim(str_replace("\r", '', mb_substr((string)$_POST['reply'], 0, 2000)));
+      if ($txt === '' && !isset($_POST['del'])) { flash('Nothing saved: the box was empty, so the reply stays as it was.', true); go($back); }   // empty Save never deletes
       /* Arabic review: written in English here, the customer gets it in Arabic (the ready reply's own Arabic when it was not changed) */
       $en = null; $warn = '';
       if ($txt !== '' && !empty($_POST['ar']) && !fx_has_ar($txt)) {
@@ -1839,8 +1846,8 @@ if (isset($_GET['reviews'])) {
         elseif (($ar = fomaxo_ar($txt)) !== null) $txt = $ar;
         else $warn = ' Arabic translation is not available right now, so it was saved in English. Tap Edit reply and save again later.';
       }
-      $ok = rv_change(function (&$list) use ($id, $txt, $en) { foreach ($list as &$r) if ($r['id'] === $id) { unset($r['reply_en']); if ($txt === '') unset($r['reply'], $r['reply_at']); else { $r['reply'] = $txt; $r['reply_at'] = date('c'); if ($en !== null) $r['reply_en'] = $en; } return true; } return false; });
-      flash($ok ? ($txt === '' ? 'Reply removed from the review.' : ($en !== null && $warn === '' ? 'Reply saved in Arabic. It shows under the review on the website.' : 'Reply saved. It shows under the review on the website.' . $warn)) : 'That reply could not be saved. Please try again.', (bool)$ok && $warn === '');
+      $ok = rv_change(function (&$list) use ($id, $txt, $en) { foreach ($list as &$r) if ($r['id'] === $id) { unset($r['reply_en']); if ($txt === '') unset($r['reply'], $r['reply_at'], $r['reply_hidden']); else { $r['reply'] = $txt; $r['reply_at'] = date('c'); if ($en !== null) $r['reply_en'] = $en; } return true; } return false; });
+      flash($ok ? ($txt === '' ? 'Reply deleted.' : ($en !== null && $warn === '' ? 'Reply saved in Arabic. It shows under the review on the website.' : 'Reply saved. It shows under the review on the website.' . $warn)) : 'That reply could not be saved. Please try again.', (bool)$ok && $warn === '');
       go($back);
     }
     $id = (string)($_POST['id'] ?? ''); $hide = ($_POST['hide'] ?? '') === '1';
@@ -1925,7 +1932,9 @@ if (isset($_GET['reviews'])) {
     $alts = []; for ($i = 0; $i < 3; $i++) $alts[] = [preg_replace('/\s{2,}/u', ' ', $suggest($r, $isAr, $i)), $isAr ? preg_replace('/\s{2,}/u', ' ', $suggest($r, false, $i)) : ''];   // ready replies for Another reply
     $val = $rep !== '' ? ($isAr && fx_has_ar($rep) ? (string)($r['reply_en'] ?? fomaxo_en($rep)) : $rep) : $alts[0][0];
     foreach (['rp', 'rq', 'vf', 'rs', 'v'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
-    return ($rep !== '' ? '<div class="rrep"><b>Reply from FOMAXO</b><p>' . (($r['reply_en'] ?? '') !== '' && fx_has_ar($rep) ? nl2br(h($r['reply_en'])) . '<span class="arx" dir="rtl" lang="ar">' . nl2br(h($rep)) . '</span>' : hx($rep, true)) . '</p></div>' : '')
+    $roff = $rep !== '' && !empty($r['reply_hidden']);
+    $rform = fn($fields, $label, $cls, $ask = '') => '<form method="post"' . ($ask ? ' onsubmit="return confirm(\'' . $ask . '\')"' : '') . '>' . csrf_field() . $hidden('id', $r['id']) . $keep . $fields . '<button class="btn sm ' . $cls . '">' . $label . '</button></form>';
+    return ($rep !== '' ? '<div class="rrep' . ($roff ? ' off' : '') . '"><b>Reply from FOMAXO' . ($roff ? ' <span>· Hidden from the website</span>' : '') . '</b><p>' . (($r['reply_en'] ?? '') !== '' && fx_has_ar($rep) ? nl2br(h($r['reply_en'])) . '<span class="arx" dir="rtl" lang="ar">' . nl2br(h($rep)) . '</span>' : hx($rep, true)) . '</p></div>' : '')
       . '<div class="racts"><details class="rrf"><summary class="btn line sm">' . ($rep !== '' ? 'Edit reply' : 'Reply') . '</summary><form method="post" data-i="' . ($rep === '' ? 0 : -1) . '" data-alt="' . h(json_encode($alts, JSON_UNESCAPED_UNICODE)) . '">' . csrf_field() . $hidden('id', $r['id']) . $keep
       . ($isAr ? $hidden('ar', '1') . $hidden('ready_en', $rep === '' ? $alts[0][0] : '') . $hidden('ready_ar', $rep === '' ? $alts[0][1] : '') : '')
       . '<textarea name="reply" dir="auto" rows="5" maxlength="2000" placeholder="Write your reply. It shows under this review on the website.">' . h($val) . '</textarea>'
@@ -1935,7 +1944,8 @@ if (isset($_GET['reviews'])) {
       . implode('', array_map(fn($e) => '<button type="button">' . $e . '</button>', ['🙏', '❤️', '😊', '✨', '🎁', '👍', '😍', '🥰', '🌸', '💐', '🤗', '😢'])) . '</div>'
       . '<div class="rrb"><button class="btn sm">Save reply</button>'
         . '<button type="button" class="btn line sm" onclick="var f=this.form,a=JSON.parse(f.dataset.alt),i=(+f.dataset.i+1)%a.length;f.dataset.i=i;f.reply.value=a[i][0];if(f.ready_en){f.ready_en.value=a[i][0];f.ready_ar.value=a[i][1]}">Another reply</button>'
-        . '<button type="button" class="btn line sm" onclick="var t=this.form.reply;t.value=\'\';t.focus()">Clear</button>' . '' . '</div></form></details>';
+        . '<button type="button" class="btn line sm" onclick="var t=this.form.reply;t.value=\'\';t.focus()">Clear</button>' . '' . '</div></form></details>'
+      . ($rep !== '' ? $rform($hidden('reply_hide', $roff ? '0' : '1'), $roff ? 'Show reply' : 'Hide reply', 'line') . $rform($hidden('reply', '') . $hidden('del', '1'), 'Delete reply', 'line rdel', 'Delete this reply? It is removed from the review for good.') : '');
   };
 
   if ($v === 'products') {
