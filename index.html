@@ -4167,10 +4167,19 @@ const FXT = (() => {
     }
   };
 })();
+/* pages hidden on fomaxo.com/admin → Settings → Site pages: their links disappear everywhere and their address opens Home */
+let HIDE_PAGES = []; try { HIDE_PAGES = JSON.parse(localStorage.getItem('fomaxo_hide_pages') || '[]') || []; } catch(e) {}
+function applyPages(){
+  let st = document.getElementById('pgHide'); if (!st){ st = document.createElement('style'); st.id = 'pgHide'; document.head.appendChild(st); }
+  st.textContent = HIDE_PAGES.map(k => `a[href^="#/${k}"]{display:none!important}`).join('');
+  $$('footer .fgrid > div').forEach(d => { const as = $$('a', d); if (d.querySelector('h5') && as.length) d.style.display = as.every(a => HIDE_PAGES.some(k => a.getAttribute('href').startsWith('#/' + k))) ? 'none' : ''; });
+}
+applyPages();
 function route(){
   const raw = location.hash.replace(/^#/, '') || '/';
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
   const seg = path.split('/').filter(Boolean);
+  if (seg[0] && HIDE_PAGES.includes(seg[0])) { location.replace('#/'); return; }
   clearInterval(heroTimer); mobileBarCheck = null; coRefresh = null; pdpStock = null; $('#mbuy').classList.remove('show'); hideAdded();
   document.title = 'FOMAXO — The House of Modern Luxury';
   let html, after;
@@ -4458,6 +4467,10 @@ async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; SALE_SIZE = d.saleSize || null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES, sz: SALE_SIZE})); } catch(e) {} saleTick(); promoMaybe(); }
   if (d && 'ads' in d) ADS.set(d.ads);
+  if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
+    HIDE_PAGES = d.hidePages; try { localStorage.setItem('fomaxo_hide_pages', JSON.stringify(HIDE_PAGES)); } catch(e) {}
+    applyPages(); const s0 = (location.hash.replace(/^#\/?/, '').split(/[/?]/)[0]); if (HIDE_PAGES.includes(s0)) location.replace('#/');
+  }
   if (d && d.cod && +d.cod.min >= 0 && +d.cod.max >= 0) { const fee = 'fee' in d.cod && +d.cod.fee >= 0 ? +d.cod.fee : COD_FEE; if (+d.cod.min !== COD_MIN || +d.cod.max !== COD_MAX || fee !== COD_FEE) { COD_MIN = +d.cod.min; COD_MAX = +d.cod.max; COD_FEE = fee; coRefresh && coRefresh(); } }
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
   const js = JSON.stringify(d.products);

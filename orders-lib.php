@@ -505,6 +505,8 @@ function fomaxo_cost_of($lines, $costs) {
   foreach (fomaxo_stock_lines($lines) as $k => $n) { if (!isset($costs[$k])) return null; $t += $costs[$k] * $n; }
   return round($t, 2);
 }
+/* website pages that admin → Settings → Site pages can hide (Home, Fragrances, products, bag and checkout always stay) */
+const FX_SITE_PAGES = ['personal-care' => 'Personal Care', 'collections' => 'Collections', 'about' => 'About FOMAXO', 'contact' => 'Contact', 'franchise' => 'Franchise'];
 const FX_EXPENSE_TYPES = ['Ads & marketing', 'Delivery', 'Packaging', 'Rent', 'Salaries', 'Card & bank fees', 'Stock purchase', 'Other'];
 
 /* Monthly report for one year (or every year when $year is null): rows keyed 'YYYY-MM' (or 'YYYY').
