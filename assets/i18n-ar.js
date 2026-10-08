@@ -554,6 +554,7 @@
 "unlocked": "تم تفعيله",
 "15% off": "خصم 15%",
 "Free 10ml mini": "ميني 10ml مجاناً",
+"Choose your free 10ml scent": "اختر عطرك المجاني 10ml",
 "FREE": "مجاناً",
 "Decrease": "تقليل",
 "Choose your free 10ml mini": "اختر الميني 10ml المجاني",
