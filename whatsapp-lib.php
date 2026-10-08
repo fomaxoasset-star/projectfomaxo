@@ -94,6 +94,7 @@ function fx_wa_slot($ts) {
 function fomaxo_wa_send_due($max = 20) {
   if (!fx_wa_ready()) return ['sent' => 0, 'note' => 'whatsapp-config.php not found or not filled in'];
   $c = fx_wa_config();
+  if (($c['review_auto'] ?? true) === false) return ['sent' => 0, 'note' => 'automatic review requests are off'];   // set up from admin → Refill reminders: only refills go out
   $dir = rv_dir('whatsapp'); $sent = 0; $failed = 0;
   $lock = @fopen("$dir/.lock", 'c'); if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) return ['sent' => 0, 'note' => 'already running'];
   $h = (int)(new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('G');
@@ -120,12 +121,16 @@ function fx_wa_reviewed($token) {
 }
 /* WhatsApp Cloud API: an approved template with 3 body variables {{1}} first name, {{2}} perfumes, {{3}} review link */
 function fx_wa_send($m, $c) {
+  return fx_wa_template($m['to'], (string)($c['template'] ?? 'review_request'), (string)($c['language'] ?? 'en'),
+                        [$m['name'] !== '' ? $m['name'] : 'there', $m['perfumes'], $m['url']], $c);
+}
+/* sends an approved template with its body variables in order ({{1}}, {{2}} …); returns [ok, message id or error] */
+function fx_wa_template($to, $name, $lang, array $vars, $c) {
   $ver = preg_replace('/[^v0-9.]/', '', (string)($c['api_version'] ?? 'v21.0')) ?: 'v21.0';
   $api = rtrim((string)($c['api'] ?? 'https://graph.facebook.com'), '/');   // 'api' only for testing against a fake server
-  $body = ['messaging_product' => 'whatsapp', 'to' => $m['to'], 'type' => 'template', 'template' => [
-    'name' => (string)($c['template'] ?? 'review_request'), 'language' => ['code' => (string)($c['language'] ?? 'en')],
-    'components' => [['type' => 'body', 'parameters' => [
-      ['type' => 'text', 'text' => $m['name'] !== '' ? $m['name'] : 'there'], ['type' => 'text', 'text' => $m['perfumes']], ['type' => 'text', 'text' => $m['url']]]]]]];
+  $body = ['messaging_product' => 'whatsapp', 'to' => $to, 'type' => 'template', 'template' => [
+    'name' => $name, 'language' => ['code' => $lang],
+    'components' => [['type' => 'body', 'parameters' => array_map(fn($v) => ['type' => 'text', 'text' => (string)$v], $vars)]]]];
   $ch = curl_init("$api/$ver/" . rawurlencode(trim((string)$c['phone_number_id'])) . '/messages');
   curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20,
     CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . trim((string)$c['access_token']), 'Content-Type: application/json'],
@@ -134,4 +139,61 @@ function fx_wa_send($m, $c) {
   $d = $res ? json_decode($res, true) : null;
   if ($code === 200 && !empty($d['messages'][0]['id'])) return [true, $d['messages'][0]['id']];
   return [false, "HTTP $code " . ($d['error']['message'] ?? ($err ?: (string)$res))];
+}
+
+/* ---- automatic refill reminders (admin → Members → Refill reminders → Automatic sending) ----
+   The set number of days after a customer's latest order (fx_refill_time, default 45, 11:00–20:00 Dubai), sends the approved template 'refill_reminder' (Arabic names: its Arabic version, 'ar').
+   Template body variables: {{1}} first name, {{2}} perfumes, {{3}} days since the order, {{4}} % off, {{5}} coupon code, {{6}} review link. */
+function fx_wa_config_file() { return dirname(__DIR__) . '/whatsapp-config.php'; }
+/* saves the WhatsApp Business details typed in admin; a key not given keeps its saved value. New files keep the automatic review requests off. */
+function fx_wa_config_save(array $new) {
+  $f = fx_wa_config_file();
+  $c = is_file($f) ? (array)(require $f) : ['review_auto' => false];
+  foreach ($new as $k => $v) if ($v !== '') $c[$k] = $v;
+  $ok = @file_put_contents($f, "<?php\n// WhatsApp Business (Meta Cloud API) details for FOMAXO (written by fomaxo.com/admin → Members → Refill reminders)\nreturn " . var_export($c, true) . ";\n", LOCK_EX) !== false;
+  if ($ok) @chmod($f, 0600);
+  return $ok;
+}
+/* STOP: the customer replied STOP on WhatsApp (whatsapp.php webhook) or FOMAXO tapped Stop on their admin page.
+   WhatsApp offers go off on all their orders, so no more automatic messages, until they tick offers again on a new order. */
+function fx_wa_stops($pdo) { return json_decode((string)fomaxo_setting($pdo, 'wa_stop'), true) ?: []; }
+function fx_wa_stop($pdo, $phone, $how) {
+  if (strlen($k = fomaxo_phone9($phone)) < 9) return false;
+  $ids = [];
+  foreach ($pdo->query('SELECT id, phone FROM fx_orders WHERE wa_optin = 1') as $o) if (fomaxo_phone9($o['phone']) === $k) $ids[] = (int)$o['id'];
+  if ($ids) $pdo->exec('UPDATE fx_orders SET wa_optin = 0 WHERE id IN (' . implode(',', $ids) . ')');
+  $s = fx_wa_stops($pdo); $s[$k] = date('Y-m-d H:i') . ' ' . $how;
+  fomaxo_setting($pdo, 'wa_stop', json_encode($s));
+  return true;
+}
+/* the whole reply is a stop word (English or Arabic), so "don't stop" or a longer message never counts */
+function fx_wa_is_stop($t) {
+  $t = trim(mb_strtolower(preg_replace('/[\s\p{P}]+/u', ' ', (string)$t)));
+  return in_array($t, ['stop', 'unsubscribe', 'stop promotions', 'stop messages', 'توقف', 'إيقاف', 'ايقاف', 'الغاء', 'إلغاء', 'الغاء الاشتراك', 'إلغاء الاشتراك', 'stop توقف'], true);
+}
+/* the Verify token FOMAXO pastes into Meta's webhook settings */
+function fx_wa_hook_token() { return rv_sign('wa-hook'); }
+function fomaxo_wa_send_refills($max = 20) {
+  require_once __DIR__ . '/refill-lib.php';
+  $pdo = fomaxo_db(); if (!$pdo) return ['refills' => 0, 'note' => 'no database'];
+  if (fomaxo_setting($pdo, 'refill_auto') !== '1') return ['refills' => 0, 'note' => 'automatic refill reminders are off'];
+  if (!fx_wa_ready()) return ['refills' => 0, 'note' => 'WhatsApp Business details missing'];
+  $c = fx_wa_config();
+  $h = (int)(new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('G');
+  $tm = fx_refill_time($pdo);
+  if ($h < $tm['from'] || $h >= $tm['to']) return ['refills' => 0, 'note' => 'outside sending hours'];
+  $tries = json_decode((string)fomaxo_setting($pdo, 'refill_tries'), true) ?: [];
+  $tpl = (string)($c['refill_template'] ?? 'refill_reminder'); $sent = 0; $failed = 0;
+  foreach (fx_refill_due($pdo) as $o) {
+    if ($sent + $failed >= $max) break;
+    if ($o['sent'] || empty($o['optin']) || $o['days'] < $tm['days'] || ($tries[$o['order_no']] ?? 0) >= 3 || !($to = fx_wa_number($o['phone']))) continue;
+    $p = fx_refill_parts($pdo, $o);
+    $vars = [$p['first'] !== '' ? $p['first'] : 'there', $p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume', $p['days'], $p['pct'], $p['code'], $p['review'] ?: 'https://fomaxo.com'];
+    [$ok, $info] = fx_wa_template($to, $tpl, $p['ar'] ? 'ar' : (string)($c['refill_language'] ?? 'en'), $vars, $c);
+    if (!$ok && $p['ar']) [$ok, $info] = fx_wa_template($to, $tpl, (string)($c['refill_language'] ?? 'en'), $vars, $c);   // no Arabic version approved: English
+    if ($ok) { fx_refill_mark($pdo, $o['order_no'], 'auto'); $sent++; }
+    else { $tries[$o['order_no']] = ($tries[$o['order_no']] ?? 0) + 1; $failed++; fomaxo_setting($pdo, 'refill_auto_err', date('d/m H:i') . ' ' . $o['order_no'] . ': ' . mb_substr($info, 0, 200)); error_log("FOMAXO refill WhatsApp {$o['order_no']}: $info"); }
+  }
+  fomaxo_setting($pdo, 'refill_tries', json_encode($tries));
+  return ['refills' => $sent, 'refills_failed' => $failed];
 }
