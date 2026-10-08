@@ -330,7 +330,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
 .mtop .mmin input{text-align:center}.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
-.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
+.rflist .rd{white-space:nowrap}.rflist .ra{text-align:right;white-space:nowrap}.rsent{font-size:12px;font-weight:600;color:var(--ok);margin-right:6px}.rfstats{grid-template-columns:repeat(2,minmax(0,180px))}.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
 /* Orders like fomaxo.in: coloured top edge on the four boxes, step boxes label left / count right, coupon row, one filter line */
 .ost .stat{border-top:3px solid var(--gold)}.ost .stat.onl{border-top-color:var(--ok)}
 .cpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
@@ -349,6 +349,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
 .ofl .acts{flex-wrap:nowrap}}
 @media (max-width:759px){.mmin{flex:1 1 100%;padding:7px 10px;gap:6px}.mmin label,.mmin span{font-size:12.5px}.mmin input{width:58px;padding:5px 6px}.mmin .btn{margin-left:auto}.mq{flex-basis:100%}
   .mlist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"mn ms" "ma mo" "md mv";gap:2px 10px;padding:8px 12px;margin-bottom:8px}.mlist td{padding:0}
+  .rflist tr.row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"rn ra" "rd ra";align-items:center}.rflist .rn{grid-area:rn}.rflist .rd{grid-area:rd;white-space:normal}.rflist .rd div{display:inline;margin-left:4px}.rflist .ra{grid-area:ra;display:flex;flex-direction:column;align-items:flex-end;gap:3px}.rsent{margin:0}.rfstats{grid-template-columns:1fr 1fr}
   .mlist .mn{grid-area:mn}.mlist .ms{grid-area:ms}.mlist .ma{grid-area:ma;color:var(--muted)}.mlist .ma div{display:inline;margin-left:4px}.mlist .ma div::before{content:"· "}.mlist .mo,.mlist .mv{align-self:end}.mlist .mo{grid-area:mo}.mlist .mo b{font-weight:600}.mlist .md{grid-area:md;font-size:11.5px}.mlist .mv{grid-area:mv;font-size:12px;color:var(--muted)}.mlist td.mo span,.mlist td.mv span{display:inline}
   .mcard{padding:8px 12px}}
 tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:center}.tsearch{flex:1 1 auto;max-width:320px;margin-left:auto;padding:7px 11px}.pagehead .tsearch+.btn{flex:none}.mmin{flex-wrap:wrap}.mmin input.amt{width:96px}
@@ -2215,6 +2216,14 @@ if (isset($_GET['members'])) {
   $subsN = 0; try { fomaxo_subscribers_table($pdo); $subsN = (int)$pdo->query('SELECT COUNT(*) FROM fx_subscribers')->fetchColumn(); } catch (Throwable $e) {}
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['members' => 1]); }
+    if (isset($_POST['refill_sent'])) {   // tapped WhatsApp on the refill reminder list: that order is marked Sent
+      if (preg_match('/^FMX-\d+$/', $no = (string)$_POST['refill_sent'])) {
+        $rfSent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
+        $rfSent[$no] = date('Y-m-d');
+        fomaxo_setting($pdo, 'refill_sent', json_encode(array_filter($rfSent, fn($d) => $d >= date('Y-m-d', strtotime('-120 days')))));
+      }
+      http_response_code(204); exit;
+    }
     /* two separate boxes, each saved on its own; an empty box means "no limit" */
     if (isset($_POST['member_min'])) {
       $n = trim((string)$_POST['member_min']);
@@ -2232,7 +2241,7 @@ if (isset($_GET['members'])) {
   $addr = fn($o) => $o['address'] !== '' ? $o['address'] : implode(', ', array_filter([$o['building'], $o['room'], $o['street'], $o['area']], fn($x) => $x !== ''));
   $waLink = function ($phone) { $wa = preg_replace('/\D/', '', (string)$phone); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); return $wa; };
   /* every real order (not cancelled, not unpaid card, not a test), oldest first so the latest name and address win */
-  $all = $pdo->query("SELECT order_no, created_at, payment, status, total, name, phone, email, emirate, building, room, street, area, address, items, test, wa_optin
+  $all = $pdo->query("SELECT order_no, created_at, payment, status, total, name, phone, email, emirate, building, room, street, area, address, items, test, wa_optin, lines_json
                       FROM fx_orders WHERE status IN ('New','Paid','Delivered') AND test = 0 ORDER BY created_at, id")->fetchAll();
   /* WhatsApp offers: each customer's choice on their latest order wins (all dates, not only members) */
   $waCust = [];
@@ -2246,6 +2255,44 @@ if (isset($_GET['members'])) {
     fputcsv($out, ['Name', 'Mobile', 'WhatsApp number', 'Email', 'Emirate', 'Last order']);
     foreach ($waOn as $w) fputcsv($out, array_map($cell, [fomaxo_en_both($w['name']), $w['phone'], $waLink($w['phone']), $w['email'], $w['emirate'], date('Y-m-d', strtotime($w['last']))]));
     exit;
+  }
+  /* refill reminders: customers whose latest order was 40 to 60 days ago (a 50ml bottle runs low around then), each with a ready WhatsApp message.
+     Tapping WhatsApp notes "Sent" for that order, so nobody is reminded twice for the same order. */
+  $rfLast = [];
+  foreach ($all as $o) if (($k = $key($o)) !== '') $rfLast[$k] = $o;   // oldest first, so the latest order wins
+  $rfSent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
+  $rfDue = [];
+  foreach ($rfLast as $k => $o) {
+    $days = (int)floor((strtotime('today') - strtotime(date('Y-m-d', strtotime($o['created_at'])))) / 86400);
+    if ($days >= 40 && $days <= 60 && $waLink($o['phone']) !== '') $rfDue[$k] = $o + ['days' => $days, 'sent' => $rfSent[$o['order_no']] ?? null];
+  }
+  uasort($rfDue, fn($a, $b) => (int)!empty($a['sent']) <=> (int)!empty($b['sent']) ?: $b['days'] <=> $a['days']);
+  if (isset($_GET['refill'])) {
+    $first = fn($n) => preg_split('/\s+/u', trim((string)$n))[0] ?? '';
+    $names = []; foreach (fomaxo_product_rows() ?: [] as $r) { $p = json_decode($r['data'], true); $names[$r['id']] = (string)($p['name'] ?? $r['id']); }
+    $prods = function ($o) use ($names) { $n = [];
+      foreach ((array)json_decode((string)($o['lines_json'] ?? ''), true) as $l) if (empty($l['free']) && isset($names[$l['id'] ?? ''])) $n[] = $names[$l['id']];
+      return implode(', ', array_unique($n)); };
+    fomaxo_en_many(array_column($rfDue, 'name'));
+    $tr = '';
+    foreach ($rfDue as $k => $o) {
+      $pn = $prods($o); $ar = fx_has_ar($o['name']); $nm = $first($o['name']);
+      $msg = $ar ? 'مرحباً ' . $nm . '، معك FOMAXO. مرّ ' . $o['days'] . ' يوماً على طلبك' . ($pn !== '' ? ' (' . $pn . ')' : '') . '. إذا قارب عطرك على النفاد، يمكنك الطلب من جديد هنا: https://fomaxo.com/?lang=ar' . "\n" . 'راسلنا هنا إن احتجت مساعدة في الاختيار. شكراً لك!'
+                 : 'Hi ' . $nm . ', this is FOMAXO. It has been ' . $o['days'] . ' days since your order' . ($pn !== '' ? ' (' . $pn . ')' : '') . '. If your perfume is running low, you can reorder here: https://fomaxo.com' . "\n" . 'Reply here if you would like help choosing. Thank you!';
+      $u = h(self_url(['members' => 1, 'c' => $k]));
+      $tr .= '<tr class="row"><td class="rn"><a href="' . $u . '"><b>' . hx($o['name'] ?: 'No name') . '</b></a>' . (!empty($waCust[$k]['on']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '')
+           . '<div class="muted small">' . h($o['phone']) . ($pn !== '' ? ' · ' . h($pn) : '') . '</div></td>'
+           . '<td class="rd small"><b>' . $o['days'] . ' days</b><div class="muted">' . h(date('d/m/Y', strtotime($o['created_at']))) . ' · ' . h($o['order_no']) . '</div></td>'
+           . '<td class="ra">' . ($o['sent'] ? '<span class="rsent">Sent ' . h(date('d/m', strtotime($o['sent']))) . '</span> ' : '')
+           . '<a class="btn sm' . ($o['sent'] ? ' line' : '') . '" data-rf="' . h($o['order_no']) . '" href="https://wa.me/' . h($waLink($o['phone'])) . '?text=' . rawurlencode($msg) . '" target="_blank" rel="noopener">WhatsApp</a></td></tr>';
+    }
+    $open = count(array_filter($rfDue, fn($o) => !$o['sent']));
+    page('Refill reminders', '<div class="pagehead"><div><p class="small" style="margin:0 0 2px"><a href="./?members=1">← All members</a></p><h1>Refill reminders</h1></div></div>'
+      . '<div class="stats up rfstats"><div class="stat"><span>To remind</span><b>' . $open . '</b></div><div class="stat"><span>Sent</span><b>' . (count($rfDue) - $open) . '</b></div></div>'
+      . '<div class="fill">' . ($tr ? '<table class="mlist rflist"><thead><tr><th>Customer</th><th>Last order</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
+           : '<p class="card muted" style="margin:0">Nobody is due right now. Customers show here 40 to 60 days after their latest order.</p>')
+      . '<p class="muted small after">Customers whose latest order was 40 to 60 days ago. WhatsApp opens with a ready message (Arabic for Arabic names); after you tap it the customer shows Sent. Once they order again they leave this list.</p></div>'
+      . '<script>document.addEventListener("click",function(e){var a=e.target.closest("[data-rf]");if(!a)return;var f=new FormData();f.append("refill_sent",a.dataset.rf);f.append("csrf",' . json_encode($_SESSION['csrf']) . ');fetch("./?members=1",{method:"POST",body:f,credentials:"same-origin"});a.classList.add("line");var r=a.parentNode;if(!r.querySelector(".rsent"))r.insertAdjacentHTML("afterbegin","<span class=\\"rsent\\">Sent today</span> ")});</script>', true, true);
   }
   $rg = isset($_GET['c']) ? null : adm_range('members', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
   if ($rg && $rg['span']) $all = array_values(array_filter($all, fn($o) => $o['created_at'] >= $rg['span'][0] && $o['created_at'] <= $rg['span'][1]));   // the list counts only orders in the period
@@ -2382,7 +2429,7 @@ if (isset($_GET['members'])) {
          . '<td class="num mv">' . money($c['spent'] / $c['n']) . '<span> avg</span></td>'
          . '<td class="md small">' . h(date('d M Y', strtotime($c['first']))) . ' – ' . h(date('d M Y', strtotime($c['last']))) . '</td></tr>';
   }
-  page('Members', '<div class="pagehead"><h1>Members</h1><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn line sm" href="' . h(self_url(['members' => 1, 'subs' => 1])) . '">Download email list (' . number_format($subsN) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1, 'walist' => 1])) . '">Download WhatsApp list (' . number_format(count($waOn)) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1] + ($mq !== '' ? ['mq' => $mq] : []) + ['export' => 1])) . '">Download Excel</a></span></div>' . flash()
+  page('Members', '<div class="pagehead"><h1>Members</h1><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="./?members=1&amp;refill=1">Refill reminders (' . count(array_filter($rfDue, fn($o) => !$o['sent'])) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1, 'subs' => 1])) . '">Download email list (' . number_format($subsN) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1, 'walist' => 1])) . '">Download WhatsApp list (' . number_format(count($waOn)) . ')</a><a class="btn line sm" href="' . h(self_url(['members' => 1] + ($mq !== '' ? ['mq' => $mq] : []) + ['export' => 1])) . '">Download Excel</a></span></div>' . flash()
     . '<div class="rgbar">' . adm_range_form($rg, ['members' => 1] + ($mq !== '' ? ['mq' => $mq] : [])) . '</div>'
     . '<div class="mtop"><form class="card mmin" method="post">' . csrf_field() . '<label for="member_min">Orders: at least</label>'
     . '<input id="member_min" type="number" min="0" max="1000" inputmode="numeric" name="member_min" value="' . ($min ?: '') . '" placeholder="any"><span>orders</span><button class="btn sm">Save</button></form>'
