@@ -37,7 +37,7 @@ function fx_refill_mark($pdo, $no, $how = 'tap') {
 }
 
 /* every customer (same mobile = one customer) whose latest real order is in the list window (fx_refill_time), oldest first; 'sent' = date already reminded,
-   'optin' = ticked WhatsApp offers at checkout (only they get automatic messages) */
+   'optin' = ticked WhatsApp offers at checkout (only they get automatic messages), 'stopped' = replied STOP and has not ticked offers since */
 function fx_refill_due($pdo) {
   $last = [];
   $opt = $pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'wa_optin'")->fetch() ? 'wa_optin' : '0 AS wa_optin';
@@ -47,12 +47,12 @@ function fx_refill_due($pdo) {
     $last[$k] = $o;   // the latest order wins
   }
   $sent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
-  $due = []; $tm = fx_refill_time($pdo);
+  $due = []; $tm = fx_refill_time($pdo); $stops = json_decode((string)fomaxo_setting($pdo, 'wa_stop'), true) ?: [];
   foreach ($last as $k => $o) {
     $days = (int)floor((strtotime('today') - strtotime(date('Y-m-d', strtotime($o['created_at'])))) / 86400);
-    if ($days >= $tm['list_from'] && $days <= $tm['list_to']) $due['m' . $k] = $o + ['days' => $days, 'sent' => isset($sent[$o['order_no']]) ? substr($sent[$o['order_no']], 0, 10) : null, 'auto' => str_ends_with((string)($sent[$o['order_no']] ?? ''), 'auto')];
+    if ($days >= $tm['list_from'] && $days <= $tm['list_to']) $due['m' . $k] = $o + ['days' => $days, 'sent' => isset($sent[$o['order_no']]) ? substr($sent[$o['order_no']], 0, 10) : null, 'auto' => str_ends_with((string)($sent[$o['order_no']] ?? ''), 'auto'), 'stopped' => isset($stops[$k]) && !$o['optin']];
   }
-  uasort($due, fn($a, $b) => (int)!empty($a['sent']) <=> (int)!empty($b['sent']) ?: $b['days'] <=> $a['days']);
+  uasort($due, fn($a, $b) => (int)($a['sent'] || $a['stopped']) <=> (int)($b['sent'] || $b['stopped']) ?: $b['days'] <=> $a['days']);
   return $due;
 }
 
