@@ -2033,7 +2033,7 @@ if (isset($_GET['reviews'])) {
       . '<div class="rrb"><button class="btn sm">Save reply</button>'
         . '<button type="button" class="btn line sm" onclick="var f=this.form,a=JSON.parse(f.dataset.alt),i=(+f.dataset.i+1)%a.length;f.dataset.i=i;f.reply.value=a[i][0];if(f.ready_en){f.ready_en.value=a[i][0];f.ready_ar.value=a[i][1]}">Another reply</button>'
         . '<button type="button" class="btn line sm" onclick="var t=this.form.reply;t.value=\'\';t.focus()">Clear</button>' . '' . '</div></form></details>'
-      . ($rep !== '' ? $rform($hidden('reply_hide', $roff ? '0' : '1'), $roff ? 'Show reply' : 'Hide reply', 'line') . $rform($hidden('reply', '') . $hidden('del', '1'), 'Delete reply', 'line rdel', 'Delete this reply? It is removed from the review for good.') : '');
+      . ($rep !== '' ? ($roff ? $rform($hidden('reply_hide', '0'), 'Show reply', 'line') : '') . $rform($hidden('reply', '') . $hidden('del', '1'), 'Delete reply', 'line rdel', 'Delete this reply? It is removed from the review for good.') : '');
   };
 
   /* product photo (Products tab first, then the built-in list) and one review row like fomaxo.in */
