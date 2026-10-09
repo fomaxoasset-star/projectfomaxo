@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=19";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=20";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -4003,7 +4003,7 @@ function rwBindForm(form, p, link, onDone){
     const mob = form.elements.mobile ? form.elements.mobile.value.trim() : '', iss = rating <= 3 ? issue.value : '', prb = check();
     const bad = !rating ? 'Please choose a star rating.' : prob && prb ? prb : !an.checked && rwShort(nm.value).length < 2 ? 'Please enter your name, or choose Post anonymously.' : !text ? 'Please write your review.'
       : iss && !mob ? 'Please add your mobile number, so we can send your coupon on WhatsApp upon proof.' : mob && !rwMobOk(mob) ? 'Please enter a valid UAE mobile number, e.g. 050 123 4567.'
-      : prb ? prb : iss === 'faulty' && !files.length ? 'Please add a photo of the faulty or damaged product as proof.' : '';
+      : prb ? prb : iss === 'faulty' && !files.length ? 'Please add a photo of faulty or damaged product for proof.' : '';
     if (bad) { err.textContent = bad; err.hidden = false; if (bad === prb && prob) $('select', prob).focus(); return; }
     const btn = $('button[type=submit]', form); btn.disabled = true; btn.textContent = files.length ? 'Uploading photos…' : 'Posting…';
     const fd = new FormData();
