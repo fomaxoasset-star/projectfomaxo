@@ -70,12 +70,12 @@ function fx_rq_parts($pdo, $o) {
 /* the message, a blank line between each part, the code in WhatsApp bold on its own line (the same words as the WhatsApp templates) */
 function fx_rq_text($p) {
   $n2 = "\n\n";
-  if ($p['ar']) return 'مرحباً ' . $p['first'] . '،' . $n2 . 'شكراً مرة أخرى على طلبك. نتمنى أن تكون مستمتعاً ' . ($p['perfumes'] !== '' ? 'بعطر ' . $p['perfumes'] : 'بعطرك من FOMAXO') . '.'
-    . $n2 . "هل يمكنك مشاركتنا تقييمك الصادق في دقيقة؟ سيظهر بشارة \"مشتري موثّق\":\n" . $p['review']
+  if ($p['ar']) return 'مرحباً ' . $p['first'] . '،' . $n2 . "*شكراً مرة أخرى على طلبك*\nنتمنى أن يكون قد وصلك بأمان وأن تكون مستمتعاً " . ($p['perfumes'] !== '' ? 'بعطر ' . $p['perfumes'] : 'بعطرك من FOMAXO') . '.'
+    . $n2 . "هل يمكنك مشاركتنا تقييمك الصادق في دقيقة؟\nسيظهر بشارة \"مشتري موثّق\".\n" . $p['review'] . "\nتقييمك الصادق يساعد الآخرين على اختيار عطرهم من FOMAXO."
     . ($p['code'] ? $n2 . 'تقديراً لوقتك، هذا رمزك الخاص للحصول على خصم ' . $p['pct'] . '% على طلبك القادم (لمرة واحدة):' . $n2 . '*' . $p['code'] . '*' : '')
     . $n2 . 'راسلنا هنا إن احتجت أي مساعدة. وأرسل كلمة STOP إن كنت لا ترغب في هذه الرسائل.' . $n2 . "شكراً لك،\nFOMAXO";
-  return 'Hi ' . $p['first'] . ',' . $n2 . 'Thank you again for your order. I hope you are enjoying ' . ($p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume') . '.'
-    . $n2 . "Could you spare a minute to share your honest review? It will show as Verified Purchaser:\n" . $p['review']
+  return 'Hi ' . $p['first'] . ',' . $n2 . "*Thank You Again For Your Order*\nI hope you received it safely and are enjoying " . ($p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume') . '.'
+    . $n2 . "Could you spare a minute to share your honest review?\nIt will show as Verified Purchaser.\n" . $p['review'] . "\nYour honest review helps others choose their FOMAXO."
     . ($p['code'] ? $n2 . 'As a thank you for your time, here is your personal code for ' . $p['pct'] . '% off your next order (single use):' . $n2 . '*' . $p['code'] . '*' : '')
     . $n2 . 'Just reply here if you need anything. If you would rather not get these messages, reply STOP.' . $n2 . "Thank you,\nFOMAXO";
 }
