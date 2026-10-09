@@ -89,7 +89,7 @@ function fx_refill_parts($pdo, $o) {
 }
 
 /* the message, with a blank line between each part so it reads like a personal note. The admin WhatsApp box puts the coupon it makes (if one
-   is picked) between fx_refill_head and fx_refill_tail; fx_refill_text is the whole message with this order's own REFILL- code. */
+   is picked) between fx_refill_head and fx_refill_tail. */
 function fx_refill_head($p) {
   if ($p['ar']) return 'مرحباً ' . $p['first'] . '،' . "\n\n" . 'نتمنى أن تكون مستمتعاً ' . ($p['perfumes'] !== '' ? 'بعطر ' . $p['perfumes'] : 'بعطرك من FOMAXO') . '. مرّ ' . $p['days'] . ' يوماً على طلبك، وقد يكون عطرك قارب على النفاد.';
   return 'Hi ' . $p['first'] . ',' . "\n\n" . 'I hope you are enjoying ' . ($p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume') . '. It has been ' . $p['days'] . ' days since your order, so your bottle may be running low.';
@@ -102,9 +102,4 @@ function fx_refill_tail($p) {
   return $n2 . "You can reorder anytime here:\nhttps://fomaxo.com"
     . ($p['review'] ? $n2 . "If you have a moment, we would love your honest review. It will show as Verified Purchaser:\n" . $p['review'] : '')
     . $n2 . 'Just reply here if you would like help choosing your next scent. If you would rather not get these messages, reply STOP.' . $n2 . "Thank you,\nFOMAXO";
-}
-function fx_refill_text($p) {
-  $n2 = "\n\n";
-  return fx_refill_head($p) . $n2 . ($p['ar'] ? 'تقديراً لك، هذا رمزك الخاص للحصول على ' . $p['offer'] . ' (لمرة واحدة):' : 'As a thank you, here is your personal code for ' . $p['offer'] . ' (single use):')
-    . $n2 . '*' . $p['code'] . '*' . fx_refill_tail($p);
 }
