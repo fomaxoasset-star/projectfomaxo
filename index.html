@@ -3740,10 +3740,20 @@ const rwGet = k => { try { return JSON.parse(localStorage.getItem(k) || 'null');
 const rwSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
 /* review links of this browser's orders, so the product page can offer the Verified Purchaser review later */
 const rwLinks = () => (rwGet('fomaxo_review_links') || []).filter(l => l && /^[a-f0-9]{24}$/.test(l.t) && Array.isArray(l.products));
-const rwLinkFor = id => { const l = rwLinks().find(l => l.products.includes(id) && !(l.done || []).includes(id)); return l ? {t: l.t, no: l.no} : null; };
+/* a saved link only counts once reviews.php has confirmed it on this visit (real order, not cancelled, product not yet reviewed) */
+const rwOk = new Set();
+const rwLinkFor = id => { const l = rwLinks().find(l => rwOk.has(l.t) && l.products.includes(id) && !(l.done || []).includes(id)); return l ? {t: l.t, no: l.no} : null; };
+/* asks reviews.php about every saved link of this product: refreshes it, or forgets it when it is not valid any more */
+async function rwCheckLinks(id){
+  await Promise.all(rwLinks().filter(l => l.products.includes(id) && !(l.done || []).includes(id)).map(async l => {
+    try { const r = await fetch(`${RW_API}?link=${l.t}`, {cache: 'no-store'}), d = await r.json().catch(() => ({}));
+      if (Array.isArray(d.products)) { rwSaveLink(l.t, d); rwOk.add(l.t); }
+      else if (r.status === 404) rwSet('fomaxo_review_links', rwLinks().filter(x => x.t !== l.t)); } catch(e) {}
+  }));
+}
 function rwSaveLink(t, d){ rwSet('fomaxo_review_links', [{t, no: d.order, products: d.products.map(x => x.id), done: d.products.filter(x => x.done).map(x => x.id)}, ...rwLinks().filter(l => l.t !== t)].slice(0, 20)); }
 function rwMarkDone(t, id){ rwSet('fomaxo_review_links', rwLinks().map(l => l.t === t ? Object.assign(l, {done: [...new Set([...(l.done || []), id])]}) : l)); }
-async function rwAddLink(t){ if (!/^[a-f0-9]{24}$/.test(t || '')) return; try { const d = await (await fetch(`${RW_API}?link=${t}`, {cache: 'no-store'})).json(); if (d.products) rwSaveLink(t, d); } catch(e) {} }
+async function rwAddLink(t){ if (!/^[a-f0-9]{24}$/.test(t || '')) return; try { const d = await (await fetch(`${RW_API}?link=${t}`, {cache: 'no-store'})).json(); if (d.products) { rwSaveLink(t, d); rwOk.add(t); } } catch(e) {} }
 const rwVoter = () => { let v = rwGet('fomaxo_voter'); if (!/^[a-z0-9]{12,64}$/.test(v || '')) { v = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); rwSet('fomaxo_voter', v); } return v; };
 /* "ahmed saleh" → "Ahmed Saleh", full name (same rule as reviews.php) */
 const rwShort = v => v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ').slice(0, 60);
@@ -3972,7 +3982,7 @@ async function rwLoad(p, msg){
   const box = $('#reviews'); if (!box) return;
   let d = null;
   const ac = window.AbortController ? new AbortController() : null, stop = ac && setTimeout(() => ac.abort(), 10000);
-  try { const r = await fetch(`${RW_API}?product=${encodeURIComponent(p.id)}`, {cache: 'no-store', signal: ac && ac.signal}); if (r.ok) d = await r.json(); } catch(e) {}
+  await Promise.all([rwCheckLinks(p.id), (async () => { try { const r = await fetch(`${RW_API}?product=${encodeURIComponent(p.id)}`, {cache: 'no-store', signal: ac && ac.signal}); if (r.ok) d = await r.json(); } catch(e) {} })()]);
   clearTimeout(stop);
   if ($('#reviews') !== box) return;
   if (!d || !Array.isArray(d.reviews)) d = {count: 0, avg: 0, dist: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}, reviews: []};
@@ -4023,7 +4033,7 @@ async function bindReviewPage(q){
   try { d = await (await fetch(`${RW_API}?link=${encodeURIComponent(t)}`, {cache: 'no-store'})).json(); } catch(e) {}
   const box = $('#rwOrder'); if (!box) return;
   if (!Array.isArray(d.products)) { box.innerHTML = `<p class="co-small">${esc(d.error || 'We could not open your review link. Please check your connection and try again.')}</p><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px"><a class="btn" href="#/fragrances">Shop FOMAXO</a></div>`; return; }
-  rwSaveLink(t, d);
+  rwSaveLink(t, d); rwOk.add(t);
   const link = {t, no: d.order}, items = d.products.filter(x => P[x.id]);
   box.innerHTML = `<p class="small rw-ord">Order ${esc(d.order)}</p>` + items.map(x => { const p = P[x.id]; return `<div class="rw-op" data-op="${p.id}"><div class="rw-op-h"><img src="${SM(p.images[0])}" alt=""><div><b>${esc(p.name)}</b><span class="small">${esc(p.family)}</span></div>${x.done ? `<span class="rw-ver">${RW_TICK}Reviewed</span>` : `<button class="btn sm" data-opw="${p.id}">Write a review</button>`}</div><div class="rw-op-f"></div></div>`; }).join('')
     + `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px"><a class="btn line" href="#/fragrances">Continue shopping</a></div>`;
