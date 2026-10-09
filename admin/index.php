@@ -140,7 +140,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .tabs a{text-align:center;text-decoration:none;font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:11px 4px;color:var(--muted);border-bottom:2px solid transparent}
 .tabs a.on{color:var(--gold);border-bottom-color:var(--gold)}
 .tb{display:inline-flex;margin-left:4px;vertical-align:1px}.tb[hidden]{display:none}.tb i{font:700 9.5px/1 Manrope,Arial,sans-serif!important;font-size-adjust:none!important;letter-spacing:0;font-style:normal;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 0 1.5px var(--panel)}.tb i+i{margin-left:-3px}
-.tb-orders{background:#2f9e55}.tb-bad{background:#4f7fc4}.tb-faulty{background:#d0644e}.tb-late{background:#e0a03a;color:#2a1c05!important}.tb-leads{background:#c9a45c;color:#17130b!important}
+.tb-orders{background:#e0342b}.tb-bad{background:#4f7fc4}.tb-faulty{background:#d0644e}.tb-late{background:#e0a03a;color:#2a1c05!important}.tb-leads{background:#c9a45c;color:#17130b!important}
 @media (max-width:759px){.tabsw .tabs a:has(.tb:not([hidden])){position:relative;overflow:visible}.tabsw .tabs:has(.tb:not([hidden])) a:nth-child(-n+6){padding-top:12px}.tabsw .tabs .tb{position:absolute;top:-1px;right:-3px;margin:0;z-index:1}.tabsw .tabs .tb i{min-width:14px;height:14px;font-size:8.5px!important;padding:0 3px}}
 /* new order pop-ups (FX_ALERT_JS), like fomaxo.in: top right, full width on phones, gold edge, stay until closed */
 .noa-stack{position:fixed;top:14px;right:14px;z-index:60;display:flex;flex-direction:column;gap:8px;width:min(340px,calc(100% - 28px));pointer-events:none}
@@ -587,7 +587,7 @@ const FX_ALERT_JS = <<<'JS'
     var x=document.createElement('button');x.type='button';x.setAttribute('aria-label','Close');x.textContent='✕';x.onclick=function(){d.classList.add('gone');setTimeout(function(){d.remove()},250)};d.append(a,x);stack.prepend(d)};
   var notify=function(o){if(!('Notification' in window)||Notification.permission!=='granted')return;var opt={body:o.total+' · '+o.name+' · '+o.how,tag:o.no,icon:'../assets/img/favicon-192.png',data:{url:o.url}};
     sw().then(function(r){if(r)return r.showNotification('New order '+o.no,opt);var n=new Notification('New order '+o.no,opt);n.onclick=function(){window.focus();location.href=o.url}}).catch(function(){})};
-  /* the rounds after the tab names: green new orders; blue / red / amber new Bad product / Faulty product / Late delivery reviews; gold new Left at checkout */
+  /* the rounds after the tab names: red new orders; blue / red / amber new Bad product / Faulty product / Late delivery reviews; gold new Left at checkout */
   var ROUNDS={orders:[['orders','new order','new orders']],reviews:[['bad','new Bad product review','new Bad product reviews'],['faulty','new Faulty product review','new Faulty product reviews'],['late','new Late delivery review','new Late delivery reviews']],analytics:[['leads','new left at checkout','new left at checkout']]};
   var rounds=function(b){if(!b)return;document.querySelectorAll('.tabs .tb[data-tb]').forEach(function(w){var a=w.parentNode,said=[];w.textContent='';
     ROUNDS[w.dataset.tb].forEach(function(r){var n=+b[r[0]]||0;if(!n)return;var i=document.createElement('i');i.className='tb-'+r[0];i.textContent=n>99?'99+':n;w.appendChild(i);said.push(n+' '+(n===1?r[1]:r[2]))});
