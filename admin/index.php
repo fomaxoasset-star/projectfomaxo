@@ -153,7 +153,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .noa button{background:none;border:0;color:var(--muted);font-size:14px;padding:0 13px;cursor:pointer}.noa button:hover{color:var(--ink)}
 @keyframes noaIn{from{opacity:0;transform:translateY(-12px)}}@keyframes noaDot{50%{opacity:.25}}
 @media (max-width:759px){.noa-stack{top:10px;right:12px;left:12px;width:auto}.noa a{padding:12px 6px 12px 14px}.noa button{padding:0 16px;font-size:16px}}
-.emrow{display:flex;gap:8px}.emrow input{flex:1 1 auto;min-width:0}.emrow .btn{flex:none}@media (min-width:1100px){main .settings{grid-template-areas:"a c e" "a f e" "b d e"}}.nalert-sw{margin-top:6px}.nalert-sw .pgs{grid-template-columns:1fr!important;margin:0}.nalert-sw label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0}.nalert{margin-top:10px}.nalert .btn{margin:0}.nalert .shelp{margin-top:8px}.nalert .nstate{margin:10px 0 0;font-size:13px}.nalert .nstate.ok{color:#2f9e55;font-weight:600}
+.emrow{display:flex;gap:8px}.emrow input{flex:1 1 auto;min-width:0}.emrow .btn{flex:none}@media (min-width:1100px){main .settings{grid-template-areas:"a c e" "a f e" "b d e"}}.nalert-sw{margin-top:6px}.nalert-sw .pgs{grid-template-columns:1fr!important;margin:0}.nalert-sw label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0}.nalert{margin-top:10px}.nalert .btn{margin:0}.nalert .shelp{margin-top:8px}.sndbtn{display:inline-flex;align-items:center;gap:5px;margin-left:auto;margin-right:6px;flex:none;white-space:nowrap}.sndbtn svg{width:13px;height:13px}.sndbtn.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.sndbtn.on .x{display:none}.sndbtn:not(.on){opacity:.8}.nalert .nstate{margin:10px 0 0;font-size:13px}.nalert .nstate.ok{color:#2f9e55;font-weight:600}
 .newo{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:#e0342b;color:#fff;font-size:10px;font-weight:700;letter-spacing:.06em;vertical-align:1px}
 .tabsw{display:flex;flex:none;background:var(--panel);border-bottom:1px solid var(--line)}.tabsw .tabs{flex:1 1 auto;min-width:0;border-bottom:0}.tnav{display:none}
 @media (max-width:759px){.tnav:not([hidden]){display:flex;align-items:center;justify-content:center;flex:none;width:38px;font-size:24px;line-height:1;color:var(--gold);text-decoration:none;background:var(--panel)}.tnav[data-d="-1"]{border-right:1px solid var(--line)}.tnav[data-d="1"]{border-left:1px solid var(--line)}}
@@ -611,6 +611,11 @@ const FX_ALERT_JS = <<<'JS'
   show();
 })();
 JS;
+function fx_sound_btn($pdo) {   // one tap turns the new order chime on or off
+  $on = fomaxo_setting($pdo, 'alert_sound') !== '0';
+  return '<button type="button" class="btn xs line sndbtn' . ($on ? ' on' : '') . '" aria-pressed="' . ($on ? 'true' : 'false') . '" title="Chime with each new order pop-up" onclick="var b=this,on=!b.classList.contains(\'on\'),f=new FormData();f.append(\'csrf\',' . h(json_encode($_SESSION['csrf'] ?? '')) . ');f.append(\'on\',on?\'1\':\'0\');fetch(\'./?alertsound=1\',{method:\'POST\',body:f,credentials:\'same-origin\'}).then(function(r){return r.json()}).then(function(j){if(j.error)return;b.classList.toggle(\'on\',j.on);b.setAttribute(\'aria-pressed\',j.on);b.lastChild.textContent=j.on?\'Sound on\':\'Sound off\';var a=document.getElementById(\'orderAlerts\');if(a)a.dataset.sound=j.on?\'1\':\'0\'})">'
+    . '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.8V3.5a1.5 1.5 0 0 0-3 0v.7A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/><path class="x" d="M3 3l18 18" stroke="currentColor" stroke-width="2.2"/></svg><span>' . ($on ? 'Sound on' : 'Sound off') . '</span></button>';
+}
 function fx_tb($b, $tab) {
   $o = ''; $said = [];
   foreach (['orders' => ['orders'], 'reviews' => ['bad', 'faulty', 'late'], 'analytics' => ['leads']][$tab] as $k) {
@@ -772,6 +777,14 @@ if (empty($_SESSION['admin'])) {
 
 /* ================= 3) logged in: orders ================= */
 
+
+/* the alert sound switch on Orders (fx_sound_btn), the same setting as Settings → New orders */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['alertsound'])) {
+  header('Content-Type: application/json');
+  if (!csrf_ok()) exit('{"error":1}');
+  fomaxo_setting($pdo, 'alert_sound', ($_POST['on'] ?? '') === '1' ? '1' : '0');
+  exit(json_encode(['on' => ($_POST['on'] ?? '') === '1']));
+}
 
 /* the shared WhatsApp box (page() script fxWa), without reloading: with a coupon picked, a new one-use code for this mobile only; then the day it went
    is noted (review request and refill lists keep their own Sent; the rest in wa_sent), so the button reads Sent dd/mm */
@@ -3230,7 +3243,7 @@ page('Orders', flash()
   . '<div><label for="to">To</label><input id="to" type="date" name="to" value="' . h($f['to']) . '"></div>'
   . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile or coupon"></div>'
   . '<div class="acts"><button class="btn line">Show</button><a class="btn" href="' . h(self_url($qs + ['export' => 1])) . '">Excel</a></div></form>'
-  . '<div class="fill">' . ($rows ? '<p class="ocount"><span>' . (int)$sum['n'] . ' order' . ((int)$sum['n'] === 1 ? '' : 's') . '. Tap a button to update an order, or tap the order to see it.</span><a class="btn xs rqbtn" href="./?orders=1&amp;ask=1">Review requests (' . $rqN . ')</a></p><table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
+  . '<div class="fill">' . ($rows ? '<p class="ocount"><span>' . (int)$sum['n'] . ' order' . ((int)$sum['n'] === 1 ? '' : 's') . '. Tap a button to update an order, or tap the order to see it.</span>' . fx_sound_btn($pdo) . '<a class="btn xs rqbtn" href="./?orders=1&amp;ask=1">Review requests (' . $rqN . ')</a></p><table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
   . $logCard
