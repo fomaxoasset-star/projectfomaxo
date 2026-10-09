@@ -153,7 +153,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .noa button{background:none;border:0;color:var(--muted);font-size:14px;padding:0 13px;cursor:pointer}.noa button:hover{color:var(--ink)}
 @keyframes noaIn{from{opacity:0;transform:translateY(-12px)}}@keyframes noaDot{50%{opacity:.25}}
 @media (max-width:759px){.noa-stack{top:10px;right:12px;left:12px;width:auto}.noa a{padding:12px 6px 12px 14px}.noa button{padding:0 16px;font-size:16px}}
-.emrow{display:flex;gap:8px}.emrow input{flex:1 1 auto;min-width:0}.emrow .btn{flex:none}@media (min-width:1100px){main .settings{grid-template-areas:"a c e" "a f e" "b d e"}}.nalert-sw{margin-top:6px}.nalert-sw .pgs{grid-template-columns:1fr!important;margin:0}.nalert-sw label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0}.nalert{margin-top:10px}.nalert .btn{margin:0}.nalert .shelp{margin-top:8px}.sndbtn{display:inline-flex;align-items:center;gap:5px;margin-left:auto;margin-right:6px;flex:none;white-space:nowrap}.sndbtn svg{width:13px;height:13px}.sndbtn.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.sndbtn.on .x{display:none}.sndbtn:not(.on){opacity:.8}@media (max-width:759px){.ocount{flex-wrap:wrap;row-gap:6px}.ocount>span{flex:1 1 100%}.ocount .sndbtn{margin-left:0}}.otx{display:inline-flex;margin:0;vertical-align:middle;flex:none}.otx .rmx{margin-right:8px}.trbtn{margin-right:6px}.trnote{margin:0 0 8px}.trlist td{vertical-align:middle}.nalert .nstate{margin:10px 0 0;font-size:13px}.nalert .nstate.ok{color:#2f9e55;font-weight:600}
+.emrow{display:flex;gap:8px}.emrow input{flex:1 1 auto;min-width:0}.emrow .btn{flex:none}@media (min-width:1100px){main .settings{grid-template-areas:"a c e" "a f e" "b d e"}}.nalert-sw{margin-top:6px}.nalert-sw .pgs{grid-template-columns:1fr!important;margin:0}.nalert-sw label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0}.nalert{margin-top:10px}.nalert .btn{margin:0}.nalert .shelp{margin-top:8px}.sndbtn{display:inline-flex;align-items:center;gap:5px;margin-left:auto;margin-right:6px;flex:none;white-space:nowrap}.sndbtn svg{width:13px;height:13px}.sndbtn.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.sndbtn.on .x{display:none}.sndbtn:not(.on){opacity:.8}@media (max-width:759px){.ocount{flex-wrap:wrap;row-gap:6px}.ocount>span{flex:1 1 100%}.ocount .sndbtn{margin-left:0}}.otx{display:inline-flex;margin:0;vertical-align:middle;flex:none}.otx .rmx{margin-right:8px}.trbtn{margin-right:6px}.trbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px;flex:none}.trall{display:inline-flex;align-items:center;gap:8px;margin:0;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);cursor:pointer}.trall input,.trlist .tck input{width:18px;height:18px;margin:0;accent-color:var(--gold)}.trlist .tck{width:30px}.trnote{margin:0 0 8px}.trlist td{vertical-align:middle}.nalert .nstate{margin:10px 0 0;font-size:13px}.nalert .nstate.ok{color:#2f9e55;font-weight:600}
 .newo{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:#e0342b;color:#fff;font-size:10px;font-weight:700;letter-spacing:.06em;vertical-align:1px}
 .tabsw{display:flex;flex:none;background:var(--panel);border-bottom:1px solid var(--line)}.tabsw .tabs{flex:1 1 auto;min-width:0;border-bottom:0}.tnav{display:none}
 @media (max-width:759px){.tnav:not([hidden]){display:flex;align-items:center;justify-content:center;flex:none;width:38px;font-size:24px;line-height:1;color:var(--gold);text-decoration:none;background:var(--panel)}.tnav[data-d="-1"]{border-right:1px solid var(--line)}.tnav[data-d="1"]{border-left:1px solid var(--line)}}
@@ -869,6 +869,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['log_add'])) {
 }
 
 /* the ✕ in front of an order: close it into Trash (it acts as if it never existed); Put back in Trash returns it */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['untrash_sel']) && !isset($_POST['untrash'])) {   // Trash: Put back selected (ticks, or Select all)
+  $nos = array_filter(array_map('strval', (array)($_POST['nos'] ?? [])));
+  $ok = csrf_ok() ? count(array_filter($nos, fn($n) => fx_order_restore($pdo, $n))) : 0;
+  flash($ok ? $ok . ' order' . ($ok > 1 ? 's are' : ' is') . ' back in Orders.' : 'Please tick the orders to put back.', $ok > 0);
+  go(['orders' => 1, 'trash' => 1]);
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['trash']) || isset($_POST['untrash']))) {
   $no = (string)($_POST['trash'] ?? $_POST['untrash']); $put = isset($_POST['untrash']);
   if (!csrf_ok()) flash('Please try again.');
@@ -882,14 +888,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['trash']) || isset($_
 if (isset($_GET['orders'], $_GET['trash'])) {
   $tr = '';
   try { $rows = $pdo->query('SELECT order_no, trashed_at, created_at, name, phone, total, payment, status FROM fx_orders_trash ORDER BY trashed_at DESC')->fetchAll(); } catch (Throwable $e) { $rows = []; }
-  foreach ($rows as $o) $tr .= '<tr class="row"><td><b>' . h($o['order_no']) . '</b><div class="muted small">' . h(date('d/m/Y, H:i', strtotime((string)$o['created_at']))) . '</div></td>'
+  foreach ($rows as $o) $tr .= '<tr class="row"><td class="tck"><input type="checkbox" name="nos[]" value="' . h($o['order_no']) . '" aria-label="Select ' . h($o['order_no']) . '"></td><td><b>' . h($o['order_no']) . '</b><div class="muted small">' . h(date('d/m/Y, H:i', strtotime((string)$o['created_at']))) . '</div></td>'
     . '<td><b>' . hx($o['name']) . '</b><div class="muted small">' . h($o['phone']) . '</div></td>'
     . '<td class="num"><b>' . money($o['total']) . '</b><div class="muted small">' . h($o['payment'] === 'Cash on delivery' ? 'Cash on delivery' : 'Card') . ' · ' . h($o['status']) . '</div></td>'
     . '<td class="muted small">Closed ' . h(date('d/m/Y', strtotime($o['trashed_at']))) . '</td>'
-    . '<td class="num"><form method="post" style="margin:0">' . csrf_field() . '<input type="hidden" name="untrash" value="' . h($o['order_no']) . '"><button class="btn sm line">Put back</button></form></td></tr>';
+    . '<td class="num"><button class="btn sm line" name="untrash" value="' . h($o['order_no']) . '">Put back</button></td></tr>';
   page('Trash', flash() . '<div class="pagehead"><h1>Trash <span class="muted small">' . count($rows) . '</span></h1><a class="btn line sm" href="./?orders=1">‹ Back to Orders</a></div>'
     . '<p class="muted small trnote">Closed orders are kept here. They do not count anywhere: not in Sales, the COD and online boxes, status counts, Members or Excel. Put back returns an order as it was.</p>'
-    . '<div class="fill">' . ($tr ? '<table class="olist trlist"><thead><tr><th>Order</th><th>Customer</th><th class="num">Total</th><th>Closed</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty" style="padding:14px">Trash is empty.</p>') . '</div>', true, true);
+    . ($tr ? '<form method="post" class="trform fitform">' . csrf_field() . '<div class="trbar"><label class="trall"><input type="checkbox" data-trall> Select all</label><button class="btn sm" name="untrash_sel" value="1" data-trsel disabled>Put back selected (0)</button></div>' : '')
+    . '<div class="fill">' . ($tr ? '<table class="olist trlist"><thead><tr><th class="tck"></th><th>Order</th><th>Customer</th><th class="num">Total</th><th>Closed</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty" style="padding:14px">Trash is empty.</p>') . '</div>' . ($tr ? '</form><script>(function(){var f=document.querySelector(".trform"),all=f.querySelector("[data-trall]"),b=f.querySelector("[data-trsel]"),bx=[].slice.call(f.querySelectorAll("input[name=\'nos[]\']"));'
+    . 'var up=function(){var n=bx.filter(function(x){return x.checked}).length;b.disabled=!n;b.textContent="Put back selected ("+n+")";all.checked=n===bx.length;all.indeterminate=n>0&&n<bx.length};'
+    . 'all.addEventListener("change",function(){bx.forEach(function(x){x.checked=all.checked});up()});bx.forEach(function(x){x.addEventListener("change",up)});'
+    . 'f.addEventListener("submit",function(e){var s=e.submitter;if(s&&s.hasAttribute("data-trsel")){var n=bx.filter(function(x){return x.checked}).length;if(!confirm("Put back "+n+" order"+(n>1?"s":"")+"?"))e.preventDefault()}})})();</script>' : ''), true, true);
 }
 
 /* save a change to one order */
