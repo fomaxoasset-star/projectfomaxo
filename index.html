@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=21";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=20";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -578,32 +578,6 @@ footer{border-top:1px solid var(--line);background:var(--deep);padding:80px 0 34
 .pc-photo img{opacity:1;object-position:center 40%}
 .pc-photo::after{background:linear-gradient(90deg,transparent 70%,var(--black))}
 @media(max-width:860px){.pc-photo{min-height:360px}.pc-photo::after{background:linear-gradient(180deg,transparent 75%,var(--black))}}
-/* personal care shop cards + combo cards (#/personal-care, #/combo) */
-.cx-card .acts{grid-template-columns:1fr}
-.cx-card .row1 .price.na,.cbx .price.na{white-space:normal;text-align:right;line-height:1.5}
-.cx-card .meta{line-height:1.6}
-.wa-ic{width:17px;height:17px;flex:none}
-.cbx-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(18px,2vw,30px)}
-.cbx{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--panel);min-width:0;transition:border-color .6s}
-.cbx:hover{border-color:var(--line-2)}
-.cbx-pics{position:relative;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;aspect-ratio:4/3;gap:1px;background:var(--line);overflow:hidden}
-.cbx-pics img{width:100%;height:100%;object-fit:cover;display:block;min-height:0}
-.cbx-pics.n2{grid-template-rows:1fr}
-.cbx-pics.n3 img:first-of-type{grid-row:span 2}
-.cbx-pics.n1{grid-template-columns:1fr}
-.cbx-body{display:flex;flex-direction:column;gap:12px;padding:clamp(18px,1.8vw,26px);flex:1}
-.cbx h3{font-family:var(--display);font-weight:400;font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;text-transform:uppercase;color:var(--ivory)}
-.cbx .desc{font-size:14.5px;color:var(--muted);line-height:1.65}
-.cbx-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-.cbx-list li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
-.cbx-list b{font-weight:500;color:var(--gold-hi);letter-spacing:.04em}
-.cbx-list span{color:var(--muted);text-align:right}
-.cbx-price{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:4px 0}
-.cbx-price small{display:block;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
-.cbx-price b{font-family:var(--serif);font-weight:400;font-size:20px;color:var(--ivory)}
-.cbx .btn{margin-top:auto;width:100%}
-@media(max-width:1100px){.cbx-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){.cbx-grid{grid-template-columns:minmax(0,1fr);gap:22px}.cbx .desc{font-size:14px}}
 /* Personal care poster: show the whole portrait poster, no crop or fade */
 .pc.pc-poster{grid-template-columns:minmax(0,2fr) minmax(0,3fr)}
 .pc-poster .pc-photo{min-height:0}
@@ -2248,7 +2222,6 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
     <nav class="menu" id="menu" aria-label="Main">
       <a href="#/fragrances" data-r="fragrances">Fragrances</a>
       <a href="#/personal-care" data-r="personal-care">Personal Care</a>
-      <a href="#/combo" data-r="combo">Combo</a>
       <a href="#/collections" data-r="collections">Collections</a>
       <a href="#/about" data-r="about">About FOMAXO</a>
       <a href="#/contact" data-r="contact">Contact</a>
@@ -2267,7 +2240,7 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 <div class="mnav" id="mnav" aria-hidden="true">
   <div class="top"><a class="brand" href="#/"><svg class="em" aria-hidden="true"><use href="#emblem"/></svg><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><use href="#wordmark"/></svg><sup class="tm">™</sup></a><button class="icon" data-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
   <nav>
-    <a href="#/fragrances">Fragrances</a><a href="#/personal-care">Personal Care</a><a href="#/combo">Combo</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
+    <a href="#/fragrances">Fragrances</a><a href="#/personal-care">Personal Care</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
   </nav>
   <div class="foot" id="mnavFoot"></div>
 </div>
@@ -2286,7 +2259,7 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
       </div>
       <div><h5>Shop</h5><div id="footShop"></div></div>
       <div><h5>Discover</h5><a href="#/collections/fragrance">Fragrance Collection</a><a href="#/collections/mini">Mini Collection</a><a href="#/collections/name">Personalized Gifting</a><a href="#/collections/gifting">Bespoke Gifting</a><a href="#/collections/elite">Elite Membership</a></div>
-      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">Personal Care</a><a href="#/combo">Combos</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
+      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">Personal Care</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
     </div>
     <div class="fbase"><span>© 2026 FOMAXO™. All rights reserved.</span><span>Inspire greatness</span></div>
     <p class="fpriv">We count anonymous visits (no cookies, nothing shared) to improve the store.</p>
@@ -2916,7 +2889,7 @@ function card(p, opts={}){
   </article>`;
 }
 app.addEventListener('click', e => {
-  const c = e.target.closest('.card[data-id]'); if (!c) return;
+  const c = e.target.closest('.card'); if (!c) return;
   const p = P[c.dataset.id];
   const chip = e.target.closest('[data-size]');
   if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s);
@@ -3387,99 +3360,16 @@ function bindElite(){
   inp.addEventListener('input', () => { v = elVal(+inp.value / 10); upd(); });
   upd();
 }
-/* PERSONAL CARE and COMBO pages (the same products and combos as fomaxo.in, in fomaxo.com's style).
-   aed = selling price in AED, was = old price (shown crossed out). null = not priced yet: the card says
-   "Price coming soon". Until the bag takes these, every card is ordered on WhatsApp. */
-const CARE = [
-  {id: 'pc-passionsin-gel', name: 'Passion Sin', type: 'Moisturizing Shower Gel', cat: 'body', vol: '250ml', aed: null, was: null, short: 'A moisturizing shower gel carrying the bold, juicy signature of Passion Sin.'},
-  {id: 'pc-passionsin-shampoo', name: 'Passion Sin', type: 'Moisturizing Shampoo', cat: 'hair', vol: '250ml', aed: null, was: null, short: 'Strengthens hair, deeply hydrates and cares for a healthy scalp.'},
-  {id: 'pc-radiant-shampoo', name: 'Radiant Bloom', type: 'Moisturizing Shampoo', cat: 'hair', badge: 'New', aed: null, was: null, short: 'A moisturizing shampoo enriched with aloe vera and vitamin E.'},
-  {id: 'pc-radiant-conditioner', name: 'Radiant Bloom', type: 'Conditioner for Dry and Frizzy Hair', cat: 'hair', badge: 'New', aed: null, was: null, short: 'A moisturizing conditioner for dry and frizzy hair, with aloe vera and vitamin E.'},
-  {id: 'pc-melondrip', name: 'Melon Drip', type: 'Hair Mist Spray', cat: 'hair', badge: 'New', aed: null, was: null, short: 'A hair mist made with 100% pure watermelon natural oil.'},
-  {id: 'pc-radiant-gel', name: 'Radiant Bloom', type: 'Moisturizing Shower Gel', cat: 'body', aed: null, was: null, short: 'A moisturizing shower gel enriched with aloe vera and vitamin E.'},
-  {id: 'pc-aloevita-wash', name: 'Aloe Vita', type: 'Face Wash for Radiant Skin', cat: 'face', vol: '100ml', aed: null, was: null, short: 'A foaming face wash with aloe vera for radiant, naturally refreshed skin.'},
-  {id: 'pc-radiant-wash', name: 'Radiant Bloom', type: 'Face Wash for Tan Removal', cat: 'face', vol: '100ml', aed: null, was: null, short: 'A foaming face wash for tan removal and brighter-looking skin.'},
-  {id: 'pc-kissberry', name: 'Kiss Berry', type: 'Lip Balm', cat: 'lips', aed: null, was: null, short: 'A berry lip balm for soft, cared-for lips.'},
-  {id: 'pc-avokiss', name: 'Avo Kiss', type: 'Lip Balm', cat: 'lips', aed: null, was: null, short: 'Nourish, hydrate, glow, with avocado oil and peppermint.'}
-];
-const CARE_BY = Object.fromEntries(CARE.map(c => [c.id, c]));
-const CARE_CATS = [['all', 'All'], ['hair', 'Hair'], ['body', 'Body'], ['face', 'Face'], ['lips', 'Lips']];
-/* combos: items = [product id, size] (parfums) or [personal care id]. A combo with a hidden product, or a size that is not sold, is left out */
-const COMBOS = [
-  {id: 'morning-midnight', tag: 'Scent layering', name: 'Morning to Midnight', badge: 'Signature', v: 'One scent from the shower to the evening. The body care builds a base, the parfum lasts longer on top.', items: [['passionsin', 50], ['pc-passionsin-gel'], ['pc-passionsin-shampoo']]},
-  {id: 'date-night', tag: 'For two', name: 'Date Night', badge: 'Couples', v: 'A strong parfum, a sweet parfum and a lip balm for the evening out.', items: [['gold', 100], ['royalcandy', 50], ['pc-kissberry']]},
-  {id: 'discovery-four', tag: 'Try before the big bottle', name: 'The Discovery Four', badge: 'First order', v: 'Four 10ml parfums to find your favourite. A great first order and great to share.', items: [['oldmoney', 10], ['royalcandy', 10], ['matchacoco', 10], ['passionsin', 10]]},
-  {id: 'eid-mubarak', tag: 'Eid', name: 'Eid Mubarak Pair', v: 'Gold, with its Arabic heritage, and fresh Dollar. One for the morning prayer, one for the evening.', items: [['gold', 100], ['dollar', 100]]},
-  {id: 'eid-eidi', tag: 'Eid', name: 'Eidi Minis', v: 'Two 10ml parfums and a lip balm. A sweet Eidi for the little ones and cousins.', items: [['passionsin', 10], ['oldmoney', 10], ['pc-avokiss']]},
-  {id: 'big-three', tag: 'Parfum wardrobe', name: 'The Big Three', badge: 'Best value', v: 'A strong, a fresh and a classic parfum. One for every mood.', items: [['gold', 100], ['dollar', 100], ['oldmoney', 50]]},
-  {id: 'glow-up', tag: 'Face, body and lips', name: 'Glow Up Kit', v: 'Two face washes for day and night, a shower gel and a lip balm.', items: [['pc-radiant-wash'], ['pc-aloevita-wash'], ['pc-radiant-gel'], ['pc-avokiss']]},
-  {id: 'salon-hair', tag: 'Hair care', name: 'Salon Hair at Home', v: 'Shampoo, conditioner and a hair mist for soft, scented hair.', items: [['pc-radiant-shampoo'], ['pc-radiant-conditioner'], ['pc-melondrip']]},
-  {id: 'kiss-tell', tag: 'Lip duo', name: 'Kiss & Tell', v: 'Both lip balms together. An easy thank-you or add-on gift.', items: [['pc-kissberry'], ['pc-avokiss']]}
-];
-const waTo = t => `https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent(t)}`;
-const WA_IC = () => `<svg class="wa-ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${SOC_ICON.whatsapp.replace(/^<g transform="[^"]*">/, '<g>')}</svg>`;
-const careLabel = c => `${c.name} ${c.type}${c.vol ? ' ' + c.vol : ''}`;
-const carePrice = c => hasPrice(c.aed) ? `<span class="price">${hasPrice(c.was) && +c.was > +c.aed ? `<s class="was">${moneyHTML(c.was)}</s> ` : ''}${moneyHTML(c.aed)}</span>` : '<span class="price na">Price coming soon</span>';
-function careCard(c, i){
-  return `<article class="card cx-card rv-up d${i % 3}">
-    <div class="media">${c.badge ? `<span class="tag">${esc(c.badge)}</span>` : ''}<img src="${IMG(c.id)}" alt="FOMAXO ${esc(c.name)} ${esc(c.type)}" loading="lazy" width="528" height="662"></div>
-    <div class="row1"><h3>${esc(c.name)}</h3>${carePrice(c)}</div>
-    <div class="meta"><span>${esc(c.type)}</span>${c.vol ? ` · <span>${c.vol}</span>` : ''}</div>
-    <p class="desc">${esc(c.short)}</p>
-    <div class="acts"><a class="btn sm" href="${waTo(`Hello FOMAXO, I would like to order ${careLabel(c)}.`)}" target="_blank" rel="noopener">${WA_IC()}<span>Order on WhatsApp</span></a></div>
-  </article>`;
-}
-function personalCare(q){
-  const c = q && CARE_CATS.some(x => x[0] === q.get('c')) ? q.get('c') : 'all';
-  const list = c === 'all' ? CARE : CARE.filter(x => x.cat === c);
-  return pageHead('Personal Care', 'Personal <em class="metal">Care</em>', 'Luxury rituals for hair, body, face and lips, crafted with the same care as every FOMAXO creation.') + `
-  <section style="padding-bottom:0"><div class="wrap">
-    <div class="filters">${CARE_CATS.map(x => `<a class="chip${x[0] === c ? ' on' : ''}" href="#/personal-care${x[0] === 'all' ? '' : '?c=' + x[0]}">${x[1]}</a>`).join('')}</div>
-    <div class="grid shop-grid cx-grid">${list.map(careCard).join('')}</div>
-  </div></section>
+function personalCare(){
+  return pageHead('Personal Care', 'Personal <em class="metal">Care</em>', 'The FOMAXO universe is expanding beyond fragrance.') + `
   <section class="sec"><div class="wrap"><div class="pc pc-poster rv-up">
     <div class="pc-media pc-photo"><img src="${IMG('personal-care-poster')}" alt="FOMAXO Personal Care poster: crafted by nature, elevated by luxury" loading="lazy" width="1024" height="1536"></div>
-    <div class="pc-copy"><span class="eyebrow">Better together</span><h2>Parfum and care <em class="metal">combos</em></h2>
-      <p class="lead">Pair your FOMAXO parfum with body, hair and lip care in the same signature. Every product is guided by the same principles as our perfumes: simplicity, quality and recognisability.</p>
-      <div class="ctas"><a class="btn" href="#/combo">Shop combos</a></div>
-      <form class="notify" data-interest="Personal Care"><input type="email" required placeholder="Email for new launches" aria-label="Email"><button class="btn sm" type="submit">Notify me</button></form>
-    </div></div></div></section>`;
-}
-/* a combo's products as they stand today: null when one of them is hidden or its size is not sold */
-const comboItems = g => { const out = [];
-  for (const [id, s] of g.items) {
-    if (CARE_BY[id]) { const c = CARE_BY[id]; out.push({img: id, name: c.name, sub: c.type, price: c.aed, label: careLabel(c)}); continue; }
-    if (!shown(id) || !P[id].sizes.includes(s)) return null;
-    const p = P[id]; out.push({img: imgFor(p, s), name: p.name, sub: sizeLabel(s), price: p.prices[s], label: `${p.name} ${sizeLabel(s)}`, sm: true});
-  }
-  return out; };
-function comboCard(g, ls, i){
-  const worth = ls.every(x => hasPrice(x.price)) ? ls.reduce((t, x) => t + +x.price, 0) : null;
-  const pics = ls.slice(0, 4);
-  return `<article class="cbx rv-up d${i % 3}">
-    <div class="cbx-pics n${pics.length}">${g.badge ? `<span class="tag">${esc(g.badge)}</span>` : ''}${pics.map(x => `<img src="${x.sm ? SM(x.img) : IMG(x.img)}" alt="" loading="lazy">`).join('')}</div>
-    <div class="cbx-body">
-      <span class="eyebrow">${esc(g.tag)}</span>
-      <h3>${esc(g.name)}</h3>
-      <p class="desc">${esc(g.v)}</p>
-      <ul class="cbx-list">${ls.map(x => `<li><b>${esc(x.name)}</b><span>${esc(x.sub)}</span></li>`).join('')}</ul>
-      <div class="cbx-price">${worth ? `<div><small>Worth</small><b>${moneyHTML(worth)}</b></div>` : ''}<span class="price na">Combo price coming soon</span></div>
-      <a class="btn sm" href="${waTo(`Hello FOMAXO, I would like to order the ${g.name} combo:\n${ls.map(x => '- ' + x.label).join('\n')}\n\nPlease share the combo price.`)}" target="_blank" rel="noopener">${WA_IC()}<span>Order on WhatsApp</span></a>
-    </div>
-  </article>`;
-}
-function comboPage(){
-  document.title = 'Combos — FOMAXO';
-  const sets = COMBOS.map(g => [g, comboItems(g)]).filter(x => x[1]);
-  const own = waTo('Hello FOMAXO, I would like to build my own combo.');
-  return pageHead('Combo', 'The <em class="metal">Combos</em>', 'Parfums and personal care, paired the way you use them. Pick a combo and order it on WhatsApp, or build your own.') + `
-  <section style="padding-bottom:0"><div class="wrap"><div class="cbx-grid">${sets.map(([g, ls], i) => comboCard(g, ls, i)).join('')}</div></div></section>
-  <section class="sec"><div class="wrap"><div class="pc rv-up">
-    <div class="pc-media pc-photo"><img src="${IMG('personal-care-poster')}" alt="" loading="lazy" width="1024" height="1536"></div>
-    <div class="pc-copy"><span class="eyebrow">Your own combo</span><h2>Build your <em class="metal">own</em></h2>
-      <p class="lead">Want something different? Mix any FOMAXO parfums and personal care into one combo. Tell us what you would like inside and we put it together for you.</p>
-      <div class="ctas"><a class="btn" href="${own}" target="_blank" rel="noopener">${WA_IC()}<span>Build your own combo</span></a></div>
-    </div></div></div></section>`;
+    <div class="pc-copy"><span class="soon">Coming soon</span><h2>Elevating <em class="metal">everyday rituals</em></h2>
+      <p class="lead">Looking ahead, our ambition extends beyond fragrances. We are launching a diverse range of high-end, luxury products designed to elevate lifestyles and inspire aspirational minds.</p>
+      <p class="lead">Every new introduction is guided by the same principles as our perfumes: simplicity, quality and recognisability.</p>
+      <form class="notify" data-interest="Personal Care"><input type="email" required placeholder="Email for first access" aria-label="Email"><button class="btn sm" type="submit">Notify me</button></form>
+    </div></div></div></section>
+  <section class="sec" style="padding-top:0"><div class="wrap">${secHead('Meanwhile','Discover the <em class="metal">collection</em>')}<div class="grid">${FRAG.slice(0,3).map((p,i)=>card(p,{d:'d'+i})).join('')}</div></div></section>`;
 }
 function about(){
   return pageHead('About FOMAXO', 'About <em class="metal">FOMAXO</em>', 'For Outstanding Minds, Acquiring Xtraordinary Opulence.') + `
@@ -4384,8 +4274,7 @@ function route(){
     case 'fragrances': html = fragrances(q); break;
     case 'product': html = product(seg[1], q); after = () => P[seg[1]] && !P[seg[1]].hidden && bindProduct(P[seg[1]]); break;
     case 'collections': html = collections(seg[1]); if (seg[1] === 'elite') after = bindElite; if (seg[1] === 'fragrance') after = bindFragColl; break;
-    case 'personal-care': html = personalCare(q); break;
-    case 'combo': html = comboPage(); break;
+    case 'personal-care': html = personalCare(); break;
     case 'about': html = about(); break;
     case 'contact': html = contact(q); after = bindContact; break;
     case 'partnership': location.replace('#/franchise'); return;
