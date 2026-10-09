@@ -2384,14 +2384,14 @@ if (isset($_GET['members']) || (isset($_GET['orders']) && isset($_GET['ask']))) 
     /* asked orders that left the list above (everything reviewed, or older): still shown, with their review status */
     $inDue = array_flip(array_column($rqDue, 'order_no'));
     foreach ($asked as $no => $a) {
-      if (isset($inDue[$no])) continue;
+      if (isset($inDue[$no]) || fx_rq_state($a) !== 'not') continue;   // reviewed (or partly) orders leave this list and go on to Refill reminders
       $tr .= '<tr class="row" data-st="' . fx_rq_state($a) . '"><td class="rn"><b>' . hx($a['name'] ?: 'No name') . '</b><div class="muted small">' . h($a['phone']) . '</div></td>'
            . '<td class="rd small"><b>' . h(date('d/m/Y', strtotime($a['created_at']))) . '</b><div class="muted">' . h($no) . '</div></td>'
            . '<td class="ra">' . fx_rq_badge($a) . ' <span class="rsent">' . ($a['auto'] ? 'Sent by itself ' : 'Sent ') . h(date('d/m', strtotime($a['sent']))) . '</span></td></tr>';
     }
-    $stN = array_count_values(array_map('fx_rq_state', $asked)); $rvN = $stN['rv'] ?? 0;
+    $stN = array_count_values(array_map('fx_rq_state', $asked)); $rvN = ($stN['rv'] ?? 0) + ($stN['part'] ?? 0);
     $flt = '<div class="seg rqseg" role="group" aria-label="Show">' . implode('', array_map(fn($k, $l) => '<button type="button" data-f="' . $k . '"' . ($k === '' ? ' class="on"' : '') . '>' . $l . '</button>',
-      ['', 'rv', 'part', 'not', 'ask'], ['All', 'Reviewed ' . $rvN, 'Partly ' . ($stN['part'] ?? 0), 'Not reviewed ' . ($stN['not'] ?? 0), 'To ask ' . $rqOpen])) . '</div>';
+      ['', 'not', 'ask'], ['All', 'Not reviewed ' . ($stN['not'] ?? 0), 'To ask ' . $rqOpen])) . '</div>';
     $hh = fn($x) => (($x % 12) ?: 12) . ' ' . ($x % 24 < 12 ? 'AM' : 'PM');
     $hsel = fn($nm, $a, $b, $v) => '<select id="' . $nm . '" name="' . $nm . '">' . implode('', array_map(fn($x) => '<option value="' . $x . '"' . ($x == $v ? ' selected' : '') . '>' . $hh($x) . ($x == 24 ? ' (midnight)' : '') . '</option>', range($a, $b))) . '</select>';
     $sw = fn($nm, $on, $lbl) => '<div class="rfsw" role="radiogroup" aria-label="' . $lbl . '"><label><input type="radio" name="' . $nm . '" value="1"' . ($on ? ' checked' : '') . '><span>On</span></label><label><input type="radio" name="' . $nm . '" value=""' . ($on ? '' : ' checked') . '><span>Off</span></label></div>';
@@ -2412,8 +2412,8 @@ if (isset($_GET['members']) || (isset($_GET['orders']) && isset($_GET['ask']))) 
       . $box
       . '<div class="stats up rfstats rq3"><div class="stat"><span>To ask</span><b>' . $rqOpen . '</b></div><div class="stat"><span>Sent</span><b>' . count($asked) . '</b></div><div class="stat"><span>Reviewed</span><b>' . $rvN . '</b></div></div>'
       . '<div class="fill">' . ($tr ? $flt . '<table class="mlist rflist"><thead><tr><th>Customer</th><th>Order</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
-           : '<p class="card muted" style="margin:0">Nobody to ask right now. Orders show here ' . $set['days'] . ' to ' . $set['list_to'] . ' days after they are placed, until every perfume in them is reviewed.</p>')
-      . '<p class="muted small after">Orders placed ' . $set['days'] . ' to ' . $set['list_to'] . ' days ago with perfumes not yet reviewed. WhatsApp opens with a ready message and the order\'s private review link (Arabic for Arabic names); after you tap it the customer shows Sent. Every asked order shows if the customer reviewed: Reviewed (with stars), Reviewed 1 of 2, or Not reviewed yet.</p></div>'
+           : '<p class="card muted" style="margin:0">Nobody to ask right now. Orders show here ' . $set['days'] . ' to ' . $set['list_to'] . ' days after they are placed, until the customer reviews them.</p>')
+      . '<p class="muted small after">Orders placed ' . $set['days'] . ' to ' . $set['list_to'] . ' days ago with perfumes not yet reviewed. WhatsApp opens with a ready message and the order\'s private review link (Arabic for Arabic names); after you tap it the customer shows Sent. Once a customer reviews anything from the order (all or part), the order leaves this list and only gets the normal Refill reminder, without the review request. Reviewed counts them.</p></div>'
       . '<script>document.querySelectorAll(".rqseg button").forEach(function(b){b.onclick=function(){document.querySelectorAll(".rqseg button").forEach(function(x){x.classList.toggle("on",x===b)});document.querySelectorAll(".rflist tr[data-st]").forEach(function(r){r.style.display=!b.dataset.f||r.dataset.st===b.dataset.f?"":"none"})}});</script><script>document.addEventListener("click",function(e){var a=e.target.closest("[data-rq]");if(!a)return;var f=new FormData();f.append("rq_sent",a.dataset.rq);f.append("csrf",' . json_encode($_SESSION['csrf']) . ');fetch("./?members=1",{method:"POST",body:f,credentials:"same-origin"});a.classList.add("line");var r=a.parentNode;if(!r.querySelector(".rsent"))r.insertAdjacentHTML("afterbegin","<span class=\\"rsent\\">Sent today</span> ")});</script>', true, true);
   }
   $rg = isset($_GET['c']) ? null : adm_range('members', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
