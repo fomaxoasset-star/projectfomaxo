@@ -59,6 +59,33 @@ function fx_rq_due($pdo) {
   return $due;
 }
 
+/* every order already asked, newest first, with how many of its perfumes the customer has reviewed (from the order's review link)
+   and the average stars: 'total' perfumes, 'done' reviewed, 'stars' null until the first review */
+function fx_rq_asked($pdo) {
+  $sent = json_decode((string)fomaxo_setting($pdo, 'rvreq_sent'), true) ?: [];
+  if (!$sent) return [];
+  $links = [];
+  foreach (glob(rv_dir('links') . '/*.json') ?: [] as $f) { $j = json_decode((string)@file_get_contents($f), true); if (isset($j['no'], $sent[$j['no']])) $links[$j['no']] = $j; }
+  $stars = []; foreach (rv_all() as $r) if (!empty($r['id'])) $stars[$r['id']] = (int)($r['rating'] ?? 0);
+  $s = $pdo->prepare('SELECT order_no, name, phone, created_at FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($sent), '?')) . ')'); $s->execute(array_map('strval', array_keys($sent)));
+  $out = [];
+  foreach ($s->fetchAll() as $o) {
+    $l = $links[$o['order_no']] ?? []; $done = array_values((array)($l['done'] ?? []));
+    $st = array_filter(array_map(fn($id) => $stars[$id] ?? 0, $done));
+    $out[$o['order_no']] = $o + ['sent' => substr($sent[$o['order_no']], 0, 10), 'auto' => str_ends_with($sent[$o['order_no']], 'auto'),
+      'total' => max(count((array)($l['products'] ?? [])), count($done)), 'done' => count($done), 'stars' => $st ? round(array_sum($st) / count($st), 1) : null];
+  }
+  uasort($out, fn($a, $b) => strcmp($b['sent'], $a['sent']) ?: strcmp($b['created_at'], $a['created_at']));
+  return $out;
+}
+
+/* the status shown in admin: green Reviewed (with stars), Reviewed 1 of 2, or Not reviewed yet */
+function fx_rq_badge($a) {
+  if ($a['total'] > 0 && $a['done'] >= $a['total']) return '<span class="rqst ok" title="Every perfume in this order is reviewed">Reviewed' . ($a['stars'] ? ' ★' . rtrim(rtrim(number_format($a['stars'], 1), '0'), '.') : '') . '</span>';
+  if ($a['done'] > 0) return '<span class="rqst part">Reviewed ' . $a['done'] . ' of ' . $a['total'] . '</span>';
+  return '<span class="rqst">Not reviewed yet</span>';
+}
+
 /* what the message says: first name, perfumes, review link (null once everything is reviewed), coupon (null when the coupon is off), Arabic or not */
 function fx_rq_parts($pdo, $o) {
   $p = fx_refill_parts($pdo, $o); $set = fx_rq_set($pdo);
