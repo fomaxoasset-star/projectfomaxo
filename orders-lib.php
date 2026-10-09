@@ -148,10 +148,11 @@ function fomaxo_db_schema($pdo) {
     $set->execute([fomaxo_json($d), $id]);
   }
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '23')");
-  /* v24: newer 100ml bottle photos for Old Money, Royal Candy, Matcha Coco and Passion Sin */
-  foreach (['oldmoney', 'royalcandy', 'matchacoco', 'passionsin'] as $id) {
+  /* v24: newer 100ml bottle photos for Old Money, Royal Candy, Matcha Coco and Passion Sin, and 50ml photos zoomed so the bottle is the same size in every photo */
+  foreach (['oldmoney' => 'oldmoney-50-main', 'royalcandy' => 'royalcandy-50-main', 'matchacoco' => 'matchacoco-50-main', 'passionsin' => 'passionsin-main'] as $id => $old) {
     $get->execute([$id]); $d = json_decode((string)$get->fetchColumn(), true);
     if (!is_array($d)) continue;
+    $d['images'] = array_values(array_merge(["$id-50-v2"], array_diff(array_filter((array)($d['images'] ?? []), 'is_string'), [$old, "$id-50-v2"])));
     $d['sizeImages'] = (array)($d['sizeImages'] ?? []); $d['sizeImages']['100'] = "$id-100-v2";
     $set->execute([fomaxo_json($d), $id]);
   }
