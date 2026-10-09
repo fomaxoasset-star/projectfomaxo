@@ -35,7 +35,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 23) return;
+  if ($ver >= 24) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -148,6 +148,15 @@ function fomaxo_db_schema($pdo) {
     $set->execute([fomaxo_json($d), $id]);
   }
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '23')");
+  /* v24: newer 100ml bottle photos for Old Money, Royal Candy, Matcha Coco and Passion Sin, and 50ml photos zoomed so the bottle is the same size in every photo */
+  foreach (['oldmoney' => 'oldmoney-50-main', 'royalcandy' => 'royalcandy-50-main', 'matchacoco' => 'matchacoco-50-main', 'passionsin' => 'passionsin-main'] as $id => $old) {
+    $get->execute([$id]); $d = json_decode((string)$get->fetchColumn(), true);
+    if (!is_array($d)) continue;
+    $d['images'] = array_values(array_merge(["$id-50-v2"], array_diff(array_filter((array)($d['images'] ?? []), 'is_string'), [$old, "$id-50-v2"])));
+    $d['sizeImages'] = (array)($d['sizeImages'] ?? []); $d['sizeImages']['100'] = "$id-100-v2";
+    $set->execute([fomaxo_json($d), $id]);
+  }
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '24')");
 }
 /* real orders the owner has not opened yet: not test, not an unpaid card attempt, not cancelled or refunded */
 const FX_NEW_ORDER_SQL = "seen_at IS NULL AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')";
