@@ -22,11 +22,12 @@ ABOUT THE BRAND
 
 THE WEBSITE (technical)
 - One file: index.html (all pages, CSS and JavaScript inside), photos in assets/img/ as .webp.
-- Product data and prices are in the window.STORE block inside index.html.
-- Hosted on Hostinger (public_html). Card payments use Stripe through checkout.php;
-  the secret key lives only in stripe-config.php. Prices also exist in checkout.php ($CATALOG)
-  — if a price changes, update BOTH places.
-- WhatsApp ordering (+971 54 314 6334) stays as a second option next to card payment.
+- Products and prices are edited on fomaxo.com/admin → Products (saved in the database).
+  The window.STORE list in index.html and $CATALOG in store-lib.php are only the fallback when the
+  database is down — keep both in step if a product changes.
+- Hosted on Hostinger (public_html). Card / Apple Pay / Google Pay go through Ziina (ziina.php);
+  cash on delivery orders go through checkout.php. Both re-check prices on the server.
+  Keys live only in the config files one level above public_html, never in GitHub.
 - Light and dark mode with a switch in the top bar; first visit follows the visitor's device
   setting. Browsers must not be allowed to re-colour the site.
 
@@ -63,10 +64,10 @@ MY REQUEST:
 ## Ready-made requests (paste under "MY REQUEST")
 
 **Add a new product**
-> Add a new product: name ___, sizes ___ ml, prices AED ___ (original price if on sale: AED ___), tier ___ (Signature / Prestige / Elite), short description: ___, notes: top ___ / heart ___ / base ___. Photos attached. Also add it to checkout.php.
+> Add a new product: name ___, sizes ___ ml, prices AED ___ (original price if on sale: AED ___), tier ___ (Signature / Prestige / Elite), short description: ___, notes: top ___ / heart ___ / base ___. Photos attached. (Or add it yourself on fomaxo.com/admin → Products.)
 
 **Change a price**
-> Change the price of ___ (___ml) from AED ___ to AED ___ in both index.html and checkout.php.
+> Change the price of ___ (___ml) from AED ___ to AED ___ on fomaxo.com/admin → Products (and in the fallback lists in index.html and store-lib.php).
 
 **Start a sale**
 > Put ___ on sale: new price AED ___, show the old price AED ___ crossed out, from ___ to ___.
@@ -94,4 +95,4 @@ MY REQUEST:
 ### Tips
 - Always attach the **latest** index.html so Claude works on your current version.
 - Screenshots help a lot when something looks wrong.
-- Never paste your Stripe **secret key** into a chat — only into stripe-config.php on Hostinger.
+- Never paste a payment **secret key** or token into a chat — only into its config file on Hostinger, one level above public_html.
