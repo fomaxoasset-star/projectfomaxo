@@ -110,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
     require_once __DIR__ . '/orders-lib.php';
     fomaxo_order_paid($rec['no'], $note !== '' ? trim($note) : '');
     fomaxo_stock_move($rec['no']);   // stock goes down once the card payment is confirmed
+    if (!empty($rec['coupon'])) fx_coupon_spent(fomaxo_db(), $rec['coupon']);   // a used-up one-use coupon deletes itself (the order keeps the code)
     fomaxo_log_order([date('Y-m-d H:i'), $rec['no'], 'Ziina — PAID' . $note, $total, $c['name'], $c['phone'], $c['email'], $c['emirate'], $c['address'], $c['note'], implode(' | ', $rec['summary'])]);
     /* the paid order is recorded: show the shopper their confirmation now, the emails go out right after */
     if (!empty($rec['review'])) $out['review'] = $rec['review'];
@@ -146,6 +147,10 @@ if ($order['totalFils'] < $MIN_ORDER * 100) { http_response_code(400); echo json
 require_once __DIR__ . '/orders-lib.php';
 $lineIn = array_map(fn($l) => ['id' => (string)($l['id'] ?? ''), 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? []))], (array)($in['lines'] ?? []));
 if ($msg = fomaxo_stock_problem($lineIn, $CATALOG)) { http_response_code(409); echo json_encode(['error' => $msg]); exit; }
+if ($f = $order['free']) {   // a free product coupon: its product joins the order at AED 0 and comes off stock once paid
+  $lineIn[] = ['id' => $f['id'], 'opt' => $f['opt'], 'qty' => 1, 'free' => true, 'coupon' => $f['coupon']];
+  if (fomaxo_stock_problem($lineIn, $CATALOG)) { http_response_code(409); echo json_encode(['error' => "Sorry, your free {$f['name']} is out of stock right now. Please remove the coupon and try again."]); exit; }
+}
 if ($order['gift']) foreach ($CATALOG as $cid => $c) if ($c['name'] === $order['gift']) { $lineIn[] = ['id' => $cid, 'opt' => '10', 'qty' => 1, 'free' => true]; break; }
 $no = fomaxo_save_order(['temp' => true, 'payment' => 'Card (Ziina)', 'status' => 'Awaiting payment', 'subtotal' => $order['fullFils'] / 100, 'discount' => $order['discountFils'] / 100,
         'fee' => 0, 'total' => $order['totalFils'] / 100, 'items' => implode(' | ', $order['summary']), 'free_mini' => $order['gift'], 'coupon' => $order['coupon'], 'wa_optin' => $cust['wa'], 'lines' => $lineIn, 'test' => $testMode]
@@ -177,13 +182,14 @@ if (!in_array($code, [200, 201], true) || empty($pi['redirect_url']) || empty($p
 
 $rows = [];
 foreach ($order['items'] as $it) $rows[] = "• {$it['qty']} x {$it['name']}" . ($it['desc'] ? " ({$it['desc']})" : '') . ' — ' . fomaxo_aed($it['unit'] * $it['qty']);
+if ($order['free']) $rows[] = "• 1 x FOMAXO {$order['free']['name']} — FREE with coupon {$order['free']['coupon']}";
 if ($order['gift']) $rows[] = "• FREE 10ml {$order['gift']} mini";
 if ($order['discountFils']) $rows[] = "{$order['discLabel']}: -" . fomaxo_aed($order['discountFils']);
 
 $pid = preg_replace('/[^A-Za-z0-9_\-]/', '', $pi['id']);
 fomaxo_order_set($no, ['ref' => $pid]);
 @file_put_contents(ziina_dir() . "/$pid.json", json_encode(['no' => $no, 'created' => date('Y-m-d H:i'), 'totalFils' => $order['totalFils'],
-  'summary' => $order['summary'], 'rows' => $rows, 'cust' => $cust, 'test' => $testMode,
+  'summary' => $order['summary'], 'rows' => $rows, 'cust' => $cust, 'test' => $testMode, 'coupon' => $order['coupon'],
   'pids' => array_values(array_unique(array_map(fn($l) => (string)($l['id'] ?? ''), (array)($in['lines'] ?? []))))]), LOCK_EX);
 fomaxo_log_order([date('Y-m-d H:i'), $no, 'Ziina — awaiting payment' . ($testMode ? ' (TEST)' : ''), fomaxo_aed($order['totalFils']), $cust['name'], $cust['phone'], $cust['email'],
                   $cust['emirate'], $cust['address'], $cust['note'], implode(' | ', $order['summary'])]);

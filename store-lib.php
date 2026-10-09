@@ -76,11 +76,13 @@ function fomaxo_price_order($in) {
     if ($gid !== '') { $gift = $CATALOG[$gid]['name']; $summary[] = "FREE 10ml $gift mini"; }
   }
   /* coupon code (checked again here, never trusted from the browser): used only when it saves more than the multi-buy discount */
-  $coupon = null; $discLabel = "Multi-buy $pct% off";
+  $coupon = null; $free = null; $discLabel = "Multi-buy $pct% off";
   if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
     $cp = fomaxo_coupon_apply($in['coupon'], $fullFils, $fullFils - $netFils, is_string($in['customer']['phone'] ?? null) ? $in['customer']['phone'] : '');
     if (isset($cp['error'])) return ['error' => $cp['error'] . ' Please remove it and try again.'];
-    if ($cp['stack'] && $cp['saveFils'] > 0) {   // "Use both": the coupon comes off after the multi-buy discount
+    if (isset($cp['free'])) {   // a free product coupon: its product joins the order at AED 0 (ziina.php adds the line); the multi-buy discount stays
+      $coupon = $cp['code']; $free = $cp['free'] + ['coupon' => $cp['code']]; $summary[] = "1 x FOMAXO {$free['name']} — FREE with coupon {$cp['code']}";
+    } elseif ($cp['stack'] && $cp['saveFils'] > 0) {   // "Use both": the coupon comes off after the multi-buy discount
       $netFils -= $cp['saveFils']; $coupon = $cp['code']; $cl = "Coupon {$cp['code']} ({$cp['label']})";
       $discLabel = ($pct ? "$discLabel + " : '') . $cl; $summary[] = "$cl: -" . fomaxo_aed($cp['saveFils']);
     } elseif (!$cp['stack'] && $cp['saveFils'] > $fullFils - $netFils) {
@@ -89,7 +91,7 @@ function fomaxo_price_order($in) {
       $summary[] = "$discLabel: -" . fomaxo_aed($cp['saveFils']);
     }
   }
-  return ['items' => $items, 'summary' => $summary, 'pct' => $pct, 'gift' => $gift, 'coupon' => $coupon, 'discLabel' => $discLabel,
+  return ['items' => $items, 'summary' => $summary, 'pct' => $pct, 'gift' => $gift, 'coupon' => $coupon, 'free' => $free, 'discLabel' => $discLabel,
           'fullFils' => $fullFils, 'discountFils' => $fullFils - $netFils, 'totalFils' => $netFils];
 }
 
