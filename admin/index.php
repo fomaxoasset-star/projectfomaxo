@@ -330,7 +330,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
 .mtop .mmin input{text-align:center}.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
-.rfauto{padding:8px 14px;margin:0 0 8px}.rfauto summary{cursor:pointer;font-weight:600}.rfauto summary>span:first-child{margin-right:6px}.rfauto label{margin:8px 0 3px}.rfsw{display:inline-flex;margin:10px 0 0;border:1px solid var(--gold);border-radius:999px;overflow:hidden}.rfsw label{margin:0!important;cursor:pointer}.rfsw input{position:absolute;opacity:0;pointer-events:none}.rfsw span{display:block;padding:6px 22px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rfsw input:checked+span{background:var(--gold);color:var(--gold-ink)}.rflist .rd{white-space:nowrap}.rflist .ra{text-align:right;white-space:nowrap}.rstop{font-size:12px;font-weight:600;color:var(--bad);margin-right:6px}.wastop{display:inline;margin:0 0 0 6px}.btn.xs{padding:2px 9px;font-size:10.5px}.rfhook{margin:8px 0 0}.rfhook p{margin:4px 0 0}.rfhook .sel{user-select:all;word-break:break-all}.rsent{font-size:12px;font-weight:600;color:var(--ok);margin-right:6px}.rfstats{grid-template-columns:repeat(2,minmax(0,180px))}.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
+.rfauto{padding:8px 14px;margin:0 0 8px}.rfauto summary{cursor:pointer;font-weight:600}.rfauto summary>span:first-child{margin-right:6px}.rfauto label{margin:8px 0 3px}.rfsw{display:inline-flex;margin:10px 0 0;border:1px solid var(--gold);border-radius:999px;overflow:hidden}.rfsw label{margin:0!important;cursor:pointer}.rfsw input{position:absolute;opacity:0;pointer-events:none}.rfsw span{display:block;padding:6px 22px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rfsw input:checked+span{background:var(--gold);color:var(--gold-ink)}.rflist .rd{white-space:nowrap}.rflist .ra{text-align:right;white-space:nowrap}.rqsw{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:flex-end;margin:6px 0 0}.rqsw #rq_pct{width:90px}.rqsw .rfsw{margin:0}.rqsw>div>label{display:block}.ocount:has(.rqbtn){display:flex;justify-content:space-between;align-items:center;gap:8px}.rqbtn{white-space:nowrap;flex:none}.rqwa{display:inline-block;margin:3px 0 0 6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 9px;border-radius:20px;background:var(--gold);color:var(--gold-ink);text-decoration:none;white-space:nowrap}.rqwa.done{background:transparent;color:var(--ok);border:1px solid var(--ok)}.rstop{font-size:12px;font-weight:600;color:var(--bad);margin-right:6px}.wastop{display:inline;margin:0 0 0 6px}.btn.xs{padding:2px 9px;font-size:10.5px}.rfhook{margin:8px 0 0}.rfhook p{margin:4px 0 0}.rfhook .sel{user-select:all;word-break:break-all}.rsent{font-size:12px;font-weight:600;color:var(--ok);margin-right:6px}.rfstats{grid-template-columns:repeat(2,minmax(0,180px))}.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}.mcard{padding:10px 14px;margin:0 0 10px}.mcard dl{margin:0}
 /* Orders like fomaxo.in: coloured top edge on the four boxes, step boxes label left / count right, coupon row, one filter line */
 .ost .stat{border-top:3px solid var(--gold)}.ost .stat.onl{border-top-color:var(--ok)}
 .cpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
@@ -1426,7 +1426,7 @@ if (isset($_GET['coupons'])) {
     $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($ends && $ends < $now ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled']
            : ($starts && $starts > $now ? ['Scheduled', 's-New'] : ['On', 'p-Paid'])));
     $time = $starts && $starts > $now ? 'Starts ' . $dt($starts) . ($ends ? ' · ends ' . $dt($ends) : '') : ($ends ? 'Ends ' . $dt($ends) . ($state[0] === 'On' ? ' · ' . $left($ends) : '') : '');
-    $rules = array_filter([!empty($c['phone']) ? (str_starts_with($c['code'], 'REFILL-') ? 'Refill' : 'Goodwill') . ' · for ' . $c['phone'] : '', !empty($c['stack']) ? 'Use both' : 'Bigger offer', (float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
+    $rules = array_filter([!empty($c['phone']) ? (str_starts_with($c['code'], 'REFILL-') ? 'Refill' : (str_starts_with($c['code'], 'REVIEW-') ? 'Review' : 'Goodwill')) . ' · for ' . $c['phone'] : '', !empty($c['stack']) ? 'Use both' : 'Bigger offer', (float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
     $btn = fn($name, $val, $label, $ask = '') => '<form method="post" style="margin:0"' . ($ask ? ' onsubmit="return confirm(\'' . h($ask) . '\')"' : '') . '>' . csrf_field()
       . '<input type="hidden" name="code" value="' . h($c['code']) . '"><button class="btn line sm" name="' . $name . '" value="' . $val . '">' . $label . '</button></form>';
     $tr .= '<div class="cprow"><div><b class="cpcode">' . h($c['code']) . '</b> <span class="tag ' . $state[1] . '">' . $state[0] . '</span>'
@@ -2237,7 +2237,7 @@ if (isset($_GET['reviews'])) {
 }
 
 /* ---- members: customers who keep coming back. Orders are grouped by mobile number (last 9 digits), or by email when there is no mobile ---- */
-if (isset($_GET['members'])) {
+if (isset($_GET['members']) || (isset($_GET['orders']) && isset($_GET['ask']))) {   // ?orders=1&ask=1 = Review requests (under Orders, built from the member data below)
   if (isset($_GET['subs'])) {   // email list from the website sign-up forms (subscribe.php), as a CSV that opens straight in Excel
     $rows = [];
     try { fomaxo_subscribers_table($pdo); $rows = $pdo->query('SELECT email, interest, page, created_at, updated_at FROM fx_subscribers ORDER BY created_at DESC')->fetchAll(); } catch (Throwable $e) {}
@@ -2272,6 +2272,19 @@ if (isset($_GET['members'])) {
       require_once dirname(__DIR__) . '/whatsapp-lib.php';
       fx_wa_stop($pdo, (string)$_POST['wa_stop'], 'admin') ? flash('WhatsApp messages stopped for this customer.', true) : flash('No mobile number for this customer.');
       go(['members' => 1, 'c' => (string)($_POST['back'] ?? '')]);
+    }
+    if (isset($_POST['rq_set'])) {   // Settings box on Review requests: timing, coupon on/off, automatic on/off
+      require_once dirname(__DIR__) . '/whatsapp-lib.php'; require_once dirname(__DIR__) . '/review-req-lib.php';
+      $n = fn($k, $lo, $hi, $def) => is_numeric($x = trim((string)($_POST[$k] ?? ''))) ? max($lo, min($hi, (float)$x)) : $def;
+      $q0 = fx_rq_set($pdo); $tf = (int)$n('rq_from', 0, 23, $q0['from']); $tt = (int)$n('rq_to', 1, 24, $q0['to']);
+      if ($tt <= $tf) { flash('The end hour must be after the start hour.'); go(['orders' => 1, 'ask' => 1]); }
+      $auto = !empty($_POST['rq_auto']) && fx_wa_ready();
+      fomaxo_setting($pdo, 'rvreq', json_encode(['days' => (int)$n('rq_days', 1, 120, $q0['days']), 'from' => $tf, 'to' => $tt, 'coupon' => !empty($_POST['rq_coupon']), 'pct' => round($n('rq_pct', 1, 50, $q0['pct']), 2), 'auto' => $auto]));
+      flash(!empty($_POST['rq_auto']) && !$auto ? 'Saved. Add the WhatsApp details on Refill reminders to switch automatic sending on.' : 'Saved.', true); go(['orders' => 1, 'ask' => 1]);
+    }
+    if (isset($_POST['rq_sent'])) {   // tapped WhatsApp on the review request list: that order is marked Sent (and its coupon saved)
+      if (preg_match('/^FMX-\d+$/', $no = (string)$_POST['rq_sent'])) { require_once dirname(__DIR__) . '/review-req-lib.php'; fx_rq_mark($pdo, $no); }
+      http_response_code(204); exit;
     }
     if (isset($_POST['refill_sent'])) {   // tapped WhatsApp on the refill reminder list: that order is marked Sent
       if (preg_match('/^FMX-\d+$/', $no = (string)$_POST['refill_sent'])) { require_once dirname(__DIR__) . '/refill-lib.php'; fx_refill_mark($pdo, $no); }
@@ -2350,6 +2363,47 @@ if (isset($_GET['members'])) {
            : '<p class="card muted" style="margin:0">Nobody is due right now. Customers show here ' . $tm['list_from'] . ' to ' . $tm['list_to'] . ' days after their latest order.</p>')
       . '<p class="muted small after">Customers whose latest order was ' . $tm['list_from'] . ' to ' . $tm['list_to'] . ' days ago. WhatsApp opens with a ready message (Arabic for Arabic names); after you tap it the customer shows Sent. With Automatic sending on, customers marked WhatsApp ✓ get it by itself ' . $tm['days'] . ' days after the order; the rest only when you tap. Once they order again they leave this list.</p></div>'
       . '<script>document.addEventListener("click",function(e){var a=e.target.closest("[data-rf]");if(!a)return;var f=new FormData();f.append("refill_sent",a.dataset.rf);f.append("csrf",' . json_encode($_SESSION['csrf']) . ');fetch("./?members=1",{method:"POST",body:f,credentials:"same-origin"});a.classList.add("line");var r=a.parentNode;if(!r.querySelector(".rsent"))r.insertAdjacentHTML("afterbegin","<span class=\\"rsent\\">Sent today</span> ")});</script>', true, true);
+  }
+  /* review requests: a few days after each order, a WhatsApp message asking for a Verified Purchaser review (optional single-use coupon, one per customer) */
+  require_once dirname(__DIR__) . '/review-req-lib.php';
+  $rqDue = fx_rq_due($pdo); $rqOpen = count(array_filter($rqDue, fn($o) => !$o['sent'] && !$o['stopped']));
+  if (isset($_GET['ask'])) {
+    require_once dirname(__DIR__) . '/whatsapp-lib.php';
+    fomaxo_en_many(array_column($rqDue, 'name'));
+    $set = fx_rq_set($pdo); $tr = '';
+    foreach ($rqDue as $k => $o) {
+      $pt = $o['parts']; $msg = fx_rq_text($pt);
+      $u = h(self_url(['members' => 1, 'c' => $k]));
+      $tr .= '<tr class="row"><td class="rn"><a href="' . $u . '"><b>' . hx($o['name'] ?: 'No name') . '</b></a>' . (!empty($waCust[$k]['on']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '')
+           . '<div class="muted small">' . h($o['phone']) . ($pt['perfumes'] !== '' ? ' · ' . h($pt['perfumes']) : '') . '</div></td>'
+           . '<td class="rd small"><b>' . $o['days'] . ' days</b><div class="muted">' . h(date('d/m/Y', strtotime($o['created_at']))) . ' · ' . h($o['order_no']) . '</div></td>'
+           . '<td class="ra">' . ($o['stopped'] ? '<span class="rstop" title="Replied STOP on WhatsApp">Stopped</span>'
+              : ($o['sent'] ? '<span class="rsent">' . ($o['auto'] ? 'Sent by itself ' : 'Sent ') . h(date('d/m', strtotime($o['sent']))) . '</span> ' : '')
+              . '<a class="btn sm' . ($o['sent'] ? ' line' : '') . '" data-rq="' . h($o['order_no']) . '" href="https://wa.me/' . h($waLink($o['phone'])) . '?text=' . rawurlencode($msg) . '" target="_blank" rel="noopener">WhatsApp</a>') . '</td></tr>';
+    }
+    $hh = fn($x) => (($x % 12) ?: 12) . ' ' . ($x % 24 < 12 ? 'AM' : 'PM');
+    $hsel = fn($nm, $a, $b, $v) => '<select id="' . $nm . '" name="' . $nm . '">' . implode('', array_map(fn($x) => '<option value="' . $x . '"' . ($x == $v ? ' selected' : '') . '>' . $hh($x) . ($x == 24 ? ' (midnight)' : '') . '</option>', range($a, $b))) . '</select>';
+    $sw = fn($nm, $on, $lbl) => '<div class="rfsw" role="radiogroup" aria-label="' . $lbl . '"><label><input type="radio" name="' . $nm . '" value="1"' . ($on ? ' checked' : '') . '><span>On</span></label><label><input type="radio" name="' . $nm . '" value=""' . ($on ? '' : ' checked') . '><span>Off</span></label></div>';
+    $waOk = fx_wa_ready(); $autoOn = $waOk && $set['auto']; $err = (string)fomaxo_setting($pdo, 'rvreq_auto_err');
+    $pct = rtrim(rtrim(number_format($set['pct'], 2, '.', ''), '0'), '.');
+    $box = '<details class="card rfauto"><summary><span>Settings</span><span class="muted small"> · ' . $set['days'] . ' days after the order · coupon ' . ($set['coupon'] ? $pct . '% on' : 'off') . ' · automatic ' . ($autoOn ? 'on, ' . $hh($set['from']) . '–' . $hh($set['to']) : 'off') . '</span></summary>'
+      . '<form method="post">' . csrf_field() . '<input type="hidden" name="rq_set" value="1">'
+      . '<div class="srow rftime"><div><label for="rq_days">Days after order</label><input id="rq_days" name="rq_days" type="number" min="1" max="120" inputmode="numeric" value="' . $set['days'] . '"></div>'
+      . '<div><label for="rq_from">Send from</label>' . $hsel('rq_from', 0, 23, $set['from']) . '</div>'
+      . '<div><label for="rq_to">Until</label>' . $hsel('rq_to', 1, 24, $set['to']) . '</div></div>'
+      . '<div class="rqsw"><div><label>Coupon in the message</label>' . $sw('rq_coupon', $set['coupon'], 'Coupon') . '</div>'
+      . '<div><label for="rq_pct">% off</label><input id="rq_pct" name="rq_pct" type="number" min="1" max="50" step="0.5" inputmode="decimal" value="' . $pct . '"></div>'
+      . '<div><label>Automatic sending</label>' . $sw('rq_auto', $autoOn, 'Automatic sending') . '</div></div>'
+      . '<p class="muted small" style="margin:6px 0 0">' . ($waOk ? 'Automatic sending goes only to customers marked WhatsApp ✓ and uses the WhatsApp details saved on <a href="./?members=1&amp;refill=1">Refill reminders</a>.' : 'To send automatically, first add the WhatsApp details on <a href="./?members=1&amp;refill=1">Refill reminders</a>.') . ' The coupon is single use, works only with that customer\'s mobile, and each customer gets one code.</p>'
+      . ($err !== '' && $autoOn ? '<p class="small" style="color:var(--bad);margin:4px 0 0">Last problem: ' . h($err) . '</p>' : '')
+      . '<p class="sbtn" style="margin:8px 0 0"><button class="btn sm">Save</button></p></form></details>';
+    page('Review requests', '<div class="pagehead"><div><p class="small" style="margin:0 0 2px"><a href="./?orders=1">← Orders</a></p><h1>Review requests</h1></div></div>' . flash()
+      . $box
+      . '<div class="stats up rfstats"><div class="stat"><span>To ask</span><b>' . $rqOpen . '</b></div><div class="stat"><span>Sent</span><b>' . count(array_filter($rqDue, fn($o) => $o['sent'])) . '</b></div></div>'
+      . '<div class="fill">' . ($tr ? '<table class="mlist rflist"><thead><tr><th>Customer</th><th>Order</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>'
+           : '<p class="card muted" style="margin:0">Nobody to ask right now. Orders show here ' . $set['days'] . ' to ' . $set['list_to'] . ' days after they are placed, until every perfume in them is reviewed.</p>')
+      . '<p class="muted small after">Orders placed ' . $set['days'] . ' to ' . $set['list_to'] . ' days ago with perfumes not yet reviewed. WhatsApp opens with a ready message and the order\'s private review link (Arabic for Arabic names); after you tap it the customer shows Sent. Once every perfume is reviewed they leave this list.</p></div>'
+      . '<script>document.addEventListener("click",function(e){var a=e.target.closest("[data-rq]");if(!a)return;var f=new FormData();f.append("rq_sent",a.dataset.rq);f.append("csrf",' . json_encode($_SESSION['csrf']) . ');fetch("./?members=1",{method:"POST",body:f,credentials:"same-origin"});a.classList.add("line");var r=a.parentNode;if(!r.querySelector(".rsent"))r.insertAdjacentHTML("afterbegin","<span class=\\"rsent\\">Sent today</span> ")});</script>', true, true);
   }
   $rg = isset($_GET['c']) ? null : adm_range('members', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
   if ($rg && $rg['span']) $all = array_values(array_filter($all, fn($o) => $o['created_at'] >= $rg['span'][0] && $o['created_at'] <= $rg['span'][1]));   // the list counts only orders in the period
@@ -2693,6 +2747,9 @@ $cpBar = '<a class="cpall' . ($f['cp'] === '1' ? ' on' : '') . '" href="' . h(se
 foreach ($cpRows as $r) { $on = $f['cp'] === $r['coupon']; $cpBar .= '<a class="cpc' . ($on ? ' on' : '') . '" href="' . h(self_url($on ? $q : $q + ['cp' => $r['coupon']])) . '">' . h($r['coupon']) . ' <b>' . (int)$r['n'] . '</b></a>'; }
 $tr = ''; $backQ = http_build_query(['orders' => 1] + array_filter($f, fn($v) => $v !== '') + ($pg > 1 ? ['p' => $pg] : []));
 fomaxo_en_many(array_column($rows, 'name'));   // Arabic names in English, all at once
+require_once dirname(__DIR__) . '/whatsapp-lib.php'; require_once dirname(__DIR__) . '/review-req-lib.php';   // orders due a review request get a WhatsApp review button in the list
+$rqAsk = []; foreach (fx_rq_due($pdo) as $x) if (!$x['sent'] && !$x['stopped']) $rqAsk[$x['order_no']] = $x;
+$rqN = count($rqAsk);
 $pic = [];   // first photo of each product, from the Products tab
 try { foreach ($pdo->query('SELECT id, data FROM fx_products') as $r) { $d = json_decode($r['data'], true); if (!empty($d['images'][0])) $pic[$r['id']] = $d['images'][0]; } } catch (Throwable $e) {}
 foreach ($rows as $o) {
@@ -2705,7 +2762,7 @@ foreach ($rows as $o) {
        . '<span class="onb"><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['test'] ? ' <span class="muted small">test</span>' : '')
        . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '') . '</span></td>'
        . '<td class="od">' . h(date('d M Y, H:i', strtotime($o['created_at']))) . '</td>'
-       . '<td class="oc" title="' . h(str_replace(' | ', ', ', (string)$o['items'])) . '"><b>' . hx($o['name']) . '</b>' . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . '' . '<span class="op">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</span>' . (!empty($o['coupon']) ? '<span class="ctag" title="Coupon code used">' . h($o['coupon']) . ((float)$o['discount'] > 0 ? ' −' . money($o['discount']) : '') . '</span>' : '') . '</td>'
+       . '<td class="oc" title="' . h(str_replace(' | ', ', ', (string)$o['items'])) . '"><b>' . hx($o['name']) . '</b>' . (!empty($o['wa_optin']) ? '<span class="wtag" title="Ticked: send me offers and updates on WhatsApp">WhatsApp ✓</span>' : '') . '' . '<span class="op">' . h($o['phone']) . ($o['emirate'] !== '' ? ' · ' . h($o['emirate']) : '') . '</span>' . (isset($rqAsk[$o['order_no']]) ? '<a class="rqwa" data-rq="' . h($o['order_no']) . '" href="https://wa.me/' . h((string)fx_wa_number($o['phone'])) . '?text=' . rawurlencode(fx_rq_text($rqAsk[$o['order_no']]['parts'])) . '" target="_blank" rel="noopener" onclick="event.stopPropagation();rqAsk(this)" title="Send the review request on WhatsApp">WhatsApp review</a>' : '') . (!empty($o['coupon']) ? '<span class="ctag" title="Coupon code used">' . h($o['coupon']) . ((float)$o['discount'] > 0 ? ' −' . money($o['discount']) : '') . '</span>' : '') . '</td>'
        . '<td class="ot"><b>' . money($o['total']) . '</b><span>' . h($o['payment'] === 'Cash on delivery' ? 'Cash on delivery' : 'Card') . '</span></td>'
        . '<td class="os">' . fx_tags($o, false) . '</td>'
        . '<td class="oa">' . fx_order_buttons($o, $backQ) . '</td></tr>';
@@ -2756,7 +2813,7 @@ page('Orders', flash()
   . '<div><label for="to">To</label><input id="to" type="date" name="to" value="' . h($f['to']) . '"></div>'
   . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile or coupon"></div>'
   . '<div class="acts"><button class="btn line">Show</button><a class="btn" href="' . h(self_url($qs + ['export' => 1])) . '">Excel</a></div></form>'
-  . '<div class="fill">' . ($rows ? '<p class="ocount">' . (int)$sum['n'] . ' order' . ((int)$sum['n'] === 1 ? '' : 's') . '. Tap a button to update an order, or tap the order to see it.</p><table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
+  . '<div class="fill">' . ($rows ? '<p class="ocount"><span>' . (int)$sum['n'] . ' order' . ((int)$sum['n'] === 1 ? '' : 's') . '. Tap a button to update an order, or tap the order to see it.</span><a class="btn xs rqbtn" href="./?orders=1&amp;ask=1">Review requests (' . $rqN . ')</a></p><script>function rqAsk(a){var f=new FormData();f.append("rq_sent",a.dataset.rq);f.append("csrf",' . json_encode($_SESSION['csrf']) . ');fetch("./?members=1",{method:"POST",body:f,credentials:"same-origin"});a.textContent="Review asked";a.classList.add("done")}</script><table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
   . $logCard
