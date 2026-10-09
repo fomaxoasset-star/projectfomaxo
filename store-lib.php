@@ -1,6 +1,6 @@
 <?php
-/* FOMAXO — shared price list and offer rules, used by checkout.php (card) and cod.php (cash on delivery).
-   If you change a price or an offer on the website (index.html), change it HERE too. */
+/* FOMAXO — shared price list, customer details check and offer rules, used by checkout.php (cash on delivery), ziina.php (card),
+   reviews.php and the admin. Products and prices are edited on fomaxo.com/admin → Products; the list below is only the fallback. */
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
 
 /* ---- multi-buy discount by total items in the order — keep in sync with index.html MB_TIERS ----
@@ -97,7 +97,7 @@ function fomaxo_price_order($in) {
    Address comes in separate boxes (villa/building no, room no / floor optional, street, area); email is optional. */
 $EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
 /* a real-looking phone number, any country — same rules as phoneOk() in index.html */
-if (!function_exists('fomaxo_phone_ok')) { function fomaxo_phone_ok($v) {
+function fomaxo_phone_ok($v) {
   $v = trim(strtr((string)$v, FX_AR_DIGITS)); if (!preg_match('/^\+?[\d\s\-()]+$/', $v)) return false;
   $d = preg_replace('/\D/', '', $v); if (strpos($d, '00') === 0) $d = substr($d, 2);
   $n = strlen($d);
@@ -105,7 +105,7 @@ if (!function_exists('fomaxo_phone_ok')) { function fomaxo_phone_ok($v) {
   if (strpos($d, '971') === 0) return (bool)preg_match('/^9710?[1-9]\d{7,8}$/', $d);
   if (strpos($d, '05') === 0) return $n === 10;
   return true;
-} }
+}
 function fomaxo_customer($in) {
   global $EMIRATES;
   $c = is_array($in['customer'] ?? null) ? $in['customer'] : [];

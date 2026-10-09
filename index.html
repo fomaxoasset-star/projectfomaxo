@@ -151,47 +151,12 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;margin-bottom:clamp(28px,3vw,48px)}
 .sec-head .t{display:flex;flex-direction:column;gap:18px;max-width:720px}
 .sec-head.c{justify-content:center;text-align:center}.sec-head.c .t{align-items:center}
-.hair{height:1px;background:linear-gradient(90deg,transparent,var(--line-2),transparent)}
 .page-fade{animation:pagein .9s var(--ease)}
 @keyframes pagein{from{opacity:0;transform:translateY(14px)}}
 
-/* ---------- HERO ---------- */
-.hero{position:relative;min-height:calc(100svh - 38px);display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);align-items:center;gap:40px;padding:40px var(--pad) 70px;max-width:1600px;margin:0 auto;margin-top:-80px;padding-top:120px}
-.hero-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 50% 60% at 72% 48%,rgba(215,170,105,.16),transparent 70%),radial-gradient(ellipse 40% 30% at 72% 92%,rgba(215,170,105,.12),transparent 70%)}
-.hero-copy{position:relative;z-index:2;display:flex;flex-direction:column;gap:28px}
-.hero h1{font-size:clamp(34px,4.6vw,74px);font-weight:300;line-height:1.05;letter-spacing:.14em}
-.hero h1 .l2{display:block;font-family:var(--serif);font-style:italic;text-transform:uppercase;letter-spacing:.03em;font-size:1.18em;line-height:1.05}
-.hero-mark{width:min(300px,62vw);height:auto;aspect-ratio:3196/481;color:var(--brand)}
-.hero .stat{display:flex;gap:clamp(20px,3vw,48px);flex-wrap:wrap;padding-top:26px;border-top:1px solid var(--line);margin-top:10px}
-.hero .stat div{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
-.hero .stat b{display:block;font-family:var(--display);font-weight:300;font-size:20px;letter-spacing:.08em;letter-spacing:0;text-transform:none;color:var(--gold-hi);margin-bottom:4px}
+/* ---------- buttons row, slow spin ---------- */
 .ctas{display:flex;gap:14px;flex-wrap:wrap}
-.hero-visual{position:relative;height:min(78vh,760px);display:flex;align-items:center;justify-content:center}
-.emblem-bg{position:absolute;width:min(96%,660px);aspect-ratio:1;color:var(--brand);opacity:.07}
 @keyframes slowspin{to{transform:rotate(360deg)}}
-.arch{position:relative;width:min(70%,440px);aspect-ratio:3/4.1;border-radius:999px 999px 6px 6px;overflow:hidden;box-shadow:0 60px 120px -30px rgba(0,0,0,.9),0 0 0 1px var(--line-2),0 0 80px -10px rgba(215,170,105,.25)}
-.arch img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.12);transition:opacity 1.8s ease,transform 9s linear;filter:saturate(.9) contrast(1.04)}
-.arch img.on{opacity:1;transform:scale(1)}
-.arch::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.75));pointer-events:none}
-.arch-cap{position:absolute;left:0;right:0;bottom:24px;z-index:2;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
-.arch-cap b{font-family:var(--display);font-weight:300;font-size:17px;letter-spacing:.22em;text-transform:uppercase}
-.arch-cap a{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-hi)}
-.hero-dots{position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px}
-.hero-dots button{width:1px;height:34px;background:var(--line-2);transition:background .5s}
-.hero-dots button.on{background:var(--gold-hi)}
-.floor{position:absolute;bottom:4%;left:15%;right:15%;height:60px;background:radial-gradient(ellipse at 50% 0,rgba(215,170,105,.32),transparent 70%);filter:blur(6px)}
-@media(max-width:900px){
-  .hero{grid-template-columns:minmax(0,1fr);margin-top:-72px;padding-top:96px;gap:10px;min-height:auto}
-  .hero-visual{order:-1;height:auto;padding:20px 0 10px}
-  .arch{width:min(74%,340px)}
-  .hero-dots{display:none}
-}
-
-/* marquee */
-.marquee{border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden;padding:20px 0;background:var(--deep)}
-.marquee div{display:flex;gap:56px;width:max-content;animation:mq 60s linear infinite;font-family:var(--serif);font-size:21px;font-style:italic;color:var(--champagne)}
-.marquee span::after{content:"✕";font-style:normal;color:var(--gold);margin-left:56px;font-size:11px;vertical-align:middle}
-@keyframes mq{to{transform:translateX(-50%)}}
 
 /* ---------- product cards ---------- */
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(18px,2vw,30px)}
@@ -546,9 +511,6 @@ footer{border-top:1px solid var(--line);background:var(--deep);padding:80px 0 34
 .eprice{display:flex;flex-direction:column;gap:6px;padding-bottom:4px}
 .eprice b{font-family:var(--display);font-weight:300;font-size:clamp(26px,2.2vw,34px);letter-spacing:.04em;color:var(--gold-hi);font-variant-numeric:tabular-nums;white-space:nowrap}
 .eprice span{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
-.eallow{border:1px solid var(--line);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:rgba(215,170,105,.04)}
-.eallow small{font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);line-height:1.5}
-.eallow b{font-family:var(--display);font-weight:400;font-size:15px;letter-spacing:.06em;color:var(--ivory);white-space:nowrap}
 .etier ul{list-style:none;display:flex;flex-direction:column;gap:12px;font-size:14px;line-height:1.5;color:var(--ivory);flex:1}
 .etier li{display:flex;gap:12px}
 .etier li::before{content:"";width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none;margin-top:8px}
@@ -590,7 +552,6 @@ footer{border-top:1px solid var(--line);background:var(--deep);padding:80px 0 34
 .eprice b small,.ladder .lv small{font-size:.5em;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
 
 /* ---------- brand typeface placements ---------- */
-.hero h1 .metal,
 .buy h1,
 .card h3,
 .ed-copy h2,
@@ -598,9 +559,7 @@ footer{border-top:1px solid var(--line);background:var(--deep);padding:80px 0 34
 .el-hero h1,
 .etier h3,
 .ladder b,
-.arch-cap b,
 .acro span{font-family:var(--brand-font);font-weight:400;text-transform:uppercase}
-.hero h1 .metal{letter-spacing:.05em}
 .buy h1{letter-spacing:.06em;font-size:clamp(38px,4vw,62px)}
 .card h3{letter-spacing:.08em;font-size:clamp(19px,1.5vw,23px)}
 .ed-copy h2{letter-spacing:.05em;font-size:clamp(40px,4.6vw,70px)}
@@ -608,7 +567,6 @@ footer{border-top:1px solid var(--line);background:var(--deep);padding:80px 0 34
 .el-hero h1{letter-spacing:.08em}
 .etier h3{letter-spacing:.12em;font-size:28px}
 .ladder b{letter-spacing:.2em;font-size:14px}
-.arch-cap b{letter-spacing:.14em;font-size:20px}
 .acro span{letter-spacing:.14em;font-size:11px;color:var(--champagne)}
 .eprice b small{display:block;margin-top:8px;font-family:var(--sans);font-size:10px}
 
@@ -668,30 +626,14 @@ html .pc-poster .pc-photo::after{display:none}
 html[data-mode="light"] #bgEmblem svg{color:#8a5c1e;opacity:.06}
 main,footer{position:relative;z-index:1}
 footer{background:rgba(var(--bg-rgb),.92)}
-/* hero stage in depth */
-.hero{perspective:1400px}
-.hero-visual{transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .9s cubic-bezier(.2,.75,.2,1)}
-.hero-visual .emblem-bg{transform:translateZ(-220px) scale(1.25)}
-.hero-visual .arch{transform:translateZ(70px);transform-style:preserve-3d}
-.hero-visual .floor{transform:translateZ(-30px) translateY(20px)}
-.hero-ring{position:absolute;width:min(88%,560px);aspect-ratio:1;border-radius:50%;border:1px solid rgba(215,170,105,.35);transform:translateZ(-80px) rotateX(74deg);animation:ringspin 26s linear infinite;pointer-events:none}
-.hero-ring.r2{width:min(104%,660px);border-color:rgba(215,170,105,.18);transform:translateZ(-120px) rotateX(74deg);animation-duration:40s;animation-direction:reverse}
-.hero-ring::after{content:"";position:absolute;top:-4px;left:50%;width:8px;height:8px;border-radius:50%;background:var(--gold-hi);box-shadow:0 0 18px var(--gold)}
-@keyframes ringspin{to{rotate:360deg}}
-.hero-copy{transform-style:preserve-3d;transform:rotateX(calc(var(--rx,0deg) * .35)) rotateY(calc(var(--ry,0deg) * .35));transition:transform .9s cubic-bezier(.2,.75,.2,1)}
 /* tiltable surfaces */
-.t3d{transform-style:preserve-3d;will-change:transform;transition:transform .7s cubic-bezier(.2,.75,.2,1),box-shadow .7s}
-.t3d.tilting{transition:transform .12s linear,box-shadow .4s;box-shadow:0 40px 80px -30px rgba(0,0,0,.95),0 0 60px -20px rgba(215,170,105,.35)}
-.glare{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .5s;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,236,196,.28),transparent 55%);mix-blend-mode:screen}
-.t3d.tilting .glare{opacity:1}
 .card .media{transform-style:preserve-3d}
 .card .media .tag,.card .media .quick{transform:translateZ(40px)}
 .etier>*,.tier>*{transform:translateZ(0)}
-.etier.tilting header,.etier.tilting .eprice{transform:translateZ(30px)}
 .exp a .in,.coll a .in{transform:translateZ(50px)}
 .ed-media{transform-style:preserve-3d;will-change:transform}
 .anim-off,.anim-off i{animation-play-state:paused!important}
-@media (prefers-reduced-motion:reduce){#space,#bgEmblem{display:none}.hero-visual,.hero-copy{transform:none}}
+@media (prefers-reduced-motion:reduce){#space,#bgEmblem{display:none}}
 
 /* ================= LIGHT MODE ================= */
 html[data-mode="light"]{
@@ -705,11 +647,9 @@ html[data-mode="light"]{
 html[data-mode="light"] .announce{background:#1b1712;color:#f0e2c4}
 html[data-mode="light"] .announce b{color:#d7aa69}
 html[data-mode="light"] .btn:not(.line){color:#fffaf1}
-html[data-mode="light"] .vignette,html[data-mode="light"] .grain{display:none}
 html[data-mode="light"] .card .media,html[data-mode="light"] .stage,html[data-mode="light"] .ed-media,html[data-mode="light"] .split .img,html[data-mode="light"] .gallery-g figure{box-shadow:0 30px 60px -35px rgba(60,40,10,.45)}
-html[data-mode="light"] .t3d.tilting{box-shadow:0 40px 80px -30px rgba(60,40,10,.45),0 0 60px -20px rgba(168,121,47,.35)}
 /* photo tiles with text on top keep their dark, gold-on-black look */
-html[data-mode="light"] .exp a,html[data-mode="light"] .coll a,html[data-mode="light"] .arch,html[data-mode="light"] .el-hero .el-bg,
+html[data-mode="light"] .exp a,html[data-mode="light"] .coll a,html[data-mode="light"] .el-hero .el-bg,
 html[data-mode="light"] .card .media .tag,html[data-mode="light"] .card .media .quick{
   --ivory:#f2ebdd; --muted:#c9bfa9; --gold:#d7aa69; --gold-hi:#f0d3a0; --champagne:#e9d6b2; --bg-rgb:5,5,5; --line-2:rgba(215,170,105,.44);
 }
@@ -718,7 +658,7 @@ html[data-mode="light"] .story::before{background:linear-gradient(180deg,var(--b
 html[data-mode="light"] .pc-media::after{background:linear-gradient(90deg,transparent 70%,var(--black))}
 html[data-mode="light"] .scrim{background:rgba(40,30,15,.35)}
 html{transition:background .5s}
-body,header.nav,footer,.panel,.card .media,.etier,.tier,.drawer{transition:background-color .5s,color .5s,border-color .5s}
+body,header.nav,footer,.card .media,.etier,.tier,.drawer{transition:background-color .5s,color .5s,border-color .5s}
 /* theme switch (sliding pill) */
 .mode-switch{position:relative;width:62px;height:32px;border-radius:999px;flex:none;margin-right:6px;display:inline-flex;align-items:center;justify-content:space-between;padding:0 8px;
   background:#16130f;border:1px solid var(--line-2);transition:background .5s,border-color .5s;cursor:pointer}
@@ -812,8 +752,6 @@ html[data-mode="light"] .announce .mode-switch .ms-moon{color:#8a7f6c}
 .tier-switch .chip small{font-size:10px;letter-spacing:.15em;color:var(--dim)}
 .buy .sub a{color:var(--gold-hi);border-bottom:1px solid var(--line-2)}
 @media(max-width:600px){.tier-item{grid-template-columns:44px minmax(0,1fr)}.tier-item .price{grid-column:2}}
-.hero{overflow-x:clip}
-@media(max-width:900px){.hero-ring{width:min(84%,340px)}.hero-ring.r2{width:min(96%,380px)}}
 /* ================= CINEMATIC HERO ================= */
 .hero-cine{position:relative;height:calc(100svh - 40px);min-height:620px;max-height:1100px;margin-top:-80px;overflow:hidden;display:flex;align-items:center;justify-content:center;isolation:isolate;
   --ivory:#f6efe2;--muted:#cfc4ad;--gold:#d7aa69;--gold-hi:#f0d3a0;--champagne:#e9d6b2;--line:rgba(215,170,105,.25);--line-2:rgba(215,170,105,.5);--bg-rgb:5,5,5;color:var(--ivory);background:#050505}
@@ -862,14 +800,9 @@ html[data-mode="light"] .announce .mode-switch .ms-moon{color:#8a7f6c}
 .hc-now b{font-family:var(--brand-font);font-weight:400;font-size:22px;letter-spacing:.14em;color:var(--gold-hi)}
 .hc-now span{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:#f6efe2;transition:color .3s}
 .hc-now:hover span{color:var(--gold-hi)}
-.hc-stats{display:flex}
-.hc-stats div{display:grid;gap:6px;padding:0 clamp(14px,1.6vw,26px);border-left:1px solid var(--line)}
-.hc-stats div:first-child{border-left:0;padding-left:0}
-.hc-stats b{font-family:var(--serif);font-weight:300;font-size:clamp(20px,1.7vw,26px);line-height:1;color:var(--gold-hi);white-space:nowrap}
-.hc-stats span{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 /* header readable over the photo on the homepage, in both modes */
 body.home header.nav:not(.solid){--ivory:#f6efe2;--muted:#d8ccb4;--champagne:#ecdcbc;--gold:#d7aa69;--gold-hi:#f0d3a0;--brand:#d7aa69;--line:rgba(215,170,105,.25)}
-@media(max-width:1180px){.hc-stats{display:none}.hc-bar{grid-template-columns:1fr auto}}
+@media(max-width:1180px){.hc-bar{grid-template-columns:1fr auto}}
 @media(max-width:760px){
   .hero-cine{min-height:560px}
   .hc-copy{padding:90px 22px 150px;gap:18px}
@@ -933,9 +866,6 @@ html[data-mode="light"] .el-hero .btn.line{color:#e9d6b2;box-shadow:inset 0 0 0 
 @media(min-width:861px){.fgrid{grid-template-columns:minmax(max-content,1.5fr) repeat(3,minmax(0,1fr))}.f-line{white-space:nowrap}}
 @media(max-width:600px){footer .fgrid .lead{font-size:12.5px!important}}
 /* light mode: stronger 3D layer */
-html[data-mode="light"] .hero-ring{border-color:rgba(153,106,36,.55);box-shadow:0 0 30px -6px rgba(176,122,40,.35),inset 0 0 30px -10px rgba(176,122,40,.25)}
-html[data-mode="light"] .hero-ring.r2{border-color:rgba(153,106,36,.32)}
-html[data-mode="light"] .hero-ring::after{background:#b07a28;box-shadow:0 0 0 3px rgba(176,122,40,.18),0 0 18px rgba(176,122,40,.75)}
 html[data-mode="light"] .rings i{border-color:rgba(153,106,36,.55)}
 /* 3-up product grids: centre an incomplete last row */
 .grid:not(.four){display:flex;flex-wrap:wrap;justify-content:center;--g:clamp(18px,2vw,30px);gap:var(--g)}
@@ -945,8 +875,6 @@ html[data-mode="light"] .rings i{border-color:rgba(153,106,36,.55)}
 /* equal-height cards so Add to bag / Buy now line up across each row */
 .grid>.card{height:auto;align-self:stretch}
 @media(min-width:1000px){.phead .lead:has(.one-line){max-width:none}.one-line{white-space:nowrap}}
-.bw{font-family:var(--brand-font);font-style:normal;font-weight:400;letter-spacing:.08em;text-transform:uppercase}
-@media(min-width:700px){h1 .bw{margin-left:-.12em}}
 /* contact: social icons */
 .contact-list .social-row{gap:14px}
 .contact-list .socials{display:grid;grid-template-columns:repeat(9,minmax(0,34px));gap:8px;padding:0;background:none}
@@ -996,7 +924,7 @@ html[data-mode="light"]{--gold:#996a24;--muted:#574e40;--dim:#776d5b;--line:rgba
 html[data-mode="light"] ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#d2b783,#b8975c)}
 html[data-mode="light"] ::selection{background:#1b1712;color:#f6f0e4}
 /* text on dark photo tiles stays light in light mode */
-html[data-mode="light"] .exp a,html[data-mode="light"] .coll a,html[data-mode="light"] .arch,
+html[data-mode="light"] .exp a,html[data-mode="light"] .coll a,
 html[data-mode="light"] .card .media .tag,html[data-mode="light"] .card .media .quick{color:var(--ivory)}
 html[data-mode="light"] .exp h3,html[data-mode="light"] .coll h3{color:#f6efe2;text-shadow:0 2px 18px rgba(0,0,0,.55)}
 html[data-mode="light"] .exp .eyebrow,html[data-mode="light"] .coll .eyebrow{color:#e2bb7c}
@@ -1040,17 +968,15 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
 .caps{font-family:var(--hfont);font-weight:500;letter-spacing:.1em}
 
 /* former italic serif lines → upright, heavier so they stay readable */
-.hero h1 .l2,.hero-cine h1 .l2{font-family:var(--hfont);font-weight:500;letter-spacing:.06em;line-height:1.06}
-.hc-lead,.esub,.tier .v,.exp p,.el-quote,.quote,.rv q,.notes-list span,.pyramid div span,.marquee div,.tech blockquote{font-family:var(--hfont);font-weight:500}
+.hero-cine h1 .l2{font-family:var(--hfont);font-weight:500;letter-spacing:.06em;line-height:1.06}
+.hc-lead,.esub,.tier .v,.exp p,.el-quote,.quote,.rv q,.notes-list span,.pyramid div span,.tech blockquote{font-family:var(--hfont);font-weight:500}
 .hc-lead{font-size:clamp(18px,1.55vw,23px);line-height:1.55}
 .esub,.tier .v{font-size:18px}
 .exp p{font-size:18px;opacity:.9}
-.marquee div{letter-spacing:.04em}
 .manifesto span.m{font-family:var(--hfont);font-weight:500;letter-spacing:.05em}
 
 /* FOMAXO brand face: identity moments only */
-.bw,.acro span,.acro div span,.tier-name,.etier h3,.el-hero h1,.final h2,
-.hero h1 .metal,.hero-cine h1 .metal{font-family:var(--brand-font);font-weight:400;text-transform:uppercase}
+.acro span,.acro div span,.tier-name,.etier h3,.el-hero h1,.final h2,.hero-cine h1 .metal{font-family:var(--brand-font);font-weight:400;text-transform:uppercase}
 .final h2{letter-spacing:.08em;font-size:clamp(30px,4.6vw,70px)}
 .final h2 em{font-family:var(--brand-font);font-weight:400}
 .el-hero h1 em{font-family:var(--hfont);font-weight:500;letter-spacing:.08em}
@@ -1060,7 +986,7 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
 
 /* product & collection names: elegant, readable serif */
 .exp h3{font-family:var(--hfont);font-weight:500;text-transform:uppercase;letter-spacing:.07em;line-height:1.15}
-.card h3,.buy h1,.ed-copy h2,.tier-item b,.mbuy .n b,.sres b,.upsell b,.line-item h4,.co-item h4,.pick span,.hc-now b,.arch-cap b{
+.card h3,.buy h1,.ed-copy h2,.tier-item b,.mbuy .n b,.sres b,.upsell b,.line-item h4,.co-item h4,.pick span,.hc-now b{
   font-family:var(--brand-font);font-weight:400;text-transform:uppercase;letter-spacing:.1em;line-height:1.2}
 .card h3{font-size:clamp(18px,1.4vw,22px)}
 .buy h1{font-size:clamp(34px,3.6vw,54px)}
@@ -1087,7 +1013,6 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
 .hc-kick{font-size:11.5px;font-weight:500;letter-spacing:.3em}
 .hc-now small,.hc-now span{white-space:nowrap;font-size:10.5px;font-weight:500;letter-spacing:.2em}
 .hc-nav button .t{font-size:10.5px;font-weight:500;letter-spacing:.16em}
-.stat div,.hc-stats span{font-size:10.5px;letter-spacing:.2em}
 .eprice span{font-size:11px;font-weight:500;letter-spacing:.2em}
 .ladder b{font-family:var(--sans);font-weight:500;font-size:13px;letter-spacing:.2em}
 .track-lab span{font-size:10px;letter-spacing:.14em}
@@ -1168,14 +1093,13 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
 .hc-kick{font-size:12.5px;letter-spacing:.26em}
 .hc-now small,.hc-now span{font-size:12px;letter-spacing:.16em}
 .hc-nav button .t{font-size:12px;letter-spacing:.12em}
-.stat div,.hc-stats span{font-size:12px;letter-spacing:.16em}
 .eprice span,.eprice b small,.ladder .lv small{font-size:12.5px;letter-spacing:.16em}
 .ladder b{font-size:14px;letter-spacing:.18em}
 .track-lab span{font-size:11.5px;letter-spacing:.1em}
 .tier ul{font-size:15px}
 .etier ul{font-size:15.5px}
 .pillars p{font-size:15.5px}
-.pillars .k,.exp .go,.arch-cap a,.tech blockquote cite{font-size:12px;letter-spacing:.2em}
+.pillars .k,.exp .go,.tech blockquote cite{font-size:12px;letter-spacing:.2em}
 .pyramid div{font-size:12px;letter-spacing:.2em}
 .tier-switch .chip{font-size:12px;letter-spacing:.18em}
 .tier-name small{font-size:12.5px;letter-spacing:.32em}
@@ -1397,7 +1321,7 @@ html[data-mode="light"] .btn:not(.line){color:#fffaf1}
 .hc-nav button{color:rgba(246,239,226,.82)}
 .hc-nav button.on{color:#f0d3a0}
 .hero-cine .hc-lead{color:#f3e6cc;max-width:760px}
-.hc-now small,.hc-stats span{color:#d8ccb4}
+.hc-now small{color:#d8ccb4}
 .track-lab span{color:var(--muted)}
 .form input::placeholder,.form textarea::placeholder,.notify input::placeholder{color:var(--dim);opacity:1}
 /* text that sits on photos keeps its light colours in light mode */
@@ -1494,8 +1418,6 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .dr-foot .total-row .price{font-size:24px}
 .dr-foot .btn{min-height:44px}
 .dr-foot .pay-note{font-size:11px;margin:-4px 0 0}
-.dr-foot .dr-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.dr-foot .dr-pair .btn{padding:0 10px;font-size:11px;letter-spacing:.12em}
 /* ---- checkout page ---- */
 .co{padding:34px var(--pad) clamp(70px,8vw,120px)}
 .co-h{font-size:clamp(32px,4.2vw,56px);margin:16px 0 clamp(22px,3vw,36px)}
@@ -1508,7 +1430,6 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co .form label.co-wa{display:flex;flex-direction:row;align-items:center;gap:10px;margin:8px 0 0;font-size:14px;letter-spacing:.02em;text-transform:none;color:var(--ivory);cursor:pointer;line-height:1.35}
 .co .form label.co-wa .co-wa-i{display:inline-flex;flex:none;width:20px;height:20px;color:#1da851;font-style:normal}.co .form label.co-wa .co-wa-i svg{width:100%;height:100%}.co .form label.co-wa .co-wa-i+span{margin-inline-start:-4px}
 .co .form label.co-wa input{flex:none;width:20px;height:20px;margin:0;padding:0;accent-color:var(--gold);cursor:pointer}
-.co .form textarea.co-addr{min-height:92px}
 .co .form textarea.co-note{min-height:70px}
 .co-ar{display:grid;gap:14px}
 .co-ar1{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
@@ -1550,7 +1471,6 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co .form label.co-opt.on{border-color:var(--gold);background:rgba(215,170,105,.08);box-shadow:0 0 0 3px rgba(215,170,105,.18)}
 .co-cp{margin:0 0 16px}
 .co-sum .co-cp{margin:4px 0 6px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.co-sum .co-cp-l{display:block;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
 .co-sum .co-cp-f input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line-2);background:transparent;color:var(--ivory);font:inherit;font-size:14px;text-transform:uppercase;letter-spacing:.08em;outline:0;border-radius:0}
 .co-sum .co-cp-f input:focus{border-color:var(--gold)}
 .co-sum .co-cp-f input::placeholder{text-transform:none;letter-spacing:.04em;color:var(--dim)}
@@ -1566,7 +1486,6 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-sum .co-row.co-save-c small .price{font-size:20px;white-space:nowrap}
 @media(max-width:900px){.co-sum .co-row.co-save-c small{font-size:13px;letter-spacing:0}.co-sum .co-row.co-save-c small .price{font-size:17px}}
 .co-row.co-save-c small{font-weight:400;font-size:12px;letter-spacing:.02em;opacity:.85}
-.co-cp-m.co-cp-saved{padding:10px 14px;border:1px solid currentColor;background:rgba(95,196,140,.08);font-size:14.5px;font-weight:500}
 @media(max-width:900px){.co-cp-f input,.co-cp-f .btn{min-height:48px}}
 .co-cp-f{display:flex;gap:8px}
 .form .co-cp-f input{flex:1;min-width:0;padding:12px 14px;text-transform:uppercase;letter-spacing:.08em}
@@ -1924,7 +1843,6 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
 .promo .pm-item{flex-basis:calc(var(--img)*1px)}
 .promo .pm-item img{width:calc(var(--img)*1px);height:calc(var(--img)*7px/6)}
 @media (max-width:600px){.promo-box{--img:var(--p-img,120);--t:var(--p-t,100);--pc:var(--p-pc,100);--sb:var(--p-sb,100);--bt:var(--p-bt,100);--nimg:var(--p-nimg,100);--nm:var(--p-nm,100);--ln:var(--p-ln,100);--bpc:44px}.promo:not(.pnew) .promo-box{max-width:min(100%,max(340px,calc(var(--n,0)*(var(--img)*1px + 10px) + 28px)))}}
-.p-off{align-self:center;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#e04a3f;padding:6px 9px;line-height:1}
 .pdp-offer{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line-2);background:rgba(215,170,105,.05);font-size:13px;line-height:1.5;color:var(--ivory)}
 .pdp-offer svg{width:20px;height:20px;flex:none;color:var(--gold);margin-top:1px}
 .pdp-offer b{display:block;font-weight:400;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
@@ -2287,27 +2205,18 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 <div class="added" id="added" role="dialog" aria-label="Added to your bag" aria-hidden="true"></div>
 
 <script>/* =====================================================================
-   FOMAXO STORE CONTENT — edit this file to update the website.
-   Source: FOMAXO Fashion Book (2026). Prices in the book are WHOLESALE,
-   so retail prices below are left empty (null) for you to set.
-   A product with no price shows "Price on request" and can still be
-   ordered through the checkout below.
+   FOMAXO STORE CONTENT — contact details, checkout files and the fallback product list
+   (products and prices are edited on fomaxo.com/admin → Products).
    ===================================================================== */
 window.STORE = {
   currency: "AED",
 
-  /* How customers complete an order.
-     mode "whatsapp" opens WhatsApp with the order filled in,
-     mode "email" opens an email, mode "url" sends them to checkoutUrl. */
+  /* How customers complete an order (files on Hostinger). */
   checkout: {
-    mode: "whatsapp",
-    whatsapp: "971543146334",          // +971 54 314 6334 (from the Fashion Book)
-    email: "fomaxoasset@gmail.com",
-    checkoutUrl: "",
-    stripe: "checkout.php",           // cash on delivery orders (and Stripe card payments when ziina is "") — file on Hostinger.
-    ziina: "ziina.php"                // card / Apple Pay / Google Pay via Ziina (file on Hostinger). Set to "" to go back to Stripe.
+    whatsapp: "971543146334",          // +971 54 314 6334: WhatsApp links on checkout, order pages and Franchise
+    cod: "checkout.php",               // cash on delivery orders
+    ziina: "ziina.php"                 // card / Apple Pay / Google Pay via Ziina
   },
-  accountUrl: "https://fomaxo.com/",
 
   /* Social links shown on the Contact page (gold icons under "Support").
      Replace any search link with FOMAXO's own account URL when you have it. */
@@ -2455,10 +2364,7 @@ window.STORE = {
     headline: "Luxury redefined in 10ml",
     text: "The FOMAXO Mini collection represents a sophisticated shift in the world of high-end perfumery. By condensing the essence of UAE-based luxury into a 10ml pocket-sized format, FOMAXO ensures that the boundaries of elegance are no longer confined to the dressing table.",
     products: ["royalcandy", "oldmoney", "matchacoco", "passionsin"]
-  },
-
-  // Personal care: no products are listed in the Fashion Book yet.
-  personalCare: { products: [] }
+  }
 };
 </script>
 <script>/* FOMAXO storefront — routing, rendering, cart, search */
@@ -2611,16 +2517,6 @@ function bagFromCode(c){
 function lineImg(l){ const p = P[l.id]; return imgFor(p, l.opt); }
 // one look for a product everywhere it is listed (bag and checkout summary, whether it came from Add to bag or Buy now)
 function lineInfo(l, split){ const p = P[l.id]; return `<h4>${esc(p.name)}</h4>${split ? `<div class="o">${optLabel(p, l.opt)}</div><div class="o o-sz">${esc(p.family.split('·')[0])}</div>` : `<div class="o">${optLabel(p, l.opt)} · ${esc(p.family.split('·')[0])}</div>`}${l.picks ? `<div class="o o-picks">${l.picks.map(id => P[id] ? esc(P[id].name) : '').join(' · ')}</div>` : ''}`; }
-function orderText(lines, d, pay){
-  const rows = lines.map(l => { const p = P[l.id], m = money(p.prices[l.opt]); return `• ${p.name} — ${optLabel(p, l.opt)} × ${l.qty}${m ? ' (' + m + ' each)' : ''}${l.picks ? '\n   Fragrances: ' + l.picks.map(id => P[id] ? P[id].name : id).join(', ') : ''}`; });
-  const tot = subtotal(lines), dc = qtyDiscount(lines);
-  if (dc.mini) rows.push(`• FREE 10ml mini — ${P[dc.miniId].name}`);
-  const sums = tot === null ? '' : dc.amount > 0
-    ? `\n\nSubtotal: ${money2(tot)}\nMulti-buy discount (${pctTxt(dc.pct)}%): -${money2(dc.amount)}\nTotal: ${money2(tot - dc.amount)}`
-    : `\n\nSubtotal: ${money(tot)}`;
-  const who = d ? `\n\nName: ${d.name}\nMobile: ${d.phone}${d.email ? '\nEmail: ' + d.email : ''}\nEmirate: ${d.emirate}\nVilla/Building no: ${d.building}${d.room ? '\nRoom No / Floor: ' + d.room : ''}\nStreet: ${d.street}\nArea: ${d.area}${d.note ? '\nNote: ' + d.note : ''}${pay ? '\nPayment: ' + pay : ''}` : '\n\nName:\nDelivery address:\nPhone:';
-  return `Hello FOMAXO, I would like to place an order:\n\n${rows.join('\n')}${sums}${who}`;
-}
 // bag line price (unit price × qty), sale price with the crossed-out original on the same line
 function linePriceHTML(p, l){ const v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; if (!hasPrice(v)) return '<span class="price na">Price on request</span>';
   return `<span class="price lp">${hasPrice(c) && c > v ? `<s class="was">${moneyHTML(c * l.qty)}</s> ` : ''}${moneyHTML(v * l.qty)}</span>`; }
@@ -2658,17 +2554,10 @@ function qtyNudge(dc){
 }
 const pctTxt = v => String(v).replace(/\.0$/, '');
 function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) return null; t += Number(v) * l.qty; } return t; }
-function checkout(lines, d){
-  if (!lines.length) return;
-  const c = S.checkout, text = orderText(lines, d, d ? 'WhatsApp' : '');
-  if (c.mode === 'url' && c.checkoutUrl) { location.href = c.checkoutUrl; return; }
-  if (c.mode === 'email' || !c.whatsapp) { location.href = `mailto:${c.email}?subject=${encodeURIComponent('FOMAXO order')}&body=${encodeURIComponent(text)}`; return; }
-  const a = document.createElement('a'); a.href = `https://wa.me/${c.whatsapp}?text=${encodeURIComponent(text)}`; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
-}
-// sends the order to the server: card → Ziina payment page (ziina.php, or Stripe via checkout.php), cod → order saved by checkout.php
+// sends the order to the server: card → Ziina payment page (ziina.php), cod → order saved by checkout.php
 async function sendOrder(lines, pay, details, src){
   try {
-    const r = await fetch(pay === 'card' && S.checkout.ziina ? S.checkout.ziina : S.checkout.stripe, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pay, src, customer: details && Object.assign({}, details, {address: addrText(details)}), lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: qtyDiscount(lines).miniId, coupon: coupon && orderTotals(lines, '', true).useC ? coupon.code : undefined})});
+    const r = await fetch(pay === 'card' && S.checkout.ziina ? S.checkout.ziina : S.checkout.cod, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pay, src, customer: details && Object.assign({}, details, {address: addrText(details)}), lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: qtyDiscount(lines).miniId, coupon: coupon && orderTotals(lines, '', true).useC ? coupon.code : undefined})});
     const d = await r.json().catch(() => ({}));
     if (r.ok && (d.url || d.order)) return d;
     return {error: d.error || (pay === 'cod' ? 'We could not place your order right now. Please try again or contact us on WhatsApp.' : 'Card payment is unavailable right now. Please try again or contact us on WhatsApp.')};
@@ -2759,7 +2648,7 @@ function renderCart(){
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
   foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row ph-sub"><span>Subtotal · <span class="gold">Free delivery</span></span><span class="price">${moneyHTML(t0, true)}</span></div><div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
-    <div class="dr-btns"><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? '<span class="co-amt"> · ' + money2(t) + '</span>' : ''}</a>`}</div><p class="pay-note">${S.checkout.ziina || S.checkout.stripe ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p>`;
+    <div class="dr-btns"><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? '<span class="co-amt"> · ' + money2(t) + '</span>' : ''}</a>`}</div><p class="pay-note">${S.checkout.ziina ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p>`;
   const ms = $('#miniSel'); if (ms) ms.onchange = () => { try { localStorage.setItem('fomaxo_mini', ms.value); } catch(e) {} coRefresh && coRefresh(); };
   coRefresh && coRefresh();
 }
@@ -3443,13 +3332,6 @@ const SOC_ICON = {"whatsapp": "<g transform=\"translate(5.6 5.6) scale(.535)\"><
 function contact(q){
   const topics = {general:'General enquiry', order:'Order enquiry', gifting:'Bespoke Gifting', name:'Personalized Gifting', elite:'Elite Membership', partnership:'Franchise', care:'Personal Care'};
   const t = q.get('topic') || 'general', C = S.contact;
-  const faq = [
-    ['What is the FOMAXO franchise?','FOMAXO is a UAE-based perfume brand offering premium European-style fragrances with strong brand identity and repeat customer demand. The franchise model is designed for scalable growth across malls, kiosks, high streets and distribution formats.'],
-    ['Will I have an exclusive territory?','FOMAXO may grant exclusive territory rights based on the agreed number of outlets and the approved country development plan, determined case by case.'],
-    ['What are the support services provided by the franchise system?','FOMAXO provides operational and brand support, including store design guidance, supplier coordination, marketing strategy, staff training, launch assistance and ongoing business development support aligned with the partner country growth plan.'],
-    ['What is the term of the agreement?','The standard franchise agreement typically ranges from 1 to 10 years, depending on the country agreement and scale of development, with renewal options.'],
-    ['What is my next step?','Submit your expression of interest with details about your country, city, investment capacity and development vision. The FOMAXO team will provide a tailored franchise plan.']
-  ];
   return pageHead('Contact', 'Contact <em class="metal">FOMAXO</em>', '<span class="one-line">For orders, bespoke gifting, membership or franchise enquiries — we would be delighted to hear from you.</span>') + `
   <section class="sec"><div class="wrap"><div class="split" style="align-items:start">
     <div class="contact-list rv-up">
@@ -3548,7 +3430,7 @@ app.addEventListener('input', e => {
 // pasted or autofilled text (which may not fire input) is capitalized when the box is left
 app.addEventListener('change', e => { const t = e.target, how = t.dataset && t.dataset.cap; if (how) t.value = how === 'words' ? capWords(t.value) : capSentences(t.value); });
 const addrText = d => [d.building, d.room && 'Room/Floor ' + d.room, d.street, d.area].filter(Boolean).join(', ');
-const CARD_ON = !!(S.checkout.ziina || S.checkout.stripe), CARD_BY = S.checkout.ziina ? 'Ziina' : 'Stripe';
+const CARD_ON = !!S.checkout.ziina, CARD_BY = 'Ziina';
 let coRefresh = null, coOpen = false, coPay = CARD_ON ? 'card' : 'cod';
 function savedDetails(){ try { const d = JSON.parse(localStorage.getItem('fomaxo_details') || '{}'); return d && typeof d === 'object' ? d : {}; } catch(e) { return {}; } }
 const CO_ICON = {
@@ -4255,14 +4137,6 @@ function bindHome(){
   $$('[data-reorder]', app).forEach(b => b.onclick = reorder);
   bindOrderAgain();
 }
-function bindHomeOld(){
-  const imgs = $$('#arch img'), dots = $$('#heroDots button'), ids = ['king','oldmoney','royalcandy','matchacoco','passionsin','gold'];
-  let i = 0;
-  const show = n => { i = n; imgs.forEach((im,k) => im.classList.toggle('on', k === i)); dots.forEach((d,k) => d.classList.toggle('on', k === i)); $('#archName').textContent = P[ids[i]].name; $('#archLink').href = '#/product/' + ids[i]; };
-  dots.forEach(d => d.onclick = () => { show(+d.dataset.i); clearInterval(heroTimer); heroTimer = setInterval(() => show((i+1) % imgs.length), 5500); });
-  heroTimer = setInterval(() => show((i+1) % imgs.length), 5500);
-  $$('[data-quickadd]').forEach(b => b.onclick = () => { const p = P[b.dataset.quickadd]; addToCart(p.id, defaultSize(p)); });
-}
 function bindFragColl(){
   $$('[data-quickadd]').forEach(b => b.onclick = () => { const p = P[b.dataset.quickadd]; addToCart(p.id, defaultSize(p)); });
   $$('[data-jump]').forEach(a => a.onclick = e => { e.preventDefault(); const el = document.getElementById(a.dataset.jump); el && el.scrollIntoView({behavior:'smooth', block:'start'}); });
@@ -4415,7 +4289,7 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   const root = document.documentElement, dot = document.createElement('div'), ring = document.createElement('div');
   dot.className = 'cur-dot'; ring.className = 'cur-ring'; document.body.append(dot, ring); root.classList.add('cur-ready');
   let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y;
-  const VIEW = [['.card .media','View'],['.stage','Zoom'],['.exp a','Discover'],['.coll a','Explore'],['.gallery-g figure','View'],['.arch','Shop'],['.ed-media','View']];
+  const VIEW = [['.card .media','View'],['.stage','Zoom'],['.exp a','Discover'],['.coll a','Explore'],['.gallery-g figure','View'],['.ed-media','View']];
   addEventListener('pointermove', e => {
     x = e.clientX; y = e.clientY; root.classList.add('cur-on');
     const t = e.target;
