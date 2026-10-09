@@ -554,6 +554,9 @@ function fx_wa_box() {
     . 'var alt=d.dataset.alt==="1";text.value=(alt?b.head2:b.head)+(k?lines(btn,{k:k,v:v,m:parseInt(min.value,10)||0,e:end.value,f:(free()&&free().value.split(" · ")[0])||"gift"}):"")+(alt?b.tail2:b.tail);'
     . 'd.querySelectorAll(".fxwa-lang button").forEach(function(x){x.classList.toggle("on",(x.dataset.l==="ar")===isAr())})}'
     . 'function wa(t){return"https://wa.me/"+(btn.dataset.wa||"")+"?text="+encodeURIComponent(t)}'
+    /* on a phone the WhatsApp app opens straight away instead of the WhatsApp website */
+    . 'var PH=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));'
+    . 'function app(t){location.href="whatsapp://send?phone="+(btn.dataset.wa||"")+"&text="+encodeURIComponent(t)}'
     . 'window.fxSent=function(b,day){b.classList.add("sent");b.lastChild.textContent="Sent "+day};'
     . 'document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-wabox]");if(!b)return;e.preventDefault();e.stopPropagation();btn=b;'
     . 'var noc=!!b.dataset.nocoupon;d.classList.toggle("noc",noc);d.dataset.alt="0";d.classList.toggle("lng",b.dataset.head2!==undefined);q(".fxwa-who").textContent=b.dataset.who||"";kind.value=noc?"":(b.dataset.k0!==undefined?b.dataset.k0:K0[b.dataset.wabox]||"");'
@@ -563,12 +566,12 @@ function fx_wa_box() {
     . 'q("[data-fxwa-close]").addEventListener("click",function(){d.close()});'
     . 'd.querySelectorAll(".fxwa-lang button").forEach(function(x){x.addEventListener("click",function(){if((x.dataset.l==="ar")!==isAr()){d.dataset.alt=d.dataset.alt==="1"?"0":"1";build()}})});'
     . 'send.addEventListener("click",function(){var k=kind.value;err.hidden=true;if(k==="free"&&!freeV().value){err.textContent="Please choose the free product.";err.hidden=false;return}'
-    . 'var w=window.open("","_blank"),f=new FormData(),b=btn;f.append("csrf",' . json_encode($_SESSION['csrf'] ?? '') . ');f.append("box",b.dataset.wabox);f.append("mark",b.dataset.mark||"");f.append("phone",b.dataset.phone||"");'
+    . 'var w=PH?null:window.open("","_blank"),f=new FormData(),b=btn;f.append("csrf",' . json_encode($_SESSION['csrf'] ?? '') . ');f.append("box",b.dataset.wabox);f.append("mark",b.dataset.mark||"");f.append("phone",b.dataset.phone||"");'
     . 'f.append("gkind",k);f.append("val",val.value||(k==="pct"?(b.dataset.pct||"10"):"20"));f.append("min",min.value);f.append("end",end.value);f.append("gfree",freeV()?freeV().value:"");send.disabled=true;'
     . 'fetch("./?wabox=1",{method:"POST",body:f,credentials:"same-origin"}).then(function(r){return r.json()}).then(function(j){send.disabled=false;if(j.error||(k&&!j.code))throw new Error(j.error||"The code could not be made.");'
-    . 'if(j.code)text.value=text.value.split("[CODE]").join(j.code);if(w)w.location=wa(text.value);else location.href=wa(text.value);'
+    . 'if(j.code)text.value=text.value.split("[CODE]").join(j.code);var msg=text.value;'
     . 'if(b.dataset.mark)document.querySelectorAll("[data-wabox][data-mark=\'"+b.dataset.mark+"\']").forEach(function(x){fxSent(x,j.day)});else fxSent(b,j.day);'
-    . 'document.dispatchEvent(new CustomEvent("fxwa-sent",{detail:{btn:b,day:j.day}}));d.close()}).catch(function(x){send.disabled=false;if(w)w.close();err.textContent=x.message;err.hidden=false})})})();</script>';
+    . 'document.dispatchEvent(new CustomEvent("fxwa-sent",{detail:{btn:b,day:j.day}}));d.close();if(PH)app(msg);else if(w)w.location=wa(msg);else location.href=wa(msg)}).catch(function(x){send.disabled=false;if(w)w.close();err.textContent=x.message;err.hidden=false})})})();</script>';
 }
 /* a review's problem: late delivery or faulty product, picked on the review form or read from a 1–3 star review's words (English, Hinglish, Arabic);
    any other 1–3 star review is a bad product. Late and faulty are owed a coupon. */
