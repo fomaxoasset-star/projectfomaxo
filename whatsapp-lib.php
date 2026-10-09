@@ -95,6 +95,7 @@ function fomaxo_wa_send_due($max = 20) {
   if (!fx_wa_ready()) return ['sent' => 0, 'note' => 'whatsapp-config.php not found or not filled in'];
   $c = fx_wa_config();
   if (($c['review_auto'] ?? true) === false) return ['sent' => 0, 'note' => 'automatic review requests are off'];   // set up from admin → Refill reminders: only refills go out
+  if (function_exists('fomaxo_db') && ($pdo = fomaxo_db())) { require_once __DIR__ . '/review-req-lib.php'; if (fx_rq_set($pdo)['auto']) return ['sent' => 0, 'note' => 'review requests now go out from admin → Review requests']; }
   $dir = rv_dir('whatsapp'); $sent = 0; $failed = 0;
   $lock = @fopen("$dir/.lock", 'c'); if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) return ['sent' => 0, 'note' => 'already running'];
   $h = (int)(new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('G');
@@ -196,4 +197,33 @@ function fomaxo_wa_send_refills($max = 20) {
   }
   fomaxo_setting($pdo, 'refill_tries', json_encode($tries));
   return ['refills' => $sent, 'refills_failed' => $failed];
+}
+
+/* automatic review requests (admin → Members → Review requests): only customers who ticked WhatsApp offers, once per order, skipped once reviewed.
+   Meta templates: review_ask ({{1}} name, {{2}} perfumes, {{3}} review link) and, with the coupon on, review_ask_coupon (+ {{4}} %, {{5}} code). */
+function fomaxo_wa_send_rvreqs($max = 20) {
+  require_once __DIR__ . '/review-req-lib.php';
+  $pdo = fomaxo_db(); if (!$pdo) return ['reviews' => 0, 'note' => 'no database'];
+  $set = fx_rq_set($pdo);
+  if (!$set['auto']) return ['reviews' => 0, 'note' => 'automatic review requests are off'];
+  if (!fx_wa_ready()) return ['reviews' => 0, 'note' => 'WhatsApp Business details missing'];
+  $c = fx_wa_config();
+  $h = (int)(new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('G');
+  if ($h < $set['from'] || $h >= $set['to']) return ['reviews' => 0, 'note' => 'outside sending hours'];
+  $tries = json_decode((string)fomaxo_setting($pdo, 'rvreq_tries'), true) ?: [];
+  $sent = 0; $failed = 0;
+  foreach (fx_rq_due($pdo) as $o) {
+    if ($sent + $failed >= $max) break;
+    if ($o['sent'] || empty($o['optin']) || ($tries[$o['order_no']] ?? 0) >= 3 || !($to = fx_wa_number($o['phone']))) continue;
+    $p = $o['parts'];
+    $vars = [$p['first'] !== '' ? $p['first'] : 'there', $p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume', $p['review']];
+    if ($p['code']) { $vars[] = $p['pct']; $vars[] = $p['code']; }
+    $tpl = $p['code'] ? 'review_ask_coupon' : 'review_ask';
+    [$ok, $info] = fx_wa_template($to, $tpl, $p['ar'] ? 'ar' : 'en', $vars, $c);
+    if (!$ok && $p['ar']) [$ok, $info] = fx_wa_template($to, $tpl, 'en', $vars, $c);   // no Arabic version approved: English
+    if ($ok) { fx_rq_mark($pdo, $o['order_no'], 'auto'); $sent++; }
+    else { $tries[$o['order_no']] = ($tries[$o['order_no']] ?? 0) + 1; $failed++; fomaxo_setting($pdo, 'rvreq_auto_err', date('d/m H:i') . ' ' . $o['order_no'] . ': ' . mb_substr($info, 0, 200)); error_log("FOMAXO review request WhatsApp {$o['order_no']}: $info"); }
+  }
+  fomaxo_setting($pdo, 'rvreq_tries', json_encode($tries));
+  return ['reviews' => $sent, 'reviews_failed' => $failed];
 }

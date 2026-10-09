@@ -1,5 +1,5 @@
 <?php
-/* FOMAXO — automatic WhatsApp review requests and refill reminders (see whatsapp-lib.php).
+/* FOMAXO — automatic WhatsApp messages: review requests (admin → Members → Review requests) and refill reminders (see whatsapp-lib.php).
    php whatsapp.php                     → Hostinger cron job (e.g. every 30 minutes): sends the messages that are due
    GET whatsapp.php?status              → set-up check: is whatsapp-config.php found and filled in (never shows the token), messages waiting
    GET whatsapp.php?skip=ORDER&k=KEY    → stop the message for one order (link in FOMAXO's order email, e.g. for a cancelled order)
@@ -7,7 +7,7 @@
 require __DIR__ . '/whatsapp-lib.php';
 date_default_timezone_set('Asia/Dubai');
 
-if (PHP_SAPI === 'cli') { echo json_encode(fomaxo_wa_send_due() + fomaxo_wa_send_refills()) . "\n"; exit; }
+if (PHP_SAPI === 'cli') { echo json_encode(fomaxo_wa_send_due() + fomaxo_wa_send_refills() + fomaxo_wa_send_rvreqs()) . "\n"; exit; }
 
 header('Cache-Control: no-store');
 if (isset($_GET['skip'])) {
