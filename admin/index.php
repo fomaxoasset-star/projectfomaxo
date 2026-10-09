@@ -2496,6 +2496,9 @@ if (isset($_GET['reviews'])) {
       && ($has("\\blate\\b|delay|never (came|arrived|reached|received)|not (yet )?(received|arrived|delivered|reached)|still (waiting|not)|didn.t (come|arrive|receive|get it)|haven.t (received|got)|تأخر|تاخر|متأخر|تأخير|ما وصل|لم يصل|ما جاني|ما وصلني|لم أستلم")
         || ($has('deliver|arriv|ship|courier|order|parcel|came|reach|receiv|توصيل|وصل|الطلب|طلبي|المندوب|الشحن') && $has('slow|took (so |too |very )?long|took \\d+|\\d+ days|weeks?|a week|waited|waiting|بطيء|بطء|انتظرت|أسبوع|اسبوع|أيام|ايام')));
     $fault = $has('damaged|broken|crack|leak|defect|faulty|fault|spray(er)? (is )?(not|doesn.t|didn.t|won.t)|nozzle|not working|doesn.t work|(cap|lid|item|tester) (was |is )?missing|missing (cap|lid|item)|half full|wrong (item|product|size|perfume)|fake|مكسور|مكسورة|تالف|يسرب|تسريب|البخاخ|ما يشتغل|لا يعمل|ناقص|فاضي|غلط|خطأ');
+    /* the review's tag wins: Delivery delay or Faulty product gets the checked-and-sorry reply, and a 4–5 star review tagged Bad product is a complaint too
+       (an apology and a coupon for the next order, never a happy thank-you) */
+    $is = fx_rv_issue($r); if ($is === 'late') $late = true; if ($is === 'faulty') $fault = true; if ($is === 'bad') { $late = $fault = false; if ($st >= 4) $st = 2; }
     $pk = fn($a) => $a[$v % count($a)];   // $v picks another wording (Another reply button)
     if ($ar) {
       $hi = $nm !== '' ? $nm : 'عزيزنا';
