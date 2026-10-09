@@ -10,7 +10,8 @@ require_once __DIR__ . '/refill-lib.php';
 function fx_rq_set($pdo) {
   $t = json_decode((string)fomaxo_setting($pdo, 'rvreq'), true) ?: [];
   $d = max(1, min(120, (int)($t['days'] ?? 7))); $f = max(0, min(23, (int)($t['from'] ?? 11))); $to = max($f + 1, min(24, (int)($t['to'] ?? 20)));
-  return ['days' => $d, 'from' => $f, 'to' => $to, 'list_to' => $d + 30, 'coupon' => !empty($t['coupon']), 'pct' => max(1, min(50, (float)($t['pct'] ?? 10))), 'auto' => !empty($t['auto'])];
+  return ['days' => $d, 'from' => $f, 'to' => $to, 'list_to' => $d + 30, 'coupon' => !empty($t['coupon']), 'pct' => max(1, min(50, (float)($t['pct'] ?? 10))), 'auto' => !empty($t['auto']),
+          'drop' => !empty($t['drop']), 'drop_days' => max(1, min(365, (int)($t['drop_days'] ?? 30)))];
 }
 
 /* the customer's coupon: REVIEW- + 5 letters, always the same for that mobile, so each customer can only ever get (and use) one */
@@ -78,6 +79,9 @@ function fx_rq_asked($pdo) {
   uasort($out, fn($a, $b) => strcmp($b['sent'], $a['sent']) ?: strcmp($b['created_at'], $a['created_at']));
   return $out;
 }
+
+/* asked but not reviewed for longer than the 'Remove not reviewed after' days (when that is on): hidden from the list */
+function fx_rq_dropped($set, $a) { return $set['drop'] && fx_rq_state($a) === 'not' && strtotime($a['sent']) < strtotime('today -' . $set['drop_days'] . ' days'); }
 
 /* rv = every perfume reviewed, part = some, not = none yet */
 function fx_rq_state($a) { return $a['total'] > 0 && $a['done'] >= $a['total'] ? 'rv' : ($a['done'] > 0 ? 'part' : 'not'); }
