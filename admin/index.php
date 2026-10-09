@@ -504,12 +504,12 @@ function fx_wa_btn($phone, $who, $head, $tail = "\n\nThank you,\nFOMAXO", $mark 
     . ' title="Send on WhatsApp" onclick="event.stopPropagation()">' . FX_WA_SVG . '<span>' . ($sd !== '' ? 'Sent ' . $sd : 'WhatsApp') . '</span></button>';
 }
 /* the day a WhatsApp went (dd/mm), from the list it belongs to: review requests and refill reminders keep their own; the rest in the setting wa_sent */
-/* Left at checkout: every visit to checkout is its own fx_leads row, so one customer's visits are put together by mobile (last 9 digits),
-   else email, else the visit itself. fx_lead_groups gives one line per customer: their latest visit plus tries (how many), sids (all of them, for ×),
+/* Left at checkout: every visit to checkout is its own fx_leads row, so one customer's visits on the same day are put together by mobile
+   (last 9 digits), else email, else the visit itself. fx_lead_groups gives one line per customer per day: their latest visit plus tries (how many), sids (all of them, for ×),
    times (their dates) and mark (the visit whose WhatsApp was sent last, so Sent dd/mm shows) */
 function fx_lead_key($l) {
   $p = fomaxo_phone9((string)$l['phone']); $e = strtolower(trim((string)($l['email'] ?? '')));
-  return $p !== '' ? 'p:' . $p : ($e !== '' ? 'e:' . $e : 's:' . $l['sid']);
+  return ($p !== '' ? 'p:' . $p : ($e !== '' ? 'e:' . $e : 's:' . $l['sid'])) . '|' . substr((string)$l['updated_at'], 0, 10);   // a new day is a new line
 }
 function fx_lead_groups($groups) {
   global $pdo; $sent = json_decode((string)fomaxo_setting($pdo, 'wa_sent'), true) ?: [];
@@ -595,7 +595,7 @@ function fx_badges($pdo) {
     $s = $pdo->prepare("SELECT COUNT(*) FROM fx_orders WHERE order_no LIKE 'FMX-%' AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') AND " . FX_ALERT_AT . " > ?");
     $s->execute([fx_seen($pdo, 'orders')]); $b['orders'] = (int)$s->fetchColumn();
     $hid = $pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'hidden'")->fetch() ? ' AND l.hidden = 0' : '';
-    $s = $pdo->prepare("SELECT COUNT(DISTINCT CASE WHEN l.phone <> '' THEN RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9) WHEN l.email <> '' THEN LOWER(l.email) ELSE l.sid END) FROM fx_leads l WHERE l.created_at > ? AND l.order_no IS NULL$hid
+    $s = $pdo->prepare("SELECT COUNT(DISTINCT CASE WHEN l.phone <> '' THEN RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9) WHEN l.email <> '' THEN LOWER(l.email) ELSE l.sid END, DATE(l.created_at)) FROM fx_leads l WHERE l.created_at > ? AND l.order_no IS NULL$hid
                         AND NOT EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
                                         AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9))");
     $s->execute([fx_seen($pdo, 'leads')]); $b['leads'] = (int)$s->fetchColumn();
@@ -2179,7 +2179,7 @@ if (isset($_GET['analytics'])) {
   foreach ($q("SELECT l.* FROM fx_leads l WHERE l.updated_at BETWEEN ? AND ? AND l.order_no IS NULL$leadHid
                AND NOT EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
                                AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9))
-               ORDER BY l.updated_at DESC LIMIT 1000")->fetchAll() as $l) {   // one line per customer (fx_lead_groups), at most 200
+               ORDER BY l.updated_at DESC LIMIT 1000")->fetchAll() as $l) {   // one line per customer per day (fx_lead_groups), at most 200
     if (count($leftG ??= []) >= 200 && !isset($leftG[fx_lead_key($l)])) continue;
     $leftG[fx_lead_key($l)][] = $l;
   }
