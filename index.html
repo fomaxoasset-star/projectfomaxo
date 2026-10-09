@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=16";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=17";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -434,13 +434,13 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .recs-nav{display:flex;gap:6px}
 .recs-nav button{width:26px;height:26px;border:1px solid var(--line-2);background:none;color:var(--gold);font-size:16px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
 .recs-nav button:hover{border-color:var(--gold)}
-.recs-row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:2px}
+.recs-row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:2px}
 .recs-row::-webkit-scrollbar{display:none}
 /* product page "You may also like": every product in one sideways row (swipe on phone, arrows or trackpad on laptop) */
 .also-nav{display:flex;gap:8px}
 .also-nav button{width:42px;height:42px;border:1px solid var(--line-2);background:none;color:var(--gold);font-size:22px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0;transition:border-color .3s}
 .also-nav button:hover{border-color:var(--gold)}
-.also-row{display:flex;gap:clamp(18px,2vw,30px);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:4px}
+.also-row{display:flex;gap:clamp(18px,2vw,30px);overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:4px}
 .also-row::-webkit-scrollbar{display:none}
 .also-row>.card{flex:0 0 calc((100% - 3 * clamp(18px,2vw,30px)) / 4);scroll-snap-align:start;height:auto}
 @media(max-width:1100px){.also-row>.card{flex-basis:calc((100% - clamp(18px,2vw,30px)) / 2.2)}}
@@ -1739,7 +1739,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-main:has(.rw-gal){gap:0}.rw-gal+.rw-tools{padding:6px 0}.rw-gal+.rw-tools .rw-sort select{height:30px}.rw-main:has(.rw-gal) #rwList>.rw-item:first-child{padding-top:8px}
 .rw-gal-h{flex:none;display:flex;flex-direction:column;gap:4px;line-height:1.5}
 .rw-gal-h{margin:0;display:block;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}.rw-gal-h .rw-gal-c{color:var(--muted);letter-spacing:.1em}
-.rw-gal-row{display:flex;gap:8px;min-width:0;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.rw-gal-row{display:flex;gap:8px;min-width:0;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .rw-gal-row::-webkit-scrollbar{display:none}
 .rw-gal-row button{flex:none;width:120px;height:120px;padding:0;border:1px solid var(--line);overflow:hidden;scroll-snap-align:start;transition:border-color .3s}
 .rw-gal-row button:hover{border-color:var(--gold)}
@@ -1748,12 +1748,55 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-cta{margin-top:30px;padding:28px;border:1px solid var(--line-2);background:var(--panel);max-width:760px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
 .rw-cta h3{font-family:var(--serif);font-weight:400;font-size:26px}
 .rw-ord{margin-bottom:18px;letter-spacing:.12em}
-.rw-op{border:1px solid var(--line);padding:16px;margin-bottom:14px;max-width:820px}
-.rw-op-h{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.rw-op-h img{width:64px;height:64px;object-fit:cover;flex:none}
-.rw-op-h>div{flex:1;min-width:140px;display:flex;flex-direction:column;gap:2px}
-.rw-op-h b{font-family:var(--serif);font-weight:400;font-size:22px}
-.rw-op .rw-form{margin:16px 0 0}
+/* #/review page: order card (items + how many are reviewed) beside the form of the item being reviewed; phone: card on top, form under it */
+.rwp{display:grid;gap:18px;max-width:1180px}
+.rwp-side,.rwp-main{border:1px solid var(--line-2);background:var(--panel);min-width:0}
+.rwp-side{padding:18px;display:flex;flex-direction:column;gap:6px}
+.rwp-no{font-family:var(--serif);font-weight:400;font-size:28px;color:var(--ivory);letter-spacing:.04em}
+.rwp-bar{display:block;height:3px;background:var(--line-2);border-radius:2px;margin-top:8px;overflow:hidden}
+.rwp-bar>span{display:block;height:100%;width:0;background:var(--gold);transition:width .5s}
+.rwp-cnt{letter-spacing:.12em;text-transform:uppercase;font-size:11px}
+.rwp-list{display:flex;flex-direction:column;gap:8px;margin:10px 0 6px}
+.rwp-it{display:flex;align-items:center;gap:12px;width:100%;padding:8px;border:1px solid var(--line);background:transparent;text-align:start;color:var(--ivory);transition:border-color .3s,background .3s;cursor:pointer}
+@media(hover:hover){.rwp-it:hover{border-color:var(--gold)}}
+.rwp-it.on{border-color:var(--gold);background:rgba(215,170,105,.1)}
+.rwp-it img{width:44px;height:44px;object-fit:cover;flex:none}
+.rwp-nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rwp-nm b{font-family:var(--serif);font-weight:400;font-size:18px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rwp-nm>span:not(.rwp-st){display:none}
+.rwp-st{display:inline-flex;align-items:center;gap:5px;margin-top:3px;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.rwp-st svg{width:13px;height:13px}
+.rwp-it.on .rwp-st,.rwp-it.done .rwp-st{color:var(--gold-hi)}
+.rwp-note{margin-top:6px}.rwp-note2{margin-top:-4px}
+.rwp-shop{margin-top:10px;align-self:flex-start}
+.rwp-main{padding:18px;display:flex;flex-direction:column;gap:14px}
+.rwp-main .rw-ok{margin:0}
+.rwp-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.rwp-head img{width:72px;height:72px;object-fit:cover;flex:none}
+.rwp-head>div{flex:1;min-width:150px;display:flex;flex-direction:column;gap:3px}
+.rwp-head b{font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.15;color:var(--ivory)}
+.rwp-main .rw-form{border:0;background:transparent;padding:0;margin:0;box-shadow:none}
+.rwp-main .rw-fhead,.rwp-main .rw-fnote{display:none}
+.rwp-main .rw-c1>div:first-child>.opt-label{justify-content:flex-start;gap:14px}
+.rwp-main .rw-rate{gap:6px}
+.rwp-main .rw-form .rw-rate button{font-size:40px}
+.rwp-main .rw-foot .btn[type=submit]{min-width:200px;justify-content:center}
+.rwp-exit{margin:0;font-size:12.5px;letter-spacing:.04em;color:var(--muted)}
+.rwp-exit a{color:var(--gold-hi);text-decoration:underline;text-underline-offset:3px}
+.rwp-main .rw-foot .rw-err:empty{display:none}
+.rwp-was{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.rwp-done{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:12px 0}
+.rwp-done h3{font-family:var(--serif);font-weight:400;font-size:30px}
+@media(max-width:899px){.rwp-side .rwp-note,.rwp-side .rwp-note2,.rwp-shop{display:none}.rwp-head .rw-ver{flex-basis:100%}
+  .rwp-side{padding:14px 16px}.rwp-no{font-size:24px}.rwp-it{padding:6px 8px}.rwp-it img{width:40px;height:40px}.rwp-nm b{font-size:17px}.rwp-st{margin-top:1px}
+  .rwp-list{flex-direction:row;gap:8px;margin:8px -16px 0;padding:0 16px 4px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.rwp-list::-webkit-scrollbar{display:none}.rwp-it{flex:none;width:176px;scroll-snap-align:start}}
+@media(max-width:620px){.rwp-main .rw-foot .btn[type=submit]{min-width:0}}
+@media(min-width:900px){.rwp{grid-template-columns:320px minmax(0,1fr);gap:28px;align-items:start}
+  .rwp-side{position:sticky;top:120px;padding:24px;max-height:calc(100vh - 140px)}.rwp-list{overflow-y:auto;min-height:0;flex:0 1 auto;scrollbar-width:thin}
+  .rwp-main{padding:26px 32px 28px;gap:18px}
+  .rwp-main .rw-form{column-gap:36px;row-gap:14px}
+  .rwp-main .rw-form .row2{grid-template-columns:minmax(0,1fr)}
+  .rwp-main .rw-form textarea{min-height:150px}}
 /* review form: title row, two parts (rating, problem, words | name, mobile, place, photos), footer with the error left and the buttons right */
 .rw-form .rw-fhead{justify-content:flex-start;align-items:baseline;gap:6px 14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .rw-form .rw-fx{margin-left:0;margin-inline-start:auto}
@@ -1906,7 +1949,7 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 .oa-arw:hover{border-color:var(--gold-hi);color:var(--gold-hi)}
 .oa.oa-fit .oa-arw{display:none}
 .oa .btn.sm{min-height:38px;padding:0 18px}
-.oa-row{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.oa-row{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
 .oa-row::-webkit-scrollbar{display:none}
 .oa-t{position:relative;flex:0 0 var(--oa-w,160px);min-width:0;scroll-snap-align:start;display:flex;flex-direction:column}
 .oa-pic{display:block;aspect-ratio:1;border:1px solid var(--line);background:var(--panel-2);overflow:hidden}
@@ -4036,13 +4079,37 @@ async function bindReviewPage(q){
   const box = $('#rwOrder'); if (!box) return;
   if (!Array.isArray(d.products)) { box.innerHTML = `<p class="co-small">${esc(d.error || 'We could not open your review link. Please check your connection and try again.')}</p><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px"><a class="btn" href="#/fragrances">Shop FOMAXO</a></div>`; return; }
   rwSaveLink(t, d); rwOk.add(t);
+  /* left: the order with each item and how far the reviews are; right: the form of the item being reviewed (laptop side by side, phone one under the other) */
   const link = {t, no: d.order}, items = d.products.filter(x => P[x.id]);
-  box.innerHTML = `<p class="small rw-ord">Order ${esc(d.order)}</p>` + items.map(x => { const p = P[x.id]; return `<div class="rw-op" data-op="${p.id}"><div class="rw-op-h"><img src="${SM(p.images[0])}" alt=""><div><b>${esc(p.name)}</b><span class="small">${esc(p.family)}</span></div>${x.done ? `<span class="rw-ver">${RW_TICK}Reviewed</span>` : `<button class="btn sm" data-opw="${p.id}">Write a review</button>`}</div><div class="rw-op-f"></div></div>`; }).join('')
-    + `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px"><a class="btn line" href="#/fragrances">Continue shopping</a></div>`;
-  const open = id => { const row = $(`[data-op="${id}"]`, box), p = P[id], f = $('.rw-op-f', row), b = $('[data-opw]', row); if (!b || $('form', f)) return; b.hidden = true; f.innerHTML = rwForm(p, link);
-    rwBindForm($('form', f), p, link, () => { f.innerHTML = `<p class="rw-ok" style="margin:16px 0 0">Thank you. Your review of ${esc(p.name)} is now live. <a class="link" href="#/product/${p.id}">See it</a></p>`; b.outerHTML = `<span class="rw-ver">${RW_TICK}Reviewed</span>`; }); };
-  $$('[data-opw]', box).forEach(b => b.onclick = () => open(b.dataset.opw));
-  const left = items.filter(x => !x.done); if (left.length === 1) open(left[0].id);
+  box.innerHTML = `<div class="rwp"><aside class="rwp-side"><span class="rw-fk">Your order</span><b class="rwp-no">${esc(d.order)}</b>
+      <span class="rwp-bar"><span></span></span><p class="small rwp-cnt"></p>
+      <div class="rwp-list">${items.map(x => { const p = P[x.id]; return `<button type="button" class="rwp-it" data-opw="${p.id}"><img src="${SM(p.images[0])}" alt=""><span class="rwp-nm"><b>${esc(p.name)}</b><span>${esc(p.family)}</span><span class="rwp-st"></span></span></button>`; }).join('')}</div>
+      <p class="small rwp-note"><span class="rw-ver">${RW_TICK}Verified Purchaser</span></p><p class="small rwp-note2">Shows on every review from this page.</p>
+      <a class="btn line rwp-shop" href="#/fragrances">Continue shopping</a></aside>
+    <div class="rwp-main"></div></div>`;
+  const main = $('.rwp-main', box), side = $('.rwp-side', box);
+  const draw = cur => {
+    const n = items.filter(x => x.done).length;
+    $('.rwp-bar>span', side).style.width = `${items.length ? n / items.length * 100 : 0}%`;
+    $('.rwp-cnt', side).textContent = `${n} of ${items.length} reviewed`;
+    items.forEach(x => { const b = $(`[data-opw="${x.id}"]`, side); b.classList.toggle('on', x.id === cur); b.classList.toggle('done', !!x.done);
+      $('.rwp-st', b).innerHTML = x.done ? `${RW_TICK}<span>Reviewed</span>` : x.id === cur ? '<span>Reviewing</span>' : '<span>To review</span>'; });
+    // long orders: the list scrolls by itself (sideways on phone, up/down on laptop) so the item being reviewed is in sight
+    const l = $('.rwp-list', side), b = cur && $(`[data-opw="${cur}"]`, side);
+    if (b) { const lr = l.getBoundingClientRect(), br = b.getBoundingClientRect(); l.scrollLeft += document.dir === 'rtl' ? br.right - lr.right + 16 : br.left - lr.left - 16; l.scrollTop += br.top - lr.top - (lr.height - br.height) / 2; }
+  };
+  const allDone = msg => { draw(''); main.innerHTML = `<div class="rwp-done">${msg ? `<p class="rw-ok">${msg}</p>` : ''}<span class="rw-fk">Thank you</span><h3>Every item is reviewed</h3><p class="small">Your honest words help others choose their FOMAXO.</p><a class="btn" href="#/fragrances">Continue shopping</a></div>`; };
+  const open = (id, msg) => { const x = items.find(y => y.id === id), p = P[id]; if (!x) return;
+    draw(id);
+    if (x.done) { main.innerHTML = `${msg ? `<p class="rw-ok">${msg}</p>` : ''}<div class="rwp-head"><img src="${SM(p.images[0])}" alt=""><div><span class="rw-fk">Your review</span><b>${esc(p.name)}</b><span class="small">${esc(p.family)}</span></div></div><p class="rwp-was"><span class="rw-ver">${RW_TICK}Reviewed</span><a class="link" href="#/product/${p.id}">See it on ${esc(p.name)}</a></p>`; return; }
+    main.innerHTML = `${msg ? `<p class="rw-ok">${msg}</p>` : ''}<div class="rwp-head"><img src="${SM(p.images[0])}" alt=""><div><span class="rw-fk">Write a review</span><b>${esc(p.name)}</b><span class="small">${esc(p.family)}</span></div><span class="rw-ver">${RW_TICK}Verified Purchaser</span></div>` + rwForm(p, link);
+    $('.rw-foot', main).insertAdjacentHTML('afterbegin', '<p class="small rwp-exit">To exit review, click <a href="#/fragrances">Continue Shopping</a></p>');
+    rwBindForm($('form', main), p, link, () => { x.done = true;
+      const ok = `Thank you. Your review of ${esc(p.name)} is now live. <a class="link" href="#/product/${p.id}">See it</a>`, next = items.find(y => !y.done);
+      if (next) open(next.id, ok); else allDone(ok);
+      main.scrollIntoView({behavior: 'smooth', block: 'start'}); }); };
+  $$('[data-opw]', side).forEach(b => b.onclick = () => { open(b.dataset.opw); if (!matchMedia('(min-width:900px)').matches) main.scrollIntoView({behavior: 'smooth', block: 'start'}); });
+  const left = items.find(x => !x.done); if (left) open(left.id); else allDone('');
 }
 
 /* ============================ ROUTER ============================ */
