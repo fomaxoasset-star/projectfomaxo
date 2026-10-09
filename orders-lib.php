@@ -639,33 +639,18 @@ function fomaxo_smtp_send($c, $to, $subject, $body, $headers) {
 /* ---- Arabic → English for FOMAXO (admin, order emails, Excel). What the customer typed is never changed: the English is shown next to it.
    Free MyMemory translation (no key, about 5,000 characters a day — plenty for orders and reviews); every result is kept in fx_tr so each text is translated once.
    If the service can't be reached, the Arabic shows as typed (with Arabic digits turned into 0-9) and is tried again next time. */
-/* Left at checkout: the ready WhatsApp message (name, the bag they left, a link that opens checkout with that bag), Arabic for an Arabic name; $code adds a 10% code for that mobile */
-function fx_left_code($pdo, $sid) {
-  $abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; $hx = hash_hmac('sha256', 'left|' . $sid, (string)fomaxo_setting($pdo, 'admin_hash')); $c = 'COMEBACK-';
-  for ($i = 0; $i < 5; $i++) $c .= $abc[hexdec(substr($hx, $i * 2, 2)) % strlen($abc)];
-  return $c;
-}
-function fx_left_wa($pdo, $l, $code = false) {
-  $wa = preg_replace('/\D/', '', strtr((string)$l['phone'], FX_AR_DIGITS)); if (str_starts_with($wa, '00')) $wa = substr($wa, 2);
-  if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); elseif (strlen($wa) === 9 && $wa[0] === '5') $wa = '971' . $wa;
+/* Left at checkout: the ready WhatsApp message (name, the bag they left, a link that opens checkout with that bag), Arabic for an Arabic name,
+   in two parts: the admin WhatsApp box puts a coupon it makes (COMEBACK-, one use, that mobile only, 7 days) between them. Returns [head, tail, arabic]. */
+function fx_left_msg($l) {
   $ar = fx_has_ar($l['name']); $first = preg_split('/\s+/u', trim((string)$l['name']))[0] ?? '';
   $bag = preg_match('/^[a-z0-9_.-]{1,300}$/i', (string)($l['bag'] ?? '')) ? $l['bag'] : '';
   $link = 'https://fomaxo.com/?' . ($ar ? 'lang=ar&' : '') . 'utm_source=whatsapp&utm_campaign=left-checkout#/' . ($bag !== '' ? 'checkout?bag=' . $bag : 'checkout');
   $items = implode("\n", array_filter(array_map('trim', preg_split('/,\s*(?=\d+ ×)/u', (string)$l['items']))));
-  $n2 = "\n\n"; $cd = $code ? fx_left_code($pdo, $l['sid']) : '';
-  if ($ar) $t = ($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،')
-    . ($items !== '' ? $n2 . "تركت هذه في حقيبة FOMAXO:\n" . $items : $n2 . 'لاحظنا أنك لم تكمل طلبك من FOMAXO.')
-    . ($cd !== '' ? $n2 . 'تقديراً لك، هذا رمزك الخاص للحصول على خصم 10% (لمرة واحدة، صالح لمدة 7 أيام، مع رقم هاتفك هذا):' . $n2 . '*' . $cd . '*' : '')
-    . $n2 . "حقيبتك محفوظة. اضغط هنا لإكمال طلبك:\n" . $link
-    . $n2 . 'توصيل مجاني داخل الإمارات خلال 1–3 أيام.'
-    . $n2 . 'إن كان لديك أي سؤال عن العطور أو الأحجام، راسلنا هنا.' . $n2 . 'FOMAXO';
-  else $t = 'Hi' . ($first !== '' ? ' ' . $first : '') . ','
-    . ($items !== '' ? $n2 . "You left these in your FOMAXO bag:\n" . $items : $n2 . 'We noticed you did not finish your FOMAXO order.')
-    . ($cd !== '' ? $n2 . 'As a thank you, here is your personal code for 10% off (single use, valid 7 days, with this mobile number):' . $n2 . '*' . $cd . '*' : '')
-    . $n2 . "Your bag is saved. Tap here to finish your order:\n" . $link
-    . $n2 . 'Free delivery across the UAE in 1–3 days.'
-    . $n2 . 'If you have any questions about the scents or sizes, just reply here.' . $n2 . 'FOMAXO';
-  return 'https://wa.me/' . $wa . '?text=' . rawurlencode($t);
+  $n2 = "\n\n";
+  if ($ar) return [($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،') . ($items !== '' ? $n2 . "تركت هذه في حقيبة FOMAXO:\n" . $items : $n2 . 'لاحظنا أنك لم تكمل طلبك من FOMAXO.'),
+    $n2 . "حقيبتك محفوظة. اضغط هنا لإكمال طلبك:\n" . $link . $n2 . 'توصيل مجاني داخل الإمارات خلال 1–3 أيام.' . $n2 . 'إن كان لديك أي سؤال عن العطور أو الأحجام، راسلنا هنا.' . $n2 . 'FOMAXO', true];
+  return ['Hi' . ($first !== '' ? ' ' . $first : '') . ',' . ($items !== '' ? $n2 . "You left these in your FOMAXO bag:\n" . $items : $n2 . 'We noticed you did not finish your FOMAXO order.'),
+    $n2 . "Your bag is saved. Tap here to finish your order:\n" . $link . $n2 . 'Free delivery across the UAE in 1–3 days.' . $n2 . 'If you have any questions about the scents or sizes, just reply here.' . $n2 . 'FOMAXO', false];
 }
 function fx_has_ar($s) { return (bool)preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', (string)$s); }
 function fomaxo_en_many(array $texts) {

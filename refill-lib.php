@@ -15,6 +15,18 @@ function fx_refill_time($pdo) {
 }
 
 function fx_refill_pct($pdo) { return (float)(fomaxo_setting($pdo, 'refill_pct') ?? 10); }
+/* the automatic coupon's minimum order in AED (0 = none) and the words the automatic message uses for the offer */
+function fx_refill_min($pdo) { return max(0, (int)(fomaxo_setting($pdo, 'refill_min') ?? 0)); }
+function fx_refill_offer($pdo, $ar = false) {
+  $p = rtrim(rtrim(number_format(fx_refill_pct($pdo), 2, '.', ''), '0'), '.'); $m = fx_refill_min($pdo);
+  return $ar ? 'خصم ' . $p . '% على طلبك القادم' . ($m ? ' لطلب بقيمة ' . number_format($m) . ' درهم أو أكثر' : '') : $p . '% off your next order' . ($m ? ' of AED ' . number_format($m) . ' or more' : '');
+}
+/* orders taken off Review requests or Refill reminders with ✕ (order no => day): not listed, no automatic message; kept 400 days */
+function fx_list_hidden($pdo, $setting) { return json_decode((string)fomaxo_setting($pdo, $setting), true) ?: []; }
+function fx_list_hide($pdo, $setting, $no) {
+  $h = array_filter(fx_list_hidden($pdo, $setting), fn($d) => $d >= date('Y-m-d', strtotime('-400 days'))); $h[$no] = date('Y-m-d');
+  fomaxo_setting($pdo, $setting, json_encode($h));
+}
 
 /* the order's coupon: REFILL- + 5 letters, always the same for that order */
 function fx_refill_code($pdo, $no) {
@@ -23,15 +35,16 @@ function fx_refill_code($pdo, $no) {
   return $c;
 }
 
-/* marks the order's reminder as sent and saves its coupon in Coupons (single use, only with this customer's mobile, no end date) */
+/* marks the order's reminder as sent. Sent by itself, its coupon is saved in Coupons (single use, only with this customer's mobile, no end date);
+   a tap on WhatsApp makes its coupon in the WhatsApp box instead, if one is picked */
 function fx_refill_mark($pdo, $no, $how = 'tap') {
   $sent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
   $sent[$no] = date('Y-m-d') . ($how === 'auto' ? ' auto' : '');
   $s = $pdo->prepare('SELECT phone FROM fx_orders WHERE order_no = ?'); $s->execute([$no]); $ph = (string)$s->fetchColumn();
-  if (strlen(fomaxo_phone9($ph)) >= 9) {
+  if ($how === 'auto' && strlen(fomaxo_phone9($ph)) >= 9) {
     fomaxo_coupons_table($pdo);
-    $pdo->prepare('INSERT IGNORE INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, phone) VALUES (?, \'pct\', ?, NULL, NULL, NULL, NULL, 1, 1, NOW(), 0, ?)')
-        ->execute([fx_refill_code($pdo, $no), round(fx_refill_pct($pdo), 2), mb_substr($ph, 0, 25)]);
+    $pdo->prepare('INSERT IGNORE INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, phone) VALUES (?, \'pct\', ?, ?, NULL, NULL, NULL, 1, 1, NOW(), 0, ?)')
+        ->execute([fx_refill_code($pdo, $no), round(fx_refill_pct($pdo), 2), fx_refill_min($pdo) ?: null, mb_substr($ph, 0, 25)]);
   }
   fomaxo_setting($pdo, 'refill_sent', json_encode(array_filter($sent, fn($d) => substr($d, 0, 10) >= date('Y-m-d', strtotime('-120 days')))));
 }
@@ -48,7 +61,9 @@ function fx_refill_due($pdo) {
   }
   $sent = json_decode((string)fomaxo_setting($pdo, 'refill_sent'), true) ?: [];
   $due = []; $tm = fx_refill_time($pdo); $stops = json_decode((string)fomaxo_setting($pdo, 'wa_stop'), true) ?: [];
+  $gone = fx_list_hidden($pdo, 'refill_sent_hide');   // ✕ on the list: no reminder for that order
   foreach ($last as $k => $o) {
+    if (isset($gone[$o['order_no']])) continue;
     $days = (int)floor((strtotime('today') - strtotime(date('Y-m-d', strtotime($o['created_at'])))) / 86400);
     if ($days >= $tm['list_from'] && $days <= $tm['list_to']) $due['m' . $k] = $o + ['days' => $days, 'sent' => isset($sent[$o['order_no']]) ? substr($sent[$o['order_no']], 0, 10) : null, 'auto' => str_ends_with((string)($sent[$o['order_no']] ?? ''), 'auto'), 'stopped' => isset($stops[$k]) && !$o['optin']];
   }
@@ -69,21 +84,27 @@ function fx_refill_parts($pdo, $o) {
   $ar = fx_has_ar($o['name']);
   $pct = fx_refill_pct($pdo);
   return ['first' => preg_split('/\s+/u', trim((string)$o['name']))[0] ?? '', 'perfumes' => $pn, 'days' => (int)$o['days'], 'code' => fx_refill_code($pdo, $o['order_no']),
-          'pct' => rtrim(rtrim(number_format($pct, 2, '.', ''), '0'), '.'), 'ar' => $ar,
+          'pct' => rtrim(rtrim(number_format($pct, 2, '.', ''), '0'), '.'), 'ar' => $ar, 'offer' => fx_refill_offer($pdo, $ar),
           'review' => $rv ? 'https://fomaxo.com/' . ($ar ? '?lang=ar' : '') . '#/review?t=' . $rv : null];
 }
 
-/* the message, with a blank line between each part so it reads like a personal note (the same words as the WhatsApp template) */
-function fx_refill_text($p) {
+/* the message, with a blank line between each part so it reads like a personal note. The admin WhatsApp box puts the coupon it makes (if one
+   is picked) between fx_refill_head and fx_refill_tail; fx_refill_text is the whole message with this order's own REFILL- code. */
+function fx_refill_head($p) {
+  if ($p['ar']) return 'مرحباً ' . $p['first'] . '،' . "\n\n" . 'نتمنى أن تكون مستمتعاً ' . ($p['perfumes'] !== '' ? 'بعطر ' . $p['perfumes'] : 'بعطرك من FOMAXO') . '. مرّ ' . $p['days'] . ' يوماً على طلبك، وقد يكون عطرك قارب على النفاد.';
+  return 'Hi ' . $p['first'] . ',' . "\n\n" . 'I hope you are enjoying ' . ($p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume') . '. It has been ' . $p['days'] . ' days since your order, so your bottle may be running low.';
+}
+function fx_refill_tail($p) {
   $n2 = "\n\n";
-  if ($p['ar']) return 'مرحباً ' . $p['first'] . '،' . $n2 . 'نتمنى أن تكون مستمتعاً ' . ($p['perfumes'] !== '' ? 'بعطر ' . $p['perfumes'] : 'بعطرك من FOMAXO') . '. مرّ ' . $p['days'] . ' يوماً على طلبك، وقد يكون عطرك قارب على النفاد.'
-    . $n2 . 'تقديراً لك، هذا رمزك الخاص للحصول على خصم ' . $p['pct'] . '% على طلبك القادم (لمرة واحدة):' . $n2 . '*' . $p['code'] . '*'
-    . $n2 . "يمكنك الطلب من جديد هنا:\nhttps://fomaxo.com/?lang=ar"
+  if ($p['ar']) return $n2 . "يمكنك الطلب من جديد هنا:\nhttps://fomaxo.com/?lang=ar"
     . ($p['review'] ? $n2 . "إن سمح وقتك، يسعدنا تقييمك الصادق، وسيظهر بشارة \"مشتري موثّق\":\n" . $p['review'] : '')
     . $n2 . 'راسلنا هنا إن احتجت مساعدة في اختيار عطرك القادم. وأرسل كلمة STOP إن كنت لا ترغب في هذه الرسائل.' . $n2 . "شكراً لك،\nFOMAXO";
-  return 'Hi ' . $p['first'] . ',' . $n2 . 'I hope you are enjoying ' . ($p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume') . '. It has been ' . $p['days'] . ' days since your order, so your bottle may be running low.'
-    . $n2 . 'As a thank you, here is your personal code for ' . $p['pct'] . '% off your next order (single use):' . $n2 . '*' . $p['code'] . '*'
-    . $n2 . "You can reorder anytime here:\nhttps://fomaxo.com"
+  return $n2 . "You can reorder anytime here:\nhttps://fomaxo.com"
     . ($p['review'] ? $n2 . "If you have a moment, we would love your honest review. It will show as Verified Purchaser:\n" . $p['review'] : '')
     . $n2 . 'Just reply here if you would like help choosing your next scent. If you would rather not get these messages, reply STOP.' . $n2 . "Thank you,\nFOMAXO";
+}
+function fx_refill_text($p) {
+  $n2 = "\n\n";
+  return fx_refill_head($p) . $n2 . ($p['ar'] ? 'تقديراً لك، هذا رمزك الخاص للحصول على ' . $p['offer'] . ' (لمرة واحدة):' : 'As a thank you, here is your personal code for ' . $p['offer'] . ' (single use):')
+    . $n2 . '*' . $p['code'] . '*' . fx_refill_tail($p);
 }
