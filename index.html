@@ -1814,8 +1814,6 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-c1,.rw-c2{display:grid;gap:18px;align-content:start;min-width:0}
 #rwFormBox[hidden],#rwFormBox [hidden]{display:none!important}
 .form .rw-mob i{font-style:normal;text-transform:none;letter-spacing:.04em;color:var(--dim)}
-.form .rw-mob-tip{margin:-4px 0 0;color:#f0a497;font-size:12px;line-height:1.4}
-html[data-mode="light"] .form .rw-mob-tip{color:#a8321f}
 .rw-issue{color:var(--gold-hi);margin:-8px 0 0;line-height:1.55}
 .rw-hint{color:#f0a497;margin:-8px 0 0;line-height:1.55}
 .form .rw-need select,.form label.rw-add.rw-need{border-color:#e0705f;box-shadow:0 0 0 1px #e0705f}
@@ -3907,8 +3905,7 @@ function rwForm(p, link, x){
     <div class="rw-c2"><label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
     <label class="rw-anon"><input type="checkbox" name="anon"><span>Post anonymously</span></label>
     <p class="small rw-shown">Your review will show the name: <b></b></p>
-    ${link ? '' : `<label class="rw-mob"><span>Mobile <i class="rw-mob-why">(optional, only FOMAXO sees it)</i></span><input name="mobile" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="e.g. 050 123 4567"></label>
-    <p class="small rw-mob-tip">Please add your mobile number, so we can send your coupon on WhatsApp upon proof.</p>`}
+    ${link ? '' : `<label class="rw-mob"><span>Mobile <i class="rw-mob-why">(optional, only FOMAXO sees it)</i></span><input name="mobile" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="e.g. 050 123 4567"></label>`}
     <div class="row2"><label>State / City (optional)<span class="rw-clr-w"><input name="city" maxlength="40" autocomplete="off" data-cap="words" autocapitalize="words" placeholder="Type or pick, e.g. Dubai" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="rw-sug" role="listbox" hidden></div><button type="button" class="rw-clr" data-clr="city" aria-label="Clear city" hidden>×</button></span></label>
       <label>Nation (optional)<span class="rw-clr-w"><input name="nation" maxlength="40" autocomplete="off" data-cap="words" autocapitalize="words" placeholder="Type or pick, e.g. India" role="combobox" aria-autocomplete="list" aria-expanded="false"><input type="hidden" name="country"><div class="rw-sug rw-sug-n" role="listbox" hidden></div><button type="button" class="rw-clr" data-clr="nation" aria-label="Clear nation" hidden>×</button></span></label></div>
     <div><div class="opt-label"><span>Photos (optional)</span><span>Up to 3</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label><button type="button" class="rw-ph-n" hidden></button></div></div></div>
