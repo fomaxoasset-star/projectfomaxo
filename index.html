@@ -1730,6 +1730,8 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-bx-rv .rw-name{font-size:14px}.rw-bx-rv .rw-loc{font-size:12.5px}
 .rw-bx-rv .rw-text{font-family:var(--sans);font-weight:300;font-size:19px;line-height:1.5;margin-top:6px}
 .rw-bx-n{margin-top:auto;padding-top:10px}
+.rw-bx-body{display:flex;flex-direction:column;gap:10px}
+@media(min-width:761px){.rw-bx-body{margin:auto 0}.rw-bx-n{margin-top:0}}   /* laptop: the review sits in the middle of its panel, the 1 / 4 count stays at the bottom */
 .rw-box .rw-bx-x{position:absolute;top:12px;right:16px;color:#fff;font-size:32px;line-height:1;padding:6px 10px}
 .rw-box .rw-bx-p{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border:1px solid rgba(255,255,255,.35);color:#fff;font-size:28px;line-height:1;padding:0 0 4px;display:inline-flex;align-items:center;justify-content:center}
 .rw-box .rw-bx-p[data-go="-1"]{left:12px}.rw-box .rw-bx-p[data-go="1"]{right:12px}
@@ -3961,7 +3963,7 @@ function rwLightbox(src, list){
   const b = document.createElement('div'); b.className = 'rw-box'; b.setAttribute('role', 'dialog'); b.setAttribute('aria-label', 'Customer photo');
   const many = list.length > 1;
   const show = () => { const x = list[i], r = x.r;
-    b.innerHTML = `<div class="rw-bx"><div class="rw-bx-img"><img src="${esc(x.src)}" alt="Customer photo"></div>${r ? `<div class="rw-bx-rv"><div class="rw-top"><span class="rw-who"><b class="rw-name">${esc(capWords(r.name || ''))}</b>${rwPlace(r)}</span><span class="small">${rwDate(r.date)}</span></div><div class="rw-meta">${rwStars(r.rating)}${r.verified ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}</div><p class="rw-text">“${esc(r.text)}”</p>${r.reply ? `<div class="rw-reply"><b>Reply from FOMAXO</b><p>${esc(r.reply)}</p></div>` : ''}${many ? `<p class="small rw-bx-n">${i + 1} / ${list.length}</p>` : ''}</div>` : ''}</div>
+    b.innerHTML = `<div class="rw-bx"><div class="rw-bx-img"><img src="${esc(x.src)}" alt="Customer photo"></div>${r ? `<div class="rw-bx-rv"><div class="rw-bx-body"><div class="rw-top"><span class="rw-who"><b class="rw-name">${esc(capWords(r.name || ''))}</b>${rwPlace(r)}</span><span class="small">${rwDate(r.date)}</span></div><div class="rw-meta">${rwStars(r.rating)}${r.verified ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}</div><p class="rw-text">“${esc(r.text)}”</p>${r.reply ? `<div class="rw-reply"><b>Reply from FOMAXO</b><p>${esc(r.reply)}</p></div>` : ''}</div>${many ? `<p class="small rw-bx-n">${i + 1} / ${list.length}</p>` : ''}</div>` : ''}</div>
       <button type="button" class="rw-bx-x" aria-label="Close">×</button>${many ? `<button type="button" class="rw-bx-p" data-go="-1" aria-label="Previous photo">‹</button><button type="button" class="rw-bx-p" data-go="1" aria-label="Next photo">›</button>` : ''}`; };
   const go = n => { i = (i + n + list.length) % list.length; show(); };
   const close = () => { b.remove(); removeEventListener('keydown', key); document.documentElement.style.overflow = ''; }, key = e => { if (e.key === 'Escape') close(); else if (many && e.key === 'ArrowLeft') go(-1); else if (many && e.key === 'ArrowRight') go(1); };
