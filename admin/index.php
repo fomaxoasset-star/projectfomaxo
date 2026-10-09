@@ -1501,10 +1501,73 @@ if (isset($_GET['expenses'])) {
     . '<p class="muted small after">"Stock purchase" is shown in reports but not taken off profit, because the cost of each bottle is already counted when it sells.</p></div>', true, true);
 }
 
-/* ---- coupons: codes customers type at checkout (% off or AED off, optional minimum, expiry date and number of uses).
-   A coupon never adds to the multi-buy discount: the customer gets whichever saving is bigger. checkout.php and ziina.php check the code on the server. ---- */
+/* ---- the free product picker (Coupons → Make a coupon and Goodwill coupon, and the WhatsApp boxes): one box to type in or pick from its
+   dropdown, every product and size with its price ("Gold 50ml · AED 199"); gift sets and hidden products are left out.
+   The hidden input $name carries "id|size"; fx_free_pick_js() (print it once on the page) makes it work. ---- */
+function fx_free_pick(string $name, string $selId = '', string $selOpt = ''): string {
+  $li = ''; $pick = '';
+  foreach (fomaxo_catalog_db() ?: [] as $id => $p) {
+    if ($p['kind'] === 'set') continue;
+    foreach ($p['prices'] as $opt => $pr) {
+      $t = $p['name'] . ' ' . $opt . 'ml · ' . fomaxo_aed_short($pr);
+      if ($selId === (string)$id && $selOpt === (string)$opt) $pick = $t;
+      $li .= '<li data-v="' . h("$id|$opt") . '">' . h($t) . '</li>';
+    }
+  }
+  return '<span class="fpick"><input type="text" data-ffind value="' . h($pick) . '" placeholder="Type or pick" aria-label="Free product" autocomplete="off">'
+    . '<input type="hidden" name="' . h($name) . '" value="' . h($pick !== '' ? "$selId|$selOpt" : '') . '"><ul class="fplist" hidden>' . $li . '</ul></span>';
+}
+/* the picker's look and its script: typing narrows the list from the start of a word ("old" finds Old Money, not Gold); a tap, Enter or the
+   arrow keys pick a line, which fills the hidden input and sends a 'change' event from the text box */
+function fx_free_pick_js(): string {
+  return <<<'HTML'
+<style>.fpick{position:relative;display:block}.fpick input[data-ffind]{width:100%;margin:0;padding-right:30px}.fpick::after{content:'';position:absolute;right:13px;top:50%;width:7px;height:7px;margin-top:-6px;border:solid var(--muted);border-width:0 1.5px 1.5px 0;transform:rotate(45deg);pointer-events:none}
+.fplist{position:absolute;z-index:40;left:0;min-width:100%;width:max-content;max-width:min(380px,calc(100vw - 48px));top:calc(100% + 4px);max-height:260px;overflow:auto;margin:0;padding:4px;list-style:none;background:var(--panel);border:1px solid var(--gold);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:13.5px;text-transform:none;letter-spacing:0;color:var(--ink)}
+.fplist li{padding:8px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fplist li:hover,.fplist li.on{background:color-mix(in srgb,var(--gold) 18%,transparent)}@media (max-width:759px){.fplist{font-size:15px}.fplist li{padding:10px 12px}}</style>
+<script>(function(){
+  if (window.fxFreePick) return; window.fxFreePick = 1;
+  function parts(f){ var w = f.parentNode; return {hid: w.querySelector('input[type=hidden]'), ul: w.querySelector('.fplist')}; }
+  function shown(ul){ return Array.prototype.filter.call(ul.children, function(li){ return !li.hidden; }); }
+  function filter(f, all){
+    var x = parts(f), q = all ? '' : f.value.trim().toLowerCase();
+    Array.prototype.forEach.call(x.ul.children, function(li){ li.hidden = q !== '' && (' ' + li.textContent.toLowerCase()).indexOf(' ' + q) < 0; li.classList.remove('on'); });
+    x.ul.hidden = !shown(x.ul).length;
+  }
+  function pick(f, li){ var x = parts(f); f.value = li.textContent; x.hid.value = li.dataset.v; x.ul.hidden = true; f.dispatchEvent(new Event('change', {bubbles: true})); }
+  function box(t){ return t && t.matches && t.matches('[data-ffind]'); }
+  document.addEventListener('focusin', function(e){ if (box(e.target)) { e.target.select(); filter(e.target, true); } });
+  document.addEventListener('input', function(e){ if (box(e.target)) { parts(e.target).hid.value = ''; filter(e.target); } });
+  document.addEventListener('focusout', function(e){
+    var f = e.target; if (!box(f)) return;
+    var x = parts(f); x.ul.hidden = true;
+    if (!x.hid.value) { var m = shown(x.ul); if (f.value.trim() && m.length) pick(f, m[0]); }   // left with words typed: the first match
+  });
+  document.addEventListener('mousedown', function(e){   // before the box loses focus
+    var li = e.target.closest && e.target.closest('.fplist li');
+    if (li) { e.preventDefault(); pick(li.parentNode.parentNode.querySelector('[data-ffind]'), li); }
+  });
+  document.addEventListener('keydown', function(e){
+    var f = e.target; if (!box(f)) return;
+    var ul = parts(f).ul, m = shown(ul), i = m.findIndex(function(li){ return li.classList.contains('on'); });
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (ul.hidden) { filter(f); m = shown(ul); i = -1; } if (!m.length) return;
+      if (i > -1) m[i].classList.remove('on');
+      i = e.key === 'ArrowDown' ? (i + 1) % m.length : (i < 1 ? m.length - 1 : i - 1);
+      m[i].classList.add('on'); m[i].scrollIntoView({block: 'nearest'});
+    } else if (e.key === 'Enter' && !ul.hidden && m.length) { e.preventDefault(); pick(f, m[i > -1 ? i : 0]); }
+    else if (e.key === 'Escape') ul.hidden = true;
+  });
+})();</script>
+HTML;
+}
+
+/* ---- coupons: codes customers type at checkout (% off, AED off or a free product, optional minimum, time limit, number of uses, one use per mobile).
+   A coupon never adds to the multi-buy discount: the customer gets whichever saving is bigger (a free product coupon adds on top).
+   checkout.php and ziina.php check the code on the server. One-use codes delete themselves once used (orders-lib.php fx_coupon_spent). ---- */
 if (isset($_GET['coupons'])) {
   fomaxo_coupons_table($pdo);
+  /* the free product picked on a form ("id|size") as [id, size], or null when it is missing, a gift set or not sold */
+  $freePick = function ($k) { [$id, $opt] = explode('|', (string)($_POST[$k] ?? ''), 2) + ['', '']; return fomaxo_free_product($id, $opt) ? [$id, $opt] : null; };
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['coupons' => 1]); }
     $code = fomaxo_coupon_norm($_POST['code'] ?? '');
@@ -1512,61 +1575,71 @@ if (isset($_GET['coupons'])) {
       $pdo->prepare('DELETE FROM fx_coupons WHERE code = ?')->execute([$code]);
       flash("Coupon $code deleted.", true); go(['coupons' => 1]);
     }
-    /* goodwill coupon for one customer (late delivery, faulty product): a new code, 1 use, only with their mobile, no end date (AJAY: till they use it) */
+    /* goodwill coupon for one customer (late delivery, faulty product): a new code, 1 use, only with their mobile, % off, AED off or a free product;
+       no end date unless one is picked (then it works to the end of that day) */
     if (isset($_POST['goodwill'])) {
-      $ph = trim(strtr((string)($_POST['phone'] ?? ''), FX_AR_DIGITS)); $pc = (float)str_replace(',', '.', (string)($_POST['pct'] ?? ''));
+      $ph = trim(strtr((string)($_POST['phone'] ?? ''), FX_AR_DIGITS)); $gk = in_array($_POST['gkind'] ?? '', ['aed', 'free'], true) ? $_POST['gkind'] : 'pct';
+      $v = (float)str_replace(',', '.', (string)($_POST['pct'] ?? '')); $end = trim((string)($_POST['ends'] ?? '')); $fr = $gk === 'free' ? $freePick('gfree') : null;
       if (strlen(fomaxo_phone9($ph)) < 9) { flash('Please type the customer\'s mobile number.'); go(['coupons' => 1]); }
-      if ($pc <= 0 || $pc > 100) { flash('Please type a % between 1 and 100.'); go(['coupons' => 1]); }
-      $abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; $chk = $pdo->prepare('SELECT 1 FROM fx_coupons WHERE code = ?');
-      do { $new = 'GOODWILL-'; for ($i = 0; $i < 4; $i++) $new .= $abc[random_int(0, strlen($abc) - 1)]; $chk->execute([$new]); } while ($chk->fetchColumn());
-      $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, phone) VALUES (?, \'pct\', ?, NULL, NULL, NULL, NULL, 1, 1, NOW(), 0, ?)')
-          ->execute([$new, round($pc, 2), mb_substr($ph, 0, 25)]);
-      $_SESSION['goodwill'] = $new; go(['coupons' => 1]);
+      if ($gk === 'free' && !$fr) { flash('Please choose the free product.'); go(['coupons' => 1]); }
+      if ($gk === 'pct' && ($v <= 0 || $v > 100)) { flash('Please type a % between 1 and 100.'); go(['coupons' => 1]); }
+      if ($gk === 'aed' && $v <= 0) { flash('Please type the AED amount.'); go(['coupons' => 1]); }
+      if ($end !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) { flash('Please type the end date as dd/mm/yyyy, or leave it empty.'); go(['coupons' => 1]); }
+      if ($end !== '' && $end < date('Y-m-d')) { flash('The end date has already passed. Please pick today or a later day.'); go(['coupons' => 1]); }
+      $_SESSION['goodwill'] = fx_phone_coupon($pdo, 'GOODWILL-', $ph, $gk, $v, 0, $end, $fr[0] ?? '', $fr[1] ?? ''); go(['coupons' => 1]);
     }
     if (isset($_POST['toggle'])) {
       $pdo->prepare('UPDATE fx_coupons SET active = 1 - active WHERE code = ?')->execute([$code]);
       flash("Coupon $code switched " . ($_POST['toggle'] === 'on' ? 'on' : 'off') . '.', true); go(['coupons' => 1]);
     }
-    $kind = ($_POST['kind'] ?? '') === 'aed' ? 'aed' : 'pct';
+    $kind = in_array($_POST['kind'] ?? '', ['aed', 'free'], true) ? $_POST['kind'] : 'pct';
     $num = fn($k) => trim((string)($_POST[$k] ?? '')) === '' ? null : (float)str_replace(',', '.', (string)$_POST[$k]);
-    $amt = $num('amount'); $min = $num('min_order'); $uses = trim((string)($_POST['max_uses'] ?? '')) === '' ? null : (int)$_POST['max_uses'];
+    $amt = $kind === 'free' ? 0 : $num('amount'); $min = $num('min_order'); $uses = trim((string)($_POST['max_uses'] ?? '')) === '' ? null : (int)$_POST['max_uses'];
+    $fr = $kind === 'free' ? $freePick('free') : null;
     /* time limit: start and end date + time (Dubai); a date without a time starts at 00:00 and ends at 23:59 */
     $when = function ($d, $t, $def) { $d = (string)($_POST[$d] ?? ''); $t = (string)($_POST[$t] ?? '');
       if ($d === '') return ''; if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d) || ($t !== '' && !preg_match('/^\d{2}:\d{2}$/', $t))) return false;
       return "$d " . ($t !== '' ? "$t:00" : $def); };
     $st = $when('start_d', 'start_t', '00:00:00'); $en = $when('end_d', 'end_t', '23:59:59');
     if (strlen($code) < 3) { flash('Please type a code of at least 3 letters or numbers (no spaces).'); go(['coupons' => 1]); }
-    if ($amt === null || $amt <= 0 || ($kind === 'pct' && $amt > 100)) { flash($kind === 'pct' ? 'Please type a % between 1 and 100.' : 'Please type the AED amount.'); go(['coupons' => 1]); }
+    if ($kind === 'free' && !$fr) { flash('Please choose the free product.'); go(['coupons' => 1]); }
+    if ($kind !== 'free' && ($amt === null || $amt <= 0 || ($kind === 'pct' && $amt > 100))) { flash($kind === 'pct' ? 'Please type a % between 1 and 100.' : 'Please type the AED amount.'); go(['coupons' => 1]); }
     if ($st === false || $en === false) { flash('Please type the dates as dd/mm/yyyy.'); go(['coupons' => 1]); }
     if ($st !== '' && $en !== '' && $en <= $st) { flash('The end must be after the start.'); go(['coupons' => 1]); }
     $had = $pdo->prepare('SELECT 1 FROM fx_coupons WHERE code = ?'); $had->execute([$code]); $had = (bool)$had->fetchColumn();
     $stack = ($_POST['stack'] ?? '') === '1' ? 1 : 0;   // with website offers: 0 = use the bigger offer, 1 = use both
-    $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, 1, NOW(), ?)
-                   ON DUPLICATE KEY UPDATE kind = VALUES(kind), amount = VALUES(amount), min_order = VALUES(min_order), expires = NULL, starts = VALUES(starts), ends = VALUES(ends), max_uses = VALUES(max_uses), active = 1, stack = VALUES(stack)')
-        ->execute([$code, $kind, round($amt, 2), $min !== null && $min > 0 ? round($min, 2) : null, $st !== '' ? $st : null, $en !== '' ? $en : null, $uses !== null && $uses > 0 ? $uses : null, $stack]);
+    $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, per_cust, free_id, free_opt) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, 1, NOW(), ?, ?, ?, ?)
+                   ON DUPLICATE KEY UPDATE kind = VALUES(kind), amount = VALUES(amount), min_order = VALUES(min_order), expires = NULL, starts = VALUES(starts), ends = VALUES(ends), max_uses = VALUES(max_uses), active = 1, stack = VALUES(stack),
+                   per_cust = VALUES(per_cust), free_id = VALUES(free_id), free_opt = VALUES(free_opt)')
+        ->execute([$code, $kind, round($amt, 2), $min !== null && $min > 0 ? round($min, 2) : null, $st !== '' ? $st : null, $en !== '' ? $en : null, $uses !== null && $uses > 0 ? $uses : null, $stack,
+                   !empty($_POST['per_cust']) ? 1 : 0, $fr[0] ?? null, $fr[1] ?? null]);
     flash("Coupon $code " . ($had ? 'updated' : 'saved') . '. ' . ($st !== '' && $st > date('Y-m-d H:i:s') ? 'It starts ' . date('d/m/Y, g:i a', strtotime($st)) . '.' : 'Customers can use it now.'), true); go(['coupons' => 1]);
   }
+  fx_coupon_sweep($pdo);   // one-use codes already used up (an order placed or paid before this was in place) go now
   $list = $pdo->query('SELECT * FROM fx_coupons ORDER BY active DESC, created_at DESC')->fetchAll();
   /* how often each code was used (placed orders, not cancelled or refunded) and what it saved customers */
   $used = [];
   foreach ($pdo->query("SELECT coupon, COUNT(*) n, COALESCE(SUM(discount), 0) d, COALESCE(SUM(total), 0) t FROM fx_orders WHERE coupon IS NOT NULL AND test = 0
                         AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') GROUP BY coupon") as $r) $used[$r['coupon']] = $r;
   $now = date('Y-m-d H:i:s'); $tr = '';
-  /* WhatsApp to the customer with their goodwill code */
+  /* WhatsApp to the customer with their goodwill code (the message: fx_goodwill_text in orders-lib.php) */
   $goodwillWa = function ($c) { $wa = preg_replace('/\D/', '', (string)$c['phone']); if (str_starts_with($wa, '00')) $wa = substr($wa, 2); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); elseif (strlen($wa) === 9 && $wa[0] === '5') $wa = '971' . $wa;
-    $end = $c['ends'] ? date('d/m/Y', strtotime($c['ends'])) : '';
-    return 'https://wa.me/' . $wa . '?text=' . rawurlencode("Hello from FOMAXO. Thank you for your patience. Here is a goodwill coupon for your next order:\n\n*{$c['code']}* · " . fomaxo_coupon_label($c) . "\n\nUse it once at checkout on fomaxo.com with this mobile number" . ($end ? ", before $end" : '') . '.'); };
+    return 'https://wa.me/' . $wa . '?text=' . rawurlencode(fx_goodwill_text($c)); };
   $made = null; if (!empty($_SESSION['goodwill'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['goodwill']]); $made = $s->fetch() ?: null; unset($_SESSION['goodwill']); }
   $dt = fn($v) => date('d/m/Y, g:i a', strtotime($v));
   $left = function ($v) { $m = (int)floor((strtotime($v) - time()) / 60); $d = intdiv($m, 1440); $h = intdiv($m % 1440, 60);
     return $d ? "$d day" . ($d > 1 ? 's' : '') . ($h ? " {$h}h" : '') . ' left' : ($h ? "{$h}h " : '') . ($m % 60) . 'm left'; };
+  /* a code made for one mobile: where it came from, by its start */
+  $tag = fn($code) => ['REFILL-' => 'Refill', 'REVIEW-' => 'Review', 'COMEBACK-' => 'Left at checkout', 'THANKS-' => 'WhatsApp'][preg_replace('/-.*$/s', '-', $code)] ?? 'Goodwill';
   foreach ($list as $c) {
     $u = $used[$c['code']] ?? ['n' => 0, 'd' => 0, 't' => 0]; $n = (int)$u['n'];
     $ends = $c['ends'] ?? ($c['expires'] ? $c['expires'] . ' 23:59:59' : null); $starts = $c['starts'] ?? null;
     $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($ends && $ends < $now ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled']
            : ($starts && $starts > $now ? ['Scheduled', 's-New'] : ['On', 'p-Paid'])));
     $time = $starts && $starts > $now ? 'Starts ' . $dt($starts) . ($ends ? ' · ends ' . $dt($ends) : '') : ($ends ? 'Ends ' . $dt($ends) . ($state[0] === 'On' ? ' · ' . $left($ends) : '') : '');
-    $rules = array_filter([!empty($c['phone']) ? (str_starts_with($c['code'], 'REFILL-') ? 'Refill' : (str_starts_with($c['code'], 'REVIEW-') ? 'Review' : (str_starts_with($c['code'], 'COMEBACK-') ? 'Left at checkout' : 'Goodwill'))) . ' · for ' . $c['phone'] : '', !empty($c['stack']) ? 'Use both' : 'Bigger offer', (float)$c['min_order'] > 0 ? 'Min. order ' . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '']);
+    $rules = array_filter([!empty($c['phone']) ? $tag($c['code']) . ' · for ' . $c['phone'] : '', $c['kind'] === 'free' ? '' : (!empty($c['stack']) ? 'Use both' : 'Bigger offer'),
+      (float)$c['min_order'] > 0 ? ($c['kind'] === 'free' ? 'Spend at least ' : 'Min. order ') . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '',
+      !empty($c['per_cust']) ? 'One use per customer' : '']);
     $btn = fn($name, $val, $label, $ask = '') => '<form method="post" style="margin:0"' . ($ask ? ' onsubmit="return confirm(\'' . h($ask) . '\')"' : '') . '>' . csrf_field()
       . '<input type="hidden" name="code" value="' . h($c['code']) . '"><button class="btn line sm" name="' . $name . '" value="' . $val . '">' . $label . '</button></form>';
     $tr .= '<div class="cprow"><div><b class="cpcode">' . h($c['code']) . '</b> <span class="tag ' . $state[1] . '">' . $state[0] . '</span>'
@@ -1578,18 +1651,22 @@ if (isset($_GET['coupons'])) {
   page('Coupons', '<div class="pagehead"><h1>Coupons</h1></div>' . flash() . fx_tabs(['Make a coupon', 'Your coupons (' . count($list) . ')'], 'Coupons')
     . '<style>.cpcode{letter-spacing:.06em}.cpin{text-transform:uppercase;letter-spacing:.06em}.cpin::placeholder{text-transform:none;letter-spacing:0}'
     . '.cplist{background:var(--panel);border:1px solid var(--line);border-radius:10px}.cprow{display:grid;grid-template-columns:1fr auto auto;gap:6px 24px;align-items:center;padding:10px 12px}.cprow+.cprow{border-top:1px solid var(--line)}'
-    . '.cpused{text-align:right}.cptime{color:var(--gold);margin-top:2px}.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.g4{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}@media (min-width:760px){.g4{grid-template-columns:1.3fr 1fr 1.3fr 1fr}}.cpacts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}.cpone{margin:0 0 12px;padding:12px 16px;flex:none}.cpone h2{margin:0 0 2px;font-size:15px}.cpone p{margin:0 0 6px}.cpone-f{display:grid;grid-template-columns:1fr 80px auto;gap:10px;align-items:end}.cpone-f label{margin:4px 0 3px}.cpone-f input{padding:6px 10px}.cpone-f .btn{height:38px}.cpmade{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 12px;border:1px solid var(--gold);border-radius:10px}@media (max-width:599px){.cpone-f{grid-template-columns:1fr 80px}.cpone-f .btn{grid-column:1/-1;height:44px}}.cpst{display:grid;gap:8px;margin:2px 0 14px}.cpst label{display:flex;gap:10px;align-items:flex-start;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--muted);line-height:1.4}.cpst label:has(input:checked){border-color:var(--gold)}.cpst b{display:block;color:var(--ink);font-size:14px;font-weight:600}.cpst input{flex:none;appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border:1.5px solid var(--gold);border-radius:50%;background:transparent;cursor:pointer}.cpst input:checked{background:var(--gold);box-shadow:inset 0 0 0 4px var(--panel)}@media (max-width:759px){.cprow{grid-template-columns:1fr;padding:12px 14px}.cpused{text-align:left}.cpacts{grid-column:1/-1;justify-content:flex-start}}'
+    . '.cpused{text-align:right}.cptime{color:var(--gold);margin-top:2px}.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.g4{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}@media (min-width:760px){.g4{grid-template-columns:1.3fr 1fr 1.3fr 1fr}}.cpacts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}.cpone{margin:0 0 12px;padding:12px 16px;flex:none}.cpone h2{margin:0 0 2px;font-size:15px}.cpone p{margin:0 0 6px}.cpone-f{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px;align-items:end}.cpone-f label{margin:4px 0 3px}.cpone-f input,.cpone-f select{padding:6px 10px}.cpone-f .btn{grid-column:1/-1;height:38px;margin-top:8px}.cpmade{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 12px;border:1px solid var(--gold);border-radius:10px}@media (min-width:1100px){.cpone-f{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1.2fr) minmax(0,1fr) auto}.cpone-f .btn{grid-column:auto;margin-top:0}}@media (max-width:599px){.cpone-f .btn{height:44px}}.cpst{display:grid;gap:8px;margin:2px 0 14px}.cpst label{display:flex;gap:10px;align-items:flex-start;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--muted);line-height:1.4}.cpst label:has(input:checked){border-color:var(--gold)}.cpst b{display:block;color:var(--ink);font-size:14px;font-weight:600}.cpst input{flex:none;appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border:1.5px solid var(--gold);border-radius:50%;background:transparent;cursor:pointer}.cpst input:checked{background:var(--gold);box-shadow:inset 0 0 0 4px var(--panel)}@media (max-width:759px){.cprow{grid-template-columns:1fr;padding:12px 14px}.cpused{text-align:left}.cpacts{grid-column:1/-1;justify-content:flex-start}}'
+    . '.cpcodebox{display:flex;gap:6px}.cpcodebox input{flex:1 1 auto;min-width:0}.cpcodebox .btn{flex:none;padding:6px 10px;white-space:nowrap}.cpg1 [hidden],.cpone-f [hidden]{display:none!important}.cptick{display:flex!important;gap:8px;align-items:center;margin:8px 0 4px!important;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);cursor:pointer}.cptick input{width:auto;margin:0}'
     /* laptop: the form is a tall card on the left, the coupons made so far are listed beside it */
     . '.cpgrid .card.add{margin:0;padding:12px 16px}.cpgrid .add h2{font-size:15px;margin-bottom:2px}.cpgrid .add label{margin:7px 0 3px}.cpgrid .add input,.cpgrid .add select{padding:6px 10px}.cpgrid .cpst{grid-template-columns:1fr 1fr;margin:0 0 4px}.cpgrid .cpst label{margin:0;padding:8px 10px}.cpgrid .cpg1>div:last-child{grid-column:auto}.cpgrid .g3:not(.cpg1){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .g3:not(.cpg1)>div:last-child{grid-column:auto}.cpgrid .g4{grid-template-columns:1.3fr 1fr 1.3fr 1fr}.cpgrid .exsum{margin-top:0}.cpgrid .cpr{display:flex;flex-direction:column}.cpgrid .cpr>.fill{overflow:auto;min-height:0}'
-    . '@media (min-width:760px){.cpgrid{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:18px;align-items:start}.cpgrid>*{max-height:100%}.cpgrid .cpg1{grid-template-columns:1.4fr 1fr 1fr}}@media (max-width:759px){main.fit:has(>.cpgrid)>.pagehead,.cpgrid .add h2{display:none}.cpgrid .g4{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .cpr>.exsum{display:none}.cpgrid .cpg1{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.8fr)}.cpgrid .add label{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cpgrid .cpst{grid-template-columns:1fr}.cpgrid .cpst label{white-space:normal;font-size:12px;padding:7px 10px}.cpgrid .cpst b{display:inline;margin-right:6px}.cpgrid .cpq{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.cpgrid .cpq button{padding:6px 2px;font-size:11.5px}}'
+    . '@media (min-width:760px){.cpgrid{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:18px;align-items:start}.cpgrid>*{max-height:100%}.cpgrid .cpg1{grid-template-columns:1.6fr 1fr 1fr}}@media (max-width:759px){main.fit:has(>.cpgrid)>.pagehead,.cpgrid .add h2{display:none}.cpgrid .g4{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .cpr>.exsum{display:none}.cpgrid .cpg1{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .cpg1>div:first-child{grid-column:1/-1}.cpgrid .add label{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cpgrid .cpst{grid-template-columns:1fr}.cpgrid .cpst label{white-space:normal;font-size:12px;padding:7px 10px}.cpgrid .cpst b{display:inline;margin-right:6px}.cpgrid .cpq{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.cpgrid .cpq button{padding:6px 2px;font-size:11.5px}}'
     . '@media (min-width:900px){'
     . '.cpr .cprow{grid-template-columns:1fr auto;gap:6px 16px}.cpr .cpacts{grid-column:2;grid-row:1/3;flex-direction:column;align-items:stretch}.cpr .cpacts .btn{width:100%}.cpr .cpused{text-align:left}}</style>'
+    . fx_free_pick_js()
     . '<div class="cpgrid fitbox ptw" data-t="1"><div class="cpl" data-t="1"><form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Make a coupon</h2>'
-    . '<div class="g3 cpg1"><div><label for="code">Code</label><input id="code" class="cpin" name="code" maxlength="30" placeholder="e.g. WELCOME10" autocapitalize="characters" autocomplete="off" required></div>'
-    . '<div><label for="kind">Type</label><select id="kind" name="kind"><option value="pct">% off</option><option value="aed">AED off</option></select></div>'
-    . '<div><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" placeholder="e.g. 10" required></div></div>'
-    . '<div class="g3"><div><label for="min_order">Minimum order AED (optional)</label><input id="min_order" type="number" min="0" step="0.01" inputmode="decimal" name="min_order"></div>'
+    . '<div class="g3 cpg1"><div><label for="code">Code</label><div class="cpcodebox"><input id="code" class="cpin" name="code" maxlength="30" placeholder="e.g. WELCOME10" autocapitalize="characters" autocomplete="off" required><button type="button" class="btn line sm" data-mkcode>Make code</button></div></div>'
+    . '<div><label for="kind">Type</label><select id="kind" name="kind" data-cpkind><option value="pct">% off</option><option value="aed">AED off</option><option value="free">Free product</option></select></div>'
+    . '<div class="cpamt"><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" placeholder="e.g. 10" required></div>'
+    . '<div class="cpfree" hidden><label>Free product</label>' . fx_free_pick('free') . '</div></div>'
+    . '<div class="g3"><div><label for="min_order"><span class="cpminl">Minimum order AED</span> (optional)</label><input id="min_order" type="number" min="0" step="0.01" inputmode="decimal" name="min_order"></div>'
     . '<div><label for="max_uses">Max uses (optional)</label><input id="max_uses" type="number" min="1" step="1" inputmode="numeric" name="max_uses"></div></div>'
+    . '<label class="cptick"><input type="checkbox" name="per_cust" value="1"> One use per customer (mobile number)</label>'
     /* website offers (multi-buy): use the bigger saving, or the coupon on top of the offer */
     . '<label>With website offers</label><div class="cpst" role="radiogroup"><label><input type="radio" name="stack" value="0" checked><span><b>Use the bigger offer</b>Customer gets the coupon or the offer, whichever saves more</span></label>'
     . '<label><input type="radio" name="stack" value="1"><span><b>Use both</b>Customer gets the offer, then the coupon on top</span></label></div>'
@@ -1597,17 +1674,30 @@ if (isset($_GET['coupons'])) {
     . '<div class="g4"><div><label for="start_d">Starts</label><input id="start_d" type="date" name="start_d"></div><div><label for="start_t">Start time</label><input id="start_t" type="time" name="start_t"></div>'
     . '<div><label for="end_d">Ends</label><input id="end_d" type="date" name="end_d"></div><div><label for="end_t">End time</label><input id="end_t" type="time" name="end_t"></div></div>'
     . '<p style="margin:10px 0 0"><button class="btn">Save coupon</button></p>'
-    . '<p class="muted small" style="margin:8px 0 0">Saving a code that already exists updates it. A coupon does not add to the multi-buy discount: the customer gets whichever saves more. The free 10ml mini still applies. Times are UAE time. Leave the time limit empty for a code with no end.</p></form>'
+    . '<p class="muted small" style="margin:8px 0 0">Saving a code that already exists updates it. A coupon does not add to the multi-buy discount: the customer gets whichever saves more. A free product coupon adds its product at AED 0 on top. The free 10ml mini still applies. Times are UAE time. Leave the time limit empty for a code with no end.</p></form>'
     . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var h=+b.dataset.h,f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},d=function(x){return x.getFullYear()+"-"+p(x.getMonth()+1)+"-"+p(x.getDate())},t=function(x){return p(x.getHours())+":"+p(x.getMinutes())};'
     . 'var n=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000),e=new Date(n.getTime()+h*3600000);if(!h){["start_d","start_t","end_d","end_t"].forEach(function(k){set(k,"")});}else{set("start_d",d(n));set("start_t",t(n));set("end_d",d(e));set("end_t",t(e));}document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}})</script></div>'
-    . '<div class="cpr" data-t="2"><form class="card cpone" method="post">' . csrf_field() . '<h2>Goodwill coupon</h2><p class="muted small">For late delivery or a faulty product. One use, only with this mobile, until they use it.</p>'
+    . '<div class="cpr" data-t="2"><form class="card cpone" method="post">' . csrf_field() . '<h2>Goodwill coupon</h2><p class="muted small">For a late delivery or a faulty product: % off, AED off or a free product. One use, only this mobile number. No end date unless you pick one. It deletes itself once used.</p>'
     . '<div class="cpone-f"><div><label for="sphone">Mobile</label><input id="sphone" name="phone" type="tel" inputmode="tel" placeholder="050 123 4567" maxlength="20" required></div>'
-    . '<div><label for="spct">% off</label><input id="spct" name="pct" type="number" min="1" max="100" step="1" inputmode="numeric" value="10" required></div>'
+    . '<div><label for="gkind">Gives</label><select id="gkind" name="gkind" data-cpkind><option value="pct">% off</option><option value="aed">AED off</option><option value="free">Free product</option></select></div>'
+    . '<div class="cpamt"><label for="spct">How much</label><input id="spct" name="pct" type="number" min="0.01" step="0.01" inputmode="decimal" value="10" required></div>'
+    . '<div class="cpfree" hidden><label>Free product</label>' . fx_free_pick('gfree') . '</div>'
+    . '<div><label for="gends">Ends (optional)</label><input id="gends" name="ends" type="date"></div>'
     . '<button class="btn" name="goodwill" value="1">Make coupon</button></div>'
     . ($made ? '<div class="cpmade"><span>Made <b class="cpcode">' . h($made['code']) . '</b> · ' . h(fomaxo_coupon_label($made)) . ' · for ' . h($made['phone']) . '</span><a class="btn sm" href="' . h($goodwillWa($made)) . '" target="_blank" rel="noopener">Send on WhatsApp</a></div>' : '')
     . '</form><h2 class="exsum">Your coupons<small>' . count($list) . ' code' . (count($list) === 1 ? '' : 's') . '</small></h2>'
     . '<div class="fill">' . ($list ? '<div class="cplist">' . $tr . '</div>' : '<p class="card muted" style="margin:0">No coupons yet. Make one with the form.</p>')
-    . '<p class="muted small after">"Used" counts placed orders; cancelled, refunded and unpaid card attempts are not counted.</p></div></div></div>', true, true);
+    . '<p class="muted small after">"Used" counts placed orders; cancelled, refunded and unpaid card attempts are not counted. One-use codes (made for one mobile number, or a free product with Max uses) delete themselves once used; orders keep the code.</p></div></div></div>'
+    /* Make code: a code like FOMAXO-7K2Q (no 0/O or 1/I, so it is easy to read out). Type: Free product shows the product picker instead of the amount,
+       the minimum reads "Spend at least AED", and a new free product coupon starts as one use per customer with Max uses 1 */
+    . '<script>(function(){'
+    . 'document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-mkcode]");if(!b)return;var abc="23456789ABCDEFGHJKLMNPQRSTUVWXYZ",c="FOMAXO-";for(var i=0;i<4;i++)c+=abc[Math.floor(Math.random()*abc.length)];var inp=b.parentNode.querySelector("input");inp.value=c;inp.dispatchEvent(new Event("input",{bubbles:true}))});'
+    . 'function kind(s,user){var f=s.form,free=s.value==="free",a=f.querySelector(".cpamt"),p=f.querySelector(".cpfree"),ai=a.querySelector("input");a.hidden=free;p.hidden=!free;ai.disabled=free;ai.required=!free;p.querySelector("[data-ffind]").required=free;'
+    . 'if(s.name==="gkind"&&user)ai.value=s.value==="aed"?"20":s.value==="pct"?"10":ai.value;'
+    . 'var ml=f.querySelector(".cpminl");if(ml)ml.textContent=free?"Spend at least AED":"Minimum order AED";'
+    . 'if(free&&user&&s.name==="kind"){if(f.elements.per_cust)f.elements.per_cust.checked=true;if(f.elements.max_uses&&!f.elements.max_uses.value)f.elements.max_uses.value="1";}}'
+    . 'document.querySelectorAll("[data-cpkind]").forEach(function(s){kind(s);s.addEventListener("change",function(){kind(s,1)})});'
+    . '})();</script>', true, true);
 }
 
 /* ---- analytics: visitors, where they come from, and where sales are lost (filled by track.php on the website) ---- */
