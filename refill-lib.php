@@ -11,7 +11,8 @@ require_once __DIR__ . '/reviews-lib.php';
 function fx_refill_time($pdo) {
   $t = json_decode((string)fomaxo_setting($pdo, 'refill_time'), true) ?: [];
   $d = max(1, min(365, (int)($t['days'] ?? 45))); $f = max(0, min(23, (int)($t['from'] ?? 11))); $to = max($f + 1, min(24, (int)($t['to'] ?? 20)));
-  return ['days' => $d, 'from' => $f, 'to' => $to, 'list_from' => max(1, $d - 5), 'list_to' => $d + 15];
+  $lf = max(1, min(365, (int)($t['lfrom'] ?? $d - 5))); $lt = max($lf, min(400, (int)($t['lto'] ?? $d + 15)));   // the list: typed on Refill reminders
+  return ['days' => $d, 'from' => $f, 'to' => $to, 'list_from' => $lf, 'list_to' => $lt];
 }
 
 function fx_refill_pct($pdo) { return (float)(fomaxo_setting($pdo, 'refill_pct') ?? 10); }
