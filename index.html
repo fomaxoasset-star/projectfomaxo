@@ -1757,6 +1757,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-head{display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.06em;color:var(--muted);align-self:flex-start;padding:0}
 .rw-head:hover{color:var(--gold-hi)}
 .rw-head .rw-none{opacity:.45}
+.rw-fx{margin-left:auto;align-self:flex-start;font-size:28px;line-height:1;padding:0 4px;margin-top:-6px;color:var(--muted);transition:color .3s}.rw-fx:hover{color:var(--gold-hi)}
 .rw-form{border:1px solid var(--line-2);background:var(--panel);padding:clamp(18px,3vw,30px);margin-bottom:22px;gap:18px}
 .rw-fhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
 .rw-fhead b{font-family:var(--serif);font-weight:400;font-size:25px;color:var(--ivory)}
@@ -3874,9 +3875,9 @@ function rwSection(p, d){   // d = null while the reviews are loading: the text 
       : !d ? '' : `<div class="rv-empty" id="rwEmpty"><h3>Be the first to review ${esc(p.name)}</h3><p class="small">Worn ${esc(p.name)}? Share your experience with the FOMAXO community.</p></div>`}
   </div>`;
 }
-function rwForm(p, link){
+function rwForm(p, link, x){
   return `<form class="form rw-form" novalidate>
-    <div class="rw-fhead"><b>Review ${esc(p.name)}</b>${link ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}</div>
+    <div class="rw-fhead"><b>Review ${esc(p.name)}</b>${link ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}${x ? `<button type="button" class="rw-fx" aria-label="Close">×</button>` : ''}</div>
     <div><div class="opt-label"><span>Your rating *</span><span class="rw-rword">Tap a star</span></div>
       <div class="rw-rate" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map(s => `<button type="button" role="radio" aria-checked="false" data-r="${s}" aria-label="${s} star${s > 1 ? 's' : ''}, ${RW_WORDS[s]}">★</button>`).join('')}</div></div>
     <label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
@@ -4034,7 +4035,8 @@ async function rwLoad(p, msg){
   const fb = $('#rwFormBox', box);
   if (msg) { fb.hidden = false; fb.innerHTML = `<p class="rw-ok">${msg}</p>`; }
   $('#rwWrite', box).onclick = () => {
-    if (!$('form', fb)) { const link = rwLinkFor(p.id); fb.innerHTML = rwForm(p, link); fb.hidden = false; const em = $('#rwEmpty', box); if (em) em.hidden = true;
+    if (!$('form', fb)) { const link = rwLinkFor(p.id); fb.innerHTML = rwForm(p, link, 1); fb.hidden = false; const em = $('#rwEmpty', box); if (em) em.hidden = true;
+      $('.rw-fx', fb).onclick = () => { fb.hidden = true; fb.innerHTML = ''; if (em) em.hidden = false; $('#rwWrite', box).scrollIntoView({behavior: 'smooth', block: 'center'}); };
       rwBindForm($('form', fb), p, link, r => rwLoad(p, `Thank you. Your review is now live.${r.note ? ' ' + esc(r.note) : ''}`)); }
     fb.scrollIntoView({behavior: 'smooth', block: 'start'});
   };
