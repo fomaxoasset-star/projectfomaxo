@@ -2462,8 +2462,14 @@ const IMG = k => `assets/img/${k}.webp`;
 const IMG_W = {"atelier":1027,"boutique-hq":1200,"boutique-people":848,"boutique-about":1145,"boutique":984,"discovery-1":800,"discovery-2":961,"discovery-3":984,"dollar-1":1114,"dollar-2":1043,"dollar-3":1398,"dollar-4":1394,"dollar-main":819,"dollar-main2":819,"elite-card":865,"elite-lounge-hq":848,"elite-lounge":862,"gift-1":984,"gift-2-hq":884,"gift-2":984,"gift-set-1-hq":986,"gift-set-1":1300,"gift-set-2-hq":925,"gift-set-2":1300,"gift-set-3-hq":857,"gift-set-3":1218,"gift-set-4-hq":841,"gift-set-4":1112,"gift-set-5-hq":856,"gift-set-5":1083,"gift-set-6-hq":860,"gift-set-6":1300,"gift-set-7-hq":1047,"gift-set-7":1300,"gold-1":1046,"gold-2":1046,"gold-3":1110,"gold-main":819,"gold-main2":819,"king-1":1048,"king-2":1048,"king-3":1048,"king-4":1048,"king-5":1400,"king-main":819,"matchacoco-1":1400,"passionsin-model":674,"oldmoney-50-v2":880,"royalcandy-50-v2":636,"matchacoco-50-v2":524,"passionsin-50-v2":591,"oldmoney-100-v2":880,"royalcandy-100-v2":880,"matchacoco-100-v2":870,"passionsin-100-v2":880,"matchacoco-50-main":688,"matchacoco-model":730,"matchacoco-100-main":1100,"oldmoney-50-main":1100,"oldmoney-100-main":688,"royalcandy-50-main":688,"royalcandy-100-main":1100,"matchacoco-10-1":1013,"matchacoco-10-main":688,"matchacoco-10-2":1004,"matchacoco-100":799,"matchacoco-2":785,"matchacoco-3":773,"matchacoco-main":819,"matchacoco-main2":819,"oldmoney-1":1250,"oldmoney-10-1":782,"oldmoney-10-main":688,"oldmoney-10-2":859,"oldmoney-100":953,"oldmoney-100b":1153,"oldmoney-2":912,"oldmoney-3":917,"oldmoney-main":819,"passionsin-1":896,"passionsin-10-1":933,"passionsin-10-main":688,"passionsin-10-2":924,"passionsin-10-3":912,"passionsin-2":934,"passionsin-3":1400,"passionsin-main":819,"personal-care-poster":1024,"personal-care":842,"royalcandy-1":832,"royalcandy-10-1":764,"royalcandy-10-main":688,"royalcandy-10-2":858,"royalcandy-10-3":867,"royalcandy-100":1300,"royalcandy-2":1002,"royalcandy-main":819,"runway":805,"runway-couture":1024,"runway-couture-2":1024,"runway-personal-care":1024};
 const SM = k => IMG_W[k] ? `assets/img/s/${k}.webp` : IMG(k);
 const CARD_SIZES = '(max-width:600px) 92vw, (max-width:1100px) 46vw, min(31vw, 500px)';
-const cardPic = k => `src="${IMG(k)}"` + (IMG_W[k] ? ` srcset="assets/img/t/${k}.webp 720w, ${IMG(k)} ${IMG_W[k]}w" sizes="${CARD_SIZES}"` : '');
-function setPic(im, k){ if (IMG_W[k]) { im.srcset = `assets/img/t/${k}.webp 720w, ${IMG(k)} ${IMG_W[k]}w`; im.sizes = CARD_SIZES; } else im.removeAttribute('srcset'); im.src = IMG(k); }
+/* laptops: product photos also come as 480px copies in assets/img/m/ (half the download of t/ on most laptop screens); a new photo without one just skips it.
+   Photos 760px or smaller are sent as they are: their t/ copy is enlarged and heavier. */
+const IMG_M = new Set(["atelier","boutique-hq","boutique-people","boutique-about","boutique","discovery-1","discovery-2","discovery-3","dollar-1","dollar-2","dollar-3","dollar-4","dollar-main","dollar-main2","elite-card","elite-lounge-hq","elite-lounge","gift-1","gift-2-hq","gift-2","gift-set-1-hq","gift-set-1","gift-set-2-hq","gift-set-2","gift-set-3-hq","gift-set-3","gift-set-4-hq","gift-set-4","gift-set-5-hq","gift-set-5","gift-set-6-hq","gift-set-6","gift-set-7-hq","gift-set-7","gold-1","gold-2","gold-3","gold-main","gold-main2","king-1","king-2","king-3","king-4","king-5","king-main","matchacoco-1","oldmoney-50-v2","oldmoney-100-v2","royalcandy-100-v2","matchacoco-100-v2","passionsin-100-v2","matchacoco-100-main","oldmoney-50-main","royalcandy-100-main","matchacoco-10-1","matchacoco-10-2","matchacoco-100","matchacoco-2","matchacoco-3","matchacoco-main","matchacoco-main2","oldmoney-1","oldmoney-10-1","oldmoney-10-2","oldmoney-100","oldmoney-100b","oldmoney-2","oldmoney-3","oldmoney-main","passionsin-1","passionsin-10-1","passionsin-10-2","passionsin-10-3","passionsin-2","passionsin-3","passionsin-main","personal-care-poster","personal-care","royalcandy-1","royalcandy-10-1","royalcandy-10-2","royalcandy-10-3","royalcandy-100","royalcandy-2","royalcandy-main","runway","runway-couture","runway-couture-2","runway-personal-care"]);
+const picSet = k => [IMG_M.has(k) && `assets/img/m/${k}.webp 480w`, IMG_W[k] > 760 && `assets/img/t/${k}.webp 720w`, `${IMG(k)} ${IMG_W[k]}w`].filter(Boolean).join(', ');
+/* larger photos (story, gift and Personal Care pictures): laptops get the 720px copy, phones the full photo, as before */
+const pic = k => `src="${IMG(k)}"` + (IMG_W[k] ? ` srcset="${picSet(k)}" sizes="(max-width:760px) 100vw, min(48vw, 680px)"` : '');
+const cardPic = k => `src="${IMG(k)}"` + (IMG_W[k] ? ` srcset="${picSet(k)}" sizes="${CARD_SIZES}"` : '');
+function setPic(im, k){ if (IMG_W[k]) { im.srcset = picSet(k); im.sizes = CARD_SIZES; } else im.removeAttribute('srcset'); im.src = IMG(k); }
 const HOVER = matchMedia('(hover:hover)').matches;   // the second card photo only shows on mouse hover, so phones skip loading it
 /* products: the list in window.STORE is only the fallback. The live list is edited on fomaxo.com/admin → Products,
    comes from products.php and is remembered on this device so the next visit opens with it straight away. */
@@ -2959,7 +2965,7 @@ function home(){
 
   ${shown('discovery') ? `<section class="sec" style="padding-top:0"><div class="wrap">
     <div class="ds-band rv-up">
-      <a class="ds-media" href="#/product/discovery"><img src="${IMG(P.discovery.images[0])}" alt="The FOMAXO Discovery Set" loading="lazy"></a>
+      <a class="ds-media" href="#/product/discovery"><img ${pic(P.discovery.images[0])} alt="The FOMAXO Discovery Set" loading="lazy"></a>
       <div class="ds-copy">
         <span class="eyebrow">Not sure where to begin?</span>
         <h2>The <span class="metal">Discovery Set</span></h2>
@@ -2973,7 +2979,7 @@ function home(){
   <section class="sec" style="padding-top:0" id="tiers"><div class="wrap">
     ${secHead('The fragrance collection', 'Distinct <em class="metal">blends</em>', '<p class="lead">Four fragrances that define the house of FOMAXO.</p>')}
     ${['gold','dollar','oldmoney','royalcandy'].map(id => P[id]).filter(p => p && !p.hidden).map((p,i) => `<div class="ed ${i%2?'rev':''}">
-      <a class="ed-media rv-up" href="#/product/${p.id}"><img data-parallax="0.08" src="${IMG(p.images[0])}" alt="FOMAXO ${esc(p.name)}" loading="lazy"></a>
+      <a class="ed-media rv-up" href="#/product/${p.id}"><img data-parallax="0.08" ${pic(p.images[0])} alt="FOMAXO ${esc(p.name)}" loading="lazy"></a>
       <div class="ed-copy rv-up d1">
         <span class="num">0${i+1}</span>
         <span class="eyebrow">${tierOf(p) ? esc(tierOf(p).name) + ' · ' : ''}${esc(p.family)}</span>
@@ -3026,7 +3032,7 @@ function home(){
   <section class="sec" style="padding-top:0" id="worlds"><div class="wrap">
     <div class="hw">
       <article class="hw-card rv-up">
-        <a class="hw-media" href="#/franchise"><img src="${IMG('atelier')}" alt="A FOMAXO boutique" loading="lazy"></a>
+        <a class="hw-media" href="#/franchise"><img ${pic('atelier')} alt="A FOMAXO boutique" loading="lazy"></a>
         <div class="hw-copy"><span class="eyebrow">Franchise</span><h2>Own a <em class="metal">FOMAXO</em> store</h2>
           <p class="lead">Partner with a Dubai-born luxury brand as a franchise partner, distributor or retail stockist in your country.</p>
           <div class="ctas"><a class="btn" href="https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent('Hello FOMAXO, I would like to know more about the FOMAXO franchise.')}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${SOC_ICON.whatsapp.replace(/^<g transform="[^"]*">/, '<g>')}</svg>Chat on WhatsApp</a><a class="btn line" href="#/franchise">Send an Enquiry</a></div></div>
@@ -3036,7 +3042,7 @@ function home(){
 
   <section class="sec" style="padding-top:0"><div class="wrap">
     <div class="pc pc-poster rv-up">
-      <div class="pc-media pc-photo"><img src="${IMG('personal-care-poster')}" alt="FOMAXO Personal Care poster: crafted by nature, elevated by luxury" loading="lazy" width="1024" height="1536"></div>
+      <div class="pc-media pc-photo"><img ${pic('personal-care-poster')} alt="FOMAXO Personal Care poster: crafted by nature, elevated by luxury" loading="lazy" width="1024" height="1536"></div>
       <div class="pc-copy">
         <span class="soon">Coming soon</span>
         <span class="eyebrow">Personal Care Collection</span>
@@ -3185,7 +3191,7 @@ function tierRow(t, i){
   const ps = t.products.map(id => P[id]);
   const list = ps.map(p => `<a class="tier-item" href="#/product/${p.id}"><img src="${SM(p.images[0])}" alt="" loading="lazy"><span><b>${esc(p.name)}</b><small>${esc(p.notes ? (p.notes.key || p.notes.top) : p.family)}</small></span>${fromHTML(p)}</a>`).join('');
   return `<div class="ed tier-row t-${t.id} ${i%2?'rev':''}" id="tier-row-${t.id}">
-    <a class="ed-media rv-up" href="#/collections/tier-${t.id}"><img data-parallax="0.08" src="${IMG(shown(t.image.split('-')[0]) || !ps[0] ? t.image : ps[0].images[0])}" alt="${esc(t.name)}" loading="lazy"><span class="tier-badge">${['I','II','III'][i]}</span></a>
+    <a class="ed-media rv-up" href="#/collections/tier-${t.id}"><img data-parallax="0.08" ${pic(shown(t.image.split('-')[0]) || !ps[0] ? t.image : ps[0].images[0])} alt="${esc(t.name)}" loading="lazy"><span class="tier-badge">${['I','II','III'][i]}</span></a>
     <div class="ed-copy rv-up d1">
       <span class="num">0${i+1}</span>
       <span class="eyebrow">${esc(t.kicker)} · ${esc(t.sizes)}</span>
@@ -3363,7 +3369,7 @@ function bindElite(){
 function personalCare(){
   return pageHead('Personal Care', 'Personal <em class="metal">Care</em>', 'The FOMAXO universe is expanding beyond fragrance.') + `
   <section class="sec"><div class="wrap"><div class="pc pc-poster rv-up">
-    <div class="pc-media pc-photo"><img src="${IMG('personal-care-poster')}" alt="FOMAXO Personal Care poster: crafted by nature, elevated by luxury" loading="lazy" width="1024" height="1536"></div>
+    <div class="pc-media pc-photo"><img ${pic('personal-care-poster')} alt="FOMAXO Personal Care poster: crafted by nature, elevated by luxury" loading="lazy" width="1024" height="1536"></div>
     <div class="pc-copy"><span class="soon">Coming soon</span><h2>Elevating <em class="metal">everyday rituals</em></h2>
       <p class="lead">Looking ahead, our ambition extends beyond fragrances. We are launching a diverse range of high-end, luxury products designed to elevate lifestyles and inspire aspirational minds.</p>
       <p class="lead">Every new introduction is guided by the same principles as our perfumes: simplicity, quality and recognisability.</p>
