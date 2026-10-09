@@ -577,11 +577,12 @@ function fx_wa_box() {
    any other 1–3 star review is a bad product. Late and faulty are owed a coupon. */
 function fx_rv_issue($r) {
   if (in_array($r['issue'] ?? '', ['late', 'faulty'], true)) return $r['issue'];
-  if ((int)round((float)($r['rating'] ?? 5)) > 3) return '';
+  $hi = (int)round((float)($r['rating'] ?? 5)) > 3;   // 4-5 stars: still caught when the words say faulty or late, but never counted as a bad product
   $t = (string)($r['text'] ?? '');
+  if ($hi) $t = preg_replace('/\b(no|not|without|zero|nothing|never|any|wasn\'t|isn\'t|didn\'t)\s+(\w+\s+){0,3}?(late|delay(ed|s)?|damaged?|broken|cracked|leak(ed|ing|s)?|spill(ed)?|faulty|defective)\b|(بدون|لا يوجد|ولا|لا|ما|غير)\s*(أي\s*)?(تأخير|تأخر|تاخر|متأخر|تالف|مكسور|معيب)/iu', ' ', $t);
   if (preg_match('/\b(faulty|defective|damaged?|broken|cracked|leak(ed|ing|s)?|spill(ed)?|wrong (item|product|perfume)|toot(a|i))\b|مكسور|تالف|خربان|معيب|يسرب|مسكوب|منتج خطأ/iu', $t)) return 'faulty';
   if (preg_match('/\b(late|delay(ed)?|not (yet )?(received|delivered|arrived)|never (came|arrived)|der(i|ee)? se)\b|تأخر|تاخر|متأخر|تأخير|لم يصل|ما وصل/iu', $t)) return 'late';
-  return 'bad';
+  return $hi ? '' : 'bad';
 }
 const FX_RV_ISSUES = ['bad' => 'Bad product', 'faulty' => 'Faulty product', 'late' => 'Late delivery'];
 /* coloured rounds on the tabs, like fomaxo.in: what came in since each tab was last opened. The times are kept on the server, so laptop and phone agree;
