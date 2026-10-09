@@ -26,6 +26,16 @@ function rv_public($r) {
           'city' => $r['city'] ?? '', 'country' => $r['country'] ?? '', 'date' => substr($r['created'], 0, 10), 'helpful' => (int)($r['helpful'] ?? 0),
           'photos' => array_map(fn($p) => 'reviews.php?photo=' . rawurlencode($p), $r['photos'] ?? []), 'reply' => empty($r['reply_hidden']) ? (string)($r['reply'] ?? '') : ''];
 }
+/* send the answer now and keep working after it (translating), so the customer never waits */
+function rv_send_then($data) {
+  ignore_user_abort(true);
+  $b = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  header('Content-Type: application/json'); header('Content-Length: ' . strlen($b)); header('Connection: close');
+  echo $b;
+  if (function_exists('litespeed_finish_request')) litespeed_finish_request();
+  elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+  else { while (ob_get_level()) ob_end_flush(); flush(); }
+}
 function rv_stats($list) {
   $dist = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0]; $sum = 0;
   foreach ($list as $r) { $dist[$r['rating']]++; $sum += $r['rating']; }
@@ -106,7 +116,16 @@ if ($method === 'GET' && isset($_GET['product'])) {
   if (!isset($CATALOG[$pid])) out(['error' => 'Unknown product.'], 404);
   $list = array_values(array_filter(rv_all(), fn($r) => $r['product'] === $pid && empty($r['hidden'])));
   usort($list, fn($a, $b) => strcmp($b['created'], $a['created']));
-  out(rv_stats($list) + ['reviews' => array_map('rv_public', $list)]);
+  $pub = array_map('rv_public', $list);
+  if (($_GET['lang'] ?? '') !== 'ar') out(rv_stats($list) + ['reviews' => $pub]);
+  /* Arabic site: English reviews and replies also come in Arabic (kept from before, so nothing waits); any not translated yet are done after this answer is sent */
+  $texts = []; foreach ($pub as $r) { $texts[] = $r['text']; $texts[] = $r['reply']; }
+  $ar = fomaxo_ar_many($texts);
+  foreach ($pub as &$r) { if (isset($ar[$r['text']])) $r['text_ar'] = $ar[$r['text']]; if ($r['reply'] !== '' && isset($ar[$r['reply']])) $r['reply_ar'] = $ar[$r['reply']]; }
+  unset($r);
+  rv_send_then(rv_stats($list) + ['reviews' => $pub]);
+  fomaxo_ar_many(array_diff($texts, array_keys($ar)), true, array_column($CATALOG, 'name'));
+  exit;
 }
 
 /* ---------------- an order's review link ---------------- */
@@ -264,4 +283,5 @@ $body = "New review on fomaxo.com — it is live now.\n\nProduct: $pname\nRating
       . 'Photos: ' . count($photos) . "\n\n" . (fx_has_ar($text) ? fomaxo_en($text) . "\n\nAs written: $text" : $text) . "\n\nTo hide this review (or any other), open:\n$manage\n";
 fomaxo_mail(fomaxo_orders_email($STORE_EMAIL), '=?UTF-8?B?' . base64_encode("New $rating★ review — $pname") . '?=', $body, "From: FOMAXO Reviews <mail@fomaxo.com>\r\nContent-Type: text/plain; charset=UTF-8");
 
-out(['ok' => true, 'review' => rv_public($rec), 'note' => $photoNote]);
+rv_send_then(['ok' => true, 'review' => rv_public($rec), 'note' => $photoNote]);
+fomaxo_ar_many([$text], true, array_column($CATALOG, 'name'));   // ready in Arabic for the Arabic site

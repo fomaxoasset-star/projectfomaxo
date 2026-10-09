@@ -680,6 +680,7 @@
 "Register interest:": "سجّل اهتمامك:",
 "Remove photo": "إزالة الصورة",
 "Reply from FOMAXO": "ردّ من FOMAXO",
+"Helpful": "مفيد",
 "Review your order": "قيّم طلبك",
 "Review your order — FOMAXO": "قيّم طلبك — FOMAXO",
 "Review your purchase": "قيّم مشترياتك",
@@ -855,7 +856,7 @@
     return null;
   }
   if (window.FX_TR_ONLY){ window.FX_TR = tr; return; }   // admin → Offer → Preview only borrows the word list, nothing on its page is changed
-  var SKIP = 'script,style,textarea,input,code,[contenteditable],[data-no-tr],[role=option],.rw-text,.rw-name,.rw-reply';
+  var SKIP = 'script,style,textarea,input,code,[contenteditable],[data-no-tr],[role=option],.rw-text,.rw-name,.rw-reply p';
   var done = new WeakMap();   // text node → the Arabic we wrote, so our own writes are not translated again
   function doText(n){
     var v = n.nodeValue; if (!v || done.get(n) === v || !/[A-Za-z]/.test(v) && !/^\s*\+\d[\d\s]{6,}$/.test(v)) return;
