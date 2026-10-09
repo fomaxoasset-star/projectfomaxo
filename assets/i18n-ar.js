@@ -626,6 +626,7 @@
 "Clear nation": "مسح الدولة",
 "Confirmed with your order": "مؤكّد مع طلبك",
 "Customer photo": "صورة العميل",
+"Customer photos": "صور العملاء",
 "Dark mode": "الوضع الداكن",
 "Delivery is free anywhere in the UAE.": "التوصيل مجاني لجميع أنحاء الإمارات.",
 "Explore FOMAXO": "اكتشف FOMAXO",
