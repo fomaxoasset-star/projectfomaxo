@@ -39,8 +39,11 @@ try {
                    ON DUPLICATE KEY UPDATE updated_at = NOW(), name = VALUES(name), phone = VALUES(phone), email = VALUES(email), emirate = VALUES(emirate),
                      items = VALUES(items), total = VALUES(total)$c,
                      stage = IF(FIELD(VALUES(stage), 'details', 'payment', 'card') > FIELD(stage, 'details', 'payment', 'card'), VALUES(stage), stage)";
-    try { $pdo->prepare($sql(', address', ', ?', ', address = VALUES(address)'))->execute(array_merge($args, [$t('addr', 300)])); }
-    catch (Throwable $e) { $pdo->prepare($sql('', '', ''))->execute($args); }   // before the address column exists
+    $bag = preg_match('/^[a-z0-9_.-]{0,300}$/i', $b = $t('bag', 300)) ? $b : '';   // id.size.qty[.picks]_… for the "finish your order" link
+    try { $pdo->prepare($sql(', address, bag', ', ?, ?', ', address = VALUES(address), bag = VALUES(bag)'))->execute(array_merge($args, [$t('addr', 300), $bag])); }
+    catch (Throwable $e) {
+      try { $pdo->prepare($sql(', address', ', ?', ', address = VALUES(address)'))->execute(array_merge($args, [$t('addr', 300)])); }   // before the bag column exists
+      catch (Throwable $e) { $pdo->prepare($sql('', '', ''))->execute($args); } }   // before the address column exists
     exit;
   }
 
