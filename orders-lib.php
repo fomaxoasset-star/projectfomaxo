@@ -726,8 +726,8 @@ function fomaxo_smtp_send($c, $to, $subject, $body, $headers) {
    If the service can't be reached, the Arabic shows as typed (with Arabic digits turned into 0-9) and is tried again next time. */
 /* Left at checkout: the ready WhatsApp message (name, the bag they left, a link that opens checkout with that bag), Arabic for an Arabic name,
    in two parts: the admin WhatsApp box puts a coupon it makes (COMEBACK-, one use, that mobile only, 7 days) between them. Returns [head, tail, arabic]. */
-function fx_left_msg($l) {
-  $ar = fx_has_ar($l['name']); $first = preg_split('/\s+/u', trim((string)$l['name']))[0] ?? '';
+function fx_left_msg($l, $ar = null) {
+  $ar ??= fx_has_ar($l['name']); $first = preg_split('/\s+/u', trim((string)$l['name']))[0] ?? '';
   $bag = preg_match('/^[a-z0-9_.-]{1,300}$/i', (string)($l['bag'] ?? '')) ? $l['bag'] : '';
   $link = 'https://fomaxo.com/?' . ($ar ? 'lang=ar&' : '') . 'utm_source=whatsapp&utm_campaign=left-checkout#/' . ($bag !== '' ? 'checkout?bag=' . $bag : 'checkout');
   $items = implode("\n", array_filter(array_map('trim', preg_split('/,\s*(?=\d+ ×)/u', (string)$l['items']))));

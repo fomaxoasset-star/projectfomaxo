@@ -89,6 +89,13 @@ function fx_refill_parts($pdo, $o) {
           'review' => $rv ? 'https://fomaxo.com/' . ($ar ? '?lang=ar' : '') . '#/review?t=' . $rv : null];
 }
 
+/* the same parts in the other language (the EN | عربي switch in the admin WhatsApp box) */
+function fx_lang_flip($p) {
+  $p['ar'] = !$p['ar'];
+  if (!empty($p['review'])) $p['review'] = str_replace(['https://fomaxo.com/?lang=ar#', 'https://fomaxo.com/#'], 'https://fomaxo.com/#', $p['review']);
+  if ($p['ar'] && !empty($p['review'])) $p['review'] = str_replace('https://fomaxo.com/#', 'https://fomaxo.com/?lang=ar#', $p['review']);
+  return $p;
+}
 /* the message, with a blank line between each part so it reads like a personal note. The admin WhatsApp box puts the coupon it makes (if one
    is picked) between fx_refill_head and fx_refill_tail. */
 function fx_refill_head($p) {
