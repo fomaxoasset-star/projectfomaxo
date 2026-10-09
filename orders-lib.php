@@ -806,6 +806,17 @@ function fx_left_msg($l, $ar = null) {
     $n2 . "Your bag is saved. Tap here to finish your order:\n" . $link . $n2 . 'Free delivery across the UAE in 1–3 days.' . $n2 . 'If you have any questions about the scents or sizes, just reply here.' . $n2 . 'FOMAXO', false];
 }
 function fx_has_ar($s) { return (bool)preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', (string)$s); }
+/* a text in pieces of at most 450 bytes, cut after sentences where possible */
+function fx_tr_parts($s) {
+  $parts = []; $buf = '';
+  foreach (preg_split('/(?<=[.!?؟،,\n])\s*/u', (string)$s, -1, PREG_SPLIT_NO_EMPTY) as $p) {
+    while (strlen($p) > 450) { $cut = mb_strcut($p, 0, 450); if ($buf !== '') { $parts[] = $buf; $buf = ''; } $parts[] = $cut; $p = substr($p, strlen($cut)); }
+    if ($buf !== '' && strlen($buf) + strlen($p) + 1 > 450) { $parts[] = $buf; $buf = ''; }
+    $buf .= ($buf === '' ? '' : ' ') . $p;
+  }
+  if ($buf !== '') $parts[] = $buf;
+  return $parts;
+}
 function fomaxo_en_many(array $texts) {
   static $memo = [], $budget = 12;   // at most 12 new look-ups per page, so a page never hangs on the service
   $out = []; $need = [];
@@ -829,15 +840,7 @@ function fomaxo_en_many(array $texts) {
   $need = array_slice($need, 0, $budget, true); $budget -= count($need);
   /* the free service takes about 450 bytes at a time: long reviews go in sentence-sized pieces */
   $parts = [];
-  foreach ($need as $h => $s) {
-    $buf = ''; $i = 0;
-    foreach (preg_split('/(?<=[.!?؟،,\n])\s*/u', strtr($s, FX_AR_DIGITS), -1, PREG_SPLIT_NO_EMPTY) as $p) {
-      while (strlen($p) > 450) { $cut = mb_strcut($p, 0, 450); if ($buf !== '') { $parts[$h][$i++] = $buf; $buf = ''; } $parts[$h][$i++] = $cut; $p = substr($p, strlen($cut)); }
-      if ($buf !== '' && strlen($buf) + strlen($p) + 1 > 450) { $parts[$h][$i++] = $buf; $buf = ''; }
-      $buf .= ($buf === '' ? '' : ' ') . $p;
-    }
-    if ($buf !== '') $parts[$h][$i++] = $buf;
-  }
+  foreach ($need as $h => $s) $parts[$h] = fx_tr_parts(strtr($s, FX_AR_DIGITS));
   $mh = curl_multi_init(); $hs = [];
   foreach ($parts as $h => $list) foreach ($list as $i => $p) {
     $c = curl_init('https://api.mymemory.translated.net/get?' . http_build_query(['q' => $p, 'langpair' => 'ar|en']));
@@ -863,6 +866,66 @@ function fomaxo_en_many(array $texts) {
   return $out;
 }
 function fomaxo_en($s) { $s = (string)$s; return $s === '' ? '' : fomaxo_en_many([$s])[$s]; }
+/* English → Arabic for reviews on the Arabic site (the review itself is never changed; the site shows the Arabic with "Show original").
+   Each text is translated once and kept in fx_tr_ar. $fetch = false: only what is already kept, so the review list never waits;
+   true: up to 12 new look-ups (run after the page has been sent). FOMAXO and the product names in $keep stay in English.
+   A text the service could not translate well is kept as '' and tried again after 3 days. Returns [text => Arabic] for the ones that have it. */
+function fomaxo_ar_many(array $texts, $fetch = false, array $keep = []) {
+  static $made = false, $budget = 12;
+  $out = []; $need = [];
+  foreach ($texts as $s) { $s = (string)$s; if (trim($s) !== '' && !fx_has_ar($s) && preg_match('/[A-Za-z]{2}/', $s)) $need[sha1($s)] = $s; }
+  if (!$need || !($pdo = fomaxo_db())) return $out;
+  try {
+    if (!$made) { $pdo->exec("CREATE TABLE IF NOT EXISTS fx_tr_ar (h CHAR(40) NOT NULL PRIMARY KEY, ar TEXT NOT NULL, created_at DATETIME NULL) DEFAULT CHARSET=utf8mb4"); $made = true; }
+    $q = $pdo->prepare('SELECT h, ar, created_at > NOW() - INTERVAL 3 DAY AS fresh FROM fx_tr_ar WHERE h IN (' . implode(',', array_fill(0, count($need), '?')) . ')'); $q->execute(array_keys($need));
+    foreach ($q->fetchAll(PDO::FETCH_ASSOC) as $row) {
+      if ($row['ar'] !== '') $out[$need[$row['h']]] = $row['ar'];
+      if ($row['ar'] !== '' || $row['fresh']) unset($need[$row['h']]);
+    }
+  } catch (Throwable $e) { error_log('FOMAXO translate cache: ' . $e->getMessage()); return $out; }
+  if (!$fetch || !$need || $budget <= 0 || !function_exists('curl_multi_init')) return $out;
+  $need = array_slice($need, 0, $budget, true); $budget -= count($need);
+  /* names that stay English go to the service as ZQX1, ZQX2… and are put back afterwards */
+  $keep = array_values(array_unique(array_filter(array_map('trim', array_merge(['FOMAXO'], $keep)), fn($k) => mb_strlen($k) > 1)));
+  usort($keep, fn($a, $b) => mb_strlen($b) - mb_strlen($a));
+  $re = $keep ? '/(?<![\p{L}\p{N}])(' . implode('|', array_map(fn($k) => $k === 'FOMAXO' ? '(?i:FOMAXO)' : preg_quote($k, '/'), $keep)) . ')(?![\p{L}\p{N}])/u' : null;
+  $parts = []; $tok = [];
+  foreach ($need as $h => $s) {
+    $map = [];
+    $p = $re ? preg_replace_callback($re, function ($m) use (&$map) { $k = strcasecmp($m[1], 'fomaxo') === 0 ? 'FOMAXO' : $m[1]; $t = array_search($k, $map, true); if ($t === false) { $t = 'ZQX' . (count($map) + 1); $map[$t] = $k; } return $t; }, $s) : $s;
+    $parts[$h] = fx_tr_parts($p); $tok[$h] = $map;
+  }
+  $mh = curl_multi_init(); $hs = [];
+  foreach ($parts as $h => $list) foreach ($list as $i => $p) {
+    $c = curl_init('https://api.mymemory.translated.net/get?' . http_build_query(['q' => $p, 'langpair' => 'en|ar']));
+    curl_setopt_array($c, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8, CURLOPT_CONNECTTIMEOUT => 3]);
+    curl_multi_add_handle($mh, $c); $hs[] = [$h, $i, $c];
+  }
+  do { $st = curl_multi_exec($mh, $run); if ($run) curl_multi_select($mh, 1); } while ($run && $st === CURLM_OK);
+  $got = []; $bad = []; $down = [];
+  foreach ($hs as [$h, $i, $c]) {
+    $j = json_decode((string)curl_multi_getcontent($c), true); curl_multi_remove_handle($mh, $c); curl_close($c);
+    if (!is_array($j) || stripos((string)($j['responseData']['translatedText'] ?? ''), 'MYMEMORY WARNING') !== false) { $down[$h] = true; $budget = 0; continue; }   // not reachable or today's limit: try again later
+    $t = trim(html_entity_decode((string)($j['responseData']['translatedText'] ?? ''), ENT_QUOTES, 'UTF-8'));
+    if ((int)($j['responseStatus'] ?? 0) !== 200 || !fx_has_ar($t)) $bad[$h] = true; else $got[$h][$i] = $t;
+  }
+  curl_multi_close($mh);
+  foreach ($need as $h => $s) {
+    if (!empty($down[$h])) continue;
+    $ar = '';
+    if (empty($bad[$h]) && count($got[$h] ?? []) === count($parts[$h])) {
+      ksort($got[$h]); $ar = implode(' ', $got[$h]);
+      foreach ($tok[$h] as $t => $k) {   // every kept name must come back, else the Arabic is not used
+        if (!preg_match('/' . $t . '(?!\d)/i', $ar)) { $ar = ''; break; }
+        $ar = preg_replace('/' . $t . '(?!\d)/i', "\u{2068}" . addcslashes($k, '\\$') . "\u{2069}", $ar);
+      }
+      if (preg_match('/ZQX\d/i', $ar)) $ar = '';
+    }
+    if ($ar !== '') $out[$s] = $ar;
+    try { $pdo->prepare('REPLACE INTO fx_tr_ar (h, ar, created_at) VALUES (?, ?, NOW())')->execute([$h, $ar]); } catch (Throwable $e) {}
+  }
+  return $out;
+}
 /* English → Arabic for the shop's reply to an Arabic review (written in English in admin). Same free service; null when it can't be reached */
 function fomaxo_ar($s) {
   $s = trim((string)$s); if ($s === '' || !function_exists('curl_init')) return null;
