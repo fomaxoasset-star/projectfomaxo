@@ -397,10 +397,13 @@ button.rqwa{border:0;cursor:pointer;font-family:inherit}.rqwa.sent{background:tr
 .em.ck-faulty::before,.em.ck-late::before,.em.ck-bad::before{content:"";display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;vertical-align:1px}.em.ck-faulty::before{background:#d0644e}.em.ck-late::before{background:#e0a03a}.em.ck-bad::before{background:#4a86d8}
 .lx .wa.wag{background:#25D366!important;color:#fff!important;cursor:pointer;font-family:inherit}.lx .wa.wag.sent{background:transparent!important;color:#25D366!important;box-shadow:inset 0 0 0 1px #25D366}
 @media(max-width:700px){.btn.mwa span,.btn.rvwa span{display:none}.btn.mwa.sent span,.btn.rvwa.sent span{display:inline}.btn.mwa,.btn.rvwa{padding:6px 8px}.mlist tr.row:has(td.mw){grid-template-areas:"mn ms" "ma mo" "md mv" "mw mw"}.mlist td.mw{grid-area:mw;text-align:left;padding-top:4px}.rqtop .arange,.rqtop>form{margin:0;flex:1 1 100%}}
+/* Teko everywhere in admin (AJAY 09/10/2026); font-size-adjust keeps the old letter height so sizes and one-screen pages stay as they were; Arabic falls back to Tajawal */
+*,*::before,*::after{font-family:Teko,Tajawal,Arial,sans-serif!important;font-size-adjust:.58}body{letter-spacing:.02em;word-spacing:.1em}input,select,textarea,button{font-family:Teko,Tajawal,Arial,sans-serif!important}
+[dir=rtl],[dir=rtl] *,[dir=auto]:dir(rtl),[dir=auto]:dir(rtl) *,.arx,.arx *{font-family:Tajawal,Arial,sans-serif!important;font-size-adjust:none;letter-spacing:0;word-spacing:normal}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
-     . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Jost:wght@300;400;500&family=Tajawal:wght@400;500;700&family=Manrope:wght@400;500;600;700&display=swap">'
+     . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&family=Cinzel:wght@500;600&family=Jost:wght@300;400;500&family=Tajawal:wght@400;500;700&family=Manrope:wght@400;500;600;700&display=swap">'
      . "<style>$css</style></head><body>"
      . '<header class="top"><a class="brand" href="./">FOMAXO<small>ADMIN</small></a>'
      . (!empty($_SESSION['admin']) ? '<div class="hacts"><a class="btn line sm" href="../" target="_blank" rel="noopener"><span class="vw">View </span>website ↗</a><form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Sign out</button></form></div>' : '')
