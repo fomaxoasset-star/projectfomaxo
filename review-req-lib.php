@@ -125,4 +125,3 @@ function fx_rq_tail($p) {
   return $p['ar'] ? $n2 . 'راسلنا هنا إن احتجت أي مساعدة. وأرسل كلمة STOP إن كنت لا ترغب في هذه الرسائل.' . $n2 . "شكراً لك،\nFOMAXO"
     : $n2 . 'Just reply here if you need anything. If you would rather not get these messages, reply STOP.' . $n2 . "Thank you,\nFOMAXO";
 }
-function fx_rq_text($p) { return fx_rq_head($p) . fx_rq_tail($p); }

@@ -323,7 +323,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .stock tr.row{padding:8px 4px 10px;margin-bottom:8px;gap:2px 10px}.stock td{padding:0 10px}.stock input{padding:6px 9px}label.mini{font-size:10.5px;margin:2px 0}
 }
 .mtop .mmin input{text-align:center}.mtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 4px}.mmin{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:0;border-color:var(--gold)}.mmin label{margin:0;font-size:13.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink)}.mmin input{width:72px;padding:6px 9px;font-weight:700;text-align:center}.mmin span{font-size:13.5px;font-weight:600}
-.rfauto{padding:8px 14px;margin:0 0 8px}.rfauto summary{cursor:pointer;font-weight:600}.rfauto summary>span:first-child{margin-right:6px}.rfauto label{margin:8px 0 3px}.rfsw{position:relative;display:inline-flex;margin:10px 0 0;border:1px solid var(--gold);border-radius:999px;overflow:hidden}.rfsw label{margin:0!important;cursor:pointer}.rfsw input{position:absolute;opacity:0;pointer-events:none}.rfsw span{display:block;padding:6px 22px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rfsw input:checked+span{background:var(--gold);color:var(--gold-ink)}.rflist .rd{white-space:nowrap}.rflist .ra{text-align:right;white-space:nowrap}.rqsw{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:flex-end;margin:6px 0 0}.rqsw #rq_pct,.rqsw #rq_drop_days{width:90px}.rqsw .rfsw{margin:0}.rqsw>div>label{display:block}.ocount:has(.rqbtn){display:flex;justify-content:space-between;align-items:center;gap:8px}.rqbtn{white-space:nowrap;flex:none}.oaw{display:flex;align-items:center;gap:6px;justify-content:flex-end}.oaw .oacts{flex:1}.rqwa{display:inline-flex;align-items:center;gap:6px;align-self:stretch;flex:none;font-size:11px;font-weight:700;letter-spacing:.02em;padding:5px 10px;border-radius:6px;background:#25D366;color:#fff;text-decoration:none;white-space:nowrap}.rqwa svg{flex:none}.btn.rqg{background:#25D366;border-color:#25D366;color:#fff}.btn.rqg.line{background:transparent;border-color:#25D366;color:#25D366;box-shadow:inset 0 0 0 1px #25D366}.rqseg{display:flex;width:fit-content;max-width:100%;margin:0 auto 8px;border-radius:20px;overflow-x:auto}.rqseg button{font-size:12.5px;padding:5px 12px}@media(max-width:700px){.rqseg button{font-size:12px;padding:5px 7px}}.rqst{display:inline-block;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}.rqst.ok{background:#25D366;border-color:#25D366;color:#fff}.rqst.part{border-color:var(--gold);color:var(--gold)}.rqwa.done{background:transparent;color:#25D366;border:1px solid #25D366}@media(max-width:700px){.oaw{flex-wrap:wrap}.oaw .oacts{flex:1 1 100%}.rqwa{align-self:auto;padding:8px 14px;font-size:13px}}.rstop{font-size:12px;font-weight:600;color:var(--bad);margin-right:6px}.wastop{display:inline;margin:0 0 0 6px}.btn.xs{padding:2px 9px;font-size:10.5px}.rfhook{margin:8px 0 0}.rfhook p{margin:4px 0 0}.rfhook .sel{user-select:all;word-break:break-all}.rsent{font-size:12px;font-weight:600;color:var(--ok);margin-right:6px}.rfstats{grid-template-columns:repeat(2,minmax(0,180px))}.rfstats.rq3{grid-template-columns:repeat(3,minmax(0,180px))}.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.rk{display:inline-block;min-width:30px;margin-right:7px;padding:1px 6px;border-radius:20px;border:1px solid var(--line);font-size:11px;font-weight:700;text-align:center;color:var(--muted);vertical-align:1px}.rk.top{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.rksw{display:flex;align-items:center;border:1px solid var(--gold);border-radius:999px;overflow:hidden;flex:none}.rksw span{padding:6px 10px 6px 14px;font-size:12.5px;font-weight:600}.rksw a{padding:6px 14px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--gold)}.rksw a.on{background:var(--gold);color:var(--gold-ink)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}
+.rfauto{padding:8px 14px;margin:0 0 8px}.rfauto summary{cursor:pointer;font-weight:600}.rfauto summary>span:first-child{margin-right:6px}.rfauto label{margin:8px 0 3px}.rfsw{position:relative;display:inline-flex;margin:10px 0 0;border:1px solid var(--gold);border-radius:999px;overflow:hidden}.rfsw label{margin:0!important;cursor:pointer}.rfsw input{position:absolute;opacity:0;pointer-events:none}.rfsw span{display:block;padding:6px 22px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rfsw input:checked+span{background:var(--gold);color:var(--gold-ink)}.rflist .rd{white-space:nowrap}.rflist .ra{text-align:right;white-space:nowrap}.rqsw{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:flex-end;margin:6px 0 0}.rqsw #rq_pct,.rqsw #rq_drop_days{width:90px}.rqsw .rfsw{margin:0}.rqsw>div>label{display:block}.ocount:has(.rqbtn){display:flex;justify-content:space-between;align-items:center;gap:8px}.rqbtn{white-space:nowrap;flex:none}.oaw{display:flex;align-items:center;gap:6px;justify-content:flex-end}.oaw .oacts{flex:1}.rqwa{display:inline-flex;align-items:center;gap:6px;align-self:stretch;flex:none;font-size:11px;font-weight:700;letter-spacing:.02em;padding:5px 10px;border-radius:6px;background:#25D366;color:#fff;text-decoration:none;white-space:nowrap}.rqwa svg{flex:none}.rqseg{display:flex;width:fit-content;max-width:100%;margin:0 auto 8px;border-radius:20px;overflow-x:auto}.rqseg button{font-size:12.5px;padding:5px 12px}@media(max-width:700px){.rqseg button{font-size:12px;padding:5px 7px}}.rqst{display:inline-block;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}.rqst.ok{background:#25D366;border-color:#25D366;color:#fff}.rqst.part{border-color:var(--gold);color:var(--gold)}.rqwa.done{background:transparent;color:#25D366;border:1px solid #25D366}@media(max-width:700px){.oaw{flex-wrap:wrap}.oaw .oacts{flex:1 1 100%}.rqwa{align-self:auto;padding:8px 14px;font-size:13px}}.rstop{font-size:12px;font-weight:600;color:var(--bad);margin-right:6px}.wastop{display:inline;margin:0 0 0 6px}.btn.xs{padding:2px 9px;font-size:10.5px}.rfhook{margin:8px 0 0}.rfhook p{margin:4px 0 0}.rfhook .sel{user-select:all;word-break:break-all}.rsent{font-size:12px;font-weight:600;color:var(--ok);margin-right:6px}.rfstats{grid-template-columns:repeat(2,minmax(0,180px))}.rfstats.rq3{grid-template-columns:repeat(3,minmax(0,180px))}.mq{display:flex;gap:6px;flex:1 1 260px;margin:0}.mq input{flex:1;min-width:0;padding:7px 10px}.mlist td.mo span,.mlist td.mv span{display:none}.mlist .md{white-space:nowrap;color:var(--muted)}.rk{display:inline-block;min-width:30px;margin-right:7px;padding:1px 6px;border-radius:20px;border:1px solid var(--line);font-size:11px;font-weight:700;text-align:center;color:var(--muted);vertical-align:1px}.rk.top{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.rksw{display:flex;align-items:center;border:1px solid var(--gold);border-radius:999px;overflow:hidden;flex:none}.rksw span{padding:6px 10px 6px 14px;font-size:12.5px;font-weight:600}.rksw a{padding:6px 14px;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--gold)}.rksw a.on{background:var(--gold);color:var(--gold-ink)}.mtag{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.ctag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);white-space:nowrap;vertical-align:1px}.wtag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;padding:1px 7px;margin-left:6px;border-radius:20px;border:1px solid color-mix(in srgb,var(--ok) 45%,transparent);color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent);white-space:nowrap;vertical-align:1px}
 /* Orders like fomaxo.in: coloured top edge on the four boxes, step boxes label left / count right, coupon row, one filter line */
 .ost .stat{border-top:3px solid var(--gold)}.ost .stat.onl{border-top-color:var(--ok)}
 .cpbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 8px}
@@ -2331,6 +2331,46 @@ if (isset($_GET['reviews'])) {
         . $f($hidden('del_review', '1'), 'Delete', 'line rdel', 'Delete this review for good? It cannot be brought back.')) . '</li>';
   };
 
+  /* the review list, its filters and Top reviewers: worked out once, shown in the phone page and the laptop page */
+  $list = $rp !== '' ? array_filter($all, fn($r) => $r['product'] === $rp) : $all;
+  $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
+  $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
+  if ($vf !== '') $list = array_filter($list, fn($r) => !empty($r['verified']) === ($vf === '1'));
+  $nst = []; foreach ([5, 4, 3, 2, 1] as $n) $nst[$n] = count(array_filter($list, fn($r) => (int)$r['rating'] === $n));
+  if ($rs) $list = array_filter($list, fn($r) => (int)$r['rating'] === $rs);   // one star rating only
+  $nis = []; foreach (FX_RV_ISSUES as $k => $l) $nis[$k] = count(array_filter($list, fn($r) => fx_rv_issue($r) === $k));
+  if ($pr !== '') $list = array_filter($list, fn($r) => fx_rv_issue($r) === $pr);   // one problem only
+  $tel = [];   // mobile and email of verified reviews, from their order
+  $nos = array_values(array_unique(array_filter(array_column($list, 'order'))));
+  if ($nos) { $s = $pdo->prepare('SELECT order_no, phone, email FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'); $s->execute($nos); foreach ($s as $o) $tel[$o['order_no']] = $o; }
+  if ($rq !== '') {   // words, name, mobile, email, city, product or order no
+    $d = preg_replace('/\D/', '', $rq); $q = mb_strtolower($rq);
+    $list = array_filter($list, function ($r) use ($q, $d, $tel, $pname) {
+      $o = $tel[$r['order'] ?? ''] ?? ['phone' => '', 'email' => ''];
+      $hay = mb_strtolower(implode(' ', [$r['text'], $r['name'], $r['real'] ?? '', $r['city'] ?? '', $pname($r['product']), $r['order'] ?? '', $o['phone'], $o['email']]));
+      return str_contains($hay, $q) || (strlen($d) >= 4 && str_contains(preg_replace('/\D/', '', $o['phone']), $d));
+    });
+  }
+  $items = '';
+  fomaxo_en_many(array_merge(array_column($list, 'text'), array_column($list, 'name'), array_map(fn($r) => trim($r['city'] ?? ''), $list)));
+  foreach ($list as $r) $items .= $rvItem($r, $tel);
+  $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
+  $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []) + ($rs ? ['rs' => $rs] : []) + ($pr !== '' ? ['pr' => $pr] : []);
+  $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
+  $sq = $vq; unset($sq['rs']); if ($vf !== '') $sq['vf'] = $vf;
+  $schips = implode('', array_map(fn($n) => '<a class="em' . ($rs === $n ? ' on' : '') . '" href="' . h(self_url($rs === $n ? $sq : $sq + ['rs' => $n])) . '">' . $n . '★ <b>' . $nst[$n] . '</b></a>', [5, 4, 3, 2, 1]));
+  $iq = $vq; unset($iq['pr']); if ($vf !== '') $iq['vf'] = $vf;   // tap a problem to see only those reviews (a coupon is owed for late and faulty), tap again for all
+  $schips = implode('', array_map(fn($k, $l) => '<a class="em ck-' . $k . ($pr === $k ? ' on' : '') . '" href="' . h(self_url($pr === $k ? $iq : $iq + ['pr' => $k])) . '" title="Show only ' . strtolower($l) . ' reviews">' . $l . ' <b>' . $nis[$k] . '</b></a>', array_keys(FX_RV_ISSUES), FX_RV_ISSUES)) . $schips;
+  $ppl = [];
+  foreach ($live as $r) {
+    $real = trim((string)(!empty($r['anon']) ? ($r['real'] ?? $r['name']) : $r['name'])); if ($real === '') continue;
+    $k = mb_strtolower($real); $c = &$ppl[$k];
+    $c['name'] ??= $real; $c['n'] = ($c['n'] ?? 0) + 1; $c['sum'] = ($c['sum'] ?? 0) + (int)$r['rating'];
+    $c['verified'] = ($c['verified'] ?? 0) + (!empty($r['verified']) ? 1 : 0); $c['last'] ??= $r['created']; if (empty($c['phone']) && !empty($telAll[$r['order'] ?? '']['phone'])) $c['phone'] = $telAll[$r['order']]['phone'];
+    $c['products'][$r['product']] = true; unset($c);
+  }
+  $ppl = array_filter($ppl, fn($c) => $c['n'] >= $rmin);
+  uasort($ppl, fn($a, $b) => $b['n'] <=> $a['n'] ?: strcmp($b['last'], $a['last']));
   if ($v === 'products') {
     $tr = '';
     foreach ($CATALOG as $id => $p) {
@@ -2344,16 +2384,6 @@ if (isset($_GET['reviews'])) {
     $body = '<div class="fill"><table class="rprod"><thead><tr><th>Product</th><th>Stars</th><th class="num">Reviews</th><th>Breakdown</th></tr></thead><tbody>' . $tr . '</tbody></table>'
           . '<p class="muted small after">Only reviews on the website count. Tap a product to see its reviews.</p></div>';
   } elseif ($v === 'people') {
-    $ppl = [];
-    foreach ($live as $r) {
-      $real = trim((string)(!empty($r['anon']) ? ($r['real'] ?? $r['name']) : $r['name'])); if ($real === '') continue;
-      $k = mb_strtolower($real); $c = &$ppl[$k];
-      $c['name'] ??= $real; $c['n'] = ($c['n'] ?? 0) + 1; $c['sum'] = ($c['sum'] ?? 0) + (int)$r['rating'];
-      $c['verified'] = ($c['verified'] ?? 0) + (!empty($r['verified']) ? 1 : 0); $c['last'] ??= $r['created'];
-      $c['products'][$r['product']] = true; unset($c);
-    }
-    $ppl = array_filter($ppl, fn($c) => $c['n'] >= $rmin);
-    uasort($ppl, fn($a, $b) => $b['n'] <=> $a['n'] ?: strcmp($b['last'], $a['last']));
     $tr = '';
     foreach ($ppl as $c) $tr .= '<tr class="row"><td><b>' . h($c['name']) . '</b><div class="small muted">' . h(implode(', ', array_map($pname, array_keys($c['products'])))) . '</div></td>'
       . '<td class="num"><b>' . $c['n'] . '</b><span class="ph"> reviews</span></td><td>' . $stars(round($c['sum'] / $c['n'])) . ' <span class="small">' . number_format($c['sum'] / $c['n'], 1) . '</span></td>'
@@ -2364,35 +2394,6 @@ if (isset($_GET['reviews'])) {
               : '<p class="card muted" style="margin:0">No customer has ' . $rmin . ' or more reviews yet.</p>')
           . '<p class="muted small after">Reviews with the same name count as one customer. Anonymous reviews use the real name the customer typed. Removed reviews are left out.</p></div>';
   } else {
-    $list = $rp !== '' ? array_filter($all, fn($r) => $r['product'] === $rp) : $all;
-    $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
-    $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
-    if ($vf !== '') $list = array_filter($list, fn($r) => !empty($r['verified']) === ($vf === '1'));
-    $nst = []; foreach ([5, 4, 3, 2, 1] as $n) $nst[$n] = count(array_filter($list, fn($r) => (int)$r['rating'] === $n));
-    if ($rs) $list = array_filter($list, fn($r) => (int)$r['rating'] === $rs);   // one star rating only
-    $nis = []; foreach (FX_RV_ISSUES as $k => $l) $nis[$k] = count(array_filter($list, fn($r) => fx_rv_issue($r) === $k));
-    if ($pr !== '') $list = array_filter($list, fn($r) => fx_rv_issue($r) === $pr);   // one problem only
-    $tel = [];   // mobile and email of verified reviews, from their order
-    $nos = array_values(array_unique(array_filter(array_column($list, 'order'))));
-    if ($nos) { $s = $pdo->prepare('SELECT order_no, phone, email FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'); $s->execute($nos); foreach ($s as $o) $tel[$o['order_no']] = $o; }
-    if ($rq !== '') {   // words, name, mobile, email, city, product or order no
-      $d = preg_replace('/\D/', '', $rq); $q = mb_strtolower($rq);
-      $list = array_filter($list, function ($r) use ($q, $d, $tel, $pname) {
-        $o = $tel[$r['order'] ?? ''] ?? ['phone' => '', 'email' => ''];
-        $hay = mb_strtolower(implode(' ', [$r['text'], $r['name'], $r['real'] ?? '', $r['city'] ?? '', $pname($r['product']), $r['order'] ?? '', $o['phone'], $o['email']]));
-        return str_contains($hay, $q) || (strlen($d) >= 4 && str_contains(preg_replace('/\D/', '', $o['phone']), $d));
-      });
-    }
-    $items = '';
-    fomaxo_en_many(array_merge(array_column($list, 'text'), array_column($list, 'name'), array_map(fn($r) => trim($r['city'] ?? ''), $list)));
-    foreach ($list as $r) $items .= $rvItem($r, $tel);
-    $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
-    $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []) + ($rs ? ['rs' => $rs] : []) + ($pr !== '' ? ['pr' => $pr] : []);
-    $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
-    $sq = $vq; unset($sq['rs']); if ($vf !== '') $sq['vf'] = $vf;
-    $schips = implode('', array_map(fn($n) => '<a class="em' . ($rs === $n ? ' on' : '') . '" href="' . h(self_url($rs === $n ? $sq : $sq + ['rs' => $n])) . '">' . $n . '★ <b>' . $nst[$n] . '</b></a>', [5, 4, 3, 2, 1]));
-    $iq = $vq; unset($iq['pr']); if ($vf !== '') $iq['vf'] = $vf;   // tap a problem to see only those reviews (a coupon is owed for late and faulty), tap again for all
-    $schips = implode('', array_map(fn($k, $l) => '<a class="em ck-' . $k . ($pr === $k ? ' on' : '') . '" href="' . h(self_url($pr === $k ? $iq : $iq + ['pr' => $k])) . '" title="Show only ' . strtolower($l) . ' reviews">' . $l . ' <b>' . $nis[$k] . '</b></a>', array_keys(FX_RV_ISSUES), FX_RV_ISSUES)) . $schips;
     $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . '<select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>' . ($rs ? '<input type="hidden" name="rs" value="' . $rs . '">' : '')
           . '<input name="rq" value="' . h($rq) . '" placeholder="Search words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
           . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . $schips . '</nav></form>'
@@ -2418,16 +2419,6 @@ if (isset($_GET['reviews'])) {
     $bodyP = $tr ? '<table class="rprod"><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty">No live reviews yet.</p>';
   }
   {   // top reviewers
-    $ppl = [];
-    foreach ($live as $r) {
-      $real = trim((string)(!empty($r['anon']) ? ($r['real'] ?? $r['name']) : $r['name'])); if ($real === '') continue;
-      $k = mb_strtolower($real); $c = &$ppl[$k];
-      $c['name'] ??= $real; $c['n'] = ($c['n'] ?? 0) + 1; $c['sum'] = ($c['sum'] ?? 0) + (int)$r['rating'];
-      $c['verified'] = ($c['verified'] ?? 0) + (!empty($r['verified']) ? 1 : 0); $c['last'] ??= $r['created']; if (empty($c['phone']) && !empty($telAll[$r['order'] ?? '']['phone'])) $c['phone'] = $telAll[$r['order']]['phone'];
-      $c['products'][$r['product']] = true; unset($c);
-    }
-    $ppl = array_filter($ppl, fn($c) => $c['n'] >= $rmin);
-    uasort($ppl, fn($a, $b) => $b['n'] <=> $a['n'] ?: strcmp($b['last'], $a['last']));
     $tr = '';
     foreach ($ppl as $c) { $ck = $ckey($c['phone'] ?? ''); $nm = '<b>' . h($c['name']) . '</b>';
       $tr .= '<tr class="row trv"><td>' . ($ck !== '' ? '<a href="' . h(self_url(['members' => 1, 'c' => $ck])) . '">' . $nm . '</a>' : $nm)
@@ -2438,35 +2429,6 @@ if (isset($_GET['reviews'])) {
     $bodyR = $tr ? '<table class="rppl"><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty">Nobody has ' . $rmin . ' or more reviews yet.</p>';
   }
   {   // the reviews
-    $list = $rp !== '' ? array_filter($all, fn($r) => $r['product'] === $rp) : $all;
-    $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
-    $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
-    if ($vf !== '') $list = array_filter($list, fn($r) => !empty($r['verified']) === ($vf === '1'));
-    $nst = []; foreach ([5, 4, 3, 2, 1] as $n) $nst[$n] = count(array_filter($list, fn($r) => (int)$r['rating'] === $n));
-    if ($rs) $list = array_filter($list, fn($r) => (int)$r['rating'] === $rs);   // one star rating only
-    $nis = []; foreach (FX_RV_ISSUES as $k => $l) $nis[$k] = count(array_filter($list, fn($r) => fx_rv_issue($r) === $k));
-    if ($pr !== '') $list = array_filter($list, fn($r) => fx_rv_issue($r) === $pr);   // one problem only
-    $tel = [];   // mobile and email of verified reviews, from their order
-    $nos = array_values(array_unique(array_filter(array_column($list, 'order'))));
-    if ($nos) { $s = $pdo->prepare('SELECT order_no, phone, email FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'); $s->execute($nos); foreach ($s as $o) $tel[$o['order_no']] = $o; }
-    if ($rq !== '') {   // words, name, mobile, email, city, product or order no
-      $d = preg_replace('/\D/', '', $rq); $q = mb_strtolower($rq);
-      $list = array_filter($list, function ($r) use ($q, $d, $tel, $pname) {
-        $o = $tel[$r['order'] ?? ''] ?? ['phone' => '', 'email' => ''];
-        $hay = mb_strtolower(implode(' ', [$r['text'], $r['name'], $r['real'] ?? '', $r['city'] ?? '', $pname($r['product']), $r['order'] ?? '', $o['phone'], $o['email']]));
-        return str_contains($hay, $q) || (strlen($d) >= 4 && str_contains(preg_replace('/\D/', '', $o['phone']), $d));
-      });
-    }
-    $items = '';
-    fomaxo_en_many(array_merge(array_column($list, 'text'), array_column($list, 'name'), array_map(fn($r) => trim($r['city'] ?? ''), $list)));
-    foreach ($list as $r) $items .= $rvItem($r, $tel);
-    $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
-    $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []) + ($rs ? ['rs' => $rs] : []) + ($pr !== '' ? ['pr' => $pr] : []);
-    $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
-    $sq = $vq; unset($sq['rs']); if ($vf !== '') $sq['vf'] = $vf;
-    $schips = implode('', array_map(fn($n) => '<a class="em' . ($rs === $n ? ' on' : '') . '" href="' . h(self_url($rs === $n ? $sq : $sq + ['rs' => $n])) . '">' . $n . '★ <b>' . $nst[$n] . '</b></a>', [5, 4, 3, 2, 1]));
-    $iq = $vq; unset($iq['pr']); if ($vf !== '') $iq['vf'] = $vf;   // tap a problem to see only those reviews (a coupon is owed for late and faulty), tap again for all
-    $schips = implode('', array_map(fn($k, $l) => '<a class="em ck-' . $k . ($pr === $k ? ' on' : '') . '" href="' . h(self_url($pr === $k ? $iq : $iq + ['pr' => $k])) . '" title="Show only ' . strtolower($l) . ' reviews">' . $l . ' <b>' . $nis[$k] . '</b></a>', array_keys(FX_RV_ISSUES), FX_RV_ISSUES)) . $schips;
     $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . ($rp !== '' ? '<input type="hidden" name="rp" value="' . h($rp) . '">' : '') . ($rs ? '<input type="hidden" name="rs" value="' . $rs . '">' : '')
           . '<input name="rq" value="' . h($rq) . '" placeholder="Words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
           . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . $schips . '</nav></form>'
