@@ -35,7 +35,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 19) return;
+  if ($ver >= 21) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -119,7 +119,7 @@ function fomaxo_db_schema($pdo) {
   if (!$pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'hidden'")->fetch()) return;
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '18')");
   /* v19: the new 10ml bottle photos are the main 10ml photo of four perfumes (only where the old 10ml photo is still first) */
-  foreach (['oldmoney', 'royalcandy', 'matchacoco', 'passionsin'] as $id) {
+  if ($ver < 19) foreach (['oldmoney', 'royalcandy', 'matchacoco', 'passionsin'] as $id) {
     $get->execute([$id]); $d = json_decode((string)$get->fetchColumn(), true);
     if (is_array($d) && ($d['miniImage'] ?? '') === "$id-10-1") { $d['miniImage'] = "$id-10-main"; $d['miniImages'] = array_values(array_unique(array_merge(["$id-10-main"], (array)($d['miniImages'] ?? [])))); $set->execute([fomaxo_json($d), $id]); }
   }
@@ -128,6 +128,16 @@ function fomaxo_db_schema($pdo) {
   try { $pdo->exec("ALTER TABLE fx_leads ADD COLUMN bag VARCHAR(300) NOT NULL DEFAULT ''"); } catch (Throwable $e) {}
   if (!$pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'bag'")->fetch()) return;
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '20')");
+  /* v21: when the owner first opened each order in admin (the red count on the Orders tab = real orders not opened yet); orders already here count as seen */
+  try { $pdo->exec("ALTER TABLE fx_orders ADD COLUMN seen_at DATETIME NULL"); } catch (Throwable $e) {}
+  if (!$pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'seen_at'")->fetch()) return;
+  $pdo->exec("UPDATE fx_orders SET seen_at = NOW() WHERE seen_at IS NULL");
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '21')");
+}
+/* real orders the owner has not opened yet: not test, not an unpaid card attempt, not cancelled or refunded */
+const FX_NEW_ORDER_SQL = "seen_at IS NULL AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')";
+function fx_new_orders($pdo) {
+  try { return (int)$pdo->query('SELECT COUNT(*) FROM fx_orders WHERE ' . FX_NEW_ORDER_SQL)->fetchColumn(); } catch (Throwable $e) { return 0; }
 }
 function fomaxo_coupons_table($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_coupons (code VARCHAR(30) NOT NULL PRIMARY KEY, kind VARCHAR(3) NOT NULL DEFAULT 'pct', amount DECIMAL(10,2) NOT NULL,
