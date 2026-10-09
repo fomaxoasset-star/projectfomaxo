@@ -573,17 +573,19 @@ function fx_wa_box() {
     . 'if(b.dataset.mark)document.querySelectorAll("[data-wabox][data-mark=\'"+b.dataset.mark+"\']").forEach(function(x){fxSent(x,j.day)});else fxSent(b,j.day);'
     . 'document.dispatchEvent(new CustomEvent("fxwa-sent",{detail:{btn:b,day:j.day}}));d.close();if(PH)app(msg);else if(w)w.location=wa(msg);else location.href=wa(msg)}).catch(function(x){send.disabled=false;if(w)w.close();err.textContent=x.message;err.hidden=false})})})();</script>';
 }
-/* a review's problem: late delivery or faulty product, picked on the review form or read from a 1–3 star review's words (English, Hinglish, Arabic);
-   any other 1–3 star review is a bad product. Late and faulty are owed a coupon. */
+/* a review's problem: delivery delay or faulty product, picked on the review form or read from the review's words (English, Hinglish, Arabic), at every star rating;
+   any other 1–3 star review is a bad product, and a 4–5 star one only when its words say so. Negated words ("no delay", "not bad") are ignored. Late and faulty are owed a coupon. */
 function fx_rv_issue($r) {
   if (in_array($r['issue'] ?? '', ['late', 'faulty'], true)) return $r['issue'];
-  if ((int)round((float)($r['rating'] ?? 5)) > 3) return '';
+  $hi = (int)round((float)($r['rating'] ?? 5)) > 3;   // 4-5 stars: still caught when the words say faulty or late, but never counted as a bad product
   $t = (string)($r['text'] ?? '');
+  if ($hi) $t = preg_replace('/\b(no|not|without|zero|nothing|never|any|wasn\'t|isn\'t|didn\'t)\s+(\w+\s+){0,3}?(late|delay(ed|s)?|damaged?|broken|cracked|leak(ed|ing|s)?|spill(ed)?|faulty|defective|bad|poor|weak|fake|disappointed|disappointing|complaints?|problems?|issues?)\b|(بدون|لا يوجد|ولا|لا|ما|غير|مو|مش)\s*(أي\s*)?(تأخير|تأخر|تاخر|متأخر|تالف|مكسور|معيب|سيء|سيئ|رديء|مقلد|ضعيف|مشكلة)/iu', ' ', $t);
   if (preg_match('/\b(faulty|defective|damaged?|broken|cracked|leak(ed|ing|s)?|spill(ed)?|wrong (item|product|perfume)|toot(a|i))\b|مكسور|تالف|خربان|معيب|يسرب|مسكوب|منتج خطأ/iu', $t)) return 'faulty';
   if (preg_match('/\b(late|delay(ed)?|not (yet )?(received|delivered|arrived)|never (came|arrived)|der(i|ee)? se)\b|تأخر|تاخر|متأخر|تأخير|لم يصل|ما وصل/iu', $t)) return 'late';
-  return 'bad';
+  if (!$hi || preg_match('/\b(bad|poor|terrible|horrible|awful|worst|fake|disappoint(ed|ing|ment)|waste|cheap|weak|not (good|worth|happy|satisfied|long ?lasting|as described)|(does|did)n\'?t (last|like|stay)|(do|did) not (last|like|stay)|no (smell|scent|longevity)|fades? (fast|quickly|away)|smells? (bad|weird|off|like alcohol)|bekaar|bakwas|ghatiya)\b|سيء|سيئ|رديء|مقلد|ضعيف|ما عجبني|لم يعجبني|مو حلو|ريحة خفيفة|ما يثبت|لا يثبت/iu', $t)) return 'bad';
+  return '';
 }
-const FX_RV_ISSUES = ['bad' => 'Bad product', 'faulty' => 'Faulty product', 'late' => 'Late delivery'];
+const FX_RV_ISSUES = ['bad' => 'Bad product', 'faulty' => 'Faulty product', 'late' => 'Delivery delay'];
 /* coloured rounds on the tabs, like fomaxo.in: what came in since each tab was last opened. The times are kept on the server, so laptop and phone agree;
    the very first time starts from now. Orders: placed (cash) or paid (card); Reviews: new Bad / Faulty / Late reviews; Analytics: new Left at checkout who have not ordered */
 const FX_ALERT_AT = "(CASE WHEN payment = 'Cash on delivery' THEN created_at ELSE COALESCE(paid_at, created_at) END)";
@@ -631,8 +633,8 @@ const FX_ALERT_JS = <<<'JS'
     var x=document.createElement('button');x.type='button';x.setAttribute('aria-label','Close');x.textContent='✕';x.onclick=function(){d.classList.add('gone');setTimeout(function(){d.remove()},250)};d.append(a,x);stack.prepend(d)};
   var notify=function(o){if(!('Notification' in window)||Notification.permission!=='granted')return;var opt={body:o.total+' · '+o.name+' · '+o.how,tag:o.no,icon:'../assets/img/favicon-192.png',data:{url:o.url}};
     sw().then(function(r){if(r)return r.showNotification('New order '+o.no,opt);var n=new Notification('New order '+o.no,opt);n.onclick=function(){window.focus();location.href=o.url}}).catch(function(){})};
-  /* the rounds after the tab names: red new orders; blue / red / amber new Bad product / Faulty product / Late delivery reviews; gold new Left at checkout */
-  var ROUNDS={orders:[['orders','new order','new orders']],reviews:[['bad','new Bad product review','new Bad product reviews'],['faulty','new Faulty product review','new Faulty product reviews'],['late','new Late delivery review','new Late delivery reviews']],analytics:[['leads','new left at checkout','new left at checkout']]};
+  /* the rounds after the tab names: red new orders; blue / red / amber new Bad product / Faulty product / Delivery delay reviews; gold new Left at checkout */
+  var ROUNDS={orders:[['orders','new order','new orders']],reviews:[['bad','new Bad product review','new Bad product reviews'],['faulty','new Faulty product review','new Faulty product reviews'],['late','new Delivery delay review','new Delivery delay reviews']],analytics:[['leads','new left at checkout','new left at checkout']]};
   var rounds=function(b){if(!b)return;document.querySelectorAll('.tabs .tb[data-tb]').forEach(function(w){var a=w.parentNode,said=[];w.textContent='';
     ROUNDS[w.dataset.tb].forEach(function(r){var n=+b[r[0]]||0;if(!n)return;var i=document.createElement('i');i.className='tb-'+r[0];i.textContent=n>99?'99+':n;w.appendChild(i);said.push(n+' '+(n===1?r[1]:r[2]))});
     w.hidden=!said.length;if(said.length){a.title=w.title=said.join(', ')}else{a.removeAttribute('title');w.removeAttribute('title')}})};
@@ -2452,7 +2454,7 @@ if (isset($_GET['reviews'])) {
   $v = in_array($_GET['v'] ?? '', ['products', 'people'], true) ? $_GET['v'] : 'all';
   $rp = (string)($_GET['rp'] ?? ''); if ($rp !== '' && !isset($CATALOG[$rp])) $rp = '';
   $rs = (int)($_GET['rs'] ?? 0); if ($rs < 1 || $rs > 5) $rs = 0;   // filter by stars
-  $pr = (string)($_GET['pr'] ?? ''); if (!isset(FX_RV_ISSUES[$pr])) $pr = '';   // Bad product / Faulty product / Late delivery chip
+  $pr = (string)($_GET['pr'] ?? ''); if (!isset(FX_RV_ISSUES[$pr])) $pr = '';   // Bad product / Faulty product / Delivery delay chip
   $starSel = '<select name="rs" aria-label="Stars" onchange="this.form.submit()"><option value="">All stars</option>'
     . implode('', array_map(fn($n) => '<option value="' . $n . '"' . ($rs === $n ? ' selected' : '') . '>' . str_repeat('★', $n) . ' ' . $n . ' star' . ($n > 1 ? 's' : '') . '</option>', [5, 4, 3, 2, 1])) . '</select>';
   $live = array_filter($all, fn($r) => empty($r['hidden']));
