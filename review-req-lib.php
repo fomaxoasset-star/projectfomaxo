@@ -79,6 +79,9 @@ function fx_rq_asked($pdo) {
   return $out;
 }
 
+/* rv = every perfume reviewed, part = some, not = none yet */
+function fx_rq_state($a) { return $a['total'] > 0 && $a['done'] >= $a['total'] ? 'rv' : ($a['done'] > 0 ? 'part' : 'not'); }
+
 /* the status shown in admin: green Reviewed (with stars), Reviewed 1 of 2, or Not reviewed yet */
 function fx_rq_badge($a) {
   if ($a['total'] > 0 && $a['done'] >= $a['total']) return '<span class="rqst ok" title="Every perfume in this order is reviewed">Reviewed' . ($a['stars'] ? ' ★' . rtrim(rtrim(number_format($a['stars'], 1), '0'), '.') : '') . '</span>';
