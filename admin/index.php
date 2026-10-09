@@ -484,7 +484,7 @@ function fx_wa_box() {
     . 'document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-wabox]");if(!b)return;e.preventDefault();e.stopPropagation();btn=b;'
     . 'var noc=!!b.dataset.nocoupon;d.classList.toggle("noc",noc);q(".fxwa-who").textContent=b.dataset.who||"";kind.value=noc?"":(b.dataset.k0!==undefined?b.dataset.k0:K0[b.dataset.wabox]||"");'
     . 'val.value="";val.placeholder=b.dataset.pct||"10";min.value=b.dataset.min||"";if(free()){free().value="";freeV().value=""}err.hidden=true;send.disabled=false;'
-    . 'q(".fxwa-note").textContent=noc?"":"A coupon makes a new "+PRE[b.dataset.wabox]+" code just for this customer: one use, only with their mobile number"+(b.dataset.wabox==="lt"?", ends in 7 days":"")+". It is made when you tap Open WhatsApp.";build();d.showModal()});'
+    . 'q(".fxwa-note").textContent=noc?"":"A coupon makes a new "+PRE[b.dataset.wabox]+" code just for this customer: one use, only with their mobile number"+(b.dataset.wabox==="lt"?", ends in 7 days":"")+". It is made when you tap Open WhatsApp.";build();d.showModal()},true);'
     . 'kind.addEventListener("change",function(){val.placeholder=kind.value==="aed"?"20":(btn.dataset.pct||"10");build()});val.addEventListener("input",build);min.addEventListener("input",build);d.addEventListener("change",function(e){if(e.target.matches("[data-ffind]"))build()});'
     . 'q("[data-fxwa-close]").addEventListener("click",function(){d.close()});'
     . 'send.addEventListener("click",function(){var k=kind.value;err.hidden=true;if(k==="free"&&!freeV().value){err.textContent="Please choose the free product.";err.hidden=false;return}'
@@ -1622,9 +1622,6 @@ if (isset($_GET['coupons'])) {
   foreach ($pdo->query("SELECT coupon, COUNT(*) n, COALESCE(SUM(discount), 0) d, COALESCE(SUM(total), 0) t FROM fx_orders WHERE coupon IS NOT NULL AND test = 0
                         AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') GROUP BY coupon") as $r) $used[$r['coupon']] = $r;
   $now = date('Y-m-d H:i:s'); $tr = '';
-  /* WhatsApp to the customer with their goodwill code (the message: fx_goodwill_text in orders-lib.php) */
-  $goodwillWa = function ($c) { $wa = preg_replace('/\D/', '', (string)$c['phone']); if (str_starts_with($wa, '00')) $wa = substr($wa, 2); if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); elseif (strlen($wa) === 9 && $wa[0] === '5') $wa = '971' . $wa;
-    return 'https://wa.me/' . $wa . '?text=' . rawurlencode(fx_goodwill_text($c)); };
   $made = null; if (!empty($_SESSION['goodwill'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['goodwill']]); $made = $s->fetch() ?: null; unset($_SESSION['goodwill']); }
   $dt = fn($v) => date('d/m/Y, g:i a', strtotime($v));
   $left = function ($v) { $m = (int)floor((strtotime($v) - time()) / 60); $d = intdiv($m, 1440); $h = intdiv($m % 1440, 60);
@@ -1645,8 +1642,10 @@ if (isset($_GET['coupons'])) {
     $tr .= '<div class="cprow"><div><b class="cpcode">' . h($c['code']) . '</b> <span class="tag ' . $state[1] . '">' . $state[0] . '</span>'
       . '<div class="muted small">' . h(fomaxo_coupon_label($c)) . ($rules ? ' · ' . h(implode(' · ', $rules)) : '') . '</div>' . ($time ? '<div class="small cptime">' . h($time) . '</div>' : '') . '</div>'
       . '<div class="cpused"><b>Used ' . $n . ' time' . ($n === 1 ? '' : 's') . '</b>' . ($n ? '<div class="muted small">Saved customers ' . money($u['d']) . ' · sales ' . money($u['t']) . '</div>' : '') . '</div>'
-      . '<div class="cpacts">' . (!empty($c['phone']) && !$n ? '<a class="btn line sm" href="' . h($goodwillWa($c)) . '" target="_blank" rel="noopener">WhatsApp</a>' : '') . ((int)$c['active'] ? $btn('toggle', 'off', 'Turn off') : $btn('toggle', 'on', 'Turn on'))
-      . $btn('delete', '1', 'Delete', 'Delete coupon ' . $c['code'] . '? Orders that used it keep the code.') . '</div></div>';
+      . '<div class="cpacts">' . ((int)$c['active'] ? $btn('toggle', 'off', 'Turn off') : $btn('toggle', 'on', 'Turn on'))
+      . $btn('delete', '1', 'Delete', 'Delete coupon ' . $c['code'] . '? Orders that used it keep the code.')
+      /* WhatsApp on every coupon that works: to its customer when it has a mobile, else WhatsApp opens and you pick who; Sent dd/mm once sent */
+      . (in_array($state[0], ['On', 'Scheduled'], true) ? fx_wa_btn((string)($c['phone'] ?? ''), (string)($c['phone'] ?: $c['code']), str_starts_with($c['code'], 'GOODWILL-') ? fx_goodwill_text($c) : fx_coupon_share_text($c), '', 'cp:' . $c['code'], 'g', false, 'btn sm wag cpwa', true) : '') . '</div></div>';
   }
   page('Coupons', '<div class="pagehead"><h1>Coupons</h1></div>' . flash() . fx_tabs(['Make a coupon', 'Your coupons (' . count($list) . ')'], 'Coupons')
     . '<style>.cpcode{letter-spacing:.06em}.cpin{text-transform:uppercase;letter-spacing:.06em}.cpin::placeholder{text-transform:none;letter-spacing:0}'
@@ -1655,6 +1654,7 @@ if (isset($_GET['coupons'])) {
     . '.cpcodebox{display:flex;gap:6px}.cpcodebox input{flex:1 1 auto;min-width:0}.cpcodebox .btn{flex:none;padding:6px 10px;white-space:nowrap}.cpg1 [hidden],.cpone-f [hidden]{display:none!important}.cptick{display:flex!important;gap:8px;align-items:center;margin:8px 0 4px!important;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);cursor:pointer}.cptick input{width:auto;margin:0}'
     /* laptop: the form is a tall card on the left, the coupons made so far are listed beside it */
     . '.cpgrid .card.add{margin:0;padding:12px 16px}.cpgrid .add h2{font-size:15px;margin-bottom:2px}.cpgrid .add label{margin:7px 0 3px}.cpgrid .add input,.cpgrid .add select{padding:6px 10px}.cpgrid .cpst{grid-template-columns:1fr 1fr;margin:0 0 4px}.cpgrid .cpst label{margin:0;padding:8px 10px}.cpgrid .cpg1>div:last-child{grid-column:auto}.cpgrid .g3:not(.cpg1){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .g3:not(.cpg1)>div:last-child{grid-column:auto}.cpgrid .g4{grid-template-columns:1.3fr 1fr 1.3fr 1fr}.cpgrid .exsum{margin-top:0}.cpgrid .cpr{display:flex;flex-direction:column}.cpgrid .cpr>.fill{overflow:auto;min-height:0}'
+    . '.cpacts .cpwa{margin:0}@media (max-width:759px){.cpacts .cpwa{order:-1}}'
     . '@media (min-width:760px){.cpgrid{display:grid;grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:18px;align-items:start}.cpgrid>*{max-height:100%}.cpgrid .cpg1{grid-template-columns:1.6fr 1fr 1fr}}@media (max-width:759px){main.fit:has(>.cpgrid)>.pagehead,.cpgrid .add h2{display:none}.cpgrid .g4{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .cpr>.exsum{display:none}.cpgrid .cpg1{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .cpg1>div:first-child{grid-column:1/-1}.cpgrid .add label{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cpgrid .cpst{grid-template-columns:1fr}.cpgrid .cpst label{white-space:normal;font-size:12px;padding:7px 10px}.cpgrid .cpst b{display:inline;margin-right:6px}.cpgrid .cpq{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.cpgrid .cpq button{padding:6px 2px;font-size:11.5px}}'
     . '@media (min-width:900px){'
     . '.cpr .cprow{grid-template-columns:1fr auto;gap:6px 16px}.cpr .cpacts{grid-column:2;grid-row:1/3;flex-direction:column;align-items:stretch}.cpr .cpacts .btn{width:100%}.cpr .cpused{text-align:left}}</style>'
@@ -1684,7 +1684,7 @@ if (isset($_GET['coupons'])) {
     . '<div class="cpfree" hidden><label>Free product</label>' . fx_free_pick('gfree') . '</div>'
     . '<div><label for="gends">Ends (optional)</label><input id="gends" name="ends" type="date"></div>'
     . '<button class="btn" name="goodwill" value="1">Make coupon</button></div>'
-    . ($made ? '<div class="cpmade"><span>Made <b class="cpcode">' . h($made['code']) . '</b> · ' . h(fomaxo_coupon_label($made)) . ' · for ' . h($made['phone']) . '</span><a class="btn sm" href="' . h($goodwillWa($made)) . '" target="_blank" rel="noopener">Send on WhatsApp</a></div>' : '')
+    . ($made ? '<div class="cpmade"><span>Made <b class="cpcode">' . h($made['code']) . '</b> · ' . h(fomaxo_coupon_label($made)) . ' · for ' . h($made['phone']) . '</span>' . fx_wa_btn((string)$made['phone'], (string)$made['phone'], fx_goodwill_text($made), '', 'cp:' . $made['code'], 'g', false, 'btn sm wag', true) . '</div>' : '')
     . '</form><h2 class="exsum">Your coupons<small>' . count($list) . ' code' . (count($list) === 1 ? '' : 's') . '</small></h2>'
     . '<div class="fill">' . ($list ? '<div class="cplist">' . $tr . '</div>' : '<p class="card muted" style="margin:0">No coupons yet. Make one with the form.</p>')
     . '<p class="muted small after">"Used" counts placed orders; cancelled, refunded and unpaid card attempts are not counted. One-use codes (made for one mobile number, or a free product with Max uses) delete themselves once used; orders keep the code.</p></div></div></div>'
