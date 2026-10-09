@@ -376,7 +376,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .btn.wag,.fxwa [data-fxwa-send]{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#25D366;color:#fff;box-shadow:none}.btn.wag:hover{background:#1fb855}.btn.wag svg{flex:none}
 .btn.wag.sent{background:transparent;color:#25D366;box-shadow:inset 0 0 0 1px #25D366}.btn.wag.sent:hover{background:rgba(37,211,102,.08)}
 dialog.fxwa{width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 24px);padding:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink)}dialog.fxwa::backdrop{background:rgba(0,0,0,.55)}
-.fxwa-f{padding:14px 18px 16px;margin:0}.fxwa h3{font:600 15px/1.3 Cinzel,Georgia,serif;letter-spacing:.05em;margin:0 0 4px}.fxwa h3 b{font-family:Manrope,system-ui,sans-serif;letter-spacing:0}
+.fxwa-f{position:relative;padding:14px 18px 16px;margin:0}.fxwa-lang{display:none;position:absolute;top:11px;right:14px;border:1px solid var(--gold);border-radius:999px;overflow:hidden}.fxwa.lng .fxwa-lang{display:flex}.fxwa.lng h3{padding-right:110px}.fxwa-lang button{border:0;background:none;color:var(--gold);font:700 12px/1 Manrope,system-ui,sans-serif;padding:6px 12px;cursor:pointer}.fxwa-lang button.on{background:var(--gold);color:var(--gold-ink)}.fxwa h3{font:600 15px/1.3 Cinzel,Georgia,serif;letter-spacing:.05em;margin:0 0 4px}.fxwa h3 b{font-family:Manrope,system-ui,sans-serif;letter-spacing:0}
 .fxwa-c{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px}.fxwa-c>label:first-child{grid-column:auto}.fxwa label small{text-transform:none;letter-spacing:0}
 .fxwa[data-kind=""] .fxwa-val,.fxwa[data-kind=""] .fxwa-min,.fxwa[data-kind=""] .fxwa-free,.fxwa[data-kind="free"] .fxwa-val,.fxwa:not([data-kind="free"]) .fxwa-free{display:none}.fxwa[data-kind="free"] .fxwa-c{grid-template-columns:minmax(0,.8fr) minmax(0,1.6fr) minmax(0,.9fr)}
 .fxwa.noc .fxwa-c,.fxwa.noc .fxwa-note{display:none}.fxwa-note{margin:6px 0 0}.fxwa textarea{min-height:220px;font-size:13.5px;line-height:1.45}.fxwa-err{color:var(--bad);margin:6px 0 0;font-size:13px}
@@ -439,13 +439,14 @@ function csrf_field() { return '<input type="hidden" name="csrf" value="' . h($_
    rv = Reviews GOODWILL- (% off first). $head + the coupon lines + $tail make the message. $mark: what the server notes as sent (rq:<order>, rf:<order>,
    lt:<visit>, rv:<review id>, cp:<code>, ph:<mobile>); the button then reads Sent dd/mm. $nocoupon: the message already carries its code (Coupons). ---- */
 const FX_WA_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.5-.3z"/></svg>';
-function fx_wa_btn($phone, $who, $head, $tail = "\n\nThank you,\nFOMAXO", $mark = '', $box = 'g', $ar = false, $cls = 'btn sm wag', $nocoupon = false) {
+function fx_wa_btn($phone, $who, $head, $tail = "\n\nThank you,\nFOMAXO", $mark = '', $box = 'g', $ar = false, $cls = 'btn sm wag', $nocoupon = false, $alt = null) {
   require_once dirname(__DIR__) . '/whatsapp-lib.php';
   $n = fx_wa_number($phone);
   if (!$n && !$nocoupon) return '';   // a coupon for anyone (Coupons) opens WhatsApp without a number, so you pick the customer
   $sd = $mark !== '' ? fx_wa_sent_day($mark) : '';
   return '<button type="button" class="' . $cls . ($sd !== '' ? ' sent' : '') . '" data-wabox="' . h($box) . '" data-wa="' . h($n ?: '') . '" data-phone="' . h($phone) . '" data-who="' . h($who) . '"'
     . ' data-head="' . h($head) . '" data-tail="' . h($tail) . '"' . ($mark !== '' ? ' data-mark="' . h($mark) . '"' : '') . ($ar ? ' data-ar="1"' : '') . ($nocoupon ? ' data-nocoupon="1"' : '')
+    . ($alt ? ' data-head2="' . h($alt[0]) . '" data-tail2="' . h($alt[1]) . '"' : '')   // the same message in the other language, for the EN | عربي switch in the box
     . ' title="Send on WhatsApp" onclick="event.stopPropagation()">' . FX_WA_SVG . '<span>' . ($sd !== '' ? 'Sent ' . $sd : 'WhatsApp') . '</span></button>';
 }
 /* the day a WhatsApp went (dd/mm), from the list it belongs to: review requests and refill reminders keep their own; the rest in the setting wa_sent */
@@ -459,6 +460,7 @@ function fx_wa_sent_day($mark) {
 /* the shared WhatsApp box (fx_wa_btn): one dialog for every page that has a WhatsApp button */
 function fx_wa_box() {
   return '<dialog class="fxwa" id="fxWa"><form method="dialog" class="fxwa-f"><h3>WhatsApp <b class="fxwa-who"></b></h3>'
+    . '<div class="fxwa-lang" role="group" aria-label="Language"><button type="button" data-l="en">EN</button><button type="button" data-l="ar" lang="ar">عربي</button></div>'
     . '<div class="fxwa-c"><label>Coupon<select class="fxwa-kind"><option value="">No coupon</option><option value="pct">% off</option><option value="aed">AED off</option><option value="free">Free product</option></select></label>'
     . '<label class="fxwa-val">How much<input type="number" min="1" step="1" inputmode="numeric"></label>'
     . '<label class="fxwa-free">Free product' . (function_exists('fx_free_pick') ? fx_free_pick('gfree') : '<input type="hidden" name="gfree">') . '</label>'
@@ -472,21 +474,24 @@ function fx_wa_box() {
     . 'free=function(){return q(".fxwa-free [data-ffind]")},freeV=function(){return q(".fxwa-free input[type=hidden]")},'
     . 'PRE={g:"THANKS-",rf:"REFILL-",lt:"COMEBACK-",rv:"GOODWILL-"},K0={g:"",rf:"pct",lt:"",rv:"pct"};'
     /* the coupon lines that go between the ready message and its end, as on fomaxo.in (Arabic for an Arabic name) */
-    . 'function lines(b,c){var ar=b.dataset.ar,box=b.dataset.wabox,n2="\n\n",site=ar?"https://fomaxo.com/?lang=ar":"https://fomaxo.com",how=ar?"اكتب الرمز عند الدفع على موقعنا:\n"+site:"Type the code at checkout on our website:\n"+site;'
+    . 'function isAr(){return !!btn.dataset.ar!==(d.dataset.alt==="1")}'
+    . 'function lines(b,c){var ar=isAr(),box=b.dataset.wabox,n2="\n\n",site=ar?"https://fomaxo.com/?lang=ar":"https://fomaxo.com",how=ar?"اكتب الرمز عند الدفع على موقعنا:\n"+site:"Type the code at checkout on our website:\n"+site;'
     . 'var g=ar?(c.k==="free"?c.f+" مجاناً":"خصم "+(c.k==="pct"?c.v+"%":c.v+" درهم")):(c.k==="free"?"a *free "+c.f+"* with":"*"+(c.k==="pct"?c.v+"% off":"AED "+c.v+" off")+"*"),'
     . 'm=c.m?(ar?" لطلب بقيمة "+c.m+" درهم أو أكثر":" of AED "+c.m.toLocaleString("en")+" or more"):"";'
     . 'if(ar)return n2+(box==="rv"?"اعتذاراً منا":"تقديراً لك")+"، هذا رمزك الخاص للحصول على *"+g+"* على طلبك"+(box==="lt"?"":" القادم")+m+" (لمرة واحدة"+(box==="lt"?"، صالح لمدة 7 أيام":"")+(box==="g"||box==="lt"?"، مع رقم هاتفك هذا":"")+"):"+n2+"*[CODE]*"+(box==="g"||box==="rv"?n2+how:"");'
     . 'return n2+(box==="rv"?"As an apology":"As a thank you")+", here is your personal code for "+g+" your "+(box==="lt"?"":"next ")+"order"+m+" (single use"+(box==="lt"?", valid 7 days":"")+(box==="g"||box==="lt"?", with this mobile number":"")+"):"+n2+"*[CODE]*"+(box==="g"||box==="rv"?n2+how:"")}'
     . 'function build(){var k=kind.value,b=btn.dataset;d.dataset.kind=k;var v=parseInt(val.value,10)||(k==="pct"?(+b.pct||10):20);'
-    . 'text.value=b.head+(k?lines(btn,{k:k,v:v,m:parseInt(min.value,10)||0,f:(free()&&free().value.split(" · ")[0])||"gift"}):"")+b.tail}'
+    . 'var alt=d.dataset.alt==="1";text.value=(alt?b.head2:b.head)+(k?lines(btn,{k:k,v:v,m:parseInt(min.value,10)||0,f:(free()&&free().value.split(" · ")[0])||"gift"}):"")+(alt?b.tail2:b.tail);'
+    . 'd.querySelectorAll(".fxwa-lang button").forEach(function(x){x.classList.toggle("on",(x.dataset.l==="ar")===isAr())})}'
     . 'function wa(t){return"https://wa.me/"+(btn.dataset.wa||"")+"?text="+encodeURIComponent(t)}'
     . 'window.fxSent=function(b,day){b.classList.add("sent");b.lastChild.textContent="Sent "+day};'
     . 'document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-wabox]");if(!b)return;e.preventDefault();e.stopPropagation();btn=b;'
-    . 'var noc=!!b.dataset.nocoupon;d.classList.toggle("noc",noc);q(".fxwa-who").textContent=b.dataset.who||"";kind.value=noc?"":(b.dataset.k0!==undefined?b.dataset.k0:K0[b.dataset.wabox]||"");'
+    . 'var noc=!!b.dataset.nocoupon;d.classList.toggle("noc",noc);d.dataset.alt="0";d.classList.toggle("lng",b.dataset.head2!==undefined);q(".fxwa-who").textContent=b.dataset.who||"";kind.value=noc?"":(b.dataset.k0!==undefined?b.dataset.k0:K0[b.dataset.wabox]||"");'
     . 'val.value="";val.placeholder=b.dataset.pct||"10";min.value=b.dataset.min||"";if(free()){free().value="";freeV().value=""}err.hidden=true;send.disabled=false;'
     . 'q(".fxwa-note").textContent=noc?"":"A coupon makes a new "+PRE[b.dataset.wabox]+" code just for this customer: one use, only with their mobile number"+(b.dataset.wabox==="lt"?", ends in 7 days":"")+". It is made when you tap Open WhatsApp.";build();d.showModal()},true);'
     . 'kind.addEventListener("change",function(){val.placeholder=kind.value==="aed"?"20":(btn.dataset.pct||"10");build()});val.addEventListener("input",build);min.addEventListener("input",build);d.addEventListener("change",function(e){if(e.target.matches("[data-ffind]"))build()});'
     . 'q("[data-fxwa-close]").addEventListener("click",function(){d.close()});'
+    . 'd.querySelectorAll(".fxwa-lang button").forEach(function(x){x.addEventListener("click",function(){if((x.dataset.l==="ar")!==isAr()){d.dataset.alt=d.dataset.alt==="1"?"0":"1";build()}})});'
     . 'send.addEventListener("click",function(){var k=kind.value;err.hidden=true;if(k==="free"&&!freeV().value){err.textContent="Please choose the free product.";err.hidden=false;return}'
     . 'var w=window.open("","_blank"),f=new FormData(),b=btn;f.append("csrf",' . json_encode($_SESSION['csrf'] ?? '') . ');f.append("box",b.dataset.wabox);f.append("mark",b.dataset.mark||"");f.append("phone",b.dataset.phone||"");'
     . 'f.append("gkind",k);f.append("val",val.value||(k==="pct"?(b.dataset.pct||"10"):"20"));f.append("min",min.value);f.append("gfree",freeV()?freeV().value:"");send.disabled=true;'
@@ -2001,7 +2006,7 @@ if (isset($_GET['analytics'])) {
            . '<span class="lem" title="' . h(trim(($l['address'] ?? '') . (($l['address'] ?? '') !== '' && $l['emirate'] !== '' ? ', ' : '') . $l['emirate'])) . '">' . (($adr = trim(($l['address'] ?? '') . (($l['address'] ?? '') !== '' && $l['emirate'] !== '' ? ', ' : '') . $l['emirate'])) !== '' ? h($adr) : $na) . '</span>'
            . '<span class="lv">' . ($l['total'] !== null ? money($l['total']) : $na) . '</span>'
            . '<span class="lst">' . $pill . '</span><span class="lol">Not ordered</span>'
-           . (($lw = $l['phone'] !== '' ? fx_wa_btn($l['phone'], $l['name'] ?: $l['phone'], ($lm = fx_left_msg($l))[0], $lm[1], 'lt:' . $l['sid'], 'lt', $lm[2], 'wa wag') : '') !== '' ? $lw : '<span class="wa none"></span>')
+           . (($lw = $l['phone'] !== '' ? fx_wa_btn($l['phone'], $l['name'] ?: $l['phone'], ($lm = fx_left_msg($l))[0], $lm[1], 'lt:' . $l['sid'], 'lt', $lm[2], 'wa wag', false, array_slice(fx_left_msg($l, !$lm[2]), 0, 2)) : '') !== '' ? $lw : '<span class="wa none"></span>')
            . '<span class="lch" aria-hidden="true"></span></summary>'
            . '<dl class="ld"><dt class="rp ra">Date</dt><dd class="rp ra">' . h(date('d M Y, H:i', $when)) . ($recent ? ' <span class="muted">· may still be checking out</span>' : '') . '</dd>'
            . '<dt>Mobile</dt><dd>' . ($l['phone'] !== '' ? h($l['phone']) : '—') . '</dd>'
@@ -2574,7 +2579,7 @@ if (isset($_GET['members']) || (isset($_GET['orders']) && (isset($_GET['ask']) |
            . '<td class="rd small"><b>' . $o['days'] . ' days</b><div class="muted">' . h(date('d/m/Y', strtotime($o['created_at']))) . ' · ' . h($o['order_no']) . '</div></td>'
            . '<td class="ra">' . ($o['stopped'] ? '<span class="rstop" title="Replied STOP on WhatsApp">Stopped</span></td></tr>' : '') . ($o['stopped'] ? '' : ($o['sent'] ? ($o['auto'] ? '<span class="rsent">Sent by itself</span> ' : '')
               : '<span class="rdue" title="' . $tm['days'] . ' days after the order (Days after order)">' . ($o['days'] >= $tm['days'] ? 'Reminder due' : 'Reminder ' . h(date('d/m', strtotime(substr((string)$o['created_at'], 0, 10) . ' +' . $tm['days'] . ' days')))) . '</span> ')
-           . str_replace('<button ', '<button data-pct="' . h($pt['pct']) . '" data-min="' . (fx_refill_min($pdo) ?: '') . '" ', fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], fx_refill_head($pt), fx_refill_tail($pt), 'rf:' . $o['order_no'], 'rf', $pt['ar'])) . '</td></tr>');
+           . str_replace('<button ', '<button data-pct="' . h($pt['pct']) . '" data-min="' . (fx_refill_min($pdo) ?: '') . '" ', fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], fx_refill_head($pt), fx_refill_tail($pt), 'rf:' . $o['order_no'], 'rf', $pt['ar'], 'btn sm wag', false, [fx_refill_head($pf = fx_lang_flip($pt)), fx_refill_tail($pf)])) . '</td></tr>');
     }
     $open = count(array_filter($rfDue, fn($o) => !$o['sent'] && !$o['stopped']));
     require_once dirname(__DIR__) . '/whatsapp-lib.php';
@@ -2624,7 +2629,7 @@ if (isset($_GET['members']) || (isset($_GET['orders']) && (isset($_GET['ask']) |
            . '<td class="rd small"><b>' . $o['days'] . ' days</b><div class="muted">' . h(date('d/m/Y', strtotime($o['created_at']))) . ' · ' . h($o['order_no']) . '</div></td>'
            . '<td class="ra">' . ($o['stopped'] ? '<span class="rstop" title="Replied STOP on WhatsApp">Stopped</span>'
               : ($o['sent'] ? (isset($asked[$o['order_no']]) ? fx_rq_badge($asked[$o['order_no']]) . ' ' : '') . ($o['auto'] ? '<span class="rsent">Sent by itself</span> ' : '') : '')
-              . fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], fx_rq_head($pt), fx_rq_tail($pt), 'rq:' . $o['order_no'], 'g', $pt['ar'])) . '</td></tr>';
+              . fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], fx_rq_head($pt), fx_rq_tail($pt), 'rq:' . $o['order_no'], 'g', $pt['ar'], 'btn sm wag', false, [fx_rq_head($pf = fx_lang_flip($pt)), fx_rq_tail($pf)])) . '</td></tr>';
     }
     /* asked orders that left the list above (everything reviewed, or older): still shown, with their review status */
     $inDue = array_flip(array_column($rqDue, 'order_no'));
@@ -3018,7 +3023,7 @@ $waBtn = function ($o) use ($pdo, $rvLinks) {
   if (isset($rvLinks[$o['order_no']]) && preg_match('/^FMX-\d+$/', $o['order_no'])) {
     $o['days'] = (int)floor((strtotime('today') - strtotime(date('Y-m-d', strtotime($o['created_at'])))) / 86400);
     $p = fx_rq_parts($pdo, $o);
-    if ($p['review']) return fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], fx_rq_head($p), fx_rq_tail($p), 'rq:' . $o['order_no'], 'g', $p['ar'], 'rqwa');
+    if ($p['review']) return fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], fx_rq_head($p), fx_rq_tail($p), 'rq:' . $o['order_no'], 'g', $p['ar'], 'rqwa', false, [fx_rq_head($pf = fx_lang_flip($p)), fx_rq_tail($pf)]);
   }
   return fx_wa_btn_ph($o['phone'], (string)$o['name'], preg_match('/^FMX-\d+$/', $o['order_no']) ? $o['order_no'] : '', 'rqwa');
 };
