@@ -144,7 +144,7 @@ function fx_wa_template($to, $name, $lang, array $vars, $c) {
 
 /* ---- automatic refill reminders (admin → Members → Refill reminders → Automatic sending) ----
    The set number of days after a customer's latest order (fx_refill_time, default 45, 11:00–20:00 Dubai), sends the approved template 'refill_reminder' (Arabic names: its Arabic version, 'ar').
-   Template body variables: {{1}} first name, {{2}} perfumes, {{3}} days since the order, {{4}} % off, {{5}} coupon code, {{6}} review link. */
+   Template body variables: {{1}} first name, {{2}} perfumes, {{3}} days since the order, {{4}} what the coupon gives ("10% off your next order", with the minimum when one is set), {{5}} coupon code, {{6}} review link. */
 function fx_wa_config_file() { return dirname(__DIR__) . '/whatsapp-config.php'; }
 /* saves the WhatsApp Business details typed in admin; a key not given keeps its saved value. New files keep the automatic review requests off. */
 function fx_wa_config_save(array $new) {
@@ -189,7 +189,7 @@ function fomaxo_wa_send_refills($max = 20) {
     if ($sent + $failed >= $max) break;
     if ($o['sent'] || empty($o['optin']) || $o['days'] < $tm['days'] || ($tries[$o['order_no']] ?? 0) >= 3 || !($to = fx_wa_number($o['phone']))) continue;
     $p = fx_refill_parts($pdo, $o);
-    $vars = [$p['first'] !== '' ? $p['first'] : 'there', $p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume', $p['days'], $p['pct'], $p['code'], $p['review'] ?: 'https://fomaxo.com'];
+    $vars = [$p['first'] !== '' ? $p['first'] : 'there', $p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume', $p['days'], $p['offer'], $p['code'], $p['review'] ?: 'https://fomaxo.com'];   // {{4}}: what the coupon gives, like "10% off your next order of AED 150 or more"
     $lang = $p['ar'] ? 'ar' : (string)($c['refill_language'] ?? 'en'); $ok = false;
     if (!$p['review']) {   // already reviewed (all or part): the template without the review request, refill_reminder_plain
       [$ok, $info] = fx_wa_template($to, $tpl . '_plain', $lang, array_slice($vars, 0, 5), $c);
@@ -205,7 +205,7 @@ function fomaxo_wa_send_refills($max = 20) {
 }
 
 /* automatic review requests (admin → Members → Review requests): only customers who ticked WhatsApp offers, once per order, skipped once reviewed.
-   Meta templates: review_ask ({{1}} name, {{2}} perfumes, {{3}} review link) and, with the coupon on, review_ask_coupon (+ {{4}} %, {{5}} code). */
+   Meta templates: review_ask ({{1}} name, {{2}} order number, {{3}} perfumes, {{4}} review link) and, with the coupon on, review_ask_coupon (+ {{5}} %, {{6}} code). */
 function fomaxo_wa_send_rvreqs($max = 20) {
   require_once __DIR__ . '/review-req-lib.php';
   $pdo = fomaxo_db(); if (!$pdo) return ['reviews' => 0, 'note' => 'no database'];
@@ -221,7 +221,7 @@ function fomaxo_wa_send_rvreqs($max = 20) {
     if ($sent + $failed >= $max) break;
     if ($o['sent'] || empty($o['optin']) || ($tries[$o['order_no']] ?? 0) >= 3 || !($to = fx_wa_number($o['phone']))) continue;
     $p = $o['parts'];
-    $vars = [$p['first'] !== '' ? $p['first'] : 'there', $p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume', $p['review']];
+    $vars = [$p['first'] !== '' ? $p['first'] : 'there', $o['order_no'], $p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume', $p['review']];
     if ($p['code']) { $vars[] = $p['pct']; $vars[] = $p['code']; }
     $tpl = $p['code'] ? 'review_ask_coupon' : 'review_ask';
     [$ok, $info] = fx_wa_template($to, $tpl, $p['ar'] ? 'ar' : 'en', $vars, $c);

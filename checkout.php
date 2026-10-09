@@ -67,6 +67,9 @@ if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
     $discLabel = ($discFils > 0 ? "$discLabel + " : '') . "Coupon {$cp['code']} ({$cp['label']})"; $discFils += $cp['saveFils']; $couponCode = $cp['code'];
   } elseif (!$cp['stack'] && $cp['saveFils'] > $discFils) { $discFils = $cp['saveFils']; $couponCode = $cp['code']; $discLabel = "Coupon {$cp['code']} ({$cp['label']})"; }
 }
+/* a free product coupon: its product joins the order at AED 0 (and comes off stock); the multi-buy discount stays */
+$freeCp = isset($cp['free']) && !isset($cp['error']) ? $cp : null;
+if ($freeCp) { $couponCode = $freeCp['code']; $summary[] = "1 x FOMAXO {$freeCp['free']['name']} — FREE with coupon {$freeCp['code']}"; }
 $afterFils = $subFils - $discFils;               // total after the multi-buy discount or the coupon
 
 /* minimum order: checked here too, so it can't be bypassed */
@@ -93,12 +96,16 @@ if ($COD_FEE > 0) $rows[] = 'Cash on delivery fee: ' . aed($COD_FEE * 100);
 /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
 $saveLines = array_map(fn($l) => ['id' => $l['id'] ?? '', 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? []))], $lines);
 if ($msg = fomaxo_stock_problem($saveLines, $CATALOG)) fail(409, $msg);
+if ($freeCp) {
+  $saveLines[] = ['id' => $freeCp['free']['id'], 'opt' => $freeCp['free']['opt'], 'qty' => 1, 'free' => true, 'coupon' => $freeCp['code']];
+  if (fomaxo_stock_problem($saveLines, $CATALOG)) fail(409, "Sorry, your free {$freeCp['free']['name']} is out of stock right now. Please remove the coupon and try again.");
+}
 if ($miniName) $saveLines[] = ['id' => $mini, 'opt' => '10', 'qty' => 1, 'free' => true];
 $no = fomaxo_save_order(['payment' => 'Cash on delivery', 'status' => 'New', 'subtotal' => $subFils / 100, 'discount' => $discFils / 100,
         'fee' => $COD_FEE, 'total' => $totalFils / 100, 'items' => implode(' | ', $rows), 'free_mini' => $miniName, 'coupon' => $couponCode, 'wa_optin' => $cu['wa'], 'lines' => $saveLines]
         + array_intersect_key($cu, array_flip(['name', 'phone', 'email', 'emirate', 'building', 'room', 'street', 'area', 'address', 'note'])));
 $inDb = (bool)$no;
-if ($no) fomaxo_stock_move($no);   // stock goes down as soon as a cash order is placed
+if ($no) { fomaxo_stock_move($no); fx_coupon_spent(fomaxo_db(), $couponCode); }   // stock goes down as soon as a cash order is placed; a used-up one-use coupon deletes itself
 else $no = 'FX' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
 $cell = fn($v) => preg_match('/^[=+\-@]/', (string)$v) ? "'" . $v : $v;   // stop spreadsheet formulas
 $order = [date('Y-m-d H:i:s'), $no, $cu['name'], $cu['phone'], $cu['email'], $cu['emirate'], $cu['address'], $cu['note'],

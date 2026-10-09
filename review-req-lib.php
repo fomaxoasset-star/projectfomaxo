@@ -49,8 +49,10 @@ function fx_rq_due($pdo) {
   }
   $sent = json_decode((string)fomaxo_setting($pdo, 'rvreq_sent'), true) ?: [];
   $stops = json_decode((string)fomaxo_setting($pdo, 'wa_stop'), true) ?: [];
+  $gone = fx_list_hidden($pdo, 'rvreq_sent_hide');   // ✕ on the list: no message, not listed (their next order comes back)
   $due = [];
   foreach ($last as $k => $o) {
+    if (isset($gone[$o['order_no']])) continue;
     $p = fx_rq_parts($pdo, $o);
     if (!$p['review']) continue;   // everything in the order is already reviewed
     $due['m' . $k] = $o + ['parts' => $p, 'sent' => isset($sent[$o['order_no']]) ? substr($sent[$o['order_no']], 0, 10) : null,
@@ -63,18 +65,19 @@ function fx_rq_due($pdo) {
 /* every order already asked, newest first, with how many of its perfumes the customer has reviewed (from the order's review link)
    and the average stars: 'total' perfumes, 'done' reviewed, 'stars' null until the first review */
 function fx_rq_asked($pdo) {
-  $sent = json_decode((string)fomaxo_setting($pdo, 'rvreq_sent'), true) ?: [];
+  $sent = array_diff_key(json_decode((string)fomaxo_setting($pdo, 'rvreq_sent'), true) ?: [], fx_list_hidden($pdo, 'rvreq_sent_hide'));
   if (!$sent) return [];
   $links = [];
   foreach (glob(rv_dir('links') . '/*.json') ?: [] as $f) { $j = json_decode((string)@file_get_contents($f), true); if (isset($j['no'], $sent[$j['no']])) $links[$j['no']] = $j; }
-  $stars = []; foreach (rv_all() as $r) if (!empty($r['id'])) $stars[$r['id']] = (int)($r['rating'] ?? 0);
+  $stars = []; $at = []; foreach (rv_all() as $r) if (!empty($r['id'])) { $stars[$r['id']] = (int)($r['rating'] ?? 0); $at[$r['id']] = strtotime((string)($r['created'] ?? '')) ?: 0; }
   $s = $pdo->prepare('SELECT order_no, name, phone, created_at FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($sent), '?')) . ')'); $s->execute(array_map('strval', array_keys($sent)));
   $out = [];
   foreach ($s->fetchAll() as $o) {
     $l = $links[$o['order_no']] ?? []; $done = array_values((array)($l['done'] ?? []));
     $st = array_filter(array_map(fn($id) => $stars[$id] ?? 0, $done));
     $out[$o['order_no']] = $o + ['sent' => substr($sent[$o['order_no']], 0, 10), 'auto' => str_ends_with($sent[$o['order_no']], 'auto'),
-      'total' => max(count((array)($l['products'] ?? [])), count($done)), 'done' => count($done), 'stars' => $st ? round(array_sum($st) / count($st), 1) : null];
+      'total' => max(count((array)($l['products'] ?? [])), count($done)), 'done' => count($done), 'stars' => $st ? round(array_sum($st) / count($st), 1) : null,
+      'last' => $done ? max(array_map(fn($id) => $at[$id] ?? 0, $done)) : 0];   // when the latest review from this order came in
   }
   uasort($out, fn($a, $b) => strcmp($b['sent'], $a['sent']) ?: strcmp($b['created_at'], $a['created_at']));
   return $out;
@@ -82,6 +85,10 @@ function fx_rq_asked($pdo) {
 
 /* asked but not reviewed for longer than the 'Remove not reviewed after' days (when that is on): hidden from the list */
 function fx_rq_dropped($set, $a) { return $set['drop'] && fx_rq_state($a) === 'not' && strtotime($a['sent']) < strtotime('today -' . $set['drop_days'] . ' days'); }
+
+/* reviewed and partly reviewed orders leave Review requests this many days after the latest review (reviews and orders stay) */
+const FX_RQ_DONE_DAYS = 30;
+function fx_rq_done_old($a) { return fx_rq_state($a) !== 'not' && $a['last'] && $a['last'] < strtotime('today -' . FX_RQ_DONE_DAYS . ' days'); }
 
 /* rv = every perfume reviewed, part = some, not = none yet */
 function fx_rq_state($a) { return $a['total'] > 0 && $a['done'] >= $a['total'] ? 'rv' : ($a['done'] > 0 ? 'part' : 'not'); }
@@ -98,18 +105,24 @@ function fx_rq_parts($pdo, $o) {
   $p = fx_refill_parts($pdo, $o); $set = fx_rq_set($pdo);
   $p['code'] = $set['coupon'] ? fx_rq_code($pdo, $o['phone']) : null;
   $p['pct'] = rtrim(rtrim(number_format($set['pct'], 2, '.', ''), '0'), '.');
+  $p['no'] = (string)$o['order_no'];
   return $p;
 }
 
-/* the message, a blank line between each part, the code in WhatsApp bold on its own line (the same words as the WhatsApp templates) */
-function fx_rq_text($p) {
-  $n2 = "\n\n";
-  if ($p['ar']) return 'مرحباً ' . $p['first'] . '،' . $n2 . "*شكراً مرة أخرى على طلبك*\nنتمنى أن يكون قد وصلك بأمان وأن تكون مستمتعاً " . ($p['perfumes'] !== '' ? 'بعطر ' . $p['perfumes'] : 'بعطرك من FOMAXO') . '.'
+/* the message, a blank line between each part, the code in WhatsApp bold on its own line (the same words as the WhatsApp templates).
+   It opens with the order number. The admin WhatsApp box puts a coupon it makes between fx_rq_head and fx_rq_tail. */
+function fx_rq_head($p) {
+  $n2 = "\n\n"; $no = (string)($p['no'] ?? '');
+  if ($p['ar']) return 'مرحباً ' . $p['first'] . '،' . ($no !== '' ? $n2 . 'معك FOMAXO بخصوص طلبك ' . $no . '.' : '') . $n2 . "*شكراً مرة أخرى على طلبك*\nنتمنى أن يكون قد وصلك بأمان وأن تكون مستمتعاً " . ($p['perfumes'] !== '' ? 'بعطر ' . $p['perfumes'] : 'بعطرك من FOMAXO') . '.'
     . $n2 . "هل يمكنك مشاركتنا تقييمك الصادق في دقيقة؟\nسيظهر بشارة \"مشتري موثّق\".\n" . $p['review'] . "\nتقييمك الصادق يساعد الآخرين على اختيار عطرهم من FOMAXO."
-    . ($p['code'] ? $n2 . 'تقديراً لوقتك، هذا رمزك الخاص للحصول على خصم ' . $p['pct'] . '% على طلبك القادم (لمرة واحدة):' . $n2 . '*' . $p['code'] . '*' : '')
-    . $n2 . 'راسلنا هنا إن احتجت أي مساعدة. وأرسل كلمة STOP إن كنت لا ترغب في هذه الرسائل.' . $n2 . "شكراً لك،\nFOMAXO";
-  return 'Hi ' . $p['first'] . ',' . $n2 . "*Thank You Again For Your Order*\nI hope you received it safely and are enjoying " . ($p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume') . '.'
+    . ($p['code'] ? $n2 . 'تقديراً لوقتك، هذا رمزك الخاص للحصول على خصم ' . $p['pct'] . '% على طلبك القادم (لمرة واحدة):' . $n2 . '*' . $p['code'] . '*' : '');
+  return 'Hi ' . $p['first'] . ',' . ($no !== '' ? $n2 . 'This is FOMAXO about your order ' . $no . '.' : '') . $n2 . "*Thank You Again For Your Order*\nI hope you received it safely and are enjoying " . ($p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume') . '.'
     . $n2 . "Could you spare a minute to share your honest review?\nIt will show as Verified Purchaser.\n" . $p['review'] . "\nYour honest review helps others choose their FOMAXO."
-    . ($p['code'] ? $n2 . 'As a thank you for your time, here is your personal code for ' . $p['pct'] . '% off your next order (single use):' . $n2 . '*' . $p['code'] . '*' : '')
-    . $n2 . 'Just reply here if you need anything. If you would rather not get these messages, reply STOP.' . $n2 . "Thank you,\nFOMAXO";
+    . ($p['code'] ? $n2 . 'As a thank you for your time, here is your personal code for ' . $p['pct'] . '% off your next order (single use):' . $n2 . '*' . $p['code'] . '*' : '');
 }
+function fx_rq_tail($p) {
+  $n2 = "\n\n";
+  return $p['ar'] ? $n2 . 'راسلنا هنا إن احتجت أي مساعدة. وأرسل كلمة STOP إن كنت لا ترغب في هذه الرسائل.' . $n2 . "شكراً لك،\nFOMAXO"
+    : $n2 . 'Just reply here if you need anything. If you would rather not get these messages, reply STOP.' . $n2 . "Thank you,\nFOMAXO";
+}
+function fx_rq_text($p) { return fx_rq_head($p) . fx_rq_tail($p); }

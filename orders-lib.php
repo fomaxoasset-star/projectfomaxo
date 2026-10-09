@@ -136,6 +136,9 @@ function fomaxo_coupons_table($pdo) {
   try { if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'stack'")->fetch()) $pdo->exec("ALTER TABLE fx_coupons ADD COLUMN stack TINYINT(1) NOT NULL DEFAULT 0"); } catch (Throwable $e) {}
   /* phone: a one-time coupon made for one customer (late delivery, faulty product) only works with that mobile number */
   try { if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'phone'")->fetch()) $pdo->exec("ALTER TABLE fx_coupons ADD COLUMN phone VARCHAR(25) NULL"); } catch (Throwable $e) {}
+  /* kind 'free': a free product (free_id in size free_opt) joins the order at AED 0; per_cust = 1: each mobile number can use the code once */
+  try { if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'per_cust'")->fetch()) $pdo->exec("ALTER TABLE fx_coupons MODIFY kind VARCHAR(4) NOT NULL DEFAULT 'pct',
+          ADD COLUMN per_cust TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN free_id VARCHAR(40) NULL, ADD COLUMN free_opt VARCHAR(10) NULL"); } catch (Throwable $e) {}
 }
 /* the same mobile written any way (+971 50…, 050…, Arabic digits) gives the same last 9 digits */
 function fomaxo_phone9($p) { return substr(preg_replace('/\D/', '', strtr((string)$p, FX_AR_DIGITS)), -9); }
@@ -407,34 +410,116 @@ function fomaxo_coupon_uses($pdo, $code) {
   $s->execute([$code]); return (int)$s->fetchColumn();
 }
 function fomaxo_coupon_label($c) {
+  if (($c['kind'] ?? '') === 'free') return 'Free ' . fomaxo_coupon_free_name($c);
   $a = (float)$c['amount']; $n = rtrim(rtrim(number_format($a, 2, '.', ''), '0'), '.');
   return $c['kind'] === 'aed' ? "AED $n off" : "$n% off";
 }
-/* Finds a code that can be used now. Returns ['error' => …] or ['code', 'kind', 'amount', 'min', 'label'] */
+/* a free product coupon's product and size, like "Gold 50ml" */
+function fomaxo_coupon_free_name($c) {
+  $p = fomaxo_free_product($c['free_id'] ?? '', $c['free_opt'] ?? '');
+  return $p ? $p['label'] : (!empty($c['free_id']) ? $c['free_id'] . ' ' . $c['free_opt'] . 'ml' : 'a product');   // a product hidden since: its id
+}
+/* the product a free product coupon gives: ['id', 'opt', 'name', 'label' ("Gold 50ml"), 'price' (AED)], or null when it is not sold now */
+function fomaxo_free_product($id, $opt) {
+  global $CATALOG; static $cat = null;
+  if ($cat === null) $cat = is_array($CATALOG ?? null) && $CATALOG ? $CATALOG : (fomaxo_catalog_db() ?: []);
+  $id = (string)$id; $opt = (string)$opt; $p = $cat[$id] ?? null;
+  if (!$p || $p['kind'] === 'set' || !isset($p['prices'][$opt])) return null;   // gift sets need fragrances picked, so they are never free
+  return ['id' => $id, 'opt' => $opt, 'name' => $p['name'], 'label' => $p['name'] . " {$opt}ml", 'price' => (float)$p['prices'][$opt]];
+}
+/* "AED 150" (no .00 on whole amounts) */
+function fomaxo_aed_short($v) { return 'AED ' . rtrim(rtrim(number_format((float)$v, 2, '.', ','), '0'), '.'); }
+/* Finds a code that can be used now. Returns ['error' => …] or ['code', 'kind', 'amount', 'min', 'label'], plus 'free' => ['id', 'opt', 'name', 'worth'] for a free product */
 function fomaxo_coupon_find($code, $phone = null) {
   $code = fomaxo_coupon_norm($code);
   if ($code === '') return ['error' => 'Please type a coupon code.'];
   $pdo = fomaxo_db(); if (!$pdo) return ['error' => 'Coupons are not available right now. Please try again later.'];
   try { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$code]); $c = $s->fetch(); }
   catch (Throwable $e) { error_log('FOMAXO coupon: ' . $e->getMessage()); return ['error' => 'Coupons are not available right now. Please try again later.']; }
-  if (!$c || !(int)$c['active'] || (float)$c['amount'] <= 0) return ['error' => 'This coupon code is not valid.'];
+  $free = $c && $c['kind'] === 'free' ? fomaxo_free_product($c['free_id'] ?? '', $c['free_opt'] ?? '') : null;
+  if (!$c || !(int)$c['active'] || ($c['kind'] === 'free' ? !$free : (float)$c['amount'] <= 0)) return ['error' => 'This coupon code is not valid.'];
   $now = (new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('Y-m-d H:i:s');
   $ends = $c['ends'] ?? ($c['expires'] ? $c['expires'] . ' 23:59:59' : null);
   if (!empty($c['starts']) && $c['starts'] > $now) return ['error' => 'This coupon code starts on ' . date('d/m/Y \a\t g:i a', strtotime($c['starts'])) . '.'];
   if ($ends && $ends < $now) return ['error' => 'This coupon code has expired.'];
   if ($c['max_uses'] !== null && fomaxo_coupon_uses($pdo, $code) >= (int)$c['max_uses']) return ['error' => 'This coupon code has been fully used.'];
   if (!empty($c['phone']) && $phone !== null && fomaxo_phone9($phone) !== fomaxo_phone9($c['phone'])) return ['error' => 'This coupon code is for another mobile number.'];
-  return ['code' => $c['code'], 'kind' => $c['kind'] === 'aed' ? 'aed' : 'pct', 'amount' => (float)$c['amount'], 'min' => $c['min_order'] !== null ? (float)$c['min_order'] : 0,
-          'label' => fomaxo_coupon_label($c), 'ends' => $ends ? str_replace(' ', 'T', $ends) . '+04:00' : null, 'stack' => !empty($c['stack'])];
+  if (!empty($c['per_cust']) && $phone !== null && strlen(fomaxo_phone9($phone)) === 9) {   // one use per customer: this mobile has not used it on a placed order
+    $s = $pdo->prepare("SELECT phone FROM fx_orders WHERE coupon = ? AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')"); $s->execute([$code]);
+    foreach ($s->fetchAll(PDO::FETCH_COLUMN) as $ph) if (fomaxo_phone9($ph) === fomaxo_phone9($phone)) return ['error' => 'This coupon code has already been used with this mobile number.'];
+  }
+  return ['code' => $c['code'], 'kind' => $c['kind'] === 'free' ? 'free' : ($c['kind'] === 'aed' ? 'aed' : 'pct'), 'amount' => (float)$c['amount'], 'min' => $c['min_order'] !== null ? (float)$c['min_order'] : 0,
+          'label' => fomaxo_coupon_label($c), 'ends' => $ends ? str_replace(' ', 'T', $ends) . '+04:00' : null, 'stack' => !empty($c['stack'])]
+       + ($free ? ['free' => ['id' => $free['id'], 'opt' => $free['opt'], 'name' => $free['label'], 'worth' => $free['price']]] : []);
 }
 /* What the code saves on a bag of $subFils (fils, before any discount). Returns ['error' => …] or the coupon plus 'saveFils'.
-   A "Use both" coupon ('stack') is worked out on the bag after the multi-buy discount ($multiFils); the minimum still counts the bag before any discount. */
+   A "Use both" coupon ('stack') is worked out on the bag after the multi-buy discount ($multiFils); the minimum still counts the bag before any discount.
+   A free product coupon saves nothing (saveFils 0): its product is added to the order at AED 0 and the multi-buy discount stays. */
 function fomaxo_coupon_apply($code, $subFils, $multiFils = 0, $phone = '') {
   $c = fomaxo_coupon_find($code, (string)$phone); if (isset($c['error'])) return $c;
+  if ($c['kind'] === 'free') {
+    if ($c['min'] > 0 && $subFils < (int)round($c['min'] * 100))
+      return ['error' => 'Spend ' . fomaxo_aed_short($c['min']) . ' to get your free ' . $c['free']['name'] . '. Add ' . fomaxo_aed_short(round($c['min'] - $subFils / 100, 2)) . ' more to your bag.'];
+    $c['saveFils'] = 0; return $c;
+  }
   if ($c['min'] > 0 && $subFils < (int)round($c['min'] * 100)) return ['error' => 'This coupon code is for orders of AED ' . rtrim(rtrim(number_format($c['min'], 2, '.', ''), '0'), '.') . ' or more.'];
   $base = $c['stack'] ? $subFils - $multiFils : $subFils;
   $c['saveFils'] = $c['kind'] === 'aed' ? min($base, (int)round($c['amount'] * 100)) : (int)round($base * min(100, $c['amount']) / 100);
   return $c;
+}
+/* One-use coupons delete themselves once used up: codes for one mobile (GOODWILL-, REFILL-, REVIEW-, COMEBACK-, THANKS-) and free product
+   coupons with a usage limit. Called when the order that uses one is placed (cash) or paid (card). Orders keep the code. */
+function fx_coupon_spent($pdo, $code) {
+  if (!$pdo || (string)$code === '') return;
+  try {
+    $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$code]); $c = $s->fetch();
+    if (!$c || (empty($c['phone']) && ($c['kind'] !== 'free' || $c['max_uses'] === null))) return;
+    if (fomaxo_coupon_uses($pdo, $code) >= max(1, (int)$c['max_uses'])) $pdo->prepare('DELETE FROM fx_coupons WHERE code = ?')->execute([$code]);
+  } catch (Throwable $e) { error_log('FOMAXO coupon spent: ' . $e->getMessage()); }
+}
+/* the same for every coupon in the list (admin → Coupons opens): used-up one-use codes go */
+function fx_coupon_sweep($pdo) {
+  foreach ($pdo->query("SELECT code FROM fx_coupons WHERE (phone IS NOT NULL AND phone <> '') OR (kind = 'free' AND max_uses IS NOT NULL)")->fetchAll(PDO::FETCH_COLUMN) as $code) fx_coupon_spent($pdo, $code);
+}
+/* A new one-use coupon for one mobile number: $prefix + 4 letters/numbers (no 0/O or 1/I), e.g. GOODWILL-7K2Q. Returns the code.
+   $kind 'pct' | 'aed' | 'free' ($value: % or AED off; for 'free' the product $freeId in size $freeOpt), $min: minimum order AED (0 = none),
+   $ends: 'Y-m-d' (works to the end of that day), 'Y-m-d H:i:s', or '' for no end. Used by Coupons → Goodwill and the WhatsApp boxes (THANKS-, REFILL-, COMEBACK-). */
+function fx_phone_coupon($pdo, $prefix, $phone, $kind, $value, $min = 0, $ends = '', $freeId = '', $freeOpt = '') {
+  fomaxo_coupons_table($pdo);
+  $kind = in_array($kind, ['aed', 'free'], true) ? $kind : 'pct'; $ends = (string)$ends;
+  if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $ends)) $ends .= ' 23:59:59';
+  $abc = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; $chk = $pdo->prepare('SELECT 1 FROM fx_coupons WHERE code = ?');
+  do { $code = $prefix; for ($i = 0; $i < 4; $i++) $code .= $abc[random_int(0, strlen($abc) - 1)]; $chk->execute([$code]); } while ($chk->fetchColumn());
+  $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, phone, per_cust, free_id, free_opt) VALUES (?, ?, ?, ?, NULL, NULL, ?, 1, 1, NOW(), 0, ?, 0, ?, ?)')
+      ->execute([$code, $kind, $kind === 'free' ? 0 : round((float)$value, 2), (float)$min > 0 ? round((float)$min, 2) : null, $ends !== '' ? $ends : null,
+                 mb_substr(trim(strtr((string)$phone, FX_AR_DIGITS)), 0, 25), $kind === 'free' ? (string)$freeId : null, $kind === 'free' ? (string)$freeOpt : null]);
+  return $code;
+}
+/* A coupon's WhatsApp message: short lines, a blank line between parts, the offer and code in *bold* (WhatsApp shows *text* as bold).
+   No emoji (wa.me shows them as "?"). $intro = the opening line, $extra = more detail lines. */
+function fx_coupon_wa_text($c, $intro, $extra = []) {
+  $n2 = "\n\n"; $min = (float)($c['min_order'] ?? 0); $ends = $c['ends'] ?? (!empty($c['expires']) ? $c['expires'] . ' 23:59:59' : null);
+  $details = array_values(array_filter(array_merge([
+    $min > 0 && $c['kind'] !== 'free' ? 'Minimum order: *' . fomaxo_aed_short($min) . '*' : '',   // a free product's minimum is already in the opening line
+    $ends ? 'Valid till: *' . date('j M Y', strtotime($ends)) . '*' : '',
+  ], $extra)));
+  return "Hi,$n2$intro{$n2}Your code:\n*{$c['code']}*" . ($details ? $n2 . implode("\n", $details) : '')
+    . "{$n2}Type the code at checkout on our website:\nhttps://fomaxo.com{$n2}Thank you,\n*FOMAXO*";
+}
+/* the message that shares a coupon (WhatsApp opens without a number, so the owner picks the customer) */
+function fx_coupon_share_text($c) {
+  $min = (float)($c['min_order'] ?? 0);
+  $intro = $c['kind'] === 'free'
+    ? ($min > 0 ? 'Shop for *' . fomaxo_aed_short($min) . '* or more and get a *free ' . fomaxo_coupon_free_name($c) . '* with your order.' : 'Here is a *free ' . fomaxo_coupon_free_name($c) . '* with your next order.')
+    : 'Here is *' . fomaxo_coupon_label($c) . '* your next order.';
+  return fx_coupon_wa_text($c, $intro, [!empty($c['per_cust']) ? 'One use per customer.' : '']);
+}
+/* the message that sends a goodwill coupon (late delivery, faulty product) to its customer */
+function fx_goodwill_text($c) {
+  $ends = $c['ends'] ?? $c['expires'] ?? null;
+  return fx_coupon_wa_text($c, 'We are sorry about your last order. As a goodwill gesture, here is '
+      . ($c['kind'] === 'free' ? 'a *free ' . fomaxo_coupon_free_name($c) . '* with your next order.' : '*' . fomaxo_coupon_label($c) . '* your next order.'),
+    ['Works one time, only with this mobile number' . ($ends ? '.' : ', no end date.')]);
 }
 
 /* ================= stock ================= */
@@ -639,33 +724,18 @@ function fomaxo_smtp_send($c, $to, $subject, $body, $headers) {
 /* ---- Arabic → English for FOMAXO (admin, order emails, Excel). What the customer typed is never changed: the English is shown next to it.
    Free MyMemory translation (no key, about 5,000 characters a day — plenty for orders and reviews); every result is kept in fx_tr so each text is translated once.
    If the service can't be reached, the Arabic shows as typed (with Arabic digits turned into 0-9) and is tried again next time. */
-/* Left at checkout: the ready WhatsApp message (name, the bag they left, a link that opens checkout with that bag), Arabic for an Arabic name; $code adds a 10% code for that mobile */
-function fx_left_code($pdo, $sid) {
-  $abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; $hx = hash_hmac('sha256', 'left|' . $sid, (string)fomaxo_setting($pdo, 'admin_hash')); $c = 'COMEBACK-';
-  for ($i = 0; $i < 5; $i++) $c .= $abc[hexdec(substr($hx, $i * 2, 2)) % strlen($abc)];
-  return $c;
-}
-function fx_left_wa($pdo, $l, $code = false) {
-  $wa = preg_replace('/\D/', '', strtr((string)$l['phone'], FX_AR_DIGITS)); if (str_starts_with($wa, '00')) $wa = substr($wa, 2);
-  if (str_starts_with($wa, '05')) $wa = '971' . substr($wa, 1); elseif (strlen($wa) === 9 && $wa[0] === '5') $wa = '971' . $wa;
+/* Left at checkout: the ready WhatsApp message (name, the bag they left, a link that opens checkout with that bag), Arabic for an Arabic name,
+   in two parts: the admin WhatsApp box puts a coupon it makes (COMEBACK-, one use, that mobile only, 7 days) between them. Returns [head, tail, arabic]. */
+function fx_left_msg($l) {
   $ar = fx_has_ar($l['name']); $first = preg_split('/\s+/u', trim((string)$l['name']))[0] ?? '';
   $bag = preg_match('/^[a-z0-9_.-]{1,300}$/i', (string)($l['bag'] ?? '')) ? $l['bag'] : '';
   $link = 'https://fomaxo.com/?' . ($ar ? 'lang=ar&' : '') . 'utm_source=whatsapp&utm_campaign=left-checkout#/' . ($bag !== '' ? 'checkout?bag=' . $bag : 'checkout');
   $items = implode("\n", array_filter(array_map('trim', preg_split('/,\s*(?=\d+ ×)/u', (string)$l['items']))));
-  $n2 = "\n\n"; $cd = $code ? fx_left_code($pdo, $l['sid']) : '';
-  if ($ar) $t = ($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،')
-    . ($items !== '' ? $n2 . "تركت هذه في حقيبة FOMAXO:\n" . $items : $n2 . 'لاحظنا أنك لم تكمل طلبك من FOMAXO.')
-    . ($cd !== '' ? $n2 . 'تقديراً لك، هذا رمزك الخاص للحصول على خصم 10% (لمرة واحدة، صالح لمدة 7 أيام، مع رقم هاتفك هذا):' . $n2 . '*' . $cd . '*' : '')
-    . $n2 . "حقيبتك محفوظة. اضغط هنا لإكمال طلبك:\n" . $link
-    . $n2 . 'توصيل مجاني داخل الإمارات خلال 1–3 أيام.'
-    . $n2 . 'إن كان لديك أي سؤال عن العطور أو الأحجام، راسلنا هنا.' . $n2 . 'FOMAXO';
-  else $t = 'Hi' . ($first !== '' ? ' ' . $first : '') . ','
-    . ($items !== '' ? $n2 . "You left these in your FOMAXO bag:\n" . $items : $n2 . 'We noticed you did not finish your FOMAXO order.')
-    . ($cd !== '' ? $n2 . 'As a thank you, here is your personal code for 10% off (single use, valid 7 days, with this mobile number):' . $n2 . '*' . $cd . '*' : '')
-    . $n2 . "Your bag is saved. Tap here to finish your order:\n" . $link
-    . $n2 . 'Free delivery across the UAE in 1–3 days.'
-    . $n2 . 'If you have any questions about the scents or sizes, just reply here.' . $n2 . 'FOMAXO';
-  return 'https://wa.me/' . $wa . '?text=' . rawurlencode($t);
+  $n2 = "\n\n";
+  if ($ar) return [($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،') . ($items !== '' ? $n2 . "تركت هذه في حقيبة FOMAXO:\n" . $items : $n2 . 'لاحظنا أنك لم تكمل طلبك من FOMAXO.'),
+    $n2 . "حقيبتك محفوظة. اضغط هنا لإكمال طلبك:\n" . $link . $n2 . 'توصيل مجاني داخل الإمارات خلال 1–3 أيام.' . $n2 . 'إن كان لديك أي سؤال عن العطور أو الأحجام، راسلنا هنا.' . $n2 . 'FOMAXO', true];
+  return ['Hi' . ($first !== '' ? ' ' . $first : '') . ',' . ($items !== '' ? $n2 . "You left these in your FOMAXO bag:\n" . $items : $n2 . 'We noticed you did not finish your FOMAXO order.'),
+    $n2 . "Your bag is saved. Tap here to finish your order:\n" . $link . $n2 . 'Free delivery across the UAE in 1–3 days.' . $n2 . 'If you have any questions about the scents or sizes, just reply here.' . $n2 . 'FOMAXO', false];
 }
 function fx_has_ar($s) { return (bool)preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', (string)$s); }
 function fomaxo_en_many(array $texts) {

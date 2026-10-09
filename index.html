@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=15";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=16";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -1499,6 +1499,7 @@ html[data-mode="light"] .co-cp-on b{color:var(--gold)}
 .co-cp-m{margin:8px 0 0;font-size:13px;line-height:1.45;color:var(--muted)}
 .co-cp-m.bad{color:#f0a497}
 .co-cp-m.ok{color:#5fc48c}
+.co-cp-m.info{color:var(--gold)}
 html[data-mode="light"] .co-cp-m.bad{color:#c0392b}
 html[data-mode="light"] .co-cp-m.ok{color:#1e7a47}
 .co-err{padding:12px 16px;border:1px solid #e0705f;color:#f0a497;font-size:14px;line-height:1.45}
@@ -1751,6 +1752,32 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-op-h>div{flex:1;min-width:140px;display:flex;flex-direction:column;gap:2px}
 .rw-op-h b{font-family:var(--serif);font-weight:400;font-size:22px}
 .rw-op .rw-form{margin:16px 0 0}
+/* review form: title row, two parts (rating, problem, words | name, mobile, place, photos), footer with the error left and the buttons right */
+.rw-form .rw-fhead{justify-content:flex-start;align-items:baseline;gap:6px 14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.rw-form .rw-fx{margin-left:0;margin-inline-start:auto}
+.rw-fk{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.rw-c1,.rw-c2{display:grid;gap:18px;align-content:start;min-width:0}
+#rwFormBox[hidden],#rwFormBox [hidden]{display:none!important}
+.form .rw-mob i{font-style:normal;text-transform:none;letter-spacing:.04em;color:var(--dim)}
+.rw-issue{color:var(--gold-hi);margin:-8px 0 0;line-height:1.55}
+.rw-hint{color:#f0a497;margin:-8px 0 0;line-height:1.55}
+.form .rw-need select,.form label.rw-add.rw-need{border-color:#e0705f;box-shadow:0 0 0 1px #e0705f}
+.rw-ph-n{font-size:12px;letter-spacing:.06em;color:var(--gold-hi);text-decoration:underline;text-underline-offset:3px;padding:6px 2px}
+.rw-foot{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--line)}
+.rw-foot .rw-err{flex:1 1 220px;margin:0;color:#f0a497;font-size:14px;line-height:1.45}
+.rw-btns{display:flex;gap:12px;flex-wrap:wrap;margin-left:auto}
+html[data-mode="light"] .rw-hint,html[data-mode="light"] .rw-foot .rw-err{color:#a8321f}
+html[data-mode="light"] .form .rw-need select,html[data-mode="light"] .form label.rw-add.rw-need{border-color:#c0503c;box-shadow:0 0 0 1px #c0503c}
+@media(max-width:620px){.rw-btns{width:100%}.rw-btns .btn{flex:1 1 0;justify-content:center}.rw-foot .rw-err:empty{display:none}}
+/* laptop: Write a review opens the form as a window over a darkened page, two columns so it fits on one screen */
+@media (min-width:900px){#rwFormBox.pop{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:rwPop .25s ease}
+  #rwFormBox.pop .rw-form{width:min(940px,100%);max-height:calc(100vh - 48px);overflow:auto;margin:0;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+  .rw-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:clamp(24px,3vw,40px);row-gap:12px;padding:18px 30px 20px}.rw-form>*{grid-column:1/-1}.rw-form>.rw-c1{grid-column:1}.rw-form>.rw-c2{grid-column:2}
+  .rw-c1,.rw-c2{gap:12px}.rw-form .rw-fhead b{font-size:22px}.rw-form textarea{min-height:110px}.rw-form .rw-rate button{font-size:30px}.rw-form .opt-label{margin-bottom:8px}
+  .form.rw-form input,.form.rw-form select{padding:11px 14px}.form.rw-form textarea{padding:12px 14px}.rw-form .row2 input,.rw-form .row2 select{height:44px}.rw-form .row2{gap:12px}
+  .rw-form .rw-issue,.rw-form .rw-hint{font-size:13px;margin:-4px 0 0}.rw-form .rw-emo{margin-top:-6px}.rw-form .rw-foot{padding-top:14px}
+  .rw-form .rw-ph-prev span{width:52px;height:52px}.form.rw-form label.rw-add{width:64px;height:52px;font-size:9px}.rw-form .rw-ph-prev button{width:20px;height:20px;line-height:20px;font-size:13px}}
+@keyframes rwPop{from{opacity:0}}
 @media(max-width:600px){.rw-avg>b{font-size:52px}.rw-text{font-size:19px}.rw-rate button{font-size:38px}}
 /* ===== conversion upgrade (Oct 2026): added-to-bag panel, multi-buy progress, product page savings/offer/payment line, order again, email sign-up ===== */
 .qd-bar{position:relative;display:block;height:3px;margin:12px 6px 20px 0;background:var(--line-2);border-radius:2px}
@@ -2377,7 +2404,7 @@ const app = $('#app');
 const IMG = k => `assets/img/${k}.webp`;
 /* lighter copies of the photos for faster loading: t/ is 720px wide (product cards on laptops), s/ is 240px (small pictures in the bag,
    search, lists). Only the photos listed here have them; a photo uploaded later on the admin just uses the full photo. */
-const IMG_W = {"atelier":1027,"boutique-hq":1200,"boutique-people":848,"boutique-about":1145,"boutique":984,"discovery-1":800,"discovery-2":961,"discovery-3":984,"dollar-1":1114,"dollar-2":1043,"dollar-3":1398,"dollar-4":1394,"dollar-main":819,"dollar-main2":819,"elite-card":865,"elite-lounge-hq":848,"elite-lounge":862,"gift-1":984,"gift-2-hq":884,"gift-2":984,"gift-set-1-hq":986,"gift-set-1":1300,"gift-set-2-hq":925,"gift-set-2":1300,"gift-set-3-hq":857,"gift-set-3":1218,"gift-set-4-hq":841,"gift-set-4":1112,"gift-set-5-hq":856,"gift-set-5":1083,"gift-set-6-hq":860,"gift-set-6":1300,"gift-set-7-hq":1047,"gift-set-7":1300,"gold-1":1046,"gold-2":1046,"gold-3":1110,"gold-main":819,"gold-main2":819,"king-1":1048,"king-2":1048,"king-3":1048,"king-4":1048,"king-5":1400,"king-main":819,"matchacoco-1":1400,"matchacoco-10-1":1013,"matchacoco-10-main":688,"matchacoco-10-2":1004,"matchacoco-100":799,"matchacoco-2":785,"matchacoco-3":773,"matchacoco-main":819,"matchacoco-main2":819,"oldmoney-1":1250,"oldmoney-10-1":782,"oldmoney-10-main":688,"oldmoney-10-2":859,"oldmoney-100":953,"oldmoney-100b":1153,"oldmoney-2":912,"oldmoney-3":917,"oldmoney-main":819,"passionsin-1":896,"passionsin-10-1":933,"passionsin-10-main":688,"passionsin-10-2":924,"passionsin-10-3":912,"passionsin-2":934,"passionsin-3":1400,"passionsin-main":819,"personal-care-poster":1024,"personal-care":842,"royalcandy-1":832,"royalcandy-10-1":764,"royalcandy-10-main":688,"royalcandy-10-2":858,"royalcandy-10-3":867,"royalcandy-100":1300,"royalcandy-2":1002,"royalcandy-main":819,"runway":805,"runway-couture":1024,"runway-couture-2":1024};
+const IMG_W = {"atelier":1027,"boutique-hq":1200,"boutique-people":848,"boutique-about":1145,"boutique":984,"discovery-1":800,"discovery-2":961,"discovery-3":984,"dollar-1":1114,"dollar-2":1043,"dollar-3":1398,"dollar-4":1394,"dollar-main":819,"dollar-main2":819,"elite-card":865,"elite-lounge-hq":848,"elite-lounge":862,"gift-1":984,"gift-2-hq":884,"gift-2":984,"gift-set-1-hq":986,"gift-set-1":1300,"gift-set-2-hq":925,"gift-set-2":1300,"gift-set-3-hq":857,"gift-set-3":1218,"gift-set-4-hq":841,"gift-set-4":1112,"gift-set-5-hq":856,"gift-set-5":1083,"gift-set-6-hq":860,"gift-set-6":1300,"gift-set-7-hq":1047,"gift-set-7":1300,"gold-1":1046,"gold-2":1046,"gold-3":1110,"gold-main":819,"gold-main2":819,"king-1":1048,"king-2":1048,"king-3":1048,"king-4":1048,"king-5":1400,"king-main":819,"matchacoco-1":1400,"matchacoco-10-1":1013,"matchacoco-10-main":688,"matchacoco-10-2":1004,"matchacoco-100":799,"matchacoco-2":785,"matchacoco-3":773,"matchacoco-main":819,"matchacoco-main2":819,"oldmoney-1":1250,"oldmoney-10-1":782,"oldmoney-10-main":688,"oldmoney-10-2":859,"oldmoney-100":953,"oldmoney-100b":1153,"oldmoney-2":912,"oldmoney-3":917,"oldmoney-main":819,"passionsin-1":896,"passionsin-10-1":933,"passionsin-10-main":688,"passionsin-10-2":924,"passionsin-10-3":912,"passionsin-2":934,"passionsin-3":1400,"passionsin-main":819,"personal-care-poster":1024,"personal-care":842,"royalcandy-1":832,"royalcandy-10-1":764,"royalcandy-10-main":688,"royalcandy-10-2":858,"royalcandy-10-3":867,"royalcandy-100":1300,"royalcandy-2":1002,"royalcandy-main":819,"runway":805,"runway-couture":1024,"runway-couture-2":1024,"runway-personal-care":1024};
 const SM = k => IMG_W[k] ? `assets/img/s/${k}.webp` : IMG(k);
 const CARD_SIZES = '(max-width:600px) 92vw, (max-width:1100px) 46vw, min(31vw, 500px)';
 const cardPic = k => `src="${IMG(k)}"` + (IMG_W[k] ? ` srcset="assets/img/t/${k}.webp 720w, ${IMG(k)} ${IMG_W[k]}w" sizes="${CARD_SIZES}"` : '');
@@ -2557,7 +2584,7 @@ function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].p
 // sends the order to the server: card → Ziina payment page (ziina.php), cod → order saved by checkout.php
 async function sendOrder(lines, pay, details, src){
   try {
-    const r = await fetch(pay === 'card' && S.checkout.ziina ? S.checkout.ziina : S.checkout.cod, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pay, src, customer: details && Object.assign({}, details, {address: addrText(details)}), lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: qtyDiscount(lines).miniId, coupon: coupon && orderTotals(lines, '', true).useC ? coupon.code : undefined})});
+    const r = await fetch(pay === 'card' && S.checkout.ziina ? S.checkout.ziina : S.checkout.cod, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pay, src, customer: details && Object.assign({}, details, {address: addrText(details)}), lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: qtyDiscount(lines).miniId, coupon: coupon && (T0 => T0.useC || T0.freeOn)(orderTotals(lines, '', true)) ? coupon.code : undefined})});
     const d = await r.json().catch(() => ({}));
     if (r.ok && (d.url || d.order)) return d;
     return {error: d.error || (pay === 'cod' ? 'We could not place your order right now. Please try again or contact us on WhatsApp.' : 'Card payment is unavailable right now. Please try again or contact us on WhatsApp.')};
@@ -2583,7 +2610,7 @@ try { coupon = JSON.parse(sessionStorage.getItem('fomaxo_coupon') || 'null'); } 
 function setCoupon(c){ coupon = c || null; try { c ? sessionStorage.setItem('fomaxo_coupon', JSON.stringify(c)) : sessionStorage.removeItem('fomaxo_coupon'); } catch(e) {} }
 // a "Use both" coupon (coupon.stack, set on admin → Coupons) comes off after the multi-buy discount (multi); the minimum counts the bag before any discount
 function couponSave(t0, multi){
-  if (!coupon || t0 === null || (coupon.min > 0 && t0 < coupon.min) || (coupon.ends && Date.parse(coupon.ends) <= Date.now())) return 0;
+  if (!coupon || coupon.free || t0 === null || (coupon.min > 0 && t0 < coupon.min) || (coupon.ends && Date.parse(coupon.ends) <= Date.now())) return 0;
   const b = coupon.stack ? Math.round((t0 - (multi || 0)) * 100) / 100 : t0;
   return coupon.kind === 'aed' ? Math.min(b, coupon.amount) : Math.round(b * Math.min(100, coupon.amount)) / 100;
 }
@@ -2597,7 +2624,9 @@ function orderTotals(lines, pay, withCoupon){
   const disc = both ? dc.amount + cs : useC ? cs : dc.amount;   // the bigger saving wins, or both for a "Use both" coupon
   const after = t0 === null ? null : Math.round((t0 - disc) * 100) / 100;
   const fee = pay === 'cod' ? COD_FEE : 0;
-  return {t0, dc, cs, useC, both, disc, after, fee, total: after === null ? null : after + fee, short: after === null ? 0 : Math.max(0, Math.round((MIN_ORDER - after) * 100) / 100)};
+  // a free product coupon (coupon.free) takes nothing off: its product joins the order at AED 0 once the bag reaches the minimum; the multi-buy discount stays
+  const freeOn = !!(withCoupon && coupon && coupon.free && t0 !== null && !(coupon.min > 0 && t0 < coupon.min) && !(coupon.ends && Date.parse(coupon.ends) <= Date.now()));
+  return {t0, dc, cs, useC, both, disc, after, fee, freeOn, total: after === null ? null : after + fee, short: after === null ? 0 : Math.max(0, Math.round((MIN_ORDER - after) * 100) / 100)};
 }
 const minMsg = short => `Minimum order ${aed(MIN_ORDER)} · add ${aed(short)} more`;
 // "Buy now" puts the product in the bag (not doubled if it's already there) and goes straight to checkout with the whole bag.
@@ -3315,7 +3344,7 @@ function about(){
     </div>
   </div></section>
   <section class="sec" style="padding-top:0"><div class="wrap"><div class="split">
-    <div class="img rv-up"><img src="${IMG('runway-couture-2')}" alt="FOMAXO runway vision" loading="lazy"></div>
+    <div class="img rv-up"><img src="${IMG('runway-personal-care')}" alt="FOMAXO Personal Care" loading="lazy"></div>
     <div class="prose rv-up d1"><span class="eyebrow">A growing brand universe</span><h2>From fragrance to <em class="metal">fashion identity</em></h2>
       <p>FOMAXO™ is a contemporary brand built on clarity of design, strength of identity and a vision for expansion. Rooted in fragrance, it is a developing platform for fashion, accessories and lifestyle products, unified by a consistent design language and brand philosophy.</p>
       <p>Every creation is an extension of personal presence. Clean design, balanced intensity and lasting character define the FOMAXO collection — products that integrate seamlessly into everyday style while maintaining a distinct edge.</p>
@@ -3521,7 +3550,7 @@ function bindCheckout(q){
     let d = {};
     try { const r = await fetch('coupon.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code, phone: (($('#coForm [name=phone]') || {}).value || '').trim()})}); d = await r.json().catch(() => ({})); }
     catch(e) { d = {error: 'We could not check this code. Please check your connection and try again.'}; }
-    if (d && d.code) { setCoupon({code: d.code, kind: d.kind, amount: +d.amount, min: +d.min || 0, label: d.label, ends: d.ends || null, stack: !!d.stack}); cpMsg = ''; drawCoupon(); draw(); return; }
+    if (d && d.code) { setCoupon({code: d.code, kind: d.kind, amount: +d.amount, min: +d.min || 0, label: d.label, ends: d.ends || null, stack: !!d.stack, free: d.free ? {id: d.free.id, opt: String(d.free.opt), name: d.free.name, worth: +d.free.worth} : null}); cpMsg = ''; drawCoupon(); draw(); return; }
     cpMsg = (d && d.error) || 'This coupon code is not valid.'; drawCoupon(); const i = $('#coCpIn'); if (i) { i.value = code; i.focus(); }
   }
   // the line under an applied code: what it saves, or why it isn't used
@@ -3533,6 +3562,8 @@ function bindCheckout(q){
     if (en) { const mins = Math.max(0, Math.floor((end || 0) / 60000)), d = Math.floor(mins / 1440), h = Math.floor(mins % 1440 / 60);
       en.textContent = end > 0 ? `Ends in ${d ? d + (d > 1 ? ' days' : ' day') + (h ? ' ' + h + 'h' : '') : (h ? h + 'h ' : '') + (mins % 60) + 'm'}` : ''; en.hidden = !(end > 0); }
     if (end !== null && end <= 0) { t = 'This coupon code has expired. Please remove it.'; cls = 'bad'; }
+    else if (coupon.free && T.t0 !== null && coupon.min > 0 && T.t0 < coupon.min) { t = `Spend ${aed(coupon.min)} to get your free ${coupon.free.name}. Add ${aed(Math.round((coupon.min - T.t0) * 100) / 100)} more to your bag.`; cls = 'info'; }   // a gold note, not an error
+    else if (coupon.free) t = '';   // the order summary shows the free product and "Free gift added"
     else if (T.t0 !== null && coupon.min > 0 && T.t0 < coupon.min) t = `Add ${aed(Math.round((coupon.min - T.t0) * 100) / 100)} more to use this code (for orders of ${aed(coupon.min)} or more).`;
     else if (T.useC) t = '';   // the order summary shows the coupon line, struck old total and "You saved"
     else if (T.dc.amount > 0) t = `Your multi-buy discount saves more, so we kept it. Coupons and multi-buy don't add up.`;
@@ -3552,6 +3583,9 @@ function bindCheckout(q){
     // order summary
     const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${SM(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l, true)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
     const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${SM(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b class="mini-l">Choose your free 10ml scent</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
+    // a free product coupon: its product shows in the summary at AED 0 (checkout.php and ziina.php add it to the order)
+    const fv = T.freeOn ? coupon.free : null, fp = fv && P[fv.id];
+    const freeIt = fv ? `<div class="co-item co-free co-gift"><span class="co-img">${fp ? `<img src="${SM(imgFor(fp, fv.opt))}" alt="">` : ''}<i>1</i></span><div><h4>${esc(fp ? fp.name : fv.name)}</h4><div class="o">${fp ? optLabel(fp, fv.opt) + ' · ' : ''}<span>Free with ${esc(coupon.code)}</span></div></div><span class="price">FREE</span></div>` : '';
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     // You save = crossed-out prices minus paid prices, plus the multi-buy discount or coupon
     const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (T.disc > 0 ? T.disc : 0)) * 100) / 100;
@@ -3562,12 +3596,12 @@ function bindCheckout(q){
         : dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row co-fee"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}
-      <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${!T.useC && saved > 0 ? `<div class="co-row co-save"><span>You saved <span class="price">${moneyHTML(saved, true)}</span> on this order</span></div>` : ''}<div id="coCpSlot"></div>${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>CONGRATS !! Total Saved is <span class="price">${moneyHTML(saved, true)}</span></small>` : ''}</div>` : ''}`;
+      <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${!T.useC && saved > 0 ? `<div class="co-row co-save"><span>You saved <span class="price">${moneyHTML(saved, true)}</span> on this order</span></div>` : ''}<div id="coCpSlot"></div>${fv ? `<div class="co-row co-save"><span>Free gift added worth ${aed(fv.worth)}</span></div>` : ''}${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>CONGRATS !! Total Saved is <span class="price">${moneyHTML(saved, true)}</span></small>` : ''}</div>` : ''}`;
     const nudge = m => `<div class="co-nudge ${m}">${ICON.gift || ''}<span>${qtyNudge(dc)}</span></div>`;   // same offer line as the bag: under the bar on phones, above Subtotal on desktop
     const sum = $('#coSum');
     sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span>${saved > 0 ? `<small><b class="co-bar-save">You save ${money2(saved)}</b></small>` : ''}</span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}<span class="co-bar-tap">${coOpen ? 'Tap to hide Orders' : 'Tap to see Orders'}</span></button>${nudge('co-nudge-m')}
       <div class="co-sum-in co-tap" id="coSumIn" title="Open your bag to change it"><div class="co-sum-h"><h3>Order summary</h3><button type="button" class="co-edit" id="coEdit">Edit bag</button></div>
-      <div class="co-items">${items}</div>${mini ? `<div class="co-mini-fx">${mini}</div>` : ''}${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
+      <div class="co-items">${items}${freeIt}</div>${mini ? `<div class="co-mini-fx">${mini}</div>` : ''}${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
     const openBag = () => {
       // Buy now: move the item into the bag (once, not doubled) and switch to the bag checkout, so the customer can change it there
@@ -3741,6 +3775,23 @@ let rwNations = null;
 const rwNationList = () => rwNations || (rwNations = RW_TOP.concat(RW_COUNTRIES.filter(c => !RW_TOP.includes(c)).sort((a, b) => rwCountryName(a).localeCompare(rwCountryName(b)))).map(c => [c, rwCountryName(c)]));
 /* one-tap emojis under the review box (phone keyboards' own emojis work too) */
 const RW_EMO = ['😍', '🔥', '✨', '💯', '👌', '❤️', '🌹', '👍'];
+/* words about a late delivery or a faulty / damaged product (English, Hinglish and Arabic), the same lists as reviews.php */
+const RW_LATE = /\b(?:late|delay(?:ed)?|not (?:yet )?(?:received|delivered|arrived)|never (?:came|arrived)|der(?:i|ee)? se)\b|تأخر|تاخر|متأخر|متاخر|تأخير|تاخير|لم يصل|ما وصل|ماوصل|ما جاني|لم يتم التوصيل/i,
+  RW_FAULTY = /\b(?:faulty|defective|damaged?|broken|cracked|leak(?:ed|ing|s)?|spill(?:ed)?|wrong (?:item|product|perfume)|toot(?:a|i))\b|مكسور|انكسر|تكسر|تالف|خربان|معيوب|يسرب|يسرّب|تسريب|مسكوب|انسكب|منتج خطأ|منتج خطا|منتج غلط|طلب غلط/i,
+  rwProblem = t => RW_LATE.test(t) || RW_FAULTY.test(t);
+const RW_ASK = 'It sounds like there was a problem with your order. Please pick Late delivery or Faulty or damaged product under “Any problem with your order?”.';
+const RW_PROOF = 'Sorry about that. Your review is about a damaged or faulty product, so please add a photo of it for proof. We will check it and send you a coupon on WhatsApp.';
+const RW_NOTE = {late: 'Sorry about that. We will check it and send you a coupon on WhatsApp, so please add your mobile number.',
+  faulty: 'Sorry about that. We will check it and send you a coupon on WhatsApp, so please add your mobile number and a photo of the product for proof.'};
+const rwNeedsProof = (rating, text, photos) => rating > 0 && rating <= 3 && RW_FAULTY.test(text) && !photos;
+/* the problem picked against the words: '' when they fit, else what to say */
+function rwMismatch(issue, text){
+  if (issue === 'late' && RW_FAULTY.test(text) && !RW_LATE.test(text)) return 'Your review is about a faulty or damaged product. Please pick Faulty or damaged product instead of Late delivery.';
+  if (issue === 'faulty' && RW_LATE.test(text) && !RW_FAULTY.test(text)) return 'Your review is about a late delivery. Please pick Late delivery instead of Faulty or damaged product.';
+  return '';
+}
+/* a UAE mobile: 05x xxx xxxx, 5x xxx xxxx or +971 / 00971 5x xxx xxxx (same rule as reviews.php) */
+const rwMobOk = v => { let d = enDigits(v).replace(/\D/g, ''); if (d.startsWith('00')) d = d.slice(2); return /^(?:9715\d{8}|05\d{8}|5\d{8})$/.test(d); };
 const rwHelpLabel = n => `${RW_HEART}<span>Helpful${n ? ` · ${n}` : ''}</span>`;
 
 function rwItem(r){
@@ -3768,21 +3819,24 @@ function rwSection(p, d){   // d = null while the reviews are loading: the text 
 }
 function rwForm(p, link, x){
   return `<form class="form rw-form" novalidate>
-    <div class="rw-fhead"><b>Review ${esc(p.name)}</b>${link ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}${x ? `<button type="button" class="rw-fx" aria-label="Close">×</button>` : ''}</div>
-    <div><div class="opt-label"><span>Your rating *</span><span class="rw-rword">Tap a star</span></div>
+    <div class="rw-fhead"><span class="rw-fk">Write a review</span><b>${esc(p.name)}</b>${link ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}${x ? `<button type="button" class="rw-fx" aria-label="Close">×</button>` : ''}</div>
+    <div class="rw-c1"><div><div class="opt-label"><span>Your rating *</span><span class="rw-rword">Tap a star</span></div>
       <div class="rw-rate" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map(s => `<button type="button" role="radio" aria-checked="false" data-r="${s}" aria-label="${s} star${s > 1 ? 's' : ''}, ${RW_WORDS[s]}">★</button>`).join('')}</div></div>
-    <label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
+    ${link ? '' : `<label class="rw-prob" hidden>Any problem with your order?<select name="issue"><option value="">No problem</option><option value="late">Late delivery</option><option value="faulty">Faulty or damaged product</option></select></label>
+    <p class="small rw-issue" hidden></p>`}
+    <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
+    <p class="small rw-hint" role="alert" hidden></p>
+    <div class="rw-emo" role="group" aria-label="Add an emoji to your review">${RW_EMO.map(e => `<button type="button" data-emo="${e}" aria-label="Add ${e}">${e}</button>`).join('')}</div></div>
+    <div class="rw-c2"><label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
     <label class="rw-anon"><input type="checkbox" name="anon"><span>Post anonymously</span></label>
     <p class="small rw-shown">Your review will show the name: <b></b></p>
+    ${link ? '' : `<label class="rw-mob"><span>Mobile <i class="rw-mob-why">(optional, only FOMAXO sees it)</i></span><input name="mobile" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="e.g. 050 123 4567"></label>`}
     <div class="row2"><label>State / City (optional)<span class="rw-clr-w"><input name="city" maxlength="40" autocomplete="off" data-cap="words" autocapitalize="words" placeholder="Type or pick, e.g. Dubai" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="rw-sug" role="listbox" hidden></div><button type="button" class="rw-clr" data-clr="city" aria-label="Clear city" hidden>×</button></span></label>
       <label>Nation (optional)<span class="rw-clr-w"><input name="nation" maxlength="40" autocomplete="off" data-cap="words" autocapitalize="words" placeholder="Type or pick, e.g. India" role="combobox" aria-autocomplete="list" aria-expanded="false"><input type="hidden" name="country"><div class="rw-sug rw-sug-n" role="listbox" hidden></div><button type="button" class="rw-clr" data-clr="nation" aria-label="Clear nation" hidden>×</button></span></label></div>
-    <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
-    <div class="rw-emo" role="group" aria-label="Add an emoji to your review">${RW_EMO.map(e => `<button type="button" data-emo="${e}" aria-label="Add ${e}">${e}</button>`).join('')}</div>
-    <div><div class="opt-label"><span>Photos (optional)</span><span>Up to 3</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label></div></div>
+    <div><div class="opt-label"><span>Photos (optional)</span><span>Up to 3</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label><button type="button" class="rw-ph-n" hidden></button></div></div></div>
     <input name="website" class="rw-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-    ${link ? `<p class="small">Order ${esc(link.no)} · please rate honestly, every star counts.</p>` : `<p class="small">Bought on fomaxo.com? Use the review link from your order confirmation to show Verified Purchaser.</p>`}
-    <p class="co-err rw-err" hidden></p>
-    <button class="btn" type="submit">Post review</button>
+    ${link ? `<p class="small rw-fnote">Order ${esc(link.no)} · please rate honestly, every star counts.</p>` : `<p class="small rw-fnote">Bought on fomaxo.com? Use the review link from your order confirmation to show Verified Purchaser.</p>`}
+    <div class="rw-foot"><p class="small rw-err" role="alert"></p><div class="rw-btns">${x ? '<button class="btn line" type="button" data-cancel>Cancel</button>' : ''}<button class="btn" type="submit">Post review</button></div></div>
   </form>`;
 }
 /* photos are shrunk in the browser before upload (fast on mobile data); reviews.php checks and re-encodes them again */
@@ -3845,20 +3899,37 @@ function rwBindForm(form, p, link, onDone){
   sug.onclick = e => { const b = e.target.closest('button'); if (!b) return; ci.value = b.textContent; ci.dispatchEvent(new Event('change')); sugHide(); };
   co.addEventListener('change', () => { if (document.activeElement === ci) sugShow(); });
   const fi = $('input[type=file]', form), prev = $('.rw-ph-prev', form), add = $('.rw-add', form);
+  const phN = $('.rw-ph-n', form);
   const drawPrev = () => {
     prev.innerHTML = files.map((x, i) => `<span><img src="${x.url}" alt=""><button type="button" data-x="${i}" aria-label="Remove photo">×</button></span>`).join('');
     add.hidden = files.length >= 3;
+    phN.hidden = !files.length; phN.textContent = `${files.length} photo${files.length > 1 ? 's' : ''} added · change`;
     $$('[data-x]', prev).forEach(b => b.onclick = () => { URL.revokeObjectURL(files[+b.dataset.x].url); files.splice(+b.dataset.x, 1); drawPrev(); });
+    warn();
   };
+  /* "2 photos added · change": choose the photos again */
+  phN.onclick = () => { files.splice(0).forEach(x => URL.revokeObjectURL(x.url)); drawPrev(); fi.click(); };
+  /* reviews without an order link only (verified purchasers have their order already): for 1–3 stars, "Any problem with your order?"
+     Late delivery needs a mobile, a faulty product a mobile and a photo, for its coupon. Words about a problem ask them to pick it.
+     Verified purchasers: a 1–3 star review about a damaged or faulty product needs a photo of it for proof. */
+  const issue = form.elements.issue || {value: ''}, prob = $('.rw-prob', form), note = $('.rw-issue', form), hint = $('.rw-hint', form);
+  const check = () => !rating || rating > 3 ? '' : prob ? (!issue.value && rwProblem(ta.value) ? RW_ASK : rwMismatch(issue.value, ta.value)) : rwNeedsProof(rating, ta.value, files.length) ? RW_PROOF : '';
+  function warn(){ const msg = check(); hint.textContent = msg; hint.hidden = !msg; if (prob) prob.classList.toggle('rw-need', !!msg); else add.classList.toggle('rw-need', !!msg); }
+  if (prob) issue.onchange = () => { note.hidden = !issue.value; note.textContent = RW_NOTE[issue.value] || ''; $('.rw-mob-why', form).textContent = `(${issue.value ? 'needed' : 'optional'}, only FOMAXO sees it)`; warn(); };
+  ta.addEventListener('input', warn);
+  stars.forEach(b => b.addEventListener('click', () => { if (prob) { prob.hidden = rating > 3; if (rating > 3 && issue.value) { issue.value = ''; issue.onchange(); } } warn(); }));
   fi.onchange = () => { [...fi.files].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)).slice(0, 3 - files.length).forEach(f => files.push({f, url: URL.createObjectURL(f)})); fi.value = ''; drawPrev(); };
   form.onsubmit = async e => {
     e.preventDefault(); err.hidden = true;
     const text = form.elements.text.value.trim();
-    const bad = !rating ? 'Please choose a star rating.' : !an.checked && rwShort(nm.value).length < 2 ? 'Please enter your name, or choose Post anonymously.' : !text ? 'Please write your review.' : '';
-    if (bad) { err.textContent = bad; err.hidden = false; return; }
+    const mob = form.elements.mobile ? form.elements.mobile.value.trim() : '', iss = rating <= 3 ? issue.value : '', prb = check();
+    const bad = !rating ? 'Please choose a star rating.' : prob && prb ? prb : !an.checked && rwShort(nm.value).length < 2 ? 'Please enter your name, or choose Post anonymously.' : !text ? 'Please write your review.'
+      : iss && !mob ? 'Please add your mobile number, so we can send your coupon on WhatsApp.' : mob && !rwMobOk(mob) ? 'Please enter a valid UAE mobile number, e.g. 050 123 4567.'
+      : prb ? prb : iss === 'faulty' && !files.length ? 'Please add a photo of the faulty or damaged product.' : '';
+    if (bad) { err.textContent = bad; err.hidden = false; if (bad === prb && prob) $('select', prob).focus(); return; }
     const btn = $('button[type=submit]', form); btn.disabled = true; btn.textContent = files.length ? 'Uploading photos…' : 'Posting…';
     const fd = new FormData();
-    [['action', 'review'], ['product', p.id], ['rating', rating], ['name', nm.value], ['anon', an.checked ? '1' : ''], ['city', form.elements.city.value], ['country', form.elements.country.value], ['text', text], ['website', form.elements.website.value], ['token', link ? link.t : '']].forEach(x => fd.append(x[0], x[1]));
+    [['action', 'review'], ['product', p.id], ['rating', rating], ['name', nm.value], ['anon', an.checked ? '1' : ''], ['city', form.elements.city.value], ['country', form.elements.country.value], ['text', text], ['website', form.elements.website.value], ['token', link ? link.t : ''], ['mobile', mob], ['issue', iss]].forEach(x => fd.append(x[0], x[1]));
     for (const x of files) fd.append('photos[]', await rwShrink(x.f), 'photo.jpg');
     let r = {};
     try { r = await (await fetch(RW_API, {method: 'POST', body: fd})).json(); } catch(x) {}
@@ -3925,11 +3996,19 @@ async function rwLoad(p, msg){
   box.onclick = e => { const h = e.target.closest('[data-rwh]'); if (h && !h.disabled) rwVote(h, d.reviews); const ph = e.target.closest('[data-rwph]'); if (ph) rwLightbox(ph.dataset.rwph, rwPhotoList(d)); };
   const fb = $('#rwFormBox', box);
   if (msg) { fb.hidden = false; fb.innerHTML = `<p class="rw-ok">${msg}</p>`; }
+  /* laptop: Write a review opens as a window in the middle of the screen over a darkened page; phone: in the page */
+  const home = fb.parentElement, next = fb.nextElementSibling;   // the window sits on the page body so it covers the menu bar too
+  const pop = on => { fb.classList.toggle('pop', on); document.body.classList.toggle('lock', on); if (on) document.body.append(fb); else if (fb.parentElement === document.body) home.insertBefore(fb, next); };
+  fb.onmousedown = e => { if (e.target === fb && fb.classList.contains('pop')) $('.rw-fx', fb).click(); };
+  const esc0 = e => { if (!fb.isConnected) return removeEventListener('keydown', esc0); if (e.key === 'Escape' && fb.classList.contains('pop') && !$('.rw-sug:not([hidden])', fb)) $('.rw-fx', fb).click(); };
+  addEventListener('keydown', esc0);
   $('#rwWrite', box).onclick = () => {
     if (!$('form', fb)) { const link = rwLinkFor(p.id); fb.innerHTML = rwForm(p, link, 1); fb.hidden = false; const em = $('#rwEmpty', box); if (em) em.hidden = true;
-      $('.rw-fx', fb).onclick = () => { fb.hidden = true; fb.innerHTML = ''; if (em) em.hidden = false; $('#rwWrite', box).scrollIntoView({behavior: 'smooth', block: 'center'}); };
-      rwBindForm($('form', fb), p, link, r => rwLoad(p, `Thank you. Your review is now live.${r.note ? ' ' + esc(r.note) : ''}`)); }
-    fb.scrollIntoView({behavior: 'smooth', block: 'start'});
+      const close = () => { const was = fb.classList.contains('pop'); pop(false); fb.hidden = true; fb.innerHTML = ''; if (em) em.hidden = false; if (!was) $('#rwWrite', box).scrollIntoView({behavior: 'smooth', block: 'center'}); };
+      $$('.rw-fx,[data-cancel]', fb).forEach(c => c.onclick = close);
+      rwBindForm($('form', fb), p, link, r => { if (fb.classList.contains('pop')) { fb.remove(); document.body.classList.remove('lock'); } rwLoad(p, `Thank you. Your review is now live.${r.note ? ' ' + esc(r.note) : ''}`); }); }
+    if (matchMedia('(min-width:900px)').matches) { pop(true); $('.rw-rate button', fb).focus({preventScroll: true}); }
+    else fb.scrollIntoView({behavior: 'smooth', block: 'start'});
   };
 }
 /* after an order: invite the customer to review (link = order's private review token) */
@@ -4087,6 +4166,7 @@ function route(){
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
   const seg = path.split('/').filter(Boolean);
   if (seg[0] && HIDE_PAGES.includes(seg[0])) { location.replace('#/'); return; }
+  const rwPopEl = $('#rwFormBox.pop'); if (rwPopEl) { rwPopEl.remove(); document.body.classList.remove('lock'); }   // leaving with the review window open
   clearInterval(heroTimer); mobileBarCheck = null; coRefresh = null; pdpStock = null; $('#mbuy').classList.remove('show'); hideAdded();
   document.title = 'FOMAXO — The House of Modern Luxury';
   let html, after;
