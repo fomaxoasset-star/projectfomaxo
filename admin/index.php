@@ -153,7 +153,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .noa button{background:none;border:0;color:var(--muted);font-size:14px;padding:0 13px;cursor:pointer}.noa button:hover{color:var(--ink)}
 @keyframes noaIn{from{opacity:0;transform:translateY(-12px)}}@keyframes noaDot{50%{opacity:.25}}
 @media (max-width:759px){.noa-stack{top:10px;right:12px;left:12px;width:auto}.noa a{padding:12px 6px 12px 14px}.noa button{padding:0 16px;font-size:16px}}
-.emrow{display:flex;gap:8px}.emrow input{flex:1 1 auto;min-width:0}.emrow .btn{flex:none}@media (min-width:1100px){main .settings{grid-template-areas:"a c e" "a f e" "b d e"}}.nalert-sw{margin-top:6px}.nalert-sw .pgs{grid-template-columns:1fr!important;margin:0}.nalert-sw label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0}.nalert{margin-top:10px}.nalert .btn{margin:0}.nalert .shelp{margin-top:8px}.sndbtn{display:inline-flex;align-items:center;gap:5px;margin-left:auto;margin-right:6px;flex:none;white-space:nowrap}.sndbtn svg{width:13px;height:13px}.sndbtn.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.sndbtn.on .x{display:none}.sndbtn:not(.on){opacity:.8}.nalert .nstate{margin:10px 0 0;font-size:13px}.nalert .nstate.ok{color:#2f9e55;font-weight:600}
+.emrow{display:flex;gap:8px}.emrow input{flex:1 1 auto;min-width:0}.emrow .btn{flex:none}@media (min-width:1100px){main .settings{grid-template-areas:"a c e" "a f e" "b d e"}}.nalert-sw{margin-top:6px}.nalert-sw .pgs{grid-template-columns:1fr!important;margin:0}.nalert-sw label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0}.nalert{margin-top:10px}.nalert .btn{margin:0}.nalert .shelp{margin-top:8px}.sndbtn{display:inline-flex;align-items:center;gap:5px;margin-left:auto;margin-right:6px;flex:none;white-space:nowrap}.sndbtn svg{width:13px;height:13px}.sndbtn.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.sndbtn.on .x{display:none}.sndbtn:not(.on){opacity:.8}@media (max-width:759px){.ocount{flex-wrap:wrap;row-gap:6px}.ocount>span{flex:1 1 100%}.ocount .sndbtn{margin-left:0}}.otx{display:inline-flex;margin:0;vertical-align:middle;flex:none}.otx .rmx{margin-right:8px}.trbtn{margin-right:6px}.trnote{margin:0 0 8px}.trlist td{vertical-align:middle}.nalert .nstate{margin:10px 0 0;font-size:13px}.nalert .nstate.ok{color:#2f9e55;font-weight:600}
 .newo{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:#e0342b;color:#fff;font-size:10px;font-weight:700;letter-spacing:.06em;vertical-align:1px}
 .tabsw{display:flex;flex:none;background:var(--panel);border-bottom:1px solid var(--line)}.tabsw .tabs{flex:1 1 auto;min-width:0;border-bottom:0}.tnav{display:none}
 @media (max-width:759px){.tnav:not([hidden]){display:flex;align-items:center;justify-content:center;flex:none;width:38px;font-size:24px;line-height:1;color:var(--gold);text-decoration:none;background:var(--panel)}.tnav[data-d="-1"]{border-right:1px solid var(--line)}.tnav[data-d="1"]{border-left:1px solid var(--line)}}
@@ -866,6 +866,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['log_add'])) {
   $no = (string)$_POST['log_add'];
   if (fomaxo_log_add($pdo, $no)) flash($no . ' is now in Orders. Stock was not changed.', true); else flash('Could not add ' . $no . '. Please try again.');
   go(['orders' => 1]);
+}
+
+/* the ✕ in front of an order: close it into Trash (it acts as if it never existed); Put back in Trash returns it */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['trash']) || isset($_POST['untrash']))) {
+  $no = (string)($_POST['trash'] ?? $_POST['untrash']); $put = isset($_POST['untrash']);
+  if (!csrf_ok()) flash('Please try again.');
+  elseif ($put ? fx_order_restore($pdo, $no) : fx_order_trash($pdo, $no)) flash($put ? $no . ' is back in Orders.' : $no . ' is closed and kept in Trash. Put it back from there any time.', true);
+  else flash('Could not ' . ($put ? 'put back ' : 'close ') . $no . '. Please try again.');
+  parse_str((string)($_POST['back'] ?? ''), $back);
+  go($put ? ['orders' => 1, 'trash' => 1] : (array_intersect_key($back, array_flip(['orders', 'q', 'status', 'pay', 'from', 'to', 'em', 'p', 'cp'])) ?: ['orders' => 1]));
+}
+
+/* Trash: closed orders, newest closed first, each with Put back */
+if (isset($_GET['orders'], $_GET['trash'])) {
+  $tr = '';
+  try { $rows = $pdo->query('SELECT order_no, trashed_at, created_at, name, phone, total, payment, status FROM fx_orders_trash ORDER BY trashed_at DESC')->fetchAll(); } catch (Throwable $e) { $rows = []; }
+  foreach ($rows as $o) $tr .= '<tr class="row"><td><b>' . h($o['order_no']) . '</b><div class="muted small">' . h(date('d/m/Y, H:i', strtotime((string)$o['created_at']))) . '</div></td>'
+    . '<td><b>' . hx($o['name']) . '</b><div class="muted small">' . h($o['phone']) . '</div></td>'
+    . '<td class="num"><b>' . money($o['total']) . '</b><div class="muted small">' . h($o['payment'] === 'Cash on delivery' ? 'Cash on delivery' : 'Card') . ' · ' . h($o['status']) . '</div></td>'
+    . '<td class="muted small">Closed ' . h(date('d/m/Y', strtotime($o['trashed_at']))) . '</td>'
+    . '<td class="num"><form method="post" style="margin:0">' . csrf_field() . '<input type="hidden" name="untrash" value="' . h($o['order_no']) . '"><button class="btn sm line">Put back</button></form></td></tr>';
+  page('Trash', flash() . '<div class="pagehead"><h1>Trash <span class="muted small">' . count($rows) . '</span></h1><a class="btn line sm" href="./?orders=1">‹ Back to Orders</a></div>'
+    . '<p class="muted small trnote">Closed orders are kept here. They do not count anywhere: not in Sales, the COD and online boxes, status counts, Members or Excel. Put back returns an order as it was.</p>'
+    . '<div class="fill">' . ($tr ? '<table class="olist trlist"><thead><tr><th>Order</th><th>Customer</th><th class="num">Total</th><th>Closed</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty" style="padding:14px">Trash is empty.</p>') . '</div>', true, true);
 }
 
 /* save a change to one order */
@@ -3236,7 +3260,7 @@ foreach ($rows as $o) {
   foreach (json_decode((string)($o['lines_json'] ?? ''), true) ?: [] as $l) if (is_array($l) && empty($l['free']) && !empty($l['id'])) { $img = $pic[$l['id']] ?? ($CATALOG[$l['id']]['images'][0] ?? ''); break; }
   $days = in_array($o['status'], ['New', 'Paid'], true) ? (int)floor((time() - strtotime($o['created_at'])) / 86400) : 0;
   $tr .= '<tr class="row st-' . h(strtok($o['status'], ' ')) . '" onclick="location.href=\'' . $u . '\'">'
-       . '<td class="oi"><span class="oth">' . ($img ? '<img src="../assets/img/t/' . h($img) . '.webp" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'../assets/img/' . h($img) . '.webp\'">' : '') . '</span>'
+       . '<td class="oi"><form method="post" class="otx" onclick="event.stopPropagation()" onsubmit="return confirm(\'Close ' . h($o['order_no']) . '? It leaves Sales, the boxes and every count, and is kept in Trash.\')">' . csrf_field() . '<input type="hidden" name="trash" value="' . h($o['order_no']) . '"><input type="hidden" name="back" value="' . h((string)($_SERVER['QUERY_STRING'] ?? '')) . '"><button class="rmx" title="Close this order (kept in Trash)" aria-label="Close ' . h($o['order_no']) . '">✕</button></form><span class="oth">' . ($img ? '<img src="../assets/img/t/' . h($img) . '.webp" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'../assets/img/' . h($img) . '.webp\'">' : '') . '</span>'
        . '<span class="onb"><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['seen_at'] === null && !$o['test'] && !in_array($o['status'], ['Awaiting payment', 'Cancelled', 'Refunded'], true) ? '<span class="newo">NEW</span>' : '') . ($o['test'] ? ' <span class="muted small">test</span>' : '')
        . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '') . '</span></td>'
        . '<td class="od">' . h(date('d M Y', strtotime($o['created_at']))) . '<span class="odt">' . h(date('H:i', strtotime($o['created_at']))) . '</span></td>'
@@ -3291,7 +3315,7 @@ page('Orders', flash()
   . '<div><label for="to">To</label><input id="to" type="date" name="to" value="' . h($f['to']) . '"></div>'
   . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile or coupon"></div>'
   . '<div class="acts"><button class="btn line">Show</button><a class="btn" href="' . h(self_url($qs + ['export' => 1])) . '">Excel</a></div></form>'
-  . '<div class="fill">' . ($rows ? '<p class="ocount"><span>' . (int)$sum['n'] . ' order' . ((int)$sum['n'] === 1 ? '' : 's') . '. Tap a button to update an order, or tap the order to see it.</span>' . fx_sound_btn($pdo) . '<a class="btn xs rqbtn" href="./?orders=1&amp;ask=1">Review requests (' . $rqN . ')</a></p><table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
+  . '<div class="fill">' . ($rows ? '<p class="ocount"><span>' . (int)$sum['n'] . ' order' . ((int)$sum['n'] === 1 ? '' : 's') . '. Tap a button to update an order, or tap the order to see it.</span>' . fx_sound_btn($pdo) . '' . (($tN = fx_trash_count($pdo)) ? '<a class="btn xs line trbtn" href="./?orders=1&amp;trash=1">Trash (' . $tN . ')</a>' : '') . '<a class="btn xs rqbtn" href="./?orders=1&amp;ask=1">Review requests (' . $rqN . ')</a></p><table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
   . $logCard

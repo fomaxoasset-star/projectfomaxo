@@ -35,7 +35,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 21) return;
+  if ($ver >= 22) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -133,6 +133,11 @@ function fomaxo_db_schema($pdo) {
   if (!$pdo->query("SHOW COLUMNS FROM fx_orders LIKE 'seen_at'")->fetch()) return;
   $pdo->exec("UPDATE fx_orders SET seen_at = NOW() WHERE seen_at IS NULL");
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '21')");
+  /* v22: Trash on admin Orders: an order closed with its ✕ is moved here whole (as it was), so it leaves every list, count and report; Put back returns it */
+  $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders_trash (order_no VARCHAR(40) NOT NULL PRIMARY KEY, trashed_at DATETIME NOT NULL, created_at DATETIME NULL,
+              name VARCHAR(80) NOT NULL DEFAULT '', phone VARCHAR(25) NOT NULL DEFAULT '', total DECIMAL(10,2) NOT NULL DEFAULT 0, payment VARCHAR(30) NOT NULL DEFAULT '',
+              status VARCHAR(20) NOT NULL DEFAULT '', row_json MEDIUMTEXT NOT NULL, KEY (trashed_at)) DEFAULT CHARSET=utf8mb4");
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '22')");
 }
 /* real orders the owner has not opened yet: not test, not an unpaid card attempt, not cancelled or refunded */
 const FX_NEW_ORDER_SQL = "seen_at IS NULL AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')";
@@ -307,7 +312,7 @@ function fomaxo_save_order($o) {
     return null;
   }
   /* the number is given in the same step that saves the order (the highest FMX number + 1), so a save that fails never uses up a number */
-  $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ") SELECT CONCAT('FMX-', GREATEST(1000, COALESCE(MAX(CAST(SUBSTRING(order_no, 5) AS UNSIGNED)), 0)) + 1)"
+  $ins = $pdo->prepare('INSERT INTO fx_orders (order_no, ' . implode(', ', $cols) . ") SELECT CONCAT('FMX-', GREATEST(1000, COALESCE(MAX(CAST(SUBSTRING(order_no, 5) AS UNSIGNED)), 0), (SELECT COALESCE(MAX(CAST(v AS UNSIGNED)), 0) FROM fx_settings WHERE k = 'trash_max')) + 1)"
                        . str_repeat(', ?', count($cols)) . " FROM fx_orders WHERE order_no REGEXP '^FMX-[0-9]+$'");
   for ($try = 0; $try < 5; $try++) {   // two orders at the same moment: the second one takes the next number
     try {
@@ -351,6 +356,8 @@ function fomaxo_log_missing($pdo) {
   foreach (array_chunk(array_keys($out), 500) as $ch) {
     $s = $pdo->prepare('SELECT order_no FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($ch), '?')) . ')'); $s->execute($ch);
     foreach ($s->fetchAll(PDO::FETCH_COLUMN) as $n) $have[$n] = 1;
+    try { $s = $pdo->prepare('SELECT order_no FROM fx_orders_trash WHERE order_no IN (' . implode(',', array_fill(0, count($ch), '?')) . ')'); $s->execute($ch);   // closed orders stay closed
+          foreach ($s->fetchAll(PDO::FETCH_COLUMN) as $n) $have[$n] = 1; } catch (Throwable $e) {}
   }
   $out = array_filter($out, fn($x) => !isset($have[$x['no']]) && $x['status'] !== 'Awaiting payment' && ($since === '' || $x['date'] >= $since));   // a card payment not made is not an order
   uasort($out, fn($a, $b) => strcmp($b['date'], $a['date']));
@@ -379,7 +386,7 @@ function fomaxo_order_number($no) {
   if (!str_starts_with((string)$no, 'CARD-')) return $no;
   $pdo = fomaxo_db(); if (!$pdo) return $no;
   $s = $pdo->prepare('SELECT id FROM fx_orders WHERE order_no = ?'); $s->execute([$no]); $id = (int)$s->fetchColumn(); if (!$id) return $no;
-  $up = $pdo->prepare("UPDATE fx_orders SET order_no = (SELECT n FROM (SELECT CONCAT('FMX-', GREATEST(1000, COALESCE(MAX(CAST(SUBSTRING(order_no, 5) AS UNSIGNED)), 0)) + 1) n
+  $up = $pdo->prepare("UPDATE fx_orders SET order_no = (SELECT n FROM (SELECT CONCAT('FMX-', GREATEST(1000, COALESCE(MAX(CAST(SUBSTRING(order_no, 5) AS UNSIGNED)), 0), (SELECT COALESCE(MAX(CAST(v AS UNSIGNED)), 0) FROM fx_settings WHERE k = 'trash_max')) + 1) n
                        FROM fx_orders WHERE order_no REGEXP '^FMX-[0-9]+$') t) WHERE id = ?");
   for ($try = 0; $try < 5; $try++) {
     try { $up->execute([$id]); $s = $pdo->prepare('SELECT order_no FROM fx_orders WHERE id = ?'); $s->execute([$id]); return (string)$s->fetchColumn() ?: $no; }
@@ -387,6 +394,38 @@ function fomaxo_order_number($no) {
   }
   return $no;
 }
+
+/* Trash (admin Orders ✕): the order leaves fx_orders whole, so sales, counts, Members, coupons and Excel no longer see it; its stock goes back.
+   The number is never given again (trash_max), and Put back returns the order exactly as it was (stock taken again if it was before). */
+function fx_order_trash($pdo, $no) {
+  $s = $pdo->prepare('SELECT * FROM fx_orders WHERE order_no = ?'); $s->execute([$no]); $o = $s->fetch(PDO::FETCH_ASSOC);
+  if (!$o || str_starts_with($no, 'CARD-')) return false;
+  $took = (int)$o['stock_taken'] === 1 && fomaxo_stock_move($no, true);
+  $o['stock_taken'] = $took ? 1 : (int)$o['stock_taken'];   // as it was, for Put back
+  try {
+    $pdo->beginTransaction();
+    $pdo->prepare('REPLACE INTO fx_orders_trash (order_no, trashed_at, created_at, name, phone, total, payment, status, row_json) VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$no, $o['created_at'], $o['name'], $o['phone'], $o['total'], $o['payment'], $o['status'], json_encode($o, JSON_UNESCAPED_UNICODE)]);
+    $pdo->prepare('DELETE FROM fx_orders WHERE order_no = ?')->execute([$no]);
+    if (preg_match('/^FMX-(\d+)$/', $no, $m) && (int)$m[1] > (int)fomaxo_setting($pdo, 'trash_max')) fomaxo_setting($pdo, 'trash_max', $m[1]);
+    $pdo->commit(); return true;
+  } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); if ($took) fomaxo_stock_move($no); error_log('FOMAXO trash: ' . $e->getMessage()); return false; }
+}
+function fx_order_restore($pdo, $no) {
+  $s = $pdo->prepare('SELECT row_json FROM fx_orders_trash WHERE order_no = ?'); $s->execute([$no]); $o = json_decode((string)$s->fetchColumn(), true);
+  if (!is_array($o)) return false;
+  $cols = array_column($pdo->query('SHOW COLUMNS FROM fx_orders')->fetchAll(PDO::FETCH_ASSOC), 'Field');
+  $o = array_intersect_key($o, array_flip($cols)); $took = !empty($o['stock_taken']); $o['stock_taken'] = 0;
+  try {
+    $pdo->beginTransaction();
+    $pdo->prepare('INSERT INTO fx_orders (' . implode(', ', array_keys($o)) . ') VALUES (' . implode(',', array_fill(0, count($o), '?')) . ')')->execute(array_values($o));
+    $pdo->prepare('DELETE FROM fx_orders_trash WHERE order_no = ?')->execute([$no]);
+    $pdo->commit();
+  } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('FOMAXO put back: ' . $e->getMessage()); return false; }
+  if ($took) fomaxo_stock_move($no);
+  return true;
+}
+function fx_trash_count($pdo) { try { return (int)$pdo->query('SELECT COUNT(*) FROM fx_orders_trash')->fetchColumn(); } catch (Throwable $e) { return 0; } }
 
 /* Changes a few fields of an order (ref, status …). */
 function fomaxo_order_set($no, $fields) {
