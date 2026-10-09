@@ -244,7 +244,7 @@ if ($mobile !== '' && !rv_mob_ok($mobile)) out(['error' => 'Please enter a valid
 /* photos chosen (counted before saving): proof of a damaged or faulty product */
 $photoCount = count(array_filter((array)($_FILES['photos']['error'] ?? []), fn($e) => $e === UPLOAD_ERR_OK));
 if ($link && $rating <= 3 && preg_match(RV_FAULTY, $text) && !$photoCount) out(['error' => 'Sorry about that. Your review is about a damaged or faulty product, so please add a photo of it for proof. We will check it and send you a coupon on WhatsApp.'], 400);
-if ($issue === 'faulty' && !$photoCount) out(['error' => 'Please add a photo of faulty or damaged product for proof.'], 400);
+if ($issue === 'faulty' && !$photoCount) out(['error' => 'Please add a photo of the faulty or damaged product as proof.'], 400);
 
 /* no daily limit: a customer can review every product they bought, in one go */
 $ip = rv_ip();
