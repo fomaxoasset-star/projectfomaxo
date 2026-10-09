@@ -1499,6 +1499,7 @@ html[data-mode="light"] .co-cp-on b{color:var(--gold)}
 .co-cp-m{margin:8px 0 0;font-size:13px;line-height:1.45;color:var(--muted)}
 .co-cp-m.bad{color:#f0a497}
 .co-cp-m.ok{color:#5fc48c}
+.co-cp-m.info{color:var(--gold)}
 html[data-mode="light"] .co-cp-m.bad{color:#c0392b}
 html[data-mode="light"] .co-cp-m.ok{color:#1e7a47}
 .co-err{padding:12px 16px;border:1px solid #e0705f;color:#f0a497;font-size:14px;line-height:1.45}
@@ -2557,7 +2558,7 @@ function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].p
 // sends the order to the server: card → Ziina payment page (ziina.php), cod → order saved by checkout.php
 async function sendOrder(lines, pay, details, src){
   try {
-    const r = await fetch(pay === 'card' && S.checkout.ziina ? S.checkout.ziina : S.checkout.cod, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pay, src, customer: details && Object.assign({}, details, {address: addrText(details)}), lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: qtyDiscount(lines).miniId, coupon: coupon && orderTotals(lines, '', true).useC ? coupon.code : undefined})});
+    const r = await fetch(pay === 'card' && S.checkout.ziina ? S.checkout.ziina : S.checkout.cod, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pay, src, customer: details && Object.assign({}, details, {address: addrText(details)}), lines: lines.map(l => ({id:l.id, opt:l.opt, qty:l.qty, picks:l.picks})), mini: qtyDiscount(lines).miniId, coupon: coupon && (T0 => T0.useC || T0.freeOn)(orderTotals(lines, '', true)) ? coupon.code : undefined})});
     const d = await r.json().catch(() => ({}));
     if (r.ok && (d.url || d.order)) return d;
     return {error: d.error || (pay === 'cod' ? 'We could not place your order right now. Please try again or contact us on WhatsApp.' : 'Card payment is unavailable right now. Please try again or contact us on WhatsApp.')};
@@ -2583,7 +2584,7 @@ try { coupon = JSON.parse(sessionStorage.getItem('fomaxo_coupon') || 'null'); } 
 function setCoupon(c){ coupon = c || null; try { c ? sessionStorage.setItem('fomaxo_coupon', JSON.stringify(c)) : sessionStorage.removeItem('fomaxo_coupon'); } catch(e) {} }
 // a "Use both" coupon (coupon.stack, set on admin → Coupons) comes off after the multi-buy discount (multi); the minimum counts the bag before any discount
 function couponSave(t0, multi){
-  if (!coupon || t0 === null || (coupon.min > 0 && t0 < coupon.min) || (coupon.ends && Date.parse(coupon.ends) <= Date.now())) return 0;
+  if (!coupon || coupon.free || t0 === null || (coupon.min > 0 && t0 < coupon.min) || (coupon.ends && Date.parse(coupon.ends) <= Date.now())) return 0;
   const b = coupon.stack ? Math.round((t0 - (multi || 0)) * 100) / 100 : t0;
   return coupon.kind === 'aed' ? Math.min(b, coupon.amount) : Math.round(b * Math.min(100, coupon.amount)) / 100;
 }
@@ -2597,7 +2598,9 @@ function orderTotals(lines, pay, withCoupon){
   const disc = both ? dc.amount + cs : useC ? cs : dc.amount;   // the bigger saving wins, or both for a "Use both" coupon
   const after = t0 === null ? null : Math.round((t0 - disc) * 100) / 100;
   const fee = pay === 'cod' ? COD_FEE : 0;
-  return {t0, dc, cs, useC, both, disc, after, fee, total: after === null ? null : after + fee, short: after === null ? 0 : Math.max(0, Math.round((MIN_ORDER - after) * 100) / 100)};
+  // a free product coupon (coupon.free) takes nothing off: its product joins the order at AED 0 once the bag reaches the minimum; the multi-buy discount stays
+  const freeOn = !!(withCoupon && coupon && coupon.free && t0 !== null && !(coupon.min > 0 && t0 < coupon.min) && !(coupon.ends && Date.parse(coupon.ends) <= Date.now()));
+  return {t0, dc, cs, useC, both, disc, after, fee, freeOn, total: after === null ? null : after + fee, short: after === null ? 0 : Math.max(0, Math.round((MIN_ORDER - after) * 100) / 100)};
 }
 const minMsg = short => `Minimum order ${aed(MIN_ORDER)} · add ${aed(short)} more`;
 // "Buy now" puts the product in the bag (not doubled if it's already there) and goes straight to checkout with the whole bag.
@@ -3521,7 +3524,7 @@ function bindCheckout(q){
     let d = {};
     try { const r = await fetch('coupon.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code, phone: (($('#coForm [name=phone]') || {}).value || '').trim()})}); d = await r.json().catch(() => ({})); }
     catch(e) { d = {error: 'We could not check this code. Please check your connection and try again.'}; }
-    if (d && d.code) { setCoupon({code: d.code, kind: d.kind, amount: +d.amount, min: +d.min || 0, label: d.label, ends: d.ends || null, stack: !!d.stack}); cpMsg = ''; drawCoupon(); draw(); return; }
+    if (d && d.code) { setCoupon({code: d.code, kind: d.kind, amount: +d.amount, min: +d.min || 0, label: d.label, ends: d.ends || null, stack: !!d.stack, free: d.free ? {id: d.free.id, opt: String(d.free.opt), name: d.free.name, worth: +d.free.worth} : null}); cpMsg = ''; drawCoupon(); draw(); return; }
     cpMsg = (d && d.error) || 'This coupon code is not valid.'; drawCoupon(); const i = $('#coCpIn'); if (i) { i.value = code; i.focus(); }
   }
   // the line under an applied code: what it saves, or why it isn't used
@@ -3533,6 +3536,8 @@ function bindCheckout(q){
     if (en) { const mins = Math.max(0, Math.floor((end || 0) / 60000)), d = Math.floor(mins / 1440), h = Math.floor(mins % 1440 / 60);
       en.textContent = end > 0 ? `Ends in ${d ? d + (d > 1 ? ' days' : ' day') + (h ? ' ' + h + 'h' : '') : (h ? h + 'h ' : '') + (mins % 60) + 'm'}` : ''; en.hidden = !(end > 0); }
     if (end !== null && end <= 0) { t = 'This coupon code has expired. Please remove it.'; cls = 'bad'; }
+    else if (coupon.free && T.t0 !== null && coupon.min > 0 && T.t0 < coupon.min) { t = `Spend ${aed(coupon.min)} to get your free ${coupon.free.name}. Add ${aed(Math.round((coupon.min - T.t0) * 100) / 100)} more to your bag.`; cls = 'info'; }   // a gold note, not an error
+    else if (coupon.free) t = '';   // the order summary shows the free product and "Free gift added"
     else if (T.t0 !== null && coupon.min > 0 && T.t0 < coupon.min) t = `Add ${aed(Math.round((coupon.min - T.t0) * 100) / 100)} more to use this code (for orders of ${aed(coupon.min)} or more).`;
     else if (T.useC) t = '';   // the order summary shows the coupon line, struck old total and "You saved"
     else if (T.dc.amount > 0) t = `Your multi-buy discount saves more, so we kept it. Coupons and multi-buy don't add up.`;
@@ -3552,6 +3557,9 @@ function bindCheckout(q){
     // order summary
     const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${SM(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l, true)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
     const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${SM(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b class="mini-l">Choose your free 10ml scent</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
+    // a free product coupon: its product shows in the summary at AED 0 (checkout.php and ziina.php add it to the order)
+    const fv = T.freeOn ? coupon.free : null, fp = fv && P[fv.id];
+    const freeIt = fv ? `<div class="co-item co-free co-gift"><span class="co-img">${fp ? `<img src="${SM(imgFor(fp, fv.opt))}" alt="">` : ''}<i>1</i></span><div><h4>${esc(fp ? fp.name : fv.name)}</h4><div class="o">${fp ? optLabel(fp, fv.opt) + ' · ' : ''}<span>Free with ${esc(coupon.code)}</span></div></div><span class="price">FREE</span></div>` : '';
     const no10 = dc.has10 && dc.units >= 3 ? `<p class="co-small">The FREE 10ml mini is not included when your order has a 10ml bottle.</p>` : '';
     // You save = crossed-out prices minus paid prices, plus the multi-buy discount or coupon
     const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (T.disc > 0 ? T.disc : 0)) * 100) / 100;
@@ -3562,12 +3570,12 @@ function bindCheckout(q){
         : dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row co-fee"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}
-      <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${!T.useC && saved > 0 ? `<div class="co-row co-save"><span>You saved <span class="price">${moneyHTML(saved, true)}</span> on this order</span></div>` : ''}<div id="coCpSlot"></div>${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>CONGRATS !! Total Saved is <span class="price">${moneyHTML(saved, true)}</span></small>` : ''}</div>` : ''}`;
+      <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${!T.useC && saved > 0 ? `<div class="co-row co-save"><span>You saved <span class="price">${moneyHTML(saved, true)}</span> on this order</span></div>` : ''}<div id="coCpSlot"></div>${fv ? `<div class="co-row co-save"><span>Free gift added worth ${aed(fv.worth)}</span></div>` : ''}${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>CONGRATS !! Total Saved is <span class="price">${moneyHTML(saved, true)}</span></small>` : ''}</div>` : ''}`;
     const nudge = m => `<div class="co-nudge ${m}">${ICON.gift || ''}<span>${qtyNudge(dc)}</span></div>`;   // same offer line as the bag: under the bar on phones, above Subtotal on desktop
     const sum = $('#coSum');
     sum.innerHTML = `<button type="button" class="co-bar" id="coBar" aria-expanded="${coOpen}" aria-controls="coSumIn"><span class="co-bar-l"><span>Order summary</span>${saved > 0 ? `<small><b class="co-bar-save">You save ${money2(saved)}</b></small>` : ''}</span>${T.total !== null ? `<span class="price">${moneyHTML(T.total, true)}</span>` : ''}<span class="co-bar-tap">${coOpen ? 'Tap to hide Orders' : 'Tap to see Orders'}</span></button>${nudge('co-nudge-m')}
       <div class="co-sum-in co-tap" id="coSumIn" title="Open your bag to change it"><div class="co-sum-h"><h3>Order summary</h3><button type="button" class="co-edit" id="coEdit">Edit bag</button></div>
-      <div class="co-items">${items}</div>${mini ? `<div class="co-mini-fx">${mini}</div>` : ''}${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
+      <div class="co-items">${items}${freeIt}</div>${mini ? `<div class="co-mini-fx">${mini}</div>` : ''}${no10}${nudge('co-nudge-d')}<div class="co-rows">${rows}</div><button type="button" class="co-edit co-edit-m" id="coEdit2">Edit bag</button></div>`;
     $('#coBar').onclick = () => { coOpen = !coOpen; sum.classList.toggle('open', coOpen); draw(); };
     const openBag = () => {
       // Buy now: move the item into the bag (once, not doubled) and switch to the bag checkout, so the customer can change it there
