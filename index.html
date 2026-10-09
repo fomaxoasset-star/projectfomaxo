@@ -1781,6 +1781,9 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rwp-main .rw-rate{gap:6px}
 .rwp-main .rw-form .rw-rate button{font-size:40px}
 .rwp-main .rw-foot .btn[type=submit]{min-width:200px;justify-content:center}
+.rwp-exit{margin:0;font-size:12.5px;letter-spacing:.04em;color:var(--muted)}
+.rwp-exit a{color:var(--gold-hi);text-decoration:underline;text-underline-offset:3px}
+.rwp-main .rw-foot .rw-err:empty{display:none}
 .rwp-was{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .rwp-done{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:12px 0}
 .rwp-done h3{font-family:var(--serif);font-weight:400;font-size:30px}
@@ -4100,6 +4103,7 @@ async function bindReviewPage(q){
     draw(id);
     if (x.done) { main.innerHTML = `${msg ? `<p class="rw-ok">${msg}</p>` : ''}<div class="rwp-head"><img src="${SM(p.images[0])}" alt=""><div><span class="rw-fk">Your review</span><b>${esc(p.name)}</b><span class="small">${esc(p.family)}</span></div></div><p class="rwp-was"><span class="rw-ver">${RW_TICK}Reviewed</span><a class="link" href="#/product/${p.id}">See it on ${esc(p.name)}</a></p>`; return; }
     main.innerHTML = `${msg ? `<p class="rw-ok">${msg}</p>` : ''}<div class="rwp-head"><img src="${SM(p.images[0])}" alt=""><div><span class="rw-fk">Write a review</span><b>${esc(p.name)}</b><span class="small">${esc(p.family)}</span></div><span class="rw-ver">${RW_TICK}Verified Purchaser</span></div>` + rwForm(p, link);
+    $('.rw-foot', main).insertAdjacentHTML('afterbegin', '<p class="small rwp-exit">To exit review, click <a href="#/fragrances">Continue Shopping</a></p>');
     rwBindForm($('form', main), p, link, () => { x.done = true;
       const ok = `Thank you. Your review of ${esc(p.name)} is now live. <a class="link" href="#/product/${p.id}">See it</a>`, next = items.find(y => !y.done);
       if (next) open(next.id, ok); else allDone(ok);

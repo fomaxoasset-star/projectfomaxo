@@ -718,6 +718,8 @@
 "Your rating *": "تقييمك *",
 "Your review": "مراجعتك",
 "Your order": "طلبك",
+"To exit review, click": "للخروج من التقييم، اضغط",
+"Continue Shopping": "متابعة التسوق",
 "To review": "للتقييم",
 "Reviewing": "قيد التقييم",
 "Reviewed": "تم التقييم",
