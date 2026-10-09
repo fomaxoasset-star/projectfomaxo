@@ -239,7 +239,7 @@ if ($text === '') out(['error' => 'Please write your review.'], 400);
 
 /* optional UAE mobile (reviews without an order link), needed with a problem for its WhatsApp coupon; saved as digits, only FOMAXO sees it */
 $mobile = $link ? '' : substr(preg_replace('/\D/', '', strtr((string)($_POST['mobile'] ?? ''), FX_AR_DIGITS)), 0, 15);
-if ($issue !== '' && $mobile === '') out(['error' => 'Please add your mobile number, so we can send your coupon on WhatsApp.'], 400);
+if ($issue !== '' && $mobile === '') out(['error' => 'Please add your mobile number, so we can send your coupon on WhatsApp upon proof.'], 400);
 if ($mobile !== '' && !rv_mob_ok($mobile)) out(['error' => 'Please enter a valid UAE mobile number, e.g. 050 123 4567.'], 400);
 /* photos chosen (counted before saving): proof of a damaged or faulty product */
 $photoCount = count(array_filter((array)($_FILES['photos']['error'] ?? []), fn($e) => $e === UPLOAD_ERR_OK));
