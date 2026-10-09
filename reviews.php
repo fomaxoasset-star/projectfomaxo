@@ -52,6 +52,12 @@ function rv_display_name($full) {
   return mb_substr(implode(' ', array_map(fn($w) => mb_strtoupper(mb_substr($w, 0, 1)) . mb_substr($w, 1), $parts)), 0, 60);
 }
 
+/* words about a late delivery or a faulty / damaged product (English, Hinglish and Arabic), the same lists as the review form in index.html */
+const RV_LATE = '/\b(?:late|delay(?:ed)?|not (?:yet )?(?:received|delivered|arrived)|never (?:came|arrived)|der(?:i|ee)? se)\b|تأخر|تاخر|متأخر|متاخر|تأخير|تاخير|لم يصل|ما وصل|ماوصل|ما جاني|لم يتم التوصيل/iu';
+const RV_FAULTY = '/\b(?:faulty|defective|damaged?|broken|cracked|leak(?:ed|ing|s)?|spill(?:ed)?|wrong (?:item|product|perfume)|toot(?:a|i))\b|مكسور|انكسر|تكسر|تالف|خربان|معيوب|يسرب|يسرّب|تسريب|مسكوب|انسكب|منتج خطأ|منتج خطا|منتج غلط|طلب غلط/iu';
+/* a UAE mobile: 05x xxx xxxx, 5x xxx xxxx or +971 / 00971 5x xxx xxxx (same rule as rwMobOk in index.html) */
+function rv_mob_ok($d) { if (strpos($d, '00') === 0) $d = substr($d, 2); return (bool)preg_match('/^(?:9715\d{8}|05\d{8}|5\d{8})$/', $d); }
+
 /* ---------------- photos ---------------- */
 if ($method === 'GET' && isset($_GET['photo'])) {
   $n = (string)$_GET['photo'];
@@ -179,26 +185,42 @@ $pid = (string)($_POST['product'] ?? '');
 if (!isset($CATALOG[$pid])) out(['error' => 'Unknown product.'], 400);
 $rating = (int)($_POST['rating'] ?? 0);
 if ($rating < 1 || $rating > 5) out(['error' => 'Please choose a star rating.'], 400);
-$anon = ($_POST['anon'] ?? '') === '1';
-$real = rv_caps(rv_clean($_POST['name'] ?? '', 60));
-$name = $anon ? 'Anonymous' : rv_display_name($real);
-if (!$anon && mb_strlen($name) < 2) out(['error' => 'Please enter your name, or choose Post anonymously.'], 400);
-$text = rv_clean($_POST['text'] ?? '', 5000, true);
-/* optional city and country (country = 2-letter code from the list on the website, shown with its flag) */
-$city = rv_caps(rv_clean(preg_replace('/[^\p{L}\p{M}\s\'\-.]/u', '', (string)($_POST['city'] ?? '')), 40));
-$country = strtoupper((string)($_POST['country'] ?? ''));
-if (!in_array($country, explode(' ', 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'), true)) $country = '';
-if ($text === '') out(['error' => 'Please write your review.'], 400);
-
-/* no daily limit: a customer can review every product they bought, in one go */
-$ip = rv_ip();
-
 /* Verified Purchaser: only through the order's private review link, once per product */
 $token = (string)($_POST['token'] ?? '');
 $link = $token !== '' ? rv_link($token) : null;
 if ($token !== '' && !$link) out(['error' => 'This review link is not valid. Please use the link from your order confirmation.'], 400);
 if ($link && !in_array($pid, $link['products'], true)) $link = null;   // not in that order → normal review
 if ($link && isset(((array)($link['done'] ?? []))[$pid])) out(['error' => "You have already reviewed this product for order {$link['no']}. Thank you!"], 409);
+
+$text = rv_clean($_POST['text'] ?? '', 5000, true);
+/* reviews without an order link, 1–3 stars: "Any problem with your order?" (ignored above 3 stars). The picked problem must fit the words. */
+$issue = $rating <= 3 && !$link && in_array($_POST['issue'] ?? '', ['late', 'faulty'], true) ? $_POST['issue'] : '';
+if ($rating <= 3 && !$link && $issue === '' && (preg_match(RV_LATE, $text) || preg_match(RV_FAULTY, $text)))
+  out(['error' => 'It sounds like there was a problem with your order. Please pick Late delivery or Faulty or damaged product under “Any problem with your order?”.'], 400);
+if ($issue === 'late' && preg_match(RV_FAULTY, $text) && !preg_match(RV_LATE, $text)) out(['error' => 'Your review is about a faulty or damaged product. Please pick Faulty or damaged product instead of Late delivery.'], 400);
+if ($issue === 'faulty' && preg_match(RV_LATE, $text) && !preg_match(RV_FAULTY, $text)) out(['error' => 'Your review is about a late delivery. Please pick Late delivery instead of Faulty or damaged product.'], 400);
+
+$anon = ($_POST['anon'] ?? '') === '1';
+$real = rv_caps(rv_clean($_POST['name'] ?? '', 60));
+$name = $anon ? 'Anonymous' : rv_display_name($real);
+if (!$anon && mb_strlen($name) < 2) out(['error' => 'Please enter your name, or choose Post anonymously.'], 400);
+/* optional city and country (country = 2-letter code from the list on the website, shown with its flag) */
+$city = rv_caps(rv_clean(preg_replace('/[^\p{L}\p{M}\s\'\-.]/u', '', (string)($_POST['city'] ?? '')), 40));
+$country = strtoupper((string)($_POST['country'] ?? ''));
+if (!in_array($country, explode(' ', 'AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'), true)) $country = '';
+if ($text === '') out(['error' => 'Please write your review.'], 400);
+
+/* optional UAE mobile (reviews without an order link), needed with a problem for its WhatsApp coupon; saved as digits, only FOMAXO sees it */
+$mobile = $link ? '' : substr(preg_replace('/\D/', '', strtr((string)($_POST['mobile'] ?? ''), FX_AR_DIGITS)), 0, 15);
+if ($issue !== '' && $mobile === '') out(['error' => 'Please add your mobile number, so we can send your coupon on WhatsApp.'], 400);
+if ($mobile !== '' && !rv_mob_ok($mobile)) out(['error' => 'Please enter a valid UAE mobile number, e.g. 050 123 4567.'], 400);
+/* photos chosen (counted before saving): proof of a damaged or faulty product */
+$photoCount = count(array_filter((array)($_FILES['photos']['error'] ?? []), fn($e) => $e === UPLOAD_ERR_OK));
+if ($link && $rating <= 3 && preg_match(RV_FAULTY, $text) && !$photoCount) out(['error' => 'Sorry about that. Your review is about a damaged or faulty product, so please add a photo of it for proof. We will check it and send you a coupon on WhatsApp.'], 400);
+if ($issue === 'faulty' && !$photoCount) out(['error' => 'Please add a photo of the faulty or damaged product.'], 400);
+
+/* no daily limit: a customer can review every product they bought, in one go */
+$ip = rv_ip();
 
 $id = bin2hex(random_bytes(8));
 $photos = []; $photoNote = null;
@@ -215,7 +237,7 @@ if ($files && is_array($files['tmp_name'])) {
 
 $rec = ['id' => $id, 'product' => $pid, 'rating' => $rating, 'name' => $name, 'anon' => $anon, 'real' => $real, 'city' => $city, 'country' => $country, 'text' => $text,
         'verified' => (bool)$link, 'order' => $link['no'] ?? null, 'photos' => $photos, 'helpful' => 0, 'hidden' => false,
-        'created' => date('c'), 'ip' => $ip];
+        'created' => date('c'), 'ip' => $ip, 'mobile' => $mobile, 'issue' => $issue];   // mobile and issue: for FOMAXO only, never in the public list
 $saved = rv_change(function (&$list) use ($rec) { $list[] = $rec; return true; });
 if (!$saved) { foreach ($photos as $p) @unlink(rv_dir('photos') . "/$p"); out(['error' => 'We could not save your review right now. Please try again.'], 500); }
 if ($link) {
@@ -230,6 +252,7 @@ $pname = $CATALOG[$pid]['name'];
 fomaxo_en_many([$text, $name, trim("$city $country")]);   // Arabic review: English in this email and in admin (the review on the site stays as written)
 $body = "New review on fomaxo.com — it is live now.\n\nProduct: $pname\nRating: " . str_repeat('★', $rating) . str_repeat('☆', 5 - $rating) . " ($rating/5)\n"
       . 'Name shown: ' . fomaxo_en_both($name) . ($anon ? " (real name: $real)" : '') . "\n" . ($city . $country !== '' ? 'From: ' . fomaxo_en_both(trim("$city $country")) . "\n" : '') . ($link ? "Verified Purchaser — order {$link['no']}\n" : "Not a verified purchase\n")
+      . ($issue !== '' ? 'Problem: ' . ($issue === 'late' ? 'Late delivery' : 'Faulty or damaged product') . "\n" : '') . ($mobile !== '' ? "Mobile: $mobile\n" : '')
       . 'Photos: ' . count($photos) . "\n\n" . (fx_has_ar($text) ? fomaxo_en($text) . "\n\nAs written: $text" : $text) . "\n\nTo hide this review (or any other), open:\n$manage\n";
 fomaxo_mail(fomaxo_orders_email($STORE_EMAIL), '=?UTF-8?B?' . base64_encode("New $rating★ review — $pname") . '?=', $body, "From: FOMAXO Reviews <mail@fomaxo.com>\r\nContent-Type: text/plain; charset=UTF-8");
 

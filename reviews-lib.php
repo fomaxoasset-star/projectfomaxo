@@ -1,7 +1,9 @@
 <?php
 /* FOMAXO — product reviews: shared helpers (used by reviews.php, checkout.php and ziina.php).
    Everything is kept OUTSIDE public_html in domains/fomaxo.com/fomaxo-reviews/ (private, kept across GitHub deploys):
-     reviews.json   all reviews (hidden ones stay in the file with "hidden": true)
+     reviews.json   all reviews (hidden ones stay in the file with "hidden": true). Private keys, never in the public list (rv_public):
+                    "mobile" UAE mobile digits as typed ('' when none; reviews without an order link only),
+                    "issue"  'late' | 'faulty' | '' — "Any problem with your order?" on a 1–3 star review without an order link
      photos/        customer photos, re-encoded as JPEG
      links/         one file per order: the private "review your order" link that gives Verified Purchaser
      secret.key     random key made on first use; signs the hide/show links emailed to FOMAXO */
