@@ -3935,7 +3935,7 @@ function rwBindForm(form, p, link, onDone){
     const mob = form.elements.mobile ? form.elements.mobile.value.trim() : '', iss = rating <= 3 ? issue.value : '', prb = check();
     const bad = !rating ? 'Please choose a star rating.' : prob && prb ? prb : !an.checked && rwShort(nm.value).length < 2 ? 'Please enter your name, or choose Post anonymously.' : !text ? 'Please write your review.'
       : iss && !mob ? 'Please add your mobile number, so we can send your coupon on WhatsApp.' : mob && !rwMobOk(mob) ? 'Please enter a valid UAE mobile number, e.g. 050 123 4567.'
-      : prb ? prb : iss === 'faulty' && !files.length ? 'Please add a photo of the faulty or damaged product.' : '';
+      : prb ? prb : iss === 'faulty' && !files.length ? 'Please add a photo of the faulty or damaged product as proof.' : '';
     if (bad) { err.textContent = bad; err.hidden = false; if (bad === prb && prob) $('select', prob).focus(); return; }
     const btn = $('button[type=submit]', form); btn.disabled = true; btn.textContent = files.length ? 'Uploading photos…' : 'Posting…';
     const fd = new FormData();

@@ -760,7 +760,7 @@
 "e.g. 050 123 4567": "مثال: 050 123 4567",
 "Please add your mobile number, so we can send your coupon on WhatsApp.": "يرجى إضافة رقم جوالك لنرسل لك كوبون الخصم عبر واتساب.",
 "Please enter a valid UAE mobile number, e.g. 050 123 4567.": "يرجى إدخال رقم جوال إماراتي صحيح، مثال: 050 123 4567.",
-"Please add a photo of the faulty or damaged product.": "يرجى إضافة صورة للمنتج المعيب أو التالف.",
+"Please add a photo of the faulty or damaged product as proof.": "يرجى إضافة صورة للمنتج المعيب أو التالف كإثبات.",
 "Photos (optional)": "الصور (اختياري)",
 "Up to 3": "حتى 3 صور",
 "+ Add": "+ أضف",
