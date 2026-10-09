@@ -7,7 +7,7 @@
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline'; worker-src 'self'; form-action 'self'; frame-ancestors 'none'");
 require dirname(__DIR__) . '/orders-lib.php';
 date_default_timezone_set('Asia/Dubai');
 
@@ -15,7 +15,7 @@ $STORE_EMAIL = 'fomaxoasset@gmail.com';   // first set-up; after that password l
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 session_name('fxadmin');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
-session_start();
+session_start(($_GET['do'] ?? '') === 'new_orders' ? ['read_and_close' => true] : []);   // the 30 second new order check only reads the sign-in, so it never keeps it alive
 if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
 
 function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
@@ -62,7 +62,12 @@ function fx_tabs(array $labels, string $name) {
 }
 
 function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
-  $nb = !empty($_SESSION['admin']) && !empty($GLOBALS['pdo']) && function_exists('fx_new_orders') ? fx_new_orders($GLOBALS['pdo']) : 0;   // red count on the Orders tab
+  $ord = !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p', 'cp']));
+  $bd = [];   // coloured rounds on the tabs; opening a tab clears its rounds
+  if (!empty($_SESSION['admin']) && !empty($GLOBALS['pdo'])) {
+    foreach (['orders' => $ord, 'reviews' => isset($_GET['reviews']), 'leads' => isset($_GET['analytics'])] as $k => $open) if ($open) fx_seen($GLOBALS['pdo'], $k, true);
+    $bd = fx_badges($GLOBALS['pdo']);
+  }
   $css = <<<'CSS'
 .arx{display:block;font-size:.86em;font-weight:400;opacity:.72;line-height:1.5;margin-top:2px;font-family:Tahoma,Arial,sans-serif}
 .arx.in{display:inline;margin:0 0 0 6px;unicode-bidi:isolate}
@@ -134,7 +139,21 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none;background:var(--panel);border-bottom:1px solid var(--line)}
 .tabs a{text-align:center;text-decoration:none;font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:11px 4px;color:var(--muted);border-bottom:2px solid transparent}
 .tabs a.on{color:var(--gold);border-bottom-color:var(--gold)}
-.nbadge{display:inline-block;min-width:18px;height:18px;margin-left:5px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#e0342b;color:#fff;font-size:10.5px;font-weight:700;font-style:normal;line-height:18px;letter-spacing:0;text-align:center;vertical-align:1px}.nbadge[hidden]{display:none}
+.tb{display:inline-flex;margin-left:4px;vertical-align:1px}.tb[hidden]{display:none}.tb i{font:700 9.5px/1 Manrope,Arial,sans-serif!important;font-size-adjust:none!important;letter-spacing:0;font-style:normal;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 0 1.5px var(--panel)}.tb i+i{margin-left:-3px}
+.tb-orders{background:#e0342b}.tb-bad{background:#4f7fc4}.tb-faulty{background:#d0644e}.tb-late{background:#e0a03a;color:#2a1c05!important}.tb-leads{background:#c9a45c;color:#17130b!important}
+@media (max-width:759px){.tabsw .tabs a:has(.tb:not([hidden])){position:relative;overflow:visible}.tabsw .tabs:has(.tb:not([hidden])) a:nth-child(-n+6){padding-top:12px}.tabsw .tabs .tb{position:absolute;top:-1px;right:-3px;margin:0;z-index:1}.tabsw .tabs .tb i{min-width:14px;height:14px;font-size:8.5px!important;padding:0 3px}}
+/* new order pop-ups (FX_ALERT_JS), like fomaxo.in: top right, full width on phones, gold edge, stay until closed */
+.noa-stack{position:fixed;top:14px;right:14px;z-index:60;display:flex;flex-direction:column;gap:8px;width:min(340px,calc(100% - 28px));pointer-events:none}
+.noa{pointer-events:auto;display:flex;align-items:stretch;background:var(--panel);border:1px solid var(--gold);border-left-width:4px;border-radius:10px;box-shadow:0 12px 32px #0003;animation:noaIn .35s ease;transition:opacity .25s,transform .25s}
+@media (prefers-color-scheme:dark){.noa{box-shadow:0 12px 32px #000b}}
+.noa.gone{opacity:0;transform:translateX(20px)}
+.noa a{flex:1;display:flex;flex-direction:column;gap:2px;padding:11px 6px 11px 14px;text-decoration:none;color:var(--ink);min-width:0}
+.noa-k{font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}.noa-k::before{content:"●";color:#2f9e55;margin-right:6px;animation:noaDot 1.4s ease-in-out infinite}
+.noa b{font-size:16px;color:var(--gold)}.noa small{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.noa button{background:none;border:0;color:var(--muted);font-size:14px;padding:0 13px;cursor:pointer}.noa button:hover{color:var(--ink)}
+@keyframes noaIn{from{opacity:0;transform:translateY(-12px)}}@keyframes noaDot{50%{opacity:.25}}
+@media (max-width:759px){.noa-stack{top:10px;right:12px;left:12px;width:auto}.noa a{padding:12px 6px 12px 14px}.noa button{padding:0 16px;font-size:16px}}
+.emrow{display:flex;gap:8px}.emrow input{flex:1 1 auto;min-width:0}.emrow .btn{flex:none}@media (min-width:1100px){main .settings{grid-template-areas:"a c e" "a f e" "b d e"}}.nalert-sw{margin-top:6px}.nalert-sw .pgs{grid-template-columns:1fr!important;margin:0}.nalert-sw label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0}.nalert{margin-top:10px}.nalert .btn{margin:0}.nalert .shelp{margin-top:8px}.sndbtn{display:inline-flex;align-items:center;gap:5px;margin-left:auto;margin-right:6px;flex:none;white-space:nowrap}.sndbtn svg{width:13px;height:13px}.sndbtn.on{background:var(--gold);color:var(--gold-ink);border-color:var(--gold)}.sndbtn.on .x{display:none}.sndbtn:not(.on){opacity:.8}.nalert .nstate{margin:10px 0 0;font-size:13px}.nalert .nstate.ok{color:#2f9e55;font-weight:600}
 .newo{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:#e0342b;color:#fff;font-size:10px;font-weight:700;letter-spacing:.06em;vertical-align:1px}
 .tabsw{display:flex;flex:none;background:var(--panel);border-bottom:1px solid var(--line)}.tabsw .tabs{flex:1 1 auto;min-width:0;border-bottom:0}.tnav{display:none}
 @media (max-width:759px){.tnav:not([hidden]){display:flex;align-items:center;justify-content:center;flex:none;width:38px;font-size:24px;line-height:1;color:var(--gold);text-decoration:none;background:var(--panel)}.tnav[data-d="-1"]{border-right:1px solid var(--line)}.tnav[data-d="1"]{border-left:1px solid var(--line)}}
@@ -412,13 +431,14 @@ CSS;
      . '</header>'
      . (!empty($_SESSION['admin']) ? '<div class="tabsw"><a class="tnav" data-d="-1" aria-label="Previous page" hidden>‹</a><nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
          [['Home', './', !$_GET], ['Products', './?products=1', isset($_GET['products'])], ['Stocks', './?stock=1', isset($_GET['stock'])],
-          ['Orders<i class="nbadge"' . ($nb ? '' : ' hidden') . ' title="New orders not opened yet">' . $nb . '</i>', './?orders=1', !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p', 'cp']))],
-          ['Reviews', './?reviews=1', isset($_GET['reviews'])], ['Analytics', './?analytics=1', isset($_GET['analytics'])],
+          ['Orders' . fx_tb($bd, 'orders'), './?orders=1', $ord],
+          ['Reviews' . fx_tb($bd, 'reviews'), './?reviews=1', isset($_GET['reviews'])], ['Analytics' . fx_tb($bd, 'analytics'), './?analytics=1', isset($_GET['analytics'])],
           ['Coupons', './?coupons=1', isset($_GET['coupons'])], ['Offers', './?offer=1', isset($_GET['offer'])], ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Sales', './?reports=1', isset($_GET['reports'])],
           ['Members', './?members=1', isset($_GET['members'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav><a class="tnav" data-d="1" aria-label="Next page" hidden>›</a></div>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . ($fit ? ' fit' : '') . '">' . $body . '</main>'
+     . (!empty($_SESSION['admin']) && !empty($GLOBALS['pdo']) ? '<div id="orderAlerts" hidden data-now="' . date('Y-m-d H:i:s') . '" data-sound="' . (fomaxo_setting($GLOBALS['pdo'], 'alert_sound') === '0' ? '0' : '1') . '"></div><script>' . FX_ALERT_JS . '</script>' : '')
      . (str_contains($body, 'data-wabox') ? fx_wa_box() : '')
-     . '<script>document.querySelectorAll("input[type=date]").forEach(function(i){var w=document.createElement("span");w.className="dmy";i.parentNode.insertBefore(w,i);var t=document.createElement("input");t.type="text";t.className="dt";t.inputMode="numeric";t.autocomplete="off";t.placeholder="dd/mm/yyyy";t.maxLength=10;if(i.id){t.id=i.id;i.removeAttribute("id")}if(i.required){t.required=true;i.required=false}var l=i.getAttribute("aria-label");if(l)t.setAttribute("aria-label",l);i.tabIndex=-1;i.setAttribute("aria-hidden","true");w.appendChild(t);w.appendChild(i);w.insertAdjacentHTML("beforeend","<svg viewBox=\\"0 0 24 24\\" aria-hidden=\\"true\\"><path fill=\\"none\\" stroke=\\"currentColor\\" stroke-width=\\"2\\" d=\\"M4 6h16v14H4zM4 10h16M8 3v4M16 3v4\\"/></svg>");var show=function(){var v=(i.value||"").split("-");t.value=v.length===3?v[2]+"/"+v[1]+"/"+v[0]:""};show();i.addEventListener("change",show);i.addEventListener("input",show);i.addEventListener("click",function(){try{i.showPicker()}catch(e){}});t.addEventListener("input",function(e){if(!/^delete/.test(e.inputType||"")&&!/^\\d{1,2}\\/\\d{1,2}\\/\\d{0,4}$/.test(t.value)){var d=t.value.replace(/[^0-9]/g,"").slice(0,8),o=d.slice(0,2);if(d.length>2)o+="/"+d.slice(2,4);if(d.length>4)o+="/"+d.slice(4);t.value=o}var m=t.value.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/),ok=false;if(m){var dd=+m[1],mm=+m[2],yy=+m[3],x=new Date(yy,mm-1,dd);ok=x.getFullYear()===yy&&x.getMonth()===mm-1&&x.getDate()===dd}i.value=ok?m[3]+"-"+("0"+m[2]).slice(-2)+"-"+("0"+m[1]).slice(-2):"";t.setCustomValidity(t.value===""||ok?"":"Type the date as dd/mm/yyyy")});t.addEventListener("blur",function(){if(i.value)show()})});' . (!empty($_SESSION['admin']) ? 'try{localStorage.setItem("fomaxo_notrack","1")}catch(e){}setInterval(function(){if(document.hidden)return;fetch("./?newcount=1",{credentials:"same-origin",cache:"no-store"}).then(function(r){return r.json()}).then(function(d){var b=document.querySelector(".nbadge");if(b&&typeof d.n==="number"){b.textContent=d.n;b.hidden=!d.n}}).catch(function(){})},60000);' : '') . 'document.querySelectorAll(".tsearch").forEach(function(i){i.addEventListener("input",function(){var q=i.value.trim().toLowerCase();document.querySelectorAll("main table tr.row").forEach(function(r){r.hidden=q!==""&&r.innerText.toLowerCase().indexOf(q)<0})})});var t=document.querySelector(".tabs a.on");if(t&&t.parentNode.scrollWidth>t.parentNode.clientWidth)t.parentNode.scrollLeft=t.offsetLeft-(t.parentNode.clientWidth-t.offsetWidth)/2;if(t){var go=function(d){var a=d<0?t.previousElementSibling:t.nextElementSibling;return a&&a.href};document.querySelectorAll(".tnav").forEach(function(b){var u=go(+b.dataset.d);if(u){b.href=u;b.hidden=false}});var sx=null,sy,st;function hscroll(e){for(;e&&e!==document.body;e=e.parentElement){var o=getComputedStyle(e).overflowX;if((o=="auto"||o=="scroll")&&e.scrollWidth>e.clientWidth+2)return true}return false}document.addEventListener("touchstart",function(e){var g=e.target;sx=null;if(e.touches.length!==1||innerWidth>759||g.closest("input,textarea,select,.tabsw,[contenteditable]")||document.body.classList.contains("zoomed")||hscroll(g))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now()},{passive:true});document.addEventListener("touchend",function(e){if(sx===null)return;var c=e.changedTouches[0],dx=c.clientX-sx,dy=c.clientY-sy;sx=null;if(Math.abs(dx)<70||Math.abs(dx)<2*Math.abs(dy)||Date.now()-st>800)return;var u=go(dx<0?1:-1);if(!u)return;var m=document.querySelector("main");if(m){m.style.transition="transform .16s,opacity .16s";m.style.transform="translateX("+(dx<0?-40:40)+"px)";m.style.opacity=".35"}location.href=u},{passive:true});addEventListener("pageshow",function(){var m=document.querySelector("main");if(m){m.style.transform="";m.style.opacity=""}})}</script></body></html>';
+     . '<script>document.querySelectorAll("input[type=date]").forEach(function(i){var w=document.createElement("span");w.className="dmy";i.parentNode.insertBefore(w,i);var t=document.createElement("input");t.type="text";t.className="dt";t.inputMode="numeric";t.autocomplete="off";t.placeholder="dd/mm/yyyy";t.maxLength=10;if(i.id){t.id=i.id;i.removeAttribute("id")}if(i.required){t.required=true;i.required=false}var l=i.getAttribute("aria-label");if(l)t.setAttribute("aria-label",l);i.tabIndex=-1;i.setAttribute("aria-hidden","true");w.appendChild(t);w.appendChild(i);w.insertAdjacentHTML("beforeend","<svg viewBox=\\"0 0 24 24\\" aria-hidden=\\"true\\"><path fill=\\"none\\" stroke=\\"currentColor\\" stroke-width=\\"2\\" d=\\"M4 6h16v14H4zM4 10h16M8 3v4M16 3v4\\"/></svg>");var show=function(){var v=(i.value||"").split("-");t.value=v.length===3?v[2]+"/"+v[1]+"/"+v[0]:""};show();i.addEventListener("change",show);i.addEventListener("input",show);i.addEventListener("click",function(){try{i.showPicker()}catch(e){}});t.addEventListener("input",function(e){if(!/^delete/.test(e.inputType||"")&&!/^\\d{1,2}\\/\\d{1,2}\\/\\d{0,4}$/.test(t.value)){var d=t.value.replace(/[^0-9]/g,"").slice(0,8),o=d.slice(0,2);if(d.length>2)o+="/"+d.slice(2,4);if(d.length>4)o+="/"+d.slice(4);t.value=o}var m=t.value.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/),ok=false;if(m){var dd=+m[1],mm=+m[2],yy=+m[3],x=new Date(yy,mm-1,dd);ok=x.getFullYear()===yy&&x.getMonth()===mm-1&&x.getDate()===dd}i.value=ok?m[3]+"-"+("0"+m[2]).slice(-2)+"-"+("0"+m[1]).slice(-2):"";t.setCustomValidity(t.value===""||ok?"":"Type the date as dd/mm/yyyy")});t.addEventListener("blur",function(){if(i.value)show()})});' . (!empty($_SESSION['admin']) ? 'try{localStorage.setItem("fomaxo_notrack","1")}catch(e){}' : '') . 'document.querySelectorAll(".tsearch").forEach(function(i){i.addEventListener("input",function(){var q=i.value.trim().toLowerCase();document.querySelectorAll("main table tr.row").forEach(function(r){r.hidden=q!==""&&r.innerText.toLowerCase().indexOf(q)<0})})});var t=document.querySelector(".tabs a.on");if(t&&t.parentNode.scrollWidth>t.parentNode.clientWidth)t.parentNode.scrollLeft=t.offsetLeft-(t.parentNode.clientWidth-t.offsetWidth)/2;if(t){var go=function(d){var a=d<0?t.previousElementSibling:t.nextElementSibling;return a&&a.href};document.querySelectorAll(".tnav").forEach(function(b){var u=go(+b.dataset.d);if(u){b.href=u;b.hidden=false}});var sx=null,sy,st;function hscroll(e){for(;e&&e!==document.body;e=e.parentElement){var o=getComputedStyle(e).overflowX;if((o=="auto"||o=="scroll")&&e.scrollWidth>e.clientWidth+2)return true}return false}document.addEventListener("touchstart",function(e){var g=e.target;sx=null;if(e.touches.length!==1||innerWidth>759||g.closest("input,textarea,select,.tabsw,[contenteditable]")||document.body.classList.contains("zoomed")||hscroll(g))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now()},{passive:true});document.addEventListener("touchend",function(e){if(sx===null)return;var c=e.changedTouches[0],dx=c.clientX-sx,dy=c.clientY-sy;sx=null;if(Math.abs(dx)<70||Math.abs(dx)<2*Math.abs(dy)||Date.now()-st>800)return;var u=go(dx<0?1:-1);if(!u)return;var m=document.querySelector("main");if(m){m.style.transition="transform .16s,opacity .16s";m.style.transform="translateX("+(dx<0?-40:40)+"px)";m.style.opacity=".35"}location.href=u},{passive:true});addEventListener("pageshow",function(){var m=document.querySelector("main");if(m){m.style.transform="";m.style.opacity=""}})}</script></body></html>';
   exit;
 }
 /* bar graph for the Dashboard and Analytics: bars stretch to fill the box; the amounts and dates are normal text so they stay readable */
@@ -520,6 +540,91 @@ function fx_rv_issue($r) {
   return 'bad';
 }
 const FX_RV_ISSUES = ['bad' => 'Bad product', 'faulty' => 'Faulty product', 'late' => 'Late delivery'];
+/* coloured rounds on the tabs, like fomaxo.in: what came in since each tab was last opened. The times are kept on the server, so laptop and phone agree;
+   the very first time starts from now. Orders: placed (cash) or paid (card); Reviews: new Bad / Faulty / Late reviews; Analytics: new Left at checkout who have not ordered */
+const FX_ALERT_AT = "(CASE WHEN payment = 'Cash on delivery' THEN created_at ELSE COALESCE(paid_at, created_at) END)";
+function fx_seen($pdo, $k, $open = false) {
+  $v = (string)fomaxo_setting($pdo, "seen_$k");
+  if ($v === '' || $open) { $v = date('Y-m-d H:i:s'); try { fomaxo_setting($pdo, "seen_$k", $v); } catch (Throwable $e) {} }
+  return $v;
+}
+function fx_badges($pdo) {
+  $b = ['orders' => 0, 'bad' => 0, 'faulty' => 0, 'late' => 0, 'leads' => 0];
+  try {
+    $s = $pdo->prepare("SELECT COUNT(*) FROM fx_orders WHERE order_no LIKE 'FMX-%' AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') AND " . FX_ALERT_AT . " > ?");
+    $s->execute([fx_seen($pdo, 'orders')]); $b['orders'] = (int)$s->fetchColumn();
+    $hid = $pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'hidden'")->fetch() ? ' AND l.hidden = 0' : '';
+    $s = $pdo->prepare("SELECT COUNT(*) FROM fx_leads l WHERE l.created_at > ? AND l.order_no IS NULL$hid
+                        AND NOT EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
+                                        AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9))");
+    $s->execute([fx_seen($pdo, 'leads')]); $b['leads'] = (int)$s->fetchColumn();
+    require_once dirname(__DIR__) . '/reviews-lib.php';
+    $t = strtotime(fx_seen($pdo, 'reviews'));
+    foreach (rv_all() as $r) if (strtotime((string)($r['created'] ?? '')) > $t && ($k = fx_rv_issue($r)) !== '') $b[$k]++;
+  } catch (Throwable $e) {}
+  return $b;
+}
+/* new order pop-ups, chime, title and device notifications, and the live tab rounds (like fomaxo.in admin.js); every 30 seconds and on coming back to the tab */
+const FX_ALERT_JS = <<<'JS'
+(function(){
+  var box=document.getElementById('orderAlerts');if(!box)return;
+  var get=function(k){try{return localStorage.getItem(k)}catch(x){return null}},put=function(k,v){try{localStorage.setItem(k,v)}catch(x){}};
+  var ms=function(t){return Date.parse(t.replace(' ','T'))};
+  var now=box.dataset.now,since=get('fxOrderSince')||'';
+  if(!since||since>now||ms(since)<ms(now)-12*3600e3)since=now;   // first time, or away a long time: start from now, not a pile of old orders
+  var seen=[],swReg=null;
+  var sw=function(){if(!swReg&&'serviceWorker' in navigator)swReg=navigator.serviceWorker.register('./alert-sw.js',{scope:'./'}).then(function(){return navigator.serviceWorker.ready}).catch(function(){return null});return swReg||Promise.resolve(null)};
+  /* the chime: two soft notes made in the browser (no sound file); browsers allow sound only after a first tap or key on the page */
+  var ac=null,unlock=function(){var A=window.AudioContext||window.webkitAudioContext;if(!A)return;if(!ac)ac=new A();if(ac.state==='suspended')ac.resume()};
+  document.addEventListener('pointerdown',unlock,{once:true,capture:true});document.addEventListener('keydown',unlock,{once:true,capture:true});
+  var chime=function(){if(box.dataset.sound!=='1')return;try{unlock();if(!ac)return;[[880,0],[1318.5,.18]].forEach(function(n){var o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+n[1];o.type='sine';o.frequency.value=n[0];g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.35,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.9);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.95)})}catch(x){}};
+  /* the pop-ups stay until closed, newest on top */
+  var stack=document.createElement('div');stack.className='noa-stack';stack.setAttribute('role','status');stack.setAttribute('aria-live','polite');document.body.appendChild(stack);
+  var title=document.title,unread=0,showTitle=function(){document.title=unread?'('+unread+') New order · '+title:title};
+  window.addEventListener('focus',function(){unread=0;showTitle()});
+  var popup=function(o){var d=document.createElement('div');d.className='noa';var a=document.createElement('a');a.href=o.url;
+    var k=document.createElement('span');k.className='noa-k';k.textContent='New order';var b=document.createElement('b');b.textContent=o.no+' · '+o.total;var s=document.createElement('small');s.textContent=o.name+' · '+o.how;a.append(k,b,s);
+    var x=document.createElement('button');x.type='button';x.setAttribute('aria-label','Close');x.textContent='✕';x.onclick=function(){d.classList.add('gone');setTimeout(function(){d.remove()},250)};d.append(a,x);stack.prepend(d)};
+  var notify=function(o){if(!('Notification' in window)||Notification.permission!=='granted')return;var opt={body:o.total+' · '+o.name+' · '+o.how,tag:o.no,icon:'../assets/img/favicon-192.png',data:{url:o.url}};
+    sw().then(function(r){if(r)return r.showNotification('New order '+o.no,opt);var n=new Notification('New order '+o.no,opt);n.onclick=function(){window.focus();location.href=o.url}}).catch(function(){})};
+  /* the rounds after the tab names: red new orders; blue / red / amber new Bad product / Faulty product / Late delivery reviews; gold new Left at checkout */
+  var ROUNDS={orders:[['orders','new order','new orders']],reviews:[['bad','new Bad product review','new Bad product reviews'],['faulty','new Faulty product review','new Faulty product reviews'],['late','new Late delivery review','new Late delivery reviews']],analytics:[['leads','new left at checkout','new left at checkout']]};
+  var rounds=function(b){if(!b)return;document.querySelectorAll('.tabs .tb[data-tb]').forEach(function(w){var a=w.parentNode,said=[];w.textContent='';
+    ROUNDS[w.dataset.tb].forEach(function(r){var n=+b[r[0]]||0;if(!n)return;var i=document.createElement('i');i.className='tb-'+r[0];i.textContent=n>99?'99+':n;w.appendChild(i);said.push(n+' '+(n===1?r[1]:r[2]))});
+    w.hidden=!said.length;if(said.length){a.title=w.title=said.join(', ')}else{a.removeAttribute('title');w.removeAttribute('title')}})};
+  rounds((function(){var b={};document.querySelectorAll('.tabs .tb i').forEach(function(i){b[i.className.slice(3)]=i.textContent});return b})());
+  var timer=null,check=function(){fetch('./?do=new_orders&since='+encodeURIComponent(since),{credentials:'same-origin',cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
+    since=j.now;put('fxOrderSince',since);rounds(j.badges);
+    seen=(get('fxOrderSeen')||'').split(',').filter(Boolean);   // another admin tab may have shown some already
+    var fresh=(j.orders||[]).filter(function(o){return seen.indexOf(o.no)<0}).reverse();if(!fresh.length)return;
+    fresh.forEach(function(o){seen.push(o.no);popup(o);notify(o)});put('fxOrderSeen',seen.slice(-50).join(','));
+    chime();if(!document.hasFocus()){unread+=fresh.length;showTitle()}}).catch(function(){clearInterval(timer)})};   // signed out: stop asking
+  timer=setInterval(check,30000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)check()});
+  if('Notification' in window&&Notification.permission==='granted')sw();
+  window.fxOrderCheck=check;
+  /* Settings → New orders: turn on pop-ups for this phone or laptop */
+  var on=document.querySelector('[data-notify-on]'),st=document.querySelector('[data-notify-state]');if(!on)return;
+  var show=function(){var p='Notification' in window&&'serviceWorker' in navigator?Notification.permission:'none';on.hidden=p!=='default';st.className='nstate'+(p==='granted'?' ok':' muted');
+    st.textContent=p==='granted'?'✓ Pop-ups are on for this device':p==='denied'?'Pop-ups are blocked for this site in the browser settings. Allow notifications for fomaxo.com there.':p==='none'?'This browser cannot show pop-ups. On iPhone, add fomaxo.com/admin to the Home Screen and open it from there.':'';st.hidden=!st.textContent};
+  on.addEventListener('click',function(){Notification.requestPermission().then(function(p){show();if(p==='granted')sw().then(function(r){var o={body:'New orders will show like this.',tag:'fx-test',icon:'../assets/img/favicon-192.png'};if(r)r.showNotification('FOMAXO order pop-ups are on',o);else new Notification('FOMAXO order pop-ups are on',o)})})});
+  show();
+})();
+JS;
+function fx_sound_btn($pdo) {   // one tap turns the new order chime on or off
+  $on = fomaxo_setting($pdo, 'alert_sound') !== '0';
+  return '<button type="button" class="btn xs line sndbtn' . ($on ? ' on' : '') . '" aria-pressed="' . ($on ? 'true' : 'false') . '" title="Chime with each new order pop-up" onclick="var b=this,on=!b.classList.contains(\'on\'),f=new FormData();f.append(\'csrf\',' . h(json_encode($_SESSION['csrf'] ?? '')) . ');f.append(\'on\',on?\'1\':\'0\');fetch(\'./?alertsound=1\',{method:\'POST\',body:f,credentials:\'same-origin\'}).then(function(r){return r.json()}).then(function(j){if(j.error)return;b.classList.toggle(\'on\',j.on);b.setAttribute(\'aria-pressed\',j.on);b.lastChild.textContent=j.on?\'Sound on\':\'Sound off\';var a=document.getElementById(\'orderAlerts\');if(a)a.dataset.sound=j.on?\'1\':\'0\'})">'
+    . '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.8V3.5a1.5 1.5 0 0 0-3 0v.7A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/><path class="x" d="M3 3l18 18" stroke="currentColor" stroke-width="2.2"/></svg><span>' . ($on ? 'Sound on' : 'Sound off') . '</span></button>';
+}
+function fx_tb($b, $tab) {
+  $o = ''; $said = [];
+  foreach (['orders' => ['orders'], 'reviews' => ['bad', 'faulty', 'late'], 'analytics' => ['leads']][$tab] as $k) {
+    $n = (int)($b[$k] ?? 0); if (!$n) continue;
+    $w = $k === 'orders' ? ($n === 1 ? 'new order' : 'new orders') : ($k === 'leads' ? 'new left at checkout' : 'new ' . FX_RV_ISSUES[$k] . ' review' . ($n === 1 ? '' : 's'));
+    $o .= '<i class="tb-' . $k . '">' . ($n > 99 ? '99+' : $n) . '</i>'; $said[] = "$n $w";
+  }
+  return '<span class="tb" data-tb="' . $tab . '"' . ($o === '' ? ' hidden' : ' title="' . h(implode(', ', $said)) . '"') . '>' . $o . '</span>';
+}
 /* the apology WhatsApp to a review's customer (Admin → Reviews): [head, tail, arabic]; the box puts a GOODWILL- coupon between them */
 function fx_rv_msg($r, $product, $ar = null) {
   $who = !empty($r['anon']) ? (string)($r['real'] ?? '') : (string)($r['name'] ?? ''); $f = preg_split('/\s+/u', trim($who))[0] ?? ''; $is = fx_rv_issue($r); $n2 = "\n\n";
@@ -582,6 +687,22 @@ if (!is_file($cfgFile)) {
 
 $pdo = fomaxo_db();
 if (!$pdo) page('Database', '<h1>Database not reachable</h1><p class="msg bad">The order database could not be opened right now. Orders are still being emailed and saved as files. Try again in a few minutes.</p>');
+
+/* every 30 seconds from any admin page (FX_ALERT_JS): orders placed (cash) or paid (card) since the last check, and the tab rounds.
+   The sign-in is only read here (session_start above), so an admin page left open still signs out as before. */
+if (($_GET['do'] ?? '') === 'new_orders') {
+  header('Content-Type: application/json'); header('Cache-Control: no-store');
+  if (empty($_SESSION['admin'])) { http_response_code(401); exit('{"out":1}'); }
+  $since = (string)($_GET['since'] ?? ''); if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $since)) $since = date('Y-m-d H:i:s');
+  $now = date('Y-m-d H:i:s'); $list = [];
+  try {
+    $s = $pdo->prepare("SELECT order_no, name, total, payment FROM fx_orders WHERE order_no LIKE 'FMX-%' AND status <> 'Awaiting payment' AND " . FX_ALERT_AT . " >= ? ORDER BY id DESC LIMIT 10");
+    $s->execute([$since]);
+    foreach ($s as $o) $list[] = ['no' => $o['order_no'], 'name' => fx_has_ar($o['name']) ? fomaxo_en($o['name']) : $o['name'], 'total' => 'AED ' . number_format((float)$o['total'], fmod((float)$o['total'], 1) ? 2 : 0),
+                                  'how' => $o['payment'] === 'Cash on delivery' ? 'Cash on delivery' : 'Paid online', 'url' => './?o=' . rawurlencode($o['order_no'])];
+  } catch (Throwable $e) {}
+  exit(json_encode(['now' => $now, 'orders' => $list, 'badges' => fx_badges($pdo)], JSON_UNESCAPED_UNICODE));
+}
 
 /* ================= 2) password: log in, log out, reset by email ================= */
 if (isset($_GET['logout']) && $_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok()) { $_SESSION = []; session_destroy(); header('Location: ./', true, 303); exit; }
@@ -656,7 +777,14 @@ if (empty($_SESSION['admin'])) {
 
 /* ================= 3) logged in: orders ================= */
 
-if (isset($_GET['newcount'])) { header('Content-Type: application/json'); header('Cache-Control: no-store'); exit(json_encode(['n' => fx_new_orders($pdo)])); }   // the red count on the Orders tab, checked every minute
+
+/* the alert sound switch on Orders (fx_sound_btn), the same setting as Settings → New orders */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['alertsound'])) {
+  header('Content-Type: application/json');
+  if (!csrf_ok()) exit('{"error":1}');
+  fomaxo_setting($pdo, 'alert_sound', ($_POST['on'] ?? '') === '1' ? '1' : '0');
+  exit(json_encode(['on' => ($_POST['on'] ?? '') === '1']));
+}
 
 /* the shared WhatsApp box (page() script fxWa), without reloading: with a coupon picked, a new one-use code for this mobile only; then the day it went
    is noted (review request and refill lists keep their own Sent; the rest in wa_sent), so the button reads Sent dd/mm */
@@ -1375,6 +1503,7 @@ if (isset($_GET['settings'])) {
     $email = trim((string)($_POST['orders_email'] ?? ''));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { flash('Please type a valid email address.'); go(['settings' => 1]); }
     fomaxo_setting($pdo, 'orders_email', $email);   // the "Only X left" level is set on the Stock page
+    if (isset($_POST['alert_save'])) fomaxo_setting($pdo, 'alert_sound', empty($_POST['alert_sound']) ? '0' : '1');   // the chime with each new order pop-up
     flash('Settings saved.', true); go(['settings' => 1]);
   }
   $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) ?: [];
@@ -1391,12 +1520,14 @@ if (isset($_GET['settings'])) {
     return '<label for="ads_' . $k . '_token" class="ads-l"><span>' . $label . '</span><small>' . $st . '</small></label><input id="ads_' . $k . '_token" name="ads_' . $k . '_token" type="password" class="ads-in" autocomplete="new-password" spellcheck="false" placeholder="' . (isset($adTok[$k]) ? 'Saved' : 'Optional') . '"><p class="muted small shelp">' . $where . '</p>'; };
   $adRow = fn($k, $label, $ph, $where) => '<label for="ads_' . $k . '" class="ads-l"><span>' . $label . '</span><small>' . $adOn($k) . '</small></label><input id="ads_' . $k . '" name="ads_' . $k . '" class="ads-in" autocomplete="off" spellcheck="false" placeholder="' . $ph . '" value="' . h($ads[$k] ?? '') . '"><p class="muted small shelp">' . $where . '</p>';
   page('Settings', '<h1>Settings</h1>' . flash()
-    . fx_tabs(['Store', 'Cash', 'Email', 'Password', 'Ads', 'Pages'], 'Settings')
+    . fx_tabs(['New orders', 'Cash', 'Email', 'Password', 'Ads', 'Pages'], 'Settings')
     . '<div class="settings fitbox ptw" data-t="1"><form class="card" method="post" data-t="1">' . csrf_field()
-    . '<h2>Store</h2>'
-    . '<label for="orders_email">Store emails go to</label><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '">'
+    . '<h2>New orders</h2>'
+    . '<label for="orders_email">Store emails go to</label><div class="emrow"><input id="orders_email" type="email" name="orders_email" required value="' . h(fomaxo_orders_email()) . '"><button class="btn">Save</button></div>'
     . '<p class="muted small shelp">New cash and card orders, new reviews and admin password reset links are all emailed here.</p>'
-    . '<p class="sbtn"><button class="btn">Save</button></p></form>'
+    . '<input type="hidden" name="alert_save" value="1"><div class="spages nalert-sw"><div class="pgs"><label class="pg"><span>Sound on new orders<small class="muted">A chime with each new order pop-up</small></span><input type="checkbox" role="switch" name="alert_sound" value="1"' . (fomaxo_setting($pdo, 'alert_sound') === '0' ? '' : ' checked') . ' aria-label="Sound on new orders" onchange="this.form.requestSubmit()"><i class="sw"></i></label></div></div>'
+    . '<div class="nalert"><button type="button" class="btn line" data-notify-on hidden>Turn on pop-ups on this device</button><p data-notify-state hidden></p>'
+    . '<p class="muted small shelp">Pop-ups show a new order even when the admin tab is behind other windows. Turn them on once on each phone or laptop you use.</p></div></form>'
     . '<form class="card spages" method="post" data-t="6">' . csrf_field() . '<input type="hidden" name="pages_save" value="1">'
     . '<h2>Site pages <small class="muted">Off hides a page from the website</small></h2><div class="pgs" onchange="this.closest(\'form\').submit()">'
     . implode('', array_map(fn($k, $l) => '<label class="pg"><span>' . h($l) . '</span><input type="checkbox" role="switch" name="pg[' . $k . ']" value="1"' . (in_array($k, $pgOff, true) ? '' : ' checked') . ' aria-label="' . h($l) . '"><i class="sw"></i></label>', array_keys(FX_SITE_PAGES), FX_SITE_PAGES))
@@ -3112,7 +3243,7 @@ page('Orders', flash()
   . '<div><label for="to">To</label><input id="to" type="date" name="to" value="' . h($f['to']) . '"></div>'
   . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile or coupon"></div>'
   . '<div class="acts"><button class="btn line">Show</button><a class="btn" href="' . h(self_url($qs + ['export' => 1])) . '">Excel</a></div></form>'
-  . '<div class="fill">' . ($rows ? '<p class="ocount"><span>' . (int)$sum['n'] . ' order' . ((int)$sum['n'] === 1 ? '' : 's') . '. Tap a button to update an order, or tap the order to see it.</span><a class="btn xs rqbtn" href="./?orders=1&amp;ask=1">Review requests (' . $rqN . ')</a></p><table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
+  . '<div class="fill">' . ($rows ? '<p class="ocount"><span>' . (int)$sum['n'] . ' order' . ((int)$sum['n'] === 1 ? '' : 's') . '. Tap a button to update an order, or tap the order to see it.</span>' . fx_sound_btn($pdo) . '<a class="btn xs rqbtn" href="./?orders=1&amp;ask=1">Review requests (' . $rqN . ')</a></p><table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">No orders match.</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
   . $logCard
