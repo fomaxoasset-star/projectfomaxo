@@ -190,7 +190,12 @@ function fomaxo_wa_send_refills($max = 20) {
     if ($o['sent'] || empty($o['optin']) || $o['days'] < $tm['days'] || ($tries[$o['order_no']] ?? 0) >= 3 || !($to = fx_wa_number($o['phone']))) continue;
     $p = fx_refill_parts($pdo, $o);
     $vars = [$p['first'] !== '' ? $p['first'] : 'there', $p['perfumes'] !== '' ? $p['perfumes'] : 'your FOMAXO perfume', $p['days'], $p['pct'], $p['code'], $p['review'] ?: 'https://fomaxo.com'];
-    [$ok, $info] = fx_wa_template($to, $tpl, $p['ar'] ? 'ar' : (string)($c['refill_language'] ?? 'en'), $vars, $c);
+    $lang = $p['ar'] ? 'ar' : (string)($c['refill_language'] ?? 'en'); $ok = false;
+    if (!$p['review']) {   // already reviewed (all or part): the template without the review request, refill_reminder_plain
+      [$ok, $info] = fx_wa_template($to, $tpl . '_plain', $lang, array_slice($vars, 0, 5), $c);
+      if (!$ok && $p['ar']) [$ok, $info] = fx_wa_template($to, $tpl . '_plain', (string)($c['refill_language'] ?? 'en'), array_slice($vars, 0, 5), $c);
+    }
+    if (!$ok) [$ok, $info] = fx_wa_template($to, $tpl, $lang, $vars, $c);   // not reviewed, or the plain template is not approved yet
     if (!$ok && $p['ar']) [$ok, $info] = fx_wa_template($to, $tpl, (string)($c['refill_language'] ?? 'en'), $vars, $c);   // no Arabic version approved: English
     if ($ok) { fx_refill_mark($pdo, $o['order_no'], 'auto'); $sent++; }
     else { $tries[$o['order_no']] = ($tries[$o['order_no']] ?? 0) + 1; $failed++; fomaxo_setting($pdo, 'refill_auto_err', date('d/m H:i') . ' ' . $o['order_no'] . ': ' . mb_substr($info, 0, 200)); error_log("FOMAXO refill WhatsApp {$o['order_no']}: $info"); }

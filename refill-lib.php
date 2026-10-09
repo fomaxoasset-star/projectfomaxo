@@ -56,15 +56,15 @@ function fx_refill_due($pdo) {
   return $due;
 }
 
-/* what the message says for one order: first name, perfumes, days, coupon, %, review link (null once everything is reviewed), Arabic or not */
+/* what the message says for one order: first name, perfumes, days, coupon, %, review link (null once anything in the order is reviewed), Arabic or not */
 function fx_refill_parts($pdo, $o) {
   static $names = null, $links = null;
   if ($names === null) { $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) { $p = json_decode($r['data'], true); $names[$r['id']] = (string)($p['name'] ?? $r['id']); } }
   if ($links === null) { $links = [];
-    foreach (glob(rv_dir('links') . '/*.json') ?: [] as $f) { $j = json_decode((string)@file_get_contents($f), true); if (isset($j['no'])) $links[$j['no']] = ['t' => basename($f, '.json'), 'left' => array_diff((array)($j['products'] ?? []), array_keys((array)($j['done'] ?? [])))]; } }
+    foreach (glob(rv_dir('links') . '/*.json') ?: [] as $f) { $j = json_decode((string)@file_get_contents($f), true); if (isset($j['no'])) $links[$j['no']] = ['t' => basename($f, '.json'), 'left' => array_diff((array)($j['products'] ?? []), array_keys((array)($j['done'] ?? []))), 'any' => !empty((array)($j['done'] ?? []))]; } }
   $lines = array_filter((array)json_decode((string)($o['lines_json'] ?? ''), true), fn($l) => empty($l['free']) && ($l['id'] ?? '') !== '');
   $pn = implode(', ', array_unique(array_filter(array_map(fn($l) => $names[$l['id']] ?? '', $lines))));
-  if (isset($links[$o['order_no']])) $rv = $links[$o['order_no']]['left'] ? $links[$o['order_no']]['t'] : null;   // the link made at checkout
+  if (isset($links[$o['order_no']])) $rv = $links[$o['order_no']]['left'] && empty($links[$o['order_no']]['any']) ? $links[$o['order_no']]['t'] : null;   // the link made at checkout; none once anything in the order is reviewed
   else { $rv = fomaxo_review_link($o['order_no'], array_column($lines, 'id')); if ($rv) $links[$o['order_no']] = ['t' => $rv, 'left' => [1]]; }
   $ar = fx_has_ar($o['name']);
   $pct = fx_refill_pct($pdo);

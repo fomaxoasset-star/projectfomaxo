@@ -10,7 +10,8 @@ require_once __DIR__ . '/refill-lib.php';
 function fx_rq_set($pdo) {
   $t = json_decode((string)fomaxo_setting($pdo, 'rvreq'), true) ?: [];
   $d = max(1, min(120, (int)($t['days'] ?? 7))); $f = max(0, min(23, (int)($t['from'] ?? 11))); $to = max($f + 1, min(24, (int)($t['to'] ?? 20)));
-  return ['days' => $d, 'from' => $f, 'to' => $to, 'list_to' => $d + 30, 'coupon' => !empty($t['coupon']), 'pct' => max(1, min(50, (float)($t['pct'] ?? 10))), 'auto' => !empty($t['auto'])];
+  return ['days' => $d, 'from' => $f, 'to' => $to, 'list_to' => $d + 30, 'coupon' => !empty($t['coupon']), 'pct' => max(1, min(50, (float)($t['pct'] ?? 10))), 'auto' => !empty($t['auto']),
+          'drop' => !empty($t['drop']), 'drop_days' => max(1, min(365, (int)($t['drop_days'] ?? 30)))];
 }
 
 /* the customer's coupon: REVIEW- + 5 letters, always the same for that mobile, so each customer can only ever get (and use) one */
@@ -57,6 +58,39 @@ function fx_rq_due($pdo) {
   }
   uasort($due, fn($a, $b) => (int)($a['sent'] || $a['stopped']) <=> (int)($b['sent'] || $b['stopped']) ?: $b['days'] <=> $a['days']);
   return $due;
+}
+
+/* every order already asked, newest first, with how many of its perfumes the customer has reviewed (from the order's review link)
+   and the average stars: 'total' perfumes, 'done' reviewed, 'stars' null until the first review */
+function fx_rq_asked($pdo) {
+  $sent = json_decode((string)fomaxo_setting($pdo, 'rvreq_sent'), true) ?: [];
+  if (!$sent) return [];
+  $links = [];
+  foreach (glob(rv_dir('links') . '/*.json') ?: [] as $f) { $j = json_decode((string)@file_get_contents($f), true); if (isset($j['no'], $sent[$j['no']])) $links[$j['no']] = $j; }
+  $stars = []; foreach (rv_all() as $r) if (!empty($r['id'])) $stars[$r['id']] = (int)($r['rating'] ?? 0);
+  $s = $pdo->prepare('SELECT order_no, name, phone, created_at FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($sent), '?')) . ')'); $s->execute(array_map('strval', array_keys($sent)));
+  $out = [];
+  foreach ($s->fetchAll() as $o) {
+    $l = $links[$o['order_no']] ?? []; $done = array_values((array)($l['done'] ?? []));
+    $st = array_filter(array_map(fn($id) => $stars[$id] ?? 0, $done));
+    $out[$o['order_no']] = $o + ['sent' => substr($sent[$o['order_no']], 0, 10), 'auto' => str_ends_with($sent[$o['order_no']], 'auto'),
+      'total' => max(count((array)($l['products'] ?? [])), count($done)), 'done' => count($done), 'stars' => $st ? round(array_sum($st) / count($st), 1) : null];
+  }
+  uasort($out, fn($a, $b) => strcmp($b['sent'], $a['sent']) ?: strcmp($b['created_at'], $a['created_at']));
+  return $out;
+}
+
+/* asked but not reviewed for longer than the 'Remove not reviewed after' days (when that is on): hidden from the list */
+function fx_rq_dropped($set, $a) { return $set['drop'] && fx_rq_state($a) === 'not' && strtotime($a['sent']) < strtotime('today -' . $set['drop_days'] . ' days'); }
+
+/* rv = every perfume reviewed, part = some, not = none yet */
+function fx_rq_state($a) { return $a['total'] > 0 && $a['done'] >= $a['total'] ? 'rv' : ($a['done'] > 0 ? 'part' : 'not'); }
+
+/* the status shown in admin: green Reviewed (with stars), Reviewed 1 of 2, or Not reviewed yet */
+function fx_rq_badge($a) {
+  if ($a['total'] > 0 && $a['done'] >= $a['total']) return '<span class="rqst ok" title="Every perfume in this order is reviewed">Reviewed' . ($a['stars'] ? ' ★' . rtrim(rtrim(number_format($a['stars'], 1), '0'), '.') : '') . '</span>';
+  if ($a['done'] > 0) return '<span class="rqst part">Reviewed ' . $a['done'] . ' of ' . $a['total'] . '</span>';
+  return '<span class="rqst">Not reviewed yet</span>';
 }
 
 /* what the message says: first name, perfumes, review link (null once everything is reviewed), coupon (null when the coupon is off), Arabic or not */
