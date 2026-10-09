@@ -402,6 +402,8 @@ button.rqwa{border:0;cursor:pointer;font-family:inherit}.rqwa.sent{background:tr
 /* Teko everywhere in admin (AJAY 09/10/2026); font-size-adjust keeps the old letter height so sizes and one-screen pages stay as they were; Arabic falls back to Tajawal */
 *,*::before,*::after{font-family:Teko,Tajawal,Arial,sans-serif!important;font-size-adjust:.58}body{letter-spacing:.02em;word-spacing:.1em}input,select,textarea,button{font-family:Teko,Tajawal,Arial,sans-serif!important}
 [dir=rtl],[dir=rtl] *,[dir=auto]:dir(rtl),[dir=auto]:dir(rtl) *,.arx,.arx *{font-family:Tajawal,Arial,sans-serif!important;font-size-adjust:none;letter-spacing:0;word-spacing:normal}
+/* bigger admin head (top tabs), AJAY 09/10/2026: letters about 30% taller, padding trimmed so the 12 tabs keep one line on laptop and two rows of six on phone */
+.tabsw .tabs a{font-size-adjust:.66}@media (min-width:760px){.tabsw .tabs a{font-size-adjust:.75}.tabsw .tabs a{padding-left:max(6px,calc(var(--tp,20px)*.6));padding-right:max(6px,calc(var(--tp,20px)*.6))}}
 CSS;
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
