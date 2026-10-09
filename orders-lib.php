@@ -35,7 +35,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 22) return;
+  if ($ver >= 23) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -138,6 +138,16 @@ function fomaxo_db_schema($pdo) {
               name VARCHAR(80) NOT NULL DEFAULT '', phone VARCHAR(25) NOT NULL DEFAULT '', total DECIMAL(10,2) NOT NULL DEFAULT 0, payment VARCHAR(30) NOT NULL DEFAULT '',
               status VARCHAR(20) NOT NULL DEFAULT '', row_json MEDIUMTEXT NOT NULL, KEY (trashed_at)) DEFAULT CHARSET=utf8mb4");
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '22')");
+  /* v23: new 50ml (main) and 100ml bottle photos for Old Money, Royal Candy and Matcha Coco; the old ones leave the gallery; Matcha Coco gets the model photo second */
+  foreach (['oldmoney' => 'oldmoney-main', 'royalcandy' => 'royalcandy-main', 'matchacoco' => 'matchacoco-main2'] as $id => $old) {
+    $get->execute([$id]); $d = json_decode((string)$get->fetchColumn(), true);
+    if (!is_array($d)) continue;
+    $add = $id === 'matchacoco' ? ["$id-50-main", 'matchacoco-model'] : ["$id-50-main"];
+    $d['images'] = array_values(array_merge($add, array_diff(array_filter((array)($d['images'] ?? []), 'is_string'), array_merge($add, [$old, "$id-100"]))));
+    $d['sizeImages'] = (array)($d['sizeImages'] ?? []); $d['sizeImages']['100'] = "$id-100-main";
+    $set->execute([fomaxo_json($d), $id]);
+  }
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '23')");
 }
 /* real orders the owner has not opened yet: not test, not an unpaid card attempt, not cancelled or refunded */
 const FX_NEW_ORDER_SQL = "seen_at IS NULL AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')";
