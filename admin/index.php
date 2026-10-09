@@ -3328,7 +3328,7 @@ page('Orders', flash()
   . '<div><label for="to">To</label><input id="to" type="date" name="to" value="' . h($f['to']) . '"></div>'
   . '<div class="q"><label for="q">Search</label><input id="q" name="q" value="' . h($f['q']) . '" placeholder="Order no, name, mobile or coupon"></div>'
   . '<div class="acts"><button class="btn line">Show</button><a class="btn" href="' . h(self_url($qs + ['export' => 1])) . '">Excel</a></div></form>'
-  . '<div class="fill"><p class="ocount"><span class="obtns">' . fx_sound_btn($pdo) . (($tN = fx_trash_count($pdo)) ? '<a class="btn xs line trbtn" href="./?orders=1&amp;trash=1">Trash (' . $tN . ')</a>' : '') . '<a class="btn xs rqbtn" href="./?orders=1&amp;ask=1">Review requests (' . $rqN . ')</a></span></p>'   // shown even with no rows, so closed orders can always be reached in Trash
+  . '<div class="fill"><p class="ocount"><span class="obtns">' . fx_sound_btn($pdo) . '<a class="btn xs line trbtn" href="./?orders=1&amp;trash=1">Trash (' . ($tN = fx_trash_count($pdo)) . ')</a>' . '<a class="btn xs rqbtn" href="./?orders=1&amp;ask=1">Review requests (' . $rqN . ')</a></span></p>'   // shown even with no rows, so closed orders can always be reached in Trash
   . ($rows ? '<table class="olist acts oclean"><tbody>' . $tr . '</tbody></table>'
            : '<p class="card muted" style="margin:0">' . (array_filter($f, fn($v) => $v !== '') ? 'No orders match.' : 'No orders yet.' . ($tN ? ' Closed orders are in Trash (' . $tN . ').' : '')) . '</p>')
   . ($pager ? '<div class="pager">' . $pager . '</div>' : '')
