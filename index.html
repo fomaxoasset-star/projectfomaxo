@@ -1751,6 +1751,32 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-op-h>div{flex:1;min-width:140px;display:flex;flex-direction:column;gap:2px}
 .rw-op-h b{font-family:var(--serif);font-weight:400;font-size:22px}
 .rw-op .rw-form{margin:16px 0 0}
+/* review form: title row, two parts (rating, problem, words | name, mobile, place, photos), footer with the error left and the buttons right */
+.rw-form .rw-fhead{justify-content:flex-start;align-items:baseline;gap:6px 14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.rw-form .rw-fx{margin-left:0;margin-inline-start:auto}
+.rw-fk{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+.rw-c1,.rw-c2{display:grid;gap:18px;align-content:start;min-width:0}
+#rwFormBox[hidden],#rwFormBox [hidden]{display:none!important}
+.form .rw-mob i{font-style:normal;text-transform:none;letter-spacing:.04em;color:var(--dim)}
+.rw-issue{color:var(--gold-hi);margin:-8px 0 0;line-height:1.55}
+.rw-hint{color:#f0a497;margin:-8px 0 0;line-height:1.55}
+.form .rw-need select,.form label.rw-add.rw-need{border-color:#e0705f;box-shadow:0 0 0 1px #e0705f}
+.rw-ph-n{font-size:12px;letter-spacing:.06em;color:var(--gold-hi);text-decoration:underline;text-underline-offset:3px;padding:6px 2px}
+.rw-foot{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--line)}
+.rw-foot .rw-err{flex:1 1 220px;margin:0;color:#f0a497;font-size:14px;line-height:1.45}
+.rw-btns{display:flex;gap:12px;flex-wrap:wrap;margin-left:auto}
+html[data-mode="light"] .rw-hint,html[data-mode="light"] .rw-foot .rw-err{color:#a8321f}
+html[data-mode="light"] .form .rw-need select,html[data-mode="light"] .form label.rw-add.rw-need{border-color:#c0503c;box-shadow:0 0 0 1px #c0503c}
+@media(max-width:620px){.rw-btns{width:100%}.rw-btns .btn{flex:1 1 0;justify-content:center}.rw-foot .rw-err:empty{display:none}}
+/* laptop: Write a review opens the form as a window over a darkened page, two columns so it fits on one screen */
+@media (min-width:900px){#rwFormBox.pop{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);animation:rwPop .25s ease}
+  #rwFormBox.pop .rw-form{width:min(940px,100%);max-height:calc(100vh - 48px);overflow:auto;margin:0;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+  .rw-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:clamp(24px,3vw,40px);row-gap:12px;padding:18px 30px 20px}.rw-form>*{grid-column:1/-1}.rw-form>.rw-c1{grid-column:1}.rw-form>.rw-c2{grid-column:2}
+  .rw-c1,.rw-c2{gap:12px}.rw-form .rw-fhead b{font-size:22px}.rw-form textarea{min-height:110px}.rw-form .rw-rate button{font-size:30px}.rw-form .opt-label{margin-bottom:8px}
+  .form.rw-form input,.form.rw-form select{padding:11px 14px}.form.rw-form textarea{padding:12px 14px}.rw-form .row2 input,.rw-form .row2 select{height:44px}.rw-form .row2{gap:12px}
+  .rw-form .rw-issue,.rw-form .rw-hint{font-size:13px;margin:-4px 0 0}.rw-form .rw-emo{margin-top:-6px}.rw-form .rw-foot{padding-top:14px}
+  .rw-form .rw-ph-prev span{width:52px;height:52px}.form.rw-form label.rw-add{width:64px;height:52px;font-size:9px}.rw-form .rw-ph-prev button{width:20px;height:20px;line-height:20px;font-size:13px}}
+@keyframes rwPop{from{opacity:0}}
 @media(max-width:600px){.rw-avg>b{font-size:52px}.rw-text{font-size:19px}.rw-rate button{font-size:38px}}
 /* ===== conversion upgrade (Oct 2026): added-to-bag panel, multi-buy progress, product page savings/offer/payment line, order again, email sign-up ===== */
 .qd-bar{position:relative;display:block;height:3px;margin:12px 6px 20px 0;background:var(--line-2);border-radius:2px}
@@ -3741,6 +3767,23 @@ let rwNations = null;
 const rwNationList = () => rwNations || (rwNations = RW_TOP.concat(RW_COUNTRIES.filter(c => !RW_TOP.includes(c)).sort((a, b) => rwCountryName(a).localeCompare(rwCountryName(b)))).map(c => [c, rwCountryName(c)]));
 /* one-tap emojis under the review box (phone keyboards' own emojis work too) */
 const RW_EMO = ['😍', '🔥', '✨', '💯', '👌', '❤️', '🌹', '👍'];
+/* words about a late delivery or a faulty / damaged product (English, Hinglish and Arabic), the same lists as reviews.php */
+const RW_LATE = /\b(?:late|delay(?:ed)?|not (?:yet )?(?:received|delivered|arrived)|never (?:came|arrived)|der(?:i|ee)? se)\b|تأخر|تاخر|متأخر|متاخر|تأخير|تاخير|لم يصل|ما وصل|ماوصل|ما جاني|لم يتم التوصيل/i,
+  RW_FAULTY = /\b(?:faulty|defective|damaged?|broken|cracked|leak(?:ed|ing|s)?|spill(?:ed)?|wrong (?:item|product|perfume)|toot(?:a|i))\b|مكسور|انكسر|تكسر|تالف|خربان|معيوب|يسرب|يسرّب|تسريب|مسكوب|انسكب|منتج خطأ|منتج خطا|منتج غلط|طلب غلط/i,
+  rwProblem = t => RW_LATE.test(t) || RW_FAULTY.test(t);
+const RW_ASK = 'It sounds like there was a problem with your order. Please pick Late delivery or Faulty or damaged product under “Any problem with your order?”.';
+const RW_PROOF = 'Sorry about that. Your review is about a damaged or faulty product, so please add a photo of it for proof. We will check it and send you a coupon on WhatsApp.';
+const RW_NOTE = {late: 'Sorry about that. We will check it and send you a coupon on WhatsApp, so please add your mobile number.',
+  faulty: 'Sorry about that. We will check it and send you a coupon on WhatsApp, so please add your mobile number and a photo of the product for proof.'};
+const rwNeedsProof = (rating, text, photos) => rating > 0 && rating <= 3 && RW_FAULTY.test(text) && !photos;
+/* the problem picked against the words: '' when they fit, else what to say */
+function rwMismatch(issue, text){
+  if (issue === 'late' && RW_FAULTY.test(text) && !RW_LATE.test(text)) return 'Your review is about a faulty or damaged product. Please pick Faulty or damaged product instead of Late delivery.';
+  if (issue === 'faulty' && RW_LATE.test(text) && !RW_FAULTY.test(text)) return 'Your review is about a late delivery. Please pick Late delivery instead of Faulty or damaged product.';
+  return '';
+}
+/* a UAE mobile: 05x xxx xxxx, 5x xxx xxxx or +971 / 00971 5x xxx xxxx (same rule as reviews.php) */
+const rwMobOk = v => { let d = enDigits(v).replace(/\D/g, ''); if (d.startsWith('00')) d = d.slice(2); return /^(?:9715\d{8}|05\d{8}|5\d{8})$/.test(d); };
 const rwHelpLabel = n => `${RW_HEART}<span>Helpful${n ? ` · ${n}` : ''}</span>`;
 
 function rwItem(r){
@@ -3768,21 +3811,24 @@ function rwSection(p, d){   // d = null while the reviews are loading: the text 
 }
 function rwForm(p, link, x){
   return `<form class="form rw-form" novalidate>
-    <div class="rw-fhead"><b>Review ${esc(p.name)}</b>${link ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}${x ? `<button type="button" class="rw-fx" aria-label="Close">×</button>` : ''}</div>
-    <div><div class="opt-label"><span>Your rating *</span><span class="rw-rword">Tap a star</span></div>
+    <div class="rw-fhead"><span class="rw-fk">Write a review</span><b>${esc(p.name)}</b>${link ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}${x ? `<button type="button" class="rw-fx" aria-label="Close">×</button>` : ''}</div>
+    <div class="rw-c1"><div><div class="opt-label"><span>Your rating *</span><span class="rw-rword">Tap a star</span></div>
       <div class="rw-rate" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map(s => `<button type="button" role="radio" aria-checked="false" data-r="${s}" aria-label="${s} star${s > 1 ? 's' : ''}, ${RW_WORDS[s]}">★</button>`).join('')}</div></div>
-    <label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
+    ${link ? '' : `<label class="rw-prob" hidden>Any problem with your order?<select name="issue"><option value="">No problem</option><option value="late">Late delivery</option><option value="faulty">Faulty or damaged product</option></select></label>
+    <p class="small rw-issue" hidden></p>`}
+    <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
+    <p class="small rw-hint" role="alert" hidden></p>
+    <div class="rw-emo" role="group" aria-label="Add an emoji to your review">${RW_EMO.map(e => `<button type="button" data-emo="${e}" aria-label="Add ${e}">${e}</button>`).join('')}</div></div>
+    <div class="rw-c2"><label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
     <label class="rw-anon"><input type="checkbox" name="anon"><span>Post anonymously</span></label>
     <p class="small rw-shown">Your review will show the name: <b></b></p>
+    ${link ? '' : `<label class="rw-mob"><span>Mobile <i class="rw-mob-why">(optional, only FOMAXO sees it)</i></span><input name="mobile" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="e.g. 050 123 4567"></label>`}
     <div class="row2"><label>State / City (optional)<span class="rw-clr-w"><input name="city" maxlength="40" autocomplete="off" data-cap="words" autocapitalize="words" placeholder="Type or pick, e.g. Dubai" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="rw-sug" role="listbox" hidden></div><button type="button" class="rw-clr" data-clr="city" aria-label="Clear city" hidden>×</button></span></label>
       <label>Nation (optional)<span class="rw-clr-w"><input name="nation" maxlength="40" autocomplete="off" data-cap="words" autocapitalize="words" placeholder="Type or pick, e.g. India" role="combobox" aria-autocomplete="list" aria-expanded="false"><input type="hidden" name="country"><div class="rw-sug rw-sug-n" role="listbox" hidden></div><button type="button" class="rw-clr" data-clr="nation" aria-label="Clear nation" hidden>×</button></span></label></div>
-    <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
-    <div class="rw-emo" role="group" aria-label="Add an emoji to your review">${RW_EMO.map(e => `<button type="button" data-emo="${e}" aria-label="Add ${e}">${e}</button>`).join('')}</div>
-    <div><div class="opt-label"><span>Photos (optional)</span><span>Up to 3</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label></div></div>
+    <div><div class="opt-label"><span>Photos (optional)</span><span>Up to 3</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label><button type="button" class="rw-ph-n" hidden></button></div></div></div>
     <input name="website" class="rw-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-    ${link ? `<p class="small">Order ${esc(link.no)} · please rate honestly, every star counts.</p>` : `<p class="small">Bought on fomaxo.com? Use the review link from your order confirmation to show Verified Purchaser.</p>`}
-    <p class="co-err rw-err" hidden></p>
-    <button class="btn" type="submit">Post review</button>
+    ${link ? `<p class="small rw-fnote">Order ${esc(link.no)} · please rate honestly, every star counts.</p>` : `<p class="small rw-fnote">Bought on fomaxo.com? Use the review link from your order confirmation to show Verified Purchaser.</p>`}
+    <div class="rw-foot"><p class="small rw-err" role="alert"></p><div class="rw-btns">${x ? '<button class="btn line" type="button" data-cancel>Cancel</button>' : ''}<button class="btn" type="submit">Post review</button></div></div>
   </form>`;
 }
 /* photos are shrunk in the browser before upload (fast on mobile data); reviews.php checks and re-encodes them again */
@@ -3845,20 +3891,37 @@ function rwBindForm(form, p, link, onDone){
   sug.onclick = e => { const b = e.target.closest('button'); if (!b) return; ci.value = b.textContent; ci.dispatchEvent(new Event('change')); sugHide(); };
   co.addEventListener('change', () => { if (document.activeElement === ci) sugShow(); });
   const fi = $('input[type=file]', form), prev = $('.rw-ph-prev', form), add = $('.rw-add', form);
+  const phN = $('.rw-ph-n', form);
   const drawPrev = () => {
     prev.innerHTML = files.map((x, i) => `<span><img src="${x.url}" alt=""><button type="button" data-x="${i}" aria-label="Remove photo">×</button></span>`).join('');
     add.hidden = files.length >= 3;
+    phN.hidden = !files.length; phN.textContent = `${files.length} photo${files.length > 1 ? 's' : ''} added · change`;
     $$('[data-x]', prev).forEach(b => b.onclick = () => { URL.revokeObjectURL(files[+b.dataset.x].url); files.splice(+b.dataset.x, 1); drawPrev(); });
+    warn();
   };
+  /* "2 photos added · change": choose the photos again */
+  phN.onclick = () => { files.splice(0).forEach(x => URL.revokeObjectURL(x.url)); drawPrev(); fi.click(); };
+  /* reviews without an order link only (verified purchasers have their order already): for 1–3 stars, "Any problem with your order?"
+     Late delivery needs a mobile, a faulty product a mobile and a photo, for its coupon. Words about a problem ask them to pick it.
+     Verified purchasers: a 1–3 star review about a damaged or faulty product needs a photo of it for proof. */
+  const issue = form.elements.issue || {value: ''}, prob = $('.rw-prob', form), note = $('.rw-issue', form), hint = $('.rw-hint', form);
+  const check = () => !rating || rating > 3 ? '' : prob ? (!issue.value && rwProblem(ta.value) ? RW_ASK : rwMismatch(issue.value, ta.value)) : rwNeedsProof(rating, ta.value, files.length) ? RW_PROOF : '';
+  function warn(){ const msg = check(); hint.textContent = msg; hint.hidden = !msg; if (prob) prob.classList.toggle('rw-need', !!msg); else add.classList.toggle('rw-need', !!msg); }
+  if (prob) issue.onchange = () => { note.hidden = !issue.value; note.textContent = RW_NOTE[issue.value] || ''; $('.rw-mob-why', form).textContent = `(${issue.value ? 'needed' : 'optional'}, only FOMAXO sees it)`; warn(); };
+  ta.addEventListener('input', warn);
+  stars.forEach(b => b.addEventListener('click', () => { if (prob) { prob.hidden = rating > 3; if (rating > 3 && issue.value) { issue.value = ''; issue.onchange(); } } warn(); }));
   fi.onchange = () => { [...fi.files].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)).slice(0, 3 - files.length).forEach(f => files.push({f, url: URL.createObjectURL(f)})); fi.value = ''; drawPrev(); };
   form.onsubmit = async e => {
     e.preventDefault(); err.hidden = true;
     const text = form.elements.text.value.trim();
-    const bad = !rating ? 'Please choose a star rating.' : !an.checked && rwShort(nm.value).length < 2 ? 'Please enter your name, or choose Post anonymously.' : !text ? 'Please write your review.' : '';
-    if (bad) { err.textContent = bad; err.hidden = false; return; }
+    const mob = form.elements.mobile ? form.elements.mobile.value.trim() : '', iss = rating <= 3 ? issue.value : '', prb = check();
+    const bad = !rating ? 'Please choose a star rating.' : prob && prb ? prb : !an.checked && rwShort(nm.value).length < 2 ? 'Please enter your name, or choose Post anonymously.' : !text ? 'Please write your review.'
+      : iss && !mob ? 'Please add your mobile number, so we can send your coupon on WhatsApp.' : mob && !rwMobOk(mob) ? 'Please enter a valid UAE mobile number, e.g. 050 123 4567.'
+      : prb ? prb : iss === 'faulty' && !files.length ? 'Please add a photo of the faulty or damaged product.' : '';
+    if (bad) { err.textContent = bad; err.hidden = false; if (bad === prb && prob) $('select', prob).focus(); return; }
     const btn = $('button[type=submit]', form); btn.disabled = true; btn.textContent = files.length ? 'Uploading photos…' : 'Posting…';
     const fd = new FormData();
-    [['action', 'review'], ['product', p.id], ['rating', rating], ['name', nm.value], ['anon', an.checked ? '1' : ''], ['city', form.elements.city.value], ['country', form.elements.country.value], ['text', text], ['website', form.elements.website.value], ['token', link ? link.t : '']].forEach(x => fd.append(x[0], x[1]));
+    [['action', 'review'], ['product', p.id], ['rating', rating], ['name', nm.value], ['anon', an.checked ? '1' : ''], ['city', form.elements.city.value], ['country', form.elements.country.value], ['text', text], ['website', form.elements.website.value], ['token', link ? link.t : ''], ['mobile', mob], ['issue', iss]].forEach(x => fd.append(x[0], x[1]));
     for (const x of files) fd.append('photos[]', await rwShrink(x.f), 'photo.jpg');
     let r = {};
     try { r = await (await fetch(RW_API, {method: 'POST', body: fd})).json(); } catch(x) {}
@@ -3925,11 +3988,19 @@ async function rwLoad(p, msg){
   box.onclick = e => { const h = e.target.closest('[data-rwh]'); if (h && !h.disabled) rwVote(h, d.reviews); const ph = e.target.closest('[data-rwph]'); if (ph) rwLightbox(ph.dataset.rwph, rwPhotoList(d)); };
   const fb = $('#rwFormBox', box);
   if (msg) { fb.hidden = false; fb.innerHTML = `<p class="rw-ok">${msg}</p>`; }
+  /* laptop: Write a review opens as a window in the middle of the screen over a darkened page; phone: in the page */
+  const home = fb.parentElement, next = fb.nextElementSibling;   // the window sits on the page body so it covers the menu bar too
+  const pop = on => { fb.classList.toggle('pop', on); document.body.classList.toggle('lock', on); if (on) document.body.append(fb); else if (fb.parentElement === document.body) home.insertBefore(fb, next); };
+  fb.onmousedown = e => { if (e.target === fb && fb.classList.contains('pop')) $('.rw-fx', fb).click(); };
+  const esc0 = e => { if (!fb.isConnected) return removeEventListener('keydown', esc0); if (e.key === 'Escape' && fb.classList.contains('pop') && !$('.rw-sug:not([hidden])', fb)) $('.rw-fx', fb).click(); };
+  addEventListener('keydown', esc0);
   $('#rwWrite', box).onclick = () => {
     if (!$('form', fb)) { const link = rwLinkFor(p.id); fb.innerHTML = rwForm(p, link, 1); fb.hidden = false; const em = $('#rwEmpty', box); if (em) em.hidden = true;
-      $('.rw-fx', fb).onclick = () => { fb.hidden = true; fb.innerHTML = ''; if (em) em.hidden = false; $('#rwWrite', box).scrollIntoView({behavior: 'smooth', block: 'center'}); };
-      rwBindForm($('form', fb), p, link, r => rwLoad(p, `Thank you. Your review is now live.${r.note ? ' ' + esc(r.note) : ''}`)); }
-    fb.scrollIntoView({behavior: 'smooth', block: 'start'});
+      const close = () => { const was = fb.classList.contains('pop'); pop(false); fb.hidden = true; fb.innerHTML = ''; if (em) em.hidden = false; if (!was) $('#rwWrite', box).scrollIntoView({behavior: 'smooth', block: 'center'}); };
+      $$('.rw-fx,[data-cancel]', fb).forEach(c => c.onclick = close);
+      rwBindForm($('form', fb), p, link, r => { if (fb.classList.contains('pop')) { fb.remove(); document.body.classList.remove('lock'); } rwLoad(p, `Thank you. Your review is now live.${r.note ? ' ' + esc(r.note) : ''}`); }); }
+    if (matchMedia('(min-width:900px)').matches) { pop(true); $('.rw-rate button', fb).focus({preventScroll: true}); }
+    else fb.scrollIntoView({behavior: 'smooth', block: 'start'});
   };
 }
 /* after an order: invite the customer to review (link = order's private review token) */
@@ -4087,6 +4158,7 @@ function route(){
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
   const seg = path.split('/').filter(Boolean);
   if (seg[0] && HIDE_PAGES.includes(seg[0])) { location.replace('#/'); return; }
+  const rwPopEl = $('#rwFormBox.pop'); if (rwPopEl) { rwPopEl.remove(); document.body.classList.remove('lock'); }   // leaving with the review window open
   clearInterval(heroTimer); mobileBarCheck = null; coRefresh = null; pdpStock = null; $('#mbuy').classList.remove('show'); hideAdded();
   document.title = 'FOMAXO — The House of Modern Luxury';
   let html, after;
