@@ -774,6 +774,7 @@
     [/^· (\d+) items? from your last order$/, function(m){ return '· ' + cnt(m[1], 'قطعة واحدة', 'قطعتان', 'قطع', 'قطعة') + ' من طلبك الأخير'; }],
     [/^Add (.+) (Set of \d+) to your bag$/, function(m){ return 'أضف ' + m[1] + ' ' + (tr(m[2]) || m[2]) + ' إلى حقيبتك'; }],
     [/^\/ (.+)$/, function(m){ return '/ ' + (tr(m[1]) || m[1]); }],
+    [/^Thank you for your order\. Share your honest rating of (.+); your review will show Verified Purchaser\.$/, function(m){ return 'شكراً لطلبك. شارك تقييمك الصادق لـ ' + m[1] + '؛ سيظهر تقييمك بعلامة مشترٍ موثّق.'; }],
     [/^Enjoying (.+)\? Your honest review helps others choose their experience\.$/, function(m){ return 'هل يعجبك ' + m[1] + '؟ تقييمك الصادق يساعد الآخرين على اختيار تجربتهم.'; }],
     [/^(\d+) photos? added · change$/, function(m){ return (+m[1] === 1 ? 'تمت إضافة صورة واحدة' : +m[1] === 2 ? 'تمت إضافة صورتين' : 'تمت إضافة ' + m[1] + ' صور') + ' · تغيير'; }],
     [/^Be the first to review (.+)$/, function(m){ return 'كن أول من يقيّم ' + m[1]; }],

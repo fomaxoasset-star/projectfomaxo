@@ -114,7 +114,15 @@ function rv_link($t) {
   if (!is_string($t) || !preg_match('/^[a-f0-9]{24}$/', $t)) return null;
   $f = rv_dir('links') . "/$t.json";
   $l = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null;
-  return is_array($l) ? $l + ['file' => $f] : null;
+  return is_array($l) && rv_order_ok($l['no'] ?? '') ? $l + ['file' => $f] : null;
+}
+/* the link's order must be a real order: placed, not a test, not cancelled or refunded, and a card order must be paid
+   (when the database cannot be reached the link still works, so real customers are not turned away) */
+function rv_order_ok($no) {
+  $pdo = fomaxo_db(); if (!$pdo) return true;
+  try { $s = $pdo->prepare('SELECT status, test FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$no]); $o = $s->fetch(PDO::FETCH_ASSOC); }
+  catch (Throwable $e) { return true; }
+  return $o && !(int)$o['test'] && !in_array($o['status'], ['Awaiting payment', 'Cancelled', 'Refunded'], true);
 }
 if ($method === 'GET' && isset($_GET['link'])) {
   $l = rv_link($_GET['link']);
