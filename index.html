@@ -3289,7 +3289,7 @@ function btRender(p, size){
   el.innerHTML = `<h2 class="fbt-h">Customers bought <em class="metal">together</em></h2>
     <div class="fbt-row">${tile(items[0], 0)}<span class="fbt-plus" aria-hidden="true">+</span>${tile(items[1], 1)}
       <div class="fbt-buy"><p>Total price: ${n && dc.amount > 0 ? `<s class="was">${moneyHTML(subtotal(lines))}</s>` : ''}<b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
-      <small>${ICON.truck}${n && dc.amount > 0 && dc.pct + (dc.bt > 0 ? BT.pct : 0) > 2 ? `You save ${aed(Math.round(dc.amount * 100) / 100)} · Free delivery` : 'Free delivery'}</small></div></div>`;   // the saving only above 2% off, never "You save AED 0"
+      <small>${ICON.truck}${n && dc.bt > 0 && dc.pct + BT.pct > 2 ? `You save ${aed(Math.round(dc.amount * 100) / 100)} · Free delivery` : 'Free delivery'}</small></div></div>`;   // the saving only above 2% off, only when Extra off is on (above 0), never "You save AED 0"
   $$('[data-bt]', el).forEach(b => b.onchange = () => { b.checked ? off.delete(b.dataset.bt) : off.add(b.dataset.bt); el.dataset.off = JSON.stringify([...off]); btRender(p, size); });
   $('#btAdd').onclick = () => { const ok = sel.filter(it => addToCart(it.id, it.opt, 1, true)); if (ok.length) addedPanel(ok[0].id, ok[0].opt, 1, ok.length > 1 ? ok.map(it => P[it.id].name) : null); };
 }
