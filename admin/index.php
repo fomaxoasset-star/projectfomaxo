@@ -190,8 +190,9 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .list small{display:block}.list .r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
 .btpct{display:flex;align-items:center;gap:6px;margin:0 6px 0 0}.btpct label{margin:0;font-size:11px;white-space:nowrap}.btpct input{width:52px;padding:6px 8px;text-align:center;margin:0}.btpct span{font-weight:600}.btsw{position:relative;flex:none;cursor:pointer;margin:0!important}.btsw input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}.btsw i{display:block;position:relative;width:52px;height:22px;border-radius:999px;border:1px solid var(--line);background:var(--bg);transition:background .2s}.btsw i::before{content:"OFF";position:absolute;right:7px;top:50%;transform:translateY(-50%);font:700 9.5px/1 Manrope,system-ui,sans-serif;letter-spacing:.06em;color:var(--muted);font-style:normal}.btsw i::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:left .2s}.btsw input:checked+i{background:var(--gold);border-color:var(--gold)}.btsw input:checked+i::before{content:"ON";right:auto;left:8px;color:var(--gold-ink)}.btsw input:checked+i::after{left:32px;background:var(--gold-ink)}.btsw input:focus-visible+i{outline:2px solid var(--gold);outline-offset:2px}.btbr{display:none}.btok{font-size:12px;font-weight:600;white-space:nowrap;color:var(--muted)}.btok.ok{color:#2e7d32}.btok.bad{color:#c62828}@media (max-width:759px){.hbtns:has(.btpct){flex-wrap:wrap;flex:1 1 100%}.btpct{flex:1 0 100%;flex-wrap:wrap;row-gap:8px;margin:0 0 4px}.btbr{display:block;flex:0 0 100%;height:0}.btpct input{width:70px}.btpct .btn{margin-left:auto}}.prods td{vertical-align:middle}.pimg img{width:52px;height:52px;object-fit:cover;border-radius:7px;display:block}
 .prods .pvis{width:56px;text-align:center;padding-left:6px;padding-right:0}.prods td.pvis form{margin:0;display:flex;justify-content:center}.rdot{width:24px;height:24px;border-radius:50%;border:2px solid var(--muted);background:none;padding:0;margin:0;cursor:pointer;position:relative;flex:none;opacity:.7}.rdot:hover{border-color:var(--gold);opacity:1}.rdot.on{border-color:var(--ok);opacity:1}.rdot.on::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--ok)}@media (max-width:759px){.prods tr.row{display:grid;grid-template-columns:38px 64px 1fr auto;align-items:center;padding:8px 4px}.prods td.pvis{grid-row:span 2;width:auto;padding:0}.prods td.pimg{grid-row:span 2}.prods td.num{display:none}.rdot{width:28px;height:28px}.rdot.on::after{inset:5px}}
-.vids.fitbox{display:grid;gap:12px;grid-template-columns:minmax(0,340px) minmax(0,1fr);align-items:stretch}.vids .card{margin:0;padding:12px 16px}.vids h2{font-size:15px;margin:0 0 4px}.vids h2 small{margin-left:6px;font-size:12px}.vadd label{margin:8px 0 3px}.vadd input,.vadd select{padding:6px 10px;width:100%}.vadd .shelp{margin:8px 0 0;font-size:12px;line-height:1.45}.vadd .sbtn{margin:10px 0 0}.vsh{display:flex;align-items:center;gap:10px;margin:8px 0 0}.vsh video{width:44px;height:78px;object-fit:cover;border-radius:6px;background:#000;flex:none}.vlist{display:flex;flex-direction:column;min-height:0;overflow:auto}.vlist .shelp{margin:8px 0 0;font-size:12px}.vrow{display:grid;grid-template-columns:30px 54px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.vrow form{margin:0}.vrow.off .vth{opacity:.45}.vvis{display:flex;justify-content:center}.vth{width:54px;height:96px;object-fit:cover;border-radius:6px;background:#000;cursor:pointer;display:block}.vinfo select{padding:5px 8px;max-width:260px;width:100%;font-weight:600}.vinfo .small{margin-top:3px}.vinfo label.mini{display:block;margin:0 0 2px;font-size:10.5px}.vmv{display:flex;gap:4px}.vmv .btn{padding:5px 9px;margin:0}.vmv .vdel{color:var(--bad)}@media (max-width:759px){.vids.fitbox{display:flex;flex-direction:column;overflow:auto}.vids.fitbox>*{flex:none;overflow:visible}.vrow{grid-template-columns:30px 48px minmax(0,1fr);gap:8px}.vth{width:48px;height:85px}.vmv{grid-column:3}.vadd input,.vadd select{font-size:16px}}
-.igauto{margin:2px 0 8px}.igauto .pgs{grid-template-columns:1fr!important;margin:0}.igauto label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0;white-space:normal}.igauto label.pg>span{white-space:normal}.igauto .shelp{margin:4px 0 0}.lnk{background:none;border:0;padding:0;color:var(--gold);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}.vleft{display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto}.vleft>.card{flex:none}.vig .shelp.stop{margin:0 0 8px}.vig label{margin:8px 0 3px}.vig input[type=password]{padding:6px 10px;width:100%}.igh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px}.igh h2{margin:0}.igh .btn{margin:0;padding:4px 9px;font-size:10.5px}.igg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:300px;overflow:auto}.igr{position:relative;display:block;margin:0;cursor:pointer;aspect-ratio:9/16;border-radius:6px;overflow:hidden;background:#000;border:2px solid transparent}.igr input{position:absolute;opacity:0;pointer-events:none}.igr img,.igph{width:100%;height:100%;object-fit:cover;display:block}.igr:has(input:checked){border-color:var(--gold)}.igr:has(input:checked)::after{content:"✓";position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--gold-ink);font-size:12px;display:grid;place-items:center}.igr.had img{opacity:.5}.igd{position:absolute;left:0;right:0;bottom:0;padding:10px 5px 3px;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75))}.igadd{display:flex;gap:6px;margin-top:8px}.igadd select{flex:1 1 auto;min-width:0;padding:6px 8px}.igadd .btn{margin:0;flex:none}@media (max-width:759px){.vleft{overflow:visible}.igg{grid-template-columns:repeat(4,minmax(0,1fr));max-height:none}.igadd select{font-size:16px}}
+.vids.fitbox{display:grid;gap:12px;grid-template-columns:minmax(0,340px) minmax(0,1fr);align-items:stretch}.vids .card{margin:0;padding:12px 16px}.vids h2{font-size:15px;margin:0 0 4px}.vids h2 small{margin-left:6px;font-size:12px}.vadd label{margin:8px 0 3px}.vadd input,.vadd select{padding:6px 10px;width:100%}.vadd .shelp{margin:8px 0 0;font-size:12px;line-height:1.45}.vadd .sbtn{margin:10px 0 0}.vsh{display:flex;align-items:center;gap:10px;margin:8px 0 0}.vsh video{width:44px;height:78px;object-fit:cover;border-radius:6px;background:#000;flex:none}.vlist{display:flex;flex-direction:column;min-height:0;overflow:auto}.vlist .shelp{margin:8px 0 0;font-size:12px}.vrow{display:grid;grid-template-columns:16px 30px 54px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.vrow form{margin:0}.vrow.off .vth{opacity:.45}.vvis{display:flex;justify-content:center}.vth{width:54px;height:96px;object-fit:cover;border-radius:6px;background:#000;cursor:pointer;display:block}.vinfo select{padding:5px 8px;max-width:260px;width:100%;font-weight:600}.vinfo .small{margin-top:3px}.vinfo label.mini{display:block;margin:0 0 2px;font-size:10.5px}.vmv{display:flex;gap:4px}.vmv .btn{padding:5px 9px;margin:0}.vmv .vdel{color:var(--bad)}@media (max-width:759px){.vids.fitbox{display:flex;flex-direction:column;overflow:auto}.vids.fitbox>*{flex:none;overflow:visible}.vrow{grid-template-columns:20px 30px 48px minmax(0,1fr);gap:8px}.vth{width:48px;height:85px}.vmv{grid-column:4}.vdrag svg{width:12px;height:19px}.vadd input,.vadd select{font-size:16px}}
+.igauto{margin:2px 0 8px}.igauto .pgs{grid-template-columns:1fr!important;margin:0}.igauto label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0;white-space:normal}.igauto label.pg>span{white-space:normal}.igauto .shelp{margin:4px 0 0}.lnk{background:none;border:0;padding:0;color:var(--gold);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}.vleft{display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto}.vleft>.card{flex:none}.vig .shelp.stop{margin:0 0 8px}.vig label{margin:8px 0 3px}.vig input[type=password]{padding:6px 10px;width:100%}.igh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px}.igh h2{margin:0}.igh .btn{margin:0;padding:4px 9px;font-size:10.5px}.igg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:300px;overflow:auto}.igr{position:relative;display:block;margin:0;cursor:pointer;aspect-ratio:9/16;border-radius:6px;overflow:hidden;background:#000;border:2px solid transparent}.igr input{position:absolute;opacity:0;pointer-events:none}.igr img,.igph{width:100%;height:100%;object-fit:cover;display:block}.igr:has(input:checked){border-color:var(--gold)}.igr:has(input:checked)::after{content:"✓";position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--gold-ink);font-size:12px;display:grid;place-items:center}.igr.had img{opacity:.5}.igd{position:absolute;left:0;right:0;bottom:0;padding:10px 5px 3px;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75))}.igadd{display:flex;gap:6px;margin-top:8px}.igadd select,.igadd .fpick{flex:1 1 auto;min-width:0;padding:6px 8px}.igadd .fpick{padding:0}.vpick .fplist{width:100%;max-width:100%}.vadd .fpick input{padding:6px 30px 6px 10px}
+.vdrag{align-self:stretch;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;color:var(--muted)}.vdrag:hover{color:var(--gold)}.vrow.drag{position:relative;z-index:5;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.35);border-radius:8px;outline:1px solid var(--gold)}.vrow.drag .vdrag{cursor:grabbing;color:var(--gold)}body.vdragging{cursor:grabbing;user-select:none;-webkit-user-select:none}.vok{margin-left:8px;font:600 12px Manrope,system-ui,sans-serif;letter-spacing:0;text-transform:none;color:var(--muted)}.vok.ok{color:var(--ok)}.vok.bad{color:var(--bad)}.igadd .btn{margin:0;flex:none}@media (max-width:759px){.vleft{overflow:visible}.igg{grid-template-columns:repeat(4,minmax(0,1fr));max-height:none}.igadd select{font-size:16px}}
 .vall{margin:0}.vall .pgs{grid-template-columns:1fr!important;margin:0}.vall label.pg{padding:4px 0;gap:10px;border-bottom:0}.vlist.alloff .vrow{opacity:.45}.vbad{color:#c0392b;font-weight:600}.vps{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.vchip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid var(--line,#d8cbb3);background:transparent;border-radius:999px;font:inherit;font-size:13px;cursor:pointer;color:inherit}.vchip span{opacity:.55;font-size:11px}.vchip.hid{opacity:.5}.vchip.none{cursor:default;border-style:dashed}.vps select{width:auto;min-height:32px;padding:0 28px 0 10px;font-size:13px}.vemb{position:relative;overflow:hidden;text-decoration:none}.vemb img{width:100%;height:100%;object-fit:cover;opacity:.8}.vemb span{position:absolute;left:0;right:0;bottom:0;padding:3px 0;font-size:9.5px;font-weight:700;text-align:center;color:#fff;background:linear-gradient(90deg,#f58529,#dd2a7b,#8134af)}.hbtns{display:flex;gap:6px;flex:none}.hbtns .btn{margin:0}
 .pform .card{margin-bottom:6px}.opt{text-transform:none;letter-spacing:0}label.sub{margin-top:4px;text-transform:none;letter-spacing:0;font-size:13px}
 .g2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}.g2>div{min-width:0}
@@ -1056,6 +1057,13 @@ if (isset($_GET['videos'])) {
       array_unshift($vids, $v); fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
       flash('Reel added. It shows on the home page within a minute.', true); go($back);
     }
+    if ($act === 'order') {   // drag the dots to reorder (the page sends it without reloading): the video ids in their new order
+      $ids = array_values(array_unique(array_filter(explode(',', (string)($_POST['ids'] ?? '')))));
+      $byId = array_column($vids, null, 'id'); $new = array_values(array_filter(array_map(fn($id) => $byId[$id] ?? null, $ids)));
+      foreach ($vids as $v) if (!in_array($v['id'], $ids, true)) $new[] = $v;   // a video added meanwhile keeps its place at the end
+      $ok = count($new) === count($vids); if ($ok) fomaxo_setting($pdo, 'videos', json_encode(array_values($new)));
+      header('Content-Type: application/json'); header('Cache-Control: no-store'); echo json_encode(['ok' => $ok, 'msg' => $ok ? 'Order saved' : 'Not saved, try again']); exit;
+    }
     if ($act === 'ig_auto') { fomaxo_setting($pdo, 'ig_auto', empty($_POST['on']) ? '0' : '1'); if (!empty($_POST['on'])) fomaxo_ig_sync($pdo, true); flash(empty($_POST['on']) ? 'Automatic is off. Add reels by tapping them.' : 'Automatic is on. New reels that name a product in their caption show on the website by themselves.', true); go($back); }
     if ($act === 'ig_sync') { $n = fomaxo_ig_sync($pdo, true); flash($n ? "$n new reel" . ($n > 1 ? 's' : '') . ' added.' : 'No new reels with a product name in the caption.', true); go($back); }
     if ($act === 'link') {   // paste a link: an Instagram reel of the connected account, a video file, or a page with a video
@@ -1107,21 +1115,25 @@ if (isset($_GET['videos'])) {
     go($back);
   }
   if (fomaxo_ig_sync($pdo)) $vids = fx_videos($pdo);   // Automatic: new reels that name a product
-  $opts = fn($sel) => implode('', array_map(fn($id, $n) => '<option value="' . h($id) . '"' . ($id === $sel ? ' selected' : '') . '>' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</option>', array_keys($names), $names));
+  /* Product in the video: one box to type a name in, or pick from its own dropdown (the free product picker, fx_free_pick_js) */
+  $vpick = fn(string $aria, string $id = '') => '<span class="fpick vpick"><input type="text"' . ($id !== '' ? ' id="' . $id . '"' : '') . ' data-ffind required placeholder="Type or pick a product" aria-label="' . $aria . '" autocomplete="off">'
+    . '<input type="hidden" name="product"><ul class="fplist" hidden>'
+    . implode('', array_map(fn($id, $n) => '<li data-v="' . h($id) . '">' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</li>', array_keys($names), $names))
+    . '<li data-v="-">No product · Shop now button</li></ul></span>';
   $post = fn($v, $act, $inner, $extra = '') => '<form method="post"' . $extra . '>' . csrf_field() . '<input type="hidden" name="vid" value="' . h($v['id']) . '"><input type="hidden" name="act" value="' . $act . '">' . $inner . '</form>';
   $tr = ''; $n = count($vids);
   foreach ($vids as $i => $v) {
     $ps = $vprods($v); $pr = $names[$ps[0] ?? ''] ?? null; $poster = $v['cover'] ?: ($pr['img'] ?? '');
     $gone = !$ps && ((string)($v['product'] ?? '') !== '' || !empty($v['also']));   // had products, all deleted
     $hid = $ps && !array_filter($ps, fn($id) => !$names[$id]['hidden']);
-    $tr .= '<div class="vrow' . (empty($v['on']) ? ' off' : '') . '">'
+    $tr .= '<div class="vrow' . (empty($v['on']) ? ' off' : '') . '" data-vid="' . h($v['id']) . '"><span class="vdrag" title="Drag to change the order" aria-hidden="true"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.6"/><circle cx="8" cy="2" r="1.6"/><circle cx="2" cy="8" r="1.6"/><circle cx="8" cy="8" r="1.6"/><circle cx="2" cy="14" r="1.6"/><circle cx="8" cy="14" r="1.6"/></svg></span>'
       . $post($v, 'vis', '<button class="rdot' . (empty($v['on']) ? '' : ' on') . '" name="show" value="' . (empty($v['on']) ? '1' : '') . '" title="' . (empty($v['on']) ? 'Hidden. Tap to show on the website' : 'On the website. Tap to hide') . '" aria-label="' . (empty($v['on']) ? 'Hidden, tap to show' : 'On the website, tap to hide') . '"></button>', ' class="vvis"')
       . (!empty($v['embed']) ? '<a class="vth vemb" href="https://www.instagram.com/reel/' . h($v['embed']) . '/" target="_blank" rel="noopener" title="Open on Instagram">' . ($poster ? '<img src="../assets/img/' . h($poster) . '.webp" alt="">' : '') . '<span>Instagram</span></a>'
         : '<video class="vth" src="../assets/' . h($v['file']) . '#t=0.1" preload="metadata" muted playsinline' . ($poster ? ' poster="../assets/img/' . h($poster) . '.webp"' : '') . ' onclick="this.paused?this.play():this.pause()"></video>')
       . '<div class="vinfo">' . $post($v, 'prods', '<label class="mini">Sells</label><div class="vps">'
         . ($ps ? implode('', array_map(fn($id) => '<button class="vchip' . ($names[$id]['hidden'] ? ' hid' : '') . '" name="rm" value="' . h($id) . '" title="Remove ' . h($names[$id]['name']) . ' from this video">' . h($names[$id]['name']) . ' <span aria-hidden="true">✕</span></button>', $ps)) : '<span class="vchip none">No product · Shop now button</span>')
         . '<select name="add" onchange="this.form.submit()" aria-label="Add a product to this video"><option value="">+ Add product</option>' . implode('', array_map(fn($id, $n) => in_array($id, $ps, true) ? '' : '<option value="' . h($id) . '">' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</option>', array_keys($names), $names)) . '</select></div>')
-      . '<div class="small muted">' . (!empty($v['embed']) ? '' : ($gone ? 'Product deleted: not shown' : ($hid ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : 'On the home page, number ' . ($i + 1))))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : (!empty($v['embed']) ? '<b class="vbad">Not on the website: it opened Instagram. Paste its link again or upload the video</b>' : (!empty($v['link']) ? ' · From a link' : '')))) . '</div></div>'
+      . '<div class="small muted">' . (!empty($v['embed']) ? '' : ($gone ? 'Product deleted: not shown' : ($hid ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : 'On the home page, number <span class="vnum">' . ($i + 1) . '</span>')))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : (!empty($v['embed']) ? '<b class="vbad">Not on the website: it opened Instagram. Paste its link again or upload the video</b>' : (!empty($v['link']) ? ' · From a link' : '')))) . '</div></div>'
       . '<div class="vmv">' . $post($v, 'up', '<button class="btn line sm"' . ($i ? '' : ' disabled') . ' aria-label="Move up">↑</button>') . $post($v, 'down', '<button class="btn line sm"' . ($i < $n - 1 ? '' : ' disabled') . ' aria-label="Move down">↓</button>')
       . $post($v, 'del', '<button class="btn line sm vdel" aria-label="Delete video">✕</button>', ' onsubmit="return confirm(\'Delete this video?\')"') . '</div></div>';
   }
@@ -1143,27 +1155,72 @@ if (isset($_GET['videos'])) {
       . '<div class="spages igauto"><div class="pgs"><label class="pg"><span>Automatic<small class="muted">New reels show by themselves when the caption names a product, e.g. Gold or Old Money</small></span><input type="checkbox" role="switch" name="on" value="1"' . ($auto ? ' checked' : '') . ' aria-label="Automatic" onchange="var f=this.form;f.querySelector(\'[name=act]\').value=\'ig_auto\';f.noValidate=true;f.submit()"><i class="sw"></i></label></div>'
       . ($auto ? '<p class="muted small shelp">Checked every hour. <button class="lnk" name="act" value="ig_sync" formnovalidate>Check now</button></p>' : '') . '</div>'
       . (!is_array($reels) ? '<p class="msg bad">Instagram: ' . h($reels) . '</p>' : ($grid === '' ? '<p class="muted small">No reels found on this account yet.</p>' : '<p class="muted small shelp stop">' . ($auto ? 'Or add any reel yourself: tap it, pick its product, then Add.' : 'Tap a reel, pick its product, then Add.') . '</p><div class="igg">' . $grid . '</div>'
-      . '<div class="igadd"><select name="product" required aria-label="Product in the reel"><option value="">Product in the reel…</option>' . $opts('') . '<option value="-">No product · Shop now button</option></select><button class="btn" onclick="if(this.form.checkValidity())this.textContent=\'Adding…\'">Add</button></div>'))
+      . '<div class="igadd">' . $vpick('Product in the reel') . '<button class="btn" onclick="if(this.form.checkValidity())this.textContent=\'Adding…\'">Add</button></div>'))
       . '</form>';
   }
   page('Shop videos', '<div class="pagehead"><h1>Shop videos</h1><a class="btn line sm" href="' . h(self_url(['products' => 1])) . '">← Products</a></div>' . flash()
     . '<div class="vids fitbox"><div class="vleft">' . $igHtml . '<form class="card vadd vlink" method="post" onsubmit="this.querySelector(\'.btn\').textContent=\'Adding…\'">' . csrf_field() . '<input type="hidden" name="act" value="link"><h2>Paste a link</h2>'
     . '<label for="v_url">Video link</label><input id="v_url" type="url" name="url" required inputmode="url" placeholder="https://www.instagram.com/reel/…" spellcheck="false">'
-    . '<div class="igadd"><select name="product" required aria-label="Product in the video"><option value="">Product in the video…</option>' . $opts('') . '<option value="-">No product · Shop now button</option></select><button class="btn">Add</button></div>'
+    . '<div class="igadd">' . $vpick('Product in the video') . '<button class="btn">Add</button></div>'
     . '<p class="muted small shelp">Any Instagram reel link (no token needed), or a link that opens the video itself. YouTube and TikTok links can’t be added.</p></form>'
     . '<form class="card vadd" method="post" enctype="multipart/form-data" data-vshrink data-max="' . $max . '">' . csrf_field() . '<input type="hidden" name="act" value="add">'
     . '<h2>Upload from your phone</h2>'
     . '<label for="v_file">Video</label><input id="v_file" type="file" name="video" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov" required>'
-    . '<label for="v_prod">Product in the video</label><select id="v_prod" name="product" required><option value="">Choose…</option>' . $opts('') . '<option value="-">No product · Shop now button</option></select>'
+    . '<label for="v_prod">Product in the video</label>' . $vpick('Product in the video', 'v_prod')
     . '<label for="v_cover">Cover photo <span class="opt">(optional)</span></label><input id="v_cover" type="file" name="cover" accept="image/*">'
     . '<p class="muted small shelp">Upright phone video (9:16), 10 to 30 seconds. A big video is made smaller by itself before it uploads. It plays without sound until the customer taps the sound button. No cover photo = the product photo.</p>'
     . '<div class="vsh muted small" hidden><span></span></div>'
     . '<p class="sbtn"><button class="btn">Upload</button></p></form><script>' . @file_get_contents(__DIR__ . '/vshrink.js') . '</script></div>'
-    . '<div class="card vlist' . ($allOn ? '' : ' alloff') . '"><div class="igh"><h2>Your videos <small class="muted">' . $n . '</small></h2>'
+    . '<div class="card vlist' . ($allOn ? '' : ' alloff') . '"><div class="igh"><h2>Your videos <small class="muted">' . $n . '</small> <b class="vok" aria-live="polite"></b></h2>'
     . '<form method="post" class="spages vall">' . csrf_field() . '<input type="hidden" name="act" value="all"><div class="pgs"><label class="pg"><span>' . ($allOn ? 'On website' : 'Off: row hidden') . '</span><input type="checkbox" role="switch" name="on" value="1"' . ($allOn ? ' checked' : '') . ' aria-label="Show videos on the website" onchange="this.form.submit()"><i class="sw"></i></label></div></form></div>'
     . ($allOn ? '' : '<p class="msg bad">All videos are switched off. Turn the switch on to show the video row again.</p>')
     . ($tr ?: '<p class="muted">No videos yet. The home page shows the video row once you add one.</p>')
-    . '<p class="muted small shelp">Ring dot: filled = on the website. The first video shows first. Sells: tap a product to remove it, + Add product for more. No product = a Shop now button. A video of a hidden product is left out by itself.</p></div></div>', true, true);
+    . '<p class="muted small shelp">Ring dot: filled = on the website. Drag the dots on the left to change the order: the first video shows first. Sells: tap a product to remove it, + Add product for more. No product = a Shop now button. A video of a hidden product is left out by itself.</p></div></div>' . fx_free_pick_js() . <<<'HTML'
+<script>/* drag the dots (mouse or finger) to change the order of the videos; the new order saves at once, without reloading */
+(function () {
+  var list = document.querySelector('.vlist'); if (!list || !list.querySelector('.vdrag')) return;
+  var row = null, y0 = 0, ok = list.querySelector('.vok');
+  function rows() { return Array.prototype.slice.call(list.querySelectorAll('.vrow')); }
+  function renumber() {
+    var r = rows();
+    r.forEach(function (x, i) {
+      var n = x.querySelector('.vnum'); if (n) n.textContent = i + 1;
+      var b = x.querySelectorAll('.vmv .btn'); if (b.length > 1) { b[0].disabled = !i; b[1].disabled = i === r.length - 1; }
+    });
+  }
+  function save() {
+    var d = new FormData();
+    d.append('csrf', list.querySelector('[name=csrf]').value); d.append('act', 'order'); d.append('ids', rows().map(function (x) { return x.dataset.vid; }).join(','));
+    ok.className = 'vok'; ok.textContent = 'Saving…';
+    fetch(location.href, {method: 'POST', body: d, credentials: 'same-origin'}).then(function (r) { return r.json(); })
+      .then(function (j) { ok.className = 'vok ' + (j.ok ? 'ok' : 'bad'); ok.textContent = j.ok ? j.msg + ' ✓' : j.msg; })
+      .catch(function () { ok.className = 'vok bad'; ok.textContent = 'Not saved, try again'; });
+  }
+  list.addEventListener('pointerdown', function (e) {
+    var h = e.target.closest('.vdrag'); if (!h || e.button > 0) return;
+    e.preventDefault(); rows().forEach(function (x, i) { x.dataset.at = i; });
+    row = h.closest('.vrow'); y0 = e.clientY; row.classList.add('drag'); document.body.classList.add('vdragging');
+    h.setPointerCapture(e.pointerId);
+  });
+  document.addEventListener('pointermove', function (e) {   // on the whole page: moving the row in the list can drop its pointer capture
+    if (!row) return;
+    var mid = e.clientY, prev = row.previousElementSibling, next = row.nextElementSibling, t0 = row.offsetTop;   // past the middle of the next or previous video: swap places
+    if (next && next.classList.contains('vrow')) { var b = next.getBoundingClientRect(); if (mid > b.top + b.height / 2) list.insertBefore(next, row); }
+    if (prev && prev.classList.contains('vrow')) { var a = prev.getBoundingClientRect(); if (mid < a.top + a.height / 2) list.insertBefore(row, prev); }
+    y0 += row.offsetTop - t0;   // the row stays under the finger
+    row.style.transform = 'translateY(' + (e.clientY - y0) + 'px)';
+    var r = list.getBoundingClientRect();   // near the top or bottom edge: scroll the list
+    if (e.clientY < r.top + 40) list.scrollTop -= 12; else if (e.clientY > r.bottom - 40) list.scrollTop += 12;
+  });
+  function end() {
+    if (!row) return;
+    var moved = row.dataset.at !== String(rows().indexOf(row));
+    row.classList.remove('drag'); row.style.transform = ''; document.body.classList.remove('vdragging'); row = null;
+    renumber(); if (moved) save();
+  }
+  document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
+})();</script>
+HTML, true, true);
 }
 
 if (isset($_GET['products'])) {
@@ -1923,10 +1980,10 @@ function fx_free_pick_js(): string {
     Array.prototype.forEach.call(x.ul.children, function(li){ li.hidden = q !== '' && (' ' + li.textContent.toLowerCase()).indexOf(' ' + q) < 0; li.classList.remove('on'); });
     x.ul.hidden = !shown(x.ul).length;
   }
-  function pick(f, li){ var x = parts(f); f.value = li.textContent; x.hid.value = li.dataset.v; x.ul.hidden = true; f.dispatchEvent(new Event('change', {bubbles: true})); }
+  function pick(f, li){ var x = parts(f); f.value = li.textContent; x.hid.value = li.dataset.v; x.ul.hidden = true; f.setCustomValidity(''); f.dispatchEvent(new Event('change', {bubbles: true})); }
   function box(t){ return t && t.matches && t.matches('[data-ffind]'); }
   document.addEventListener('focusin', function(e){ if (box(e.target)) { e.target.select(); filter(e.target, true); } });
-  document.addEventListener('input', function(e){ if (box(e.target)) { parts(e.target).hid.value = ''; filter(e.target); } });
+  document.addEventListener('input', function(e){ if (box(e.target)) { parts(e.target).hid.value = ''; if (e.target.required) e.target.setCustomValidity(e.target.value.trim() ? 'Pick one from the list' : ''); filter(e.target); } });   // a required box only sends once a line is picked
   document.addEventListener('focusout', function(e){
     var f = e.target; if (!box(f)) return;
     var x = parts(f); x.ul.hidden = true;
