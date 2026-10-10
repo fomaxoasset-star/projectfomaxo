@@ -77,6 +77,9 @@ function fomaxo_price_order($in) {
   }
   /* coupon code (checked again here, never trusted from the browser): used only when it saves more than the multi-buy discount */
   $coupon = null; $free = null; $discLabel = "Multi-buy $pct% off";
+  /* "Customers bought together" extra % (admin → Products → Customers bought together): counts as part of the multi-buy offer; a bigger coupon replaces both */
+  $bt = fomaxo_bt(); $btFils = fomaxo_bt_fils($lines, $CATALOG, $bt);
+  if ($btFils > 0) { $netFils -= $btFils; $discLabel = ($pct ? "$discLabel + " : '') . "Bought together {$bt['pct']}% off"; $summary[] = "Bought together {$bt['pct']}% off: -" . fomaxo_aed($btFils); }
   if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
     $cp = fomaxo_coupon_apply($in['coupon'], $fullFils, $fullFils - $netFils, is_string($in['customer']['phone'] ?? null) ? $in['customer']['phone'] : '');
     if (isset($cp['error'])) return ['error' => $cp['error'] . ' Please remove it and try again.'];
@@ -84,9 +87,10 @@ function fomaxo_price_order($in) {
       $coupon = $cp['code']; $free = $cp['free'] + ['coupon' => $cp['code']]; $summary[] = "1 x FOMAXO {$free['name']} — FREE with coupon {$cp['code']}";
     } elseif ($cp['stack'] && $cp['saveFils'] > 0) {   // "Use both": the coupon comes off after the multi-buy discount
       $netFils -= $cp['saveFils']; $coupon = $cp['code']; $cl = "Coupon {$cp['code']} ({$cp['label']})";
-      $discLabel = ($pct ? "$discLabel + " : '') . $cl; $summary[] = "$cl: -" . fomaxo_aed($cp['saveFils']);
+      $discLabel = ($pct || $btFils ? "$discLabel + " : '') . $cl; $summary[] = "$cl: -" . fomaxo_aed($cp['saveFils']);
     } elseif (!$cp['stack'] && $cp['saveFils'] > $fullFils - $netFils) {
       foreach ($items as &$it) { $it['unit'] = $it['full']; $it['pct'] = 0; } unset($it);
+      if ($btFils > 0) array_pop($summary);   // the bigger coupon replaces the bought together extra too
       $pct = 0; $netFils = $fullFils - $cp['saveFils']; $coupon = $cp['code']; $discLabel = "Coupon {$cp['code']} ({$cp['label']})";
       $summary[] = "$discLabel: -" . fomaxo_aed($cp['saveFils']);
     }

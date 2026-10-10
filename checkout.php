@@ -60,6 +60,9 @@ $discFils = (int)round($discBase * $discPct);   // AED × % = fils (1/100 AED)
 $pctTxt = rtrim(rtrim(number_format($discPct, 1, '.', ''), '0'), '.');
 /* coupon code: checked here again (never trusted from the browser); it replaces the multi-buy discount only when it saves more */
 $discLabel = "Multi-buy discount ($pctTxt%)"; $couponCode = null;
+/* "Customers bought together" extra % (admin → Products → Customers bought together): counts as part of the multi-buy offer */
+$bt = fomaxo_bt(); $btFils = fomaxo_bt_fils($lines, $CATALOG, $bt);
+if ($btFils > 0) { $discFils += $btFils; $discLabel = ($discPct ? "Multi-buy discount ($pctTxt%) + " : '') . "Bought together ({$bt['pct']}%)"; }
 if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
   $cp = fomaxo_coupon_apply($in['coupon'], $subFils, $discFils, $cu['phone']);
   if (isset($cp['error'])) fail(400, $cp['error'] . ' Please remove it and try again.');

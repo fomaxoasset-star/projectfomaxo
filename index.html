@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=23";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=24";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -2730,10 +2730,10 @@ function miniPick(){
 function qtyDiscount(lines){
   let units = 0, base = 0, has10 = false;
   for (const l of lines){ if (QTY_DISCOUNT_SKIP.includes(l.id)) continue; if (String(l.opt) === '10') has10 = true; const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) continue; units += l.qty; base += Number(v) * l.qty; }
-  const tier = qtyTier(units), pct = tier.pct, amount = Math.round(base * pct) / 100;
+  const tier = qtyTier(units), pct = tier.pct, bt = btSave(lines), amount = Math.round(base * pct + bt * 100) / 100;   // bt: the "bought together" extra, part of the multi-buy offer
   const mini = tier.mini && !has10;
   const next = QTY_TIERS.find(t => t.n > units) || null;
-  return {units, pct, amount, has10, mini, miniId: mini ? miniPick() : null, next: next && {need: next.n - units, pct: next.pct, mini: next.mini}};
+  return {units, pct, bt, amount, has10, mini, miniId: mini ? miniPick() : null, next: next && {need: next.n - units, pct: next.pct, mini: next.mini}};
 }
 // bag message for the multi-buy offer
 function qtyNudge(dc){
@@ -2746,6 +2746,8 @@ function qtyNudge(dc){
   return `<b>15% off${freeMini}</b> unlocked<span class="qn-dot"> · </span><span class="qn-line">You have our best price</span>`;
 }
 const pctTxt = v => String(v).replace(/\.0$/, '');
+// the discount line's name: multi-buy, plus the "bought together" extra when it applies
+const dcLabel = dc => dc.bt > 0 ? (dc.pct ? `Multi-buy (${pctTxt(dc.pct)}%) + bought together (${BT.pct}%)` : `Bought together (${BT.pct}%)`) : `Multi-buy discount (${pctTxt(dc.pct)}%)`;
 function subtotal(lines){ let t = 0; for (const l of lines){ const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) return null; t += Number(v) * l.qty; } return t; }
 // sends the order to the server: card → Ziina payment page (ziina.php), cod → order saved by checkout.php
 async function sendOrder(lines, pay, details, src){
@@ -2840,7 +2842,7 @@ function renderCart(){
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
   const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${qdBar(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
   const mini = dc.mini ? `<div class="mini-pick qd-row"><label for="miniSel" class="mini-l">Choose your free 10ml scent</label><select id="miniSel" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select><span class="price">FREE</span></div>` : '';
-  const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
+  const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>${dcLabel(dc)}</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
   foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row ph-sub"><span>Subtotal · <span class="gold">Free delivery</span></span><span class="price">${moneyHTML(t0, true)}</span></div><div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
     <div class="dr-btns"><a class="btn line block" href="#/fragrances" data-close>Continue shopping</a>${t !== null && t < MIN_ORDER ? `<button class="btn block co-min" disabled>${minMsg(Math.round((MIN_ORDER - t) * 100) / 100)}</button>` : `<a class="btn block" id="goCheckout" href="#/checkout" data-close>Checkout${t !== null ? '<span class="co-amt"> · ' + money2(t) + '</span>' : ''}</a>`}</div><p class="pay-note">${S.checkout.ziina ? 'Card · Apple Pay · Google Pay · ' : ''}Cash on delivery</p>`;
@@ -3195,10 +3197,22 @@ const btSize = (p, size) => p.sizes.includes(+size) ? +size : defaultSize(p);
 const btInStock = (p, size) => { const n = stockLeft(p.id, btSize(p, size)); return n === null || n > 0; };
 // the partner shown on each product page (then the next one if that is hidden or out of stock); products not listed use real orders
 const BT_PAIR = {oldmoney: ['gold', 'dollar'], royalcandy: ['dollar', 'gold'], matchacoco: ['gold', 'dollar'], passionsin: ['dollar', 'gold'], gold: ['dollar', 'oldmoney'], dollar: ['gold', 'royalcandy']};
+/* admin → Products → Customers bought together (sent by products.php): the partner picked for each product, and the extra % off when both are in the bag */
+let BT = {pct: 0, pairs: {}}; try { BT = JSON.parse(localStorage.getItem('fomaxo_bt') || 'null') || BT; } catch(e) {}
+// the "bought together" extra in AED, same as fomaxo_bt_fils() in orders-lib.php: going down the bag, a product whose partner is also there
+// takes BT.pct % off one bottle of each (the cheapest size in the bag); each product counts in one pair only; King and the Discovery Set never
+function btSave(lines){
+  if (!BT.pct) return 0;
+  const unit = {};
+  for (const l of lines) { if (QTY_DISCOUNT_SKIP.includes(l.id) || !P[l.id] || !hasPrice(P[l.id].prices[l.opt]) || l.qty < 1) continue; const v = +P[l.id].prices[l.opt]; if (!(l.id in unit) || v < unit[l.id]) unit[l.id] = v; }
+  const used = new Set(); let fils = 0;
+  for (const a of Object.keys(unit)) { const b = BT.pairs[a]; if (!b || !(b in unit) || used.has(a) || used.has(b)) continue; used.add(a); used.add(b); fils += Math.round((unit[a] + unit[b]) * BT.pct); }
+  return fils / 100;
+}
 function btPick(p, size){
   if (!btOK(p)) return [];
   const fit = id => id !== p.id && btOK(P[id]) && btInStock(P[id], size) && hasPrice(P[id].prices[btSize(P[id], size)]);
-  const set = (BT_PAIR[p.id] || []).filter(fit);   // AJAY's pairs first: a different partner on each page, Gold and Dollar most
+  const set = [...new Set([BT.pairs[p.id]].concat(BT_PAIR[p.id] || []).filter(Boolean))].filter(fit);   // AJAY's pairs first: a different partner on each page, Gold and Dollar most
   if (set.length) return set.slice(0, 2).map(id => ({id, real: false}));
   const real = (TOGETHER[p.id] || []).filter(fit).slice(0, 2);
   if (real.length) return real.map(id => ({id, real: true}));
@@ -3219,7 +3233,7 @@ function btRender(p, size){
   el.innerHTML = `<h2 class="fbt-h">Customers bought <em class="metal">together</em></h2>
     <div class="fbt-row">${tile(items[0], 0)}<span class="fbt-plus" aria-hidden="true">+</span>${tile(items[1], 1)}
       <div class="fbt-buy"><p>Total price: <b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
-      <small>${ICON.truck}${n === 2 ? 'Free delivery on both' : 'Free delivery'}${dc.pct ? ` · ${dc.pct}% multi-buy off included` : ''}</small></div></div>`;
+      <small>${ICON.truck}${n === 2 ? 'Free delivery on both' : 'Free delivery'}${dc.bt > 0 ? ` · ${dc.pct + BT.pct}% off included` : dc.pct ? ` · ${dc.pct}% multi-buy off included` : ''}</small></div></div>`;
   $$('[data-bt]', el).forEach(b => b.onchange = () => { b.checked ? off.delete(b.dataset.bt) : off.add(b.dataset.bt); el.dataset.off = JSON.stringify([...off]); btRender(p, size); });
   $('#btAdd').onclick = () => { const ok = sel.filter(it => addToCart(it.id, it.opt, 1, true)); if (ok.length) addedPanel(ok[0].id, ok[0].opt, 1, ok.length > 1 ? ok.map(it => P[it.id].name) : null); };
 }
@@ -3817,9 +3831,9 @@ function bindCheckout(q){
     const saved = Math.round((ls.reduce((a, l) => { const p = P[l.id], v = p.prices[l.opt], c = p.compareAt && p.compareAt[l.opt]; return a + (hasPrice(v) && hasPrice(c) && c > v ? (c - v) * l.qty : 0); }, 0) + (T.disc > 0 ? T.disc : 0)) * 100) / 100;
     const rows = T.after === null ? `<div class="co-row tot"><span>Total</span><span class="small">Confirmed with your order</span></div><div id="coCpSlot"></div>` :
       `<div class="co-row"><span>Subtotal</span><span class="price">${moneyHTML(T.t0, true)}</span></div>
-      ${T.both && T.useC && dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
+      ${T.both && T.useC && dc.amount > 0 ? `<div class="co-row disc"><span>${dcLabel(dc)}</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       ${T.useC ? `<div class="co-row disc${T.both ? '' : ' co-cpr'}"><span>Coupon ${esc(coupon.code)} (${esc(coupon.label)})</span><span class="price">−${moneyHTML(T.cs, true)}</span></div>`
-        : dc.amount > 0 ? `<div class="co-row disc"><span>Multi-buy discount (${pctTxt(dc.pct)}%)</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
+        : dc.amount > 0 ? `<div class="co-row disc"><span>${dcLabel(dc)}</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : ''}
       <div class="co-row"><span>Delivery</span><span class="co-free-t">Free</span></div>
       ${T.fee ? `<div class="co-row co-fee"><span>Cash on delivery fee</span><span class="price">${moneyHTML(T.fee, true)}</span></div>` : ''}
       <div class="co-row tot"><span>Total</span><span class="price">${T.useC ? `<s class="co-was">${moneyHTML(T.total + T.cs, true)}</s>` : ''}${moneyHTML(T.total, true)}</span></div>${!T.useC && saved > 0 ? `<div class="co-row co-save"><span>You saved <span class="price">${moneyHTML(saved, true)}</span> on this order</span></div>` : ''}<div id="coCpSlot"></div>${fv ? `<div class="co-row co-save"><span>Free gift added worth ${aed(fv.worth)}</span></div>` : ''}${T.useC ? `<div class="co-row co-save co-save-c"><span>You saved <span class="price">${moneyHTML(T.cs, true)}</span> after coupon</span>${saved > T.cs ? `<small>CONGRATS !! Total Saved is <span class="price">${moneyHTML(saved, true)}</span></small>` : ''}</div>` : ''}`;
@@ -4832,6 +4846,7 @@ footShop();
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; SALE_SIZE = d.saleSize || null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES, sz: SALE_SIZE})); } catch(e) {} saleTick(); promoMaybe(); }
+  if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }

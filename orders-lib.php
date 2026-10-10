@@ -315,6 +315,33 @@ function fomaxo_setting($pdo, $k, $v = null) {
   return $v;
 }
 
+/* "Customers bought together" (the product page box; admin → Products → Customers bought together): the partner shown for each product,
+   and an extra % off when a product and its partner are both in the bag. Saved as fx_settings 'bt' = {"pct":N,"pairs":{product:partner}}. */
+const FX_BT_PAIRS = ['oldmoney' => 'gold', 'royalcandy' => 'dollar', 'matchacoco' => 'gold', 'passionsin' => 'dollar', 'gold' => 'dollar', 'dollar' => 'gold'];
+function fomaxo_bt($pdo = null) {
+  $pdo = $pdo ?: fomaxo_db(); $v = null;
+  if ($pdo) { try { $v = json_decode((string)fomaxo_setting($pdo, 'bt'), true); } catch (Throwable $e) {} }
+  $pairs = is_array($v['pairs'] ?? null) ? array_filter($v['pairs'], fn($b, $a) => is_string($a) && is_string($b) && $b !== '' && $a !== $b, ARRAY_FILTER_USE_BOTH) : FX_BT_PAIRS;
+  return ['pct' => max(0, min(50, (int)($v['pct'] ?? 0))), 'pairs' => $pairs];
+}
+/* The extra "bought together" saving in fils, worked out on the server (never taken from the browser). Keep in sync with btSave() in index.html.
+   Going down the bag: a product whose partner is also in the bag takes pct % off one bottle of each (the cheapest size in the bag);
+   each product counts in one pair only. King and the Discovery Set never count. */
+function fomaxo_bt_fils($lines, $catalog, $bt) {
+  if (empty($bt['pct'])) return 0;
+  $unit = [];
+  foreach ((array)$lines as $l) {
+    $id = is_string($l['id'] ?? null) ? $l['id'] : ''; $opt = (string)($l['opt'] ?? '');
+    if ($id === 'king' || $id === 'discovery' || !isset($catalog[$id]['prices'][$opt]) || (int)($l['qty'] ?? 0) < 1) continue;
+    $v = (float)$catalog[$id]['prices'][$opt]; if (!isset($unit[$id]) || $v < $unit[$id]) $unit[$id] = $v;
+  }
+  $used = []; $fils = 0;
+  foreach ($unit as $a => $va) {
+    $b = $bt['pairs'][$a] ?? ''; if ($b === '' || !isset($unit[$b]) || isset($used[$a]) || isset($used[$b])) continue;
+    $used[$a] = $used[$b] = true; $fils += (int)round(($va + $unit[$b]) * $bt['pct']);   // AED × % = fils
+  }
+  return $fils;
+}
 /* cash on delivery in AED, as set on fomaxo.com/admin → Settings → Cash on delivery: [min, max, fee]; max 0 = no upper limit, fee 0 = no fee.
    Defaults (nothing saved yet, or database down): from AED 200, under AED 2,000, AED 10 fee. */
 function fomaxo_cod_limits($pdo = null) {
