@@ -786,11 +786,28 @@
 "+ Add": "+ أضف",
 "photos": "صوراً",
 "State / City (optional)": "الإمارة / المدينة (اختياري)",
-"Nation (optional)": "الدولة (اختياري)"
+"Nation (optional)": "الدولة (اختياري)",
+"Tick an item": "اختر منتجاً",
+"Add both to bag": "أضف الاثنين إلى الحقيبة",
+"FREE delivery": "توصيل مجاني",
+"Secure payment": "دفع آمن",
+"This item:": "هذا المنتج:",
+"Total price:": "السعر الإجمالي:",
+"Customers bought": "اشتراها العملاء",
+"Pairs well": "يتناسقان",
+"Free Delivery": "توصيل مجاني",
+"Delivered in 1–3 Days": "التوصيل خلال 1–3 أيام",
+"Cash on Delivery": "الدفع عند الاستلام",
+"Secure Payment": "دفع آمن",
+"Original FOMAXO": "FOMAXO أصلي",
+"Free delivery on both": "توصيل مجاني للاثنين"
 };
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };
   var R = [
+    [/^(Free delivery(?: on both)?) · (\d+)% multi-buy off included$/, function(m){ return (m[1] === 'Free delivery' ? 'توصيل مجاني' : 'توصيل مجاني للاثنين') + ' · يشمل خصم ' + m[2] + '%'; }],
+    [/^Cash on Delivery over AED ([\d,.]+)$/, function(m){ return 'الدفع عند الاستلام فوق AED ' + m[1]; }],
+    [/^✓ (\d+) items added to your bag$/, function(m){ return '✓ تمت إضافة ' + cnt(m[1], 'قطعة واحدة', 'قطعتين', 'قطع', 'قطعة') + ' إلى حقيبتك'; }],
     [/^\+ (\d+) more$/, function(m){ return '+ ' + m[1] + ' أخرى'; }],
     [/^(\d+) products in this video · swipe$/, function(m){ return cnt(m[1], 'منتج واحد', 'منتجان', 'منتجات', 'منتجاً') + ' في هذا الفيديو · اسحب'; }],
     [/^· (\d+) items? from your last order$/, function(m){ return '· ' + cnt(m[1], 'قطعة واحدة', 'قطعتان', 'قطع', 'قطعة') + ' من طلبك الأخير'; }],

@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=21";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=23";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -1942,6 +1942,49 @@ section.sec.ro-sec{padding:clamp(20px,3vw,32px) 0 0}
 .ro-sec+section.sec{padding-top:clamp(36px,5vw,64px)}
 /* even, tighter rhythm: the closing "Define your signature luxury" band brings its own space, so the block above it adds none (no doubled gap) */
 main section:has(+ .final){padding-bottom:0!important}
+/* product page (same look as fomaxo.in): delivery line and small icon row under the price, and the "Customers bought together" box */
+.pdel{display:flex;align-items:center;gap:10px;margin:0;font-size:14px;color:var(--muted);letter-spacing:.02em}
+.pdel svg{width:18px;height:18px;flex:none;color:var(--gold)}
+.pdel b{color:var(--ivory);font-weight:500}.pdel b:first-child{color:var(--gold)}
+.assure{list-style:none;margin:6px 0 0;padding:12px 0;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:6px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.assure li{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;font-size:11.5px;line-height:1.3;color:var(--champagne);letter-spacing:.02em}
+.assure i{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--line-2);color:var(--gold);background:rgba(215,170,105,.06)}
+.assure svg{width:20px;height:20px}
+.assure span{max-width:8.5em}   /* two short lines, like fomaxo.in */
+.fbt{padding:56px 0 64px;border-top:1px solid var(--line)}
+.fbt-h{font-family:var(--serif);font-weight:300;font-size:clamp(28px,3vw,40px);margin:0 0 26px;color:var(--ivory);text-align:center}
+.fbt-row{display:grid;grid-template-columns:minmax(0,230px) 40px minmax(0,230px) minmax(240px,320px);gap:0 18px;align-items:start;justify-content:center}
+.fbt-it{display:flex;flex-direction:column;gap:8px;transition:opacity .3s}.fbt-it.off{opacity:.45}
+.fbt-img{position:relative;display:block;aspect-ratio:1;background:var(--panel);border:1px solid var(--line);cursor:pointer;overflow:hidden}
+.fbt-img img{width:100%;height:100%;object-fit:cover}
+.fbt-img input{position:absolute;opacity:0;width:1px;height:1px}
+.fbt-img i{position:absolute;top:10px;right:10px;width:24px;height:24px;display:grid;place-items:center;font-style:normal;font-size:14px;line-height:1;background:var(--gold);color:#050505;box-shadow:0 0 0 1px var(--gold)}
+.fbt-img input:not(:checked)+i{background:rgba(var(--bg-rgb),.75);color:transparent;box-shadow:inset 0 0 0 1px var(--line-2)}
+.fbt-img input:focus-visible+i{outline:2px solid var(--gold-hi);outline-offset:2px}
+.fbt-n{margin:4px 0 0;font-size:14.5px;line-height:1.4;color:var(--ivory)}.fbt-n b{font-weight:500;color:var(--gold)}.fbt-n a{color:var(--ivory);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+.fbt-n small{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.fbt-p{margin:0;font-size:18px;color:var(--gold-hi);font-weight:300;letter-spacing:.03em}.fbt-p .was{display:inline;margin:0 8px 0 0;font-size:14px}
+.fbt-plus{align-self:center;margin-top:-60px;text-align:center;font-size:30px;font-weight:200;color:var(--gold)}
+.fbt-buy{align-self:center;margin-top:-60px;padding-left:18px;display:flex;flex-direction:column;gap:12px}
+.fbt-buy p{margin:0;font-size:14px;color:var(--muted);letter-spacing:.04em}.fbt-buy p b{font-size:24px;color:var(--ivory);font-weight:400;margin-left:6px}
+.fbt-buy small{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.fbt-buy small svg{width:16px;height:16px;flex:none;color:var(--gold)}
+.fbt-buy .btn:disabled{opacity:.5;cursor:default}
+html[data-mode="light"] .fbt-img i{color:#fffaf1}
+html[data-mode="light"] .pdel b:first-child{color:#8a5a12}
+html[dir="rtl"] .fbt-img i{right:auto;left:10px}
+@media(max-width:960px){
+  .fbt{padding:40px 0 44px}
+  .fbt-h{margin-bottom:18px}
+  .fbt-row{grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);gap:0 8px}
+  .fbt-plus{margin-top:-80px;font-size:24px}
+  .fbt-buy{grid-column:1/-1;margin:20px 0 0;padding:0;align-items:center;text-align:center}.fbt-buy .btn{width:100%}
+  .fbt-n{font-size:13.5px}
+  .assure{padding:10px 0;gap:2px}
+  .assure li{font-size:10.5px;gap:6px}
+  .assure i{width:34px;height:34px}.assure svg{width:17px;height:17px}
+  .pdel{font-size:13px}
+}
+@media(min-width:961px){.buy .pdel{font-size:13px}.buy .assure{padding:8px 0 0;margin-top:0;border-bottom:0}.buy .assure i{width:30px;height:30px;flex:none}.buy .assure svg{width:16px;height:16px}.buy .assure li{flex-direction:row;justify-content:center;gap:7px;font-size:10.5px;line-height:1.25;text-align:left}}
 .also-sec{padding:clamp(56px,6vw,96px) 0}
 @media(max-width:700px){.also-sec{padding:44px 0}}
 section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
@@ -2825,11 +2868,11 @@ function qdBar(dc){
 let addT = 0, addHold = false;
 const addedEl = $('#added');
 function hideAdded(){ clearTimeout(addT); addedEl.classList.remove('show'); addedEl.setAttribute('aria-hidden', 'true'); }
-function addedPanel(id, opt, qty){
+function addedPanel(id, opt, qty, names){
   const p = P[id], dc = qtyDiscount(cart), T = orderTotals(cart, ''), n = cart.reduce((a, l) => a + l.qty, 0);
   const v = p.prices[opt], ok = T.after === null || T.short <= 0;
   addedEl.innerHTML = `<button class="ad-x" type="button" data-adclose aria-label="Close">×</button>
-    <div class="ad-top"><img src="${SM(imgFor(p, opt))}" alt=""><div><small>✓ Added to your bag</small><b>${esc(p.name)}</b><span>${optLabel(p, opt)}${qty > 1 ? ' × ' + qty : ''}${hasPrice(v) ? ' · ' + moneyHTML(v * qty) : ''}</span></div></div>
+    <div class="ad-top"><img src="${SM(imgFor(p, opt))}" alt=""><div>${names ? `<small>✓ ${names.length} items added to your bag</small><b>${names.map(esc).join(' + ')}</b>` : `<small>✓ Added to your bag</small><b>${esc(p.name)}</b><span>${optLabel(p, opt)}${qty > 1 ? ' × ' + qty : ''}${hasPrice(v) ? ' · ' + moneyHTML(v * qty) : ''}</span>`}</div></div>
     ${dc.units ? `<div class="ad-offer"><span>${qtyNudge(dc)}</span>${qdBar(dc)}</div>` : ''}
     <div class="ad-acts">${ok ? `<a class="btn sm" href="#/checkout" data-adclose>Checkout${T.after !== null ? ' · ' + aed(T.after) : ''}</a>` : `<span class="btn sm co-min">${minMsg(T.short)}</span>`}<button class="btn line sm" type="button" data-adbag>View bag (${n})</button></div>`;
   $('#toast').classList.remove('show');
@@ -3143,6 +3186,58 @@ const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.c
 // the multi-buy offer, shown before the customer adds to bag (King and the Discovery Set are not part of it)
 const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
   `<p class="pdp-offer">${ICON.gift}<span><b>Buy more, save more</b>2 items 5% off · 3 items 10% off + FREE 10ml mini · 5+ items 15% off</span></p>`;
+/* Bought together: this perfume + up to two others. Partners come from real orders (TOGETHER, from products.php: 2+ orders together);
+   with too few orders yet, the Distinct Blends stand in. The title is always "Customers bought together" (AJAY's pick, 2026-10-10, same as fomaxo.in).
+   King and the Discovery Set are not in it (not part of multi-buy), nor hidden or out-of-stock bottles. Partners take this page's size when they have it. */
+let TOGETHER = {}; try { TOGETHER = JSON.parse(localStorage.getItem('fomaxo_together') || '{}') || {}; } catch(e) {}
+const btOK = p => p && !p.hidden && p.kind !== 'set' && !QTY_DISCOUNT_SKIP.includes(p.id);
+const btSize = (p, size) => p.sizes.includes(+size) ? +size : defaultSize(p);
+const btInStock = (p, size) => { const n = stockLeft(p.id, btSize(p, size)); return n === null || n > 0; };
+function btPick(p, size){
+  if (!btOK(p)) return [];
+  const fit = id => id !== p.id && btOK(P[id]) && btInStock(P[id], size) && hasPrice(P[id].prices[btSize(P[id], size)]);
+  const real = (TOGETHER[p.id] || []).filter(fit).slice(0, 2);
+  if (real.length) return real.map(id => ({id, real: true}));
+  return ['gold', 'dollar', 'oldmoney', 'royalcandy', 'matchacoco', 'passionsin'].concat(Object.keys(P)).filter((id, i, a) => a.indexOf(id) === i && fit(id)).slice(0, 2).map(id => ({id, real: false}));
+}
+function btRender(p, size){
+  const el = $('#bt'); if (!el) return;
+  const pick = btPick(p, size)[0];
+  if (!pick) { el.remove(); return; }
+  const off = new Set(JSON.parse(el.dataset.off || '[]'));
+  const items = [{id: p.id, opt: size, me: true}, {id: pick.id, opt: btSize(P[pick.id], size)}];
+  const tile = (it, i) => { const q = P[it.id], v = q.prices[it.opt], c = q.compareAt && q.compareAt[it.opt];
+    return `<div class="fbt-it${off.has(it.id) ? ' off' : ''}"><label class="fbt-img"><img src="${IMG(imgFor(q, it.opt))}" alt="" loading="lazy"><input type="checkbox" data-bt="${q.id}"${off.has(it.id) ? '' : ' checked'} aria-label="Include ${esc(q.name)}"><i aria-hidden="true">✓</i></label>
+      <p class="fbt-n">${it.me ? '<b>This item:</b> ' + esc(q.name) : `<a href="#/product/${q.id}?size=${it.opt}">${esc(q.name)}</a>`}<small>${optLabel(q, it.opt)}</small></p>
+      <p class="fbt-p">${hasPrice(c) && +c > +v ? `<s class="was">${moneyHTML(c)}</s>` : ''}${moneyHTML(v)}</p></div>`; };
+  const sel = items.filter(it => !off.has(it.id)), lines = sel.map(it => ({id: it.id, opt: it.opt, qty: 1}));
+  const dc = qtyDiscount(lines), total = Math.round(((subtotal(lines) || 0) - dc.amount) * 100) / 100, n = sel.length;
+  el.innerHTML = `<h2 class="fbt-h">Customers bought <em class="metal">together</em></h2>
+    <div class="fbt-row">${tile(items[0], 0)}<span class="fbt-plus" aria-hidden="true">+</span>${tile(items[1], 1)}
+      <div class="fbt-buy"><p>Total price: <b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
+      <small>${ICON.truck}${n === 2 ? 'Free delivery on both' : 'Free delivery'}${dc.pct ? ` · ${dc.pct}% multi-buy off included` : ''}</small></div></div>`;
+  $$('[data-bt]', el).forEach(b => b.onchange = () => { b.checked ? off.delete(b.dataset.bt) : off.add(b.dataset.bt); el.dataset.off = JSON.stringify([...off]); btRender(p, size); });
+  $('#btAdd').onclick = () => { const ok = sel.filter(it => addToCart(it.id, it.opt, 1, true)); if (ok.length) addedPanel(ok[0].id, ok[0].opt, 1, ok.length > 1 ? ok.map(it => P[it.id].name) : null); };
+}
+/* product page, under the price (as on fomaxo.in): when it arrives (the 1–3 days promised at checkout, Sundays skipped) and a row of small icons,
+   only for what is true today: Cash on delivery with its minimum, Secure payment only while card payment is on */
+function delWindow(){
+  const d = new Date(), add = n => { const x = new Date(d); let k = 0; while (k < n) { x.setDate(x.getDate() + 1); if (x.getDay()) k++; } return x; };
+  const a = add(1), b = add(3), f = (x, m) => x.toLocaleDateString('en-GB', m ? {weekday:'short', day:'numeric', month:'short'} : {weekday:'short', day:'numeric'});
+  return `<b>${f(a, a.getMonth() !== b.getMonth())} – ${f(b, true)}</b>`;
+}
+const AS_ICON = {
+  fast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3.5" y="5" width="17" height="15" rx="1"/><path d="M3.5 9.5h17M8 3v4M16 3v4M8.5 14.5l2.3 2.2 4.7-4.7"/></svg>',
+  cod: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2.5" y="6" width="19" height="12" rx="1"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="5" y="10.5" width="14" height="10" rx="1"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M8.7 12.2l2.3 2.3 4.4-4.5"/></svg>'
+};
+function assureHTML(){
+  const it = [[ICON.truck, 'Free', 'Delivery'], [AS_ICON.fast, 'Delivered in', '1–3 Days'], COD_MIN > 0 ? [AS_ICON.cod, 'Cash on Delivery', 'over ' + aed(COD_MIN)] : [AS_ICON.cod, 'Cash on', 'Delivery']];
+  if (CARD_ON) it.push([AS_ICON.lock, 'Secure', 'Payment']);
+  it.push([AS_ICON.shield, 'Original', 'FOMAXO']);
+  return `<ul class="assure" style="--n:${it.length}">${it.map(x => `<li><i>${x[0]}</i><span>${x[1]} ${x[2]}</span></li>`).join('')}</ul>`;
+}
 function product(id, q){
   const p = P[id]; if (!p || p.hidden) return notFound();
   let size = q.get('size') ? (q.get('size') === 'set' ? 'set' : +q.get('size')) : defaultSize(p);
@@ -3171,6 +3266,8 @@ function product(id, q){
           <p class="lead" style="max-width:none">${esc(p.short)}</p>
           <div id="pprice">${pdpPrice(p, size)}</div>
           ${pdpOffer(p)}
+          <p class="pdel">${ICON.truck}<span><b>FREE delivery</b> ${delWindow()}</span></p>
+          ${assureHTML()}
         </div>
         ${p.sizes.length > 1 ? `<div><div class="opt-label"><span>${isSet ? 'Choose your set' : 'Size'}</span><span id="sizeName">${optLabel(p, size)}</span></div>
           <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · Travel':s===50?'Everyday':'Supreme'}</small></button>`).join('')}</div></div>`
@@ -3183,7 +3280,6 @@ function product(id, q){
           <button class="btn line" id="addBtn">Add to bag</button>
         </div>
         <button class="btn block" id="buyBtn">Buy now</button>
-        <p class="pdp-pay">${CO_ICON.lock}<span>Secure checkout · ${CARD_ON ? 'Card, Apple Pay, Google Pay · ' : ''}Cash on delivery over ${aed(COD_MIN)} · Free UAE delivery</span></p>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
           <details${matchMedia('(min-width:961px)').matches ? '' : ' open'}><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
@@ -3193,6 +3289,8 @@ function product(id, q){
         </div>
       </div>
     </div>
+
+    ${btPick(p, size).length ? `<section class="fbt" id="bt" data-p="${p.id}"></section>` : ''}
 
     <div class="reviews" id="reviews">${rwSection(p, null)}</div>
 
@@ -3215,7 +3313,7 @@ function bindProduct(p){
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
     $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = pdpPrice(p, size);
     setImg(imgFor(p, size));
-    renderMbuy(); pdpStock();
+    renderMbuy(); pdpStock(); btRender(p, size);
   });
   const stage = $('#stage');
   stage.onclick = () => stage.classList.toggle('zoom');
@@ -3241,7 +3339,7 @@ function bindProduct(p){
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
     ['#addBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) { b.classList.toggle('oos', out); b.textContent = out ? 'Out of stock' : 'Add to bag'; } });
     $$('#sizes button').forEach(b => b.classList.toggle('so', stockLeft(p.id, b.dataset.s) === 0)); };
-  pdpStock();
+  pdpStock(); btRender(p, size);
   const addBtn = $('#addBtn');
   mobileBarCheck = () => { const r = addBtn.getBoundingClientRect(), off = r.bottom < 0 || r.top > innerHeight - 70; mb.classList.toggle('show', off && $('#reviews').getBoundingClientRect().top > innerHeight*.6); };
   setTimeout(() => mobileBarCheck && mobileBarCheck(), 400);
@@ -4730,13 +4828,14 @@ footShop();
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; SALE_SIZE = d.saleSize || null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES, sz: SALE_SIZE})); } catch(e) {} saleTick(); promoMaybe(); }
+  if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
     HIDE_PAGES = d.hidePages; try { localStorage.setItem('fomaxo_hide_pages', JSON.stringify(HIDE_PAGES)); } catch(e) {}
     applyPages(); const s0 = (location.hash.replace(/^#\/?/, '').split(/[/?]/)[0]); if (HIDE_PAGES.includes(s0)) location.replace('#/');
   }
-  if (d && d.cod && +d.cod.min >= 0 && +d.cod.max >= 0) { const fee = 'fee' in d.cod && +d.cod.fee >= 0 ? +d.cod.fee : COD_FEE; if (+d.cod.min !== COD_MIN || +d.cod.max !== COD_MAX || fee !== COD_FEE) { COD_MIN = +d.cod.min; COD_MAX = +d.cod.max; COD_FEE = fee; coRefresh && coRefresh(); } }
+  if (d && d.cod && +d.cod.min >= 0 && +d.cod.max >= 0) { const fee = 'fee' in d.cod && +d.cod.fee >= 0 ? +d.cod.fee : COD_FEE; if (+d.cod.min !== COD_MIN || +d.cod.max !== COD_MAX || fee !== COD_FEE) { COD_MIN = +d.cod.min; COD_MAX = +d.cod.max; COD_FEE = fee; coRefresh && coRefresh(); const as = $('.buy .assure'); if (as) as.outerHTML = assureHTML(); } }
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
   const js = JSON.stringify(d.products);
   try { localStorage.setItem('fomaxo_products', js); } catch(e) {}
