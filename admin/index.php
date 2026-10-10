@@ -7,7 +7,7 @@
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline'; worker-src 'self'; form-action 'self'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'self'; img-src 'self' https://*.cdninstagram.com https://*.fbcdn.net" . (defined('FX_IG_API') ? ' ' . FX_IG_API : '') . "; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline'; worker-src 'self'; form-action 'self'; frame-ancestors 'none'");
 require dirname(__DIR__) . '/orders-lib.php';
 date_default_timezone_set('Asia/Dubai');
 
@@ -191,6 +191,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .prods td{vertical-align:middle}.pimg img{width:52px;height:52px;object-fit:cover;border-radius:7px;display:block}
 .prods .pvis{width:56px;text-align:center;padding-left:6px;padding-right:0}.prods td.pvis form{margin:0;display:flex;justify-content:center}.rdot{width:24px;height:24px;border-radius:50%;border:2px solid var(--muted);background:none;padding:0;margin:0;cursor:pointer;position:relative;flex:none;opacity:.7}.rdot:hover{border-color:var(--gold);opacity:1}.rdot.on{border-color:var(--ok);opacity:1}.rdot.on::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--ok)}@media (max-width:759px){.prods tr.row{display:grid;grid-template-columns:38px 64px 1fr auto;align-items:center;padding:8px 4px}.prods td.pvis{grid-row:span 2;width:auto;padding:0}.prods td.pimg{grid-row:span 2}.prods td.num{display:none}.rdot{width:28px;height:28px}.rdot.on::after{inset:5px}}
 .vids.fitbox{display:grid;gap:12px;grid-template-columns:minmax(0,340px) minmax(0,1fr);align-items:stretch}.vids .card{margin:0;padding:12px 16px}.vids h2{font-size:15px;margin:0 0 4px}.vids h2 small{margin-left:6px;font-size:12px}.vadd label{margin:8px 0 3px}.vadd input,.vadd select{padding:6px 10px;width:100%}.vadd .shelp{margin:8px 0 0;font-size:12px;line-height:1.45}.vadd .sbtn{margin:10px 0 0}.vlist{display:flex;flex-direction:column;min-height:0;overflow:auto}.vlist .shelp{margin:8px 0 0;font-size:12px}.vrow{display:grid;grid-template-columns:30px 54px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.vrow form{margin:0}.vrow.off .vth{opacity:.45}.vvis{display:flex;justify-content:center}.vth{width:54px;height:96px;object-fit:cover;border-radius:6px;background:#000;cursor:pointer;display:block}.vinfo select{padding:5px 8px;max-width:260px;width:100%;font-weight:600}.vinfo .small{margin-top:3px}.vinfo label.mini{display:block;margin:0 0 2px;font-size:10.5px}.vmv{display:flex;gap:4px}.vmv .btn{padding:5px 9px;margin:0}.vmv .vdel{color:var(--bad)}@media (max-width:759px){.vids.fitbox{display:flex;flex-direction:column;overflow:auto}.vids.fitbox>*{flex:none;overflow:visible}.vrow{grid-template-columns:30px 48px minmax(0,1fr);gap:8px}.vth{width:48px;height:85px}.vmv{grid-column:3}.vadd input,.vadd select{font-size:16px}}
+.vleft{display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto}.vleft>.card{flex:none}.vig .shelp.stop{margin:0 0 8px}.vig label{margin:8px 0 3px}.vig input[type=password]{padding:6px 10px;width:100%}.igh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px}.igh h2{margin:0}.igh .btn{margin:0;padding:4px 9px;font-size:10.5px}.igg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:300px;overflow:auto}.igr{position:relative;display:block;margin:0;cursor:pointer;aspect-ratio:9/16;border-radius:6px;overflow:hidden;background:#000;border:2px solid transparent}.igr input{position:absolute;opacity:0;pointer-events:none}.igr img,.igph{width:100%;height:100%;object-fit:cover;display:block}.igr:has(input:checked){border-color:var(--gold)}.igr:has(input:checked)::after{content:"✓";position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--gold-ink);font-size:12px;display:grid;place-items:center}.igr.had img{opacity:.5}.igd{position:absolute;left:0;right:0;bottom:0;padding:10px 5px 3px;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75))}.igadd{display:flex;gap:6px;margin-top:8px}.igadd select{flex:1 1 auto;min-width:0;padding:6px 8px}.igadd .btn{margin:0;flex:none}@media (max-width:759px){.vleft{overflow:visible}.igg{grid-template-columns:repeat(4,minmax(0,1fr));max-height:none}.igadd select{font-size:16px}}
 .hbtns{display:flex;gap:6px;flex:none}.hbtns .btn{margin:0}
 .pform .card{margin-bottom:6px}.opt{text-transform:none;letter-spacing:0}label.sub{margin-top:4px;text-transform:none;letter-spacing:0;font-size:13px}
 .g2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}.g2>div{min-width:0}
@@ -1003,8 +1004,8 @@ function fx_slug($name, $taken) {
   return $id;
 }
 /* Saves an uploaded photo as a compressed webp in assets/img/up/ and returns its key for the website (or null). */
-function fx_save_photo($tmp, $id) {
-  if (!is_uploaded_file($tmp) || !($info = @getimagesize($tmp)) || !function_exists('imagewebp')) return null;
+function fx_save_photo($tmp, $id, $upload = true) {   // $upload false: a file the server fetched itself (an Instagram cover)
+  if (($upload ? !is_uploaded_file($tmp) : !is_file($tmp)) || !($info = @getimagesize($tmp)) || !function_exists('imagewebp')) return null;
   $im = @imagecreatefromstring((string)file_get_contents($tmp)); if (!$im) return null;
   if ($info[2] === IMAGETYPE_JPEG && function_exists('exif_read_data')) {   // phone photos: turn them the right way up
     $o = (int)((@exif_read_data($tmp) ?: [])['Orientation'] ?? 1);
@@ -1027,6 +1028,7 @@ function fx_upload_max() {   // the biggest upload Hostinger accepts, in bytes
   return $m ? min($m) : 0;
 }
 if (isset($_GET['videos'])) {
+  require_once dirname(__DIR__) . '/instagram-lib.php';
   $vids = fx_videos($pdo);
   $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) { $d = json_decode($r['data'], true) ?: []; $names[$r['id']] = ['name' => $d['name'] ?? $r['id'], 'img' => $d['images'][0] ?? '', 'hidden' => (bool)$r['hidden']]; }
   $back = ['products' => 1, 'videos' => 1];
@@ -1035,6 +1037,30 @@ if (isset($_GET['videos'])) {
     if (!csrf_ok()) { flash('Please try again.'); go($back); }
     $vid = (string)($_POST['vid'] ?? ''); $at = array_search($vid, array_column($vids, 'id'), true);
     $act = (string)($_POST['act'] ?? '');
+    if ($act === 'ig_token') {   // connect Instagram: the token is checked with Instagram, then kept above public_html
+      $tok = preg_replace('/\s+/', '', (string)($_POST['ig_token'] ?? ''));
+      if (!preg_match('/^[A-Za-z0-9_\-|.]{30,600}$/', $tok)) { flash('Please paste the whole Instagram access token.'); go($back); }
+      $r = fomaxo_ig_connect($tok);
+      flash(is_array($r) ? 'Instagram connected' . ($r['user'] !== '' ? ' as @' . $r['user'] : '') . '. Pick a reel below.' : 'Instagram did not accept the token: ' . $r, is_array($r)); go($back);
+    }
+    if ($act === 'ig_off') { fomaxo_ig_save(null); flash('Instagram disconnected. Videos already added stay on the website.', true); go($back); }
+    if ($act === 'ig_add') {   // copy a reel from Instagram to our server, with its cover photo
+      $prod = (string)($_POST['product'] ?? ''); $ig = (string)($_POST['ig'] ?? ''); $c = fomaxo_ig();
+      if (!$c) { flash('Please connect Instagram first.'); go($back); }
+      if (!preg_match('/^\d{5,30}$/', $ig)) { flash('Please tap a reel first.'); go($back); }
+      if (!isset($names[$prod])) { flash('Please pick the product shown in the reel.'); go($back); }
+      $m = fomaxo_ig_media($c, $ig);
+      if (!is_array($m)) { flash('Instagram: ' . $m); go($back); }
+      $dir = dirname(__DIR__) . '/assets/vid'; $name = $prod . '-' . bin2hex(random_bytes(4)) . '.mp4';
+      if (!is_dir($dir) && !@mkdir($dir, 0755, true)) { flash('The video could not be saved. Please try again.'); go($back); }
+      @set_time_limit(300);
+      if (($r = fomaxo_ig_download($m['media_url'], "$dir/$name")) !== true) { flash($r); go($back); }
+      $cover = '';
+      if (!empty($m['thumbnail_url']) && ($tmp = tempnam(sys_get_temp_dir(), 'fxig')) && fomaxo_ig_download($m['thumbnail_url'], $tmp, 15 * 1048576) === true) { $cover = fx_save_photo($tmp, $prod . '-cover', false) ?: ''; @unlink($tmp); }
+      array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => $cover, 'product' => $prod, 'on' => true, 'ig' => $ig]);
+      fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
+      flash('Reel added. It shows on the home page within a minute.', true); go($back);
+    }
     if ($act === 'add') {
       $prod = (string)($_POST['product'] ?? ''); $f = $_FILES['video'] ?? null;
       if (!isset($names[$prod])) { flash('Please pick the product shown in the video.'); go($back); }
@@ -1076,14 +1102,32 @@ if (isset($_GET['videos'])) {
       . $post($v, 'del', '<button class="btn line sm vdel" aria-label="Delete video">✕</button>', ' onsubmit="return confirm(\'Delete this video?\')"') . '</div></div>';
   }
   $max = fx_upload_max();
+  /* From Instagram: connect once with a token, then tap a reel and its product */
+  $ig = fomaxo_ig_fresh(); $igHtml = '';
+  if (!$ig) $igHtml = '<form class="card vig" method="post">' . csrf_field() . '<input type="hidden" name="act" value="ig_token"><h2>From Instagram</h2>'
+    . '<p class="muted small shelp stop">Connect once, then add any reel in two taps. Your Instagram must be a Business or Creator account.</p>'
+    . '<label for="ig_token">Instagram access token</label><input id="ig_token" name="ig_token" type="password" autocomplete="new-password" spellcheck="false" required placeholder="Paste here">'
+    . '<p class="muted small shelp">developers.facebook.com → My apps → your app → Instagram → API setup with Instagram login → Generate token. Kept on your Hostinger server only, never shown again.</p>'
+    . '<p class="sbtn"><button class="btn">Connect Instagram</button></p></form>';
+  else {
+    $reels = fomaxo_ig_reels($ig); $have = array_filter(array_column($vids, 'ig'));
+    $grid = is_array($reels) ? implode('', array_map(fn($r) => '<label class="igr' . (in_array($r['id'], $have, true) ? ' had' : '') . '"><input type="radio" name="ig" value="' . h($r['id']) . '" required>'
+        . ($r['thumb'] ? '<img src="' . h($r['thumb']) . '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="igph"></span>')
+        . '<span class="igd">' . ($r['at'] ? date('d/m', $r['at']) : '') . (in_array($r['id'], $have, true) ? ' · Added' : '') . '</span></label>', $reels)) : '';
+    $igHtml = '<form class="card vig" method="post">' . csrf_field() . '<input type="hidden" name="act" value="ig_add">'
+      . '<div class="igh"><h2>From Instagram' . ($ig['user'] !== '' ? ' <small class="muted">@' . h($ig['user']) . '</small>' : '') . '</h2><button class="btn line sm" name="act" value="ig_off" formnovalidate onclick="return confirm(\'Disconnect Instagram?\')">Disconnect</button></div>'
+      . (!is_array($reels) ? '<p class="msg bad">Instagram: ' . h($reels) . '</p>' : ($grid === '' ? '<p class="muted small">No reels found on this account yet.</p>' : '<p class="muted small shelp stop">Tap a reel, pick its product, then Add.</p><div class="igg">' . $grid . '</div>'
+      . '<div class="igadd"><select name="product" required aria-label="Product in the reel"><option value="">Product in the reel…</option>' . $opts('') . '</select><button class="btn" onclick="if(this.form.checkValidity())this.textContent=\'Adding…\'">Add</button></div>'))
+      . '</form>';
+  }
   page('Shop videos', '<div class="pagehead"><h1>Shop videos</h1><a class="btn line sm" href="' . h(self_url(['products' => 1])) . '">← Products</a></div>' . flash()
-    . '<div class="vids fitbox"><form class="card vadd" method="post" enctype="multipart/form-data" onsubmit="var f=this.video.files[0];if(f&&' . $max . '&&f.size>' . $max . '){alert(\'This video is \'+Math.round(f.size/1048576)+\' MB. Please use one under ' . round($max / 1048576) . ' MB.\');return false}this.querySelector(\'.btn\').textContent=\'Uploading…\'">' . csrf_field() . '<input type="hidden" name="act" value="add">'
-    . '<h2>Add a video</h2>'
+    . '<div class="vids fitbox"><div class="vleft">' . $igHtml . '<form class="card vadd" method="post" enctype="multipart/form-data" onsubmit="var f=this.video.files[0];if(f&&' . $max . '&&f.size>' . $max . '){alert(\'This video is \'+Math.round(f.size/1048576)+\' MB. Please use one under ' . round($max / 1048576) . ' MB.\');return false}this.querySelector(\'.btn\').textContent=\'Uploading…\'">' . csrf_field() . '<input type="hidden" name="act" value="add">'
+    . '<h2>Upload from your phone</h2>'
     . '<label for="v_file">Video</label><input id="v_file" type="file" name="video" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov" required>'
     . '<label for="v_prod">Product in the video</label><select id="v_prod" name="product" required><option value="">Choose…</option>' . $opts('') . '</select>'
     . '<label for="v_cover">Cover photo <span class="opt">(optional)</span></label><input id="v_cover" type="file" name="cover" accept="image/*">'
     . '<p class="muted small shelp">Upright phone video (9:16), 10 to 30 seconds' . ($max ? ', under ' . round($max / 1048576) . ' MB' : '') . '. It plays without sound until the customer taps the sound button. No cover photo = the product photo.</p>'
-    . '<p class="sbtn"><button class="btn">Upload</button></p></form>'
+    . '<p class="sbtn"><button class="btn">Upload</button></p></form></div>'
     . '<div class="card vlist"><h2>Your videos <small class="muted">' . $n . '</small></h2>'
     . ($tr ?: '<p class="muted">No videos yet. The home page shows the video row once you add one.</p>')
     . '<p class="muted small shelp">Ring dot: filled = on the website. The first video shows first. A video of a hidden product is left out by itself.</p></div></div>', true, true);
