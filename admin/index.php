@@ -1036,6 +1036,8 @@ if (isset($_GET['videos'])) {
   $vprods = fn($v) => array_values(array_unique(array_filter(array_merge([(string)($v['product'] ?? '')], (array)($v['also'] ?? [])), fn($id) => is_string($id) && isset($names[$id]))));   // the products a video sells, first one first
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prod = (string)($_POST['product'] ?? ''); $none = $prod === '-'; if ($none) $prod = '';   // '-' = no product: the video gets a Shop now button
+    $words = $prod === '' && !$none ? mb_substr(trim(preg_replace('/\s+/u', ' ', (string)($_POST['product_text'] ?? ''))), 0, 60) : '';   // typed words, not a product from the list: shown under the video, with Shop now
+    if ($words !== '') $none = true;
     if (!$_POST && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) { flash('The video is too big. Please use one under ' . round(fx_upload_max() / 1048576) . ' MB.'); go($back); }
     if (!csrf_ok()) { flash('Please try again.'); go($back); }
     $vid = (string)($_POST['vid'] ?? ''); $at = array_search($vid, array_column($vids, 'id'), true);
@@ -1053,7 +1055,7 @@ if (isset($_GET['videos'])) {
       if (!$c) { flash('Please connect Instagram first.'); go($back); }
       if (!preg_match('/^\d{5,30}$/', $ig)) { flash('Please tap a reel first.'); go($back); }
       if (!$none && !isset($names[$prod])) { flash('Please pick the product shown in the reel.'); go($back); }
-      $v = fomaxo_ig_copy($c, $ig, $prod ?: 'fomaxo'); if (!is_array($v)) { flash($v); go($back); } $v['product'] = $prod;
+      $v = fomaxo_ig_copy($c, $ig, $prod ?: 'fomaxo'); if (!is_array($v)) { flash($v); go($back); } $v['product'] = $prod; if ($words !== '') $v['words'] = $words;
       array_unshift($vids, $v); fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
       flash('Reel added. It shows on the home page within a minute.', true); go($back);
     }
@@ -1070,7 +1072,7 @@ if (isset($_GET['videos'])) {
       $url = trim((string)($_POST['url'] ?? ''));
       if ($url === '' || strlen($url) > 2000) { flash('Please paste the video link.'); go($back); }
       if (!$none && !isset($names[$prod])) { flash('Please pick the product shown in the video.'); go($back); }
-      $v = fomaxo_video_from_link($url, $prod ?: 'fomaxo'); if (!is_array($v)) { flash($v); go($back); } $v['product'] = $prod;
+      $v = fomaxo_video_from_link($url, $prod ?: 'fomaxo'); if (!is_array($v)) { flash($v); go($back); } $v['product'] = $prod; if ($words !== '') $v['words'] = $words;
       $code = (string)($v['ig_code'] ?? '');
       if ((!empty($v['ig']) && in_array($v['ig'], array_column($vids, 'ig'), true)) || ($code !== '' && in_array($code, array_column($vids, 'ig_code'), true))) {
         @unlink(dirname(__DIR__) . '/assets/' . $v['file']); flash('That reel is already in your videos.'); go($back); }
@@ -1090,7 +1092,7 @@ if (isset($_GET['videos'])) {
       if ((!is_dir($dir) && !@mkdir($dir, 0755, true)) || !move_uploaded_file($f['tmp_name'], "$dir/$name")) { flash('The video could not be saved. Please try again.'); go($back); }
       $cover = ''; $c = $_FILES['cover'] ?? null;
       if ($c && ($c['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) $cover = fx_save_photo($c['tmp_name'], ($prod ?: 'fomaxo') . '-cover') ?: '';
-      array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => $cover, 'product' => $prod, 'on' => true]);
+      array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => $cover, 'product' => $prod, 'on' => true] + ($words !== '' ? ['words' => $words] : []));
       flash('Video added. It shows on the home page within a minute.', true);
     } elseif ($at === false) { flash('Please try again.'); go($back); }
     elseif ($act === 'vis') { $vids[$at]['on'] = !empty($_POST['show']); flash($vids[$at]['on'] ? 'The video is on the website.' : 'The video is hidden from the website.', true); }
@@ -1116,7 +1118,7 @@ if (isset($_GET['videos'])) {
   }
   if (fomaxo_ig_sync($pdo)) $vids = fx_videos($pdo);   // Automatic: new reels that name a product
   /* Product in the video: one box to type a name in, or pick from its own dropdown (the free product picker, fx_free_pick_js) */
-  $vpick = fn(string $aria, string $id = '') => '<span class="fpick vpick"><input type="text"' . ($id !== '' ? ' id="' . $id . '"' : '') . ' data-ffind required placeholder="Type or pick a product" aria-label="' . $aria . '" autocomplete="off">'
+  $vpick = fn(string $aria, string $id = '') => '<span class="fpick vpick"><input type="text"' . ($id !== '' ? ' id="' . $id . '"' : '') . ' name="product_text" maxlength="60" data-ffind data-free required placeholder="Type anything, or pick a product" aria-label="' . $aria . '" autocomplete="off">'
     . '<input type="hidden" name="product"><ul class="fplist" hidden>'
     . implode('', array_map(fn($id, $n) => '<li data-v="' . h($id) . '">' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</li>', array_keys($names), $names))
     . '<li data-v="-">No product · Shop now button</li></ul></span>';
@@ -1131,7 +1133,7 @@ if (isset($_GET['videos'])) {
       . (!empty($v['embed']) ? '<a class="vth vemb" href="https://www.instagram.com/reel/' . h($v['embed']) . '/" target="_blank" rel="noopener" title="Open on Instagram">' . ($poster ? '<img src="../assets/img/' . h($poster) . '.webp" alt="">' : '') . '<span>Instagram</span></a>'
         : '<video class="vth" src="../assets/' . h($v['file']) . '#t=0.1" preload="metadata" muted playsinline' . ($poster ? ' poster="../assets/img/' . h($poster) . '.webp"' : '') . ' onclick="this.paused?this.play():this.pause()"></video>')
       . '<div class="vinfo">' . $post($v, 'prods', '<label class="mini">Sells</label><div class="vps">'
-        . ($ps ? implode('', array_map(fn($id) => '<button class="vchip' . ($names[$id]['hidden'] ? ' hid' : '') . '" name="rm" value="' . h($id) . '" title="Remove ' . h($names[$id]['name']) . ' from this video">' . h($names[$id]['name']) . ' <span aria-hidden="true">✕</span></button>', $ps)) : '<span class="vchip none">No product · Shop now button</span>')
+        . ($ps ? implode('', array_map(fn($id) => '<button class="vchip' . ($names[$id]['hidden'] ? ' hid' : '') . '" name="rm" value="' . h($id) . '" title="Remove ' . h($names[$id]['name']) . ' from this video">' . h($names[$id]['name']) . ' <span aria-hidden="true">✕</span></button>', $ps)) : '<span class="vchip none">' . (($v['words'] ?? '') !== '' ? '“' . h($v['words']) . '” · Shop now button' : 'No product · Shop now button') . '</span>')
         . '<select name="add" onchange="this.form.submit()" aria-label="Add a product to this video"><option value="">+ Add product</option>' . implode('', array_map(fn($id, $n) => in_array($id, $ps, true) ? '' : '<option value="' . h($id) . '">' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</option>', array_keys($names), $names)) . '</select></div>')
       . '<div class="small muted">' . (!empty($v['embed']) ? '' : ($gone ? 'Product deleted: not shown' : ($hid ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : 'On the home page, number <span class="vnum">' . ($i + 1) . '</span>')))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : (!empty($v['embed']) ? '<b class="vbad">Not on the website: it opened Instagram. Paste its link again or upload the video</b>' : (!empty($v['link']) ? ' · From a link' : '')))) . '</div></div>'
       . '<div class="vmv">' . $post($v, 'up', '<button class="btn line sm"' . ($i ? '' : ' disabled') . ' aria-label="Move up">↑</button>') . $post($v, 'down', '<button class="btn line sm"' . ($i < $n - 1 ? '' : ' disabled') . ' aria-label="Move down">↓</button>')
@@ -1175,7 +1177,7 @@ if (isset($_GET['videos'])) {
     . '<form method="post" class="spages vall">' . csrf_field() . '<input type="hidden" name="act" value="all"><div class="pgs"><label class="pg"><span>' . ($allOn ? 'On website' : 'Off: row hidden') . '</span><input type="checkbox" role="switch" name="on" value="1"' . ($allOn ? ' checked' : '') . ' aria-label="Show videos on the website" onchange="this.form.submit()"><i class="sw"></i></label></div></form></div>'
     . ($allOn ? '' : '<p class="msg bad">All videos are switched off. Turn the switch on to show the video row again.</p>')
     . ($tr ?: '<p class="muted">No videos yet. The home page shows the video row once you add one.</p>')
-    . '<p class="muted small shelp">Ring dot: filled = on the website. Drag the dots on the left to change the order: the first video shows first. Sells: tap a product to remove it, + Add product for more. No product = a Shop now button. A video of a hidden product is left out by itself.</p></div></div>' . fx_free_pick_js() . <<<'HTML'
+    . '<p class="muted small shelp">Ring dot: filled = on the website. Drag the dots on the left to change the order: the first video shows first. Sells: tap a product to remove it, + Add product for more. No product = a Shop now button, with the words you typed. A video of a hidden product is left out by itself.</p></div></div>' . fx_free_pick_js() . <<<'HTML'
 <script>/* drag the dots (mouse or finger) to change the order of the videos; the new order saves at once, without reloading */
 (function () {
   var list = document.querySelector('.vlist'); if (!list || !list.querySelector('.vdrag')) return;
@@ -1983,11 +1985,11 @@ function fx_free_pick_js(): string {
   function pick(f, li){ var x = parts(f); f.value = li.textContent; x.hid.value = li.dataset.v; x.ul.hidden = true; f.setCustomValidity(''); f.dispatchEvent(new Event('change', {bubbles: true})); }
   function box(t){ return t && t.matches && t.matches('[data-ffind]'); }
   document.addEventListener('focusin', function(e){ if (box(e.target)) { e.target.select(); filter(e.target, true); } });
-  document.addEventListener('input', function(e){ if (box(e.target)) { parts(e.target).hid.value = ''; if (e.target.required) e.target.setCustomValidity(e.target.value.trim() ? 'Pick one from the list' : ''); filter(e.target); } });   // a required box only sends once a line is picked
+  document.addEventListener('input', function(e){ if (box(e.target)) { parts(e.target).hid.value = ''; if (e.target.required && !e.target.hasAttribute('data-free')) e.target.setCustomValidity(e.target.value.trim() ? 'Pick one from the list' : ''); filter(e.target); } });   // a required box only sends once a line is picked
   document.addEventListener('focusout', function(e){
     var f = e.target; if (!box(f)) return;
     var x = parts(f); x.ul.hidden = true;
-    if (!x.hid.value) { var m = shown(x.ul); if (f.value.trim() && m.length) pick(f, m[0]); }   // left with words typed: the first match
+    if (!x.hid.value) { var m = shown(x.ul); if (f.value.trim() && m.length && (!f.hasAttribute('data-free') || m[0].textContent.trim().toLowerCase() === f.value.trim().toLowerCase())) pick(f, m[0]); }   // left with words typed: the first match (a box that takes any words: only an exact name)
   });
   document.addEventListener('mousedown', function(e){   // before the box loses focus
     var li = e.target.closest && e.target.closest('.fplist li');

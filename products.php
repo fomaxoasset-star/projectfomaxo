@@ -25,7 +25,7 @@ if ($pdo && (string)fomaxo_setting($pdo, 'videos_off') !== '1') { try { $live = 
   foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (!empty($v['on']) && preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? '')) {   // only videos on our server: an Instagram-player entry sends shoppers off to Instagram
     $all = array_values(array_unique(array_filter(array_merge([(string)($v['product'] ?? '')], (array)($v['also'] ?? [])), fn($id) => is_string($id) && $id !== '')));   // one product, several, or none (a Shop now button)
     $ps = array_values(array_filter($all, fn($id) => isset($live[$id]))); if ($all && !$ps) continue;   // every product in it is hidden
-    $videos[] = ['v' => $v['file']] + ['p' => $ps[0] ?? ''] + (count($ps) > 1 ? ['a' => array_slice($ps, 1)] : []) + (($v['cover'] ?? '') !== '' ? ['c' => $v['cover']] : []); } } catch (Throwable $e) {} }
+    $videos[] = ['v' => $v['file']] + ['p' => $ps[0] ?? ''] + (count($ps) > 1 ? ['a' => array_slice($ps, 1)] : []) + (($v['cover'] ?? '') !== '' ? ['c' => $v['cover']] : []) + (!$ps && ($v['words'] ?? '') !== '' ? ['w' => (string)$v['words']] : []); } } catch (Throwable $e) {} }
 /* bought together (product page): per product, the other products most often in the same real order (2+ orders together), best first.
    King and the Discovery Set are left out (not part of multi-buy); hidden products are left out on the website. */
 $together = [];
