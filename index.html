@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=25";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=26";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -3234,7 +3234,7 @@ function btRender(p, size){
   el.innerHTML = `<h2 class="fbt-h">Customers bought <em class="metal">together</em></h2>
     <div class="fbt-row">${tile(items[0], 0)}<span class="fbt-plus" aria-hidden="true">+</span>${tile(items[1], 1)}
       <div class="fbt-buy"><p>Total price: ${n && dc.amount > 0 ? `<s class="was">${moneyHTML(subtotal(lines))}</s>` : ''}<b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
-      <small>${ICON.truck}${n === 2 ? 'Free delivery on both' : 'Free delivery'}${dc.pct + (dc.bt > 0 ? BT.pct : 0) >= 5 ? ` · ${dc.pct + (dc.bt > 0 ? BT.pct : 0)}% off included` : ''}</small></div></div>`;   // the % note only from 5% up
+      <small>${ICON.truck}${n && dc.pct + (dc.bt > 0 ? BT.pct : 0) >= 5 ? `You save ${aed(Math.round(dc.amount * 100) / 100)} · Free delivery` : 'Free delivery'}</small></div></div>`;   // the saving only from 5% off up
   $$('[data-bt]', el).forEach(b => b.onchange = () => { b.checked ? off.delete(b.dataset.bt) : off.add(b.dataset.bt); el.dataset.off = JSON.stringify([...off]); btRender(p, size); });
   $('#btAdd').onclick = () => { const ok = sel.filter(it => addToCart(it.id, it.opt, 1, true)); if (ok.length) addedPanel(ok[0].id, ok[0].opt, 1, ok.length > 1 ? ok.map(it => P[it.id].name) : null); };
 }

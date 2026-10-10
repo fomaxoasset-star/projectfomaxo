@@ -807,6 +807,7 @@
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };
   var R = [
+    [/^You save AED ([\d,.]+) · Free delivery$/, function(m){ return 'وفّر AED ' + m[1] + ' · توصيل مجاني'; }],
     [/^(Free delivery(?: on both)?) · (\d+)% off included$/, function(m){ return (m[1] === 'Free delivery' ? 'توصيل مجاني' : 'توصيل مجاني للاثنين') + ' · يشمل خصم ' + m[2] + '%'; }],
     [/^Multi-buy \((\d+)%\) \+ bought together \((\d+)%\)$/, function(m){ return 'الشراء المتعدد (' + m[1] + '%) + الشراء معًا (' + m[2] + '%)'; }],
     [/^Bought together \((\d+)%\)$/, function(m){ return 'خصم الشراء معًا (' + m[1] + '%)'; }],
