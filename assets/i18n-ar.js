@@ -804,6 +804,8 @@
     [/^Add all (\d+) to bag$/, function(m){ return 'أضف الـ ' + m[1] + ' إلى الحقيبة'; }],
     [/^Includes (\d+)% multi-buy off( \+ FREE 10ml mini)?$/, function(m){ return 'يشمل خصم ' + m[1] + '% عند شراء أكثر' + (m[2] ? ' + ميني 10ml مجاناً' : ''); }],
     [/^✓ (\d+) items added to your bag$/, function(m){ return '✓ تمت إضافة ' + cnt(m[1], 'قطعة واحدة', 'قطعتين', 'قطع', 'قطعة') + ' إلى حقيبتك'; }],
+    [/^\+ (\d+) more$/, function(m){ return '+ ' + m[1] + ' أخرى'; }],
+    [/^(\d+) products in this video · swipe$/, function(m){ return cnt(m[1], 'منتج واحد', 'منتجان', 'منتجات', 'منتجاً') + ' في هذا الفيديو · اسحب'; }],
     [/^· (\d+) items? from your last order$/, function(m){ return '· ' + cnt(m[1], 'قطعة واحدة', 'قطعتان', 'قطع', 'قطعة') + ' من طلبك الأخير'; }],
     [/^Add (.+) (Set of \d+) to your bag$/, function(m){ return 'أضف ' + m[1] + ' ' + (tr(m[2]) || m[2]) + ' إلى حقيبتك'; }],
     [/^\/ (.+)$/, function(m){ return '/ ' + (tr(m[1]) || m[1]); }],
