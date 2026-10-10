@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=28";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=29";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -2719,6 +2719,7 @@ const ICON = {
   gift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="9" width="18" height="12"/><path d="M3 13h18M12 9v12M12 9s-1-5-4-5-3 5 4 5zm0 0s1-5 4-5 3 5-4 5z"/></svg>',
   pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/><path d="M14 6l3 3"/></svg>',
   unisex:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="9" cy="14" r="5"/><circle cx="15" cy="10" r="5"/></svg>',
+  spark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 3l1.8 5.4a2 2 0 0 0 1.3 1.3L20.5 12l-5.4 1.8a2 2 0 0 0-1.3 1.3L12 20.5l-1.8-5.4a2 2 0 0 0-1.3-1.3L3.5 12l5.4-1.8a2 2 0 0 0 1.3-1.3z"/><path d="M19 3v3M17.5 4.5h3"/></svg>',
   drop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/></svg>',
   travel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="9" y="3" width="6" height="18" rx="1"/><path d="M9 7h6"/></svg>'
 };
@@ -3122,7 +3123,7 @@ function home(){
   <div class="perks-strip"><div class="wrap">
     <div>${ICON.truck}<span><b>Free delivery</b>Anywhere in UAE</span></div>
     <div>${ICON.gift}<span><b>Ready to gift</b>Luxury packaging</span></div>
-    <div>${ICON.pen}<span><b>Custom engraving</b>On request</span></div>
+    <div>${ICON.spark}<span><b>Made for</b>Everyday luxury</span></div>
     <div>${ICON.drop}<span><b>Try first</b><span class="perk-line">${shown('discovery') ? `Discovery Set from ${moneyHTML(Math.min(...Object.values(P.discovery.prices)))}` : S.mini.products.length ? `Mini 10ml from ${moneyHTML(Math.min(...S.mini.products.map(id => P[id].prices[10]).filter(hasPrice)))}` : 'Ask us for a sample'}</span></span></div>
   </div></div>
   ${lastOrder() ? `<section class="sec ro-sec"><div class="wrap">${orderAgainHTML()}</div></section>` : ''}
