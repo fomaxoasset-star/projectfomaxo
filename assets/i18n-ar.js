@@ -42,6 +42,8 @@
 "Ready to gift": "جاهز للإهداء",
 "Luxury packaging": "تغليف فاخر",
 "On request": "عند الطلب",
+"Made for": "صُنع لـ",
+"Everyday luxury": "الفخامة اليومية",
 "Try first": "جرّب أولاً",
 "Discovery Set from": "مجموعة الاكتشاف ابتداءً من",
 "Mini 10ml from": "ميني 10ml ابتداءً من",
