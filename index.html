@@ -3199,7 +3199,7 @@ const btInStock = (p, size) => { const n = stockLeft(p.id, btSize(p, size)); ret
 // the partner shown on each product page (then the next one if that is hidden or out of stock); products not listed use real orders
 const BT_PAIR = {oldmoney: ['gold', 'dollar'], royalcandy: ['dollar', 'gold'], matchacoco: ['gold', 'dollar'], passionsin: ['dollar', 'gold'], gold: ['dollar', 'oldmoney'], dollar: ['gold', 'royalcandy']};
 /* admin → Products → Together extra off (sent by products.php): each product's partner, and the extra % off when both are in the bag */
-let BT = {pct: 0, pairs: {}}; try { BT = JSON.parse(localStorage.getItem('fomaxo_bt') || 'null') || BT; } catch(e) {}
+let BT = {pct: 0, on: true, pairs: {}}; try { BT = JSON.parse(localStorage.getItem('fomaxo_bt') || 'null') || BT; } catch(e) {}
 // the "bought together" extra in AED, same as fomaxo_bt_fils() in orders-lib.php: going down the bag, a product whose partner is also there
 // takes BT.pct % off one bottle of each (the cheapest size in the bag); each product counts in one pair only; King and the Discovery Set never
 function btSave(lines){
@@ -3221,6 +3221,8 @@ function btPick(p, size){
 }
 function btRender(p, size){
   const el = $('#bt'); if (!el) return;
+  el.style.display = BT.on === false ? 'none' : '';   // admin → Products → Customers bought together Off hides the box
+  if (BT.on === false) return;
   const pick = btPick(p, size)[0];
   if (!pick) { el.remove(); return; }
   const off = new Set(JSON.parse(el.dataset.off || '[]'));
@@ -4846,7 +4848,7 @@ footShop();
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; SALE_SIZE = d.saleSize || null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES, sz: SALE_SIZE})); } catch(e) {} saleTick(); promoMaybe(); }
-  if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
+  if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
