@@ -7,7 +7,7 @@ $f = (string)($_GET['f'] ?? '');
 if (preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $f, $m)) { $key = $f; $path = fx_media_path($f); $type = ['mp4' => 'video/mp4', 'mov' => 'video/quicktime', 'webm' => 'video/webm'][$m[1]]; }
 elseif (preg_match('~^img/(up/[a-z0-9-]+)\.webp$~', $f, $m)) { $key = $m[1]; $path = fx_media_path($m[1]); $type = 'image/webp'; }
 if (empty($path) || !is_file($path)) { http_response_code(404); header('Cache-Control: no-store'); exit; }
-fx_media_link($key);   // from now on the web server sends it itself
+ignore_user_abort(true); register_shutdown_function('fx_media_link', $key);   // after this answer, the web server sends it itself from then on (the first visitor is not kept waiting)
 $size = filesize($path); $mt = filemtime($path); $etag = '"' . dechex($size) . '-' . dechex($mt) . '"';
 header('Content-Type: ' . $type);
 header('Cache-Control: public, max-age=2592000, immutable');   // each upload has its own new name
