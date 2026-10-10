@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>FOMAXO video test</title>
+<style>body{margin:0;background:#050505;color:#d7aa69;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:24px 16px}video{width:min(320px,90vw);aspect-ratio:9/16;background:#000;display:block;margin:16px auto}</style>
+</head><body>
+<!-- Test page: one plain video and nothing else, to see if this browser plays muted videos by itself -->
+<p>Does this video move by itself?</p>
+<video src="assets/vid/dollar-10db6808.mp4" muted autoplay playsinline loop></video>
+<p id="st">Checking…</p>
+<script>
+setTimeout(() => { const v = document.querySelector('video'), r = v.paused ? 'paused' : 'playing';
+  document.getElementById('st').textContent = v.paused ? 'Not moving' : 'Moving';
+  try { navigator.sendBeacon('vlog.php', new Blob([JSON.stringify({v: ['vtest ' + r + ' ready=' + v.readyState + ' muted=' + v.muted + ' t=' + v.currentTime.toFixed(1)]})], {type: 'application/json'})); } catch (e) {}
+}, 4000);
+</script>
+</body></html>
