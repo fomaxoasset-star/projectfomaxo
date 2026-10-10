@@ -4135,12 +4135,23 @@ async function bindReviewPage(q){
 /* ============================ ROUTER ============================ */
 let heroTimer;
 /* ads tracking for Meta, TikTok and Google (fomaxo.com/admin → Settings → Ads tracking). Each one loads only when its ID is saved there,
-   after the page has loaded, so ads can learn who views, adds to bag, checks out and buys. Off for the admin's own browser. */
+   after the page has loaded, so ads can learn who views, adds to bag, checks out and buys. Off for the admin's own browser.
+   Microsoft Clarity (recordings and heatmaps) loads the same late way. It is stopped on the private pages (a customer's review link,
+   order confirmed, thank-you) so their addresses never reach it, and the checkout, contact and franchise pages carry data-clarity-mask,
+   so names, phones and addresses typed there show as blocks in recordings. */
 const ADS = (() => {
-  let ids = null, q = [], ready = false, off = false;
+  let ids = null, q = [], ready = false, off = false, clr = '';   // clr: '' Clarity not loaded, 'on' recording, 'off' stopped
   try { off = localStorage.getItem('fomaxo_notrack') === '1'; ids = JSON.parse(localStorage.getItem('fomaxo_ads') || 'null'); } catch(e) {}
   const js = src => { const s = document.createElement('script'); s.async = true; s.src = src; document.head.appendChild(s); };
   const items = ls => ls.filter(l => P[l.id]).map(l => ({id: l.id, name: P[l.id].name, opt: optLabel(P[l.id], l.opt), qty: l.qty, price: Number(P[l.id].prices[l.opt]) || 0}));
+  const priv = () => /^#\/(review|order-confirmed|thank-you)\b/.test(location.hash);
+  const clarity = () => {   // Clarity's own loader, as in its snippet; started or stopped as the visitor moves between pages
+    if (!ready || !ids.clarity) return;
+    if (priv()) { if (clr === 'on') { clr = 'off'; window.clarity('stop'); } return; }
+    if (clr === 'off') { clr = 'on'; window.clarity('start'); }
+    else if (!clr) { clr = 'on'; window.clarity = window.clarity || function(){ (window.clarity.q = window.clarity.q || []).push(arguments); };
+      js('https://www.clarity.ms/tag/' + encodeURIComponent(ids.clarity)); }
+  };
   const fire = (ev, d) => {
     const m = ids.meta && window.fbq, t = ids.tiktok && window.ttq, g = ids.google && window.gtag;
     if (ev === 'page') { m && fbq('track', 'PageView'); t && ttq.page(); return; }   // Google counts each page by itself
@@ -4155,8 +4166,8 @@ const ADS = (() => {
     if (g) { gtag('event', n[2], gc); if (ev === 'buy' && ids.gads) gtag('event', 'conversion', {send_to: ids.gads, value: val, currency: cur, transaction_id: d.order}); }
   };
   const start = () => {
-    if (ready || off || !ids || !(ids.meta || ids.tiktok || ids.google)) return;
-    ready = true;
+    if (ready || off || !ids || !(ids.meta || ids.tiktok || ids.google || ids.clarity)) return;
+    ready = true; clarity();
     if (ids.meta) { const f = window.fbq = function(){ f.callMethod ? f.callMethod.apply(f, arguments) : f.queue.push(arguments); }; if (!window._fbq) window._fbq = f; f.push = f; f.loaded = true; f.version = '2.0'; f.queue = []; f.disablePushState = true; f.allowDuplicatePageViews = true;   // one PageView per page of the shop, sent below
       js('https://connect.facebook.net/en_US/fbevents.js'); fbq('init', ids.meta); }
     if (ids.tiktok) { const t = window.ttq = window.ttq || []; t.methods = ['page', 'track', 'identify', 'instances', 'debug', 'on', 'off', 'once', 'ready', 'alias', 'group', 'enableCookie', 'disableCookie', 'holdConsent', 'revokeConsent', 'grantConsent'];
@@ -4173,15 +4184,15 @@ const ADS = (() => {
   // wait until the page has loaded and is idle, so the shop opens just as fast
   // the footer privacy line stays "no cookies, nothing shared" only while no ad pixel is switched on
   let footOn = false;
-  const foot = () => { const on = !!(ids && (ids.meta || ids.tiktok || ids.google)); if (on === footOn) return; footOn = on;
-    document.querySelectorAll('.fpriv').forEach(p => p.textContent = on ? 'We use cookies, including from our ad partners, to improve the store and our ads.' : 'We count anonymous visits (no cookies, nothing shared) to improve the store.'); };
+  const foot = () => { const on = !!(ids && (ids.meta || ids.tiktok || ids.google || ids.clarity)); if (on === footOn) return; footOn = on;
+    document.querySelectorAll('.fpriv').forEach(p => p.textContent = on ? 'We use cookies, including from our ad and analytics partners, to improve the store and our ads.' : 'We count anonymous visits (no cookies, nothing shared) to improve the store.'); };
   foot();
   const later = () => { const go = () => (window.requestIdleCallback || setTimeout)(start, {timeout: 3000}); document.readyState === 'complete' ? go() : addEventListener('load', go, {once: true}); };
   const send = (ev, d) => { if (off) return; if (ready) fire(ev, d || {}); else if (q.length < 30) q.push([ev, d || {}]); };
   later();
   return {
     set(v){ const ok = v && typeof v === 'object' ? v : null; try { if (ok) localStorage.setItem('fomaxo_ads', JSON.stringify(ok)); else localStorage.removeItem('fomaxo_ads'); } catch(e) {} if (!ready) { const was = ids; ids = ok; foot(); if (!was && ok) later(); } },   // newest IDs win until the pixels have loaded
-    page(){ send('page'); },
+    page(){ clarity(); send('page'); },
     view(p){ const s = defaultSize(p); send('view', {items: items([{id: p.id, opt: s, qty: 1}]), value: Number(p.prices[s]) || 0}); },
     cart(id, opt, qty){ const it = items([{id, opt, qty}]); send('cart', {items: it, value: it.length ? it[0].price * qty : 0}); },
     checkout(ls){ send('checkout', {items: items(ls), value: orderTotals(ls, '', true).after || 0}); },
@@ -4290,7 +4301,7 @@ function route(){
   if (html === '') return;
   document.body.classList.toggle('home', !seg[0]);
   document.body.classList.toggle('co-page', seg[0] === 'checkout');
-  app.innerHTML = `<div class="page-fade">${html}</div>`;
+  app.innerHTML = `<div class="page-fade"${/^(checkout|order-confirmed|thank-you|review|contact|franchise)$/.test(seg[0]) ? ' data-clarity-mask="true"' : ''}>${html}</div>`;   // typed and shown customer details stay hidden in Clarity recordings
   FXT.view(seg);
   $$('#menu a').forEach(a => a.classList.toggle('on', a.dataset.r === seg[0] || (a.dataset.r === 'fragrances' && seg[0] === 'product')));
   closePanels();
