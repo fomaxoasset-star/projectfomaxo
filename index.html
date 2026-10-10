@@ -300,7 +300,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .buy .pprice{font-family:var(--serif);font-size:34px;color:var(--gold-hi)}
 .buy .pprice.na{font-family:var(--sans);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
 .opt-label{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between}
-.opt-label.opt-one{margin:0;justify-content:flex-end;gap:12px}   /* single size: "SIZE 100ML" together on the right */
+.opt-label.opt-one{justify-content:flex-end;gap:12px}   /* "SIZE 50ML" together on the right, above the size buttons too */
 .sizes{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px}
 .sizes button{border:1px solid var(--line);padding:16px 8px;display:flex;flex-direction:column;gap:4px;align-items:center;transition:.35s}
 .sizes button b{font-family:var(--display);font-weight:300;font-size:20px;letter-spacing:.06em;line-height:1}
@@ -3287,9 +3287,9 @@ function product(id, q){
           <p class="pdel">${ICON.truck}<span><b>FREE delivery</b> ${delWindow()}</span></p>
           ${assureHTML()}
         </div>
-        ${p.sizes.length > 1 ? `<div><div class="opt-label"><span>${isSet ? 'Choose your set' : 'Size'}</span><span id="sizeName">${optLabel(p, size)}</span></div>
+        ${p.sizes.length > 1 ? `<div><div class="opt-label opt-one"><span>${isSet ? 'Choose your set' : 'Size'}</span><span id="sizeName">${optLabel(p, size)}</span></div>
           <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · Travel':s===50?'Everyday':'Supreme'}</small></button>`).join('')}</div></div>`
-          : `<div class="opt-label opt-one"><span>Size</span><span>${isSet ? '2ml vials' : sizeLabel(size)}</span></div>`}
+          : `<div class="opt-label opt-one" style="margin:0"><span>Size</span><span>${isSet ? '2ml vials' : sizeLabel(size)}</span></div>`}
         ${isSet ? `<div id="picker"><div class="opt-label"><span>Choose your fragrances</span><span id="pickCount">0 / ${size}</span></div>
           <div class="picks">${pickable(p).map(f => `<button type="button" class="pick" data-pick="${f.id}" aria-pressed="false"><img src="${SM(f.images[0])}" alt="" loading="lazy"><span>${esc(f.name)}</span><i>✓</i></button>`).join('')}</div>
           <p class="small" id="pickHint" style="margin-top:12px">Select ${size} fragrances to continue.</p></div>` : ''}
