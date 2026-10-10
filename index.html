@@ -2236,12 +2236,12 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
   .pshare{margin-top:-4px}
   .perks div{padding:4px 12px;font-size:12px;line-height:1.25}
   .acc summary{padding:7px 0}
-  .acc .body{padding-bottom:8px;font-size:13px;line-height:1.5;max-height:150px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+  .acc .body{padding-bottom:8px;font-size:calc(15.5px / var(--bz,1));line-height:1.6;max-height:calc(160px / var(--bz,1));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
   .stage{width:var(--stage-w,auto)}
   .picks{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.pick span{padding:5px 6px;font-size:9.5px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* Discovery Set: the six fragrances in one row
   .thumbs{overflow-y:auto;scrollbar-width:none}.thumbs::-webkit-scrollbar{display:none}.thumbs button{flex:none}
 }
-@media(min-width:961px) and (max-height:800px){.pdp-crumbs{display:none}.pdp{padding-top:10px}.acc .body{max-height:64px}}
+@media(min-width:961px) and (max-height:800px){.pdp-crumbs{display:none}.pdp{padding-top:10px}.acc .body{max-height:calc(84px / var(--bz,1))}}
 /* ===== Arabic (عربي) — the site turns right-to-left; English text is swapped by assets/i18n-ar.js ===== */
 html.i18n-wait body{visibility:hidden}
 html[lang=ar]{--serif:"Cormorant Garamond","Amiri","Times New Roman",serif;--display:"Jost","Tajawal","Helvetica Neue",Arial,sans-serif;--sans:"Jost","Tajawal","Helvetica Neue",Arial,sans-serif}
@@ -2811,7 +2811,7 @@ addEventListener('resize', () => requestAnimationFrame(fitCo));
 /* laptop product page: photos and thumbnails no taller than the screen, and the buy side scaled down (never below 72%) so it all fits one screen, also with a section opened */
 function fitPdp(){
   const pdp = $('.pdp'), buy = pdp && $('.buy', pdp), gal = pdp && $('.gallery', pdp); if (!buy) return;
-  buy.style.zoom = ''; if (gal) { gal.style.gridTemplateColumns = ''; const tb0 = $('.thumbs', gal); if (tb0) tb0.style.maxHeight = ''; gal.style.removeProperty('--stage-w'); }
+  buy.style.zoom = ''; buy.style.removeProperty('--bz'); if (gal) { gal.style.gridTemplateColumns = ''; const tb0 = $('.thumbs', gal); if (tb0) tb0.style.maxHeight = ''; gal.style.removeProperty('--stage-w'); }
   if (innerWidth < 961) return;
   const pf = pdp.closest('.page-fade'), ty = pf ? new DOMMatrix(getComputedStyle(pf).transform).m42 || 0 : 0;
   const top = buy.getBoundingClientRect().top + scrollY - ty, avail = innerHeight - top - 12;
@@ -2822,7 +2822,7 @@ function fitPdp(){
   }
   // photos in the buy side keep their on-screen width when zoomed, so shrink in a few steps until it fits
   let z = 1;
-  for (let i = 0; i < 4; i++) { const need = buy.getBoundingClientRect().height; if (need <= avail || z <= .72) break; z = Math.max(.72, Math.floor(z * avail / need * 100) / 100); buy.style.zoom = z; }
+  for (let i = 0; i < 4; i++) { const need = buy.getBoundingClientRect().height; if (need <= avail || z <= .72) break; z = Math.max(.72, Math.floor(z * avail / need * 100) / 100); buy.style.zoom = z; buy.style.setProperty('--bz', z); }   // --bz keeps the open section's text full size
 }
 addEventListener('resize', () => requestAnimationFrame(fitPdp));
 document.addEventListener('toggle', e => { if (e.target.closest && e.target.closest('.pdp .acc')) fitPdp(); }, true);
