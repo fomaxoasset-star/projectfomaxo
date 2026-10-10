@@ -126,4 +126,11 @@
       send(null);
     });
   });
+  /* 9:16 or 16:9: the ring is picked from the chosen video's real shape (it can still be changed by hand) */
+  inp.addEventListener('change', function () {
+    var file = inp.files && inp.files[0], r = f.querySelectorAll('input[name=shape]'); if (!file || r.length < 2) return;
+    var v = document.createElement('video'); v.preload = 'metadata'; v.muted = true; v.src = URL.createObjectURL(file);
+    v.onloadedmetadata = function () { if (v.videoWidth && v.videoHeight) (v.videoWidth > v.videoHeight ? r[1] : r[0]).checked = true; URL.revokeObjectURL(v.src); };
+    v.onerror = function () { URL.revokeObjectURL(v.src); };
+  });
 })();
