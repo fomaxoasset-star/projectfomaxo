@@ -2,8 +2,9 @@
 /* FOMAXO — Instagram reels for the shop videos (fomaxo.com/admin → Products → Videos → From Instagram).
    Uses the Instagram API with Instagram login (Business or Creator account). The access token is typed in the admin
    and kept in fomaxo-instagram.php ONE LEVEL ABOVE public_html (never on GitHub, never public).
-   A chosen reel is copied to assets/vid/ so it keeps playing even if it is removed from Instagram. */
+   A chosen reel is copied to fomaxo-media/vid (assets/vid/ on the website, see media-lib.php) so it keeps playing even if it is removed from Instagram. */
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
+require_once __DIR__ . '/media-lib.php';
 
 function fomaxo_ig_file() { return dirname(__DIR__) . '/fomaxo-instagram.php'; }
 function fomaxo_ig() { $f = fomaxo_ig_file(); $c = is_file($f) ? require $f : null; return is_array($c) && !empty($c['token']) ? $c : null; }
@@ -69,15 +70,15 @@ function fomaxo_ig_download($url, $dest, $max = 300 * 1048576) {
 /* copies one reel (video + cover photo) to our server: the new entry for the video list, or an error message */
 function fomaxo_ig_copy($c, $ig, $prod) {
   $m = fomaxo_ig_media($c, $ig); if (!is_array($m)) return 'Instagram: ' . $m;
-  $dir = __DIR__ . '/assets/vid'; $name = $prod . '-' . bin2hex(random_bytes(4)) . '.mp4';
+  $dir = fx_media('vid'); $name = $prod . '-' . bin2hex(random_bytes(4)) . '.mp4';
   if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return 'The video could not be saved. Please try again.';
   @set_time_limit(300);
   if (($r = fomaxo_ig_download($m['media_url'], "$dir/$name")) !== true) return $r;
-  $cover = '';   // Instagram's cover picture, as a compressed webp in assets/img/up/
+  $cover = '';   // Instagram's cover picture, as a compressed webp in fomaxo-media/up (assets/img/up/ on the website)
   if (!empty($m['thumbnail_url']) && function_exists('imagewebp') && ($tmp = tempnam(sys_get_temp_dir(), 'fxig'))) {
     if (fomaxo_ig_download($m['thumbnail_url'], $tmp, 15 * 1048576) === true && ($im = @imagecreatefromstring((string)file_get_contents($tmp)))) {
       $w = imagesx($im); $h = imagesy($im); if (max($w, $h) > 1600) $im = imagescale($im, $w >= $h ? 1600 : (int)round($w * 1600 / $h), $w >= $h ? (int)round($h * 1600 / $w) : 1600);
-      $up = __DIR__ . '/assets/img/up'; $k = $prod . '-cover-' . bin2hex(random_bytes(4));
+      $up = fx_media('up'); $k = $prod . '-cover-' . bin2hex(random_bytes(4));
       imagepalettetotruecolor($im);
       if ((is_dir($up) || @mkdir($up, 0755, true)) && @imagewebp($im, "$up/$k.webp", 80)) $cover = "up/$k";
     }
@@ -208,7 +209,7 @@ function fomaxo_ig_public_urls($code) {
     $log[] = ($i + 1) . ":$c" . ($vid !== '' ? '+' : '');
     if ($ok($vid)) { $out = [$vid, $img]; break; }
   }
-  $f = __DIR__ . '/fomaxo-ig-log.txt'; $old = is_file($f) ? array_slice(file($f, FILE_IGNORE_NEW_LINES), -29) : [];
+  $f = fx_media() . '/fomaxo-ig-log.txt'; $old = is_file($f) ? array_slice(file($f, FILE_IGNORE_NEW_LINES), -29) : [];
   @file_put_contents($f, implode("\n", array_merge($old, [gmdate('Y-m-d H:i') . " $code " . implode(' ', $log) . ($out[0] !== '' ? ' copied' : ' refused')])) . "\n");
   return $out;
 }
@@ -216,13 +217,13 @@ function fomaxo_ig_public_urls($code) {
 function fomaxo_ig_public_copy($code, $prod) {
   if (!function_exists('curl_init')) return null;
   [$vid, $img] = fomaxo_ig_public_urls($code); if ($vid === '') return null;
-  $vdir = __DIR__ . '/assets/vid'; if (!is_dir($vdir) && !@mkdir($vdir, 0755, true)) return null;
+  $vdir = fx_media('vid'); if (!is_dir($vdir) && !@mkdir($vdir, 0755, true)) return null;
   $name = $prod . '-' . bin2hex(random_bytes(4)) . '.mp4';
-  if (fomaxo_ig_download($vid, __DIR__ . "/assets/vid/$name") !== true) return null;
+  if (fomaxo_ig_download($vid, fx_media('vid') . "/$name") !== true) return null;
   $cover = '';
   if ($img !== '' && function_exists('imagewebp') && ($tmp = tempnam(sys_get_temp_dir(), 'fxig'))) {
     if (fomaxo_ig_download($img, $tmp, 15 * 1048576) === true && ($im = @imagecreatefromstring((string)file_get_contents($tmp)))) {
-      $up = __DIR__ . '/assets/img/up'; $k = $prod . '-cover-' . bin2hex(random_bytes(4)); imagepalettetotruecolor($im);
+      $up = fx_media('up'); $k = $prod . '-cover-' . bin2hex(random_bytes(4)); imagepalettetotruecolor($im);
       if ((is_dir($up) || @mkdir($up, 0755, true)) && @imagewebp($im, "$up/$k.webp", 80)) $cover = "up/$k";
     }
     @unlink($tmp);
@@ -242,15 +243,15 @@ function fomaxo_video_from_link($url, $prod) {
   if (preg_match('~^(?:https?://)?(?:[\w-]+\.)*(youtube\.com|youtu\.be|tiktok\.com|facebook\.com|fb\.watch)/~i', $url))
     return 'YouTube, TikTok and Facebook do not let their videos be copied. Save the video to your phone and upload it, or paste a reel link from your Instagram.';
   if (!preg_match('~^https?://~i', $url)) $url = 'https://' . $url;
-  $tmp = tempnam(sys_get_temp_dir(), 'fxvl'); @set_time_limit(300); $vdir = __DIR__ . '/assets/vid'; if (!is_dir($vdir)) @mkdir($vdir, 0755, true);
+  $tmp = tempnam(sys_get_temp_dir(), 'fxvl'); @set_time_limit(300); $vdir = fx_media('vid'); if (!is_dir($vdir)) @mkdir($vdir, 0755, true);
   for ($try = 0; $try < 2; $try++) {
     [$ok, $final] = fomaxo_link_get($url, $tmp, 300 * 1048576);
     if ($ok !== true) { @unlink($tmp); return $ok; }
     $mime = function_exists('finfo_open') ? (string)finfo_file(finfo_open(FILEINFO_MIME_TYPE), $tmp) : '';
     if (isset(FX_VIDEO_MIMES[$mime])) {
       $name = $prod . '-' . bin2hex(random_bytes(4)) . '.' . FX_VIDEO_MIMES[$mime];
-      if (!@rename($tmp, __DIR__ . "/assets/vid/$name")) { @unlink($tmp); return 'The video could not be saved. Please try again.'; }
-      @chmod(__DIR__ . "/assets/vid/$name", 0644);
+      if (!@rename($tmp, fx_media('vid') . "/$name")) { @unlink($tmp); return 'The video could not be saved. Please try again.'; }
+      @chmod(fx_media('vid') . "/$name", 0644);
       return ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => '', 'product' => $prod, 'on' => true, 'link' => trim($url)];
     }
     /* a web page: the video it shares (og:video), or the first <video> on it */

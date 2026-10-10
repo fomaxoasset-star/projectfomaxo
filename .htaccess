@@ -15,6 +15,11 @@ RewriteRule ^assets/img/link-preview\.jpg$ assets/img/link-preview-square.jpg [L
   </IfModule>
 </FilesMatch>
 
+# uploads from the admin (shop videos, cover and product photos) are kept above public_html, because each GitHub update
+# removes files that are not on GitHub; their addresses stay the same and media.php sends them
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^assets/(vid/[a-z0-9-]+\.(?:mp4|mov|webm)|img/up/[a-z0-9-]+\.webp)$ media.php?f=$1 [L]
+
 # product addresses for Google: fomaxo.com/fomaxo-gold → product.php; fomaxo.com/sitemap.xml → sitemap.php
 RewriteRule ^sitemap\.xml$ sitemap.php [L]
 RewriteCond %{REQUEST_FILENAME} !-f
