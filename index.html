@@ -2292,6 +2292,11 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 .vt-p .price .was{display:none}
 @media(max-width:600px){.vrow{gap:10px;margin-right:calc(-1 * var(--pad));padding-right:var(--pad)}.vt{flex-basis:40vw}.vt-p{left:8px;right:8px;bottom:8px;gap:6px}.vt-p img{width:30px;height:30px}.vt-p b{font-size:11.5px}.vt-p .price{font-size:13.5px}}
 .vt .vt-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* a 16:9 (wide) video: its tile is two upright tiles wide, the same height, and shows the whole picture with the name below it */
+.vt.wide{flex-basis:calc(2 * clamp(150px,17vw,230px) + 14px);aspect-ratio:9/8}
+.vt.wide video,.vt.wide .vt-img{object-fit:contain}
+.vt.wide:hover video{transform:none}
+@media(max-width:600px){.vt.wide{flex-basis:calc(80vw + 10px)}}
 .rl-s.emb .rl-stage{display:flex;flex-direction:column;background:#000}
 .rl-s.emb .rl-stage::after{display:none}
 .rl-s.emb iframe{flex:1 1 auto;min-height:0;width:100%;border:0;background:#fff}
@@ -2305,6 +2310,7 @@ html[data-mode="light"] .reel{background:#1b1712}
 .rl-s{height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:grid;place-items:center}
 .rl-stage{position:relative;height:100%;width:100%;overflow:hidden;background:#000}
 .rl-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rl-s.wide .rl-stage video{object-fit:contain}   /* 16:9: the whole picture shows, the product card sits under it */
 .rl-stage::after{content:"";position:absolute;inset:auto 0 0;height:45%;background:linear-gradient(to top,rgba(0,0,0,.75),rgba(0,0,0,0));pointer-events:none}
 .rl-pause{position:absolute;inset:0;margin:auto;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#f0d3a0;opacity:0;transition:opacity .3s;pointer-events:none;z-index:1}
 .rl-pause svg{width:22px;height:22px;margin-left:3px}
@@ -2337,6 +2343,8 @@ html[data-mode="light"] .reel{background:#1b1712}
 .rl-nav{display:none}
 @media(min-width:760px){
   .rl-stage{height:calc(100% - 40px);width:auto;aspect-ratio:9/16;border:1px solid rgba(215,170,105,.3)}
+  .rl-s.wide .rl-stage{height:auto;width:min(calc(100% - 180px),calc((100vh - 40px) * 16 / 9));aspect-ratio:16/9}
+  .rl-s.wide .rl-cards{left:auto;width:min(380px,calc(100% - 24px))}
   .rl-top{left:auto;right:24px;top:20px;flex-direction:column;gap:10px}
   .rl-nav{display:flex;flex-direction:column;gap:10px;position:fixed;right:24px;top:50%;transform:translateY(-50%);z-index:3}
   .rl-nav button[disabled]{opacity:.3;cursor:default}
@@ -4587,7 +4595,7 @@ const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; 
 function vidSecHTML(){
   const l = vids(); if (!l.length) return '';
   return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)}
-    <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
+    <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
       ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `<video muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
       <span class="vt-play" aria-hidden="true">${VI.play}</span>
       ${p ? `<span class="vt-p"><img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now</i></span></span>`}</button>`; }).join('')}</div></div>`;
@@ -4619,7 +4627,7 @@ function reelCard(p){
 }
 function reelSlide(v, k){
   const ps = vidProds(v).map(id => P[id]), name = ps.length ? ps[0].name : 'FOMAXO';
-  return `<section class="rl-s${v.e ? ' emb' : ''}" data-k="${k}"><div class="rl-stage">
+  return `<section class="rl-s${v.e ? ' emb' : ''}${v.wd ? ' wide' : ''}" data-k="${k}"><div class="rl-stage">
     ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video playsinline loop muted preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
     <span class="rl-pause" aria-hidden="true">${VI.play}</span>
     ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'Eau de Parfum · Unisex'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`
