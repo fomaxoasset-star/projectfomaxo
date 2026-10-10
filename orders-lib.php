@@ -35,7 +35,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 25) return;
+  if ($ver >= 26) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -165,6 +165,14 @@ function fomaxo_db_schema($pdo) {
     $set->execute([fomaxo_json($d), 'passionsin']);
   }
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '25')");
+  /* v26: Old Money gets the model photo second, after the bottle photo */
+  $get->execute(['oldmoney']); $d = json_decode((string)$get->fetchColumn(), true);
+  if (is_array($d)) {
+    $imgs = array_values(array_diff(array_filter((array)($d['images'] ?? []), 'is_string'), ['oldmoney-model']));
+    array_splice($imgs, min(1, count($imgs)), 0, ['oldmoney-model']); $d['images'] = $imgs;
+    $set->execute([fomaxo_json($d), 'oldmoney']);
+  }
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '26')");
 }
 /* real orders the owner has not opened yet: not test, not an unpaid card attempt, not cancelled or refunded */
 const FX_NEW_ORDER_SQL = "seen_at IS NULL AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')";
