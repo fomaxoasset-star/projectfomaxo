@@ -2,7 +2,8 @@
 /* FOMAXO — the product list for the website, as saved on fomaxo.com/admin → Products.
    {"products": null} when the database is not set up or down: the website then keeps the list built into index.html. */
 header('Content-Type: application/json');
-header('Cache-Control: public, max-age=30');
+header('Cache-Control: no-store');   // never kept by the browser, Hostinger or a CDN: a change saved on admin shows on the website straight away
+header('X-LiteSpeed-Cache-Control: no-cache');
 require __DIR__ . '/orders-lib.php';
 $out = [];
 foreach (fomaxo_product_rows() ?: [] as $r) {

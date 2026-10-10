@@ -4921,6 +4921,8 @@ async function loadProducts(){
   if (!/^#\/checkout/.test(location.hash)) { route(); applyStock(); }
 }
 renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); promoMaybe();
+let lpAt = Date.now(); const lpAgain = () => { if (document.hidden || Date.now() - lpAt < 3000) return; lpAt = Date.now(); loadProducts(); };   // back on the tab (e.g. after saving on admin): fetch the latest prices and offers again
+document.addEventListener('visibilitychange', lpAgain); addEventListener('focus', lpAgain);
 })();
 </script>
 
