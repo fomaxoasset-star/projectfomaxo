@@ -17,4 +17,19 @@ function fx_media_path($file) {
   if (preg_match('~^up/([a-z0-9-]+)$~', $file, $m)) { $f = fx_media('up') . '/' . $m[1] . '.webp'; return is_file($f) ? $f : __DIR__ . '/assets/img/' . $file . '.webp'; }
   return null;
 }
-function fx_media_delete($file) { if (($f = fx_media_path($file)) && is_file($f)) @unlink($f); }
+function fx_media_delete($file) { if (($l = fx_media_public($file)) && is_link($l)) @unlink($l); if (($f = fx_media_path($file)) && is_file($f)) @unlink($f); }
+/* where the website shows it: assets/vid/x.mp4 or assets/img/up/x.webp in public_html */
+function fx_media_public($file) {
+  if (preg_match('~^vid/[a-z0-9-]+\.(?:mp4|mov|webm)$~', (string)$file)) return __DIR__ . '/assets/' . $file;
+  if (preg_match('~^up/[a-z0-9-]+$~', (string)$file)) return __DIR__ . '/assets/img/' . $file . '.webp';
+  return null;
+}
+/* puts a link to the kept file at its website address, so the web server sends it itself (starts at once, in parts) instead of media.php.
+   A GitHub update removes the link; the next visit through media.php (or the admin Videos page) puts it back. */
+function fx_media_link($file) {
+  $pub = fx_media_public($file); $real = fx_media_path($file);
+  if (!$pub || !$real || !is_file($real) || strpos($real, dirname(__DIR__) . '/fomaxo-media/') !== 0 || is_file($pub)) return;
+  if (is_link($pub)) @unlink($pub);
+  if (!is_dir(dirname($pub))) @mkdir(dirname($pub), 0755, true);
+  @symlink($real, $pub);
+}
