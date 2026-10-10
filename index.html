@@ -3187,7 +3187,7 @@ const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.c
 const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
   `<p class="pdp-offer">${ICON.gift}<span><b>Buy more, save more</b>2 items 5% off · 3 items 10% off + FREE 10ml mini · 5+ items 15% off</span></p>`;
 /* Bought together: this perfume + up to two others. Partners come from real orders (TOGETHER, from products.php: 2+ orders together);
-   with too few orders yet, the Distinct Blends stand in under an honest title ("Pairs well together"), never "customers bought".
+   with too few orders yet, the Distinct Blends stand in. The title is always "Customers bought together" (AJAY's pick, 2026-10-10, same as fomaxo.in).
    King and the Discovery Set are not in it (not part of multi-buy), nor hidden or out-of-stock bottles. Partners take this page's size when they have it. */
 let TOGETHER = {}; try { TOGETHER = JSON.parse(localStorage.getItem('fomaxo_together') || '{}') || {}; } catch(e) {}
 const btOK = p => p && !p.hidden && p.kind !== 'set' && !QTY_DISCOUNT_SKIP.includes(p.id);
@@ -3212,7 +3212,7 @@ function btRender(p, size){
       <p class="fbt-p">${hasPrice(c) && +c > +v ? `<s class="was">${moneyHTML(c)}</s>` : ''}${moneyHTML(v)}</p></div>`; };
   const sel = items.filter(it => !off.has(it.id)), lines = sel.map(it => ({id: it.id, opt: it.opt, qty: 1}));
   const dc = qtyDiscount(lines), total = Math.round(((subtotal(lines) || 0) - dc.amount) * 100) / 100, n = sel.length;
-  el.innerHTML = `<h2 class="fbt-h">${pick.real ? 'Customers bought <em class="metal">together</em>' : 'Pairs well <em class="metal">together</em>'}</h2>
+  el.innerHTML = `<h2 class="fbt-h">Customers bought <em class="metal">together</em></h2>
     <div class="fbt-row">${tile(items[0], 0)}<span class="fbt-plus" aria-hidden="true">+</span>${tile(items[1], 1)}
       <div class="fbt-buy"><p>Total price: <b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
       <small>${ICON.truck}${n === 2 ? 'Free delivery on both' : 'Free delivery'}${dc.pct ? ` · ${dc.pct}% multi-buy off included` : ''}</small></div></div>`;
