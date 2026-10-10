@@ -204,6 +204,7 @@ function fomaxo_ig_public_urls($code) {
   $log = []; $out = ['', ''];
   foreach ($tries as $i => [$url, $ua, $hdr]) {
     [$c, $body] = $fetch($url, $ua, $hdr); [$vid, $img] = fomaxo_ig_pick($body);
+    @file_put_contents(__DIR__ . '/fomaxo-ig-answer-' . ($i + 1) . '.txt', substr(preg_replace('~<style.*?</style>~s', '', $body), 0, 600000));   // what Instagram sent, to see why a copy fails
     $log[] = ($i + 1) . ":$c" . ($vid !== '' ? '+' : '');
     if ($ok($vid)) { $out = [$vid, $img]; break; }
   }
