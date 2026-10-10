@@ -191,7 +191,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .prods td{vertical-align:middle}.pimg img{width:52px;height:52px;object-fit:cover;border-radius:7px;display:block}
 .prods .pvis{width:56px;text-align:center;padding-left:6px;padding-right:0}.prods td.pvis form{margin:0;display:flex;justify-content:center}.rdot{width:24px;height:24px;border-radius:50%;border:2px solid var(--muted);background:none;padding:0;margin:0;cursor:pointer;position:relative;flex:none;opacity:.7}.rdot:hover{border-color:var(--gold);opacity:1}.rdot.on{border-color:var(--ok);opacity:1}.rdot.on::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--ok)}@media (max-width:759px){.prods tr.row{display:grid;grid-template-columns:38px 64px 1fr auto;align-items:center;padding:8px 4px}.prods td.pvis{grid-row:span 2;width:auto;padding:0}.prods td.pimg{grid-row:span 2}.prods td.num{display:none}.rdot{width:28px;height:28px}.rdot.on::after{inset:5px}}
 .vids.fitbox{display:grid;gap:12px;grid-template-columns:minmax(0,340px) minmax(0,1fr);align-items:stretch}.vids .card{margin:0;padding:12px 16px}.vids h2{font-size:15px;margin:0 0 4px}.vids h2 small{margin-left:6px;font-size:12px}.vadd label{margin:8px 0 3px}.vadd input,.vadd select{padding:6px 10px;width:100%}.vadd .shelp{margin:8px 0 0;font-size:12px;line-height:1.45}.vadd .sbtn{margin:10px 0 0}.vlist{display:flex;flex-direction:column;min-height:0;overflow:auto}.vlist .shelp{margin:8px 0 0;font-size:12px}.vrow{display:grid;grid-template-columns:30px 54px minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.vrow form{margin:0}.vrow.off .vth{opacity:.45}.vvis{display:flex;justify-content:center}.vth{width:54px;height:96px;object-fit:cover;border-radius:6px;background:#000;cursor:pointer;display:block}.vinfo select{padding:5px 8px;max-width:260px;width:100%;font-weight:600}.vinfo .small{margin-top:3px}.vinfo label.mini{display:block;margin:0 0 2px;font-size:10.5px}.vmv{display:flex;gap:4px}.vmv .btn{padding:5px 9px;margin:0}.vmv .vdel{color:var(--bad)}@media (max-width:759px){.vids.fitbox{display:flex;flex-direction:column;overflow:auto}.vids.fitbox>*{flex:none;overflow:visible}.vrow{grid-template-columns:30px 48px minmax(0,1fr);gap:8px}.vth{width:48px;height:85px}.vmv{grid-column:3}.vadd input,.vadd select{font-size:16px}}
-.vleft{display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto}.vleft>.card{flex:none}.vig .shelp.stop{margin:0 0 8px}.vig label{margin:8px 0 3px}.vig input[type=password]{padding:6px 10px;width:100%}.igh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px}.igh h2{margin:0}.igh .btn{margin:0;padding:4px 9px;font-size:10.5px}.igg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:300px;overflow:auto}.igr{position:relative;display:block;margin:0;cursor:pointer;aspect-ratio:9/16;border-radius:6px;overflow:hidden;background:#000;border:2px solid transparent}.igr input{position:absolute;opacity:0;pointer-events:none}.igr img,.igph{width:100%;height:100%;object-fit:cover;display:block}.igr:has(input:checked){border-color:var(--gold)}.igr:has(input:checked)::after{content:"✓";position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--gold-ink);font-size:12px;display:grid;place-items:center}.igr.had img{opacity:.5}.igd{position:absolute;left:0;right:0;bottom:0;padding:10px 5px 3px;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75))}.igadd{display:flex;gap:6px;margin-top:8px}.igadd select{flex:1 1 auto;min-width:0;padding:6px 8px}.igadd .btn{margin:0;flex:none}@media (max-width:759px){.vleft{overflow:visible}.igg{grid-template-columns:repeat(4,minmax(0,1fr));max-height:none}.igadd select{font-size:16px}}
+.igauto{margin:2px 0 8px}.igauto .pgs{grid-template-columns:1fr!important;margin:0}.igauto label.pg>span small{display:block;font-weight:400;font-size:11.5px;letter-spacing:0;white-space:normal}.igauto label.pg>span{white-space:normal}.igauto .shelp{margin:4px 0 0}.lnk{background:none;border:0;padding:0;color:var(--gold);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}.vleft{display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto}.vleft>.card{flex:none}.vig .shelp.stop{margin:0 0 8px}.vig label{margin:8px 0 3px}.vig input[type=password]{padding:6px 10px;width:100%}.igh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px}.igh h2{margin:0}.igh .btn{margin:0;padding:4px 9px;font-size:10.5px}.igg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:300px;overflow:auto}.igr{position:relative;display:block;margin:0;cursor:pointer;aspect-ratio:9/16;border-radius:6px;overflow:hidden;background:#000;border:2px solid transparent}.igr input{position:absolute;opacity:0;pointer-events:none}.igr img,.igph{width:100%;height:100%;object-fit:cover;display:block}.igr:has(input:checked){border-color:var(--gold)}.igr:has(input:checked)::after{content:"✓";position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--gold-ink);font-size:12px;display:grid;place-items:center}.igr.had img{opacity:.5}.igd{position:absolute;left:0;right:0;bottom:0;padding:10px 5px 3px;font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.75))}.igadd{display:flex;gap:6px;margin-top:8px}.igadd select{flex:1 1 auto;min-width:0;padding:6px 8px}.igadd .btn{margin:0;flex:none}@media (max-width:759px){.vleft{overflow:visible}.igg{grid-template-columns:repeat(4,minmax(0,1fr));max-height:none}.igadd select{font-size:16px}}
 .hbtns{display:flex;gap:6px;flex:none}.hbtns .btn{margin:0}
 .pform .card{margin-bottom:6px}.opt{text-transform:none;letter-spacing:0}label.sub{margin-top:4px;text-transform:none;letter-spacing:0;font-size:13px}
 .g2{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}.g2>div{min-width:0}
@@ -1049,18 +1049,12 @@ if (isset($_GET['videos'])) {
       if (!$c) { flash('Please connect Instagram first.'); go($back); }
       if (!preg_match('/^\d{5,30}$/', $ig)) { flash('Please tap a reel first.'); go($back); }
       if (!isset($names[$prod])) { flash('Please pick the product shown in the reel.'); go($back); }
-      $m = fomaxo_ig_media($c, $ig);
-      if (!is_array($m)) { flash('Instagram: ' . $m); go($back); }
-      $dir = dirname(__DIR__) . '/assets/vid'; $name = $prod . '-' . bin2hex(random_bytes(4)) . '.mp4';
-      if (!is_dir($dir) && !@mkdir($dir, 0755, true)) { flash('The video could not be saved. Please try again.'); go($back); }
-      @set_time_limit(300);
-      if (($r = fomaxo_ig_download($m['media_url'], "$dir/$name")) !== true) { flash($r); go($back); }
-      $cover = '';
-      if (!empty($m['thumbnail_url']) && ($tmp = tempnam(sys_get_temp_dir(), 'fxig')) && fomaxo_ig_download($m['thumbnail_url'], $tmp, 15 * 1048576) === true) { $cover = fx_save_photo($tmp, $prod . '-cover', false) ?: ''; @unlink($tmp); }
-      array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => $cover, 'product' => $prod, 'on' => true, 'ig' => $ig]);
-      fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
+      $v = fomaxo_ig_copy($c, $ig, $prod); if (!is_array($v)) { flash($v); go($back); }
+      array_unshift($vids, $v); fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
       flash('Reel added. It shows on the home page within a minute.', true); go($back);
     }
+    if ($act === 'ig_auto') { fomaxo_setting($pdo, 'ig_auto', empty($_POST['on']) ? '0' : '1'); if (!empty($_POST['on'])) fomaxo_ig_sync($pdo, true); flash(empty($_POST['on']) ? 'Automatic is off. Add reels by tapping them.' : 'Automatic is on. New reels that name a product in their caption show on the website by themselves.', true); go($back); }
+    if ($act === 'ig_sync') { $n = fomaxo_ig_sync($pdo, true); flash($n ? "$n new reel" . ($n > 1 ? 's' : '') . ' added.' : 'No new reels with a product name in the caption.', true); go($back); }
     if ($act === 'add') {
       $prod = (string)($_POST['product'] ?? ''); $f = $_FILES['video'] ?? null;
       if (!isset($names[$prod])) { flash('Please pick the product shown in the video.'); go($back); }
@@ -1081,6 +1075,7 @@ if (isset($_GET['videos'])) {
     elseif ($act === 'up' || $act === 'down') { $to = $at + ($act === 'up' ? -1 : 1); if (isset($vids[$to])) [$vids[$at], $vids[$to]] = [$vids[$to], $vids[$at]]; }
     elseif ($act === 'del') {
       $v = $vids[$at]; array_splice($vids, $at, 1);
+      if (!empty($v['ig'])) { $seen = json_decode((string)fomaxo_setting($pdo, 'ig_seen'), true) ?: []; $seen[] = $v['ig']; fomaxo_setting($pdo, 'ig_seen', json_encode(array_slice($seen, -300))); }   // Automatic never brings it back
       if (preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'])) @unlink(dirname(__DIR__) . '/assets/' . $v['file']);
       if (preg_match('~^up/[a-z0-9-]+$~', $v['cover'] ?? '')) @unlink(dirname(__DIR__) . '/assets/img/' . $v['cover'] . '.webp');
       flash('Video deleted.', true);
@@ -1088,6 +1083,7 @@ if (isset($_GET['videos'])) {
     fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
     go($back);
   }
+  if (fomaxo_ig_sync($pdo)) $vids = fx_videos($pdo);   // Automatic: new reels that name a product
   $opts = fn($sel) => implode('', array_map(fn($id, $n) => '<option value="' . h($id) . '"' . ($id === $sel ? ' selected' : '') . '>' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</option>', array_keys($names), $names));
   $post = fn($v, $act, $inner, $extra = '') => '<form method="post"' . $extra . '>' . csrf_field() . '<input type="hidden" name="vid" value="' . h($v['id']) . '"><input type="hidden" name="act" value="' . $act . '">' . $inner . '</form>';
   $tr = ''; $n = count($vids);
@@ -1097,13 +1093,13 @@ if (isset($_GET['videos'])) {
       . $post($v, 'vis', '<button class="rdot' . (empty($v['on']) ? '' : ' on') . '" name="show" value="' . (empty($v['on']) ? '1' : '') . '" title="' . (empty($v['on']) ? 'Hidden. Tap to show on the website' : 'On the website. Tap to hide') . '" aria-label="' . (empty($v['on']) ? 'Hidden, tap to show' : 'On the website, tap to hide') . '"></button>', ' class="vvis"')
       . '<video class="vth" src="../assets/' . h($v['file']) . '#t=0.1" preload="metadata" muted playsinline' . ($poster ? ' poster="../assets/img/' . h($poster) . '.webp"' : '') . ' onclick="this.paused?this.play():this.pause()"></video>'
       . '<div class="vinfo">' . $post($v, 'product', '<label class="mini">Sells</label><select name="product" onchange="this.form.submit()" aria-label="Product in this video">' . $opts($v['product']) . '</select>')
-      . '<div class="small muted">' . (!$pr ? 'Product deleted: not shown' : ($pr['hidden'] ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : 'On the home page, number ' . ($i + 1)))) . '</div></div>'
+      . '<div class="small muted">' . (!$pr ? 'Product deleted: not shown' : ($pr['hidden'] ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : 'On the home page, number ' . ($i + 1)))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : '')) . '</div></div>'
       . '<div class="vmv">' . $post($v, 'up', '<button class="btn line sm"' . ($i ? '' : ' disabled') . ' aria-label="Move up">↑</button>') . $post($v, 'down', '<button class="btn line sm"' . ($i < $n - 1 ? '' : ' disabled') . ' aria-label="Move down">↓</button>')
       . $post($v, 'del', '<button class="btn line sm vdel" aria-label="Delete video">✕</button>', ' onsubmit="return confirm(\'Delete this video?\')"') . '</div></div>';
   }
   $max = fx_upload_max();
   /* From Instagram: connect once with a token, then tap a reel and its product */
-  $ig = fomaxo_ig_fresh(); $igHtml = '';
+  $ig = fomaxo_ig_fresh(); $igHtml = ''; $auto = (string)fomaxo_setting($pdo, 'ig_auto') !== '0';
   if (!$ig) $igHtml = '<form class="card vig" method="post">' . csrf_field() . '<input type="hidden" name="act" value="ig_token"><h2>From Instagram</h2>'
     . '<p class="muted small shelp stop">Connect once, then add any reel in two taps. Your Instagram must be a Business or Creator account.</p>'
     . '<label for="ig_token">Instagram access token</label><input id="ig_token" name="ig_token" type="password" autocomplete="new-password" spellcheck="false" required placeholder="Paste here">'
@@ -1116,7 +1112,9 @@ if (isset($_GET['videos'])) {
         . '<span class="igd">' . ($r['at'] ? date('d/m', $r['at']) : '') . (in_array($r['id'], $have, true) ? ' · Added' : '') . '</span></label>', $reels)) : '';
     $igHtml = '<form class="card vig" method="post">' . csrf_field() . '<input type="hidden" name="act" value="ig_add">'
       . '<div class="igh"><h2>From Instagram' . ($ig['user'] !== '' ? ' <small class="muted">@' . h($ig['user']) . '</small>' : '') . '</h2><button class="btn line sm" name="act" value="ig_off" formnovalidate onclick="return confirm(\'Disconnect Instagram?\')">Disconnect</button></div>'
-      . (!is_array($reels) ? '<p class="msg bad">Instagram: ' . h($reels) . '</p>' : ($grid === '' ? '<p class="muted small">No reels found on this account yet.</p>' : '<p class="muted small shelp stop">Tap a reel, pick its product, then Add.</p><div class="igg">' . $grid . '</div>'
+      . '<div class="spages igauto"><div class="pgs"><label class="pg"><span>Automatic<small class="muted">New reels show by themselves when the caption names a product, e.g. Gold or Old Money</small></span><input type="checkbox" role="switch" name="on" value="1"' . ($auto ? ' checked' : '') . ' aria-label="Automatic" onchange="var f=this.form;f.querySelector(\'[name=act]\').value=\'ig_auto\';f.noValidate=true;f.submit()"><i class="sw"></i></label></div>'
+      . ($auto ? '<p class="muted small shelp">Checked every hour. <button class="lnk" name="act" value="ig_sync" formnovalidate>Check now</button></p>' : '') . '</div>'
+      . (!is_array($reels) ? '<p class="msg bad">Instagram: ' . h($reels) . '</p>' : ($grid === '' ? '<p class="muted small">No reels found on this account yet.</p>' : '<p class="muted small shelp stop">' . ($auto ? 'Or add any reel yourself: tap it, pick its product, then Add.' : 'Tap a reel, pick its product, then Add.') . '</p><div class="igg">' . $grid . '</div>'
       . '<div class="igadd"><select name="product" required aria-label="Product in the reel"><option value="">Product in the reel…</option>' . $opts('') . '</select><button class="btn" onclick="if(this.form.checkValidity())this.textContent=\'Adding…\'">Add</button></div>'))
       . '</form>';
   }

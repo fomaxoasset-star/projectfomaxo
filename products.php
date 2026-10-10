@@ -30,3 +30,11 @@ if ($pdo) { try { $live = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) if
 $hidePages = [];
 if ($pdo) { try { $hidePages = array_values(array_intersect(json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: [], array_keys(FX_SITE_PAGES))); } catch (Throwable $e) {} }
 echo '{"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
+
+/* Automatic Instagram reels (admin → Products → Videos): at most once an hour, after the visitor already has the answer above */
+if ($pdo && is_file(dirname(__DIR__) . '/fomaxo-instagram.php') && time() - (int)fomaxo_setting($pdo, 'ig_sync_at') >= 3600) {
+  if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request(); else return;
+  ignore_user_abort(true);
+  require_once __DIR__ . '/instagram-lib.php';
+  try { fomaxo_ig_sync($pdo); } catch (Throwable $e) { error_log('FOMAXO Instagram: ' . $e->getMessage()); }
+}
