@@ -79,7 +79,7 @@ function fomaxo_price_order($in) {
   $coupon = null; $free = null; $discLabel = "Multi-buy $pct% off";
   /* "Customers bought together" extra % (admin → Products → Together extra off): counts as part of the multi-buy offer; a bigger coupon replaces both */
   $bt = fomaxo_bt(); $btFils = fomaxo_bt_fils($lines, $CATALOG, $bt);
-  if ($btFils > 0) { $netFils -= $btFils; $discLabel = ($pct ? "$discLabel + " : '') . "Bought together {$bt['pct']}% off"; $summary[] = "Bought together {$bt['pct']}% off: -" . fomaxo_aed($btFils); }
+  if ($btFils > 0) { $netFils -= $btFils; $discLabel = ($pct ? "$discLabel + " : '') . "Bought together {$bt['txt']} off"; $summary[] = "Bought together {$bt['txt']} off: -" . fomaxo_aed($btFils); }
   if (is_string($in['coupon'] ?? null) && trim($in['coupon']) !== '') {
     $cp = fomaxo_coupon_apply($in['coupon'], $fullFils, $fullFils - $netFils, is_string($in['customer']['phone'] ?? null) ? $in['customer']['phone'] : '');
     if (isset($cp['error'])) return ['error' => $cp['error'] . ' Please remove it and try again.'];
