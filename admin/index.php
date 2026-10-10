@@ -1029,6 +1029,22 @@ function fx_upload_max() {   // the biggest upload Hostinger accepts, in bytes
   $m = array_filter([$b(ini_get('upload_max_filesize')), $b(ini_get('post_max_size'))]);
   return $m ? min($m) : 0;
 }
+/* what is inside a video file (container, boxes, codecs), kept in fomaxo-vid-info.json (blocked from the web), so a video that won't play can be checked on the server */
+function fx_vid_probe(string $path): array {
+  $sz = (int)@filesize($path); $f = @fopen($path, 'rb'); if (!$f) return ['size' => $sz, 'error' => 'cannot open'];
+  $d = (string)fread($f, min($sz, 20 * 1048576)); fclose($f);
+  if (substr($d, 0, 4) === "\x1a\x45\xdf\xa3") { preg_match_all('/[VA]_[A-Z0-9\/]+/', $d, $m); return ['size' => $sz, 'container' => 'webm/mkv', 'codecs' => array_values(array_unique($m[0]))]; }
+  $boxes = []; $o = 0;
+  while ($o + 8 <= strlen($d) && count($boxes) < 40) { $n = unpack('N', substr($d, $o, 4))[1]; $t = substr($d, $o + 4, 4); if ($n === 1 && $o + 16 <= strlen($d)) { $n = (int)unpack('J', substr($d, $o + 8, 8))[1]; } $boxes[] = $t . ':' . $n; if ($n < 8) break; $o += $n; }
+  $codecs = []; $q = 0; while (($q = strpos($d, 'stsd', $q)) !== false) { $codecs[] = preg_replace('/[^\x20-\x7e]/', '?', substr($d, $q + 16, 4)); $q += 4; }
+  return ['size' => $sz, 'container' => 'mp4/mov', 'brand' => substr($d, 8, 4), 'boxes' => $boxes, 'codecs' => array_values(array_unique($codecs)), 'moov_first' => strpos($d, 'moov') !== false && strpos($d, 'moov') < (int)strpos($d, 'mdat')];
+}
+function fx_vid_note(string $file, array $extra = []): void {
+  $j = dirname(__DIR__) . '/fomaxo-vid-info.json'; $all = is_file($j) ? (json_decode((string)file_get_contents($j), true) ?: []) : [];
+  if (!$extra && isset($all[$file])) return;
+  $all[$file] = ($all[$file] ?? []) + $extra + fx_vid_probe(dirname(__DIR__) . '/assets/' . $file) + ['at' => date('c')];
+  @file_put_contents($j, json_encode(array_slice($all, -40, null, true), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
 if (isset($_GET['videos'])) {
   require_once dirname(__DIR__) . '/instagram-lib.php';
   $vids = fx_videos($pdo);
@@ -1093,6 +1109,7 @@ if (isset($_GET['videos'])) {
       if ((!is_dir($dir) && !@mkdir($dir, 0755, true)) || !move_uploaded_file($f['tmp_name'], "$dir/$name")) { flash('The video could not be saved. Please try again.'); go($back); }
       $cover = ''; $c = $_FILES['cover'] ?? null;
       if ($c && ($c['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) $cover = fx_save_photo($c['tmp_name'], ($prod ?: 'fomaxo') . '-cover') ?: '';
+      fx_vid_note("vid/$name", ['how' => substr((string)($_POST['how'] ?? 'as is'), 0, 40), 'sent_type' => (string)($f['type'] ?? ''), 'mime' => $mime, 'browser' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160)]);
       array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => $cover, 'product' => $prod, 'on' => true] + ($words !== '' ? ['words' => $words] : []));
       flash('Video added. It shows on the home page within a minute.', true);
     } elseif ($at === false) { flash('Please try again.'); go($back); }
@@ -1160,6 +1177,7 @@ if (isset($_GET['videos'])) {
       . '<div class="igadd">' . $vpick('Product in the reel') . '<button class="btn" onclick="if(this.form.checkValidity())this.textContent=\'Adding…\'">Add</button></div>'))
       . '</form>';
   }
+  foreach ($vids as $v) if (preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? '')) fx_vid_note($v['file']);   // once per file
   page('Shop videos', '<div class="pagehead"><h1>Shop videos</h1><a class="btn line sm" href="' . h(self_url(['products' => 1])) . '">← Products</a></div>' . flash()
     . fx_tabs(['Your videos (' . $n . ')', 'Add a video'], 'Shop videos') . '<div class="vids fitbox ptw" data-t="1"><div class="vleft" data-t="2">' . $igHtml . '<form class="card vadd vlink" method="post" onsubmit="this.querySelector(\'.btn\').textContent=\'Adding…\'">' . csrf_field() . '<input type="hidden" name="act" value="link"><h2>Paste a link</h2>'
     . '<input id="v_url" type="url" name="url" required inputmode="url" placeholder="https://www.instagram.com/reel/…" spellcheck="false" aria-label="Video link">'
