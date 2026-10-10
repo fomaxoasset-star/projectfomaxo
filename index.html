@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=24";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=25";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -3245,13 +3245,12 @@ function delWindow(){
   return `<b>${f(a, a.getMonth() !== b.getMonth())} – ${f(b, true)}</b>`;
 }
 const AS_ICON = {
-  fast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3.5" y="5" width="17" height="15" rx="1"/><path d="M3.5 9.5h17M8 3v4M16 3v4M8.5 14.5l2.3 2.2 4.7-4.7"/></svg>',
   cod: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2.5" y="6" width="19" height="12" rx="1"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/></svg>',
   lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="5" y="10.5" width="14" height="10" rx="1"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/></svg>',
   shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M8.7 12.2l2.3 2.3 4.4-4.5"/></svg>'
 };
 function assureHTML(){
-  const it = [[ICON.truck, 'Free', 'Delivery'], [AS_ICON.fast, 'Delivered in', '1–3 Days'], COD_MIN > 0 ? [AS_ICON.cod, 'Cash on Delivery', 'over ' + aed(COD_MIN)] : [AS_ICON.cod, 'Cash on', 'Delivery']];
+  const it = [[ICON.truck, 'Free', 'Delivery'], [AS_ICON.cod, 'COD', 'Available']];
   if (CARD_ON) it.push([AS_ICON.lock, 'Secure', 'Payment']);
   it.push([AS_ICON.shield, 'Original', 'FOMAXO']);
   return `<ul class="assure" style="--n:${it.length}">${it.map(x => `<li><i>${x[0]}</i><span>${x[1]} ${x[2]}</span></li>`).join('')}</ul>`;
@@ -3264,7 +3263,7 @@ function product(id, q){
   const isSet = p.kind === 'set';
   const perks = isSet
     ? [[ICON.drop,'Try before you buy'],[ICON.travel,'Pocket-friendly, ideal for travel'],[ICON.gift,'Luxury mini-box, ready to gift'],[ICON.truck,'Free delivery anywhere in UAE']]
-    : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.pen,'Custom engraving on request'],[ICON.truck,'Free delivery anywhere in UAE']];
+    : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.drop,'Concentrated fragrance oils'],[ICON.truck,'Free delivery anywhere in UAE']];
   const related = S.products.filter(x => x.id !== p.id).sort((a, b) => (a.id === 'king') - (b.id === 'king'));   // every product on sale except this one, in a sideways swipe row, King last
   const ship = S.shipping.length ? S.shipping.map(s => `<p>${esc(s)}</p>`).join('') : `<p class="ph">Add your delivery &amp; returns information in assets/data.js.</p>`;
   document.title = `${p.name} ${p.family || ''} | FOMAXO Dubai`;
