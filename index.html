@@ -3285,11 +3285,11 @@ function btRender(p, size){
       <p class="fbt-n">${it.me ? '<b>This item:</b> ' + esc(q.name) : `<a href="#/product/${q.id}?size=${it.opt}">${esc(q.name)}</a>`}<small>${optLabel(q, it.opt)}</small></p>
       <p class="fbt-p">${hasPrice(c) && +c > +v ? `<s class="was">${moneyHTML(c)}</s>` : ''}${moneyHTML(v)}</p></div>`; };
   const sel = items.filter(it => !off.has(it.id)), lines = sel.map(it => ({id: it.id, opt: it.opt, qty: 1}));
-  const dc = qtyDiscount(lines), total = Math.round(((subtotal(lines) || 0) - dc.amount) * 100) / 100, n = sel.length;
+  const bt = btSave(lines), total = Math.round(((subtotal(lines) || 0) - bt) * 100) / 100, n = sel.length;   // the box shows only the Extra off for these two (the bag still adds the multi-buy)
   el.innerHTML = `<h2 class="fbt-h">Customers bought <em class="metal">together</em></h2>
     <div class="fbt-row">${tile(items[0], 0)}<span class="fbt-plus" aria-hidden="true">+</span>${tile(items[1], 1)}
-      <div class="fbt-buy"><p>Total price: ${n && dc.amount > 0 ? `<s class="was">${moneyHTML(subtotal(lines))}</s>` : ''}<b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
-      <small>${ICON.truck}${n && dc.bt > 0 && dc.pct + BT.pct > 2 ? `You save ${aed(Math.round(dc.amount * 100) / 100)} · Free delivery` : 'Free delivery'}</small></div></div>`;   // the saving only above 2% off, only when Extra off is on (above 0), never "You save AED 0"
+      <div class="fbt-buy"><p>Total price: ${n && bt > 0 ? `<s class="was">${moneyHTML(subtotal(lines))}</s>` : ''}<b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
+      <small>${ICON.truck}${n && bt > 0 && BT.pct > 2 ? `You save ${aed(Math.round(bt * 100) / 100)} · Free delivery` : 'Free delivery'}</small></div></div>`;   // the saving only above 2% off, only when Extra off is on (above 0), never "You save AED 0"
   $$('[data-bt]', el).forEach(b => b.onchange = () => { b.checked ? off.delete(b.dataset.bt) : off.add(b.dataset.bt); el.dataset.off = JSON.stringify([...off]); btRender(p, size); });
   $('#btAdd').onclick = () => { const ok = sel.filter(it => addToCart(it.id, it.opt, 1, true)); if (ok.length) addedPanel(ok[0].id, ok[0].opt, 1, ok.length > 1 ? ok.map(it => P[it.id].name) : null); };
 }
