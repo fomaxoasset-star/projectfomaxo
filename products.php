@@ -22,8 +22,10 @@ $ads = array_filter(array_intersect_key((array)$ads, array_flip(['meta', 'tiktok
 /* shop videos (admin → Products → Videos): only the ones switched on, of products on the website; the website shows them on the home page */
 $videos = [];
 if ($pdo && (string)fomaxo_setting($pdo, 'videos_off') !== '1') { try { $live = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) if (!$r['hidden']) $live[$r['id']] = true;
-  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (!empty($v['on']) && isset($live[$v['product'] ?? '']) && preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? ''))   // only videos on our server: an Instagram-player entry sends shoppers off to Instagram
-    $videos[] = ['v' => $v['file']] + ['p' => $v['product']] + (($v['cover'] ?? '') !== '' ? ['c' => $v['cover']] : []); } catch (Throwable $e) {} }
+  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (!empty($v['on']) && preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? '')) {   // only videos on our server: an Instagram-player entry sends shoppers off to Instagram
+    $all = array_values(array_unique(array_filter(array_merge([(string)($v['product'] ?? '')], (array)($v['also'] ?? [])), fn($id) => is_string($id) && $id !== '')));   // one product, several, or none (a Shop now button)
+    $ps = array_values(array_filter($all, fn($id) => isset($live[$id]))); if ($all && !$ps) continue;   // every product in it is hidden
+    $videos[] = ['v' => $v['file']] + ['p' => $ps[0] ?? ''] + (count($ps) > 1 ? ['a' => array_slice($ps, 1)] : []) + (($v['cover'] ?? '') !== '' ? ['c' => $v['cover']] : []); } } catch (Throwable $e) {} }
 /* cash on delivery minimum and maximum (admin → Settings → Cash on delivery); max 0 = no upper limit */
 [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo ?: null);
 /* site pages hidden on admin → Settings → Site pages (their links go and their address opens Home) */
