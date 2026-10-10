@@ -791,6 +791,8 @@
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };
   var R = [
+    [/^\+ (\d+) more$/, function(m){ return '+ ' + m[1] + ' أخرى'; }],
+    [/^(\d+) products in this video · swipe$/, function(m){ return cnt(m[1], 'منتج واحد', 'منتجان', 'منتجات', 'منتجاً') + ' في هذا الفيديو · اسحب'; }],
     [/^· (\d+) items? from your last order$/, function(m){ return '· ' + cnt(m[1], 'قطعة واحدة', 'قطعتان', 'قطع', 'قطعة') + ' من طلبك الأخير'; }],
     [/^Add (.+) (Set of \d+) to your bag$/, function(m){ return 'أضف ' + m[1] + ' ' + (tr(m[2]) || m[2]) + ' إلى حقيبتك'; }],
     [/^\/ (.+)$/, function(m){ return '/ ' + (tr(m[1]) || m[1]); }],

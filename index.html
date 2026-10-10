@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=20";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=21";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -2217,7 +2217,7 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 .rl-s.emb .rl-stage{display:flex;flex-direction:column;background:#000}
 .rl-s.emb .rl-stage::after{display:none}
 .rl-s.emb iframe{flex:1 1 auto;min-height:0;width:100%;border:0;background:#fff}
-.rl-s.emb .rl-card{position:relative;left:auto;right:auto;bottom:auto;margin:8px 8px calc(8px + env(safe-area-inset-bottom));flex:none}
+.rl-s.emb .rl-cards{position:relative;left:auto;right:auto;bottom:auto;margin:8px 8px calc(8px + env(safe-area-inset-bottom));flex:none}
 /* full-screen player: swipe up / down for the next video; the product's Add to bag / Buy now sit on the video */
 .reel{position:fixed;inset:0;z-index:500;background:#000;color:#f2ebdd}
 html[data-mode="light"] .reel{background:#1b1712}
@@ -2231,7 +2231,16 @@ html[data-mode="light"] .reel{background:#1b1712}
 .rl-pause{position:absolute;inset:0;margin:auto;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#f0d3a0;opacity:0;transition:opacity .3s;pointer-events:none;z-index:1}
 .rl-pause svg{width:22px;height:22px;margin-left:3px}
 .rl-s.paused .rl-pause{opacity:1}
-.rl-card{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2;background:rgba(var(--bg-rgb),.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line-2);color:var(--ivory);padding:12px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 12px;align-items:center}
+.rl-cards{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2}
+.rl-cards.many{left:0;right:0}
+.rl-cards.many .rl-cs{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 12px;scrollbar-width:none}
+.rl-cards.many .rl-cs::-webkit-scrollbar{display:none}
+.rl-cards.many .rl-card{flex:0 0 86%;scroll-snap-align:center}
+.rl-cnt{margin:0 12px 6px;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#f0d3a0;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.rl-shop{grid-template-columns:minmax(0,1fr) auto!important}
+.rl-shop .btn{min-height:44px;padding:0 22px;letter-spacing:.18em;font-size:11px}
+.vt-more{font-style:normal;font-size:12px;color:#f0d3a0;letter-spacing:.06em}
+.rl-card{position:relative;z-index:2;background:rgba(var(--bg-rgb),.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line-2);color:var(--ivory);padding:12px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 12px;align-items:center}
 .rl-pi img{width:56px;height:56px;object-fit:cover;border:1px solid var(--line)}
 .rl-info{display:flex;flex-direction:column;min-width:0;line-height:1.3}
 .rl-n{font-size:15px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -4392,7 +4401,8 @@ function bindHome(){
    with its product's sizes, Add to bag and Buy now, and a swipe up or down goes to the next video. Videos of hidden products are left out.
    Light on data: a video only loads when it is on screen, and only one plays at a time in the row. */
 let VIDEOS = []; try { VIDEOS = JSON.parse(localStorage.getItem('fomaxo_videos') || '[]') || []; } catch(e) {}
-const vids = () => VIDEOS.filter(v => v && (v.v || v.e) && shown(v.p));   // v.e = an Instagram reel shown with Instagram's own player
+const vidProds = v => [v.p, ...(v.a || [])].filter((id, i, a) => shown(id) && a.indexOf(id) === i);   // v.p = first product, v.a = more; none = a general video with Shop now
+const vids = () => VIDEOS.filter(v => v && (v.v || v.e) && (vidProds(v).length || (!v.p && !(v.a || []).length)));   // v.e = an Instagram reel shown with Instagram's own player
 const VI = {
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -4401,14 +4411,14 @@ const VI = {
   up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 15l6-6 6 6"/></svg>',
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 9l6 6 6-6"/></svg>'
 };
-const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[v.p], k = imgFor(p, defaultSize(p)); return IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };
+const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; if (!p) return ''; const k = imgFor(p, defaultSize(p)); return IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };
 function vidSecHTML(){
   const l = vids(); if (!l.length) return '';
   return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)}
-    <div class="vrow" id="vrow">${l.map((v, i) => { const p = P[v.p], s = defaultSize(p); return `<button class="vt" type="button" data-vi="${i}" aria-label="${esc(p.name)} video">
+    <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : 'FOMAXO'} video">
       ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `<video muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
       <span class="vt-play" aria-hidden="true">${VI.play}</span>
-      <span class="vt-p"><img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${priceHTML(p, s)}</span></span></button>`; }).join('')}</div></div>`;
+      ${p ? `<span class="vt-p"><img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : '<span class="vt-p vt-shop"><span><b>FOMAXO</b><i class="vt-more">Shop now</i></span></span>'}</button>`; }).join('')}</div></div>`;
 }
 let vrIO = null;
 function bindVids(){
@@ -4424,18 +4434,24 @@ function bindVids(){
 }
 function renderVids(){ const el = $('#vidSec'); if (!el) return; const h = vidSecHTML(); el.innerHTML = h; el.hidden = !h; $$('.rv-up', el).forEach(x => x.classList.add('in')); bindVids(); }
 let reelMuted = true;
-function reelSlide(v, k){
-  const p = P[v.p], s = defaultSize(p);
-  return `<section class="rl-s${v.e ? ' emb' : ''}" data-k="${k}" data-id="${p.id}" data-sel="${s}"><div class="rl-stage">
-    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(p.name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video playsinline loop muted preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
-    <span class="rl-pause" aria-hidden="true">${VI.play}</span>
-    <div class="rl-card">
+function reelCard(p){
+  const s = defaultSize(p);
+  return `<div class="rl-card" data-id="${p.id}" data-sel="${s}">
       <a class="rl-pi" href="#/product/${p.id}" data-rlgo><img src="${SM(imgFor(p, s))}" alt="FOMAXO ${esc(p.name)}"></a>
       <div class="rl-info"><a class="rl-n" href="#/product/${p.id}" data-rlgo>${esc(p.name)}</a><span class="rl-f">${esc(p.family)}</span><span data-price>${priceHTML(p, s)}</span></div>
       ${p.sizes.length > 1 ? `<div class="rl-sz">${p.sizes.map(z => `<button type="button" class="chip${z == s ? ' on' : ''}" data-size="${z}">${optLabel(p, z)}</button>`).join('')}</div>` : ''}
       <p class="rl-stk stk-line" data-stk>${stockHTML(p.id, s)}</p>
       <div class="rl-acts"><button class="btn line sm" type="button" data-add>Add to bag</button><button class="btn sm" type="button" data-buy>Buy now</button></div>
-    </div></div></section>`;
+    </div>`;
+}
+function reelSlide(v, k){
+  const ps = vidProds(v).map(id => P[id]), name = ps.length ? ps[0].name : 'FOMAXO';
+  return `<section class="rl-s${v.e ? ' emb' : ''}" data-k="${k}"><div class="rl-stage">
+    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video playsinline loop muted preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
+    <span class="rl-pause" aria-hidden="true">${VI.play}</span>
+    ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">FOMAXO</span><span class="rl-f">Eau de Parfum · Unisex</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`
+      : `<div class="rl-cards${ps.length > 1 ? ' many' : ''}">${ps.length > 1 ? `<p class="rl-cnt">${ps.length} products in this video · swipe</p>` : ''}<div class="rl-cs">${ps.map(reelCard).join('')}</div></div>`}
+    </div></section>`;
 }
 function openReel(i){
   const l = vids(); if (!l[i] || $('#reel')) return;
@@ -4471,7 +4487,9 @@ function openReel(i){
   $('.rl-x', el).onclick = () => close(true);
   $$('.rl-nav button', el).forEach(b => b.onclick = () => go(cur + +b.dataset.rl));
   el.addEventListener('click', e => {
-    const s = e.target.closest('.rl-s'); if (!s) return;
+    const sl = e.target.closest('.rl-s'); if (!sl) return;
+    const s = e.target.closest('.rl-card[data-id]');
+    if (!s) { if (e.target.closest('a,button,.rl-cards')) return; const v = $('video', sl); if (!v) return; if (v.paused) { v.play().catch(() => {}); sl.classList.remove('paused'); } else { v.pause(); sl.classList.add('paused'); } return; }   // tap the video: pause / play
     const p = P[s.dataset.id], chip = e.target.closest('[data-size]');
     if (chip) { const z = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; s.dataset.sel = z; $$('.chip', s).forEach(c => c.classList.toggle('on', c === chip)); $('[data-price]', s).innerHTML = priceHTML(p, z); $('.rl-pi img', s).src = SM(imgFor(p, z)); $('[data-stk]', s).innerHTML = stockHTML(p.id, z); $$('[data-add],[data-buy]', s).forEach(b => b.disabled = stockLeft(p.id, z) === 0); return; }
     const sel = s.dataset.sel === 'set' ? 'set' : +s.dataset.sel;
@@ -4479,10 +4497,8 @@ function openReel(i){
     const add = e.target.closest('[data-add]');
     if (add) { if (addToCart(p.id, sel, 1, true)) { add.textContent = 'Added ✓'; clearTimeout(add._t); add._t = setTimeout(() => add.textContent = 'Add to bag', 1800); } return; }
     if (e.target.closest('[data-buy]')) { close(false); buyNow({id: p.id, opt: sel, qty: 1}); return; }
-    if (e.target.closest('a,button,.rl-card')) return;
-    const v = $('video', s); if (!v) return; if (v.paused) { v.play().catch(() => {}); s.classList.remove('paused'); } else { v.pause(); s.classList.add('paused'); }   // tap the video: pause / play
   });
-  $$('[data-add],[data-buy]', el).forEach(b => { const s = b.closest('.rl-s'); b.disabled = stockLeft(s.dataset.id, s.dataset.sel) === 0; });
+  $$('[data-add],[data-buy]', el).forEach(b => { const s = b.closest('.rl-card'); b.disabled = stockLeft(s.dataset.id, s.dataset.sel) === 0; });
 }
 function bindFragColl(){
   $$('[data-quickadd]').forEach(b => b.onclick = () => { const p = P[b.dataset.quickadd]; addToCart(p.id, defaultSize(p)); });
