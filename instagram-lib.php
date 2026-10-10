@@ -164,24 +164,39 @@ function fomaxo_ig_find($c, $code) {
   }
   return null;
 }
-/* A public reel without a token: Instagram's embed page sometimes carries the video file. Copied when it does; null when not. */
-function fomaxo_ig_public_copy($code, $prod) {
-  if (!function_exists('curl_init')) return null;
+/* A public reel without a token: the video file's address from Instagram's embed page, else from its public reel data. ['', ''] when Instagram gives neither. */
+function fomaxo_ig_public_urls($code) {
   $base = defined('FX_IG_EMBED') ? FX_IG_EMBED : 'https://www.instagram.com';
-  $ch = curl_init("$base/reel/$code/embed/captioned/");
-  curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3,
-    CURLOPT_USERAGENT => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1']);
-  $html = (string)curl_exec($ch); curl_close($ch);
+  $fetch = function ($url, $hdr = []) {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3, CURLOPT_HTTPHEADER => $hdr,
+      CURLOPT_USERAGENT => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1']);
+    $r = (string)curl_exec($ch); curl_close($ch); return $r;
+  };
+  $ok = fn($u) => $u !== '' && (defined('FX_IG_EMBED') || preg_match('~^https://[\w.-]+\.(cdninstagram\.com|fbcdn\.net)/~', $u));
+  $html = $fetch("$base/reel/$code/embed/captioned/");
   $get = function ($k) use ($html) {   // the value in Instagram's page data, which is escaped once or twice
     if (!preg_match('~' . $k . '\\\\*"\s*:\s*\\\\*"([^"]+?)\\\\*"~', $html, $x)) return '';
     $v = $x[1]; for ($i = 0; $i < 3 && preg_match('~\\\\[/u\\\\]~', $v); $i++) { $d = json_decode('"' . $v . '"'); if (!is_string($d)) break; $v = $d; }
     return $v;
   };
-  $vid = $get('video_url'); if ($vid === '' || !preg_match('~^https://[\w.-]+\.(cdninstagram\.com|fbcdn\.net)/~', $vid) && !defined('FX_IG_EMBED')) return null;
+  if ($ok($vid = $get('video_url'))) return [$vid, $get('display_url')];
+  $hdr = ['X-IG-App-ID: 936619743392459', 'X-Requested-With: XMLHttpRequest', 'Accept: */*', "Referer: $base/reel/$code/"];
+  foreach (['doc_id=8845758582119845', 'query_hash=b3055c01b4b222b8a47dc12b090e4e64'] as $q) {   // Instagram's public reel data, as its own web page asks for it
+    $j = json_decode($fetch("$base/graphql/query/?$q&variables=" . rawurlencode(json_encode(['shortcode' => $code])), $hdr), true);
+    $m = $j['data']['xdt_shortcode_media'] ?? $j['data']['shortcode_media'] ?? null;
+    if (is_array($m) && $ok($vid = (string)($m['video_url'] ?? ''))) return [$vid, (string)($m['display_url'] ?? '')];
+  }
+  return ['', ''];
+}
+/* Copies a public reel to our server; null when Instagram doesn't give its video file. */
+function fomaxo_ig_public_copy($code, $prod) {
+  if (!function_exists('curl_init')) return null;
+  [$vid, $img] = fomaxo_ig_public_urls($code); if ($vid === '') return null;
   $vdir = __DIR__ . '/assets/vid'; if (!is_dir($vdir) && !@mkdir($vdir, 0755, true)) return null;
   $name = $prod . '-' . bin2hex(random_bytes(4)) . '.mp4';
   if (fomaxo_ig_download($vid, __DIR__ . "/assets/vid/$name") !== true) return null;
-  $cover = ''; $img = $get('display_url');
+  $cover = '';
   if ($img !== '' && function_exists('imagewebp') && ($tmp = tempnam(sys_get_temp_dir(), 'fxig'))) {
     if (fomaxo_ig_download($img, $tmp, 15 * 1048576) === true && ($im = @imagecreatefromstring((string)file_get_contents($tmp)))) {
       $up = __DIR__ . '/assets/img/up'; $k = $prod . '-cover-' . bin2hex(random_bytes(4)); imagepalettetotruecolor($im);
@@ -198,7 +213,7 @@ function fomaxo_video_from_link($url, $prod) {
     $c = fomaxo_ig_fresh();   // connected: copy it to our server like the reel grid does
     if ($c && ($id = fomaxo_ig_find($c, $m[1])) && is_array($v = fomaxo_ig_copy($c, $id, $prod))) return $v + ['link' => $url];
     if ($v = fomaxo_ig_public_copy($m[1], $prod)) return $v + ['link' => $url];   // a public reel Instagram lets us copy
-    return ['id' => bin2hex(random_bytes(5)), 'file' => '', 'embed' => $m[1], 'cover' => '', 'product' => $prod, 'on' => true, 'link' => $url];   // else Instagram's own player
+    return 'Instagram did not let us copy this reel, so it can’t play on your website. In Instagram open the reel, tap ⋯ then Download, and add it under Upload from your phone. Private accounts’ reels can’t be copied.';
   }
   if (preg_match('~^(?:https?://)?(?:[\w-]+\.)*(youtube\.com|youtu\.be|tiktok\.com|facebook\.com|fb\.watch)/~i', $url))
     return 'YouTube, TikTok and Facebook do not let their videos be copied. Save the video to your phone and upload it, or paste a reel link from your Instagram.';
