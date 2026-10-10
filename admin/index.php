@@ -1202,7 +1202,7 @@ if (isset($_GET['videos'])) {
       . '<div class="igadd">' . $vpick('Product in the reel') . '<button class="btn" onclick="if(this.form.checkValidity())this.textContent=\'Adding…\'">Add</button></div>'))
       . '</form>';
   }
-  foreach ($vids as $v) if (preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? '')) fx_vid_note($v['file']);   // once per file
+  foreach ($vids as $v) { if (preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? '')) { fx_vid_note($v['file']); fx_media_link($v['file']); } fx_media_link($v['cover'] ?? ''); }   // links put back after a GitHub update   // once per file
   page('Shop videos', '<div class="pagehead"><h1>Shop videos</h1><a class="btn line sm" href="' . h(self_url(['products' => 1])) . '">← Products</a></div>' . flash()
     . fx_tabs(['Your videos (' . $n . ')', 'Add a video'], 'Shop videos') . '<div class="vids fitbox ptw" data-t="1"><div class="vleft" data-t="2">' . $igHtml . '<form class="card vadd vlink" method="post" onsubmit="this.querySelector(\'.btn\').textContent=\'Adding…\'">' . csrf_field() . '<input type="hidden" name="act" value="link"><h2>Paste a link</h2>'
     . '<input id="v_url" type="url" name="url" required inputmode="url" placeholder="https://www.instagram.com/reel/…" spellcheck="false" aria-label="Video link">'
