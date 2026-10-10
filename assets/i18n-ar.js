@@ -792,7 +792,11 @@
 "This item": "هذا المنتج",
 "Total price:": "السعر الإجمالي:",
 "Tick an item": "اختر منتجاً",
-"Add both to bag": "أضف الاثنين إلى الحقيبة"
+"Add both to bag": "أضف الاثنين إلى الحقيبة",
+"FREE delivery": "توصيل مجاني",
+"in 1–3 days across the UAE · Prices include VAT": "خلال 1–3 أيام في جميع أنحاء الإمارات · جميع الأسعار تشمل الضريبة",
+"Secure payment": "دفع آمن",
+"Ready to gift": "جاهز للإهداء"
 };
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };

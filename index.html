@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=21";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=22";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -1930,6 +1930,13 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
 .pdp-offer b{display:block;font-weight:400;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
 .pdp-pay{display:flex;gap:8px;align-items:center;justify-content:center;margin:-6px 0 2px;font-size:12px;line-height:1.45;color:var(--muted);text-align:center}
 .pdp-pay svg{width:14px;height:14px;flex:none;color:var(--gold)}
+.pdp-pay b{font-weight:500;color:var(--ivory)}
+/* Amazon-style trust icons under the delivery line: icon in a thin gold ring, small label under it */
+.pdp-icons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:-2px 0 0;text-align:center}
+.pdp-icons div{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;line-height:1.25;color:var(--champagne)}
+.pdp-icons i{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line-2);border-radius:50%;color:var(--gold)}
+.pdp-icons svg{width:17px;height:17px}
+@media(max-width:700px){.pdp-pay{font-size:11px;white-space:nowrap;letter-spacing:0}html[lang=ar] .pdp-pay{white-space:normal}.pdp-icons div{font-size:11px}}
 .reorder{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;border:1px solid var(--line-2);background:var(--panel);padding:14px 18px}
 .reorder .ro-imgs{display:flex}
 .reorder .ro-imgs img{width:46px;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line);background:var(--panel)}
@@ -3213,7 +3220,7 @@ function product(id, q){
   const isSet = p.kind === 'set';
   const perks = isSet
     ? [[ICON.drop,'Try before you buy'],[ICON.travel,'Pocket-friendly, ideal for travel'],[ICON.gift,'Luxury mini-box, ready to gift'],[ICON.truck,'Free delivery anywhere in UAE']]
-    : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.pen,'Custom engraving on request'],[ICON.truck,'Free delivery anywhere in UAE']];
+    : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.pen,'Custom engraving on request']];   // free delivery and gift packaging are in the icon row above
   const related = S.products.filter(x => x.id !== p.id).sort((a, b) => (a.id === 'king') - (b.id === 'king'));   // every product on sale except this one, in a sideways swipe row, King last
   const ship = S.shipping.length ? S.shipping.map(s => `<p>${esc(s)}</p>`).join('') : `<p class="ph">Add your delivery &amp; returns information in assets/data.js.</p>`;
   document.title = `${p.name} ${p.family || ''} | FOMAXO Dubai`;
@@ -3245,7 +3252,8 @@ function product(id, q){
           <button class="btn line" id="addBtn">Add to bag</button>
         </div>
         <button class="btn block" id="buyBtn">Buy now</button>
-        <p class="pdp-pay">${CO_ICON.lock}<span>Secure checkout · ${CARD_ON ? 'Card, Apple Pay, Google Pay · ' : ''}Cash on delivery over ${aed(COD_MIN)} · Free UAE delivery</span></p>
+        <p class="pdp-pay">${ICON.truck}<span><b>FREE delivery</b> in 1–3 days across the UAE · Prices include VAT</span></p>
+        <div class="pdp-icons">${[[CO_ICON.cod, 'Cash on delivery'], [ICON.truck, 'Free delivery'], [CO_ICON.lock, 'Secure payment'], [ICON.gift, 'Ready to gift']].map(x => `<div><i>${x[0]}</i><span>${x[1]}</span></div>`).join('')}</div>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
           <details${matchMedia('(min-width:961px)').matches ? '' : ' open'}><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
