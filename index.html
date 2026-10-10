@@ -4601,7 +4601,7 @@ function bindVids(){
   const run = (t, on) => { const v = $('video', t); if (!v) return; if (on) { if (!v.src) v.src = v.dataset.src; v.play().then(() => t.classList.add('playing')).catch(() => {}); } else if (!v.paused) { v.pause(); t.classList.remove('playing'); } };
   tiles.forEach(t => { const v = $('video', t); if (v && !v.src) { v.muted = true; v.preload = 'auto'; v.src = v.dataset.src; } });   // every video starts loading as the page opens, so it plays the moment it is on screen
   const again = () => tiles.forEach(t => { const r = t.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0) run(t, true); });   // a phone that held back autoplay (iPhone Low Power Mode) plays them at the first touch
-  addEventListener('touchend', again, {once: true, passive: true});
+  ['touchend', 'pointerdown', 'keydown'].forEach(ev => addEventListener(ev, again, {once: true, passive: true}));   // a laptop or phone that held back autoplay (Low Power Mode, Safari's Auto-Play setting) starts them on the first tap, click or key
   vrIO = new IntersectionObserver(es => es.forEach(e => run(e.target, e.isIntersecting)), {rootMargin: '250px'});   // every video plays, muted, just before it scrolls on screen, so it is already moving when seen; well off screen it pauses
   tiles.forEach(t => vrIO.observe(t));
 }

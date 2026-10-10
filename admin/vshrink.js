@@ -55,8 +55,16 @@
     });
   }
   /* upload with a % bar, then show the page the upload returns (the list with the new video, or what went wrong); a stopped upload says so */
+  /* a made-smaller video is only sent if this browser can play it back; otherwise the next way is tried */
+  function playable(b) {
+    return new Promise(function (ok) {
+      var v = document.createElement('video'), u = URL.createObjectURL(b), done = function (y) { clearTimeout(t); v.removeAttribute('src'); v.load(); URL.revokeObjectURL(u); ok(y); }, t = setTimeout(function () { done(true); }, 8000);
+      v.muted = true; v.playsInline = true; v.preload = 'auto'; v.onloadeddata = function () { done(true); }; v.onerror = function () { done(false); }; v.src = u;
+    });
+  }
+  var how = 'as is';
   function send(file) {
-    var fd = new FormData(f); if (file) fd.set('video', file, file.name);
+    var fd = new FormData(f); if (file) fd.set('video', file, file.name); fd.set('how', how);
     var x = new XMLHttpRequest(), stop = function (t) { btn.disabled = false; btn.textContent = 'Upload'; delete f.dataset.go; say(t); };
     btn.disabled = true; btn.textContent = 'Uploading…'; f.dataset.go = 1;
     x.open('POST', f.action || location.href);
@@ -76,7 +84,8 @@
     var can = mime && HTMLCanvasElement.prototype.captureStream;
     if (!big || (!can && !window.VideoEncoder)) { if (max && file.size > max) { tooBig(file); return; } send(null); return; }
     btn.disabled = true; setTimeout(function () { btn.textContent = 'Please wait…'; });
-    fast(file).then(function (b) { return b && b.size < file.size ? b : (can ? shrink(file) : Promise.reject()); }).then(function (b) {
+    fast(file).then(function (b) { return b && b.size < file.size ? playable(b).then(function (y) { if (y) how = 'fast ' + b.type; return y ? b : null; }) : null; })
+      .then(function (b) { return b || (can ? shrink(file).then(function (r) { return playable(r).then(function (y) { if (y) how = 'recorded ' + r.type; return y ? r : Promise.reject(); }); }) : Promise.reject()); }).then(function (b) {
       send(new File([b], file.name.replace(/\.\w+$/, '') + '.' + (/mp4/.test(b.type) ? 'mp4' : 'webm'), {type: b.type}));
     }, function () {
       if (max && file.size > max) { btn.disabled = false; btn.textContent = 'Upload'; note.hidden = true; tooBig(file); return; }
