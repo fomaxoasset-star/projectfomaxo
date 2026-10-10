@@ -4832,7 +4832,7 @@ async function loadProducts(){
     HIDE_PAGES = d.hidePages; try { localStorage.setItem('fomaxo_hide_pages', JSON.stringify(HIDE_PAGES)); } catch(e) {}
     applyPages(); const s0 = (location.hash.replace(/^#\/?/, '').split(/[/?]/)[0]); if (HIDE_PAGES.includes(s0)) location.replace('#/');
   }
-  if (d && d.cod && +d.cod.min >= 0 && +d.cod.max >= 0) { const fee = 'fee' in d.cod && +d.cod.fee >= 0 ? +d.cod.fee : COD_FEE; if (+d.cod.min !== COD_MIN || +d.cod.max !== COD_MAX || fee !== COD_FEE) { COD_MIN = +d.cod.min; COD_MAX = +d.cod.max; COD_FEE = fee; coRefresh && coRefresh(); } }
+  if (d && d.cod && +d.cod.min >= 0 && +d.cod.max >= 0) { const fee = 'fee' in d.cod && +d.cod.fee >= 0 ? +d.cod.fee : COD_FEE; if (+d.cod.min !== COD_MIN || +d.cod.max !== COD_MAX || fee !== COD_FEE) { COD_MIN = +d.cod.min; COD_MAX = +d.cod.max; COD_FEE = fee; coRefresh && coRefresh(); const as = $('.buy .assure'); if (as) as.outerHTML = assureHTML(); } }
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
   const js = JSON.stringify(d.products);
   try { localStorage.setItem('fomaxo_products', js); } catch(e) {}
