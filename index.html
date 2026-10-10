@@ -4399,7 +4399,7 @@ function bindHome(){
 }
 /* shop videos (fomaxo.com/admin → Products → Videos): a row of short upright videos on the home page; tapping one opens it full screen
    with its product's sizes, Add to bag and Buy now, and a swipe up or down goes to the next video. Videos of hidden products are left out.
-   Light on data: a video only loads when it is on screen, and only one plays at a time in the row. */
+   Light on data: a video only loads when it is on screen; the ones on screen play straight away, muted, and pause when scrolled away. */
 let VIDEOS = []; try { VIDEOS = JSON.parse(localStorage.getItem('fomaxo_videos') || '[]') || []; } catch(e) {}
 const vidProds = v => [v.p, ...(v.a || [])].filter((id, i, a) => shown(id) && a.indexOf(id) === i);   // v.p = first product, v.a = more; none = a general video with Shop now
 const vids = () => VIDEOS.filter(v => v && (v.v || v.e) && (vidProds(v).length || (!v.p && !(v.a || []).length)));   // v.e = an Instagram reel shown with Instagram's own player
@@ -4425,12 +4425,10 @@ function bindVids(){
   vrIO && vrIO.disconnect(); vrIO = null;
   const tiles = $$('#vrow .vt'); if (!tiles.length) return;
   tiles.forEach(t => t.onclick = () => openReel(+t.dataset.vi));
-  if ((navigator.connection && navigator.connection.saveData) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;   // data saver: posters only until tapped
-  const seen = new Set(); let hover = null;
-  const pick = () => { const on = hover || tiles.find(t => seen.has(t) && $('video', t));
-    tiles.forEach(t => { const v = $('video', t); if (!v) return; if (t === on) { if (!v.src) v.src = v.dataset.src; v.play().then(() => t.classList.add('playing')).catch(() => {}); } else if (!v.paused) { v.pause(); t.classList.remove('playing'); } }); };
-  vrIO = new IntersectionObserver(es => { es.forEach(e => e.intersectionRatio >= .75 ? seen.add(e.target) : seen.delete(e.target)); pick(); }, {threshold: [0, .75]});
-  tiles.forEach(t => { vrIO.observe(t); if (HOVER) { t.onmouseenter = () => { hover = t; pick(); }; t.onmouseleave = () => { hover = null; pick(); }; } });
+  if (navigator.connection && navigator.connection.saveData) return;   // data saver: posters only until tapped
+  const run = (t, on) => { const v = $('video', t); if (!v) return; if (on) { if (!v.src) v.src = v.dataset.src; v.play().then(() => t.classList.add('playing')).catch(() => {}); } else if (!v.paused) { v.pause(); t.classList.remove('playing'); } };
+  vrIO = new IntersectionObserver(es => es.forEach(e => run(e.target, e.isIntersecting)), {threshold: .2});   // every video on screen plays straight away, muted; off screen it pauses
+  tiles.forEach(t => vrIO.observe(t));
 }
 function renderVids(){ const el = $('#vidSec'); if (!el) return; const h = vidSecHTML(); el.innerHTML = h; el.hidden = !h; $$('.rv-up', el).forEach(x => x.classList.add('in')); bindVids(); }
 let reelMuted = true;
