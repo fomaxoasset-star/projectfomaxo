@@ -2238,6 +2238,7 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
   .acc summary{padding:7px 0}
   .acc .body{padding-bottom:8px;font-size:13px;line-height:1.5;max-height:150px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
   .stage{width:var(--stage-w,auto)}
+  .picks{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.pick span{padding:5px 6px;font-size:9.5px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* Discovery Set: the six fragrances in one row
   .thumbs{overflow-y:auto;scrollbar-width:none}.thumbs::-webkit-scrollbar{display:none}.thumbs button{flex:none}
 }
 @media(min-width:961px) and (max-height:800px){.pdp-crumbs{display:none}.pdp{padding-top:10px}.acc .body{max-height:64px}}
@@ -2819,8 +2820,9 @@ function fitPdp(){
     gal.style.gridTemplateColumns = tw + 'px minmax(0,1fr)'; const tb = $('.thumbs', gal); if (tb) tb.style.maxHeight = Math.floor(avail) + 'px';   // many photos: the thumbnails scroll inside
     const st = $('.stage', gal); if (st && st.getBoundingClientRect().height > avail) gal.style.setProperty('--stage-w', Math.floor(avail * .8) + 'px');
   }
-  const need = buy.getBoundingClientRect().height;
-  if (need > avail) buy.style.zoom = Math.max(.72, Math.floor(avail / need * 100) / 100);
+  // photos in the buy side keep their on-screen width when zoomed, so shrink in a few steps until it fits
+  let z = 1;
+  for (let i = 0; i < 4; i++) { const need = buy.getBoundingClientRect().height; if (need <= avail || z <= .72) break; z = Math.max(.72, Math.floor(z * avail / need * 100) / 100); buy.style.zoom = z; }
 }
 addEventListener('resize', () => requestAnimationFrame(fitPdp));
 document.addEventListener('toggle', e => { if (e.target.closest && e.target.closest('.pdp .acc')) fitPdp(); }, true);
