@@ -4594,7 +4594,7 @@ const VI = {
 const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; if (!p) return ''; const k = imgFor(p, defaultSize(p)); return IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };
 function vidSecHTML(){
   const l = vids(); if (!l.length) return '';
-  return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)}
+  return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">videos</em>', '', false)}
     <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
       ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `<video muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
       <span class="vt-play" aria-hidden="true">${VI.play}</span>
@@ -4638,7 +4638,7 @@ function openReel(i){
   const l = vids(); if (!l[i] || $('#reel')) return;
   $$('#vrow video').forEach(v => v.pause());
   const el = document.createElement('div');
-  el.id = 'reel'; el.className = 'reel'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Shop the video');
+  el.id = 'reel'; el.className = 'reel'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Shop the videos');
   el.innerHTML = `<div class="rl-track">${l.map(reelSlide).join('')}</div>
     <div class="rl-top"><button type="button" class="rl-snd" aria-label="Sound on">${VI.off}</button><button type="button" class="rl-x" aria-label="Close">${VI.x}</button></div>
     <div class="rl-nav"><button type="button" data-rl="-1" aria-label="Previous video">${VI.up}</button><button type="button" data-rl="1" aria-label="Next video">${VI.down}</button></div>`;

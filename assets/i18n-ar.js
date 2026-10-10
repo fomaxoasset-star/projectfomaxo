@@ -31,6 +31,8 @@
 "Shop the": "تسوّق من",
 "video": "الفيديو",
 "Shop the video": "تسوّق من الفيديو",
+"videos": "الفيديوهات",
+"Shop the videos": "تسوّق من الفيديوهات",
 "Added ✓": "أُضيف ✓",
 "Sound on": "تشغيل الصوت",
 "Sound off": "كتم الصوت",
