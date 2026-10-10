@@ -17,7 +17,7 @@ function fx_media_path($file) {
   if (preg_match('~^up/([a-z0-9-]+)$~', $file, $m)) { $f = fx_media('up') . '/' . $m[1] . '.webp'; return is_file($f) ? $f : __DIR__ . '/assets/img/' . $file . '.webp'; }
   return null;
 }
-function fx_media_delete($file) { if (($l = fx_media_public($file)) && is_link($l)) @unlink($l); if (($f = fx_media_path($file)) && is_file($f)) @unlink($f); }
+function fx_media_delete($file) { $f = fx_media_path($file); if (($l = fx_media_public($file)) && (is_link($l) || ($f !== $l && is_file($l)))) @unlink($l); if ($f && is_file($f)) @unlink($f); }
 /* where the website shows it: assets/vid/x.mp4 or assets/img/up/x.webp in public_html */
 function fx_media_public($file) {
   if (preg_match('~^vid/[a-z0-9-]+\.(?:mp4|mov|webm)$~', (string)$file)) return __DIR__ . '/assets/' . $file;
@@ -31,5 +31,9 @@ function fx_media_link($file) {
   if (!$pub || !$real || !is_file($real) || strpos($real, dirname(__DIR__) . '/fomaxo-media/') !== 0 || is_file($pub)) return;
   if (is_link($pub)) @unlink($pub);
   if (!is_dir(dirname($pub))) @mkdir(dirname($pub), 0755, true);
-  @symlink($real, $pub);
+  if (function_exists('symlink') && @symlink($real, $pub) && is_file($pub)) return;   // many hosts switch symlink() and link() off: calling them then stops the page
+  if (is_link($pub)) @unlink($pub);
+  if (function_exists('link') && @link($real, $pub)) return;   // servers that refuse links: a second name for the same file, or else a copy (a GitHub update removes it, media.php puts it back)
+  $tmp = $pub . '.part' . getmypid(); if (@copy($real, $tmp) && filesize($tmp) === filesize($real) && @rename($tmp, $pub)) { @chmod($pub, 0644); return; }
+  @unlink($tmp);
 }

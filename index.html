@@ -2296,6 +2296,11 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 .vt.wide{flex-basis:calc(2 * clamp(150px,17vw,230px) + 14px);aspect-ratio:9/8}
 .vt.wide video,.vt.wide .vt-img{object-fit:contain}
 .vt.wide:hover video{transform:none}
+.vt.np{background:#000 url(assets/img/logo.webp) center 40%/46% auto no-repeat}   /* no product and no cover photo: the FOMAXO logo until the video plays */
+.vt.np video{background:transparent}
+.vr-nav{align-self:flex-end}.vr-nav[hidden]{display:none}.vr-nav button{width:40px;height:40px;font-size:20px}
+@media(min-width:601px){.vt{flex-shrink:1;min-width:150px}.vt.wide{min-width:314px}}   /* laptop: the videos shrink a little to fit the page before the row needs the arrows */
+@media(max-width:600px){.vr-nav{display:none}}
 @media(max-width:600px){.vt.wide{flex-basis:calc(80vw + 10px)}}
 .rl-s.emb .rl-stage{display:flex;flex-direction:column;background:#000}
 .rl-s.emb .rl-stage::after{display:none}
@@ -4594,8 +4599,8 @@ const VI = {
 const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; if (!p) return ''; const k = imgFor(p, defaultSize(p)); return IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };
 function vidSecHTML(){
   const l = vids(); if (!l.length) return '';
-  return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)}
-    <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
+  return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
+    <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
       ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `<video muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
       <span class="vt-play" aria-hidden="true">${VI.play}</span>
       ${p ? `<span class="vt-p"><img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now</i></span></span>`}</button>`; }).join('')}</div></div>`;
@@ -4605,6 +4610,8 @@ function bindVids(){
   vrIO && vrIO.disconnect(); vrIO = null;
   const tiles = $$('#vrow .vt'); if (!tiles.length) return;
   tiles.forEach(t => t.onclick = () => openReel(+t.dataset.vi));
+  const row = $('#vrow'), nav = $('.vr-nav');   // laptop: arrows when the videos are wider than the page
+  if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => row.scrollBy({left: +b.dataset.vscroll * row.clientWidth * .8, behavior: 'smooth'})); }
   if (navigator.connection && navigator.connection.saveData) return;   // data saver: posters only until tapped
   const run = (t, on) => { const v = $('video', t); if (!v) return; if (on) { if (!v.src) v.src = v.dataset.src; v.play().then(() => t.classList.add('playing')).catch(() => {}); } else if (!v.paused) { v.pause(); t.classList.remove('playing'); } };
   tiles.forEach(t => { const v = $('video', t); if (v && !v.src) { v.muted = true; v.preload = 'auto'; v.src = v.dataset.src; } });   // every video starts loading as the page opens, so it plays the moment it is on screen
