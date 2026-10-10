@@ -3193,9 +3193,13 @@ let TOGETHER = {}; try { TOGETHER = JSON.parse(localStorage.getItem('fomaxo_toge
 const btOK = p => p && !p.hidden && p.kind !== 'set' && !QTY_DISCOUNT_SKIP.includes(p.id);
 const btSize = (p, size) => p.sizes.includes(+size) ? +size : defaultSize(p);
 const btInStock = (p, size) => { const n = stockLeft(p.id, btSize(p, size)); return n === null || n > 0; };
+// the partner shown on each product page (then the next one if that is hidden or out of stock); products not listed use real orders
+const BT_PAIR = {oldmoney: ['gold', 'dollar'], royalcandy: ['dollar', 'gold'], matchacoco: ['gold', 'dollar'], passionsin: ['dollar', 'gold'], gold: ['dollar', 'oldmoney'], dollar: ['gold', 'royalcandy']};
 function btPick(p, size){
   if (!btOK(p)) return [];
   const fit = id => id !== p.id && btOK(P[id]) && btInStock(P[id], size) && hasPrice(P[id].prices[btSize(P[id], size)]);
+  const set = (BT_PAIR[p.id] || []).filter(fit);   // AJAY's pairs first: a different partner on each page, Gold and Dollar most
+  if (set.length) return set.slice(0, 2).map(id => ({id, real: false}));
   const real = (TOGETHER[p.id] || []).filter(fit).slice(0, 2);
   if (real.length) return real.map(id => ({id, real: true}));
   return ['gold', 'dollar', 'oldmoney', 'royalcandy', 'matchacoco', 'passionsin'].concat(Object.keys(P)).filter((id, i, a) => a.indexOf(id) === i && fit(id)).slice(0, 2).map(id => ({id, real: false}));
