@@ -64,7 +64,7 @@
     });
   }
   var stopNow = null, how = 'as is', stop = function (t) { btn.disabled = false; btn.textContent = 'Upload'; delete f.dataset.go; say(t); };
-  /* a video over 8 MB goes up in pieces, 4 at a time (several times faster on most connections);
+  /* every video goes up in pieces, 4 at a time (several times faster on most connections);
      a piece that fails is sent again (4 tries), and the server checks every byte arrived before the video joins the list */
   function parts(file) {
     var size = Math.min(8 * MB, Math.max(2 * MB, Math.ceil(file.size / 16))), n = Math.ceil(file.size / size), up = '', done = [], next = 0, running = 0, failed = false, csrf = f.querySelector('[name=csrf]').value;
@@ -88,23 +88,19 @@
   function send(file) {
     var src = file || inp.files[0];
     btn.disabled = true; btn.textContent = 'Uploading…'; f.dataset.go = 1;
-    if (src && src.size > 8 * MB) return parts(src).then(function (p) {
+    if (src) return parts(src).then(function (p) {
       var fd = new FormData(f); fd.delete('video'); fd.set('parts', p.up); fd.set('parts_n', p.n); fd.set('parts_size', src.size); fd.set('parts_type', src.type); fd.set('how', how + ', ' + p.n + ' pieces');
       say('Saving the video…'); post(fd);
     }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
-    var fd = new FormData(f); if (file) fd.set('video', file, file.name); fd.set('how', how); say('Uploading… 0%. Keep this page open.'); post(fd);
+    var fd = new FormData(f); fd.set('how', how); post(fd);
   }
+  /* the video is already on the server in pieces: this only saves it. The page then loads afresh (not written over),
+     so everything on it works again for the next upload, and it shows "Video added" or what went wrong */
   function post(fd) {
-    var x = new XMLHttpRequest();
-    x.open('POST', f.action || location.href);
-    x.upload.onprogress = function (e) { if (e.lengthComputable && e.total > MB) say('Uploading… ' + Math.min(99, Math.round(e.loaded / e.total * 100)) + '% of ' + Math.max(1, Math.round(e.total / MB)) + ' MB. Keep this page open.'); };
-    x.onload = function () {
-      if (x.status >= 400 || !/<html/i.test(x.responseText)) return stop('The upload did not finish (error ' + x.status + '). Please tap Upload again.');
-      try { history.replaceState(null, '', x.responseURL || location.href); } catch (e) {}
-      document.open(); document.write(x.responseText); document.close();
-    };
-    x.onerror = x.ontimeout = function () { stop('The upload stopped. Check your internet, then tap Upload again.'); };
-    x.send(fd);
+    fetch(f.action || location.href, {method: 'POST', body: fd, credentials: 'same-origin', redirect: 'manual'}).then(function (r) {
+      if (r.type === 'opaqueredirect' || r.ok) location.replace(location.href);
+      else stop('The upload did not finish (error ' + r.status + '). Please tap Upload again.');
+    }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
   }
   f.addEventListener('submit', function (e) {
     var file = inp.files[0]; if (!file || f.dataset.go) return;
