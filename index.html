@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=22";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=23";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -1930,13 +1930,6 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
 .pdp-offer b{display:block;font-weight:400;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
 .pdp-pay{display:flex;gap:8px;align-items:center;justify-content:center;margin:-6px 0 2px;font-size:12px;line-height:1.45;color:var(--muted);text-align:center}
 .pdp-pay svg{width:14px;height:14px;flex:none;color:var(--gold)}
-.pdp-pay b{font-weight:500;color:var(--ivory)}
-/* Amazon-style trust icons under the delivery line: icon in a thin gold ring, small label under it */
-.pdp-icons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:-2px 0 0;text-align:center}
-.pdp-icons div{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;line-height:1.25;color:var(--champagne)}
-.pdp-icons i{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line-2);border-radius:50%;color:var(--gold)}
-.pdp-icons svg{width:17px;height:17px}
-@media(max-width:700px){.pdp-pay{font-size:11px;white-space:nowrap;letter-spacing:0}html[lang=ar] .pdp-pay{white-space:normal}.pdp-icons div{font-size:11px}}
 .reorder{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;border:1px solid var(--line-2);background:var(--panel);padding:14px 18px}
 .reorder .ro-imgs{display:flex}
 .reorder .ro-imgs img{width:46px;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line);background:var(--panel)}
@@ -1949,44 +1942,49 @@ section.sec.ro-sec{padding:clamp(20px,3vw,32px) 0 0}
 .ro-sec+section.sec{padding-top:clamp(36px,5vw,64px)}
 /* even, tighter rhythm: the closing "Define your signature luxury" band brings its own space, so the block above it adds none (no doubled gap) */
 main section:has(+ .final){padding-bottom:0!important}
-/* bought together (product page): this perfume + up to two others, tick boxes, total with the multi-buy discount, one gold button */
-.bt{padding:clamp(28px,3vw,44px) 0;border-top:1px solid var(--line)}
-.bt-h{font-family:var(--serif);font-weight:300;font-size:clamp(22px,2.2vw,30px);letter-spacing:.06em;text-transform:uppercase;margin:0 0 18px;color:var(--ivory)}
-.bt-in{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
-.bt-items{display:flex;align-items:flex-start;gap:10px;min-width:0}
-.bt-plus{align-self:center;margin-top:-40px;color:var(--gold);font-size:22px;font-weight:300}
-.bt-it{position:relative;width:170px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.35;color:var(--ivory)}
-.bt-it.off{opacity:.45}
-.bt-img{display:block;position:relative;aspect-ratio:1;border:1px solid var(--line);background:var(--panel);overflow:hidden}
-.bt-img img{width:100%;height:100%;object-fit:cover}
-.bt-tick{position:absolute;top:8px;right:8px;z-index:2;width:24px;height:24px;margin:0;appearance:none;-webkit-appearance:none;border:1.5px solid var(--gold);background:var(--black);cursor:pointer;display:grid;place-items:center}
-.bt-tick:checked{background:var(--gold)}
-.bt-tick:checked::after{content:"";width:6px;height:11px;border:solid var(--black);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
-.bt-it b{font-weight:500;letter-spacing:.04em}
-.bt-it small{color:var(--muted);font-size:12px}
-.bt-pr{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
-.bt-pr .was{display:inline;margin:0;font-size:12px}
-.bt-pr .now{color:var(--gold);font-size:15px}
-.bt-sum{display:flex;flex-direction:column;gap:8px;min-width:240px;max-width:300px}
-.bt-tot{font-size:14px;color:var(--ivory)}
-.bt-tot .was{display:inline;margin:0;margin-inline-end:6px;font-size:13px}
-.bt-tot strong{font-weight:400;color:var(--gold);font-size:22px}
-.bt-off{font-size:12px;line-height:1.45;color:#2f8a4e}
-.bt-sum .btn{width:100%}
-@media(max-width:700px){
-  .bt{padding:24px 0}
-  .bt-h{font-size:20px;margin-bottom:14px}
-  .bt-in{flex-direction:column;align-items:stretch;gap:16px}
-  .bt-items{gap:4px}
-  .bt-it{flex:1 1 0;width:auto;font-size:12px}
-  .bt-it b{font-size:12px}
-  .bt-it small,.bt-pr .was{font-size:11px}
-  .bt-pr{gap:4px}
-  .bt-pr .now{font-size:13px}
-  .bt-plus{font-size:16px;margin-top:-60px}
-  .bt-tick{top:6px;right:6px;width:22px;height:22px}
-  .bt-sum{max-width:none;min-width:0}
+/* product page (same look as fomaxo.in): delivery line and small icon row under the price, and the "Customers bought together" box */
+.pdel{display:flex;align-items:center;gap:10px;margin:0;font-size:14px;color:var(--muted);letter-spacing:.02em}
+.pdel svg{width:18px;height:18px;flex:none;color:var(--gold)}
+.pdel b{color:var(--ivory);font-weight:500}.pdel b:first-child{color:var(--gold)}
+.assure{list-style:none;margin:6px 0 0;padding:12px 0;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:6px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.assure li{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;font-size:11.5px;line-height:1.3;color:var(--champagne);letter-spacing:.02em}
+.assure i{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--line-2);color:var(--gold);background:rgba(215,170,105,.06)}
+.assure svg{width:20px;height:20px}
+.assure span{max-width:8.5em}   /* two short lines, like fomaxo.in */
+.fbt{padding:56px 0 64px;border-top:1px solid var(--line)}
+.fbt-h{font-family:var(--serif);font-weight:300;font-size:clamp(28px,3vw,40px);margin:0 0 26px;color:var(--ivory);text-align:center}
+.fbt-row{display:grid;grid-template-columns:minmax(0,230px) 40px minmax(0,230px) minmax(240px,320px);gap:0 18px;align-items:start;justify-content:center}
+.fbt-it{display:flex;flex-direction:column;gap:8px;transition:opacity .3s}.fbt-it.off{opacity:.45}
+.fbt-img{position:relative;display:block;aspect-ratio:1;background:var(--panel);border:1px solid var(--line);cursor:pointer;overflow:hidden}
+.fbt-img img{width:100%;height:100%;object-fit:cover}
+.fbt-img input{position:absolute;opacity:0;width:1px;height:1px}
+.fbt-img i{position:absolute;top:10px;right:10px;width:24px;height:24px;display:grid;place-items:center;font-style:normal;font-size:14px;line-height:1;background:var(--gold);color:#050505;box-shadow:0 0 0 1px var(--gold)}
+.fbt-img input:not(:checked)+i{background:rgba(var(--bg-rgb),.75);color:transparent;box-shadow:inset 0 0 0 1px var(--line-2)}
+.fbt-img input:focus-visible+i{outline:2px solid var(--gold-hi);outline-offset:2px}
+.fbt-n{margin:4px 0 0;font-size:14.5px;line-height:1.4;color:var(--ivory)}.fbt-n b{font-weight:500;color:var(--gold)}.fbt-n a{color:var(--ivory);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+.fbt-n small{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.fbt-p{margin:0;font-size:18px;color:var(--gold-hi);font-weight:300;letter-spacing:.03em}.fbt-p .was{display:inline;margin:0 8px 0 0;font-size:14px}
+.fbt-plus{align-self:center;margin-top:-60px;text-align:center;font-size:30px;font-weight:200;color:var(--gold)}
+.fbt-buy{align-self:center;margin-top:-60px;padding-left:18px;display:flex;flex-direction:column;gap:12px}
+.fbt-buy p{margin:0;font-size:14px;color:var(--muted);letter-spacing:.04em}.fbt-buy p b{font-size:24px;color:var(--ivory);font-weight:400;margin-left:6px}
+.fbt-buy small{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.fbt-buy small svg{width:16px;height:16px;flex:none;color:var(--gold)}
+.fbt-buy .btn:disabled{opacity:.5;cursor:default}
+html[data-mode="light"] .fbt-img i{color:#fffaf1}
+html[data-mode="light"] .pdel b:first-child{color:#8a5a12}
+html[dir="rtl"] .fbt-img i{right:auto;left:10px}
+@media(max-width:960px){
+  .fbt{padding:40px 0 44px}
+  .fbt-h{margin-bottom:18px}
+  .fbt-row{grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);gap:0 8px}
+  .fbt-plus{margin-top:-80px;font-size:24px}
+  .fbt-buy{grid-column:1/-1;margin:20px 0 0;padding:0;align-items:center;text-align:center}.fbt-buy .btn{width:100%}
+  .fbt-n{font-size:13.5px}
+  .assure{padding:10px 0;gap:2px}
+  .assure li{font-size:10.5px;gap:6px}
+  .assure i{width:34px;height:34px}.assure svg{width:17px;height:17px}
+  .pdel{font-size:13px}
 }
+@media(min-width:961px){.buy .pdel{font-size:13px}.buy .assure{padding:8px 0 0;margin-top:0;border-bottom:0}.buy .assure i{width:30px;height:30px;flex:none}.buy .assure svg{width:16px;height:16px}.buy .assure li{flex-direction:row;justify-content:center;gap:7px;font-size:10.5px;line-height:1.25;text-align:left}}
 .also-sec{padding:clamp(56px,6vw,96px) 0}
 @media(max-width:700px){.also-sec{padding:44px 0}}
 section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
@@ -3204,26 +3202,41 @@ function btPick(p, size){
 }
 function btRender(p, size){
   const el = $('#bt'); if (!el) return;
-  const picks = btPick(p, size);
-  if (!picks.length) { el.remove(); return; }
+  const pick = btPick(p, size)[0];
+  if (!pick) { el.remove(); return; }
   const off = new Set(JSON.parse(el.dataset.off || '[]'));
-  const items = [{id: p.id, opt: size, me: true}].concat(picks.map(x => ({id: x.id, opt: btSize(P[x.id], size)})));
-  const itemHTML = it => { const q = P[it.id], v = q.prices[it.opt], c = q.compareAt && q.compareAt[it.opt], on = !off.has(it.id);
-    return `<div class="bt-it${on ? '' : ' off'}"><a class="bt-img" href="#/product/${q.id}?size=${it.opt}"><img src="${SM(imgFor(q, it.opt))}" alt="FOMAXO ${esc(q.name)}" loading="lazy"></a>
-      <input type="checkbox" class="bt-tick" data-bt="${q.id}"${on ? ' checked' : ''} aria-label="${esc(q.name)} ${optLabel(q, it.opt)}">
-      <span>${it.me ? '<small>This item</small><br>' : ''}<b>${esc(q.name)}</b></span><small>${optLabel(q, it.opt)}</small>
-      <span class="bt-pr">${hasPrice(c) && +c > +v ? `<s class="was">${moneyHTML(c)}</s>` : ''}<span class="now">${moneyHTML(v)}</span></span></div>`; };
+  const items = [{id: p.id, opt: size, me: true}, {id: pick.id, opt: btSize(P[pick.id], size)}];
+  const tile = (it, i) => { const q = P[it.id], v = q.prices[it.opt], c = q.compareAt && q.compareAt[it.opt];
+    return `<div class="fbt-it${off.has(it.id) ? ' off' : ''}"><label class="fbt-img"><img src="${IMG(imgFor(q, it.opt))}" alt="" loading="lazy"><input type="checkbox" data-bt="${q.id}"${off.has(it.id) ? '' : ' checked'} aria-label="Include ${esc(q.name)}"><i aria-hidden="true">✓</i></label>
+      <p class="fbt-n">${it.me ? '<b>This item:</b> ' + esc(q.name) : `<a href="#/product/${q.id}?size=${it.opt}">${esc(q.name)}</a>`}<small>${optLabel(q, it.opt)}</small></p>
+      <p class="fbt-p">${hasPrice(c) && +c > +v ? `<s class="was">${moneyHTML(c)}</s>` : ''}${moneyHTML(v)}</p></div>`; };
   const sel = items.filter(it => !off.has(it.id)), lines = sel.map(it => ({id: it.id, opt: it.opt, qty: 1}));
-  const base = subtotal(lines) || 0, was = sel.reduce((a, it) => { const q = P[it.id], c = q.compareAt && q.compareAt[it.opt]; return a + Number(hasPrice(c) && +c > +q.prices[it.opt] ? c : q.prices[it.opt]); }, 0);
-  const dc = qtyDiscount(lines), total = Math.round((base - dc.amount) * 100) / 100;
-  const n = sel.length, btnTxt = !n ? 'Tick an item' : n === 1 ? 'Add to bag' : n === 2 ? 'Add both to bag' : `Add all ${n} to bag`;
-  el.innerHTML = `<h2 class="bt-h">${picks[0].real ? 'Customers bought together' : 'Pairs well together'}</h2>
-    <div class="bt-in"><div class="bt-items">${items.map(itemHTML).join('<span class="bt-plus" aria-hidden="true">+</span>')}</div>
-    <div class="bt-sum"><div class="bt-tot">Total price: ${was > total ? `<s class="was">${moneyHTML(was)}</s>` : ''}<strong>${moneyHTML(total, total % 1 !== 0)}</strong></div>
-      ${dc.pct ? `<div class="bt-off">Includes ${dc.pct}% multi-buy off${dc.mini ? ' + FREE 10ml mini' : ''}</div>` : ''}
-      <button class="btn" type="button" id="btAdd"${n ? '' : ' disabled'}>${btnTxt}</button></div></div>`;
-  $$('.bt-tick', el).forEach(b => b.onchange = () => { b.checked ? off.delete(b.dataset.bt) : off.add(b.dataset.bt); el.dataset.off = JSON.stringify([...off]); btRender(p, size); });
+  const dc = qtyDiscount(lines), total = Math.round(((subtotal(lines) || 0) - dc.amount) * 100) / 100, n = sel.length;
+  el.innerHTML = `<h2 class="fbt-h">${pick.real ? 'Customers bought <em class="metal">together</em>' : 'Pairs well <em class="metal">together</em>'}</h2>
+    <div class="fbt-row">${tile(items[0], 0)}<span class="fbt-plus" aria-hidden="true">+</span>${tile(items[1], 1)}
+      <div class="fbt-buy"><p>Total price: <b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
+      <small>${ICON.truck}${n === 2 ? 'Free delivery on both' : 'Free delivery'}${dc.pct ? ` · ${dc.pct}% multi-buy off included` : ''}</small></div></div>`;
+  $$('[data-bt]', el).forEach(b => b.onchange = () => { b.checked ? off.delete(b.dataset.bt) : off.add(b.dataset.bt); el.dataset.off = JSON.stringify([...off]); btRender(p, size); });
   $('#btAdd').onclick = () => { const ok = sel.filter(it => addToCart(it.id, it.opt, 1, true)); if (ok.length) addedPanel(ok[0].id, ok[0].opt, 1, ok.length > 1 ? ok.map(it => P[it.id].name) : null); };
+}
+/* product page, under the price (as on fomaxo.in): when it arrives (the 1–3 days promised at checkout, Sundays skipped) and a row of small icons,
+   only for what is true today: Cash on delivery with its minimum, Secure payment only while card payment is on */
+function delWindow(){
+  const d = new Date(), add = n => { const x = new Date(d); let k = 0; while (k < n) { x.setDate(x.getDate() + 1); if (x.getDay()) k++; } return x; };
+  const a = add(1), b = add(3), f = (x, m) => x.toLocaleDateString('en-GB', m ? {weekday:'short', day:'numeric', month:'short'} : {weekday:'short', day:'numeric'});
+  return `<b>${f(a, a.getMonth() !== b.getMonth())} – ${f(b, true)}</b>`;
+}
+const AS_ICON = {
+  fast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3.5" y="5" width="17" height="15" rx="1"/><path d="M3.5 9.5h17M8 3v4M16 3v4M8.5 14.5l2.3 2.2 4.7-4.7"/></svg>',
+  cod: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2.5" y="6" width="19" height="12" rx="1"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="5" y="10.5" width="14" height="10" rx="1"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M8.7 12.2l2.3 2.3 4.4-4.5"/></svg>'
+};
+function assureHTML(){
+  const it = [[ICON.truck, 'Free', 'Delivery'], [AS_ICON.fast, 'Delivered in', '1–3 Days'], COD_MIN > 0 ? [AS_ICON.cod, 'Cash on Delivery', 'over ' + aed(COD_MIN)] : [AS_ICON.cod, 'Cash on', 'Delivery']];
+  if (CARD_ON) it.push([AS_ICON.lock, 'Secure', 'Payment']);
+  it.push([AS_ICON.shield, 'Original', 'FOMAXO']);
+  return `<ul class="assure" style="--n:${it.length}">${it.map(x => `<li><i>${x[0]}</i><span>${x[1]} ${x[2]}</span></li>`).join('')}</ul>`;
 }
 function product(id, q){
   const p = P[id]; if (!p || p.hidden) return notFound();
@@ -3233,7 +3246,7 @@ function product(id, q){
   const isSet = p.kind === 'set';
   const perks = isSet
     ? [[ICON.drop,'Try before you buy'],[ICON.travel,'Pocket-friendly, ideal for travel'],[ICON.gift,'Luxury mini-box, ready to gift'],[ICON.truck,'Free delivery anywhere in UAE']]
-    : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.pen,'Custom engraving on request']];   // free delivery and gift packaging are in the icon row above
+    : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.pen,'Custom engraving on request'],[ICON.truck,'Free delivery anywhere in UAE']];
   const related = S.products.filter(x => x.id !== p.id).sort((a, b) => (a.id === 'king') - (b.id === 'king'));   // every product on sale except this one, in a sideways swipe row, King last
   const ship = S.shipping.length ? S.shipping.map(s => `<p>${esc(s)}</p>`).join('') : `<p class="ph">Add your delivery &amp; returns information in assets/data.js.</p>`;
   document.title = `${p.name} ${p.family || ''} | FOMAXO Dubai`;
@@ -3253,6 +3266,8 @@ function product(id, q){
           <p class="lead" style="max-width:none">${esc(p.short)}</p>
           <div id="pprice">${pdpPrice(p, size)}</div>
           ${pdpOffer(p)}
+          <p class="pdel">${ICON.truck}<span><b>FREE delivery</b> ${delWindow()}</span></p>
+          ${assureHTML()}
         </div>
         ${p.sizes.length > 1 ? `<div><div class="opt-label"><span>${isSet ? 'Choose your set' : 'Size'}</span><span id="sizeName">${optLabel(p, size)}</span></div>
           <div class="sizes" id="sizes">${p.sizes.map(s => `<button data-s="${s}" class="${s===size?'on':''}">${!isSet && s === 100 ? '<i class="bv">Best value</i>' : ''}<b>${isSet ? s + ' vials' : sizeLabel(s)}</b><small>${isSet ? (moneyHTML(p.prices[s]) || '2ml each') : s===10?'Mini · Travel':s===50?'Everyday':'Supreme'}</small></button>`).join('')}</div></div>`
@@ -3265,8 +3280,6 @@ function product(id, q){
           <button class="btn line" id="addBtn">Add to bag</button>
         </div>
         <button class="btn block" id="buyBtn">Buy now</button>
-        <p class="pdp-pay">${ICON.truck}<span><b>FREE delivery</b> in 1–3 days across the UAE · Prices include VAT</span></p>
-        <div class="pdp-icons">${[[CO_ICON.cod, 'Cash on delivery'], [ICON.truck, 'Free delivery'], [CO_ICON.lock, 'Secure payment'], [ICON.gift, 'Ready to gift']].map(x => `<div><i>${x[0]}</i><span>${x[1]}</span></div>`).join('')}</div>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
           <details${matchMedia('(min-width:961px)').matches ? '' : ' open'}><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
@@ -3277,7 +3290,7 @@ function product(id, q){
       </div>
     </div>
 
-    ${btPick(p, size).length ? `<section class="bt" id="bt" data-p="${p.id}"></section>` : ''}
+    ${btPick(p, size).length ? `<section class="fbt" id="bt" data-p="${p.id}"></section>` : ''}
 
     <div class="reviews" id="reviews">${rwSection(p, null)}</div>
 

@@ -787,22 +787,26 @@
 "photos": "صوراً",
 "State / City (optional)": "الإمارة / المدينة (اختياري)",
 "Nation (optional)": "الدولة (اختياري)",
-"Customers bought together": "اشتراها العملاء معاً",
-"Pairs well together": "تتناسق معاً",
-"This item": "هذا المنتج",
-"Total price:": "السعر الإجمالي:",
 "Tick an item": "اختر منتجاً",
 "Add both to bag": "أضف الاثنين إلى الحقيبة",
 "FREE delivery": "توصيل مجاني",
-"in 1–3 days across the UAE · Prices include VAT": "خلال 1–3 أيام في جميع أنحاء الإمارات · جميع الأسعار تشمل الضريبة",
 "Secure payment": "دفع آمن",
-"Ready to gift": "جاهز للإهداء"
+"This item:": "هذا المنتج:",
+"Total price:": "السعر الإجمالي:",
+"Customers bought": "اشتراها العملاء",
+"Pairs well": "يتناسقان",
+"Free Delivery": "توصيل مجاني",
+"Delivered in 1–3 Days": "التوصيل خلال 1–3 أيام",
+"Cash on Delivery": "الدفع عند الاستلام",
+"Secure Payment": "دفع آمن",
+"Original FOMAXO": "FOMAXO أصلي",
+"Free delivery on both": "توصيل مجاني للاثنين"
 };
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };
   var R = [
-    [/^Add all (\d+) to bag$/, function(m){ return 'أضف الـ ' + m[1] + ' إلى الحقيبة'; }],
-    [/^Includes (\d+)% multi-buy off( \+ FREE 10ml mini)?$/, function(m){ return 'يشمل خصم ' + m[1] + '% عند شراء أكثر' + (m[2] ? ' + ميني 10ml مجاناً' : ''); }],
+    [/^(Free delivery(?: on both)?) · (\d+)% multi-buy off included$/, function(m){ return (m[1] === 'Free delivery' ? 'توصيل مجاني' : 'توصيل مجاني للاثنين') + ' · يشمل خصم ' + m[2] + '%'; }],
+    [/^Cash on Delivery over AED ([\d,.]+)$/, function(m){ return 'الدفع عند الاستلام فوق AED ' + m[1]; }],
     [/^✓ (\d+) items added to your bag$/, function(m){ return '✓ تمت إضافة ' + cnt(m[1], 'قطعة واحدة', 'قطعتين', 'قطع', 'قطعة') + ' إلى حقيبتك'; }],
     [/^\+ (\d+) more$/, function(m){ return '+ ' + m[1] + ' أخرى'; }],
     [/^(\d+) products in this video · swipe$/, function(m){ return cnt(m[1], 'منتج واحد', 'منتجان', 'منتجات', 'منتجاً') + ' في هذا الفيديو · اسحب'; }],
