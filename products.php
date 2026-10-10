@@ -21,7 +21,7 @@ if ($pdo) { try { $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) 
 $ads = array_filter(array_intersect_key((array)$ads, array_flip(['meta', 'tiktok', 'google', 'gads', 'clarity'])), fn($v) => is_string($v) && $v !== '');
 /* shop videos (admin → Products → Videos): only the ones switched on, of products on the website; the website shows them on the home page */
 $videos = [];
-if ($pdo) { try { $live = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) if (!$r['hidden']) $live[$r['id']] = true;
+if ($pdo && (string)fomaxo_setting($pdo, 'videos_off') !== '1') { try { $live = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) if (!$r['hidden']) $live[$r['id']] = true;
   foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (!empty($v['on']) && isset($live[$v['product'] ?? '']) && preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? ''))
     $videos[] = ['v' => $v['file'], 'p' => $v['product']] + (($v['cover'] ?? '') !== '' ? ['c' => $v['cover']] : []); } catch (Throwable $e) {} }
 /* cash on delivery minimum and maximum (admin → Settings → Cash on delivery); max 0 = no upper limit */
