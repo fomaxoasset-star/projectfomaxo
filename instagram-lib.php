@@ -204,7 +204,7 @@ function fomaxo_ig_public_urls($code) {
   $log = []; $out = ['', ''];
   foreach ($tries as $i => [$url, $ua, $hdr]) {
     [$c, $body] = $fetch($url, $ua, $hdr); [$vid, $img] = fomaxo_ig_pick($body);
-    @file_put_contents(__DIR__ . '/fomaxo-ig-answer-' . ($i + 1) . '.txt', substr(preg_replace('~<style.*?</style>~s', '', $body), 0, 600000));   // what Instagram sent, to see why a copy fails
+    if (preg_match('~copyright_blocked\\\\*"\s*:\s*true~', $body)) $GLOBALS['fx_ig_music'] = true;   // a reel with protected music: Instagram never gives its video
     $log[] = ($i + 1) . ":$c" . ($vid !== '' ? '+' : '');
     if ($ok($vid)) { $out = [$vid, $img]; break; }
   }
@@ -236,6 +236,7 @@ function fomaxo_video_from_link($url, $prod) {
     $c = fomaxo_ig_fresh();   // connected: copy it to our server like the reel grid does
     if ($c && ($id = fomaxo_ig_find($c, $m[1])) && is_array($v = fomaxo_ig_copy($c, $id, $prod))) return $v + ['link' => $url];
     if ($v = fomaxo_ig_public_copy($m[1], $prod)) return $v + ['link' => $url];   // a public reel Instagram lets us copy
+    if (!empty($GLOBALS['fx_ig_music'])) return 'This reel has music Instagram protects, so Instagram never lets the video be copied. In Instagram open the reel, tap ⋯ then Download, and add it under Upload from your phone.';
     return 'Instagram did not let us copy this reel, so it can’t play on your website. In Instagram open the reel, tap ⋯ then Download, and add it under Upload from your phone. Private accounts’ reels can’t be copied.';
   }
   if (preg_match('~^(?:https?://)?(?:[\w-]+\.)*(youtube\.com|youtu\.be|tiktok\.com|facebook\.com|fb\.watch)/~i', $url))
