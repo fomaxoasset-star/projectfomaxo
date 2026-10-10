@@ -798,6 +798,8 @@
 "Free Delivery": "توصيل مجاني",
 "Delivered in 1–3 Days": "التوصيل خلال 1–3 أيام",
 "Cash on Delivery": "الدفع عند الاستلام",
+"COD Available": "الدفع عند الاستلام متاح",
+"Concentrated fragrance oils": "زيوت عطرية مركّزة",
 "Secure Payment": "دفع آمن",
 "Original FOMAXO": "FOMAXO أصلي",
 "Free delivery on both": "توصيل مجاني للاثنين"
