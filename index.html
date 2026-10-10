@@ -4611,16 +4611,21 @@ function bindVids(){
   vrIO && vrIO.disconnect(); vrIO = null;
   const tiles = $$('#vrow .vt'); if (!tiles.length) return;
   tiles.forEach(t => t.onclick = () => openReel(+t.dataset.vi));
-  tiles.forEach(t => { const v = $('video', t); if (v) v.addEventListener('playing', () => t.classList.add('playing')); });   // the videos start by themselves as the page opens (autoplay, muted, looping)
+  tiles.forEach(t => { const v = $('video', t); if (v) { v.addEventListener('playing', () => t.classList.add('playing')); v.addEventListener('pause', () => { v.dataset.pev = (+v.dataset.pev || 0) + 1; }); } });
+  const onScreen = t => { const r = t.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0; };
+  let kicks = 0; const kick = setInterval(() => {   // for the first 12 seconds: any video on screen that is still paused is started again (some Safari versions drop the first start)
+    if (++kicks > 6 || !document.contains(tiles[0])) return clearInterval(kick);
+    tiles.forEach(t => { const v = $('video', t); if (v && v.paused && onScreen(t)) { v.muted = true; v.play().then(() => { v.dataset.kick = 'ok'; t.classList.add('playing'); }).catch(e => { v.dataset.kick = e.name; }); } });
+  }, 2000);   // the videos start by themselves as the page opens (autoplay, muted, looping)
   const row = $('#vrow'), nav = $('.vr-nav');   // laptop: arrows when the videos are wider than the page
   if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => row.scrollBy({left: +b.dataset.vscroll * row.clientWidth * .8, behavior: 'smooth'})); }
   if (navigator.connection && navigator.connection.saveData) return;   // data saver: posters only until tapped
-  const run = (t, on) => { const v = $('video', t); if (!v) return; if (on) { if (!v.src) v.src = v.dataset.src; v.play().then(() => t.classList.add('playing')).catch(() => {}); } else if (!v.paused) { v.pause(); t.classList.remove('playing'); } };
+  const run = (t, on) => { const v = $('video', t); if (!v) return; if (on) { if (!v.src) v.src = v.dataset.src; v.play().then(() => t.classList.add('playing')).catch(e => { v.dataset.pe = e.name; }); } else if (!v.paused) { v.pause(); v.dataset.pz = (+v.dataset.pz || 0) + 1; t.classList.remove('playing'); } };
   tiles.forEach(t => { const v = $('video', t); if (v && !v.src) { v.muted = true; v.preload = 'auto'; v.src = v.dataset.src; } });   // every video starts loading as the page opens, so it plays the moment it is on screen
   const again = () => tiles.forEach(t => { const r = t.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0) run(t, true); });   // a phone that held back autoplay (iPhone Low Power Mode) plays them at the first touch
   ['touchend', 'pointerdown', 'keydown'].forEach(ev => addEventListener(ev, again, {once: true, passive: true}));   // a laptop or phone that held back autoplay (Low Power Mode, Safari's Auto-Play setting) starts them on the first tap, click or key
   const report = () => { try {   // 4 seconds after the row first comes on screen: report how each video is doing (vlog.php), to look into videos that will not play
-    const rep = tiles.map(t => { const v = $('video', t); if (!v) return 'img'; const r = t.getBoundingClientRect(); return [(v.currentSrc || v.dataset.src || '').split('/').pop(), r.left < innerWidth && r.right > 0 && r.top < innerHeight && r.bottom > 0 ? 'seen' : 'away', v.paused ? 'paused' : 'playing', 'ready=' + v.readyState, 'net=' + v.networkState, 'err=' + (v.error ? v.error.code : 0), 'muted=' + v.muted, 't=' + v.currentTime.toFixed(1)].join(' '); });
+    const rep = tiles.map(t => { const v = $('video', t); if (!v) return 'img'; const r = t.getBoundingClientRect(); return [(v.currentSrc || v.dataset.src || '').split('/').pop(), r.left < innerWidth && r.right > 0 && r.top < innerHeight && r.bottom > 0 ? 'seen' : 'away', v.paused ? 'paused' : 'playing', 'ready=' + v.readyState, 'net=' + v.networkState, 'err=' + (v.error ? v.error.code : 0), 'muted=' + v.muted, 't=' + v.currentTime.toFixed(1), 'playErr=' + (v.dataset.pe || '-'), 'ourPauses=' + (v.dataset.pz || 0), 'pauseEvents=' + (v.dataset.pev || 0), 'kick=' + (v.dataset.kick || '-')].join(' '); });
     navigator.sendBeacon && navigator.sendBeacon('vlog.php', new Blob([JSON.stringify({v: rep})], {type: 'application/json'}));
   } catch (e) {} };
   let told = false;
