@@ -1548,12 +1548,13 @@ if (isset($_GET['settings'])) {
     }
     if (isset($_POST['ads_save'])) {   // Meta Pixel, TikTok Pixel and Google tag IDs for the website; empty = that one is off
       $v = fn($k) => preg_replace('/\s+/', '', (string)($_POST[$k] ?? ''));
-      $ads = ['meta' => $v('ads_meta'), 'tiktok' => strtoupper($v('ads_tiktok')), 'google' => strtoupper($v('ads_google')), 'gads' => $v('ads_gads')];
+      $ads = ['meta' => $v('ads_meta'), 'tiktok' => strtoupper($v('ads_tiktok')), 'google' => strtoupper($v('ads_google')), 'gads' => $v('ads_gads'), 'clarity' => strtolower($v('ads_clarity'))];
       $bad = [];
       if ($ads['meta'] !== '' && !preg_match('/^\d{10,20}$/', $ads['meta'])) $bad[] = 'Meta Pixel ID (numbers only)';
       if ($ads['tiktok'] !== '' && !preg_match('/^[A-Z0-9]{10,30}$/', $ads['tiktok'])) $bad[] = 'TikTok Pixel ID';
       if ($ads['google'] !== '' && !preg_match('/^(G|AW|GT)-[A-Z0-9]{4,20}$/', $ads['google'])) $bad[] = 'Google tag ID (starts with G- or AW-)';
       if ($ads['gads'] !== '' && !preg_match('/^AW-\d{4,20}\/[A-Za-z0-9_-]{4,40}$/', $ads['gads'])) $bad[] = 'Google Ads purchase (AW-…/…)';
+      if ($ads['clarity'] !== '' && !preg_match('/^[a-z0-9]{6,20}$/', $ads['clarity'])) $bad[] = 'Microsoft Clarity project ID';
       $tk = [];   // access tokens: an empty box keeps the saved one
       foreach (['meta', 'tiktok'] as $k) if (($t = $v('ads_' . $k . '_token')) !== '') { if (preg_match('/^[A-Za-z0-9_\-]{20,600}$/', $t)) $tk[$k] = $t; else $bad[] = ucfirst($k === 'tiktok' ? 'TikTok' : 'Meta') . ' access token'; }
       if ($bad) { flash('Please check the ' . implode(', ', $bad) . '.'); go(['settings' => 1]); }
@@ -1643,6 +1644,7 @@ if (isset($_GET['settings'])) {
     . '<div>' . $tokRow('tiktok', 'TikTok token', 'Pixel → Settings → Generate access token') . '</div></div>'
     . $adRow('google', 'Google tag ID', 'e.g. G-ABC123XYZ', 'Google Analytics → Admin → Data streams (G-…), or Google Ads (AW-…)')
     . $adRow('gads', 'Google Ads purchase', 'Optional · AW-123456789/AbCdEf', 'Google Ads → Goals → Conversions → Purchase → Tag setup (ID/label)')
+    . $adRow('clarity', 'Microsoft Clarity project ID', 'e.g. abcde12345', 'clarity.microsoft.com → your project → Settings → Overview. Records visits and heatmaps; checkout details stay hidden, review links and thank-you pages are not recorded')
     . '<p class="muted small shelp">Your own visits from this admin browser are not sent. A token also sends every order straight from fomaxo.com, so ad blockers and iPhones do not hide sales (kept on your server, never shown again).</p>'
     . '<p class="sbtn"><button class="btn">Save</button></p></form></div>', true, true);
 }
