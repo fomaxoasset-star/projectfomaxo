@@ -24,12 +24,24 @@ $videos = [];
 if ($pdo && (string)fomaxo_setting($pdo, 'videos_off') !== '1') { try { $live = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) if (!$r['hidden']) $live[$r['id']] = true;
   foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (!empty($v['on']) && isset($live[$v['product'] ?? '']) && preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? ''))
     $videos[] = ['v' => $v['file'], 'p' => $v['product']] + (($v['cover'] ?? '') !== '' ? ['c' => $v['cover']] : []); } catch (Throwable $e) {} }
+/* bought together (product page): per product, the other products most often in the same real order (2+ orders together), best first.
+   King and the Discovery Set are left out (not part of multi-buy); hidden products are left out on the website. */
+$together = [];
+if ($pdo) { try { $pair = [];
+  foreach ($pdo->query("SELECT lines_json FROM fx_orders WHERE test = 0 AND status IN ('New', 'Paid', 'Delivered') AND lines_json IS NOT NULL ORDER BY id DESC LIMIT 2000") as $r) {
+    $ids = [];
+    foreach ((array)json_decode($r['lines_json'], true) as $l) { $id = is_array($l) ? (string)($l['id'] ?? '') : ''; if ($id !== '' && $id !== 'king' && $id !== 'discovery' && preg_match('~^[a-z0-9-]{1,30}$~', $id)) $ids[$id] = true; }
+    $ids = array_keys($ids);
+    foreach ($ids as $a) foreach ($ids as $b) if ($a !== $b) $pair[$a][$b] = ($pair[$a][$b] ?? 0) + 1;
+  }
+  foreach ($pair as $a => $m) { $m = array_filter($m, fn($n) => $n >= 2); arsort($m); if ($m) $together[$a] = array_slice(array_keys($m), 0, 4); }
+} catch (Throwable $e) {} }
 /* cash on delivery minimum and maximum (admin → Settings → Cash on delivery); max 0 = no upper limit */
 [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo ?: null);
 /* site pages hidden on admin → Settings → Site pages (their links go and their address opens Home) */
 $hidePages = [];
 if ($pdo) { try { $hidePages = array_values(array_intersect(json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: [], array_keys(FX_SITE_PAGES))); } catch (Throwable $e) {} }
-echo '{"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
+echo '{"together":' . fomaxo_json((object)$together) . ',"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
 
 /* Automatic Instagram reels (admin → Products → Videos): at most once an hour, after the visitor already has the answer above */
 if ($pdo && is_file(dirname(__DIR__) . '/fomaxo-instagram.php') && time() - (int)fomaxo_setting($pdo, 'ig_sync_at') >= 3600) {

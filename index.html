@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=20";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=21";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -1942,6 +1942,44 @@ section.sec.ro-sec{padding:clamp(20px,3vw,32px) 0 0}
 .ro-sec+section.sec{padding-top:clamp(36px,5vw,64px)}
 /* even, tighter rhythm: the closing "Define your signature luxury" band brings its own space, so the block above it adds none (no doubled gap) */
 main section:has(+ .final){padding-bottom:0!important}
+/* bought together (product page): this perfume + up to two others, tick boxes, total with the multi-buy discount, one gold button */
+.bt{padding:clamp(28px,3vw,44px) 0;border-top:1px solid var(--line)}
+.bt-h{font-family:var(--serif);font-weight:300;font-size:clamp(22px,2.2vw,30px);letter-spacing:.06em;text-transform:uppercase;margin:0 0 18px;color:var(--ivory)}
+.bt-in{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.bt-items{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.bt-plus{align-self:center;margin-top:-40px;color:var(--gold);font-size:22px;font-weight:300}
+.bt-it{position:relative;width:170px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.35;color:var(--ivory)}
+.bt-it.off{opacity:.45}
+.bt-img{display:block;position:relative;aspect-ratio:1;border:1px solid var(--line);background:var(--panel);overflow:hidden}
+.bt-img img{width:100%;height:100%;object-fit:cover}
+.bt-tick{position:absolute;top:8px;right:8px;z-index:2;width:24px;height:24px;margin:0;appearance:none;-webkit-appearance:none;border:1.5px solid var(--gold);background:var(--black);cursor:pointer;display:grid;place-items:center}
+.bt-tick:checked{background:var(--gold)}
+.bt-tick:checked::after{content:"";width:6px;height:11px;border:solid var(--black);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.bt-it b{font-weight:500;letter-spacing:.04em}
+.bt-it small{color:var(--muted);font-size:12px}
+.bt-pr{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.bt-pr .was{display:inline;margin:0;font-size:12px}
+.bt-pr .now{color:var(--gold);font-size:15px}
+.bt-sum{display:flex;flex-direction:column;gap:8px;min-width:240px;max-width:300px}
+.bt-tot{font-size:14px;color:var(--ivory)}
+.bt-tot .was{display:inline;margin:0;margin-inline-end:6px;font-size:13px}
+.bt-tot strong{font-weight:400;color:var(--gold);font-size:22px}
+.bt-off{font-size:12px;line-height:1.45;color:#2f8a4e}
+.bt-sum .btn{width:100%}
+@media(max-width:700px){
+  .bt{padding:24px 0}
+  .bt-h{font-size:20px;margin-bottom:14px}
+  .bt-in{flex-direction:column;align-items:stretch;gap:16px}
+  .bt-items{gap:4px}
+  .bt-it{flex:1 1 0;width:auto;font-size:12px}
+  .bt-it b{font-size:12px}
+  .bt-it small,.bt-pr .was{font-size:11px}
+  .bt-pr{gap:4px}
+  .bt-pr .now{font-size:13px}
+  .bt-plus{font-size:16px;margin-top:-60px}
+  .bt-tick{top:6px;right:6px;width:22px;height:22px}
+  .bt-sum{max-width:none;min-width:0}
+}
 .also-sec{padding:clamp(56px,6vw,96px) 0}
 @media(max-width:700px){.also-sec{padding:44px 0}}
 section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
@@ -2811,11 +2849,11 @@ function qdBar(dc){
 let addT = 0, addHold = false;
 const addedEl = $('#added');
 function hideAdded(){ clearTimeout(addT); addedEl.classList.remove('show'); addedEl.setAttribute('aria-hidden', 'true'); }
-function addedPanel(id, opt, qty){
+function addedPanel(id, opt, qty, names){
   const p = P[id], dc = qtyDiscount(cart), T = orderTotals(cart, ''), n = cart.reduce((a, l) => a + l.qty, 0);
   const v = p.prices[opt], ok = T.after === null || T.short <= 0;
   addedEl.innerHTML = `<button class="ad-x" type="button" data-adclose aria-label="Close">×</button>
-    <div class="ad-top"><img src="${SM(imgFor(p, opt))}" alt=""><div><small>✓ Added to your bag</small><b>${esc(p.name)}</b><span>${optLabel(p, opt)}${qty > 1 ? ' × ' + qty : ''}${hasPrice(v) ? ' · ' + moneyHTML(v * qty) : ''}</span></div></div>
+    <div class="ad-top"><img src="${SM(imgFor(p, opt))}" alt=""><div>${names ? `<small>✓ ${names.length} items added to your bag</small><b>${names.map(esc).join(' + ')}</b>` : `<small>✓ Added to your bag</small><b>${esc(p.name)}</b><span>${optLabel(p, opt)}${qty > 1 ? ' × ' + qty : ''}${hasPrice(v) ? ' · ' + moneyHTML(v * qty) : ''}</span>`}</div></div>
     ${dc.units ? `<div class="ad-offer"><span>${qtyNudge(dc)}</span>${qdBar(dc)}</div>` : ''}
     <div class="ad-acts">${ok ? `<a class="btn sm" href="#/checkout" data-adclose>Checkout${T.after !== null ? ' · ' + aed(T.after) : ''}</a>` : `<span class="btn sm co-min">${minMsg(T.short)}</span>`}<button class="btn line sm" type="button" data-adbag>View bag (${n})</button></div>`;
   $('#toast').classList.remove('show');
@@ -3130,6 +3168,43 @@ const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.c
 // the multi-buy offer, shown before the customer adds to bag (King and the Discovery Set are not part of it)
 const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
   `<p class="pdp-offer">${ICON.gift}<span><b>Buy more, save more</b>2 items 5% off · 3 items 10% off + FREE 10ml mini · 5+ items 15% off</span></p>`;
+/* Bought together: this perfume + up to two others. Partners come from real orders (TOGETHER, from products.php: 2+ orders together);
+   with too few orders yet, the Distinct Blends stand in under an honest title ("Pairs well together"), never "customers bought".
+   King and the Discovery Set are not in it (not part of multi-buy), nor hidden or out-of-stock bottles. Partners take this page's size when they have it. */
+let TOGETHER = {}; try { TOGETHER = JSON.parse(localStorage.getItem('fomaxo_together') || '{}') || {}; } catch(e) {}
+const btOK = p => p && !p.hidden && p.kind !== 'set' && !QTY_DISCOUNT_SKIP.includes(p.id);
+const btSize = (p, size) => p.sizes.includes(+size) ? +size : defaultSize(p);
+const btInStock = (p, size) => { const n = stockLeft(p.id, btSize(p, size)); return n === null || n > 0; };
+function btPick(p, size){
+  if (!btOK(p)) return [];
+  const fit = id => id !== p.id && btOK(P[id]) && btInStock(P[id], size) && hasPrice(P[id].prices[btSize(P[id], size)]);
+  const real = (TOGETHER[p.id] || []).filter(fit).slice(0, 2);
+  if (real.length) return real.map(id => ({id, real: true}));
+  return ['gold', 'dollar', 'oldmoney', 'royalcandy', 'matchacoco', 'passionsin'].concat(Object.keys(P)).filter((id, i, a) => a.indexOf(id) === i && fit(id)).slice(0, 2).map(id => ({id, real: false}));
+}
+function btRender(p, size){
+  const el = $('#bt'); if (!el) return;
+  const picks = btPick(p, size);
+  if (!picks.length) { el.remove(); return; }
+  const off = new Set(JSON.parse(el.dataset.off || '[]'));
+  const items = [{id: p.id, opt: size, me: true}].concat(picks.map(x => ({id: x.id, opt: btSize(P[x.id], size)})));
+  const itemHTML = it => { const q = P[it.id], v = q.prices[it.opt], c = q.compareAt && q.compareAt[it.opt], on = !off.has(it.id);
+    return `<div class="bt-it${on ? '' : ' off'}"><a class="bt-img" href="#/product/${q.id}?size=${it.opt}"><img src="${SM(imgFor(q, it.opt))}" alt="FOMAXO ${esc(q.name)}" loading="lazy"></a>
+      <input type="checkbox" class="bt-tick" data-bt="${q.id}"${on ? ' checked' : ''} aria-label="${esc(q.name)} ${optLabel(q, it.opt)}">
+      <span>${it.me ? '<small>This item</small><br>' : ''}<b>${esc(q.name)}</b></span><small>${optLabel(q, it.opt)}</small>
+      <span class="bt-pr">${hasPrice(c) && +c > +v ? `<s class="was">${moneyHTML(c)}</s>` : ''}<span class="now">${moneyHTML(v)}</span></span></div>`; };
+  const sel = items.filter(it => !off.has(it.id)), lines = sel.map(it => ({id: it.id, opt: it.opt, qty: 1}));
+  const base = subtotal(lines) || 0, was = sel.reduce((a, it) => { const q = P[it.id], c = q.compareAt && q.compareAt[it.opt]; return a + Number(hasPrice(c) && +c > +q.prices[it.opt] ? c : q.prices[it.opt]); }, 0);
+  const dc = qtyDiscount(lines), total = Math.round((base - dc.amount) * 100) / 100;
+  const n = sel.length, btnTxt = !n ? 'Tick an item' : n === 1 ? 'Add to bag' : n === 2 ? 'Add both to bag' : `Add all ${n} to bag`;
+  el.innerHTML = `<h2 class="bt-h">${picks[0].real ? 'Customers bought together' : 'Pairs well together'}</h2>
+    <div class="bt-in"><div class="bt-items">${items.map(itemHTML).join('<span class="bt-plus" aria-hidden="true">+</span>')}</div>
+    <div class="bt-sum"><div class="bt-tot">Total price: ${was > total ? `<s class="was">${moneyHTML(was)}</s>` : ''}<strong>${moneyHTML(total, total % 1 !== 0)}</strong></div>
+      ${dc.pct ? `<div class="bt-off">Includes ${dc.pct}% multi-buy off${dc.mini ? ' + FREE 10ml mini' : ''}</div>` : ''}
+      <button class="btn" type="button" id="btAdd"${n ? '' : ' disabled'}>${btnTxt}</button></div></div>`;
+  $$('.bt-tick', el).forEach(b => b.onchange = () => { b.checked ? off.delete(b.dataset.bt) : off.add(b.dataset.bt); el.dataset.off = JSON.stringify([...off]); btRender(p, size); });
+  $('#btAdd').onclick = () => { const ok = sel.filter(it => addToCart(it.id, it.opt, 1, true)); if (ok.length) addedPanel(ok[0].id, ok[0].opt, 1, ok.length > 1 ? ok.map(it => P[it.id].name) : null); };
+}
 function product(id, q){
   const p = P[id]; if (!p || p.hidden) return notFound();
   let size = q.get('size') ? (q.get('size') === 'set' ? 'set' : +q.get('size')) : defaultSize(p);
@@ -3181,6 +3256,8 @@ function product(id, q){
       </div>
     </div>
 
+    ${btPick(p, size).length ? `<section class="bt" id="bt" data-p="${p.id}"></section>` : ''}
+
     <div class="reviews" id="reviews">${rwSection(p, null)}</div>
 
     <section class="also-sec" style="border-top:1px solid var(--line)">
@@ -3202,7 +3279,7 @@ function bindProduct(p){
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
     $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = pdpPrice(p, size);
     setImg(imgFor(p, size));
-    renderMbuy(); pdpStock();
+    renderMbuy(); pdpStock(); btRender(p, size);
   });
   const stage = $('#stage');
   stage.onclick = () => stage.classList.toggle('zoom');
@@ -3228,7 +3305,7 @@ function bindProduct(p){
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
     ['#addBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) { b.classList.toggle('oos', out); b.textContent = out ? 'Out of stock' : 'Add to bag'; } });
     $$('#sizes button').forEach(b => b.classList.toggle('so', stockLeft(p.id, b.dataset.s) === 0)); };
-  pdpStock();
+  pdpStock(); btRender(p, size);
   const addBtn = $('#addBtn');
   mobileBarCheck = () => { const r = addBtn.getBoundingClientRect(), off = r.bottom < 0 || r.top > innerHeight - 70; mb.classList.toggle('show', off && $('#reviews').getBoundingClientRect().top > innerHeight*.6); };
   setTimeout(() => mobileBarCheck && mobileBarCheck(), 400);
@@ -4707,6 +4784,7 @@ footShop();
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; SALE_SIZE = d.saleSize || null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES, sz: SALE_SIZE})); } catch(e) {} saleTick(); promoMaybe(); }
+  if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
