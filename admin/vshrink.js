@@ -3,7 +3,7 @@
    1080p, about 20 MB for 30 seconds. Browsers without it re-record the video while it plays (720p). Neither works = upload as it is. */
 (function () {
   var f = document.querySelector('form[data-vshrink]'); if (!f) return;
-  var inp = f.querySelector('input[type=file][name=video]'), max = +f.dataset.max || 0, MB = 1048576, note = f.querySelector('.vsh'), btn = f.querySelector('.btn');
+  var inp = f.querySelector('input[type=file][name=video]'), max = 500 * 1048576, MB = 1048576, note = f.querySelector('.vsh'), btn = f.querySelector('.btn');
   var mime = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'].filter(function (m) { return window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m); })[0];
   var say = function (t) { note.hidden = false; note.querySelector('span').textContent = t; };
   var tooBig = function (file) { alert('This video is ' + Math.round(file.size / MB) + ' MB. Please use one under ' + Math.round(max / MB) + ' MB.'); };
@@ -54,7 +54,7 @@
       var p = v.play(); if (p && p.catch) p.catch(fail);
     });
   }
-  /* upload with a % bar, then show the page the upload returns (the list with the new video, or what went wrong); a stopped upload says so */
+  /* upload with a % bar (big videos in pieces, see parts()), then show the page the upload returns (the list with the new video, or what went wrong); a stopped upload says so */
   /* a made-smaller video is only sent if this browser can play it back; otherwise the next way is tried */
   function playable(b) {
     return new Promise(function (ok) {
@@ -62,20 +62,48 @@
       v.muted = true; v.playsInline = true; v.preload = 'auto'; v.onloadeddata = function () { done(true); }; v.onerror = function () { done(false); }; v.src = u;
     });
   }
-  var how = 'as is';
+  var how = 'as is', stop = function (t) { btn.disabled = false; btn.textContent = 'Upload'; delete f.dataset.go; say(t); };
+  /* a video over 8 MB goes up in pieces, 4 at a time (several times faster on most connections);
+     a piece that fails is sent again (4 tries), and the server checks every byte arrived before the video joins the list */
+  function parts(file) {
+    var size = Math.min(8 * MB, Math.max(2 * MB, Math.ceil(file.size / 16))), n = Math.ceil(file.size / size), up = '', done = [], next = 0, running = 0, failed = false, csrf = f.querySelector('[name=csrf]').value;
+    var r = new Uint8Array(8); crypto.getRandomValues(r); r.forEach(function (x) { up += ('0' + x.toString(16)).slice(-2); });
+    var show = function () { var s = 0; done.forEach(function (d) { s += d || 0; }); say('Uploading… ' + Math.min(99, Math.round(s / file.size * 100)) + '% of ' + Math.max(1, Math.round(file.size / MB)) + ' MB. Keep this page open.'); };
+    return new Promise(function (ok, no) {
+      function one(i, tries) {
+        var x = new XMLHttpRequest(), fd = new FormData(), b = file.slice(i * size, Math.min(file.size, (i + 1) * size));
+        var retry = function () { done[i] = 0; show(); if (failed) return; if (tries < 3) setTimeout(function () { one(i, tries + 1); }, 1500 * (tries + 1)); else { failed = true; no(); } };
+        fd.append('csrf', csrf); fd.append('up', up); fd.append('i', i); fd.append('part', b, 'part');
+        x.open('POST', './?vchunk=1'); x.timeout = 300000;
+        x.upload.onprogress = function (e) { if (e.lengthComputable) { done[i] = Math.min(b.size, e.loaded * b.size / e.total); show(); } };
+        x.onload = function () { var j = {}; try { j = JSON.parse(x.responseText); } catch (e) {} if (j.ok && j.size === b.size) { done[i] = b.size; show(); running--; pump(); } else retry(); };
+        x.onerror = x.ontimeout = retry;
+        x.send(fd);
+      }
+      function pump() { if (failed) return; if (next >= n && !running) return ok({up: up, n: n}); while (running < 4 && next < n) { running++; one(next++, 0); } }
+      say('Uploading… 0%. Keep this page open.'); pump();
+    });
+  }
   function send(file) {
-    var fd = new FormData(f); if (file) fd.set('video', file, file.name); fd.set('how', how);
-    var x = new XMLHttpRequest(), stop = function (t) { btn.disabled = false; btn.textContent = 'Upload'; delete f.dataset.go; say(t); };
+    var src = file || inp.files[0];
     btn.disabled = true; btn.textContent = 'Uploading…'; f.dataset.go = 1;
+    if (src && src.size > 8 * MB) return parts(src).then(function (p) {
+      var fd = new FormData(f); fd.delete('video'); fd.set('parts', p.up); fd.set('parts_n', p.n); fd.set('parts_size', src.size); fd.set('parts_type', src.type); fd.set('how', how + ', ' + p.n + ' pieces');
+      say('Saving the video…'); post(fd);
+    }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
+    var fd = new FormData(f); if (file) fd.set('video', file, file.name); fd.set('how', how); say('Uploading… 0%. Keep this page open.'); post(fd);
+  }
+  function post(fd) {
+    var x = new XMLHttpRequest();
     x.open('POST', f.action || location.href);
-    x.upload.onprogress = function (e) { if (e.lengthComputable) say('Uploading… ' + Math.min(99, Math.round(e.loaded / e.total * 100)) + '% of ' + Math.max(1, Math.round(e.total / MB)) + ' MB. Keep this page open.'); };
+    x.upload.onprogress = function (e) { if (e.lengthComputable && e.total > MB) say('Uploading… ' + Math.min(99, Math.round(e.loaded / e.total * 100)) + '% of ' + Math.max(1, Math.round(e.total / MB)) + ' MB. Keep this page open.'); };
     x.onload = function () {
       if (x.status >= 400 || !/<html/i.test(x.responseText)) return stop('The upload did not finish (error ' + x.status + '). Please tap Upload again.');
       try { history.replaceState(null, '', x.responseURL || location.href); } catch (e) {}
       document.open(); document.write(x.responseText); document.close();
     };
     x.onerror = x.ontimeout = function () { stop('The upload stopped. Check your internet, then tap Upload again.'); };
-    say('Uploading… 0%. Keep this page open.'); x.send(fd);
+    x.send(fd);
   }
   f.addEventListener('submit', function (e) {
     var file = inp.files[0]; if (!file || f.dataset.go) return;

@@ -1,0 +1,20 @@
+<?php
+/* FOMAXO — where uploaded videos and photos are kept.
+   Every GitHub update of the website removes files that are not on GitHub, so uploads made in the admin
+   (shop videos, their cover photos, product photos) are kept in fomaxo-media/ ONE LEVEL ABOVE public_html instead.
+   Their addresses stay the same (assets/vid/…, assets/img/up/…): .htaccess hands those to media.php. */
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
+
+function fx_media($sub = '') {   // fomaxo-media/vid, fomaxo-media/up, fomaxo-media/parts …
+  $d = dirname(__DIR__) . '/fomaxo-media' . ($sub !== '' ? "/$sub" : '');
+  if (!is_dir($d)) @mkdir($d, 0755, true);
+  return $d;
+}
+/* the file on the server for 'vid/x.mp4' (a video) or 'up/x' (a photo key); older files on GitHub stay in assets/ */
+function fx_media_path($file) {
+  $file = (string)$file;
+  if (preg_match('~^vid/([a-z0-9-]+\.(?:mp4|mov|webm))$~', $file, $m)) { $f = fx_media('vid') . '/' . $m[1]; return is_file($f) ? $f : __DIR__ . '/assets/' . $file; }
+  if (preg_match('~^up/([a-z0-9-]+)$~', $file, $m)) { $f = fx_media('up') . '/' . $m[1] . '.webp'; return is_file($f) ? $f : __DIR__ . '/assets/img/' . $file . '.webp'; }
+  return null;
+}
+function fx_media_delete($file) { if (($f = fx_media_path($file)) && is_file($f)) @unlink($f); }

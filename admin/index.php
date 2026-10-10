@@ -9,13 +9,14 @@ header('X-Robots-Tag: noindex, nofollow');
 header('X-Frame-Options: DENY');
 header("Content-Security-Policy: default-src 'self'; img-src 'self' https://*.cdninstagram.com https://*.fbcdn.net" . (defined('FX_IG_API') ? ' ' . FX_IG_API : '') . "; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; media-src 'self' blob:; worker-src 'self' blob:; form-action 'self'; frame-ancestors 'none'");
 require dirname(__DIR__) . '/orders-lib.php';
+require_once dirname(__DIR__) . '/media-lib.php';
 date_default_timezone_set('Asia/Dubai');
 
 $STORE_EMAIL = 'fomaxoasset@gmail.com';   // first set-up; after that password links go to the address in Settings
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 session_name('fxadmin');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
-session_start(($_GET['do'] ?? '') === 'new_orders' ? ['read_and_close' => true] : []);   // the 30 second new order check only reads the sign-in, so it never keeps it alive
+session_start(($_GET['do'] ?? '') === 'new_orders' || isset($_GET['vchunk']) ? ['read_and_close' => true] : []);   // the 30 second new order check only reads the sign-in, so it never keeps it alive
 if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
 
 function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
@@ -1005,7 +1006,7 @@ function fx_slug($name, $taken) {
   for ($id = $base, $n = 2; isset($taken[$id]) || $id === 'new'; $n++) $id = $base . $n;
   return $id;
 }
-/* Saves an uploaded photo as a compressed webp in assets/img/up/ and returns its key for the website (or null). */
+/* Saves an uploaded photo as a compressed webp in fomaxo-media/up (assets/img/up/ on the website) and returns its key for the website (or null). */
 function fx_save_photo($tmp, $id, $upload = true) {   // $upload false: a file the server fetched itself (an Instagram cover)
   if (($upload ? !is_uploaded_file($tmp) : !is_file($tmp)) || !($info = @getimagesize($tmp)) || !function_exists('imagewebp')) return null;
   $im = @imagecreatefromstring((string)file_get_contents($tmp)); if (!$im) return null;
@@ -1016,20 +1017,20 @@ function fx_save_photo($tmp, $id, $upload = true) {   // $upload false: a file t
   $w = imagesx($im); $h = imagesy($im); $max = 1600;
   if (max($w, $h) > $max) $im = imagescale($im, $w >= $h ? $max : (int)round($w * $max / $h), $w >= $h ? (int)round($h * $max / $w) : $max);
   imagepalettetotruecolor($im); imagealphablending($im, false); imagesavealpha($im, true);
-  $dir = dirname(__DIR__) . '/assets/img/up';
+  $dir = fx_media('up');   // above public_html: GitHub updates never remove it (media-lib.php)
   if (!is_dir($dir) && !@mkdir($dir, 0755, true)) return null;
   $name = $id . '-' . bin2hex(random_bytes(4));
   return @imagewebp($im, "$dir/$name.webp", 80) ? "up/$name" : null;
 }
 /* ---- shop videos (Products → Videos): short vertical videos on the home page; tapping one opens it full screen with its product's
-   Add to bag / Buy now. Kept as a list in fx_settings 'videos'; the files go in assets/vid/ (cover photos in assets/img/up/). ---- */
+   Add to bag / Buy now. Kept as a list in fx_settings 'videos'; the files go in fomaxo-media/vid (cover photos in fomaxo-media/up), above public_html. ---- */
 function fx_videos($pdo) { return array_values(array_filter(json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [], fn($v) => is_array($v) && !empty($v['id']))); }
 function fx_upload_max() {   // the biggest upload Hostinger accepts, in bytes
   $b = fn($s) => (int)$s * (['K' => 1024, 'M' => 1048576, 'G' => 1073741824][strtoupper(substr(trim((string)$s), -1))] ?? 1);
   $m = array_filter([$b(ini_get('upload_max_filesize')), $b(ini_get('post_max_size'))]);
   return $m ? min($m) : 0;
 }
-/* what is inside a video file (container, boxes, codecs), kept in fomaxo-vid-info.json (blocked from the web), so a video that won't play can be checked on the server */
+/* what is inside a video file (container, boxes, codecs), kept in fomaxo-media/fomaxo-vid-info.json, so a video that won't play can be checked on the server */
 function fx_vid_probe(string $path): array {
   $sz = (int)@filesize($path); $f = @fopen($path, 'rb'); if (!$f) return ['size' => $sz, 'error' => 'cannot open'];
   $d = (string)fread($f, min($sz, 20 * 1048576)); fclose($f);
@@ -1040,10 +1041,20 @@ function fx_vid_probe(string $path): array {
   return ['size' => $sz, 'container' => 'mp4/mov', 'brand' => substr($d, 8, 4), 'boxes' => $boxes, 'codecs' => array_values(array_unique($codecs)), 'moov_first' => strpos($d, 'moov') !== false && strpos($d, 'moov') < (int)strpos($d, 'mdat')];
 }
 function fx_vid_note(string $file, array $extra = []): void {
-  $j = dirname(__DIR__) . '/fomaxo-vid-info.json'; $all = is_file($j) ? (json_decode((string)file_get_contents($j), true) ?: []) : [];
+  $j = fx_media() . '/fomaxo-vid-info.json'; $all = is_file($j) ? (json_decode((string)file_get_contents($j), true) ?: []) : [];
   if (!$extra && isset($all[$file])) return;
-  $all[$file] = ($all[$file] ?? []) + $extra + fx_vid_probe(dirname(__DIR__) . '/assets/' . $file) + ['at' => date('c')];
+  $all[$file] = ($all[$file] ?? []) + $extra + fx_vid_probe((string)fx_media_path($file)) + ['at' => date('c')];
   @file_put_contents($j, json_encode(array_slice($all, -40, null, true), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
+/* Upload from your phone sends a big video in pieces, 4 at a time (faster, and a piece that fails is just sent again).
+   The pieces wait in fomaxo-media/parts/<upload id>/ until the Upload form joins them. The sign-in is only read, so pieces go up side by side. */
+if (isset($_GET['vchunk'])) {
+  header('Content-Type: application/json'); header('Cache-Control: no-store');
+  $up = (string)($_POST['up'] ?? ''); $i = (int)($_POST['i'] ?? -1); $f = $_FILES['part'] ?? null;
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_ok() || !preg_match('/^[a-f0-9]{16}$/', $up) || $i < 0 || $i > 999 || !$f || ($f['error'] ?? 1) !== UPLOAD_ERR_OK) exit('{"ok":0}');
+  if (!mt_rand(0, 20)) foreach (glob(fx_media('parts') . '/*', GLOB_ONLYDIR) ?: [] as $old) if (filemtime($old) < time() - 86400) { array_map('unlink', glob("$old/*") ?: []); @rmdir($old); }   // pieces of uploads never finished
+  $d = fx_media("parts/$up");
+  exit(json_encode(['ok' => move_uploaded_file($f['tmp_name'], "$d/$i") ? 1 : 0, 'size' => (int)@filesize("$d/$i")]));
 }
 if (isset($_GET['videos'])) {
   require_once dirname(__DIR__) . '/instagram-lib.php';
@@ -1092,21 +1103,33 @@ if (isset($_GET['videos'])) {
       $v = fomaxo_video_from_link($url, $prod ?: 'fomaxo'); if (!is_array($v)) { flash($v); go($back); } $v['product'] = $prod; if ($words !== '') $v['words'] = $words;
       $code = (string)($v['ig_code'] ?? '');
       if ((!empty($v['ig']) && in_array($v['ig'], array_column($vids, 'ig'), true)) || ($code !== '' && in_array($code, array_column($vids, 'ig_code'), true))) {
-        @unlink(dirname(__DIR__) . '/assets/' . $v['file']); flash('That reel is already in your videos.'); go($back); }
+        fx_media_delete($v['file']); flash('That reel is already in your videos.'); go($back); }
       $old = false; foreach ($vids as $k => $x) if ($code !== '' && ($x['embed'] ?? '') === $code) $old = $k;   // an older Instagram-player entry of this reel: the copy takes its place
       if ($old !== false) $vids[$old] = $v; else array_unshift($vids, $v); fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
       flash('Video added from the link. It shows on the home page within a minute.', true); go($back);
     }
     if ($act === 'add') {
-      $f = $_FILES['video'] ?? null;
+      $f = $_FILES['video'] ?? null; $pd = '';
       if (!$none && !isset($names[$prod])) { flash('Please pick the product shown in the video.'); go($back); }
+      if (preg_match('/^[a-f0-9]{16}$/', (string)($_POST['parts'] ?? ''))) {   // a video sent in pieces: join them, and check nothing is missing
+        $pd = fx_media('parts/' . $_POST['parts']); $pn = (int)($_POST['parts_n'] ?? 0); $total = (int)($_POST['parts_size'] ?? 0);
+        $ok = $pn > 0 && $pn <= 1000 && $total > 0 && $total <= 500 * 1048576 && ($out = @fopen("$pd/all", 'wb'));
+        for ($k = 0; $ok && $k < $pn; $k++) { $in = @fopen("$pd/$k", 'rb'); if (!$in) { $ok = false; break; } stream_copy_to_stream($in, $out); fclose($in); }
+        if (!empty($out)) fclose($out);
+        clearstatcache(); $ok = $ok && (int)@filesize("$pd/all") === $total;
+        foreach (glob("$pd/*") ?: [] as $x) if (basename($x) !== 'all' || !$ok) @unlink($x);
+        if (!$ok) { @rmdir($pd); flash('The upload did not finish. Please tap Upload again.'); go($back); }
+        $f = ['tmp_name' => "$pd/all", 'error' => UPLOAD_ERR_OK, 'type' => (string)($_POST['parts_type'] ?? '')];
+      }
       if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) { flash('Please choose a video.'); go($back); }
       if (in_array($f['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) { flash('The video is too big. Please use one under ' . round(fx_upload_max() / 1048576) . ' MB.'); go($back); }
-      $mime = $f['error'] === UPLOAD_ERR_OK && is_uploaded_file($f['tmp_name']) && function_exists('finfo_open') ? (string)finfo_file(finfo_open(FILEINFO_MIME_TYPE), $f['tmp_name']) : '';
+      $mime = $f['error'] === UPLOAD_ERR_OK && ($pd ? is_file($f['tmp_name']) : is_uploaded_file($f['tmp_name'])) && function_exists('finfo_open') ? (string)finfo_file(finfo_open(FILEINFO_MIME_TYPE), $f['tmp_name']) : '';
       $ext = ['video/mp4' => 'mp4', 'video/quicktime' => 'mov', 'video/webm' => 'webm', 'video/x-m4v' => 'mp4'][$mime] ?? '';
+      if ($ext === '' && $pd) { @unlink($f['tmp_name']); @rmdir($pd); }
       if ($ext === '') { flash('That file is not a video. Please use an MP4 or a video from your phone.'); go($back); }
-      $dir = dirname(__DIR__) . '/assets/vid'; $name = ($prod ?: 'fomaxo') . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
-      if ((!is_dir($dir) && !@mkdir($dir, 0755, true)) || !move_uploaded_file($f['tmp_name'], "$dir/$name")) { flash('The video could not be saved. Please try again.'); go($back); }
+      $dir = fx_media('vid'); $name = ($prod ?: 'fomaxo') . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
+      if ((!is_dir($dir) && !@mkdir($dir, 0755, true)) || !($pd ? @rename($f['tmp_name'], "$dir/$name") : move_uploaded_file($f['tmp_name'], "$dir/$name")) || !filesize("$dir/$name")) { if ($pd) { @unlink($f['tmp_name']); @rmdir($pd); } flash('The video could not be saved. Please try again.'); go($back); }
+      if ($pd) { @chmod("$dir/$name", 0644); @rmdir($pd); }
       $cover = ''; $c = $_FILES['cover'] ?? null;
       if ($c && ($c['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) $cover = fx_save_photo($c['tmp_name'], ($prod ?: 'fomaxo') . '-cover') ?: '';
       fx_vid_note("vid/$name", ['how' => substr((string)($_POST['how'] ?? 'as is'), 0, 40), 'sent_type' => (string)($f['type'] ?? ''), 'mime' => $mime, 'browser' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160)]);
@@ -1127,8 +1150,8 @@ if (isset($_GET['videos'])) {
     elseif ($act === 'del') {
       $v = $vids[$at]; array_splice($vids, $at, 1);
       if (!empty($v['ig'])) { $seen = json_decode((string)fomaxo_setting($pdo, 'ig_seen'), true) ?: []; $seen[] = $v['ig']; fomaxo_setting($pdo, 'ig_seen', json_encode(array_slice($seen, -300))); }   // Automatic never brings it back
-      if (preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'])) @unlink(dirname(__DIR__) . '/assets/' . $v['file']);
-      if (preg_match('~^up/[a-z0-9-]+$~', $v['cover'] ?? '')) @unlink(dirname(__DIR__) . '/assets/img/' . $v['cover'] . '.webp');
+      fx_media_delete($v['file'] ?? '');
+      fx_media_delete($v['cover'] ?? '');
       flash('Video deleted.', true);
     }
     fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
