@@ -316,19 +316,21 @@ function fomaxo_setting($pdo, $k, $v = null) {
 }
 
 /* "Customers bought together" (the product page box): each product's partner (keep in sync with BT_PAIR in index.html), and the extra % off
-   when a product and its partner are both in the bag (admin → Products → Together extra off). Saved as fx_settings 'bt' = {"pct":N,"on":0|1}. */
+   when a product and its partner are both in the bag (admin → Products → Together extra off). Saved as fx_settings 'bt' = {"pct":N,"aed":N,"on":0|1}: N % and/or N AED off each pair. */
 const FX_BT_PAIRS = ['oldmoney' => 'gold', 'royalcandy' => 'dollar', 'matchacoco' => 'gold', 'passionsin' => 'dollar', 'gold' => 'dollar', 'dollar' => 'gold'];
 function fomaxo_bt($pdo = null) {
   $pdo = $pdo ?: fomaxo_db(); $v = null;
   if ($pdo) { try { $v = json_decode((string)fomaxo_setting($pdo, 'bt'), true); } catch (Throwable $e) {} }
-  $set = max(0, min(50, (int)($v['pct'] ?? 0))); $on = !isset($v['on']) || !empty($v['on']);   // the On/Off switch keeps the % for later
-  return ['pct' => $on ? $set : 0, 'set' => $set, 'on' => $on, 'pairs' => FX_BT_PAIRS];
+  $set = max(0, min(50, (int)($v['pct'] ?? 0))); $setAed = max(0, min(500, (int)($v['aed'] ?? 0))); $on = !isset($v['on']) || !empty($v['on']);   // the On/Off switch keeps the % and AED for later
+  $pct = $on ? $set : 0; $aed = $on ? $setAed : 0;
+  $txt = implode(' + ', array_filter([$pct ? "$pct%" : '', $aed ? "AED $aed" : '']));   // "10%", "AED 5" or "10% + AED 5", for order labels
+  return ['pct' => $pct, 'aed' => $aed, 'set' => $set, 'setAed' => $setAed, 'on' => $on, 'txt' => $txt, 'pairs' => FX_BT_PAIRS];
 }
 /* The extra "bought together" saving in fils, worked out on the server (never taken from the browser). Keep in sync with btSave() in index.html.
-   Going down the bag: a product whose partner is also in the bag takes pct % off one bottle of each (the cheapest size in the bag);
+   Going down the bag: a product whose partner is also in the bag takes pct % and aed AED off one bottle of each (the cheapest size in the bag);
    each product counts in one pair only. King and the Discovery Set never count. */
 function fomaxo_bt_fils($lines, $catalog, $bt) {
-  if (empty($bt['pct'])) return 0;
+  if (empty($bt['pct']) && empty($bt['aed'])) return 0;
   $unit = [];
   foreach ((array)$lines as $l) {
     $id = is_string($l['id'] ?? null) ? $l['id'] : ''; $opt = (string)($l['opt'] ?? '');
@@ -338,7 +340,7 @@ function fomaxo_bt_fils($lines, $catalog, $bt) {
   $used = []; $fils = 0;
   foreach ($unit as $a => $va) {
     $b = $bt['pairs'][$a] ?? ''; if ($b === '' || !isset($unit[$b]) || isset($used[$a]) || isset($used[$b])) continue;
-    $used[$a] = $used[$b] = true; $fils += (int)round(($va + $unit[$b]) * $bt['pct']);   // AED × % = fils
+    $used[$a] = $used[$b] = true; $pair = (int)round(($va + $unit[$b]) * 100); $fils += min($pair, (int)round(($va + $unit[$b]) * ($bt['pct'] ?? 0)) + (int)($bt['aed'] ?? 0) * 100);   // AED × % = fils, plus the AED off, never more than the pair
   }
   return $fils;
 }

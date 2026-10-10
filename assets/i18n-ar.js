@@ -810,8 +810,8 @@
   var R = [
     [/^You save AED ([\d,.]+) · Free delivery$/, function(m){ return 'وفّر AED ' + m[1] + ' · توصيل مجاني'; }],
     [/^(Free delivery(?: on both)?) · (\d+)% off included$/, function(m){ return (m[1] === 'Free delivery' ? 'توصيل مجاني' : 'توصيل مجاني للاثنين') + ' · يشمل خصم ' + m[2] + '%'; }],
-    [/^Multi-buy \((\d+)%\) \+ bought together \((\d+)%\)$/, function(m){ return 'الشراء المتعدد (' + m[1] + '%) + الشراء معًا (' + m[2] + '%)'; }],
-    [/^Bought together \((\d+)%\)$/, function(m){ return 'خصم الشراء معًا (' + m[1] + '%)'; }],
+    [/^Multi-buy \((\d+)%\) \+ bought together \((.+)\)$/, function(m){ return 'الشراء المتعدد (' + m[1] + '%) + الشراء معًا (' + m[2] + ')'; }],
+    [/^Bought together \((.+)\)$/, function(m){ return 'خصم الشراء معًا (' + m[1] + ')'; }],
     [/^(Free delivery(?: on both)?) · (\d+)% multi-buy off included$/, function(m){ return (m[1] === 'Free delivery' ? 'توصيل مجاني' : 'توصيل مجاني للاثنين') + ' · يشمل خصم ' + m[2] + '%'; }],
     [/^Cash on Delivery over AED ([\d,.]+)$/, function(m){ return 'الدفع عند الاستلام فوق AED ' + m[1]; }],
     [/^✓ (\d+) items added to your bag$/, function(m){ return '✓ تمت إضافة ' + cnt(m[1], 'قطعة واحدة', 'قطعتين', 'قطع', 'قطعة') + ' إلى حقيبتك'; }],
