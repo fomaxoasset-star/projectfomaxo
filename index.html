@@ -1966,7 +1966,7 @@ main section:has(+ .final){padding-bottom:0!important}
 .fbt-p{margin:0;font-size:18px;color:var(--gold-hi);font-weight:300;letter-spacing:.03em}.fbt-p .was{display:inline;margin:0 8px 0 0;font-size:14px}
 .fbt-plus{align-self:center;margin-top:-60px;text-align:center;font-size:30px;font-weight:200;color:var(--gold)}
 .fbt-buy{align-self:center;margin-top:-60px;padding-left:18px;display:flex;flex-direction:column;gap:12px}
-.fbt-buy p{margin:0;font-size:14px;color:var(--muted);letter-spacing:.04em}.fbt-buy p b{font-size:24px;color:var(--ivory);font-weight:400;margin-left:6px}
+.fbt-buy p{margin:0;font-size:14px;color:var(--muted);letter-spacing:.04em}.fbt-buy p .was{display:inline;font-size:16px;margin:0;margin-inline:8px 6px}.fbt-buy p b{font-size:24px;color:var(--ivory);font-weight:400;margin-left:6px}
 .fbt-buy small{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.fbt-buy small svg{width:16px;height:16px;flex:none;color:var(--gold)}
 .fbt-buy .btn:disabled{opacity:.5;cursor:default}
 html[data-mode="light"] .fbt-img i{color:#fffaf1}
@@ -3232,7 +3232,7 @@ function btRender(p, size){
   const dc = qtyDiscount(lines), total = Math.round(((subtotal(lines) || 0) - dc.amount) * 100) / 100, n = sel.length;
   el.innerHTML = `<h2 class="fbt-h">Customers bought <em class="metal">together</em></h2>
     <div class="fbt-row">${tile(items[0], 0)}<span class="fbt-plus" aria-hidden="true">+</span>${tile(items[1], 1)}
-      <div class="fbt-buy"><p>Total price: <b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
+      <div class="fbt-buy"><p>Total price: ${n && dc.amount > 0 ? `<s class="was">${moneyHTML(subtotal(lines))}</s>` : ''}<b>${n ? moneyHTML(total, total % 1 !== 0) : '—'}</b></p><button class="btn block" id="btAdd" type="button"${n ? '' : ' disabled'}>${n === 2 ? 'Add both to bag' : n ? 'Add to bag' : 'Tick an item'}</button>
       <small>${ICON.truck}${n === 2 ? 'Free delivery on both' : 'Free delivery'}${dc.bt > 0 ? ` · ${dc.pct + BT.pct}% off included` : dc.pct ? ` · ${dc.pct}% multi-buy off included` : ''}</small></div></div>`;
   $$('[data-bt]', el).forEach(b => b.onchange = () => { b.checked ? off.delete(b.dataset.bt) : off.add(b.dataset.bt); el.dataset.off = JSON.stringify([...off]); btRender(p, size); });
   $('#btAdd').onclick = () => { const ok = sel.filter(it => addToCart(it.id, it.opt, 1, true)); if (ok.length) addedPanel(ok[0].id, ok[0].opt, 1, ok.length > 1 ? ok.map(it => P[it.id].name) : null); };
