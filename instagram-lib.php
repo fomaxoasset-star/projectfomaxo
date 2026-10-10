@@ -164,30 +164,53 @@ function fomaxo_ig_find($c, $code) {
   }
   return null;
 }
-/* A public reel without a token: the video file's address from Instagram's embed page, else from its public reel data. ['', ''] when Instagram gives neither. */
+/* The video file's address and picture in one of Instagram's public answers (a page, its page data or link-preview tags, escaped once or twice). */
+function fomaxo_ig_pick($s) {
+  $get = function ($k) use ($s) {
+    foreach (['~' . $k . '\\\\*"\s*:\s*\\\\*"([^"]+?)\\\\*"~', '~<meta[^>]+property=["\']' . $k . '["\'][^>]+content=["\']([^"\']+)~i'] as $re) {
+      if (!preg_match($re, $s, $x)) continue;
+      $v = html_entity_decode($x[1], ENT_QUOTES); for ($i = 0; $i < 3 && preg_match('~\\\\[/u\\\\]~', $v); $i++) { $d = json_decode('"' . $v . '"'); if (!is_string($d)) break; $v = $d; }
+      return $v;
+    }
+    return '';
+  };
+  $vid = $get('video_url'); if ($vid === '') $vid = $get('video_versions\\\\*"\s*:\s*\[\s*\{[^\]]*?\\\\*"url'); if ($vid === '') $vid = $get('og:video(?::secure_url)?');
+  $img = $get('display_url'); if ($img === '') $img = $get('og:image');
+  return [$vid, $img];
+}
+/* A public reel without a token: tries each way Instagram shows a public reel (its embed page as a phone and as a computer, the link preview
+   it gives Facebook and WhatsApp, its own page data) until one gives the video file. ['', ''] when none does. Each attempt is noted in a
+   private log so a refusal can be traced. */
 function fomaxo_ig_public_urls($code) {
+  @set_time_limit(300);
   $base = defined('FX_IG_EMBED') ? FX_IG_EMBED : 'https://www.instagram.com';
-  $fetch = function ($url, $hdr = []) {
+  $fetch = function ($url, $ua, $hdr) {
     $ch = curl_init($url);
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3, CURLOPT_HTTPHEADER => $hdr,
-      CURLOPT_USERAGENT => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1']);
-    $r = (string)curl_exec($ch); curl_close($ch); return $r;
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3, CURLOPT_HTTPHEADER => array_merge($hdr, ['Accept-Language: en-US,en;q=0.9']), CURLOPT_USERAGENT => $ua, CURLOPT_ENCODING => '']);
+    $r = (string)curl_exec($ch); $c = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch); return [$c, $r];
   };
   $ok = fn($u) => $u !== '' && (defined('FX_IG_EMBED') || preg_match('~^https://[\w.-]+\.(cdninstagram\.com|fbcdn\.net)/~', $u));
-  $html = $fetch("$base/reel/$code/embed/captioned/");
-  $get = function ($k) use ($html) {   // the value in Instagram's page data, which is escaped once or twice
-    if (!preg_match('~' . $k . '\\\\*"\s*:\s*\\\\*"([^"]+?)\\\\*"~', $html, $x)) return '';
-    $v = $x[1]; for ($i = 0; $i < 3 && preg_match('~\\\\[/u\\\\]~', $v); $i++) { $d = json_decode('"' . $v . '"'); if (!is_string($d)) break; $v = $d; }
-    return $v;
-  };
-  if ($ok($vid = $get('video_url'))) return [$vid, $get('display_url')];
-  $hdr = ['X-IG-App-ID: 936619743392459', 'X-Requested-With: XMLHttpRequest', 'Accept: */*', "Referer: $base/reel/$code/"];
-  foreach (['doc_id=8845758582119845', 'query_hash=b3055c01b4b222b8a47dc12b090e4e64'] as $q) {   // Instagram's public reel data, as its own web page asks for it
-    $j = json_decode($fetch("$base/graphql/query/?$q&variables=" . rawurlencode(json_encode(['shortcode' => $code])), $hdr), true);
-    $m = $j['data']['xdt_shortcode_media'] ?? $j['data']['shortcode_media'] ?? null;
-    if (is_array($m) && $ok($vid = (string)($m['video_url'] ?? ''))) return [$vid, (string)($m['display_url'] ?? '')];
+  $phone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+  $pc = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+  $bot = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
+  $api = ['X-IG-App-ID: 936619743392459', 'X-Requested-With: XMLHttpRequest', 'Accept: */*', "Referer: $base/reel/$code/"];
+  $vars = rawurlencode(json_encode(['shortcode' => $code]));
+  $tries = [
+    ["$base/reel/$code/embed/captioned/", $phone, []], ["$base/p/$code/embed/captioned/", $pc, []],
+    ["$base/reel/$code/", $bot, []], ["$base/p/$code/", 'WhatsApp/2.24.20.71 A', []],   // link previews
+    ["$base/graphql/query/?doc_id=8845758582119845&variables=$vars", $pc, $api], ["$base/graphql/query/?query_hash=b3055c01b4b222b8a47dc12b090e4e64&variables=$vars", $pc, $api],
+    ["$base/p/$code/?__a=1&__d=dis", $phone, $api],
+  ];
+  $log = []; $out = ['', ''];
+  foreach ($tries as $i => [$url, $ua, $hdr]) {
+    [$c, $body] = $fetch($url, $ua, $hdr); [$vid, $img] = fomaxo_ig_pick($body);
+    if (preg_match('~copyright_blocked\\\\*"\s*:\s*true~', $body)) $GLOBALS['fx_ig_music'] = true;   // a reel with protected music: Instagram never gives its video
+    $log[] = ($i + 1) . ":$c" . ($vid !== '' ? '+' : '');
+    if ($ok($vid)) { $out = [$vid, $img]; break; }
   }
-  return ['', ''];
+  $f = __DIR__ . '/fomaxo-ig-log.txt'; $old = is_file($f) ? array_slice(file($f, FILE_IGNORE_NEW_LINES), -29) : [];
+  @file_put_contents($f, implode("\n", array_merge($old, [gmdate('Y-m-d H:i') . " $code " . implode(' ', $log) . ($out[0] !== '' ? ' copied' : ' refused')])) . "\n");
+  return $out;
 }
 /* Copies a public reel to our server; null when Instagram doesn't give its video file. */
 function fomaxo_ig_public_copy($code, $prod) {
@@ -213,6 +236,7 @@ function fomaxo_video_from_link($url, $prod) {
     $c = fomaxo_ig_fresh();   // connected: copy it to our server like the reel grid does
     if ($c && ($id = fomaxo_ig_find($c, $m[1])) && is_array($v = fomaxo_ig_copy($c, $id, $prod))) return $v + ['link' => $url];
     if ($v = fomaxo_ig_public_copy($m[1], $prod)) return $v + ['link' => $url];   // a public reel Instagram lets us copy
+    if (!empty($GLOBALS['fx_ig_music'])) return 'This reel has music Instagram protects, so Instagram never lets the video be copied. In Instagram open the reel, tap ⋯ then Download, and add it under Upload from your phone.';
     return 'Instagram did not let us copy this reel, so it can’t play on your website. In Instagram open the reel, tap ⋯ then Download, and add it under Upload from your phone. Private accounts’ reels can’t be copied.';
   }
   if (preg_match('~^(?:https?://)?(?:[\w-]+\.)*(youtube\.com|youtu\.be|tiktok\.com|facebook\.com|fb\.watch)/~i', $url))
