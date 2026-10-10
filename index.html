@@ -3008,6 +3008,7 @@ function home(){
     <div>${ICON.pen}<span><b>Custom engraving</b>On request</span></div>
     <div>${ICON.drop}<span><b>Try first</b><span class="perk-line">${shown('discovery') ? `Discovery Set from ${moneyHTML(Math.min(...Object.values(P.discovery.prices)))}` : S.mini.products.length ? `Mini 10ml from ${moneyHTML(Math.min(...S.mini.products.map(id => P[id].prices[10]).filter(hasPrice)))}` : 'Ask us for a sample'}</span></span></div>
   </div></div>
+  <section class="sec vid-sec" id="vidSec" style="padding-bottom:0"${vids().length ? '' : ' hidden'}>${vidSecHTML()}</section>
   ${lastOrder() ? `<section class="sec ro-sec"><div class="wrap">${orderAgainHTML()}</div></section>` : ''}
 
   <section class="sec"><div class="wrap">
@@ -3015,8 +3016,6 @@ function home(){
     <div class="filters home-filters rv-up">${[['all','All'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
     <div class="grid">${FRAG.map((p,i) => card(p, {d:'d'+(i%3)})).join('')}</div>
   </div></section>
-
-  <section class="sec vid-sec" id="vidSec" style="padding-top:0"${vids().length ? '' : ' hidden'}>${vidSecHTML()}</section>
 
   ${shown('discovery') ? `<section class="sec" style="padding-top:0"><div class="wrap">
     <div class="ds-band rv-up">
