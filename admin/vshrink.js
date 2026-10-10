@@ -54,18 +54,33 @@
       var p = v.play(); if (p && p.catch) p.catch(fail);
     });
   }
+  /* upload with a % bar, then show the page the upload returns (the list with the new video, or what went wrong); a stopped upload says so */
+  function send(file) {
+    var fd = new FormData(f); if (file) fd.set('video', file, file.name);
+    var x = new XMLHttpRequest(), stop = function (t) { btn.disabled = false; btn.textContent = 'Upload'; delete f.dataset.go; say(t); };
+    btn.disabled = true; btn.textContent = 'Uploading…'; f.dataset.go = 1;
+    x.open('POST', f.action || location.href);
+    x.upload.onprogress = function (e) { if (e.lengthComputable) say('Uploading… ' + Math.min(99, Math.round(e.loaded / e.total * 100)) + '% of ' + Math.max(1, Math.round(e.total / MB)) + ' MB. Keep this page open.'); };
+    x.onload = function () {
+      if (x.status >= 400 || !/<html/i.test(x.responseText)) return stop('The upload did not finish (error ' + x.status + '). Please tap Upload again.');
+      try { history.replaceState(null, '', x.responseURL || location.href); } catch (e) {}
+      document.open(); document.write(x.responseText); document.close();
+    };
+    x.onerror = x.ontimeout = function () { stop('The upload stopped. Check your internet, then tap Upload again.'); };
+    say('Uploading… 0%. Keep this page open.'); x.send(fd);
+  }
   f.addEventListener('submit', function (e) {
     var file = inp.files[0]; if (!file || f.dataset.go) return;
+    e.preventDefault();
     var big = file.size > 30 * MB || /quicktime/i.test(file.type) || /\.mov$/i.test(file.name);
-    var can = mime && window.DataTransfer && HTMLCanvasElement.prototype.captureStream;
-    if (!big || !window.DataTransfer || (!can && !window.VideoEncoder)) { if (max && file.size > max) { e.preventDefault(); tooBig(file); return; } btn.textContent = 'Uploading…'; return; }
-    e.preventDefault(); btn.disabled = true; setTimeout(function () { btn.textContent = 'Please wait…'; });
+    var can = mime && HTMLCanvasElement.prototype.captureStream;
+    if (!big || (!can && !window.VideoEncoder)) { if (max && file.size > max) { tooBig(file); return; } send(null); return; }
+    btn.disabled = true; setTimeout(function () { btn.textContent = 'Please wait…'; });
     fast(file).then(function (b) { return b && b.size < file.size ? b : (can ? shrink(file) : Promise.reject()); }).then(function (b) {
-      var dt = new DataTransfer(); dt.items.add(new File([b], file.name.replace(/\.\w+$/, '') + '.' + (/mp4/.test(b.type) ? 'mp4' : 'webm'), {type: b.type})); inp.files = dt.files;
-      say('Uploading… ' + Math.max(1, Math.round(b.size / MB)) + ' MB'); btn.textContent = 'Uploading…'; f.dataset.go = 1; f.submit();
+      send(new File([b], file.name.replace(/\.\w+$/, '') + '.' + (/mp4/.test(b.type) ? 'mp4' : 'webm'), {type: b.type}));
     }, function () {
       if (max && file.size > max) { btn.disabled = false; btn.textContent = 'Upload'; note.hidden = true; tooBig(file); return; }
-      say('Uploading…'); btn.textContent = 'Uploading…'; f.dataset.go = 1; f.submit();
+      send(null);
     });
   });
 })();
