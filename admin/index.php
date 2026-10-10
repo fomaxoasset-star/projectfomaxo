@@ -1056,6 +1056,15 @@ if (isset($_GET['videos'])) {
     }
     if ($act === 'ig_auto') { fomaxo_setting($pdo, 'ig_auto', empty($_POST['on']) ? '0' : '1'); if (!empty($_POST['on'])) fomaxo_ig_sync($pdo, true); flash(empty($_POST['on']) ? 'Automatic is off. Add reels by tapping them.' : 'Automatic is on. New reels that name a product in their caption show on the website by themselves.', true); go($back); }
     if ($act === 'ig_sync') { $n = fomaxo_ig_sync($pdo, true); flash($n ? "$n new reel" . ($n > 1 ? 's' : '') . ' added.' : 'No new reels with a product name in the caption.', true); go($back); }
+    if ($act === 'link') {   // paste a link: an Instagram reel of the connected account, a video file, or a page with a video
+      $url = trim((string)($_POST['url'] ?? '')); $prod = (string)($_POST['product'] ?? '');
+      if ($url === '' || strlen($url) > 2000) { flash('Please paste the video link.'); go($back); }
+      if (!isset($names[$prod])) { flash('Please pick the product shown in the video.'); go($back); }
+      $v = fomaxo_video_from_link($url, $prod); if (!is_array($v)) { flash($v); go($back); }
+      if (!empty($v['ig']) && in_array($v['ig'], array_column($vids, 'ig'), true)) { @unlink(dirname(__DIR__) . '/assets/' . $v['file']); flash('That reel is already in your videos.'); go($back); }
+      array_unshift($vids, $v); fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
+      flash('Video added from the link. It shows on the home page within a minute.', true); go($back);
+    }
     if ($act === 'add') {
       $prod = (string)($_POST['product'] ?? ''); $f = $_FILES['video'] ?? null;
       if (!isset($names[$prod])) { flash('Please pick the product shown in the video.'); go($back); }
@@ -1094,7 +1103,7 @@ if (isset($_GET['videos'])) {
       . $post($v, 'vis', '<button class="rdot' . (empty($v['on']) ? '' : ' on') . '" name="show" value="' . (empty($v['on']) ? '1' : '') . '" title="' . (empty($v['on']) ? 'Hidden. Tap to show on the website' : 'On the website. Tap to hide') . '" aria-label="' . (empty($v['on']) ? 'Hidden, tap to show' : 'On the website, tap to hide') . '"></button>', ' class="vvis"')
       . '<video class="vth" src="../assets/' . h($v['file']) . '#t=0.1" preload="metadata" muted playsinline' . ($poster ? ' poster="../assets/img/' . h($poster) . '.webp"' : '') . ' onclick="this.paused?this.play():this.pause()"></video>'
       . '<div class="vinfo">' . $post($v, 'product', '<label class="mini">Sells</label><select name="product" onchange="this.form.submit()" aria-label="Product in this video">' . $opts($v['product']) . '</select>')
-      . '<div class="small muted">' . (!$pr ? 'Product deleted: not shown' : ($pr['hidden'] ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : 'On the home page, number ' . ($i + 1)))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : '')) . '</div></div>'
+      . '<div class="small muted">' . (!$pr ? 'Product deleted: not shown' : ($pr['hidden'] ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : 'On the home page, number ' . ($i + 1)))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : (!empty($v['link']) ? ' · From a link' : ''))) . '</div></div>'
       . '<div class="vmv">' . $post($v, 'up', '<button class="btn line sm"' . ($i ? '' : ' disabled') . ' aria-label="Move up">↑</button>') . $post($v, 'down', '<button class="btn line sm"' . ($i < $n - 1 ? '' : ' disabled') . ' aria-label="Move down">↓</button>')
       . $post($v, 'del', '<button class="btn line sm vdel" aria-label="Delete video">✕</button>', ' onsubmit="return confirm(\'Delete this video?\')"') . '</div></div>';
   }
@@ -1120,7 +1129,11 @@ if (isset($_GET['videos'])) {
       . '</form>';
   }
   page('Shop videos', '<div class="pagehead"><h1>Shop videos</h1><a class="btn line sm" href="' . h(self_url(['products' => 1])) . '">← Products</a></div>' . flash()
-    . '<div class="vids fitbox"><div class="vleft">' . $igHtml . '<form class="card vadd" method="post" enctype="multipart/form-data" onsubmit="var f=this.video.files[0];if(f&&' . $max . '&&f.size>' . $max . '){alert(\'This video is \'+Math.round(f.size/1048576)+\' MB. Please use one under ' . round($max / 1048576) . ' MB.\');return false}this.querySelector(\'.btn\').textContent=\'Uploading…\'">' . csrf_field() . '<input type="hidden" name="act" value="add">'
+    . '<div class="vids fitbox"><div class="vleft">' . $igHtml . '<form class="card vadd vlink" method="post" onsubmit="this.querySelector(\'.btn\').textContent=\'Adding…\'">' . csrf_field() . '<input type="hidden" name="act" value="link"><h2>Paste a link</h2>'
+    . '<label for="v_url">Video link</label><input id="v_url" type="url" name="url" required inputmode="url" placeholder="https://www.instagram.com/reel/…" spellcheck="false">'
+    . '<div class="igadd"><select name="product" required aria-label="Product in the video"><option value="">Product in the video…</option>' . $opts('') . '</select><button class="btn">Add</button></div>'
+    . '<p class="muted small shelp">A reel link from your Instagram' . ($ig ? '' : ' (connect Instagram above first)') . ', or a link that opens the video itself. YouTube and TikTok links can’t be copied.</p></form>'
+    . '<form class="card vadd" method="post" enctype="multipart/form-data" onsubmit="var f=this.video.files[0];if(f&&' . $max . '&&f.size>' . $max . '){alert(\'This video is \'+Math.round(f.size/1048576)+\' MB. Please use one under ' . round($max / 1048576) . ' MB.\');return false}this.querySelector(\'.btn\').textContent=\'Uploading…\'">' . csrf_field() . '<input type="hidden" name="act" value="add">'
     . '<h2>Upload from your phone</h2>'
     . '<label for="v_file">Video</label><input id="v_file" type="file" name="video" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov" required>'
     . '<label for="v_prod">Product in the video</label><select id="v_prod" name="product" required><option value="">Choose…</option>' . $opts('') . '</select>'

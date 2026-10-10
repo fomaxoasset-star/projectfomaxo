@@ -114,3 +114,88 @@ function fomaxo_ig_sync($pdo, $force = false) {
   if ($added) fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
   return $added;
 }
+
+/* ---------------- Paste a link (admin → Products → Videos) ---------------- */
+/* An Instagram reel link from the connected account, a direct video link (…mp4), or a web page that carries a video. */
+const FX_VIDEO_MIMES = ['video/mp4' => 'mp4', 'video/quicktime' => 'mov', 'video/webm' => 'webm', 'video/x-m4v' => 'mp4'];
+/* a link to a public web address (never this server or the local network) */
+function fomaxo_link_public($url) {
+  $p = parse_url($url); $host = trim((string)($p['host'] ?? ''), '[]');
+  if (!in_array(strtolower((string)($p['scheme'] ?? '')), ['http', 'https'], true) || $host === '') return false;
+  if (defined('FX_IG_API')) return true;   // local testing only
+  $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : (gethostbynamel($host) ?: []);
+  foreach ($ips as $ip) if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) return false;
+  return (bool)$ips;
+}
+/* downloads $url to $dest (at most $max bytes), following up to 4 redirects that stay public: [true, final url] or [error, ''] */
+function fomaxo_link_get($url, $dest, $max) {
+  for ($hop = 0; $hop < 5; $hop++) {
+    if (!fomaxo_link_public($url)) return ['Please paste a full web link starting with https://', ''];
+    if (!($fh = @fopen($dest, 'wb'))) return ['The video could not be saved.', ''];
+    $ch = curl_init($url); $got = 0; $loc = '';
+    curl_setopt_array($ch, [CURLOPT_FOLLOWLOCATION => false, CURLOPT_TIMEOUT => 240, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+      CURLOPT_USERAGENT => 'Mozilla/5.0 (FOMAXO shop videos)',
+      CURLOPT_HEADERFUNCTION => function ($ch, $h) use (&$loc) { if (stripos($h, 'location:') === 0) $loc = trim(substr($h, 9)); return strlen($h); },
+      CURLOPT_WRITEFUNCTION => function ($ch, $s) use ($fh, &$got, $max) { $got += strlen($s); return $got > $max ? 0 : fwrite($fh, $s); }]);
+    $ok = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch); fclose($fh);
+    if ($code >= 300 && $code < 400 && $loc !== '') { $url = fomaxo_link_abs($loc, $url); continue; }
+    if ($ok && $code === 200 && $got > 0) return [true, $url];
+    return [$got > $max ? 'The video is too big.' : "That link did not open ($code). Please check it and try again.", ''];
+  }
+  return ['That link goes round in circles. Please paste the video’s own link.', ''];
+}
+/* a link found on a page ($rel) as a full address */
+function fomaxo_link_abs($rel, $base) {
+  $rel = html_entity_decode(trim((string)$rel), ENT_QUOTES);
+  if (preg_match('~^https?://~i', $rel)) return $rel;
+  $b = parse_url($base); $root = $b['scheme'] . '://' . $b['host'] . (isset($b['port']) ? ':' . $b['port'] : '');
+  if (str_starts_with($rel, '//')) return $b['scheme'] . ':' . $rel;
+  if (str_starts_with($rel, '/')) return $root . $rel;
+  return $root . preg_replace('~/[^/]*$~', '/', (string)($b['path'] ?? '/')) . $rel;
+}
+/* one of the connected account's reels by its link code (looks through the latest 200 posts) */
+function fomaxo_ig_find($c, $code) {
+  $after = '';
+  for ($page = 0; $page < 4; $page++) {
+    [$d] = fomaxo_ig_api('me/media', ['fields' => 'id,permalink,media_type', 'limit' => 50] + ($after !== '' ? ['after' => $after] : []), $c['token']);
+    if (!$d) return null;
+    foreach ((array)($d['data'] ?? []) as $m) if (preg_match('~/' . preg_quote($code, '~') . '/?$~', rtrim((string)($m['permalink'] ?? ''), '/') . '/')) return (string)$m['id'];
+    $after = (string)($d['paging']['cursors']['after'] ?? ''); if ($after === '' || empty($d['paging']['next'])) return null;
+  }
+  return null;
+}
+/* the new entry for the video list, or an error message */
+function fomaxo_video_from_link($url, $prod) {
+  $url = trim($url);
+  if (preg_match('~^(?:https?://)?(?:www\.)?instagram\.com/(?:[\w.]+/)?(?:reels?|p|tv)/([A-Za-z0-9_-]+)~i', $url, $m)) {
+    $c = fomaxo_ig_fresh(); if (!$c) return 'To add an Instagram reel by its link, connect Instagram first (From Instagram, above).';
+    $id = fomaxo_ig_find($c, $m[1]);
+    if (!$id) return 'That reel was not found on @' . ($c['user'] ?: 'your account') . '. Only reels from your own Instagram can be added.';
+    $v = fomaxo_ig_copy($c, $id, $prod); return is_array($v) ? $v + ['link' => $url] : $v;
+  }
+  if (preg_match('~^(?:https?://)?(?:[\w-]+\.)*(youtube\.com|youtu\.be|tiktok\.com|facebook\.com|fb\.watch)/~i', $url))
+    return 'YouTube, TikTok and Facebook do not let their videos be copied. Save the video to your phone and upload it, or paste a reel link from your Instagram.';
+  if (!preg_match('~^https?://~i', $url)) $url = 'https://' . $url;
+  $tmp = tempnam(sys_get_temp_dir(), 'fxvl'); @set_time_limit(300); $vdir = __DIR__ . '/assets/vid'; if (!is_dir($vdir)) @mkdir($vdir, 0755, true);
+  for ($try = 0; $try < 2; $try++) {
+    [$ok, $final] = fomaxo_link_get($url, $tmp, 300 * 1048576);
+    if ($ok !== true) { @unlink($tmp); return $ok; }
+    $mime = function_exists('finfo_open') ? (string)finfo_file(finfo_open(FILEINFO_MIME_TYPE), $tmp) : '';
+    if (isset(FX_VIDEO_MIMES[$mime])) {
+      $name = $prod . '-' . bin2hex(random_bytes(4)) . '.' . FX_VIDEO_MIMES[$mime];
+      if (!@rename($tmp, __DIR__ . "/assets/vid/$name")) { @unlink($tmp); return 'The video could not be saved. Please try again.'; }
+      @chmod(__DIR__ . "/assets/vid/$name", 0644);
+      return ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => '', 'product' => $prod, 'on' => true, 'link' => trim($url)];
+    }
+    /* a web page: the video it shares (og:video), or the first <video> on it */
+    $html = $try || filesize($tmp) > 4 * 1048576 ? '' : (string)file_get_contents($tmp);
+    $src = '';
+    foreach (['og:video:secure_url', 'og:video:url', 'og:video', 'twitter:player:stream'] as $k)
+      if (preg_match('~<meta[^>]+(?:property|name)=["\']' . preg_quote($k, '~') . '["\'][^>]*content=["\']([^"\']+)~i', $html, $x) || preg_match('~<meta[^>]+content=["\']([^"\']+)["\'][^>]*(?:property|name)=["\']' . preg_quote($k, '~') . '["\']~i', $html, $x)) { $src = $x[1]; break; }
+    if ($src === '' && preg_match('~<(?:video|source)[^>]+src=["\']([^"\']+)~i', $html, $x)) $src = $x[1];
+    if ($src === '') break;
+    $url = fomaxo_link_abs($src, $final);
+  }
+  @unlink($tmp);
+  return 'No video was found at that link. Paste a reel link from your Instagram, or a link that opens the video itself (it often ends in .mp4).';
+}
