@@ -50,6 +50,16 @@ RewriteRule ^fomaxo-([A-Za-z0-9-]+)$ product.php?p=$1 [L,QSA]
   AddOutputFilterByType DEFLATE text/html text/css text/plain text/javascript application/javascript application/json image/svg+xml font/otf
 </IfModule>
 
+# shop videos (admin → Products → Videos): each upload has its own new name, so phones can keep them for 30 days
+AddType video/mp4 .mp4
+AddType video/quicktime .mov
+AddType video/webm .webm
+<IfModule mod_expires.c>
+  ExpiresByType video/mp4 "access plus 30 days"
+  ExpiresByType video/quicktime "access plus 30 days"
+  ExpiresByType video/webm "access plus 30 days"
+</IfModule>
+
 # price font (Charles Wright Singapore)
 AddType font/woff2 .woff2
 AddType font/otf .otf

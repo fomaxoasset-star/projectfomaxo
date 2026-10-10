@@ -2195,6 +2195,60 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 @supports (overflow:clip){html,body{overflow-x:clip}}
 @supports not (overflow:clip){body{overflow-x:hidden}}   /* older iPhones (before iOS 16) can't clip: hide anything wider than the screen on body instead */
 @media(max-width:900px){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px!important}}
+/* ================= SHOP VIDEOS (admin → Products → Videos) ================= */
+.vid-sec[hidden]{display:none}
+.vrow{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:4px;overscroll-behavior-x:contain}
+.vrow::-webkit-scrollbar{display:none}
+.vt{position:relative;flex:0 0 clamp(150px,17vw,230px);aspect-ratio:9/16;overflow:hidden;background:#000;border:1px solid var(--line);scroll-snap-align:start;padding:0;text-align:left;color:#f2ebdd;cursor:pointer}
+.vt video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease)}
+.vt:hover video{transform:scale(1.03)}
+.vt::after{content:"";position:absolute;inset:auto 0 0;height:48%;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,0));pointer-events:none}
+.vt-play{position:absolute;top:10px;right:10px;z-index:1;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);border:1px solid rgba(240,211,160,.5);color:#f0d3a0}
+.vt-play svg{width:12px;height:12px;margin-left:2px}
+.vt.playing .vt-play{opacity:0;transition:opacity .4s}
+.vt-p{position:absolute;left:10px;right:10px;bottom:10px;z-index:1;display:flex;align-items:center;gap:8px;min-width:0}
+.vt-p img{width:36px;height:36px;object-fit:cover;flex:none;border:1px solid rgba(240,211,160,.45);background:#111}
+.vt-p>span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.vt-p b{font-weight:500;font-size:13px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt-p .price{font-size:15px;color:#f0d3a0}
+.vt-p .price .was{display:none}
+@media(max-width:600px){.vrow{gap:10px;margin-right:calc(-1 * var(--pad));padding-right:var(--pad)}.vt{flex-basis:40vw}.vt-p{left:8px;right:8px;bottom:8px;gap:6px}.vt-p img{width:30px;height:30px}.vt-p b{font-size:11.5px}.vt-p .price{font-size:13.5px}}
+/* full-screen player: swipe up / down for the next video; the product's Add to bag / Buy now sit on the video */
+.reel{position:fixed;inset:0;z-index:500;background:#000;color:#f2ebdd}
+html[data-mode="light"] .reel{background:#1b1712}
+.reel-on .toast{z-index:510}
+.rl-track{position:absolute;inset:0;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.rl-track::-webkit-scrollbar{display:none}
+.rl-s{height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:grid;place-items:center}
+.rl-stage{position:relative;height:100%;width:100%;overflow:hidden;background:#000}
+.rl-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rl-stage::after{content:"";position:absolute;inset:auto 0 0;height:45%;background:linear-gradient(to top,rgba(0,0,0,.75),rgba(0,0,0,0));pointer-events:none}
+.rl-pause{position:absolute;inset:0;margin:auto;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#f0d3a0;opacity:0;transition:opacity .3s;pointer-events:none;z-index:1}
+.rl-pause svg{width:22px;height:22px;margin-left:3px}
+.rl-s.paused .rl-pause{opacity:1}
+.rl-card{position:absolute;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:2;background:rgba(var(--bg-rgb),.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line-2);color:var(--ivory);padding:12px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 12px;align-items:center}
+.rl-pi img{width:56px;height:56px;object-fit:cover;border:1px solid var(--line)}
+.rl-info{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.rl-n{font-size:15px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rl-f{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.rl-info .price{font-size:19px}
+.rl-info .price,.rl-info .price:has(.was){white-space:nowrap;flex-direction:row;align-items:baseline}.rl-info .price .was{display:inline;font-size:.72em;margin-right:6px}
+.rl-sz{grid-column:1/-1;display:flex;gap:6px}
+.rl-sz .chip{flex:1 1 0;min-width:0;height:32px;font-size:11.5px}
+.rl-stk{grid-column:1/-1;margin:0;font-size:12px}
+.rl-stk:empty{display:none}
+.rl-acts{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rl-acts .btn{min-height:44px;padding:0 10px;letter-spacing:.16em;font-size:11px}
+.rl-top{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;z-index:3;display:flex;justify-content:space-between;pointer-events:none}
+.rl-top button,.rl-nav button{pointer-events:auto;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.5);border:1px solid rgba(240,211,160,.45);color:#f0d3a0}
+.rl-top svg,.rl-nav svg{width:18px;height:18px}
+.rl-nav{display:none}
+@media(min-width:760px){
+  .rl-stage{height:calc(100% - 40px);width:auto;aspect-ratio:9/16;border:1px solid rgba(215,170,105,.3)}
+  .rl-top{left:auto;right:24px;top:20px;flex-direction:column;gap:10px}
+  .rl-nav{display:flex;flex-direction:column;gap:10px;position:fixed;right:24px;top:50%;transform:translateY(-50%);z-index:3}
+  .rl-nav button[disabled]{opacity:.3;cursor:default}
+}
 </style>
 </head>
 <body>
@@ -2956,6 +3010,8 @@ function home(){
     <div class="filters home-filters rv-up">${[['all','All'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
     <div class="grid">${FRAG.map((p,i) => card(p, {d:'d'+(i%3)})).join('')}</div>
   </div></section>
+
+  <section class="sec vid-sec" id="vidSec" style="padding-top:0"${vids().length ? '' : ' hidden'}>${vidSecHTML()}</section>
 
   ${shown('discovery') ? `<section class="sec" style="padding-top:0"><div class="wrap">
     <div class="ds-band rv-up">
@@ -4326,6 +4382,101 @@ function bindHome(){
   $$('[data-quickadd]').forEach(b => b.onclick = () => { const p = P[b.dataset.quickadd]; addToCart(p.id, defaultSize(p)); });
   $$('[data-reorder]', app).forEach(b => b.onclick = reorder);
   bindOrderAgain();
+  bindVids();
+}
+/* shop videos (fomaxo.com/admin → Products → Videos): a row of short upright videos on the home page; tapping one opens it full screen
+   with its product's sizes, Add to bag and Buy now, and a swipe up or down goes to the next video. Videos of hidden products are left out.
+   Light on data: a video only loads when it is on screen, and only one plays at a time in the row. */
+let VIDEOS = []; try { VIDEOS = JSON.parse(localStorage.getItem('fomaxo_videos') || '[]') || []; } catch(e) {}
+const vids = () => VIDEOS.filter(v => v && v.v && shown(v.p));
+const VI = {
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  on: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.6 7.6 0 0 1 0 11"/></svg>',
+  off: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 15l6-6 6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 9l6 6 6-6"/></svg>'
+};
+const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[v.p], k = imgFor(p, defaultSize(p)); return IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };
+function vidSecHTML(){
+  const l = vids(); if (!l.length) return '';
+  return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)}
+    <div class="vrow" id="vrow">${l.map((v, i) => { const p = P[v.p], s = defaultSize(p); return `<button class="vt" type="button" data-vi="${i}" aria-label="${esc(p.name)} video">
+      <video muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>
+      <span class="vt-play" aria-hidden="true">${VI.play}</span>
+      <span class="vt-p"><img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${priceHTML(p, s)}</span></span></button>`; }).join('')}</div></div>`;
+}
+let vrIO = null;
+function bindVids(){
+  vrIO && vrIO.disconnect(); vrIO = null;
+  const tiles = $$('#vrow .vt'); if (!tiles.length) return;
+  tiles.forEach(t => t.onclick = () => openReel(+t.dataset.vi));
+  if ((navigator.connection && navigator.connection.saveData) || matchMedia('(prefers-reduced-motion: reduce)').matches) return;   // data saver: posters only until tapped
+  const seen = new Set(); let hover = null;
+  const pick = () => { const on = hover || tiles.find(t => seen.has(t));
+    tiles.forEach(t => { const v = $('video', t); if (t === on) { if (!v.src) v.src = v.dataset.src; v.play().then(() => t.classList.add('playing')).catch(() => {}); } else if (!v.paused) { v.pause(); t.classList.remove('playing'); } }); };
+  vrIO = new IntersectionObserver(es => { es.forEach(e => e.intersectionRatio >= .75 ? seen.add(e.target) : seen.delete(e.target)); pick(); }, {threshold: [0, .75]});
+  tiles.forEach(t => { vrIO.observe(t); if (HOVER) { t.onmouseenter = () => { hover = t; pick(); }; t.onmouseleave = () => { hover = null; pick(); }; } });
+}
+function renderVids(){ const el = $('#vidSec'); if (!el) return; const h = vidSecHTML(); el.innerHTML = h; el.hidden = !h; $$('.rv-up', el).forEach(x => x.classList.add('in')); bindVids(); }
+let reelMuted = true;
+function reelSlide(v, k){
+  const p = P[v.p], s = defaultSize(p);
+  return `<section class="rl-s" data-k="${k}" data-id="${p.id}" data-sel="${s}"><div class="rl-stage">
+    <video playsinline loop muted preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>
+    <span class="rl-pause" aria-hidden="true">${VI.play}</span>
+    <div class="rl-card">
+      <a class="rl-pi" href="#/product/${p.id}" data-rlgo><img src="${SM(imgFor(p, s))}" alt="FOMAXO ${esc(p.name)}"></a>
+      <div class="rl-info"><a class="rl-n" href="#/product/${p.id}" data-rlgo>${esc(p.name)}</a><span class="rl-f">${esc(p.family)}</span><span data-price>${priceHTML(p, s)}</span></div>
+      ${p.sizes.length > 1 ? `<div class="rl-sz">${p.sizes.map(z => `<button type="button" class="chip${z == s ? ' on' : ''}" data-size="${z}">${optLabel(p, z)}</button>`).join('')}</div>` : ''}
+      <p class="rl-stk stk-line" data-stk>${stockHTML(p.id, s)}</p>
+      <div class="rl-acts"><button class="btn line sm" type="button" data-add>Add to bag</button><button class="btn sm" type="button" data-buy>Buy now</button></div>
+    </div></div></section>`;
+}
+function openReel(i){
+  const l = vids(); if (!l[i] || $('#reel')) return;
+  $$('#vrow video').forEach(v => v.pause());
+  const el = document.createElement('div');
+  el.id = 'reel'; el.className = 'reel'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Shop the video');
+  el.innerHTML = `<div class="rl-track">${l.map(reelSlide).join('')}</div>
+    <div class="rl-top"><button type="button" class="rl-snd" aria-label="Sound on">${VI.off}</button><button type="button" class="rl-x" aria-label="Close">${VI.x}</button></div>
+    <div class="rl-nav"><button type="button" data-rl="-1" aria-label="Previous video">${VI.up}</button><button type="button" data-rl="1" aria-label="Next video">${VI.down}</button></div>`;
+  document.body.appendChild(el); document.body.classList.add('lock', 'reel-on');
+  try { history.pushState({reel: 1}, ''); } catch(e) {}
+  const track = $('.rl-track', el), slides = $$('.rl-s', el);
+  let cur = -1;
+  const go = k => { k = Math.max(0, Math.min(slides.length - 1, k)); track.scrollTo({top: k * track.clientHeight, behavior: 'smooth'}); };
+  const act = k => { if (k === cur) return; cur = k;
+    slides.forEach((s, n) => { const v = $('video', s);
+      if (n === k) { if (!v.src) v.src = v.dataset.src; v.muted = reelMuted; v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = true; v.play().catch(() => s.classList.add('paused')); }); }
+      else { v.pause(); if (n === k + 1 && !v.src) { v.preload = 'metadata'; v.src = v.dataset.src; } } });
+    $$('.rl-nav button', el).forEach(b => b.disabled = (+b.dataset.rl < 0 && k === 0) || (+b.dataset.rl > 0 && k === slides.length - 1));
+  };
+  const sio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) act(+e.target.dataset.k); }), {root: track, threshold: .6});
+  track.scrollTop = i * track.clientHeight; act(i);
+  slides.forEach(s => sio.observe(s));
+  const snd = $('.rl-snd', el);
+  snd.onclick = () => { reelMuted = !reelMuted; snd.innerHTML = reelMuted ? VI.off : VI.on; snd.setAttribute('aria-label', reelMuted ? 'Sound on' : 'Sound off'); const v = $('video', slides[cur]); v.muted = reelMuted; if (v.paused) v.play().catch(() => {}); };
+  snd.innerHTML = reelMuted ? VI.off : VI.on;
+  const close = back => { sio.disconnect(); el.remove(); document.body.classList.remove('lock', 'reel-on'); removeEventListener('keydown', key); removeEventListener('popstate', pop); removeEventListener('hashchange', hc); if (back && history.state && history.state.reel) history.back(); bindVids(); };
+  const key = e => { if (e.key === 'Escape') close(true); else if (e.key === 'ArrowDown') { e.preventDefault(); go(cur + 1); } else if (e.key === 'ArrowUp') { e.preventDefault(); go(cur - 1); } };
+  const pop = () => close(false), hc = () => close(false);
+  addEventListener('keydown', key); addEventListener('popstate', pop); addEventListener('hashchange', hc);
+  $('.rl-x', el).onclick = () => close(true);
+  $$('.rl-nav button', el).forEach(b => b.onclick = () => go(cur + +b.dataset.rl));
+  el.addEventListener('click', e => {
+    const s = e.target.closest('.rl-s'); if (!s) return;
+    const p = P[s.dataset.id], chip = e.target.closest('[data-size]');
+    if (chip) { const z = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; s.dataset.sel = z; $$('.chip', s).forEach(c => c.classList.toggle('on', c === chip)); $('[data-price]', s).innerHTML = priceHTML(p, z); $('.rl-pi img', s).src = SM(imgFor(p, z)); $('[data-stk]', s).innerHTML = stockHTML(p.id, z); $$('[data-add],[data-buy]', s).forEach(b => b.disabled = stockLeft(p.id, z) === 0); return; }
+    const sel = s.dataset.sel === 'set' ? 'set' : +s.dataset.sel;
+    if (p.kind === 'set' && e.target.closest('[data-add],[data-buy]')) { location.hash = `#/product/${p.id}?size=${sel}`; return; }
+    const add = e.target.closest('[data-add]');
+    if (add) { if (addToCart(p.id, sel, 1, true)) { add.textContent = 'Added ✓'; clearTimeout(add._t); add._t = setTimeout(() => add.textContent = 'Add to bag', 1800); } return; }
+    if (e.target.closest('[data-buy]')) { close(false); buyNow({id: p.id, opt: sel, qty: 1}); return; }
+    if (e.target.closest('a,button,.rl-card')) return;
+    const v = $('video', s); if (v.paused) { v.play().catch(() => {}); s.classList.remove('paused'); } else { v.pause(); s.classList.add('paused'); }   // tap the video: pause / play
+  });
+  $$('[data-add],[data-buy]', el).forEach(b => { const s = b.closest('.rl-s'); b.disabled = stockLeft(s.dataset.id, s.dataset.sel) === 0; });
 }
 function bindFragColl(){
   $$('[data-quickadd]').forEach(b => b.onclick = () => { const p = P[b.dataset.quickadd]; addToCart(p.id, defaultSize(p)); });
@@ -4557,6 +4708,7 @@ async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; SALE_SIZE = d.saleSize || null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES, sz: SALE_SIZE})); } catch(e) {} saleTick(); promoMaybe(); }
   if (d && 'ads' in d) ADS.set(d.ads);
+  if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
     HIDE_PAGES = d.hidePages; try { localStorage.setItem('fomaxo_hide_pages', JSON.stringify(HIDE_PAGES)); } catch(e) {}
     applyPages(); const s0 = (location.hash.replace(/^#\/?/, '').split(/[/?]/)[0]); if (HIDE_PAGES.includes(s0)) location.replace('#/');
