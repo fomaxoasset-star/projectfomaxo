@@ -194,7 +194,10 @@
 setTimeout(function () {   // after the page has loaded (the list comes after this script)
   var rows = [].slice.call(document.querySelectorAll('.vrow[data-mkprev]')), f = document.querySelector('form[data-vshrink]');
   if (!rows.length || !f || !window.fetch || !window.Promise) return;
-  var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 8, BR = 600000, pill = null, made = 0;
+  var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 8, BR = 600000, pill = null, made = 0, conv = null, how = '';
+  /* a way that hangs (some Mac Safari videos never finish in the fast way) is given up after a while, so the next way or the next video goes on */
+  var limit = function (p, ms, stop) { var t; return Promise.race([p, new Promise(function (ok) { t = setTimeout(function () { try { stop && stop(); } catch (e) {} ok(null); }, ms); })]).then(function (r) { clearTimeout(t); return r; }); };
+  var tell = function (t) { if (f.querySelector('[name=act]')) try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['preview ' + t]})], {type: 'application/json'})); } catch (e) {} };   // fomaxo.com: written to vid-report.txt
   var say = function (t) {
     if (!pill) { pill = document.createElement('div'); pill.setAttribute('role', 'status'); pill.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:60;background:#111;color:#d4af37;border:1px solid #d4af37;border-radius:999px;padding:6px 14px;font-size:13px;max-width:calc(100vw - 24px)'; document.body.appendChild(pill); }
     pill.textContent = t; pill.hidden = !t;
@@ -210,10 +213,10 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
           if (!ok) return null;   // the row needs H.264 so every phone plays it
           var out = new M.Output({format: new M.Mp4OutputFormat({fastStart: 'in-memory'}), target: new M.BufferTarget()});
           return M.Conversion.init({input: src, output: out, showWarnings: false, video: {width: w, height: h, fit: 'contain', codec: 'avc', bitrate: BR, forceTranscode: true}, audio: {discard: true}, trim: r[1] > SEC ? {start: 0, end: SEC} : undefined})
-            .then(function (c) { return c.isValid ? c.execute().then(function () { var b = out.target.buffer; return b && b.byteLength ? new Blob([b], {type: 'video/mp4'}) : null; }) : null; });
+            .then(function (c) { conv = c; return c.isValid ? c.execute().then(function () { var b = out.target.buffer; return b && b.byteLength ? new Blob([b], {type: 'video/mp4'}) : null; }) : null; });
         });
       });
-    }).catch(function () { return null; });
+    }).catch(function (e) { how += ' fast: ' + String(e && (e.message || e.name) || e).slice(0, 50); return null; });
   }
   var F = null;   // FFmpeg (admin/ffmpeg), loaded once for all previews when the fast way can't
   function wasmPrev(blob) {
@@ -225,7 +228,7 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
         '-c:v', 'libx264', '-preset', 'veryfast', '-b:v', String(BR), '-maxrate', String(BR * 1.4), '-bufsize', String(BR * 2), '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '/p.mp4']); })
       .then(function (code) { return code ? null : F.readFile('/p.mp4'); })
       .then(function (d) { F.unmount('/p').catch(function () {}); F.deleteFile('/p.mp4').catch(function () {}); return d && d.length ? new Blob([d.buffer], {type: 'video/mp4'}) : null; })
-      .catch(function () { try { F && F.terminate(); } catch (e) {} F = null; return null; });
+      .catch(function (e) { how += ' ffmpeg: ' + String(e && (e.message || e.name) || e).slice(0, 50); try { F && F.terminate(); } catch (x) {} F = null; return null; });
   }
   var idle = function () { return new Promise(function (ok) { (function w() { if (f.dataset.go || (btn && btn.disabled)) setTimeout(w, 3000); else ok(); })(); }); };   // an upload going on comes first
   var i = 0;
@@ -235,8 +238,13 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
     idle().then(function () {
       say('Making quick previews for the home page: ' + i + ' of ' + rows.length + '…');
       return fetch(row.dataset.mkprev, {credentials: 'same-origin'}).then(function (r) { return r.ok ? r.blob() : null; });
-    }).then(function (b) { return b ? fastPrev(b).then(function (p) { return p || wasmPrev(b); }) : null; })
-      .then(function (p) {
+    }).then(function (b) {
+      how = ''; if (!b) { how = 'not loaded'; return null; }
+      return limit(fastPrev(b), 60000, function () { how += ' fast: too slow'; conv && conv.cancel(); }).then(function (p) { if (p) { how = 'fast'; return p; }
+        return limit(wasmPrev(b), 300000, function () { how += ' ffmpeg: too slow'; try { F && F.terminate(); } catch (e) {} F = null; }).then(function (w) { if (w) how = 'ffmpeg'; return w; }); });
+    }).then(function (p) {
+        var nm = row.dataset.mkprev.split(/[\/=]/).pop();
+        tell(nm + (p ? ' ' + Math.round(p.size / 1024) + ' KB ' + how : ' failed' + how) + ' | ' + navigator.userAgent.slice(0, 120));
         if (!p || p.size > 3 * 1048576) return;
         var fd = new FormData(); fd.append('csrf', csrf); if (f.querySelector('[name=action]')) fd.append('action', 'vid_prev'); else fd.append('act', 'prev'); fd.append('vid', row.dataset.vid); fd.append('prev', p, 'prev.mp4');
         return fetch(location.href, {method: 'POST', body: fd, credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) { made++; row.removeAttribute('data-mkprev'); } });
