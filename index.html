@@ -2288,9 +2288,9 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 .vt-p>span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
 .vt-p b{font-weight:500;font-size:13px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vt-shop b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}   /* words typed in Admin for a video with no product: up to two lines */
-.vt-p .price{font-size:15px;color:#f0d3a0}
-.vt-p .price .was{display:none}
-@media(max-width:600px){.vrow{gap:10px;margin-right:calc(-1 * var(--pad));padding-right:var(--pad)}.vt{flex-basis:40vw}.vt-p{left:8px;right:8px;bottom:8px;gap:6px}.vt-p img{width:30px;height:30px}.vt-p b{font-size:11.5px}.vt-p .price{font-size:13.5px}}
+.vt-p .price,.vt-p .price:has(.was){font-size:15px;color:#f0d3a0;display:inline}
+.vt-p .price .was{display:inline;margin:0 6px 0 0;font-size:.8em;color:rgba(255,255,255,.8);text-decoration-color:currentColor}.vt-p .price .was *{color:inherit}   /* the old price crossed out, beside the price (light, so it reads on the video) */
+@media(max-width:600px){.vrow{gap:10px;margin-right:calc(-1 * var(--pad));padding-right:var(--pad)}.vt{flex-basis:40vw}.vt-p{left:8px;right:8px;bottom:8px;gap:6px}.vt-p img{width:30px;height:30px}.vt-p b{font-size:11.5px}.vt-p .price,.vt-p .price:has(.was){font-size:13.5px}}
 .vt .vt-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 /* a 16:9 (wide) video: its tile is two upright tiles wide, the same height, and shows the whole picture with the name below it */
 .vt.wide{flex-basis:calc(2 * clamp(150px,17vw,230px) + 14px);aspect-ratio:9/8}
