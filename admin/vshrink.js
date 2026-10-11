@@ -4,12 +4,11 @@
    Browsers without it re-record the video while it plays (720p). Neither works = upload as it is. */
 (function () {
   var f = document.querySelector('form[data-vshrink]'); if (!f) return;
-  var inp = f.querySelector('input[type=file][name=video]'), max = 500 * 1048576, MB = 1048576, note = f.querySelector('.vsh'), btn = f.querySelector('.btn');
+  var inp = f.querySelector('input[type=file][name=video]'), MB = 1048576, note = f.querySelector('.vsh'), btn = f.querySelector('.btn');
   var mime = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'].filter(function (m) { return window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m); })[0];
   var why = '', pct = -1, say = function (t) { note.hidden = false; note.querySelector('span').textContent = t; var m = /smaller… (\d+)%/.exec(t); if (m) pct = +m[1]; };
   var GOAL = 4.6 * MB * 8;   // bits: every made-smaller video lands under 5 MB
   var rate = function (sec) { return Math.max(400000, Math.min(5000000, Math.floor(GOAL / Math.max(1, sec || 30)) - 96000)); };   // video bits per second for that length (96 kbit/s is the sound)
-  var tooBig = function (file) { alert('This video is ' + Math.round(file.size / MB) + ' MB. Please use one under ' + Math.round(max / MB) + ' MB.'); };
   /* fast: re-encode from the file itself, no playing; null = this browser can't, use the slow way */
   function fast(file, scale) {
     if (!window.VideoEncoder) { why = 'no VideoEncoder'; return Promise.resolve(null); }
@@ -110,13 +109,18 @@
   f.addEventListener('submit', function (e) {
     var file = inp.files[0]; if (!file || f.dataset.go) return;
     e.preventDefault();
-    var big = file.size > 10 * MB || /quicktime/i.test(file.type) || /\.mov$/i.test(file.name);   // over 10 MB is made smaller (under 5 MB) so the site stays fast; iPhone .mov is made playable everywhere
+    /* over 10 MB (any type) is made smaller, under 5 MB, so the site stays fast; any type other than MP4/WebM (iPhone .mov, .mkv, .avi…) is turned into MP4.
+       Only a video under 10 MB in a type the site keeps (MP4, WebM, MOV) may go up as it is when that can't be done here */
+    var plain = /^video\/(mp4|webm|x-m4v)$/i.test(file.type) || /\.(mp4|m4v|webm)$/i.test(file.name), mov = /quicktime/i.test(file.type) || /\.mov$/i.test(file.name);
+    var big = file.size > 10 * MB || !plain, asIs = file.size <= 10 * MB && (plain || mov);
     var can = mime && HTMLCanvasElement.prototype.captureStream;
-    if (!big || (!can && !window.VideoEncoder)) { if (max && file.size > max) { tooBig(file); return; } send(null); return; }
+    var cant = function () { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again.'); };
+    if (!big) { send(null); return; }
+    if (!can && !window.VideoEncoder) { if (asIs) send(null); else cant(); return; }
     btn.disabled = true; setTimeout(function () { btn.textContent = 'Please wait…'; });
     /* making it smaller: no progress for 45 seconds, or a tap on Skip = upload the original instead (in pieces) */
     var t0 = Date.now(), last = -1, moved = t0, bail, gaveUp = new Promise(function (ok) { bail = ok; });
-    var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; sk.onclick = function () { bail(); }; note.appendChild(sk);
+    var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; sk.onclick = function () { bail(); }; if (asIs) note.appendChild(sk);   // a video over 10 MB never goes up as it is
     var dog = setInterval(function () { var now = Date.now(); if (pct !== last) { last = pct; moved = now; } if (now - moved > 45000) bail(); }, 1000);
     var quit = false; gaveUp.then(function () { quit = true; clearInterval(dog); try { stopNow && stopNow.cancel(); } catch (e) {} });
     var shrunk = fast(file).then(function (b) {   // still over 5 MB (some phones' encoders overshoot): once more, with the quality lowered by just that much
@@ -129,7 +133,7 @@
       send(new File([b], file.name.replace(/\.\w+$/, '') + '.' + (/mp4/.test(b.type) ? 'mp4' : 'webm'), {type: b.type}));
     }, function () {
       clearInterval(dog); sk.remove(); bail(); if (how === 'as is') how = 'as is (' + (why || 'slow way failed') + ')';
-      if (max && file.size > max) { btn.disabled = false; btn.textContent = 'Upload'; note.hidden = true; tooBig(file); return; }
+      if (!asIs) { cant(); return; }
       send(null);
     });
   });
