@@ -409,6 +409,7 @@
 "WhatsApp": "واتساب",
 "You can order up to 30 of one item online. For a bigger order, please message us on WhatsApp.": "يمكنك طلب حتى 30 قطعة من المنتج الواحد عبر الموقع. للطلبات الأكبر، يرجى مراسلتنا عبر واتساب.",
 "Contact FOMAXO for Massive Order": "تواصل مع FOMAXO للطلبات الكبيرة",
+"You can order up to 30 of one item online. For more, message us on WhatsApp.": "يمكنك طلب حتى 30 قطعة من المنتج الواحد عبر الموقع. للمزيد، راسلنا عبر واتساب.",
 "An item in your bag is no longer available. Please refresh and try again.": "أحد المنتجات في حقيبتك لم يعد متوفراً. يرجى تحديث الصفحة والمحاولة مرة أخرى.",
 "FOMAXO on Instagram": "FOMAXO على إنستغرام",
 "FOMAXO on TikTok": "FOMAXO على تيك توك",

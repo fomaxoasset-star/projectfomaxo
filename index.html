@@ -323,6 +323,12 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .qty{display:flex;border:1px solid var(--line-2);height:52px;position:relative}
 .qtyrow.capped{margin-bottom:16px}
 .qcap{position:absolute;left:0;right:0;top:100%;margin-top:3px;text-align:center;font-size:10px;letter-spacing:.06em;color:var(--gold);white-space:nowrap;pointer-events:none}
+.mass-pop{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6)}
+.mass-pop.on{display:flex}
+.mass-box{position:relative;width:100%;max-width:380px;background:var(--black);border:1px solid var(--gold);padding:30px 22px 22px;text-align:center}
+.mass-box b{display:block;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;font-size:14px;font-weight:500;margin-bottom:10px}
+.mass-box p{font-size:14px;margin:0 0 18px;color:var(--ivory)}
+.mass-x{position:absolute;top:6px;right:10px;font-size:24px;line-height:1;color:var(--champagne);padding:6px}
 .qcap a,.cap-note a{pointer-events:auto;color:var(--gold);text-decoration:underline;text-underline-offset:2px}
 .qty button.at-cap,.line-item .q button.at-cap{opacity:.35}
 .cap-note{font-size:10px;letter-spacing:.06em;color:var(--gold)}
@@ -2752,8 +2758,8 @@ const save = () => { try { localStorage.setItem('fomaxo_cart', JSON.stringify(ca
 function addToCart(id, opt, qty=1, silent, picks){
   const left = maxQty(id, opt), inBag = inBagQty(id, opt);   // never more in the bag than we have (or MAX_PER_ITEM)
   const what = `${P[id].name} · ${optLabel(P[id], opt)}`, low = left < MAX_PER_ITEM;
-  if (left - inBag <= 0) { toast(left <= 0 ? `${what} is out of stock, restocking soon` : low ? `Only ${left} available of ${what}, and they are in your bag` : MASS_TXT); return false; }
-  if (qty > left - inBag) { qty = left - inBag; if (!silent) { silent = true; toast(low ? `Only ${left} available of ${what}. ${qty} added to your bag` : MASS_TXT); } }
+  if (left - inBag <= 0) { toast(left <= 0 ? `${what} is out of stock, restocking soon` : low ? `Only ${left} available of ${what}, and they are in your bag` : (massPopup(id, opt), MASS_TXT)); return false; }
+  if (qty > left - inBag) { qty = left - inBag; if (!silent) { silent = true; toast(low ? `Only ${left} available of ${what}. ${qty} added to your bag` : MASS_TXT); if (!low) massPopup(id, opt); } }
   const key = (picks || []).join('|');
   const l = cart.find(x => x.id === id && String(x.opt) === String(opt) && (x.picks || []).join('|') === key);
   if (l) l.qty = Math.min(MAX_PER_ITEM, l.qty + qty); else cart.push(picks ? {id, opt, qty, picks} : {id, opt, qty});
@@ -2935,7 +2941,7 @@ $('#cartFoot').addEventListener('click', e => { const ra = e.target.closest('[da
 $('#cartBody').addEventListener('click', e => {
   const q = e.target.closest('[data-q]'), rm = e.target.closest('[data-rm]');
   if (q){ const i = +q.dataset.q, l = cart[i], cap = maxQty(l.id, l.opt) - inBagQty(l.id, l.opt, l);
-    if (+q.dataset.d > 0 && l.qty >= cap) { toast(capMsg(maxQty(l.id, l.opt))); return; }
+    if (+q.dataset.d > 0 && l.qty >= cap) { if (maxQty(l.id, l.opt) >= MAX_PER_ITEM) massPopup(l.id, l.opt); else toast(capMsg(maxQty(l.id, l.opt))); return; }
     const n = Math.min(cap, l.qty + +q.dataset.d); if (n < 1) { cart.splice(i, 1); toast(`${P[l.id].name} removed from your bag`); } else l.qty = n; save(); }
   if (rm){ cart.splice(+rm.dataset.rm, 1); save(); }
   const ra = e.target.closest('[data-recadd]'); if (ra){ const p = P[ra.dataset.recadd]; addToCart(p.id, +ra.dataset.recsz || defaultSize(p)); }
@@ -3062,6 +3068,16 @@ const capMsg = n => n < MAX_PER_ITEM ? `Only ${n} available` : MASS_TXT;
 const MASS_TXT = 'Contact FOMAXO for Massive Order';
 const massLink = (id, opt) => { const p = P[id], ar = document.documentElement.lang === 'ar', it = `${p.name} ${optLabel(p, opt)}`;
   return `https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent(ar ? `مرحباً FOMAXO، أرغب في طلب كمية كبيرة من ${it}.` : `Hello FOMAXO, I would like to place a massive order of ${it}.`)}`; };
+/* the popup when a customer tries to go over MAX_PER_ITEM (AJAY: "also popup") */
+function massPopup(id, opt){
+  let m = $('#massPop');
+  if (!m) { m = document.createElement('div'); m.id = 'massPop'; m.className = 'mass-pop'; document.body.appendChild(m);
+    m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-massx]')) m.classList.remove('on'); }); }
+  m.innerHTML = `<div class="mass-box" role="dialog" aria-modal="true" aria-label="${MASS_TXT}"><button type="button" class="mass-x" data-massx aria-label="Close">×</button>
+    <b>${MASS_TXT}</b><p>You can order up to ${MAX_PER_ITEM} of one item online. For more, message us on WhatsApp.</p>
+    <a class="btn block" href="${massLink(id, opt)}" target="_blank" rel="noopener" data-massx>Message us on WhatsApp</a></div>`;
+  m.classList.add('on');
+}
 const capHTML = (id, opt) => { const n = maxQty(id, opt); return n < MAX_PER_ITEM ? capMsg(n) : `<a href="${massLink(id, opt)}" target="_blank" rel="noopener">${MASS_TXT}</a>`; };
 const slugOf = p => String(p.name || p.id).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || p.id;   // same as fomaxo_slug() in seo-lib.php: fomaxo.com/fomaxo-old-money (shows the product picture in WhatsApp)
 const stockHTML = (id, opt, long) => { const n = stockLeft(id, opt); return n === null ? '' : n <= 0 ? '<span class="stk out">Out of Stock — Restocking Soon</span>' : `<span class="stk${long ? ' low' : ''}">Only ${n} left${long ? ' in stock, order soon' : ''}</span>`; };   // only sizes really running low come from stock.php (admin → Stocks); long = the product page box
@@ -3427,8 +3443,9 @@ function bindProduct(p){
   const qty = $('#qty'), capQ = () => Math.max(1, maxQty(p.id, size) - inBagQty(p.id, size)), getQ = () => Math.max(1, Math.min(capQ(), parseInt(qty.value) || 1));
   const qcap = () => { const c = capQ(), hit = (parseInt(qty.value) || 1) >= c && maxQty(p.id, size) > 0; $('#qcap').innerHTML = hit ? capHTML(p.id, size) : ''; $('#qp').classList.toggle('at-cap', hit); qty.closest('.qtyrow').classList.toggle('capped', hit); };
   $('#qm').onclick = () => { qty.value = Math.max(1, getQ() - 1); qcap(); };
-  $('#qp').onclick = () => { qty.value = Math.min(capQ(), getQ() + 1); qcap(); };
-  qty.onchange = () => { qty.value = getQ(); qcap(); };
+  const overMax = n => n > capQ() && maxQty(p.id, size) >= MAX_PER_ITEM;   // more than 30: the Massive Order popup
+  $('#qp').onclick = () => { if (overMax(getQ() + 1)) massPopup(p.id, size); qty.value = Math.min(capQ(), getQ() + 1); qcap(); };
+  qty.onchange = () => { if (overMax(parseInt(qty.value) || 1)) massPopup(p.id, size); qty.value = getQ(); qcap(); };
   const setImg = k => { $('#stageImg').src = IMG(k); $$('.thumbs button').forEach(b => b.classList.toggle('on', b.dataset.g === k)); };
   $$('.thumbs button').forEach(b => b.onclick = () => setImg(b.dataset.g));
   $$('#sizes button').forEach(b => b.onclick = () => {
