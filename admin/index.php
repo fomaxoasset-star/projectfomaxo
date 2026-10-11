@@ -1944,6 +1944,8 @@ if (isset($_GET['stock'])) {
     if (!csrf_ok()) { flash('Please try again.'); go(['stock' => 1]); }
     $lvl = trim((string)($_POST['low_stock'] ?? ''));   // the "Only X left" level for the website (only set here)
     if (ctype_digit($lvl) && (int)$lvl <= 100) fomaxo_setting($pdo, 'low_stock', (string)(int)$lvl);
+    if (isset($_POST['max_per_item'])) { $mx = trim((string)$_POST['max_per_item']);   // most of one item per order on the website; empty = 30
+      fomaxo_setting($pdo, 'max_per_item', ctype_digit($mx) && (int)$mx >= 1 ? (string)min(999, (int)$mx) : ''); }
     $set = $pdo->prepare('INSERT INTO fx_stock (product, size, qty, cost, updated_at) VALUES (?, ?, ?, ?, NOW())
                           ON DUPLICATE KEY UPDATE qty = VALUES(qty), cost = VALUES(cost), updated_at = NOW()');
     $old = []; foreach ($pdo->query('SELECT product, size, qty, cost FROM fx_stock') as $r) $old[$r['product'] . '|' . $r['size']] = [$r['qty'] === null ? null : (int)$r['qty'], $r['cost'] === null ? null : round((float)$r['cost'], 2)];
@@ -1981,6 +1983,8 @@ if (isset($_GET['stock'])) {
     . '<form class="fitform" method="post">' . csrf_field() . ($w !== '' ? '<input type="hidden" name="w" value="' . $w . '">' : '')
     . '<div class="card lowlvl"><label for="low_stock">Show "Only X left" on the website when stock is at or below</label><input id="low_stock" type="number" min="0" max="100" inputmode="numeric" name="low_stock" required value="' . fomaxo_low_stock() . '">'
     . '<p class="muted small" style="margin:6px 0 0">One level for every product and size. 0 turns it off (Sold out still shows).</p></div>'
+    . '<div class="card lowlvl"><label for="max_per_item">Max per item per order</label><input id="max_per_item" type="number" min="1" max="999" inputmode="numeric" name="max_per_item" placeholder="30" value="' . fomaxo_max_per_item() . '">'
+    . '<p class="muted small" style="margin:6px 0 0">Customers can order up to the stock, never more than this. Empty = 30. Above it they see "Contact FOMAXO for Massive Order".</p></div>'
     . '<div class="fill"><table class="stock"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost (AED)</th></tr></thead><tbody>' . $tr . '</tbody></table></div>'
     . '<div class="savebar">' . '<p class="muted small stock-help"><b>Stock:</b> how many bottles you have. It goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml) and goes back up if you cancel an order. Leave it empty to not count that size. The website shows "Only X left" at ' . fomaxo_low_stock() . ' or fewer, and "Out of Stock — Restocking Soon" at 0.<br>'
     . '<b>Cost:</b> what one bottle costs you. Reports use it to work out your profit.</p>' . '<button class="btn big">Save</button></div></form>', true, true);
