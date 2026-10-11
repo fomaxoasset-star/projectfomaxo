@@ -36,6 +36,31 @@
       });
     }).catch(function (e) { why = 'error ' + String(e && (e.message || e.name) || e).slice(0, 60); try { conv && conv.cancel(); } catch (x) {} return null; });
   }
+  /* sure way: FFmpeg itself, running inside this browser (admin/ffmpeg, ffmpeg.wasm 0.12). Slower, but it opens every video type
+     (iPhone HEVC .mov, .mkv, .avi, .m4v…) on every browser and needs no playing, so no tap. Fetched only when the fast way can't */
+  var inWasm = false;
+  function wasm(file, scale) {
+    var F = null, dur = 0, name = 'in' + ((/\.\w{1,5}$/.exec(file.name) || ['.mp4'])[0]).toLowerCase(), base = new URL('ffmpeg/', location.href).href;
+    inWasm = true;
+    return import(base + 'index.js?v=0.12.15').then(function (m) {
+      F = new m.FFmpeg(); stopNow = {cancel: function () { try { F.terminate(); } catch (e) {} }};
+      F.on('log', function (e) { var d = /Duration: (\d+):(\d+):([\d.]+)/.exec(e.message || ''); if (d && !dur) dur = +d[1] * 3600 + +d[2] * 60 + +d[3]; });
+      F.on('progress', function (e) { if (e.progress >= 0 && e.progress <= 1) say('Making the video smaller… ' + Math.min(99, Math.round(e.progress * 100)) + '%. Keep this page open.'); });
+      say('Getting the video maker ready (once)… Keep this page open.');
+      return F.load({coreURL: base + 'ffmpeg-core.js?v=0.12.10', wasmURL: base + 'ffmpeg-core.wasm?v=0.12.10'});
+    }).then(function () { return F.createDir('/in'); }).then(function () { return F.mount('WORKERFS', {files: [new File([file], name, {type: file.type})]}, '/in'); })
+    .then(function () { return F.exec(['-hide_banner', '-i', '/in/' + name]).catch(function () {}); })   // reads the length (it says so in the log)
+    .then(function () {
+      var br = Math.max(300000, Math.round(rate(dur) * (scale || 1))), L = br < 2500000 ? 1280 : 1920;
+      say('Making the video smaller… 0%. Keep this page open.');
+      return F.exec(['-hide_banner', '-i', '/in/' + name, '-map', '0:v:0', '-map', '0:a:0?', '-vf', 'scale=w=' + L + ':h=' + L + ':force_original_aspect_ratio=decrease:force_divisible_by=2',
+        '-c:v', 'libx264', '-preset', 'veryfast', '-b:v', String(br), '-maxrate', String(Math.round(br * 1.3)), '-bufsize', String(br * 2), '-pix_fmt', 'yuv420p',
+        '-c:a', 'aac', '-b:a', '96k', '-ac', '2', '-movflags', '+faststart', '/out.mp4']);
+    }).then(function (code) { if (code) { why += ' / ffmpeg: exit ' + code; return null; } return F.readFile('/out.mp4'); })
+    .then(function (d) { return d && d.length ? new Blob([d.buffer], {type: 'video/mp4'}) : null; },
+      function (e) { why += ' / ffmpeg: ' + String(e && (e.message || e.name) || e).slice(0, 60); return null; })
+    .then(function (b) { inWasm = false; try { F && F.terminate(); } catch (e) {} return b; });
+  }
   function shrink(file) {
     return new Promise(function (ok, no) {
       var v = document.createElement('video'), c = document.createElement('canvas'), g = c.getContext('2d'), rec = null, parts = [], raf = 0, ctx = null, dest = null;
@@ -129,16 +154,18 @@
     var can = mime && HTMLCanvasElement.prototype.captureStream;
     var cant = function () { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again. (' + (why || 'no way to convert') + ')'); skipBtn(file); };
     if (!big) { send(null); return; }
-    if (!can && !window.VideoEncoder) { if (asIs) send(null); else cant(); return; }
     btn.disabled = true; setTimeout(function () { btn.textContent = 'Please wait…'; });
     /* making it smaller: no progress for 45 seconds, or a tap on Skip = upload the original instead (in pieces) */
     var t0 = Date.now(), last = -1, moved = t0, bail, gaveUp = new Promise(function (ok) { bail = ok; });
     var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; var skipped = false; sk.onclick = function () { skipped = true; bail(); }; if (keeps(file)) note.appendChild(sk);   // any size: the original goes up as it is when Skip is tapped
-    var dog = setInterval(function () { var now = Date.now(); if (pct !== last) { last = pct; moved = now; } if (now - moved > 45000) bail(); }, 1000);
+    var dog = setInterval(function () { var now = Date.now(); if (pct !== last) { last = pct; moved = now; } if (inWasm) moved = now; if (now - moved > 45000) bail(); }, 1000);
     var quit = false; gaveUp.then(function () { quit = true; clearInterval(dog); try { stopNow && stopNow.cancel(); } catch (e) {} });
     var shrunk = fast(file).then(function (b) {   // still over 5 MB (some phones' encoders overshoot): once more, with the quality lowered by just that much
       if (!b || b.size <= 5 * MB || quit) return b; t0 = Date.now(); return fast(file, 4.6 * MB / b.size).then(function (c) { return c && c.size < b.size ? c : b; });
     }).then(function (b) { return b && b.size < file.size ? playable(b).then(function (y) { if (y) how = 'fast ' + b.type; return y ? b : null; }) : null; })
+      .then(function (b) { if (b || quit) return b; return wasm(file).then(function (w) {   // the fast way couldn't: the sure way (FFmpeg)
+        if (!w || w.size <= 5 * MB || quit) return w; return wasm(file, 4.6 * MB / w.size).then(function (c) { return c && c.size < w.size ? c : w; });
+      }).then(function (w) { if (w) how = 'ffmpeg ' + w.type; return w; }); })
       .then(function (b) { if (quit) return Promise.reject(); return b || (can ? shrink(file).then(function (r) { return playable(r).then(function (y) { if (y) how = 'recorded ' + r.type; return y ? r : Promise.reject(); }); }) : Promise.reject()); });
     shrunk.catch(function () {});
     Promise.race([shrunk, gaveUp.then(function () { how = 'as is (skipped at ' + pct + '%)'; return Promise.reject(); })]).then(function (b) {
