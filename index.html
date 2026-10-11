@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=30";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=31";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -2398,7 +2398,7 @@ html[dir="rtl"] .rl-s{direction:rtl}
     <a class="brand" href="#/" aria-label="FOMAXO home"><svg class="em" aria-hidden="true"><use href="#emblem"/></svg><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><use href="#wordmark"/></svg><sup class="tm">™</sup></a>
     <nav class="menu" id="menu" aria-label="Main">
       <a href="#/fragrances" data-r="fragrances">Fragrances</a>
-      <a href="#/personal-care" data-r="personal-care">Personal Care</a>
+      <a href="#/personal-care" data-r="personal-care">PC</a>
       <a href="#/collections" data-r="collections">Collections</a>
       <a href="#/about" data-r="about">About FOMAXO</a>
       <a href="#/contact" data-r="contact">Contact</a>
@@ -2417,7 +2417,7 @@ html[dir="rtl"] .rl-s{direction:rtl}
 <div class="mnav" id="mnav" aria-hidden="true">
   <div class="top"><a class="brand" href="#/"><svg class="em" aria-hidden="true"><use href="#emblem"/></svg><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><use href="#wordmark"/></svg><sup class="tm">™</sup></a><button class="icon" data-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
   <nav>
-    <a href="#/fragrances">Fragrances</a><a href="#/personal-care">Personal Care</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
+    <a href="#/fragrances">Fragrances</a><a href="#/personal-care">PC</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
   </nav>
   <div class="foot" id="mnavFoot"></div>
 </div>
@@ -2436,7 +2436,7 @@ html[dir="rtl"] .rl-s{direction:rtl}
       </div>
       <div><h5>Shop</h5><div id="footShop"></div></div>
       <div><h5>Discover</h5><a href="#/collections/fragrance">Fragrance Collection</a><a href="#/collections/mini">Mini Collection</a><a href="#/collections/name">Personalized Gifting</a><a href="#/collections/gifting">Bespoke Gifting</a><a href="#/collections/elite">Elite Membership</a></div>
-      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">Personal Care</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
+      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">PC</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
     </div>
     <div class="fbase"><span>© 2026 FOMAXO™. All rights reserved.</span><span>Inspire greatness</span></div>
     <p class="fpriv">We count anonymous visits (no cookies, nothing shared) to improve the store.</p>
