@@ -3270,7 +3270,7 @@ function fragrances(q){
   </div></section>` + finalCTA();
 }
 
-/* "612 people bought this year": different customers who really bought it since 1 January, from real orders (products.php sends it only from 10 up; never a made-up number) */
+/* "612 people bought this year": different customers who really bought it since 1 January, from real orders (products.php sends it only from 500 up; never a made-up number) */
 let SOLD = {};
 const soldHTML = id => +SOLD[id] > 0 ? `${ICON.bag}<span>${+SOLD[id]} people bought this year</span>` : '';
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
