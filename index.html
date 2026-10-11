@@ -320,11 +320,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 @keyframes bvShine{0%,55%{left:-60%}100%{left:130%}}
 @media (prefers-reduced-motion:reduce){.sizes .bv::after{display:none}}
 .qtyrow{display:grid;grid-template-columns:140px 1fr;gap:10px}
-.qty{display:flex;border:1px solid var(--line-2);height:52px;position:relative}
-.qtyrow.capped{margin-bottom:16px}
-.qcap{position:absolute;left:0;right:0;top:100%;margin-top:3px;text-align:center;font-size:10px;letter-spacing:.06em;color:var(--gold);white-space:nowrap;pointer-events:none}
-.qty button.at-cap,.line-item .q button.at-cap{opacity:.35}
-.cap-note{font-size:10px;letter-spacing:.06em;color:var(--gold)}
+.qty{display:flex;border:1px solid var(--line-2);height:52px}
 .qty button{width:44px;font-size:18px;color:var(--champagne)}
 .qty input{flex:1;min-width:0;text-align:center;background:transparent;border:0;outline:none;font-size:15px}
 .perks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
@@ -2749,12 +2745,15 @@ let cart = [];
 try { cart = JSON.parse(localStorage.getItem('fomaxo_cart') || '[]').filter(l => P[l.id] && P[l.id].sizes.map(String).includes(String(l.opt))); } catch(e) { cart = []; }
 const save = () => { try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} renderCart(); };
 function addToCart(id, opt, qty=1, silent, picks){
-  const left = maxQty(id, opt), inBag = inBagQty(id, opt);   // never more in the bag than we have (or 99)
-  if (left - inBag <= 0) { toast(left <= 0 ? `${P[id].name} · ${optLabel(P[id], opt)} is out of stock, restocking soon` : `Only ${left} available of ${P[id].name} · ${optLabel(P[id], opt)}, and they are in your bag`); return false; }
-  if (qty > left - inBag) { qty = left - inBag; if (!silent) { silent = true; toast(`Only ${left} available of ${P[id].name} · ${optLabel(P[id], opt)}. ${qty} added to your bag`); } }
+  const left = stockLeft(id, opt);
+  if (left !== null) {   // never more in the bag than we have
+    const inBag = cart.filter(x => x.id === id && String(x.opt) === String(opt)).reduce((a, x) => a + x.qty, 0);
+    if (left - inBag <= 0) { toast(left <= 0 ? `${P[id].name} · ${optLabel(P[id], opt)} is out of stock, restocking soon` : `Only ${left} left of ${P[id].name} · ${optLabel(P[id], opt)}, and they are in your bag`); return false; }
+    if (qty > left - inBag) { qty = left - inBag; if (!silent) { silent = true; toast(`Only ${left} left of ${P[id].name} · ${optLabel(P[id], opt)}. ${qty} added to your bag`); } }
+  }
   const key = (picks || []).join('|');
   const l = cart.find(x => x.id === id && String(x.opt) === String(opt) && (x.picks || []).join('|') === key);
-  if (l) l.qty += qty; else cart.push(picks ? {id, opt, qty, picks} : {id, opt, qty});
+  if (l) l.qty = Math.min(99, l.qty + qty); else cart.push(picks ? {id, opt, qty, picks} : {id, opt, qty});
   save();
   if (!silent) addedPanel(id, opt, qty);
   FXT.send('cart', {id}); ADS.cart(id, opt, qty);
@@ -2764,7 +2763,7 @@ function addToCart(id, opt, qty=1, silent, picks){
 function bagCode(ls){ const c = ls.map(l => [l.id, l.opt, l.qty].concat(l.picks && l.picks.length ? [l.picks.join('-')] : []).join('.')).join('_'); return /^[a-z0-9_.-]*$/i.test(c) && c.length <= 300 ? c : ''; }
 function bagFromCode(c){
   const ls = String(c || '').split('_').map(x => x.split('.')).filter(a => a.length >= 3 && P[a[0]] && !P[a[0]].hidden && P[a[0]].sizes.map(String).includes(a[1]))
-    .map(a => { const l = {id: a[0], opt: isNaN(+a[1]) ? a[1] : +a[1], qty: Math.min(9999, Math.max(1, parseInt(a[2], 10) || 1))}; if (a[3]) l.picks = a[3].split('-').filter(id => P[id]); return l; });
+    .map(a => { const l = {id: a[0], opt: isNaN(+a[1]) ? a[1] : +a[1], qty: Math.min(99, Math.max(1, parseInt(a[2], 10) || 1))}; if (a[3]) l.picks = a[3].split('-').filter(id => P[id]); return l; });
   if (!ls.length) return false;
   cart = []; ls.forEach(l => addToCart(l.id, l.opt, l.qty, true, l.picks && l.picks.length ? l.picks : undefined)); return cart.length > 0;
 }
@@ -2883,8 +2882,8 @@ let buyLines = [];
 try { buyLines = JSON.parse(sessionStorage.getItem('fomaxo_buy') || '[]').filter(l => P[l.id] && P[l.id].sizes.map(String).includes(String(l.opt))); } catch(e) { buyLines = []; }
 function buyNow(line){
   const key = (line.picks || []).join('|'), l = cart.find(x => x.id === line.id && String(x.opt) === String(line.opt) && (x.picks || []).join('|') === key);
-  const left = maxQty(line.id, line.opt) - inBagQty(line.id, line.opt, l);
-  if (l) { l.qty = Math.max(1, Math.min(Math.max(l.qty, line.qty), left)); save(); } else if (!addToCart(line.id, line.opt, line.qty, true, line.picks)) return;
+  const left = stockLeft(line.id, line.opt);
+  if (l) { l.qty = Math.max(l.qty, left === null ? line.qty : Math.min(line.qty, left)); save(); } else if (!addToCart(line.id, line.opt, line.qty, true, line.picks)) return;
   location.hash = '#/checkout';
 }
 function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'); } catch(e) {} }
@@ -2914,9 +2913,9 @@ function renderCart(){
   body.innerHTML = cart.map((l, i) => { const p = P[l.id]; return `<div class="line-item">
       <a href="#/product/${p.id}" data-close><img src="${SM(lineImg(l))}" alt="${esc(p.name)}"></a>
       <div>${lineInfo(l)}
-        <div class="qrow"><div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase"${l.qty >= maxQty(l.id, l.opt) - inBagQty(l.id, l.opt, l) ? ' class="at-cap"' : ''}>+</button></div>
+        <div class="qrow"><div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase">+</button></div>
         ${linePriceHTML(p, l)}</div>
-        <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty >= maxQty(l.id, l.opt) - inBagQty(l.id, l.opt, l) && stockCounted(l.id, l.opt) ? `<span class="cap-note">${capMsg(maxQty(l.id, l.opt))}</span>` : ''}${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') || !shown('discovery') ? '' :
+        <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') || !shown('discovery') ? '' :
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${SM('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`) + bagRecs();
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
@@ -2932,9 +2931,7 @@ function renderCart(){
 $('#cartFoot').addEventListener('click', e => { const ra = e.target.closest('[data-recadd]'); if (ra){ const p = P[ra.dataset.recadd]; if (p) addToCart(p.id, +ra.dataset.recsz || defaultSize(p)); } });
 $('#cartBody').addEventListener('click', e => {
   const q = e.target.closest('[data-q]'), rm = e.target.closest('[data-rm]');
-  if (q){ const i = +q.dataset.q, l = cart[i], cap = maxQty(l.id, l.opt) - inBagQty(l.id, l.opt, l);
-    if (+q.dataset.d > 0 && l.qty >= cap) { toast(capMsg(maxQty(l.id, l.opt))); return; }
-    const n = Math.min(cap, l.qty + +q.dataset.d); if (n < 1) { cart.splice(i, 1); toast(`${P[l.id].name} removed from your bag`); } else l.qty = n; save(); }
+  if (q){ const i = +q.dataset.q, l = cart[i], n = Math.min(99, l.qty + +q.dataset.d); if (n < 1) { cart.splice(i, 1); toast(`${P[l.id].name} removed from your bag`); } else l.qty = n; save(); }
   if (rm){ cart.splice(+rm.dataset.rm, 1); save(); }
   const ra = e.target.closest('[data-recadd]'); if (ra){ const p = P[ra.dataset.recadd]; addToCart(p.id, +ra.dataset.recsz || defaultSize(p)); }
   const rs = e.target.closest('[data-recscroll]'); if (rs){ const row = $('.recs-row'); row.scrollBy({left: +rs.dataset.recscroll * row.clientWidth * .75, behavior: 'smooth'}); }
@@ -3049,13 +3046,8 @@ async function loadRates(){
   if (RATES) $$('[data-rate]').forEach(el => { const p = P[el.dataset.rate]; if (p) el.outerHTML = rateHTML(p); });
 }
 /* stock from stock.php: only sizes running low are listed (null = in stock). Typed in on fomaxo.com/admin → Stock. */
-let STOCK = {}, STOCK_MAX = {}, pdpStock = null;
+let STOCK = {}, pdpStock = null;
 const stockLeft = (id, opt) => { const s = STOCK[id]; return s && s[String(opt)] !== undefined ? +s[String(opt)] : null; };
-/* the most one customer can order of a size: what admin → Stock says we have, even over 99 (empty there = up to 99) */
-const stockCounted = (id, opt) => { const s = STOCK_MAX[id]; return !!(s && s[String(opt)] !== undefined) || stockLeft(id, opt) !== null; };
-const maxQty = (id, opt) => { const s = STOCK_MAX[id], n = s && s[String(opt)] !== undefined ? +s[String(opt)] : stockLeft(id, opt); return n === null ? 99 : Math.max(0, n); };
-const inBagQty = (id, opt, skip) => cart.reduce((a, x) => a + (x !== skip && x.id === id && String(x.opt) === String(opt) ? x.qty : 0), 0);
-const capMsg = n => `Only ${n} available`;
 const slugOf = p => String(p.name || p.id).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || p.id;   // same as fomaxo_slug() in seo-lib.php: fomaxo.com/fomaxo-old-money (shows the product picture in WhatsApp)
 const stockHTML = (id, opt, long) => { const n = stockLeft(id, opt); return n === null ? '' : n <= 0 ? '<span class="stk out">Out of Stock — Restocking Soon</span>' : `<span class="stk${long ? ' low' : ''}">Only ${n} left${long ? ' in stock, order soon' : ''}</span>`; };   // only sizes really running low come from stock.php (admin → Stocks); long = the product page box
 function applyStock(){
@@ -3065,9 +3057,7 @@ function applyStock(){
   refreshOrderAgain();
 }
 async function loadStock(){
-  try { const r = await fetch('stock.php', {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.stock) STOCK = d.stock; if (d && d.max) STOCK_MAX = d.max; } } catch(e) {}
-  cart.forEach(l => { const m = maxQty(l.id, l.opt) - inBagQty(l.id, l.opt, l); if (m > 0 && l.qty > m) l.qty = m; });   // a bag from before never asks for more than we have (sold out stays as it is)
-  try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {}
+  try { const r = await fetch('stock.php', {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.stock) STOCK = d.stock; } } catch(e) {}
   applyStock();
   renderCart(); coRefresh && coRefresh();   // the free 10ml mini skips sizes that are out of stock
 }
@@ -3388,7 +3378,7 @@ function product(id, q){
           <div class="picks">${pickable(p).map(f => `<button type="button" class="pick" data-pick="${f.id}" aria-pressed="false"><img src="${SM(f.images[0])}" alt="" loading="lazy"><span>${esc(f.name)}</span><i>✓</i></button>`).join('')}</div>
           <p class="small" id="pickHint" style="margin-top:12px">Select ${size} fragrances to continue.</p></div>` : ''}
         <div class="qtyrow">
-          <div class="qty"><button id="qm" aria-label="Decrease quantity">−</button><input id="qty" value="1" inputmode="numeric" aria-label="Quantity"><button id="qp" aria-label="Increase quantity">+</button><small class="qcap" id="qcap" aria-live="polite"></small></div>
+          <div class="qty"><button id="qm" aria-label="Decrease quantity">−</button><input id="qty" value="1" inputmode="numeric" aria-label="Quantity"><button id="qp" aria-label="Increase quantity">+</button></div>
           <button class="btn line" id="addBtn">Add to bag</button>
         </div>
         <button class="btn block" id="buyBtn">Buy now</button>
@@ -3417,18 +3407,16 @@ function bindProduct(p){
   $$('[data-alsoscroll]').forEach(b => b.onclick = () => { const row = $('#alsoRow'); row.scrollBy({left: +b.dataset.alsoscroll * row.clientWidth * .8, behavior: 'smooth'}); });
   let size = +($('#sizes .on')?.dataset.s) || defaultSize(p);
   const isSet = p.kind === 'set'; let picks = [];
-  const qty = $('#qty'), capQ = () => Math.max(1, maxQty(p.id, size) - inBagQty(p.id, size)), getQ = () => Math.max(1, Math.min(capQ(), parseInt(qty.value) || 1));
-  const qcap = () => { const c = capQ(), hit = (parseInt(qty.value) || 1) >= c && stockCounted(p.id, size) && maxQty(p.id, size) > 0; $('#qcap').textContent = hit ? capMsg(maxQty(p.id, size)) : ''; $('#qp').classList.toggle('at-cap', hit); qty.closest('.qtyrow').classList.toggle('capped', hit); };
-  $('#qm').onclick = () => { qty.value = Math.max(1, getQ() - 1); qcap(); };
-  $('#qp').onclick = () => { qty.value = Math.min(capQ(), getQ() + 1); qcap(); };
-  qty.onchange = () => { qty.value = getQ(); qcap(); };
+  const qty = $('#qty'), getQ = () => Math.max(1, Math.min(99, parseInt(qty.value) || 1));
+  $('#qm').onclick = () => qty.value = Math.max(1, getQ() - 1);
+  $('#qp').onclick = () => qty.value = Math.min(99, getQ() + 1);
   const setImg = k => { $('#stageImg').src = IMG(k); $$('.thumbs button').forEach(b => b.classList.toggle('on', b.dataset.g === k)); };
   $$('.thumbs button').forEach(b => b.onclick = () => setImg(b.dataset.g));
   $$('#sizes button').forEach(b => b.onclick = () => {
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
     $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = pdpPrice(p, size);
     setImg(imgFor(p, size));
-    qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); fitPdp();
+    renderMbuy(); pdpStock(); btRender(p, size); fitPdp();
   });
   const stage = $('#stage');
   stage.onclick = () => stage.classList.toggle('zoom');
@@ -3453,7 +3441,7 @@ function bindProduct(p){
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
     ['#addBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) { b.classList.toggle('oos', out); b.textContent = out ? 'Out of stock' : 'Add to bag'; } });
-    $$('#sizes button').forEach(b => b.classList.toggle('so', stockLeft(p.id, b.dataset.s) === 0)); qcap(); };
+    $$('#sizes button').forEach(b => b.classList.toggle('so', stockLeft(p.id, b.dataset.s) === 0)); };
   pdpStock(); btRender(p, size); requestAnimationFrame(fitPdp); document.fonts && document.fonts.ready.then(fitPdp);
   const addBtn = $('#addBtn');
   mobileBarCheck = () => { const r = addBtn.getBoundingClientRect(), off = r.bottom < 0 || r.top > innerHeight - 70; mb.classList.toggle('show', off && $('#reviews').getBoundingClientRect().top > innerHeight*.6); };
