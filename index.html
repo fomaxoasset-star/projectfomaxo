@@ -3059,8 +3059,8 @@ async function loadRates(){
 /* stock from stock.php: only sizes running low are listed (null = in stock). Typed in on fomaxo.com/admin → Stock. */
 let STOCK = {}, STOCK_MAX = {}, pdpStock = null;
 const stockLeft = (id, opt) => { const s = STOCK[id]; return s && s[String(opt)] !== undefined ? +s[String(opt)] : null; };
-/* the most one customer can order of a size: what admin → Stock says we have, never more than MAX_PER_ITEM (empty there = MAX_PER_ITEM). Same as FX_MAX_PER_ITEM in orders-lib.php */
-const MAX_PER_ITEM = 30;
+/* the most one customer can order of a size: what admin → Stock says we have, never more than MAX_PER_ITEM (empty there = MAX_PER_ITEM). Same as fomaxo_max_per_item() in orders-lib.php */
+let MAX_PER_ITEM = 30;   // admin → Stocks "Max per item per order", from stock.php
 const maxQty = (id, opt) => { const s = STOCK_MAX[id], n = s && s[String(opt)] !== undefined ? +s[String(opt)] : stockLeft(id, opt); return n === null ? MAX_PER_ITEM : Math.max(0, Math.min(MAX_PER_ITEM, n)); };
 const inBagQty = (id, opt, skip) => cart.reduce((a, x) => a + (x !== skip && x.id === id && String(x.opt) === String(opt) ? x.qty : 0), 0);
 const capMsg = n => n < MAX_PER_ITEM ? `Only ${n} available` : MASS_TXT;
@@ -3088,7 +3088,7 @@ function applyStock(){
   refreshOrderAgain();
 }
 async function loadStock(){
-  try { const r = await fetch('stock.php', {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.stock) STOCK = d.stock; if (d && d.max) STOCK_MAX = d.max; } } catch(e) {}
+  try { const r = await fetch('stock.php', {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.stock) STOCK = d.stock; if (d && d.max) STOCK_MAX = d.max; if (d && +d.perItem >= 1) MAX_PER_ITEM = +d.perItem; } } catch(e) {}
   cart.forEach(l => { const m = maxQty(l.id, l.opt) - inBagQty(l.id, l.opt, l); if (m > 0 && l.qty > m) l.qty = m; });   // a bag from before never asks for more than we have (sold out stays as it is)
   try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {}
   applyStock();
