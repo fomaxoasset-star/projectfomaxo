@@ -841,7 +841,7 @@
     [/^Based on (\d+) reviews?$/, function(m){ return 'بناءً على ' + rv(m[1]); }],
     [/^(\d+) reviews?$/, function(m){ return rv(m[1]); }],
     [/^Only (\d+) left$/, function(m){ return 'بقي ' + m[1] + ' فقط'; }],
-    [/^(\d+)\+ people bought this$/, function(m){ return 'اشتراه ' + m[1] + '+ شخص'; }],
+    [/^(\d+)(\+?) people bought this$/, function(m){ return 'اشتراه ' + m[1] + m[2] + ' شخص'; }],
     [/^Only (\d+) left in stock, order soon$/, function(m){ return 'بقي ' + m[1] + ' فقط في المخزون، اطلب الآن'; }],
     [/^(.+) is out of stock, restocking soon$/, function(m){ return m[1] + ' نفد من المخزون، يعود قريباً'; }],
     [/^Only (\d+) left of (.+), and they are in your bag$/, function(m){ return 'بقي ' + m[1] + ' فقط من ' + m[2] + '، وهي في حقيبتك'; }],

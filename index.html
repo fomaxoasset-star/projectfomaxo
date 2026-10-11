@@ -3260,9 +3260,9 @@ function fragrances(q){
   </div></section>` + finalCTA();
 }
 
-/* "1000+ people bought this": different customers who really bought it, all time, from real orders (products.php sends it only at 1000 or more; never a made-up number) */
+/* "1000+ people bought this": different customers who really bought it, all time, from real orders (products.php sends it from 10 up, "1000+" from 1000; never a made-up number) */
 let SOLD = {}, BEST = null;   // BEST: the product that really sold the most in the last 30 days ("Bestseller")
-const soldHTML = id => +SOLD[id] > 0 ? `${ICON.bag}<span>${+SOLD[id]}+ people bought this</span>` : id === BEST ? '<span class="pd-best">Bestseller</span><span>Our most bought this month</span>' : '';
+const soldHTML = id => +SOLD[id] > 0 ? `${ICON.bag}<span>${+SOLD[id]}${+SOLD[id] >= 1000 ? '+' : ''} people bought this</span>` : id === BEST ? '<span class="pd-best">Bestseller</span><span>Our most bought this month</span>' : '';
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
   // sale: old price struck on top, new price below it, on the left; the saving in a small green box on the right

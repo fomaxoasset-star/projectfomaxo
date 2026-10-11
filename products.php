@@ -40,7 +40,7 @@ if ($pdo) { try { $pair = [];
   foreach ($pair as $a => $m) { $m = array_filter($m, fn($n) => $n >= 2); arsort($m); if ($m) $together[$a] = array_slice(array_keys($m), 0, 4); }
 } catch (Throwable $e) {} }
 /* "1000+ people bought this" (product page): different customers (by mobile number) who really bought each product, all time, from real orders only
-   (test, unpaid, cancelled and trashed orders don't count). Only products with 1000 or more are sent, rounded down to the thousand; below that the line doesn't show. Never a made-up number.
+   (test, unpaid, cancelled and trashed orders don't count). Products with 10 or more are sent with the real number (1000 and up rounded down to the thousand, shown as "1000+"); below 10 the line doesn't show. Never a made-up number.
    best: the one product that really sold the most bottles in the last 30 days, shown as a gold "Bestseller" tag. */
 $sold = []; $best = null;
 if ($pdo) { try { $n = []; $who = []; $since = date('Y-m-d H:i:s', strtotime('-30 days'));
@@ -50,7 +50,7 @@ if ($pdo) { try { $n = []; $who = []; $since = date('Y-m-d H:i:s', strtotime('-3
       if ($p9 !== '') $who[$id][$p9] = true;
       if ($r['created_at'] >= $since) $n[$id] = ($n[$id] ?? 0) + max(0, (int)($l['qty'] ?? 0)); }
   }
-  foreach ($who as $id => $m) if (count($m) >= 1000) $sold[$id] = intdiv(count($m), 1000) * 1000;
+  foreach ($who as $id => $m) if (($c = count($m)) >= 10) $sold[$id] = $c >= 1000 ? intdiv($c, 1000) * 1000 : $c;   // the real number from 10 up ("236 people bought this"), "1000+" from 1000
   arsort($n); $top = array_key_first($n); if ($top !== null && $n[$top] >= 5) $best = $top;   // Bestseller: the product that really sold the most bottles in the last 30 days (at least 5)
 } catch (Throwable $e) {} }
 /* cash on delivery minimum and maximum (admin → Settings → Cash on delivery); max 0 = no upper limit */
