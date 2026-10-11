@@ -3293,7 +3293,7 @@ function fragrances(q){
   </div></section>` + finalCTA();
 }
 
-/* "612 people bought this week": different customers who really bought it in the last 7 days, from real orders (products.php sends it only above 10; never a made-up number) */
+/* "612 people bought this week": different customers who really bought it in the last 7 days, from real orders (products.php sends it only above 5; never a made-up number) */
 let SOLD = {};
 const soldHTML = id => +SOLD[id] > 0 ? `${ICON.bag}<span>${+SOLD[id]} purchased this week</span>` : '';
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
