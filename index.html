@@ -1688,7 +1688,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-head{display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.06em;color:var(--muted);align-self:flex-start;padding:0}
 .rw-head:hover{color:var(--gold-hi)}
 .rw-head .rw-none{opacity:.45}
-.pd-sold{display:flex;align-items:center;gap:8px;margin:0;font-size:12.5px;letter-spacing:.06em;color:var(--fg,inherit)}.pd-sold:empty{display:none}.pd-sold svg{width:15px;height:15px;color:var(--gold);flex:none}.pd-best{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#1a1408;background:linear-gradient(135deg,#e7c873,#b8862f);padding:5px 9px;line-height:1;flex:none}   /* bought in the past month: real orders only */
+.pd-sold{display:flex;align-items:center;gap:8px;margin:0;font-size:12.5px;letter-spacing:.06em;color:var(--fg,inherit)}.pd-sold:empty{display:none}.pd-sold svg{width:15px;height:15px;color:var(--gold);flex:none}   /* people bought this year: real orders only */
 .rw-fx{margin-left:auto;align-self:flex-start;font-size:28px;line-height:1;padding:0 4px;margin-top:-6px;color:var(--muted);transition:color .3s}.rw-fx:hover{color:var(--gold-hi)}
 .rw-form{border:1px solid var(--line-2);background:var(--panel);padding:clamp(18px,3vw,30px);margin-bottom:22px;gap:18px}
 .rw-fhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
@@ -3271,8 +3271,8 @@ function fragrances(q){
 }
 
 /* "612 people bought this year": different customers who really bought it since 1 January, from real orders (products.php sends it only from 500 up; never a made-up number) */
-let SOLD = {}, BEST = null;   // BEST: the product that really sold the most in the last 30 days ("Bestseller")
-const soldHTML = id => +SOLD[id] > 0 ? `${ICON.bag}<span>${+SOLD[id]} people bought this year</span>` : id === BEST ? '<span class="pd-best">Bestseller</span><span>Our most bought this month</span>' : '';
+let SOLD = {};
+const soldHTML = id => +SOLD[id] > 0 ? `${ICON.bag}<span>${+SOLD[id]} people bought this year</span>` : '';
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
   // sale: old price struck on top, new price below it, on the left; the saving in a small green box on the right
@@ -4977,7 +4977,7 @@ async function loadProducts(){
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; SALE_SIZE = d.saleSize || null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES, sz: SALE_SIZE})); } catch(e) {} saleTick(); promoMaybe(); }
   if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, aed: +d.bt.aed || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
-  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; BEST = typeof d.best === 'string' ? d.best : null; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p); }
+  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
