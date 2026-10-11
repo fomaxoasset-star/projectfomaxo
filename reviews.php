@@ -138,6 +138,7 @@ function rv_link($t) {
 /* the link's order must be a real order: placed, not a test, not cancelled or refunded, and a card order must be paid
    (when the database cannot be reached the link still works, so real customers are not turned away) */
 function rv_order_ok($no) {
+  if (str_starts_with((string)$no, 'OLD-')) return true;   // a real order from before the reset of 11/10/2026 (cleared from admin, still reviewable)
   $pdo = fomaxo_db(); if (!$pdo) return true;
   try { $s = $pdo->prepare('SELECT status, test FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$no]); $o = $s->fetch(PDO::FETCH_ASSOC); }
   catch (Throwable $e) { return true; }

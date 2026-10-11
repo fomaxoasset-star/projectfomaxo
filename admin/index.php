@@ -2148,7 +2148,7 @@ if (isset($_GET['coupons'])) {
   /* a code made for one mobile: where it came from, by its start */
   $tag = fn($code) => ['REFILL-' => 'Refill', 'REVIEW-' => 'Review', 'COMEBACK-' => 'Left at checkout', 'THANKS-' => 'WhatsApp'][preg_replace('/-.*$/s', '-', $code)] ?? 'Goodwill';
   foreach ($list as $c) {
-    $u = $used[$c['code']] ?? ['n' => 0, 'd' => 0, 't' => 0]; $n = (int)$u['n'];
+    $u = $used[$c['code']] ?? ['n' => 0, 'd' => 0, 't' => 0]; $n = (int)$u['n'] + (int)(fx_coupon_old($pdo)[$c['code']]['n'] ?? 0);   // + uses on orders cleared on 11/10/2026
     $ends = $c['ends'] ?? ($c['expires'] ? $c['expires'] . ' 23:59:59' : null); $starts = $c['starts'] ?? null;
     $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($ends && $ends < $now ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled']
            : ($starts && $starts > $now ? ['Scheduled', 's-New'] : ['On', 'p-Paid'])));
