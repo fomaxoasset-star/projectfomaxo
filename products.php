@@ -40,18 +40,15 @@ if ($pdo) { try { $pair = [];
   foreach ($pair as $a => $m) { $m = array_filter($m, fn($n) => $n >= 2); arsort($m); if ($m) $together[$a] = array_slice(array_keys($m), 0, 4); }
 } catch (Throwable $e) {} }
 /* "612 people bought this year" (product page): different customers (by mobile number) who really bought each product since 1 January, from real orders only
-   (test, unpaid, cancelled and trashed orders don't count). Only products with 500 or more are sent, with the real number; below 500 the line doesn't show. Never a made-up number.
-   best: the one product that really sold the most bottles in the last 30 days, shown as a gold "Bestseller" tag. */
-$sold = []; $best = null;
-if ($pdo) { try { $n = []; $who = []; $since = date('Y-m-d H:i:s', strtotime('-30 days')); $year = date('Y') . '-01-01 00:00:00';
+   (test, unpaid, cancelled and trashed orders don't count). Only products with 10 or more are sent, with the real number; below 10 the line doesn't show. Never a made-up number. */
+$sold = [];
+if ($pdo) { try { $who = []; $year = date('Y') . '-01-01 00:00:00';
   foreach ($pdo->query("SELECT lines_json, phone, created_at FROM fx_orders WHERE test = 0 AND status IN ('New', 'Paid', 'Delivered') AND lines_json IS NOT NULL") as $r) {
     $p9 = substr(preg_replace('/\D/', '', (string)$r['phone']), -9);
     foreach ((array)json_decode($r['lines_json'], true) as $l) { $id = is_array($l) ? (string)($l['id'] ?? '') : ''; if ($id === '' || !preg_match('~^[a-z0-9-]{1,30}$~', $id)) continue;
-      if ($p9 !== '' && $r['created_at'] >= $year) $who[$id][$p9] = true;
-      if ($r['created_at'] >= $since) $n[$id] = ($n[$id] ?? 0) + max(0, (int)($l['qty'] ?? 0)); }
+      if ($p9 !== '' && $r['created_at'] >= $year) $who[$id][$p9] = true; }
   }
-  foreach ($who as $id => $m) if (($c = count($m)) >= 500) $sold[$id] = $c;   // the real number, from 500 up ("612 people bought this year")
-  arsort($n); $top = array_key_first($n); if ($top !== null && $n[$top] >= 5) $best = $top;   // Bestseller: the product that really sold the most bottles in the last 30 days (at least 5)
+  foreach ($who as $id => $m) if (($c = count($m)) >= 10) $sold[$id] = $c;   // the real number, from 10 up ("612 people bought this year")
 } catch (Throwable $e) {} }
 /* cash on delivery minimum and maximum (admin → Settings → Cash on delivery); max 0 = no upper limit */
 [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo ?: null);
@@ -59,7 +56,7 @@ if ($pdo) { try { $n = []; $who = []; $since = date('Y-m-d H:i:s', strtotime('-3
 $hidePages = [];
 if ($pdo) { try { $hidePages = array_values(array_intersect(json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: [], array_keys(FX_SITE_PAGES))); } catch (Throwable $e) {} }
 $btSet = fomaxo_bt($pdo ?: null);
-echo '{"sold":' . fomaxo_json((object)$sold) . ',"best":' . json_encode($best) . ',"bt":' . fomaxo_json(['pct' => $btSet['pct'], 'aed' => $btSet['aed'], 'on' => $btSet['on'], 'pairs' => (object)$btSet['pairs']]) . ',"together":' . fomaxo_json((object)$together) . ',"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
+echo '{"sold":' . fomaxo_json((object)$sold) . ',"bt":' . fomaxo_json(['pct' => $btSet['pct'], 'aed' => $btSet['aed'], 'on' => $btSet['on'], 'pairs' => (object)$btSet['pairs']]) . ',"together":' . fomaxo_json((object)$together) . ',"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
 
 /* Automatic Instagram reels (admin → Products → Videos): at most once an hour, after the visitor already has the answer above */
 if ($pdo && is_file(dirname(__DIR__) . '/fomaxo-instagram.php') && time() - (int)fomaxo_setting($pdo, 'ig_sync_at') >= 3600) {
