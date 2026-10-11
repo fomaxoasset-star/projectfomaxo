@@ -1132,7 +1132,8 @@ if (isset($_GET['videos'])) {
       if ($pd) { @chmod("$dir/$name", 0644); @rmdir($pd); }
       $cover = ''; $c = $_FILES['cover'] ?? null;
       if ($c && ($c['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) $cover = fx_save_photo($c['tmp_name'], ($prod ?: 'fomaxo') . '-cover') ?: '';
-      fx_vid_note("vid/$name", ['how' => substr((string)($_POST['how'] ?? 'as is'), 0, 40), 'sent_type' => (string)($f['type'] ?? ''), 'mime' => $mime, 'browser' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160)]);
+      @file_put_contents(dirname(__DIR__) . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | upload ' . $name . ' ' . round(filesize("$dir/$name") / 1048576, 1) . ' MB | ' . substr(preg_replace('/[^a-z0-9 .:\/_=,%()-]+/i', '', (string)($_POST['how'] ?? 'as is')), 0, 120) . ' | ' . substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160) . "\n", FILE_APPEND | LOCK_EX);   // so a video that was not made smaller can be looked into
+      fx_vid_note("vid/$name", ['how' => substr((string)($_POST['how'] ?? 'as is'), 0, 120), 'sent_type' => (string)($f['type'] ?? ''), 'mime' => $mime, 'browser' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160)]);
       array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => $cover, 'product' => $prod, 'on' => true] + ($words !== '' ? ['words' => $words] : []) + (($_POST['shape'] ?? '') === '169' ? ['wide' => true] : []));
       flash('Video added. It shows on the home page within a minute.', true);
     } elseif ($at === false) { flash('Please try again.'); go($back); }

@@ -6,34 +6,36 @@
   var f = document.querySelector('form[data-vshrink]'); if (!f) return;
   var inp = f.querySelector('input[type=file][name=video]'), max = 500 * 1048576, MB = 1048576, note = f.querySelector('.vsh'), btn = f.querySelector('.btn');
   var mime = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'].filter(function (m) { return window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m); })[0];
-  var pct = -1, say = function (t) { note.hidden = false; note.querySelector('span').textContent = t; var m = /smaller… (\d+)%/.exec(t); if (m) pct = +m[1]; };
+  var why = '', pct = -1, say = function (t) { note.hidden = false; note.querySelector('span').textContent = t; var m = /smaller… (\d+)%/.exec(t); if (m) pct = +m[1]; };
   var GOAL = 4.6 * MB * 8;   // bits: every made-smaller video lands under 5 MB
   var rate = function (sec) { return Math.max(400000, Math.min(5000000, Math.floor(GOAL / Math.max(1, sec || 30)) - 96000)); };   // video bits per second for that length (96 kbit/s is the sound)
   var tooBig = function (file) { alert('This video is ' + Math.round(file.size / MB) + ' MB. Please use one under ' + Math.round(max / MB) + ' MB.'); };
   /* fast: re-encode from the file itself, no playing; null = this browser can't, use the slow way */
   function fast(file, scale) {
-    if (!window.VideoEncoder || !window.AudioEncoder) return Promise.resolve(null);
+    if (!window.VideoEncoder) { why = 'no VideoEncoder'; return Promise.resolve(null); }
     var M = null, conv = null, src = null;
     return import(new URL('mediabunny.js?v=1.59.1', location.href).href).then(function (m) {
       M = m; src = new M.Input({source: new M.BlobSource(file), formats: M.ALL_FORMATS});
-      return Promise.all([src.getPrimaryVideoTrack(), src.computeDuration().catch(function () { return 0; })]);
+      return Promise.all([src.getPrimaryVideoTrack(), src.computeDuration().catch(function () { return 0; }), src.getPrimaryAudioTrack().catch(function () { return null; })]);
     }).then(function (r) {
-      var t = r[0], br = Math.max(300000, Math.round(rate(r[1]) * (scale || 1))); if (!t) return null;
+      var t = r[0], at = r[2], br = Math.max(300000, Math.round(rate(r[1]) * (scale || 1))); if (!t) { why = 'no video track'; return null; }
       var w = t.displayWidth, h = t.displayHeight, k = Math.min(1, (br < 2500000 ? 1280 : 1920) / Math.max(w, h));
       w = Math.round(w * k / 2) * 2; h = Math.round(h * k / 2) * 2;
-      return Promise.all([M.getFirstEncodableVideoCodec(['avc', 'hevc', 'vp9'], {width: w, height: h}), M.getFirstEncodableAudioCodec(['aac', 'opus'])]).then(function (cs) {
-        if (!cs[0] || !cs[1]) return null;
+      return Promise.all([M.getFirstEncodableVideoCodec(['avc', 'hevc', 'vp9'], {width: w, height: h}), window.AudioEncoder ? M.getFirstEncodableAudioCodec(['aac', 'opus']).catch(function () { return null; }) : null]).then(function (cs) {
+        if (!cs[0]) { why = 'no video encoder ' + w + 'x' + h; return null; }
+        var au = cs[1] ? {codec: cs[1], bitrate: 96000} : at ? {codec: at.codec} : undefined;   // no sound encoder (some Safari): the sound is copied as it is
         var out = new M.Output({format: new M.Mp4OutputFormat({fastStart: 'in-memory'}), target: new M.BufferTarget()});
         return M.Conversion.init({input: src, output: out, showWarnings: false,
           video: {width: w, height: h, fit: 'contain', codec: cs[0], bitrate: br, forceTranscode: true},
-          audio: {codec: cs[1], bitrate: 96000}}).then(function (c) {
-          conv = stopNow = c; if (!c.isValid) return null;
+          audio: au}).then(function (c) {
+          conv = stopNow = c; if (!c.isValid) { why = 'not valid ' + c.discardedTracks.map(function (d) { return d.reason; }).join(' '); return null; }
+          if (at && c.discardedTracks.some(function (d) { return d.track.type === 'audio'; })) { why = 'sound would be lost'; return null; }
           c.onProgress = function (p) { say('Making the video smaller… ' + Math.min(99, Math.round(p * 100)) + '%. Keep this page open.'); };
           say('Making the video smaller… 0%. Keep this page open.');
           return c.execute().then(function () { var b = out.target.buffer; return b && b.byteLength ? new Blob([b], {type: 'video/mp4'}) : null; });
         });
       });
-    }).catch(function () { try { conv && conv.cancel(); } catch (e) {} return null; });
+    }).catch(function (e) { why = 'error ' + String(e && (e.message || e.name) || e).slice(0, 60); try { conv && conv.cancel(); } catch (x) {} return null; });
   }
   function shrink(file) {
     return new Promise(function (ok, no) {
@@ -112,21 +114,21 @@
     var can = mime && HTMLCanvasElement.prototype.captureStream;
     if (!big || (!can && !window.VideoEncoder)) { if (max && file.size > max) { tooBig(file); return; } send(null); return; }
     btn.disabled = true; setTimeout(function () { btn.textContent = 'Please wait…'; });
-    /* making it smaller must be quick: no progress for 10 seconds, under 10% after 20 seconds, or a tap on Skip = upload the original instead (in pieces) */
+    /* making it smaller: no progress for 45 seconds, or a tap on Skip = upload the original instead (in pieces) */
     var t0 = Date.now(), last = -1, moved = t0, bail, gaveUp = new Promise(function (ok) { bail = ok; });
     var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; sk.onclick = function () { bail(); }; note.appendChild(sk);
-    var dog = setInterval(function () { var now = Date.now(); if (pct !== last) { last = pct; moved = now; } if (now - moved > 10000 || (now - t0 > 20000 && pct < 10)) bail(); }, 1000);
+    var dog = setInterval(function () { var now = Date.now(); if (pct !== last) { last = pct; moved = now; } if (now - moved > 45000) bail(); }, 1000);
     var quit = false; gaveUp.then(function () { quit = true; clearInterval(dog); try { stopNow && stopNow.cancel(); } catch (e) {} });
     var shrunk = fast(file).then(function (b) {   // still over 5 MB (some phones' encoders overshoot): once more, with the quality lowered by just that much
       if (!b || b.size <= 5 * MB || quit) return b; t0 = Date.now(); return fast(file, 4.6 * MB / b.size).then(function (c) { return c && c.size < b.size ? c : b; });
     }).then(function (b) { return b && b.size < file.size ? playable(b).then(function (y) { if (y) how = 'fast ' + b.type; return y ? b : null; }) : null; })
       .then(function (b) { if (quit) return Promise.reject(); return b || (can ? shrink(file).then(function (r) { return playable(r).then(function (y) { if (y) how = 'recorded ' + r.type; return y ? r : Promise.reject(); }); }) : Promise.reject()); });
     shrunk.catch(function () {});
-    Promise.race([shrunk, gaveUp.then(function () { how = 'as is (skipped)'; return Promise.reject(); })]).then(function (b) {
+    Promise.race([shrunk, gaveUp.then(function () { how = 'as is (skipped at ' + pct + '%)'; return Promise.reject(); })]).then(function (b) {
       clearInterval(dog); sk.remove();
       send(new File([b], file.name.replace(/\.\w+$/, '') + '.' + (/mp4/.test(b.type) ? 'mp4' : 'webm'), {type: b.type}));
     }, function () {
-      clearInterval(dog); sk.remove(); bail();
+      clearInterval(dog); sk.remove(); bail(); if (how === 'as is') how = 'as is (' + (why || 'slow way failed') + ')';
       if (max && file.size > max) { btn.disabled = false; btn.textContent = 'Upload'; note.hidden = true; tooBig(file); return; }
       send(null);
     });
