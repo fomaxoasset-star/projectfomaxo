@@ -3302,7 +3302,7 @@ function fragrances(q){
 /* "612 people bought this week": different customers who really bought it in the last 7 days, from real orders (products.php sends it only above 5; never a made-up number) */
 let SOLD = {};
 const soldN = (id, s) => +((SOLD[id] || {})[s]) || 0;   // bottles of that one size (10ml, 50ml, 100ml each counted on their own)
-const soldKey = (p, s) => p.kind === 'set' ? 'set' : s;   // the Discovery Set counts as one box, whichever set size
+const soldKey = (p, s) => s;   // every choice on its own: 10ml, 50ml, 100ml, and the Discovery Set of 3 / of 5
 const soldHTML = (id, s) => soldN(id, s) > 0 ? `${ICON.bag}<span>${soldN(id, s)} purchased this week</span>` : '';
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
