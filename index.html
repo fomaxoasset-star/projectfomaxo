@@ -463,8 +463,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .also-row>.card{height:auto;min-width:0}
 .also-nav{display:none}
 @media(max-width:1100px){.also-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
-/* phone: all of them at once, 2 a row, short cards (name, price, sizes, buttons) */
-@media(max-width:600px){.also-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 12px}.also-row .desc,.also-row .card-sold,.also-row .media .badge{display:none}.also-row>.card{gap:10px}.also-row .row1{flex-direction:column;align-items:flex-start;gap:4px}.also-row .row1 h3{font-size:14px}.also-row .acts{grid-template-columns:minmax(0,1fr);display:grid;gap:8px}.also-row .acts .btn{width:100%;padding-left:6px;padding-right:6px}.also-row .chips{flex-wrap:nowrap;gap:4px}.also-row .chip{padding:5px 6px;font-size:11px;letter-spacing:.04em;min-width:0}}
+@media(max-width:600px){.also-row{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:4px;gap:18px}.also-row::-webkit-scrollbar{display:none}.also-row>.card{flex:0 0 80%;scroll-snap-align:start}}
 .rec{position:relative;min-width:0;flex:0 0 calc((100% - 30px) / 3.6);scroll-snap-align:start}
 .rec a{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;text-align:left}
 .rec img{width:100%;max-width:100%;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
