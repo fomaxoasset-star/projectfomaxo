@@ -466,11 +466,13 @@ function fx_order_trash($pdo, $no) {
   if (!$o || str_starts_with($no, 'CARD-')) return false;
   $took = (int)$o['stock_taken'] === 1 && fomaxo_stock_move($no, true);
   $o['stock_taken'] = $took ? 1 : (int)$o['stock_taken'];   // as it was, for Put back
+  $o['_web'] = fx_trash_web($pdo, $no);   // its customer's checkout record in Analytics, kept with it for Put back
   try {
     $pdo->beginTransaction();
     $pdo->prepare('REPLACE INTO fx_orders_trash (order_no, trashed_at, created_at, name, phone, total, payment, status, row_json) VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?)')
         ->execute([$no, $o['created_at'], $o['name'], $o['phone'], $o['total'], $o['payment'], $o['status'], json_encode($o, JSON_UNESCAPED_UNICODE)]);
     $pdo->prepare('DELETE FROM fx_orders WHERE order_no = ?')->execute([$no]);
+    fx_trash_web_drop($pdo, $no, $o['_web']);
     if (preg_match('/^FMX-(\d+)$/', $no, $m) && (int)$m[1] > (int)fomaxo_setting($pdo, 'trash_max')) fomaxo_setting($pdo, 'trash_max', $m[1]);
     $pdo->commit(); return true;
   } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); if ($took) fomaxo_stock_move($no); error_log('FOMAXO trash: ' . $e->getMessage()); return false; }
@@ -479,17 +481,58 @@ function fx_order_restore($pdo, $no) {
   $s = $pdo->prepare('SELECT row_json FROM fx_orders_trash WHERE order_no = ?'); $s->execute([$no]); $o = json_decode((string)$s->fetchColumn(), true);
   if (!is_array($o)) return false;
   $cols = array_column($pdo->query('SHOW COLUMNS FROM fx_orders')->fetchAll(PDO::FETCH_ASSOC), 'Field');
+  $web = (array)($o['_web'] ?? []);
   $o = array_intersect_key($o, array_flip($cols)); $took = !empty($o['stock_taken']); $o['stock_taken'] = 0;
   try {
     $pdo->beginTransaction();
     $pdo->prepare('INSERT INTO fx_orders (' . implode(', ', array_keys($o)) . ') VALUES (' . implode(',', array_fill(0, count($o), '?')) . ')')->execute(array_values($o));
+    foreach (['fx_leads' => $web['leads'] ?? []] as $t => $rows) {   // its customer's checkout record comes back too
+      if (!$rows) continue; $tc = array_flip(array_column($pdo->query("SHOW COLUMNS FROM $t")->fetchAll(PDO::FETCH_ASSOC), 'Field'));
+      foreach ($rows as $r) { $r = array_intersect_key((array)$r, $tc); if ($r) $pdo->prepare("INSERT IGNORE INTO $t (" . implode(', ', array_keys($r)) . ') VALUES (' . implode(',', array_fill(0, count($r), '?')) . ')')->execute(array_values($r)); }
+    }
     $pdo->prepare('DELETE FROM fx_orders_trash WHERE order_no = ?')->execute([$no]);
     $pdo->commit();
   } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('FOMAXO put back: ' . $e->getMessage()); return false; }
   if ($took) fomaxo_stock_move($no);
   return true;
 }
-function fx_trash_count($pdo) { try { return (int)$pdo->query('SELECT COUNT(*) FROM fx_orders_trash')->fetchColumn(); } catch (Throwable $e) { return 0; } }
+/* a trashed order's customer leaves Analytics too (Left at checkout and its Excel). Its purchase still counts: the Purchased step in Analytics,
+   bottles sold on Products and "X people bought this year" (fx_trash_sold) */
+function fx_trash_web($pdo, $no) {
+  $w = ['leads' => []];
+  try { $s = $pdo->prepare('SELECT * FROM fx_leads WHERE order_no = ?'); $s->execute([$no]); $w['leads'] = $s->fetchAll(PDO::FETCH_ASSOC); } catch (Throwable $e) {}
+  return $w;
+}
+function fx_trash_web_drop($pdo, $no, $w) {
+  if ($w['leads'] ?? []) $pdo->prepare('DELETE FROM fx_leads WHERE order_no = ?')->execute([$no]);
+}
+/* trashed orders that were real purchases (New, Paid or Delivered, not a test), as [lines_json, phone, created_at]: added to the purchase counts */
+function fx_trash_sold($pdo, $from = null, $to = null) {
+  $out = [];
+  try { foreach ($pdo->query('SELECT row_json FROM fx_orders_trash') as $t) {
+    $o = json_decode((string)$t['row_json'], true);
+    if (!is_array($o) || !empty($o['test']) || !in_array($o['status'] ?? '', ['New', 'Paid', 'Delivered'], true) || empty($o['lines_json'])) continue;
+    if (($from !== null && $o['created_at'] < $from) || ($to !== null && $o['created_at'] > $to)) continue;
+    $out[] = ['lines_json' => $o['lines_json'], 'phone' => (string)($o['phone'] ?? ''), 'created_at' => (string)$o['created_at']];
+  } } catch (Throwable $e) {}
+  return $out;
+}
+/* orders trashed before Analytics was cleared with them: cleared once, kept with the order for Put back */
+function fx_trash_web_sweep($pdo) {
+  if (fomaxo_setting($pdo, 'trash_web') === '1') return;   // (the first version also took the Purchased step out; it now stays)
+  try {
+    foreach ($pdo->query('SELECT order_no, row_json FROM fx_orders_trash')->fetchAll(PDO::FETCH_ASSOC) as $t) {
+      $o = json_decode((string)$t['row_json'], true); if (!is_array($o) || isset($o['_web'])) continue;
+      $o['_web'] = fx_trash_web($pdo, $t['order_no']);
+      $pdo->beginTransaction();
+      $pdo->prepare('UPDATE fx_orders_trash SET row_json = ? WHERE order_no = ?')->execute([json_encode($o, JSON_UNESCAPED_UNICODE), $t['order_no']]);
+      fx_trash_web_drop($pdo, $t['order_no'], $o['_web']);
+      $pdo->commit();
+    }
+    fomaxo_setting($pdo, 'trash_web', '1');
+  } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('FOMAXO trash sweep: ' . $e->getMessage()); }
+}
+function fx_trash_count($pdo) { fx_trash_web_sweep($pdo); try { return (int)$pdo->query('SELECT COUNT(*) FROM fx_orders_trash')->fetchColumn(); } catch (Throwable $e) { return 0; } }
 
 /* Changes a few fields of an order (ref, status …). */
 function fomaxo_order_set($no, $fields) {
