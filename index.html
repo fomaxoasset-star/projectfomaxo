@@ -2310,9 +2310,10 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 .reel{position:fixed;inset:0;z-index:500;background:#000;color:#f2ebdd}
 html[data-mode="light"] .reel{background:#1b1712}
 .reel-on .toast{z-index:510}
-.rl-track{position:absolute;inset:0;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.rl-track{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior:contain;direction:ltr}   /* videos sit side by side: swipe left / right */
+html[dir="rtl"] .rl-s{direction:rtl}
 .rl-track::-webkit-scrollbar{display:none}
-.rl-s{height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:grid;place-items:center}
+.rl-s{flex:0 0 100%;width:100%;height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:grid;place-items:center}
 .rl-stage{position:relative;height:100%;width:100%;overflow:hidden;background:#000}
 .rl-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .rl-s.wide .rl-stage video{object-fit:contain}   /* 16:9: the whole picture shows, the product card sits under it */
@@ -2351,7 +2352,7 @@ html[data-mode="light"] .reel{background:#1b1712}
   .rl-s.wide .rl-stage{height:auto;width:min(calc(100% - 180px),calc((100vh - 40px) * 16 / 9));aspect-ratio:16/9}
   .rl-s.wide .rl-cards{left:auto;width:min(380px,calc(100% - 24px))}
   .rl-top{left:auto;right:24px;top:20px;flex-direction:column;gap:10px}
-  .rl-nav{display:flex;flex-direction:column;gap:10px;position:fixed;right:24px;top:50%;transform:translateY(-50%);z-index:3}
+  .rl-nav{display:block}.rl-nav button{position:fixed;top:50%;transform:translateY(-50%);z-index:3;width:52px;height:52px}.rl-nav button[data-rl="-1"]{left:24px}.rl-nav button[data-rl="1"]{right:24px}.rl-nav svg{width:22px;height:22px}
   .rl-nav button[disabled]{opacity:.3;cursor:default}
 }
 </style>
@@ -4594,6 +4595,8 @@ const VI = {
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   on: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.6 7.6 0 0 1 0 11"/></svg>',
   off: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15 5l-7 7 7 7"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 5l7 7-7 7"/></svg>',
   up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 15l6-6 6 6"/></svg>',
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 9l6 6 6-6"/></svg>'
 };
@@ -4660,14 +4663,14 @@ function openReel(i){
   el.id = 'reel'; el.className = 'reel'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Shop the video');
   el.innerHTML = `<div class="rl-track">${l.map(reelSlide).join('')}</div>
     <div class="rl-top"><button type="button" class="rl-snd" aria-label="Sound on">${VI.off}</button><button type="button" class="rl-x" aria-label="Close">${VI.x}</button></div>
-    <div class="rl-nav"><button type="button" data-rl="-1" aria-label="Previous video">${VI.up}</button><button type="button" data-rl="1" aria-label="Next video">${VI.down}</button></div>`;
+    <div class="rl-nav"><button type="button" data-rl="-1" aria-label="Previous video">${VI.left}</button><button type="button" data-rl="1" aria-label="Next video">${VI.right}</button></div>`;
   document.body.appendChild(el); document.body.classList.add('lock', 'reel-on');
   try { history.pushState({reel: 1}, ''); } catch(e) {}
   const track = $('.rl-track', el), slides = $$('.rl-s', el);
   const lent = [];   // the row's videos are already loaded: the player borrows them, so the tapped video plays at once (given back on close)
   $$('#vrow .vt').forEach(t => { const rv = $('video', t), sv = slides[+t.dataset.vi] && $('video', slides[+t.dataset.vi]); if (!rv || !rv.src || !sv) return; const ph = document.createComment(''); rv.before(ph); sv.replaceWith(rv); lent.push([ph, rv]); });
   let cur = -1;
-  const go = k => { k = Math.max(0, Math.min(slides.length - 1, k)); track.scrollTo({top: k * track.clientHeight, behavior: 'smooth'}); };
+  const go = k => { k = Math.max(0, Math.min(slides.length - 1, k)); track.scrollTo({left: k * track.clientWidth, behavior: 'smooth'}); };
   const act = k => { if (k === cur) return; cur = k;
     const sb = $('.rl-snd', el); if (sb) sb.hidden = !$('video', slides[k]);   // Instagram's player has its own sound
     slides.forEach((s, n) => { const v = $('video', s);
@@ -4677,13 +4680,14 @@ function openReel(i){
     $$('.rl-nav button', el).forEach(b => b.disabled = (+b.dataset.rl < 0 && k === 0) || (+b.dataset.rl > 0 && k === slides.length - 1));
   };
   const sio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) act(+e.target.dataset.k); }), {root: track, threshold: .6});
-  track.scrollTop = i * track.clientHeight; act(i);
+  track.scrollLeft = i * track.clientWidth; act(i);
   slides.forEach(s => sio.observe(s));
   const snd = $('.rl-snd', el);
   snd.onclick = () => { reelMuted = !reelMuted; snd.innerHTML = reelMuted ? VI.off : VI.on; snd.setAttribute('aria-label', reelMuted ? 'Sound on' : 'Sound off'); const v = $('video', slides[cur]); if (!v) return; v.muted = reelMuted; if (v.paused) v.play().catch(() => {}); };
   snd.innerHTML = reelMuted ? VI.off : VI.on;
   const close = back => { sio.disconnect(); lent.forEach(([ph, v]) => { v.pause(); v.muted = true; ph.replaceWith(v); }); el.remove(); document.body.classList.remove('lock', 'reel-on'); removeEventListener('keydown', key); removeEventListener('popstate', pop); removeEventListener('hashchange', hc); if (back && history.state && history.state.reel) history.back(); bindVids(); };
-  const key = e => { if (e.key === 'Escape') close(true); else if (e.key === 'ArrowDown') { e.preventDefault(); go(cur + 1); } else if (e.key === 'ArrowUp') { e.preventDefault(); go(cur - 1); } };
+  const key = e => { if (e.key === 'Escape') close(true); else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); go(cur + 1); } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); go(cur - 1); } };
+  let wt = 0; track.addEventListener('wheel', e => { if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || Math.abs(e.deltaY) < 8) return; e.preventDefault(); const t = Date.now(); if (t - wt < 600) return; wt = t; go(cur + (e.deltaY > 0 ? 1 : -1)); }, {passive: false});   // a mouse wheel (up / down) also moves to the next or previous video; a trackpad swipes sideways by itself
   const pop = () => close(false), hc = () => close(false);
   addEventListener('keydown', key); addEventListener('popstate', pop); addEventListener('hashchange', hc);
   $('.rl-x', el).onclick = () => close(true);
