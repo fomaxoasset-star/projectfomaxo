@@ -2901,12 +2901,15 @@ function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'
 // a Buy now item left from before this change goes into the bag too (unless we're back from paying for it)
 if (buyLines.length && !/src=buy/.test(location.hash)) { buyLines.forEach(l => { const key = (l.picks || []).join('|'); if (!cart.some(x => x.id === l.id && String(x.opt) === String(l.opt) && (x.picks || []).join('|') === key)) cart.push(l); }); clearBuy(); try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} }
 // "You may also like" in the bag: every size of every fragrance the customer doesn't have yet in that size (AJAY 2026-10-11: show the 100ml and 50ml too),
-// biggest size first (100ml, then 50ml, then 10ml minis), King always last; the Discovery Set has its own "Not sure yet?" link
+// biggest size first (100ml, then 50ml, then 10ml minis), King always last; the Discovery Set has its own "Not sure yet?" link.
+// Within each size the order follows real orders (AJAY 2026-10-11: change it every time, by customer, for the most sales): first what people bought together
+// with what's in this bag, then the best sellers, then the rest in a random order each visit (bagRank, same data as the product page's alsoOrder).
 function bagRecs(){
   const haveSz = new Set(cart.map(l => l.id + '/' + l.opt));
-  const frag = S.products.filter(p => p.kind !== 'set' && p.prices).sort((a, b) => (a.tier === 'elite') - (b.tier === 'elite'));
+  const frag = S.products.filter(p => p.kind !== 'set' && p.prices);
+  const rank = bagRank(cart.map(l => l.id)), r = p => rank(p.id);
   const sizes = [...new Set(frag.flatMap(p => p.sizes.filter(s => typeof s === 'number')))].sort((a, b) => b - a);
-  const recs = sizes.flatMap(sz => frag.filter(p => p.sizes.includes(sz) && hasPrice(p.prices[sz]) && !haveSz.has(p.id + '/' + sz)).map(p => [p, sz]))
+  const recs = sizes.flatMap(sz => frag.filter(p => p.sizes.includes(sz) && hasPrice(p.prices[sz]) && !haveSz.has(p.id + '/' + sz)).sort((a, b) => r(a) - r(b)).map(p => [p, sz]))
     .sort((a, b) => (a[0].id === 'king') - (b[0].id === 'king'));
   if (!recs.length) return '';
   return `<div class="recs"><div class="recs-h"><h5>You may also like</h5><span class="recs-nav"><button type="button" data-recscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-recscroll="1" aria-label="Scroll for more">›</button></span></div><div class="recs-row">${recs.map(([p, sz]) => `<div class="rec">
@@ -3320,6 +3323,13 @@ function alsoOrder(id){
   add((ALSO.pairs || {})[id]); add(ALSO.top);
   const r = x => x.id in rank ? rank[x.id] : 1e4 + (ALSO_RND[x.id] ??= Math.random());
   return S.products.filter(x => x.id !== id).sort((a, b) => r(a) - r(b));
+}
+// the bag's order: products bought together with what's in the bag (best first), then the best sellers, then a random order kept for this visit
+function bagRank(ids){
+  const rank = {}, add = l => (l || []).forEach(x => { if (!(x in rank)) rank[x] = Object.keys(rank).length; });
+  let pairs = [];
+  try { ids.forEach(id => (ALSO.pairs || {})[id] && pairs.push((ALSO.pairs || {})[id])); for (let i = 0; pairs.some(l => l.length > i); i++) pairs.forEach(l => l[i] && add([l[i]])); add(ALSO.top); } catch(e) {}
+  return id => id in rank ? rank[id] : 1e4 + (ALSO_RND[id] ??= Math.random());
 }
 let TOGETHER = {}; try { TOGETHER = JSON.parse(localStorage.getItem('fomaxo_together') || '{}') || {}; } catch(e) {}
 const btOK = p => p && !p.hidden && p.kind !== 'set' && !QTY_DISCOUNT_SKIP.includes(p.id);
