@@ -812,6 +812,8 @@ function fomaxo_stock_problem($lines, $catalog) {
   }
   return null;
 }
+/* Most of one item (product + size) a customer can order online: its stock, never more than this (AJAY 2026-10-11). Same number as MAX_PER_ITEM in index.html. */
+const FX_MAX_PER_ITEM = 30;
 /* One order at a time between the stock check and taking it out of stock, so two customers can't both buy the last bottles.
    MySQL lets go of it by itself if the page stops. */
 function fomaxo_stock_lock($on = true) {
