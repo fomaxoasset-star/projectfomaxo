@@ -29,9 +29,10 @@ function fx_list_hide($pdo, $setting, $no) {
   fomaxo_setting($pdo, $setting, json_encode($h));
 }
 
-/* the order's coupon: REFILL- + 5 letters, always the same for that order */
+/* the order's coupon: REFILL- + 5 letters, always the same for that order (numbers given again after the reset of 11/10/2026 get new codes) */
+function fx_refill_salt($pdo) { static $r = null; return $r ??= (($v = (string)fomaxo_setting($pdo, 'orders_reset')) !== '' ? "|$v" : ''); }
 function fx_refill_code($pdo, $no) {
-  $abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; $hx = hash_hmac('sha256', 'refill|' . $no, (string)fomaxo_setting($pdo, 'admin_hash')); $c = 'REFILL-';
+  $abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; $hx = hash_hmac('sha256', 'refill|' . $no . fx_refill_salt($pdo), (string)fomaxo_setting($pdo, 'admin_hash')); $c = 'REFILL-';
   for ($i = 0; $i < 5; $i++) $c .= $abc[hexdec(substr($hx, $i * 2, 2)) % strlen($abc)];
   return $c;
 }

@@ -35,7 +35,7 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 26) return;
+  if ($ver >= 27) return;
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -173,7 +173,89 @@ function fomaxo_db_schema($pdo) {
     $set->execute([fomaxo_json($d), 'oldmoney']);
   }
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '26')");
+  /* v27: every order before 11/10/2026 cleared, numbers start again at FMX-1001 (fx_orders_reset); a new, empty store has nothing to clear */
+  if ($ver > 0 && !fx_orders_reset($pdo)) return;   // tried again on the next visit; nothing is deleted until the backup is safe
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '27')");
 }
+
+/* AJAY, 11/10/2026: clear every order (Orders and Trash) and start again at FMX-1001. Reviews stay.
+   1. A full copy goes to domains/fomaxo.com/fomaxo-backups/orders-before-reset-2026-10-11/ (above public_html, never touched by deploys):
+      orders.json (everything), orders.csv (Excel), orders.sql, the order logs and reviews.json. Nothing is deleted unless that copy reads back whole.
+   2. Orders and Trash are emptied in one go. Old numbers that live on elsewhere become OLD-FMX-… (Analytics checkouts, review request and
+      refill lists, reviews, review links) so a new FMX-1001 is never mixed up with the old one; an old customer's review link still works.
+      Coupons used on the old orders stay used (setting coupon_uses_old). Stock, products, expenses, coupons and reviews are not touched. */
+function fx_orders_reset($pdo) {
+  if (fomaxo_setting($pdo, 'orders_reset_files') === '1') return true;
+  if ((int)$pdo->query("SELECT GET_LOCK('fx_orders_reset', 0)")->fetchColumn() !== 1) return false;   // another visit is doing it
+  try { return fx_orders_reset_run($pdo); }
+  catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('FOMAXO orders reset: ' . $e->getMessage()); return false; }
+  finally { $pdo->query("SELECT RELEASE_LOCK('fx_orders_reset')"); }
+}
+function fx_orders_reset_run($pdo) {
+  if (fomaxo_setting($pdo, 'orders_reset_files') === '1') return true;
+  $dir = dirname(__DIR__) . '/fomaxo-backups/orders-before-reset-2026-10-11';
+  $old = fn($no) => preg_replace('/(^|:)(FMX-\d+)$/', '$1OLD-$2', (string)$no);
+  if ((string)fomaxo_setting($pdo, 'orders_reset') === '') {
+    /* 1. the backup */
+    $orders = $pdo->query('SELECT * FROM fx_orders ORDER BY id')->fetchAll(PDO::FETCH_ASSOC);
+    $trash = []; try { $trash = $pdo->query('SELECT * FROM fx_orders_trash ORDER BY order_no')->fetchAll(PDO::FETCH_ASSOC); } catch (Throwable $e) {}
+    $leads = []; try { $leads = $pdo->query("SELECT * FROM fx_leads WHERE order_no IS NOT NULL AND order_no <> ''")->fetchAll(PDO::FETCH_ASSOC); } catch (Throwable $e) {}
+    $sets = []; foreach (['trash_max', 'rvreq_sent', 'rvreq_sent_hide', 'rvreq_tries', 'refill_sent', 'refill_sent_hide', 'refill_tries', 'wa_sent'] as $k) $sets[$k] = fomaxo_setting($pdo, $k);
+    $cp = [];   // coupons used on these orders stay used: a one-use code is not given back
+    foreach ($orders as $o) if ((string)($o['coupon'] ?? '') !== '' && !(int)$o['test'] && !in_array($o['status'], ['Awaiting payment', 'Cancelled', 'Refunded'], true)) {
+      $cp[$o['coupon']]['n'] = ($cp[$o['coupon']]['n'] ?? 0) + 1; $cp[$o['coupon']]['ph'][] = fomaxo_phone9($o['phone']);
+    }
+    if (!is_dir($dir) && !@mkdir($dir, 0700, true)) return false;
+    $all = ['saved' => date('c'), 'orders' => $orders, 'trash' => $trash, 'leads' => $leads, 'settings' => $sets, 'coupons_used' => $cp];
+    if (!@file_put_contents("$dir/orders.json", json_encode($all, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT), LOCK_EX)) return false;
+    $back = json_decode((string)@file_get_contents("$dir/orders.json"), true);
+    if (!is_array($back) || count($back['orders'] ?? []) !== count($orders) || count($back['trash'] ?? []) !== count($trash)) return false;
+    /* the same orders for Excel (Trash ones at the end, marked) and as SQL */
+    $rows = array_merge(array_map(fn($o) => $o + ['in_trash' => ''], $orders),
+                        array_map(fn($t) => array_diff_key((array)json_decode((string)$t['row_json'], true), ['_web' => 1]) + ['in_trash' => 'Yes ' . $t['trashed_at']], $trash));
+    $head = []; foreach ($rows as $r) $head += array_flip(array_keys($r));
+    $f = @fopen("$dir/orders.csv", 'w'); if (!$f) return false;
+    fwrite($f, "\xEF\xBB\xBF"); fputcsv($f, array_keys($head));
+    foreach ($rows as $r) fputcsv($f, array_map(fn($k) => preg_replace('/^([=+\-@])/', "'$1", is_scalar($r[$k] ?? '') ? (string)($r[$k] ?? '') : json_encode($r[$k])), array_keys($head)));
+    fclose($f);
+    $sql = "-- FOMAXO orders before the reset of 11/10/2026\n";
+    foreach (['fx_orders' => $orders, 'fx_orders_trash' => $trash] as $t => $list) foreach ($list as $r)
+      $sql .= "INSERT INTO $t (" . implode(', ', array_keys($r)) . ') VALUES (' . implode(', ', array_map(fn($v) => $v === null ? 'NULL' : $pdo->quote((string)$v), $r)) . ");\n";
+    if (@file_put_contents("$dir/orders.sql", $sql, LOCK_EX) === false) return false;
+    foreach (['cash-on-delivery-orders.csv', 'orders.csv'] as $lf) if (is_file($src = dirname(__DIR__) . "/fomaxo-orders/$lf") && !@copy($src, "$dir/log-$lf")) return false;
+    if (is_file($src = dirname(__DIR__) . '/fomaxo-reviews/reviews.json') && !@copy($src, "$dir/reviews.json")) return false;
+    /* 2. clear, all or nothing */
+    $pdo->beginTransaction();
+    $pdo->exec('DELETE FROM fx_orders');
+    try { $pdo->exec('DELETE FROM fx_orders_trash'); } catch (Throwable $e) {}
+    if ($leads) $pdo->exec("UPDATE fx_leads SET order_no = CONCAT('OLD-', order_no) WHERE order_no REGEXP '^FMX-[0-9]+$'");
+    $pdo->exec("DELETE FROM fx_settings WHERE k = 'trash_max'");
+    foreach ($sets as $k => $v) if ($k !== 'trash_max' && is_array($j = json_decode((string)$v, true)) && $j) {
+      $n = []; foreach ($j as $key => $val) $n[$old($key)] = $val; fomaxo_setting($pdo, $k, json_encode($n));
+    }
+    if ($cp) fomaxo_setting($pdo, 'coupon_uses_old', json_encode($cp));
+    fomaxo_setting($pdo, 'orders_reset', date('Y-m-d H:i:s'));
+    $pdo->commit();
+  }
+  /* 3. reviews and review links: old order numbers become OLD-FMX-… (a link of a cancelled, refunded or test order: VOID-, it stays closed) */
+  $back = json_decode((string)@file_get_contents("$dir/orders.json"), true); if (!is_array($back)) return false;
+  $real = [];
+  foreach ($back['orders'] ?? [] as $o) if (!(int)$o['test'] && !in_array($o['status'], ['Awaiting payment', 'Cancelled', 'Refunded'], true)) $real[$o['order_no']] = 1;
+  require_once __DIR__ . '/reviews-lib.php';
+  $links = [];
+  foreach (glob(rv_dir('links') . '/*.json') ?: [] as $lf) {
+    $l = json_decode((string)@file_get_contents($lf), true);
+    if (!is_array($l) || ($l['no'] ?? '') === '' || preg_match('/^(OLD|VOID)-/', (string)$l['no'])) continue;
+    $links[basename($lf, '.json')] = $l['no']; $l['no'] = (isset($real[$l['no']]) ? 'OLD-' : 'VOID-') . $l['no'];
+    if (!@file_put_contents($lf, json_encode($l), LOCK_EX)) return false;
+  }
+  if ($links && !is_file("$dir/review-links.json")) @file_put_contents("$dir/review-links.json", json_encode($links, JSON_PRETTY_PRINT));
+  if (rv_change(function (&$list) use ($old) { foreach ($list as &$r) if (!empty($r['order'])) $r['order'] = $old($r['order']); unset($r); return true; }) !== true) return false;
+  fomaxo_setting($pdo, 'orders_reset_files', '1');
+  return true;
+}
+/* coupons used on orders cleared by the reset (coupon_uses_old): {code: {n: times used, ph: [mobiles]}} */
+function fx_coupon_old($pdo) { static $c = null; return $c ??= (json_decode((string)fomaxo_setting($pdo, 'coupon_uses_old'), true) ?: []); }
 /* real orders the owner has not opened yet: not test, not an unpaid card attempt, not cancelled or refunded */
 const FX_NEW_ORDER_SQL = "seen_at IS NULL AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')";
 function fx_new_orders($pdo) {
@@ -396,6 +478,7 @@ function fomaxo_save_order($o) {
 function fomaxo_log_missing($pdo) {
   $dir = dirname(__DIR__) . '/fomaxo-orders'; $out = [];
   $since = (string)$pdo->query('SELECT MIN(created_at) FROM fx_orders')->fetchColumn();
+  $rs = (string)fomaxo_setting($pdo, 'orders_reset'); if ($rs !== '' && ($since === '' || $since < $rs)) $since = $rs;   // orders cleared by the reset stay cleared
   $read = function ($file, $map) use (&$out) {
     if (!is_file($file) || !($fh = @fopen($file, 'r'))) return;
     if (fread($fh, 3) !== "\xEF\xBB\xBF") rewind($fh);   // the Excel mark at the start of the file
@@ -563,7 +646,7 @@ function fomaxo_coupon_norm($code) { return substr(preg_replace('/[^A-Z0-9_\-]/'
 /* orders that count as a use: placed and not cancelled, refunded, unpaid card attempts or test payments */
 function fomaxo_coupon_uses($pdo, $code) {
   $s = $pdo->prepare("SELECT COUNT(*) FROM fx_orders WHERE coupon = ? AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')");
-  $s->execute([$code]); return (int)$s->fetchColumn();
+  $s->execute([$code]); return (int)$s->fetchColumn() + (int)(fx_coupon_old($pdo)[$code]['n'] ?? 0);
 }
 function fomaxo_coupon_label($c) {
   if (($c['kind'] ?? '') === 'free') return 'Free ' . fomaxo_coupon_free_name($c);
@@ -602,7 +685,7 @@ function fomaxo_coupon_find($code, $phone = null) {
   if (!empty($c['phone']) && $phone !== null && fomaxo_phone9($phone) !== fomaxo_phone9($c['phone'])) return ['error' => 'This coupon code is for another mobile number.'];
   if (!empty($c['per_cust']) && $phone !== null && strlen(fomaxo_phone9($phone)) === 9) {   // one use per customer: this mobile has not used it on a placed order
     $s = $pdo->prepare("SELECT phone FROM fx_orders WHERE coupon = ? AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')"); $s->execute([$code]);
-    foreach ($s->fetchAll(PDO::FETCH_COLUMN) as $ph) if (fomaxo_phone9($ph) === fomaxo_phone9($phone)) return ['error' => 'This coupon code has already been used with this mobile number.'];
+    foreach (array_merge($s->fetchAll(PDO::FETCH_COLUMN), (array)(fx_coupon_old($pdo)[$code]['ph'] ?? [])) as $ph) if (fomaxo_phone9($ph) === fomaxo_phone9($phone)) return ['error' => 'This coupon code has already been used with this mobile number.'];
   }
   return ['code' => $c['code'], 'kind' => $c['kind'] === 'free' ? 'free' : ($c['kind'] === 'aed' ? 'aed' : 'pct'), 'amount' => (float)$c['amount'], 'min' => $c['min_order'] !== null ? (float)$c['min_order'] : 0,
           'label' => fomaxo_coupon_label($c), 'ends' => $ends ? str_replace(' ', 'T', $ends) . '+04:00' : null, 'stack' => !empty($c['stack'])]
