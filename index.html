@@ -157,6 +157,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .sec-head .t{display:flex;flex-direction:column;gap:18px;max-width:720px}
 .sec-head.c{justify-content:center;text-align:center}.sec-head.c .t{align-items:center}
 .page-fade{animation:pagein .9s var(--ease)}
+body.home .page-fade>section.sec:not(.vid-sec),body>footer{content-visibility:auto;contain-intrinsic-size:auto 900px}/* home sections lower down are only laid out and drawn as they come near the screen: much less work for a phone while the page opens */
 @keyframes pagein{from{opacity:0;transform:translateY(14px)}}
 
 /* ---------- buttons row, slow spin ---------- */
@@ -2627,7 +2628,7 @@ const SM = k => IMG_W[k] ? `assets/img/s/${k}.webp` : IMG(k);
 const CARD_SIZES = '(max-width:600px) 92vw, (max-width:1100px) 46vw, min(31vw, 500px)';
 /* laptops: product photos also come as 480px copies in assets/img/m/ (half the download of t/ on most laptop screens); a new photo without one just skips it.
    Photos 760px or smaller are sent as they are: their t/ copy is enlarged and heavier. */
-const IMG_M = new Set(["atelier","boutique-hq","boutique-people","boutique-about","boutique","discovery-1","discovery-2","discovery-3","dollar-1","dollar-2","dollar-3","dollar-4","dollar-main","dollar-main2","elite-card","elite-lounge-hq","elite-lounge","gift-1","gift-2-hq","gift-2","gift-set-1-hq","gift-set-1","gift-set-2-hq","gift-set-2","gift-set-3-hq","gift-set-3","gift-set-4-hq","gift-set-4","gift-set-5-hq","gift-set-5","gift-set-6-hq","gift-set-6","gift-set-7-hq","gift-set-7","gold-1","gold-2","gold-3","gold-main","gold-main2","king-1","king-2","king-3","king-4","king-5","king-main","matchacoco-1","oldmoney-50-v2","oldmoney-100-v2","royalcandy-100-v2","matchacoco-100-v2","passionsin-100-v2","matchacoco-100-main","oldmoney-50-main","royalcandy-100-main","matchacoco-10-1","matchacoco-10-2","matchacoco-100","matchacoco-2","matchacoco-3","matchacoco-main","matchacoco-main2","oldmoney-1","oldmoney-10-1","oldmoney-10-2","oldmoney-100","oldmoney-100b","oldmoney-2","oldmoney-3","oldmoney-main","passionsin-1","passionsin-10-1","passionsin-10-2","passionsin-10-3","passionsin-2","passionsin-3","passionsin-main","personal-care-poster","personal-care","royalcandy-1","royalcandy-10-1","royalcandy-10-2","royalcandy-10-3","royalcandy-100","royalcandy-2","royalcandy-main","runway","runway-couture","runway-couture-2","runway-personal-care","oldmoney-model"]);
+const IMG_M = new Set(["matchacoco-10-main","matchacoco-50-v2","oldmoney-10-main","passionsin-10-main","passionsin-50-v2","royalcandy-10-main","royalcandy-50-v2","atelier","boutique-hq","boutique-people","boutique-about","boutique","discovery-1","discovery-2","discovery-3","dollar-1","dollar-2","dollar-3","dollar-4","dollar-main","dollar-main2","elite-card","elite-lounge-hq","elite-lounge","gift-1","gift-2-hq","gift-2","gift-set-1-hq","gift-set-1","gift-set-2-hq","gift-set-2","gift-set-3-hq","gift-set-3","gift-set-4-hq","gift-set-4","gift-set-5-hq","gift-set-5","gift-set-6-hq","gift-set-6","gift-set-7-hq","gift-set-7","gold-1","gold-2","gold-3","gold-main","gold-main2","king-1","king-2","king-3","king-4","king-5","king-main","matchacoco-1","oldmoney-50-v2","oldmoney-100-v2","royalcandy-100-v2","matchacoco-100-v2","passionsin-100-v2","matchacoco-100-main","oldmoney-50-main","royalcandy-100-main","matchacoco-10-1","matchacoco-10-2","matchacoco-100","matchacoco-2","matchacoco-3","matchacoco-main","matchacoco-main2","oldmoney-1","oldmoney-10-1","oldmoney-10-2","oldmoney-100","oldmoney-100b","oldmoney-2","oldmoney-3","oldmoney-main","passionsin-1","passionsin-10-1","passionsin-10-2","passionsin-10-3","passionsin-2","passionsin-3","passionsin-main","personal-care-poster","personal-care","royalcandy-1","royalcandy-10-1","royalcandy-10-2","royalcandy-10-3","royalcandy-100","royalcandy-2","royalcandy-main","runway","runway-couture","runway-couture-2","runway-personal-care","oldmoney-model"]);
 const picSet = k => [IMG_M.has(k) && `assets/img/m/${k}.webp 480w`, IMG_W[k] > 760 && `assets/img/t/${k}.webp 720w`, `${IMG(k)} ${IMG_W[k]}w`].filter(Boolean).join(', ');
 /* larger photos (story, gift and Personal Care pictures): laptops get the 720px copy, phones the full photo, as before */
 const pic = k => `src="${IMG(k)}"` + (IMG_W[k] ? ` srcset="${picSet(k)}" sizes="(max-width:760px) 100vw, min(48vw, 680px)"` : '');
@@ -4622,12 +4623,12 @@ const VI = {
   up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 15l6-6 6 6"/></svg>',
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 9l6 6 6-6"/></svg>'
 };
-const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; if (!p) return ''; const k = imgFor(p, defaultSize(p)); return IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };
+const vidPoster = (v, full) => { if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; if (!p) return ''; const k = imgFor(p, defaultSize(p)); return !full && IMG_M.has(k) ? `assets/img/m/${k}.webp` : IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };   // a row tile gets the 480px copy; the full-screen player (full) the 720px one
 function vidSecHTML(){
   const l = vids(); if (!l.length) return '';
   return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
     <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
-      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `<video autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : v.v)}"></video>`}
+      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `<video autoplay muted playsinline loop preload="none" data-poster="${vidPoster(v)}" data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : v.v)}"></video>`}
       <span class="vt-play" aria-hidden="true">${VI.play}</span>
       ${p ? `<span class="vt-p"><img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now</i></span></span>`}</button>`; }).join('')}</div></div>`;
 }
@@ -4642,6 +4643,8 @@ function bindVids(){
     if (++kicks > 6 || !document.contains(tiles[0])) return clearInterval(kick);
     tiles.forEach(t => { const v = $('video', t); if (v && v.paused && onScreen(t)) { v.muted = true; v.play().then(() => { v.dataset.kick = 'ok'; t.classList.add('playing'); }).catch(e => { v.dataset.kick = e.name; }); } });
   }, 2000);   // the videos start by themselves as the page opens (autoplay, muted, looping)
+  const covers = () => tiles.forEach(t => { const v = $('video', t); if (v && v.dataset.poster) { v.poster = v.dataset.poster; delete v.dataset.poster; } });   // cover photos load only when the row is about a screen away, not with the first screen
+  if ('IntersectionObserver' in window) { const cio = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { cio.disconnect(); covers(); } }, {rootMargin: '100% 0px'}); cio.observe($('#vrow')); } else covers();
   const row = $('#vrow'), nav = $('.vr-nav');   // laptop: arrows when the videos are wider than the page
   if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => row.scrollBy({left: +b.dataset.vscroll * row.clientWidth * .8, behavior: 'smooth'})); }
   if (navigator.connection && navigator.connection.saveData) return;   // data saver: posters only until tapped
@@ -4682,7 +4685,7 @@ function reelCard(p){
 function reelSlide(v, k){
   const ps = vidProds(v).map(id => P[id]), name = ps.length ? ps[0].name : 'FOMAXO';
   return `<section class="rl-s${v.e ? ' emb' : ''}${v.wd ? ' wide' : ''}" data-k="${k}"><div class="rl-stage">
-    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video playsinline loop muted preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
+    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video playsinline loop muted preload="none" data-poster="${vidPoster(v, 1)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
     <span class="rl-pause" aria-hidden="true">${VI.play}</span>
     ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'Eau de Parfum · Unisex'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`
       : `<div class="rl-cards${ps.length > 1 ? ' many' : ''}">${ps.length > 1 ? `<p class="rl-cnt">${ps.length} products in this video · swipe</p>` : ''}<div class="rl-cs">${ps.map(reelCard).join('')}</div></div>`}
@@ -4706,9 +4709,12 @@ function openReel(i){
   const act = k => { if (k === cur) return; cur = k;
     const sb = $('.rl-snd', el); if (sb) sb.hidden = !$('video', slides[k]);   // Instagram's player has its own sound
     slides.forEach((s, n) => { const v = $('video', s);
+      if (v && v.dataset.poster && Math.abs(n - k) <= 1) { v.poster = v.dataset.poster; delete v.dataset.poster; }   // a cover photo only for this video and the ones either side
       if (!v) { const f = $('iframe', s); if (f && !f.src && Math.abs(n - k) <= 1) f.src = f.dataset.src; return; }   // Instagram's player: loaded when near, played by a tap on it
       if (n === k) { if (!v.src) v.src = v.dataset.src; v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
-      else { v.pause(); if (Math.abs(n - k) === 1 && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } } });   // the next and previous videos load now, so a swipe plays at once
+      else v.pause(); });
+    const cv = $('video', slides[k]), near = () => { if (cur !== k) return; [k + 1, k - 1].forEach(n => { const v = slides[n] && $('video', slides[n]); if (v && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } }); };   // the next video, then the previous one, load once this one is playing, so a swipe plays at once without slowing the start of this one
+    if (cv && cv.readyState < 3) { cv.addEventListener('playing', near, {once: true}); setTimeout(near, 2500); } else near();
     $$('.rl-nav button', el).forEach(b => b.disabled = (+b.dataset.rl < 0 && k === 0) || (+b.dataset.rl > 0 && k === slides.length - 1));
   };
   const sio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) act(+e.target.dataset.k); }), {root: track, threshold: .6});
