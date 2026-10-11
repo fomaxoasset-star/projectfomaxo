@@ -46,7 +46,7 @@ function fomaxo_price_order($in) {
     $qty = (int)($l['qty'] ?? 0);
     if (!isset($CATALOG[$id]) || !isset($CATALOG[$id]['prices'][$opt]) || $qty < 1)
       return ['error' => 'An item in your bag is no longer available. Please refresh and try again.'];
-    if ($qty > 99) return ['error' => 'You can order up to 99 of one item online. For a bigger order, please message us on WhatsApp.'];   // same limit as the bag
+    if ($qty > FX_MAX_PER_ITEM) return ['error' => 'You can order up to ' . FX_MAX_PER_ITEM . ' of one item online. For a bigger order, please message us on WhatsApp.'];   // same limit as the bag
     $p = $CATALOG[$id];
     $isSet = $p['kind'] === 'set';
     $name = "FOMAXO {$p['name']} — " . ($isSet ? "Set of $opt" : "{$opt}ml");
