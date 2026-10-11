@@ -186,6 +186,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .card .desc{font-size:14px;color:var(--muted);line-height:1.65;min-height:46px}
 .card .meta{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--dim)}
 .card .rate-row{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
+.card .card-sold{justify-content:flex-end;margin-bottom:-14px;line-height:1.2}   /* "X purchased this week" on the right, tight above the stars row (Arabic: on the left) */
 .card .crate{display:inline-flex;align-items:center;gap:8px;margin-left:auto;font-size:15px;font-weight:500;letter-spacing:.04em;color:var(--ivory);white-space:nowrap;font-style:normal}
 .card .crate .rw-stars.sm{font-size:18px;letter-spacing:2px}
 .card .crate.none .rw-s-bg{opacity:.75}
@@ -1200,7 +1201,7 @@ html{scroll-padding-top:calc(var(--ann-h,40px) + 80px)}
   .sec-head .t{gap:12px}
   .home-filters{padding:0 0 22px;margin-top:-6px}
   .grid,.grid.four{gap:44px}
-  .card{gap:14px}
+  .card{gap:14px} .card .card-sold{margin-bottom:-10px}
   .card .desc{min-height:0;margin-top:-2px}
   .card .acts{gap:8px}
   .card .acts .btn{min-height:48px}
