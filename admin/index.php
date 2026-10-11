@@ -375,7 +375,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .mlist .mn{grid-area:mn}.mlist .ms{grid-area:ms}.mlist .ma{grid-area:ma;color:var(--muted)}.mlist .ma div{display:inline;margin-left:4px}.mlist .ma div::before{content:"· "}.mlist .mo,.mlist .mv{align-self:end}.mlist .mo{grid-area:mo}.mlist .mo b{font-weight:600}.mlist .md{grid-area:md;font-size:11.5px}.mlist .mv{grid-area:mv;font-size:12px;color:var(--muted)}.mlist td.mo span,.mlist td.mv span{display:inline}
   }
 tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:center}.tsearch{flex:1 1 auto;max-width:320px;margin-left:auto;padding:7px 11px}.pagehead .tsearch+.btn{flex:none}.mmin{flex-wrap:wrap}.mmin input.amt{width:96px}
-.sp{display:flex;align-items:center;gap:10px}.sth{width:40px;height:40px;flex:none;border-radius:7px;object-fit:cover;background:var(--line)}
+.sp{display:flex;align-items:center;gap:10px}.sdrag{align-self:stretch;display:flex;align-items:center;padding:0 2px;margin-right:-4px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;color:var(--muted)}.sdrag:hover{color:var(--gold)}.stock tr.drag{position:relative;z-index:5;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.35);outline:1px solid var(--gold)}.stock tr.drag .sdrag{cursor:grabbing;color:var(--gold)}.pok{font-weight:600;color:var(--muted)}.pok.ok{color:var(--ok)}.pok.bad{color:var(--bad)}.sth{width:40px;height:40px;flex:none;border-radius:7px;object-fit:cover;background:var(--line)}
 .savebar{display:flex;align-items:center;gap:14px}.savebar .stock-help{flex:1;margin:0;font-size:12px;line-height:1.45}.savebar .btn{flex:none}
 .rseg{flex-wrap:wrap}.stars{color:var(--gold);letter-spacing:.06em;white-space:nowrap}.stars i{font-style:normal;color:var(--line)}
 .rfilter .vcount{margin:0;flex:1 1 100%;justify-content:center}.rfilter .vcount .em{font-size:12.5px;padding:4px 11px}.rfilter{margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rfilter select{max-width:240px;width:auto}.rfilter input{flex:1 1 220px;min-width:0;max-width:420px;padding:7px 10px}.rvlist{list-style:none;margin:0;padding:0}.rv{padding:10px 14px;border-bottom:1px solid var(--line);display:grid;gap:3px}.rv:last-child{border-bottom:0}.rv.off{opacity:.55}
@@ -1940,6 +1940,11 @@ if (isset($_GET['settings'])) {
 /* ---- stock and cost price: one row per product and size ---- */
 if (isset($_GET['stock'])) {
   require_once dirname(__DIR__) . '/store-lib.php';
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sorder'])) {   // drag the dots in front of a row: the list order saves at once (only this list; the website keeps its own order)
+    $keys = array_values(array_unique(array_filter(explode(',', (string)$_POST['sorder']), fn($k) => preg_match('/^[a-z0-9-]+\|[a-z0-9]+$/i', $k)))); $ok = csrf_ok() && $keys;
+    if ($ok) fomaxo_setting($pdo, 'stock_order', json_encode($keys));
+    header('Content-Type: application/json'); header('Cache-Control: no-store'); echo json_encode(['ok' => $ok, 'msg' => $ok ? 'Order saved' : 'Not saved, reload and try again']); exit;
+  }
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['stock' => 1]); }
     $lvl = trim((string)($_POST['low_stock'] ?? ''));   // the "Only X left" level for the website (only set here)
@@ -1966,13 +1971,17 @@ if (isset($_GET['stock'])) {
   $s = $pdo->query("SELECT lines_json FROM fx_orders WHERE stock_taken = 1 AND created_at > NOW() - INTERVAL 30 DAY");
   foreach ($s as $r) foreach (fomaxo_stock_lines(json_decode((string)$r['lines_json'], true) ?: []) as $k => $n) $sold[$k] = ($sold[$k] ?? 0) + $n;
   $tr = ''; $w = in_array($_GET['w'] ?? '', ['low', 'out'], true) ? $_GET['w'] : ''; $nw = ['low' => 0, 'out' => 0];
-  foreach ($CATALOG as $id => $p) foreach (array_keys($p['prices']) as $opt) {
+  $lines = []; foreach ($CATALOG as $id => $p) foreach (array_keys($p['prices']) as $opt) $lines[] = [$id, $opt];
+  $at = array_flip((array)(json_decode((string)fomaxo_setting($pdo, 'stock_order'), true) ?: []));   // the order dragged on this page; new sizes go at the end
+  $n0 = count($at); foreach ($lines as $i => $l) $lines[$i][2] = $at["$l[0]|$l[1]"] ?? $n0 + $i;
+  usort($lines, fn($a, $b) => $a[2] <=> $b[2]);
+  foreach ($lines as [$id, $opt]) { $p = $CATALOG[$id];
     $k = "$id|$opt"; $q = $have[$k] ?? null; $c = $cost[$k] ?? null;
     $st = $q === null ? '' : ((int)$q <= 0 ? 'out' : ((int)$q <= fomaxo_low_stock() ? 'low' : '')); if ($st !== '') $nw[$st]++;
     $lvl = $q === null ? '<span class="muted">Not counted</span>' : ((int)$q <= 0 ? '<span class="lvl-out">Sold out</span>' : ((int)$q <= fomaxo_low_stock() ? '<span class="lvl-low">Only ' . (int)$q . ' left</span>' : '<span class="lvl-ok">In stock</span>'));
     $margin = ' · <span class="muted">sells at AED ' . h(number_format($p['prices'][$opt], 0)) . '</span>';
     $img = $pic[$id] ?? ($p['images'][0] ?? '');
-    $tr .= '<tr class="row' . ($w !== '' && $st !== $w ? ' wf' : '') . '"><td class="sp">' . ($img ? '<img class="sth" src="../assets/img/' . h($img) . '.webp" alt="" loading="lazy">' : '<span class="sth"></span>') . '<div><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
+    $tr .= '<tr class="row' . ($w !== '' && $st !== $w ? ' wf' : '') . '" data-k="' . h($k) . '"><td class="sp"><span class="sdrag" title="Drag to change the order of this list" aria-hidden="true"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.6"/><circle cx="8" cy="2" r="1.6"/><circle cx="2" cy="8" r="1.6"/><circle cx="8" cy="8" r="1.6"/><circle cx="2" cy="14" r="1.6"/><circle cx="8" cy="14" r="1.6"/></svg></span>' . ($img ? '<img class="sth" src="../assets/img/' . h($img) . '.webp" alt="" loading="lazy">' : '<span class="sth"></span>') . '<div><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
          . '<div class="small">' . $lvl . $margin . (!empty($sold[$k]) ? ' <span class="muted">· ' . (int)$sold[$k] . ' sold in 30 days</span>' : '') . '</div></div></td>'
          . '<td class="num"><label class="mini">Stock</label><input type="number" min="0" inputmode="numeric" name="q[' . h($id) . '][' . h($opt) . ']" value="' . ($q === null ? '' : (int)$q) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' stock"></td>'
          . '<td class="num"><label class="mini">Cost AED</label><input type="number" min="0" step="0.01" inputmode="decimal" name="c[' . h($id) . '][' . h($opt) . ']" value="' . ($c === null ? '' : h(rtrim(rtrim($c, '0'), '.'))) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' cost price"></td></tr>';
@@ -1987,7 +1996,44 @@ if (isset($_GET['stock'])) {
     . '<p class="muted small" style="margin:6px 0 0">Customers can order up to the stock, never more than this. Empty = 30. Above it they see "Contact FOMAXO for Massive Order".</p></div>'
     . '<div class="fill"><table class="stock"><thead><tr><th>Product</th><th class="num">Stock</th><th class="num">Cost (AED)</th></tr></thead><tbody>' . $tr . '</tbody></table></div>'
     . '<div class="savebar">' . '<p class="muted small stock-help"><b>Stock:</b> how many bottles you have. It goes down by itself with every cash order and every paid card order (the free mini counts as one 10ml) and goes back up if you cancel an order. Leave it empty to not count that size. The website shows "Only X left" at ' . fomaxo_low_stock() . ' or fewer, and "Out of Stock — Restocking Soon" at 0.<br>'
-    . '<b>Cost:</b> what one bottle costs you. Reports use it to work out your profit.</p>' . '<button class="btn big">Save</button></div></form>', true, true);
+    . '<b>Cost:</b> what one bottle costs you. Reports use it to work out your profit.<br><b>Order:</b> drag the dots on the left to move a row. <b class="pok" aria-live="polite"></b></p>' . '<button class="btn big">Save</button></div></form>' . <<<'HTML'
+<script>/* drag the dots (mouse or finger) to change the order of the stock list; it saves at once, without reloading */
+(function () {
+  var list = document.querySelector('.stock tbody'), box = list && list.closest('.fill'); if (!list || !list.querySelector('.sdrag')) return;
+  var row = null, y0 = 0, ok = document.querySelector('.pok');
+  function rows() { return Array.prototype.slice.call(list.querySelectorAll('tr.row')); }
+  function shown(x) { return x && x.offsetParent !== null; }
+  function save() {
+    var d = new FormData(); d.append('csrf', document.querySelector('[name=csrf]').value); d.append('sorder', rows().map(function (x) { return x.dataset.k; }).join(','));
+    ok.className = 'pok'; ok.textContent = 'Saving order…';
+    fetch(location.href, {method: 'POST', body: d, credentials: 'same-origin'}).then(function (r) { return r.json(); })
+      .then(function (j) { ok.className = 'pok ' + (j.ok ? 'ok' : 'bad'); ok.textContent = j.ok ? j.msg + ' ✓' : j.msg; })
+      .catch(function () { ok.className = 'pok bad'; ok.textContent = 'Order not saved, try again'; });
+  }
+  list.addEventListener('pointerdown', function (e) {
+    var h = e.target.closest('.sdrag'); if (!h || e.button > 0) return;
+    e.preventDefault(); rows().forEach(function (x, i) { x.dataset.at = i; });
+    row = h.closest('tr'); y0 = e.clientY; row.classList.add('drag'); document.body.classList.add('vdragging');
+    h.setPointerCapture(e.pointerId);
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!row) return;
+    var prev = row.previousElementSibling, next = row.nextElementSibling, t0 = row.offsetTop;
+    while (next && !shown(next)) next = next.nextElementSibling; while (prev && !shown(prev)) prev = prev.previousElementSibling;
+    if (next) { var b = next.getBoundingClientRect(); if (e.clientY > b.top + b.height / 2) list.insertBefore(next, row); }
+    if (prev) { var a = prev.getBoundingClientRect(); if (e.clientY < a.top + a.height / 2) list.insertBefore(row, prev); }
+    y0 += row.offsetTop - t0; row.style.transform = 'translateY(' + (e.clientY - y0) + 'px)';
+    var r = box.getBoundingClientRect(); if (e.clientY < r.top + 40) box.scrollTop -= 12; else if (e.clientY > r.bottom - 40) box.scrollTop += 12;
+  });
+  function end() {
+    if (!row) return;
+    var moved = row.dataset.at !== String(rows().indexOf(row));
+    row.classList.remove('drag'); row.style.transform = ''; document.body.classList.remove('vdragging'); row = null;
+    if (moved) save();
+  }
+  document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
+})();</script>
+HTML, true, true);
 }
 
 /* ---- expenses: money going out that is not a bottle sold (ads, delivery, packaging, rent …) ---- */
