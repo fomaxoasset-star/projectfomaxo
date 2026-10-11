@@ -3109,8 +3109,8 @@ function card(p, opts={}){
     </a>
     <div class="row1"><h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3><span data-price>${priceHTML(p, size)}</span></div>
     ${saleCD(lineOn(p) && p.sizes.some(s => onSale(p, s)))}
-    <p class="pd-sold card-sold" data-sold="${p.id}">${soldHTML(p.id, 'all')}</p>
     <p class="desc">${esc(p.short)}</p>
+    <p class="pd-sold card-sold" data-sold="${p.id}">${soldHTML(p.id, 'all')}</p>
     <div class="rate-row">${chips}${rateHTML(p)}</div>
     <p class="stk-line" data-stk>${stockHTML(p.id, size)}</p>
     <div class="acts"><button class="btn line sm" data-add>Add to bag</button><button class="btn sm" data-buy>Buy now</button></div>
