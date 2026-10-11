@@ -3259,7 +3259,7 @@ function home(){
   <section class="sec" style="padding-top:0" id="worlds"><div class="wrap">
     <div class="hw">
       <article class="hw-card rv-up">
-        <a class="hw-media" href="#/franchise"><img ${pic('atelier')} alt="A FOMAXO boutique" loading="lazy"></a>
+        <a class="hw-media" href="#/franchise"><img ${pic('franchise-boutique')} alt="A FOMAXO boutique" loading="lazy"></a>
         <div class="hw-copy"><span class="eyebrow">Franchise</span><h2>Own a <em class="metal">FOMAXO</em> store</h2>
           <p class="lead">Partner with a Dubai-born luxury brand as a franchise partner, distributor or retail stockist in your country.</p>
           <div class="ctas"><a class="btn" href="https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent('Hello FOMAXO, I would like to know more about the FOMAXO franchise.')}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${SOC_ICON.whatsapp.replace(/^<g transform="[^"]*">/, '<g>')}</svg>Chat on WhatsApp</a><a class="btn line" href="#/franchise">Send an Enquiry</a></div></div>
@@ -3546,8 +3546,8 @@ function collections(sub){
   if (sub === 'elite') return elite();
   if (sub === 'discovery'){ location.hash = '#/product/discovery'; return ''; }
   const tiles = [
-    ['fragrance','Fragrance Collection','Three tiers of luxury: Elite, Signature and Prestige.',shown('king') ? 'king-1' : (FRAG[0] ? FRAG[0].images[0] : 'atelier')],
-    ['mini','Mini Collection','Luxury redefined in 10ml. Elegance no longer confined to the dressing table.',shown('oldmoney') ? 'oldmoney-10-1' : (P[S.mini.products[0]] ? imgFor(P[S.mini.products[0]], 10) : 'atelier')],
+    ['fragrance','Fragrance Collection','Three tiers of luxury: Elite, Signature and Prestige.',shown('king') ? 'king-1' : (FRAG[0] ? FRAG[0].images[0] : 'franchise-boutique')],
+    ['mini','Mini Collection','Luxury redefined in 10ml. Elegance no longer confined to the dressing table.',shown('oldmoney') ? 'oldmoney-10-1' : (P[S.mini.products[0]] ? imgFor(P[S.mini.products[0]], 10) : 'franchise-boutique')],
     ['discovery','Discovery Sets','2ml vials to experience the FOMAXO collection at home before choosing your full-size bottle.','discovery-1'],
     ['gifting','Bespoke Gifting','Luxury gifting for weddings, gatherings and corporate functions.','gift-set-3-hq'],
     ['name','Exclusive Personalized Gifting','Your gift. Your scent. Your legacy. The highest form of personalisation: a perfume gifted after the client themselves.','gift-2-hq'],
@@ -3737,7 +3737,7 @@ function about(){
       <p class="quote" style="font-size:26px;color:var(--ivory)">FOMAXO is more than a brand; it’s a celebration of elegance, ambition and success.</p></div>
   </div></div></section>
   <section class="sec" style="padding-top:0"><div class="wrap"><div class="pc rv-up">
-    <div class="pc-media"><img src="${IMG('atelier')}" alt="" loading="lazy"></div>
+    <div class="pc-media"><img src="${IMG('franchise-boutique')}" alt="" loading="lazy"></div>
     <div class="pc-copy"><span class="eyebrow">Franchise</span><h2>Build your <em class="metal">FOMAXO empire</em></h2>
       <p class="lead">Join us as an exclusive distributor, franchise partner or retail stockist and bring a high-potential luxury brand to your territory.</p>
       <div><a class="btn" href="#/franchise">Own a franchise</a></div></div>
