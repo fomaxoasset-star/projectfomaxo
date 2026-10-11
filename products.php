@@ -64,6 +64,7 @@ if ($pdo) { try { $who = []; $year = date('Y-m-d', strtotime('-6 day')) . ' 00:0
       if ($r['created_at'] >= $year) $who[$id][$opt] = ($who[$id][$opt] ?? 0) + max(0, (int)($l['qty'] ?? 0)); }
   }
   foreach ($who as $id => $byOpt) foreach ($byOpt as $opt => $c) if ($c > 5) $sold[$id][(string)$opt] = $c;   // each size on its own: the real number of bottles of that size, from 6 up ("14 purchased this week")
+  foreach ($who as $id => $byOpt) if (($t = array_sum($byOpt)) > 5) $sold[$id]['all'] = $t;   // shop cards: all sizes of that product together
   foreach ($sold as $id => $byOpt) $sold[$id] = (object)$byOpt;
 } catch (Throwable $e) {} }
 /* cash on delivery minimum and maximum (admin → Settings → Cash on delivery); max 0 = no upper limit */
