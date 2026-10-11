@@ -4577,14 +4577,16 @@ function applyPages(){
   $$('footer .fgrid > div').forEach(d => { const as = $$('a', d); if (d.querySelector('h5') && as.length) d.style.display = as.every(a => HIDE_PAGES.some(k => a.getAttribute('href').startsWith('#/' + k))) ? 'none' : ''; });
 }
 applyPages();
-/* a reload starts again on the home page, at the very top (phone and laptop). Pages opened from a link still open that page
-   (a product address, a WhatsApp bag or review link, a payment return), and a reload on checkout, an order or review page stays there. */
+/* a reload stays on the same page and at the same spot (phone and laptop); a fresh visit opens the home page at the top.
+   The spot is kept for this tab only, saved when the page is left or hidden. */
 try { history.scrollRestoration = 'manual'; } catch(e) {}
+let reloadY = 0;
 (() => { let t = ''; try { t = performance.getEntriesByType('navigation')[0].type; } catch(e) {}
-  let keep = false; try { keep = sessionStorage.getItem('fx_keep_page') === '1'; sessionStorage.removeItem('fx_keep_page'); } catch(e) {}   // the language switch reloads on purpose
-  if (t !== 'reload') return;
-  const stay = keep || /^#\/(checkout|order-confirmed|thank-you|review|owner)\b/.test(location.hash);
-  try { history.replaceState(null, '', stay ? location.href : '/' + location.search); } catch(e) {} })();
+  try { const s = JSON.parse(sessionStorage.getItem('fx_spot') || 'null'); if (t === 'reload' && s && s.h === location.hash) reloadY = +s.y || 0; } catch(e) {}
+  const keep = () => { try { sessionStorage.setItem('fx_spot', JSON.stringify({h: location.hash, y: Math.round(scrollY)})); } catch(e) {} };
+  addEventListener('pagehide', keep); document.addEventListener('visibilitychange', () => { if (document.hidden) keep(); });
+  if (reloadY) { const stop = () => { reloadY = 0; }; ['wheel', 'touchstart', 'keydown'].forEach(k => addEventListener(k, stop, {once: true, passive: true})); setTimeout(stop, 5000); addEventListener('load', () => backToSpot(), {once: true}); } })();
+function backToSpot(){ if (!reloadY) return; const go = () => { if (!reloadY) return; window.scrollTo({top: reloadY, left: 0, behavior: 'instant'}); if (Math.abs(scrollY - reloadY) > 2) setTimeout(go, 100); }; go(); }   // tries again while pictures load and the page grows, up to 5s or until the shopper scrolls
 function route(){
   const raw = location.hash.replace(/^#/, '') || '/';
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
@@ -5016,9 +5018,9 @@ async function loadProducts(){
   productsJSON = js;
   cart = cart.filter(l => P[l.id] && !P[l.id].hidden && P[l.id].sizes.map(String).includes(String(l.opt)));
   footShop(); save();
-  if (!/^#\/checkout/.test(location.hash)) { route(); applyStock(); }
+  if (!/^#\/checkout/.test(location.hash)) { route(); applyStock(); backToSpot(); }
 }
-renderCart(); route(); bindCommon(); loadRates(); loadStock(); loadProducts(); promoMaybe();
+renderCart(); route(); backToSpot(); bindCommon(); loadRates(); loadStock(); loadProducts(); promoMaybe();
 let lpAt = Date.now(); const lpAgain = () => { if (document.hidden || Date.now() - lpAt < 3000) return; lpAt = Date.now(); loadProducts(); };   // back on the tab (e.g. after saving on admin): fetch the latest prices and offers again
 document.addEventListener('visibilitychange', lpAgain); addEventListener('focus', lpAgain);
 })();
@@ -5030,6 +5032,6 @@ document.addEventListener('visibilitychange', lpAgain); addEventListener('focus'
 <script>/* language switch: عربي ⇄ EN. Arabic text loads only for Arabic visitors */
 (function(){var ar=document.documentElement.lang==="ar";
 document.querySelectorAll(".lang-sw").forEach(function(b){if(ar){b.textContent="EN";b.lang="en";b.setAttribute("aria-label","English");b.title="English"}
-b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href){try{sessionStorage.setItem("fx_keep_page","1")}catch(e){}location.reload()}else location.replace(u)}});
+b.onclick=function(){try{localStorage.setItem("fomaxo_lang",ar?"en":"ar")}catch(e){}var u=location.href.replace(/([?&])lang=(ar|en)&?/,"$1").replace(/[?&]$/,"").replace(/[?&]#/,"#");if(u===location.href)location.reload();else location.replace(u)}});
 if(ar){var s=document.createElement("script");s.src=window.FX_AR_JS||"assets/i18n-ar.js";s.onerror=function(){document.documentElement.classList.remove("i18n-wait")};document.body.appendChild(s)}})();</script>
 </body></html>
