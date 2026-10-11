@@ -1213,7 +1213,7 @@ if (isset($_GET['videos'])) {
     . '<p class="muted small shelp">Instagram reel link, or a link that opens the video itself. Not YouTube or TikTok.</p></form>'
     . '<form class="card vadd" method="post" enctype="multipart/form-data" data-vshrink data-max="' . $max . '">' . csrf_field() . '<input type="hidden" name="act" value="add">'
     . '<h2>Upload from your phone</h2>'
-    . '<div class="vfiles"><div><label for="v_file">Video</label><input id="v_file" type="file" name="video" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov" required></div>'
+    . '<div class="vfiles"><div><label for="v_file">Video</label><input id="v_file" type="file" name="video" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,.avi" required></div>'
     . '<div><label for="v_cover">Cover photo <span class="opt">(optional)</span></label><input id="v_cover" type="file" name="cover" accept="image/*"></div></div>'
     . '<div class="vshape" role="radiogroup" aria-label="Video shape"><span>Shape</span><label><input type="radio" name="shape" value="916" checked><i></i>9:16 upright</label><label><input type="radio" name="shape" value="169"><i></i>16:9 wide</label></div>'
     . '<div class="igadd">' . $vpick('Product in the video', 'v_prod') . '<button class="btn">Upload</button></div>'
