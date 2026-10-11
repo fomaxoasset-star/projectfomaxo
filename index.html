@@ -4605,7 +4605,7 @@ function vidSecHTML(){
   const l = vids(); if (!l.length) return '';
   return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
     <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
-      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `<video autoplay muted playsinline loop preload="auto" poster="${vidPoster(v)}" src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
+      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `<video autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
       <span class="vt-play" aria-hidden="true">${VI.play}</span>
       ${p ? `<span class="vt-p"><img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now</i></span></span>`}</button>`; }).join('')}</div></div>`;
 }
@@ -4624,7 +4624,10 @@ function bindVids(){
   if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => row.scrollBy({left: +b.dataset.vscroll * row.clientWidth * .8, behavior: 'smooth'})); }
   if (navigator.connection && navigator.connection.saveData) return;   // data saver: posters only until tapped
   const run = (t, on) => { const v = $('video', t); if (!v) return; if (on) { if (!v.src) v.src = v.dataset.src; v.play().then(() => t.classList.add('playing')).catch(e => { v.dataset.pe = e.name; }); } else if (!v.paused) { v.pause(); v.dataset.pz = (+v.dataset.pz || 0) + 1; t.classList.remove('playing'); } };
-  tiles.forEach(t => { const v = $('video', t); if (v && !v.src) { v.muted = true; v.preload = 'auto'; v.src = v.dataset.src; } });   // every video starts loading as the page opens, so it plays the moment it is on screen
+  const load = t => { const v = t && $('video', t); if (v && !v.src) { v.muted = true; v.preload = 'auto'; v.src = v.dataset.src; } };
+  const near = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; const k = tiles.indexOf(e.target); [0, 1, 2].forEach(d => load(tiles[k + d])); }), {rootMargin: '60% 0px'});
+  const watch = () => tiles.forEach(t => near.observe(t));   // a video loads only when the row is close (with the next two in the row), and only after the first screen has finished loading
+  if (document.readyState === 'complete') watch(); else addEventListener('load', watch, {once: true});
   const again = () => tiles.forEach(t => { const r = t.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0) run(t, true); });   // a phone that held back autoplay (iPhone Low Power Mode) plays them at the first touch
   ['touchend', 'pointerdown', 'keydown'].forEach(ev => addEventListener(ev, again, {once: true, passive: true}));   // a laptop or phone that held back autoplay (Low Power Mode, Safari's Auto-Play setting) starts them on the first tap, click or key
   const report = () => { try {   // 4 seconds after the row first comes on screen: report how each video is doing (vlog.php), to look into videos that will not play
