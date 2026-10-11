@@ -11,6 +11,7 @@
 "Ready-to-gift luxury packaging": "تغليف فاخر جاهز للإهداء",
 "Fragrances": "العطور",
 "Personal Care": "العناية الشخصية",
+"PC": "العناية الشخصية",
 "Collections": "المجموعات",
 "About FOMAXO": "عن FOMAXO",
 "Contact": "تواصل معنا",
