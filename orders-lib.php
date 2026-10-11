@@ -729,12 +729,6 @@ function fomaxo_stock_problem($lines, $catalog) {
   }
   return null;
 }
-/* The most of one size a customer can order: its stock when admin → Stock counts it (even over 99), else 99. */
-function fomaxo_qty_cap($id, $opt) {
-  static $m = null;
-  if ($m === null) { $m = []; $pdo = fomaxo_db(); if ($pdo) { try { $m = fomaxo_stock_map($pdo); } catch (Throwable $e) {} } }
-  return isset($m["$id|$opt"]) ? max(99, $m["$id|$opt"]) : 99;   // counted sizes: fomaxo_stock_problem() gives the exact "only N available"
-}
 /* One order at a time between the stock check and taking it out of stock, so two customers can't both buy the last bottles.
    MySQL lets go of it by itself if the page stops. */
 function fomaxo_stock_lock($on = true) {
