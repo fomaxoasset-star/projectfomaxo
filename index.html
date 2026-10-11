@@ -2279,9 +2279,6 @@ html[lang=ar] .qd-bar b:last-child em{transform:scaleX(-1)}
 .lang-ph{height:26px;min-width:0;padding:0 10px;font-size:12px;margin-inline-end:6px}   /* the switch sits in the header next to search, phone and laptop */
 @media(min-width:1241px) and (max-width:1600px){.menu{letter-spacing:.09em;gap:clamp(12px,1.1vw,24px)}}
 @media(min-width:1241px) and (max-width:1400px){.menu{font-size:12px;letter-spacing:.06em;gap:12px}.nav-in{gap:20px}}   /* room for the switch on laptops */
-@media(min-width:1241px) and (max-width:1400px){.menu{font-size:11px;letter-spacing:.03em;gap:9px}.nav-in{gap:14px}}   /* PC + Personal Care + Gifts + Combo: the menu still fits in one line */
-@media(min-width:1401px) and (max-width:1600px){.menu{letter-spacing:.05em;gap:14px}}
-@media(min-width:1601px) and (max-width:1999px){.menu{letter-spacing:.08em;gap:clamp(16px,1.2vw,26px)}}
 @media(max-width:700px){.lang-ph{display:inline-flex;height:22px;min-width:0;padding:0 7px;font-size:10.5px;margin-inline-end:4px}}
 @media(max-width:430px){.nav-in>.icons{gap:0}.nav-in>.icons .icon{width:36px}}   /* phone: عربي sits next to search; slimmer icons keep the header inside the screen */
 html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
@@ -4735,8 +4732,28 @@ function applyPages(){
   let st = document.getElementById('pgHide'); if (!st){ st = document.createElement('style'); st.id = 'pgHide'; document.head.appendChild(st); }
   st.textContent = HIDE_PAGES.map(k => `a[href^="#/${k}"]{display:none!important}`).join('');
   $$('footer .fgrid > div').forEach(d => { const as = $$('a', d); if (d.querySelector('h5') && as.length) d.style.display = as.every(a => HIDE_PAGES.some(k => a.getAttribute('href').startsWith('#/' + k))) ? 'none' : ''; });
+  if (typeof fitMenu === 'function') fitMenu();   // pages switched on or off change how many words the menu holds
 }
 applyPages();
+/* top menu size follows how many pages are switched on: the menu keeps its normal size when it fits, and only when more
+   pages are on than fit in one line (laptop) the words, spacing and gaps get smaller until the whole header fits */
+function fitMenu(){
+  const mn = $('#mnav nav');   // phone menu: with more than 6 pages on, the rows get smaller so every page still fits on one screen
+  if (mn) { const n = $$('a:not(.nav-india)', mn).filter(a => getComputedStyle(a).display !== 'none').length, k = n > 6 ? 6 / n : 1;
+    $$('a:not(.nav-india)', mn).forEach(a => { a.style.fontSize = k < 1 ? `calc(${(.62 + .38 * k).toFixed(3)} * 22px)` : ''; a.style.paddingTop = a.style.paddingBottom = k < 1 ? (16 * k).toFixed(1) + 'px' : ''; }); }
+  const m = $('#menu'), ic = $('header.nav .icons'); if (!m || !ic) return;
+  m.style.fontSize = m.style.letterSpacing = m.style.gap = '';
+  if (getComputedStyle(m).display === 'none') return;
+  const cs = getComputedStyle(m), fs = parseFloat(cs.fontSize), ls = parseFloat(cs.letterSpacing) || 0, gap = parseFloat(cs.columnGap) || 0;
+  m.dataset.n = $$('a:not(.nav-india)', m).filter(a => a.offsetParent).length;
+  const over = () => m.scrollWidth > m.clientWidth + 1 || ic.getBoundingClientRect().right > document.documentElement.clientWidth - 6 || ic.getBoundingClientRect().left < 0;
+  for (let k = 1; k >= .7 && over(); k -= .03) { m.style.fontSize = (fs * k).toFixed(2) + 'px'; m.style.letterSpacing = (ls * k * k).toFixed(2) + 'px'; m.style.gap = (gap * k * k).toFixed(1) + 'px'; }
+}
+let fitT = 0; const fitSoon = () => { cancelAnimationFrame(fitT); fitT = requestAnimationFrame(fitMenu); };
+fitMenu(); addEventListener('resize', fitSoon); addEventListener('load', fitSoon);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSoon);
+new MutationObserver(fitSoon).observe($('#menu'), {subtree: true, characterData: true, childList: true});   // Arabic words are longer or shorter
+new MutationObserver(fitSoon).observe(document.documentElement, {attributes: true, attributeFilter: ['lang', 'dir']});
 /* a reload stays on the same page and at the same spot (phone and laptop); a fresh visit opens the home page at the top.
    The spot is kept for this tab only, saved when the page is left or hidden. */
 try { history.scrollRestoration = 'manual'; } catch(e) {}
