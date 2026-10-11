@@ -188,3 +188,59 @@
     v.onerror = function () { URL.revokeObjectURL(v.src); };
   });
 })();
+/* Small previews for the home page row: each video without one gets a 640px, silent copy of its first 8 seconds (about 0.5 MB),
+   made here in the browser and kept next to it (vid/name-p.mp4). The row plays that; the full video loads only when the player opens.
+   Runs by itself on this page for every video that has none yet (new uploads and older videos), one at a time. */
+setTimeout(function () {   // after the page has loaded (the list comes after this script)
+  var rows = [].slice.call(document.querySelectorAll('.vrow[data-mkprev]')), f = document.querySelector('form[data-vshrink]');
+  if (!rows.length || !f || !window.fetch || !window.Promise) return;
+  var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 8, BR = 600000, pill = null, made = 0;
+  var say = function (t) {
+    if (!pill) { pill = document.createElement('div'); pill.setAttribute('role', 'status'); pill.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:60;background:#111;color:#d4af37;border:1px solid #d4af37;border-radius:999px;padding:6px 14px;font-size:13px;max-width:calc(100vw - 24px)'; document.body.appendChild(pill); }
+    pill.textContent = t; pill.hidden = !t;
+  };
+  function fastPrev(blob) {
+    if (!window.VideoEncoder) return Promise.resolve(null);
+    return import(new URL('mediabunny.js?v=1.59.1', location.href).href).then(function (M) {
+      var src = new M.Input({source: new M.BlobSource(blob), formats: M.ALL_FORMATS});
+      return Promise.all([src.getPrimaryVideoTrack(), src.computeDuration().catch(function () { return 0; })]).then(function (r) {
+        var t = r[0]; if (!t) return null;
+        var k = Math.min(1, 640 / Math.max(t.displayWidth, t.displayHeight)), w = Math.round(t.displayWidth * k / 2) * 2, h = Math.round(t.displayHeight * k / 2) * 2;
+        return M.canEncodeVideo('avc', {width: w, height: h}).then(function (ok) {
+          if (!ok) return null;   // the row needs H.264 so every phone plays it
+          var out = new M.Output({format: new M.Mp4OutputFormat({fastStart: 'in-memory'}), target: new M.BufferTarget()});
+          return M.Conversion.init({input: src, output: out, showWarnings: false, video: {width: w, height: h, fit: 'contain', codec: 'avc', bitrate: BR, forceTranscode: true}, audio: {discard: true}, trim: r[1] > SEC ? {start: 0, end: SEC} : undefined})
+            .then(function (c) { return c.isValid ? c.execute().then(function () { var b = out.target.buffer; return b && b.byteLength ? new Blob([b], {type: 'video/mp4'}) : null; }) : null; });
+        });
+      });
+    }).catch(function () { return null; });
+  }
+  var F = null;   // FFmpeg (admin/ffmpeg), loaded once for all previews when the fast way can't
+  function wasmPrev(blob) {
+    var base = new URL('ffmpeg/', location.href).href;
+    return (F ? Promise.resolve() : import(base + 'index.js?v=0.12.15').then(function (m) { F = new m.FFmpeg(); return F.load({coreURL: base + 'ffmpeg-core.js?v=0.12.10', wasmURL: base + 'ffmpeg-core.wasm?v=0.12.10'}); }))
+      .then(function () { return F.createDir('/p').catch(function () {}); })
+      .then(function () { return F.mount('WORKERFS', {files: [new File([blob], 'in')]}, '/p'); })
+      .then(function () { return F.exec(['-hide_banner', '-t', String(SEC), '-i', '/p/in', '-map', '0:v:0', '-an', '-vf', 'scale=w=640:h=640:force_original_aspect_ratio=decrease:force_divisible_by=2',
+        '-c:v', 'libx264', '-preset', 'veryfast', '-b:v', String(BR), '-maxrate', String(BR * 1.4), '-bufsize', String(BR * 2), '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '/p.mp4']); })
+      .then(function (code) { return code ? null : F.readFile('/p.mp4'); })
+      .then(function (d) { F.unmount('/p').catch(function () {}); F.deleteFile('/p.mp4').catch(function () {}); return d && d.length ? new Blob([d.buffer], {type: 'video/mp4'}) : null; })
+      .catch(function () { try { F && F.terminate(); } catch (e) {} F = null; return null; });
+  }
+  var idle = function () { return new Promise(function (ok) { (function w() { if (f.dataset.go || (btn && btn.disabled)) setTimeout(w, 3000); else ok(); })(); }); };   // an upload going on comes first
+  var i = 0;
+  function next() {
+    if (i >= rows.length) { try { F && F.terminate(); } catch (e) {} if (made) { say('Quick previews ready for the home page (' + made + ').'); setTimeout(function () { say(''); }, 5000); } else say(''); return; }
+    var row = rows[i++];
+    idle().then(function () {
+      say('Making quick previews for the home page: ' + i + ' of ' + rows.length + '…');
+      return fetch(row.dataset.mkprev, {credentials: 'same-origin'}).then(function (r) { return r.ok ? r.blob() : null; });
+    }).then(function (b) { return b ? fastPrev(b).then(function (p) { return p || wasmPrev(b); }) : null; })
+      .then(function (p) {
+        if (!p || p.size > 3 * 1048576) return;
+        var fd = new FormData(); fd.append('csrf', csrf); if (f.querySelector('[name=action]')) fd.append('action', 'vid_prev'); else fd.append('act', 'prev'); fd.append('vid', row.dataset.vid); fd.append('prev', p, 'prev.mp4');
+        return fetch(location.href, {method: 'POST', body: fd, credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) { made++; row.removeAttribute('data-mkprev'); } });
+      }).catch(function () {}).then(next);
+  }
+  next();
+}, 1500);
