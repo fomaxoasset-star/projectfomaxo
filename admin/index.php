@@ -1087,6 +1087,15 @@ if (isset($_GET['videos'])) {
       array_unshift($vids, $v); fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
       flash('Reel added. It shows on the home page within a minute.', true); go($back);
     }
+    if ($act === 'prev') {   // the small preview for the home page row (made in the browser by vshrink.js): 640px, no sound, first seconds only. The full video loads only when the player opens
+      header('Content-Type: application/json'); header('Cache-Control: no-store'); $f = $_FILES['prev'] ?? null; $ok = false;
+      if ($at !== false && empty($vids[$at]['embed']) && preg_match('~^vid/([a-z0-9-]+)\.(mp4|mov|webm)$~', (string)($vids[$at]['file'] ?? ''), $m) && $f && ($f['error'] ?? 1) === UPLOAD_ERR_OK && $f['size'] > 0 && $f['size'] <= 3 * 1048576
+        && is_uploaded_file($f['tmp_name']) && function_exists('finfo_open') && finfo_file(finfo_open(FILEINFO_MIME_TYPE), $f['tmp_name']) === 'video/mp4') {
+        $pv = "vid/{$m[1]}-p.mp4"; $to = fx_media('vid') . "/{$m[1]}-p.mp4";
+        if ($ok = move_uploaded_file($f['tmp_name'], $to)) { @chmod($to, 0644); fx_media_link($pv); $vids[$at]['prev'] = $pv; fomaxo_setting($pdo, 'videos', json_encode(array_values($vids))); }
+      }
+      exit(json_encode(['ok' => $ok ? 1 : 0]));
+    }
     if ($act === 'order') {   // drag the dots to reorder (the page sends it without reloading): the video ids in their new order
       $ids = array_values(array_unique(array_filter(explode(',', (string)($_POST['ids'] ?? '')))));
       $byId = array_column($vids, null, 'id'); $new = array_values(array_filter(array_map(fn($id) => $byId[$id] ?? null, $ids)));
@@ -1153,6 +1162,7 @@ if (isset($_GET['videos'])) {
       $v = $vids[$at]; array_splice($vids, $at, 1);
       if (!empty($v['ig'])) { $seen = json_decode((string)fomaxo_setting($pdo, 'ig_seen'), true) ?: []; $seen[] = $v['ig']; fomaxo_setting($pdo, 'ig_seen', json_encode(array_slice($seen, -300))); }   // Automatic never brings it back
       fx_media_delete($v['file'] ?? '');
+      fx_media_delete($v['prev'] ?? '');
       fx_media_delete($v['cover'] ?? '');
       flash('Video deleted.', true);
     }
@@ -1173,7 +1183,8 @@ if (isset($_GET['videos'])) {
     $fsz = empty($v['embed']) && ($fp = fx_media_path($v['file'] ?? '')) && is_file($fp) ? (int)filesize($fp) : 0;   // 0 = the video file is not on the server
     $fnote = !empty($v['embed']) ? '' : ($fsz ? ' · ' . ($fsz >= 1048576 ? round($fsz / 1048576, 1) . ' MB' : max(1, round($fsz / 1024)) . ' KB') : ' · <b class="vbad">File missing, upload again</b>');
     $hid = $ps && !array_filter($ps, fn($id) => !$names[$id]['hidden']);
-    $tr .= '<div class="vrow' . (empty($v['on']) ? ' off' : '') . '" data-vid="' . h($v['id']) . '"><span class="vdrag" title="Drag to change the order" aria-hidden="true"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.6"/><circle cx="8" cy="2" r="1.6"/><circle cx="2" cy="8" r="1.6"/><circle cx="8" cy="8" r="1.6"/><circle cx="2" cy="14" r="1.6"/><circle cx="8" cy="14" r="1.6"/></svg></span>'
+    $mk = $fsz && empty($v['embed']) && !(($v['prev'] ?? '') !== '' && is_file((string)fx_media_path($v['prev'])));   // no small preview yet: this page makes one (vshrink.js)
+    $tr .= '<div class="vrow' . (empty($v['on']) ? ' off' : '') . '" data-vid="' . h($v['id']) . '"' . ($mk ? ' data-mkprev="../assets/' . h($v['file']) . '"' : '') . '><span class="vdrag" title="Drag to change the order" aria-hidden="true"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.6"/><circle cx="8" cy="2" r="1.6"/><circle cx="2" cy="8" r="1.6"/><circle cx="8" cy="8" r="1.6"/><circle cx="2" cy="14" r="1.6"/><circle cx="8" cy="14" r="1.6"/></svg></span>'
       . $post($v, 'vis', '<button class="rdot' . (empty($v['on']) ? '' : ' on') . '" name="show" value="' . (empty($v['on']) ? '1' : '') . '" title="' . (empty($v['on']) ? 'Hidden. Tap to show on the website' : 'On the website. Tap to hide') . '" aria-label="' . (empty($v['on']) ? 'Hidden, tap to show' : 'On the website, tap to hide') . '"></button>', ' class="vvis"')
       . (!empty($v['embed']) ? '<a class="vth vemb" href="https://www.instagram.com/reel/' . h($v['embed']) . '/" target="_blank" rel="noopener" title="Open on Instagram">' . ($poster ? '<img src="../assets/img/' . h($poster) . '.webp" alt="">' : '') . '<span>Instagram</span></a>'
         : '<video class="vth' . (empty($v['wide']) ? '' : ' wd') . '" src="../assets/' . h($v['file']) . '#t=0.1" preload="metadata" muted playsinline' . ($poster ? ' poster="../assets/img/' . h($poster) . '.webp"' : '') . ' onclick="this.paused?this.play():this.pause()"></video>')
@@ -1205,7 +1216,7 @@ if (isset($_GET['videos'])) {
       . '<div class="igadd">' . $vpick('Product in the reel') . '<button class="btn" onclick="if(this.form.checkValidity())this.textContent=\'Adding…\'">Add</button></div>'))
       . '</form>';
   }
-  foreach ($vids as $v) { if (preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? '')) { fx_vid_note($v['file']); fx_media_link($v['file']); } fx_media_link($v['cover'] ?? ''); }   // links put back after a GitHub update   // once per file
+  foreach ($vids as $v) { if (preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? '')) { fx_vid_note($v['file']); fx_media_link($v['file']); } fx_media_link($v['prev'] ?? ''); fx_media_link($v['cover'] ?? ''); }   // links put back after a GitHub update   // once per file
   page('Shop videos', '<div class="pagehead"><h1>Shop videos</h1><a class="btn line sm" href="' . h(self_url(['products' => 1])) . '">← Products</a></div>' . flash()
     . fx_tabs(['Your videos (' . $n . ')', 'Add a video'], 'Shop videos') . '<div class="vids fitbox ptw" data-t="1"><div class="vleft" data-t="2">' . $igHtml . '<form class="card vadd vlink" method="post" onsubmit="this.querySelector(\'.btn\').textContent=\'Adding…\'">' . csrf_field() . '<input type="hidden" name="act" value="link"><h2>Paste a link</h2>'
     . '<input id="v_url" type="url" name="url" required inputmode="url" placeholder="https://www.instagram.com/reel/…" spellcheck="false" aria-label="Video link">'
