@@ -3,10 +3,11 @@
    To change a translation, edit the English → Arabic list below. */
 (function(){
   var D = {
-"Free delivery anywhere in UAE · Custom engraving · Ready-to-gift luxury packaging": "توصيل مجاني لجميع أنحاء الإمارات · نقش حسب الطلب · تغليف فاخر جاهز للإهداء",
+"Free delivery anywhere in UAE · Made for luxury · Ready-to-gift luxury packaging": "توصيل مجاني لجميع أنحاء الإمارات · صُنع للفخامة · تغليف فاخر جاهز للإهداء",
 "Free delivery anywhere in UAE": "توصيل مجاني لجميع أنحاء الإمارات",
 "Please pay by card.": "يرجى الدفع بالبطاقة.",
 "Custom engraving": "نقش حسب الطلب",
+"Made for luxury": "صُنع للفخامة",
 "Ready-to-gift luxury packaging": "تغليف فاخر جاهز للإهداء",
 "Fragrances": "العطور",
 "Personal Care": "العناية الشخصية",
