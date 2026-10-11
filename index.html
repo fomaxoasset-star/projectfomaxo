@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=32";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=33";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -2279,6 +2279,9 @@ html[lang=ar] .qd-bar b:last-child em{transform:scaleX(-1)}
 .lang-ph{height:26px;min-width:0;padding:0 10px;font-size:12px;margin-inline-end:6px}   /* the switch sits in the header next to search, phone and laptop */
 @media(min-width:1241px) and (max-width:1600px){.menu{letter-spacing:.09em;gap:clamp(12px,1.1vw,24px)}}
 @media(min-width:1241px) and (max-width:1400px){.menu{font-size:12px;letter-spacing:.06em;gap:12px}.nav-in{gap:20px}}   /* room for the switch on laptops */
+@media(min-width:1241px) and (max-width:1400px){.menu{font-size:11px;letter-spacing:.03em;gap:9px}.nav-in{gap:14px}}   /* PC + Personal Care + Gifts + Combo: the menu still fits in one line */
+@media(min-width:1401px) and (max-width:1600px){.menu{letter-spacing:.05em;gap:14px}}
+@media(min-width:1601px) and (max-width:1999px){.menu{letter-spacing:.08em;gap:clamp(16px,1.2vw,26px)}}
 @media(max-width:700px){.lang-ph{display:inline-flex;height:22px;min-width:0;padding:0 7px;font-size:10.5px;margin-inline-end:4px}}
 @media(max-width:430px){.nav-in>.icons{gap:0}.nav-in>.icons .icon{width:36px}}   /* phone: عربي sits next to search; slimmer icons keep the header inside the screen */
 html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
@@ -2413,7 +2416,8 @@ html[dir="rtl"] .rl-s{direction:rtl}
     <a class="brand" href="#/" aria-label="FOMAXO home"><svg class="em" aria-hidden="true"><use href="#emblem"/></svg><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><use href="#wordmark"/></svg><sup class="tm">™</sup></a>
     <nav class="menu" id="menu" aria-label="Main">
       <a href="#/fragrances" data-r="fragrances">Fragrances</a>
-      <a href="#/personal-care" data-r="personal-care">PC</a>
+      <a href="#/pc" data-r="pc">PC</a>
+      <a href="#/personal-care" data-r="personal-care">Personal Care</a>
       <a href="#/gifts" data-r="gifts">Gifts</a>
       <a href="#/combo" data-r="combo">Combo</a>
       <a href="#/collections" data-r="collections">Collections</a>
@@ -2434,7 +2438,7 @@ html[dir="rtl"] .rl-s{direction:rtl}
 <div class="mnav" id="mnav" aria-hidden="true">
   <div class="top"><a class="brand" href="#/"><svg class="em" aria-hidden="true"><use href="#emblem"/></svg><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><use href="#wordmark"/></svg><sup class="tm">™</sup></a><button class="icon" data-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
   <nav>
-    <a href="#/fragrances">Fragrances</a><a href="#/personal-care">PC</a><a href="#/gifts">Gifts</a><a href="#/combo">Combo</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
+    <a href="#/fragrances">Fragrances</a><a href="#/pc">PC</a><a href="#/personal-care">Personal Care</a><a href="#/gifts">Gifts</a><a href="#/combo">Combo</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
   </nav>
   <div class="foot" id="mnavFoot"></div>
 </div>
@@ -2453,7 +2457,7 @@ html[dir="rtl"] .rl-s{direction:rtl}
       </div>
       <div><h5>Shop</h5><div id="footShop"></div></div>
       <div><h5>Discover</h5><a href="#/collections/fragrance">Fragrance Collection</a><a href="#/collections/mini">Mini Collection</a><a href="#/collections/name">Personalized Gifting</a><a href="#/collections/gifting">Bespoke Gifting</a><a href="#/collections/elite">Elite Membership</a></div>
-      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">PC</a><a href="#/gifts">Gifts</a><a href="#/combo">Combo</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
+      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/pc">PC</a><a href="#/personal-care">Personal Care</a><a href="#/gifts">Gifts</a><a href="#/combo">Combo</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
     </div>
     <div class="fbase"><span>© 2026 FOMAXO™. All rights reserved.</span><span>Inspire greatness</span></div>
     <p class="fpriv">We count anonymous visits (no cookies, nothing shared) to improve the store.</p>
@@ -3787,11 +3791,11 @@ const cxSplit = (img, eyebrow, title, lead, ctas) => `<section class="sec"><div 
     <div class="pc-copy"><span class="eyebrow">${eyebrow}</span><h2>${title}</h2><p class="lead">${lead}</p><div class="ctas">${ctas}</div></div>
   </div></div></section>`;
 const CARE_CATS = [['all', 'All'], ['face', 'Face'], ['body', 'Body'], ['hair', 'Hair'], ['lips', 'Lips']];
-function personalCare(q){
-  document.title = 'Personal Care — FOMAXO';
+function pcPage(q){
+  document.title = 'PC — FOMAXO';
   const c = CARE_CATS.some(x => x[0] === q.get('c')) ? q.get('c') : 'all';
-  return pageHead('Personal Care', 'Personal <em class="metal">Care</em>', 'Face, body, hair and lips, crafted with the same care as every FOMAXO parfum.') + `
-  <section style="padding-bottom:0"><div class="wrap">${cxFilters('personal-care', 'c', CARE_CATS, c)}
+  return pageHead('PC', 'Personal <em class="metal">Care</em>', 'Face, body, hair and lips, crafted with the same care as every FOMAXO parfum.') + `
+  <section style="padding-bottom:0"><div class="wrap">${cxFilters('pc', 'c', CARE_CATS, c)}
     <div class="grid shop-grid">${CARE.filter(x => c === 'all' || x.cat === c).map(cxCard).join('')}</div>
   </div></section>` +
   cxSplit('personal-care-poster', 'Better together', 'Parfum and care <em class="metal">combos</em>', 'Pair your FOMAXO parfum with body, hair and lip care. Passion Sin shower gel and shampoo carry the same scent as the parfum.',
@@ -3820,6 +3824,18 @@ function bindDx(){
   $$('[data-cxset]', app).forEach(b => b.onclick = () => { const ls = b.dataset.cxset.split(',').map(x => x.split('.')); let ok = 0;
     ls.forEach(([id, s], i) => { if (addToCart(id, +s, 1, i < ls.length - 1)) ok++; });
     if (ok && ok < ls.length) toast('Part of this set is out of stock. The rest is in your bag'); });
+}
+/* the original Personal Care page (#/personal-care); the products are on the PC page (#/pc) */
+function personalCare(){
+  return pageHead('Personal Care', 'Personal <em class="metal">Care</em>', 'The FOMAXO universe is expanding beyond fragrance.') + `
+  <section class="sec"><div class="wrap"><div class="pc pc-poster rv-up">
+    <div class="pc-media pc-photo"><img ${pic('personal-care-poster')} alt="FOMAXO Personal Care poster: crafted by nature, elevated by luxury" loading="lazy" width="1024" height="1536"></div>
+    <div class="pc-copy"><span class="soon">Coming soon</span><h2>Elevating <em class="metal">everyday rituals</em></h2>
+      <p class="lead">Looking ahead, our ambition extends beyond fragrances. We are launching a diverse range of high-end, luxury products designed to elevate lifestyles and inspire aspirational minds.</p>
+      <p class="lead">Every new introduction is guided by the same principles as our perfumes: simplicity, quality and recognisability.</p>
+      <form class="notify" data-interest="Personal Care"><input type="email" required placeholder="Email for first access" aria-label="Email"><button class="btn sm" type="submit">Notify me</button></form>
+    </div></div></div></section>
+  <section class="sec" style="padding-top:0"><div class="wrap">${secHead('Meanwhile','Discover the <em class="metal">collection</em>')}<div class="grid">${FRAG.slice(0,3).map((p,i)=>card(p,{d:'d'+i})).join('')}</div></div></section>`;
 }
 function about(){
   return pageHead('About FOMAXO', 'About <em class="metal">FOMAXO</em>', 'For Outstanding Minds, Acquiring Xtraordinary Opulence.') + `
@@ -4745,7 +4761,8 @@ function route(){
     case 'fragrances': html = fragrances(q); break;
     case 'product': html = product(seg[1], q); after = () => P[seg[1]] && !P[seg[1]].hidden && bindProduct(P[seg[1]]); break;
     case 'collections': html = collections(seg[1]); if (seg[1] === 'elite') after = bindElite; if (seg[1] === 'fragrance') after = bindFragColl; break;
-    case 'personal-care': html = personalCare(q); after = bindDx; break;
+    case 'personal-care': html = personalCare(); break;
+    case 'pc': html = pcPage(q); after = bindDx; break;
     case 'gifts': html = giftsPage(q); after = bindDx; break;
     case 'combo': html = comboPage(); after = bindDx; break;
     case 'about': html = about(); break;
