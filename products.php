@@ -40,7 +40,7 @@ if ($pdo) { try { $pair = [];
   foreach ($pair as $a => $m) { $m = array_filter($m, fn($n) => $n >= 2); arsort($m); if ($m) $together[$a] = array_slice(array_keys($m), 0, 4); }
 } catch (Throwable $e) {} }
 /* "612 people bought this week" (product page): different customers (by mobile number) who really bought each product in the last 7 days, from real orders only
-   (test, unpaid and cancelled orders don't count; trashed ones still do, AJAY: the number purchased stays). Only products with 500 or more are sent, with the real number; below 500 the line doesn't show. Never a made-up number. */
+   (test, unpaid and cancelled orders don't count; trashed ones still do, AJAY: the number purchased stays). Only products with more than 10 (11 or more) are sent, with the real number; 10 or fewer and the line doesn't show. Never a made-up number. */
 $sold = [];
 if ($pdo) { try { $who = []; $year = date('Y-m-d H:i:s', strtotime('-7 days'));   // the last 7 days
   foreach (array_merge($pdo->query("SELECT lines_json, phone, created_at FROM fx_orders WHERE test = 0 AND status IN ('New', 'Paid', 'Delivered') AND lines_json IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC), fx_trash_sold($pdo, $year)) as $r) {
@@ -48,7 +48,7 @@ if ($pdo) { try { $who = []; $year = date('Y-m-d H:i:s', strtotime('-7 days')); 
     foreach ((array)json_decode($r['lines_json'], true) as $l) { $id = is_array($l) ? (string)($l['id'] ?? '') : ''; if ($id === '' || !preg_match('~^[a-z0-9-]{1,30}$~', $id)) continue;
       if ($p9 !== '' && $r['created_at'] >= $year) $who[$id][$p9] = true; }
   }
-  foreach ($who as $id => $m) if (($c = count($m)) >= 500) $sold[$id] = $c;   // the real number, from 500 up ("612 people bought this week")
+  foreach ($who as $id => $m) if (($c = count($m)) > 10) $sold[$id] = $c;   // the real number, from 11 up ("612 people bought this week")
 } catch (Throwable $e) {} }
 /* cash on delivery minimum and maximum (admin → Settings → Cash on delivery); max 0 = no upper limit */
 [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo ?: null);
