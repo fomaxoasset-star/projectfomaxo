@@ -321,6 +321,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 @media (prefers-reduced-motion:reduce){.sizes .bv::after{display:none}}
 .qtyrow{display:grid;grid-template-columns:140px 1fr;gap:10px}
 .qty{display:flex;border:1px solid var(--line-2);height:52px;position:relative}
+.qtyrow.capped{margin-bottom:16px}
 .qcap{position:absolute;left:0;right:0;top:100%;margin-top:3px;text-align:center;font-size:10px;letter-spacing:.06em;color:var(--gold);white-space:nowrap;pointer-events:none}
 .qty button.at-cap,.line-item .q button.at-cap{opacity:.35}
 .cap-note{font-size:10px;letter-spacing:.06em;color:var(--gold)}
@@ -3416,7 +3417,7 @@ function bindProduct(p){
   let size = +($('#sizes .on')?.dataset.s) || defaultSize(p);
   const isSet = p.kind === 'set'; let picks = [];
   const qty = $('#qty'), capQ = () => Math.max(1, maxQty(p.id, size) - inBagQty(p.id, size)), getQ = () => Math.max(1, Math.min(capQ(), parseInt(qty.value) || 1));
-  const qcap = () => { const c = capQ(), hit = (parseInt(qty.value) || 1) >= c && maxQty(p.id, size) < 99 && maxQty(p.id, size) > 0; $('#qcap').textContent = hit ? capMsg(maxQty(p.id, size)) : ''; $('#qp').classList.toggle('at-cap', hit); };
+  const qcap = () => { const c = capQ(), hit = (parseInt(qty.value) || 1) >= c && maxQty(p.id, size) < 99 && maxQty(p.id, size) > 0; $('#qcap').textContent = hit ? capMsg(maxQty(p.id, size)) : ''; $('#qp').classList.toggle('at-cap', hit); qty.closest('.qtyrow').classList.toggle('capped', hit); };
   $('#qm').onclick = () => { qty.value = Math.max(1, getQ() - 1); qcap(); };
   $('#qp').onclick = () => { qty.value = Math.min(capQ(), getQ() + 1); qcap(); };
   qty.onchange = () => { qty.value = getQ(); qcap(); };
