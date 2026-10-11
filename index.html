@@ -1695,7 +1695,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-head{display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.06em;color:var(--muted);align-self:flex-start;padding:0}
 .rw-head:hover{color:var(--gold-hi)}
 .rw-head .rw-none{opacity:.45}
-.pd-sold{display:flex;align-items:center;gap:8px;margin:0;font-size:12.5px;letter-spacing:.06em;font-weight:700;font-style:normal;color:var(--fg,inherit)}.pd-sold:empty{display:none}.pd-sold svg{width:15px;height:15px;color:var(--gold);flex:none}   /* people bought this week: real orders only */
+.pd-sold{position:absolute;top:14px;left:14px;z-index:2;display:flex;align-items:center;gap:8px;margin:0;padding:8px 14px;border:1px solid var(--gold);background:rgba(20,16,8,.84);color:#f3e3b5;font-size:13px;letter-spacing:.06em;font-weight:700;font-style:normal;pointer-events:none}[dir=rtl] .pd-sold{left:auto;right:14px}.stage.zoom .pd-sold{display:none}.pd-sold:empty{display:none}.pd-sold svg{width:15px;height:15px;color:var(--gold);flex:none}   /* people bought this week: real orders only */
 .rw-fx{margin-left:auto;align-self:flex-start;font-size:28px;line-height:1;padding:0 4px;margin-top:-6px;color:var(--muted);transition:color .3s}.rw-fx:hover{color:var(--gold-hi)}
 .rw-form{border:1px solid var(--line-2);background:var(--panel);padding:clamp(18px,3vw,30px);margin-bottom:22px;gap:18px}
 .rw-fhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
@@ -3390,14 +3390,13 @@ function product(id, q){
     <div class="pdp">
       <div class="gallery">
         <div class="thumbs">${gallery.map((g,i) => `<button class="${i?'':'on'}" data-g="${g}" aria-label="Image ${i+1}"><img src="${SM(g)}" alt="" loading="lazy"></button>`).join('')}</div>
-        <div class="stage" id="stage"><img id="stageImg" src="${IMG(imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}"></div>
+        <div class="stage" id="stage"><img id="stageImg" src="${IMG(imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}"><p class="pd-sold" id="psold" data-p="${p.id}">${soldHTML(p.id)}</p></div>
       </div>
       <div class="buy">
         <div style="display:flex;flex-direction:column;gap:14px">
           ${tierOf(p) ? `<span class="sub"><a href="#/collections/tier-${p.tier}">${esc(tierOf(p).name)}</a></span>` : ''}
           <div class="pd-name"><h1>${esc(p.name)}</h1><span class="sub">${esc(p.family)}</span></div>
           <button type="button" class="rw-head" id="rwHead">${rwHeadHTML(RATES && RATES[p.id])}</button>
-          <p class="pd-sold" id="psold" data-p="${p.id}">${soldHTML(p.id)}</p>
           <p class="lead" style="max-width:none">${esc(p.short)}</p>
           <div id="pprice">${pdpPrice(p, size)}</div>
           ${pdpOffer(p)}
