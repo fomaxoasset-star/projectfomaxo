@@ -38,7 +38,7 @@ foreach ($lines as $l) {
   $opt = (string)($l['opt'] ?? '');
   $qty = (int)($l['qty'] ?? 0);
   if (!isset($CATALOG[$id]) || !isset($CATALOG[$id]['prices'][$opt]) || $qty < 1) fail(400, 'An item in your bag is no longer available. Please refresh and try again.');
-  if ($qty > 99) fail(400, 'You can order up to 99 of one item online. For a bigger order, please message us on WhatsApp.');   // same limit as the bag
+  if ($qty > fomaxo_qty_cap($id, $opt)) fail(400, 'You can order up to 99 of one item online. For a bigger order, please message us on WhatsApp.');   // same limit as the bag (stock when counted)
   $p = $CATALOG[$id];
   $isSet = $p['kind'] === 'set';
   $label = $isSet ? "Set of $opt" : "{$opt}ml";
