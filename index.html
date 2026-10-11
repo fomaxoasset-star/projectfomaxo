@@ -2901,13 +2901,13 @@ function buyNow(line){
 function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'); } catch(e) {} }
 // a Buy now item left from before this change goes into the bag too (unless we're back from paying for it)
 if (buyLines.length && !/src=buy/.test(location.hash)) { buyLines.forEach(l => { const key = (l.picks || []).join('|'); if (!cart.some(x => x.id === l.id && String(x.opt) === String(l.opt) && (x.picks || []).join('|') === key)) cart.push(l); }); clearBuy(); try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} }
-// "You may also like" in the bag: products the customer doesn't have yet (everyday fragrances, then 10ml minis, King always last; the Discovery Set has its own "Not sure yet?" link)
+// "You may also like" in the bag: every size of every fragrance the customer doesn't have yet in that size (AJAY 2026-10-11: show the 100ml and 50ml too),
+// biggest size first (100ml, then 50ml, then 10ml minis), King always last; the Discovery Set has its own "Not sure yet?" link
 function bagRecs(){
-  const have = new Set(cart.map(l => l.id)), haveSz = new Set(cart.map(l => l.id + '/' + l.opt));
+  const haveSz = new Set(cart.map(l => l.id + '/' + l.opt));
   const frag = S.products.filter(p => p.kind !== 'set' && p.prices).sort((a, b) => (a.tier === 'elite') - (b.tier === 'elite'));
-  // full-size fragrances the customer doesn't have, then the 10ml minis they don't have yet
-  const recs = frag.filter(p => !have.has(p.id) && hasPrice(p.prices[defaultSize(p)])).map(p => [p, defaultSize(p)])
-    .concat(frag.filter(p => p.sizes.includes(10) && hasPrice(p.prices[10]) && !haveSz.has(p.id + '/10')).map(p => [p, 10]))
+  const sizes = [...new Set(frag.flatMap(p => p.sizes.filter(s => typeof s === 'number')))].sort((a, b) => b - a);
+  const recs = sizes.flatMap(sz => frag.filter(p => p.sizes.includes(sz) && hasPrice(p.prices[sz]) && !haveSz.has(p.id + '/' + sz)).map(p => [p, sz]))
     .sort((a, b) => (a[0].id === 'king') - (b[0].id === 'king'));
   if (!recs.length) return '';
   return `<div class="recs"><div class="recs-h"><h5>You may also like</h5><span class="recs-nav"><button type="button" data-recscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-recscroll="1" aria-label="Scroll for more">›</button></span></div><div class="recs-row">${recs.map(([p, sz]) => `<div class="rec">
