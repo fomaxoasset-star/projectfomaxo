@@ -8,6 +8,8 @@
 "Please pay by card.": "يرجى الدفع بالبطاقة.",
 "Custom engraving": "نقش حسب الطلب",
 "Ready-to-gift luxury packaging": "تغليف فاخر جاهز للإهداء",
+"Bestseller": "الأكثر مبيعاً",
+"Our most bought this month": "الأكثر شراءً هذا الشهر",
 "Fragrances": "العطور",
 "Personal Care": "العناية الشخصية",
 "Collections": "المجموعات",
