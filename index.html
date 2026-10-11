@@ -323,6 +323,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .qty{display:flex;border:1px solid var(--line-2);height:52px;position:relative}
 .qtyrow.capped{margin-bottom:16px}
 .qcap{position:absolute;left:0;right:0;top:100%;margin-top:3px;text-align:center;font-size:10px;letter-spacing:.06em;color:var(--gold);white-space:nowrap;pointer-events:none}
+.qcap a,.cap-note a{pointer-events:auto;color:var(--gold);text-decoration:underline;text-underline-offset:2px}
 .qty button.at-cap,.line-item .q button.at-cap{opacity:.35}
 .cap-note{font-size:10px;letter-spacing:.06em;color:var(--gold)}
 .qty button{width:44px;font-size:18px;color:var(--champagne)}
@@ -2750,9 +2751,9 @@ try { cart = JSON.parse(localStorage.getItem('fomaxo_cart') || '[]').filter(l =>
 const save = () => { try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} renderCart(); };
 function addToCart(id, opt, qty=1, silent, picks){
   const left = maxQty(id, opt), inBag = inBagQty(id, opt);   // never more in the bag than we have (or MAX_PER_ITEM)
-  const what = `${P[id].name} · ${optLabel(P[id], opt)}`, lim = left < MAX_PER_ITEM ? `Only ${left} available of ${what}` : `Up to ${MAX_PER_ITEM} per item of ${what}`;
-  if (left - inBag <= 0) { toast(left <= 0 ? `${what} is out of stock, restocking soon` : `${lim}, and they are in your bag`); return false; }
-  if (qty > left - inBag) { qty = left - inBag; if (!silent) { silent = true; toast(`${lim}. ${qty} added to your bag`); } }
+  const what = `${P[id].name} · ${optLabel(P[id], opt)}`, low = left < MAX_PER_ITEM;
+  if (left - inBag <= 0) { toast(left <= 0 ? `${what} is out of stock, restocking soon` : low ? `Only ${left} available of ${what}, and they are in your bag` : MASS_TXT); return false; }
+  if (qty > left - inBag) { qty = left - inBag; if (!silent) { silent = true; toast(low ? `Only ${left} available of ${what}. ${qty} added to your bag` : MASS_TXT); } }
   const key = (picks || []).join('|');
   const l = cart.find(x => x.id === id && String(x.opt) === String(opt) && (x.picks || []).join('|') === key);
   if (l) l.qty = Math.min(MAX_PER_ITEM, l.qty + qty); else cart.push(picks ? {id, opt, qty, picks} : {id, opt, qty});
@@ -2917,7 +2918,7 @@ function renderCart(){
       <div>${lineInfo(l)}
         <div class="qrow"><div class="q"><button data-q="${i}" data-d="-1" aria-label="${l.qty === 1 ? 'Remove' : 'Decrease'}">${l.qty === 1 ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>' : '−'}</button><span>${l.qty}</span><button data-q="${i}" data-d="1" aria-label="Increase"${l.qty >= maxQty(l.id, l.opt) - inBagQty(l.id, l.opt, l) ? ' class="at-cap"' : ''}>+</button></div>
         ${linePriceHTML(p, l)}</div>
-        <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty >= maxQty(l.id, l.opt) - inBagQty(l.id, l.opt, l) && maxQty(l.id, l.opt) < MAX_PER_ITEM ? `<span class="cap-note">${capMsg(maxQty(l.id, l.opt))}</span>` : ''}${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') || !shown('discovery') ? '' :
+        <div class="rmrow"><button class="rm" data-rm="${i}">Remove</button>${l.qty >= maxQty(l.id, l.opt) - inBagQty(l.id, l.opt, l) && maxQty(l.id, l.opt) > 0 ? `<span class="cap-note">${capHTML(l.id, l.opt)}</span>` : ''}${l.qty > 1 && hasPrice(p.prices[l.opt]) ? `<span class="each">${moneyHTML(p.prices[l.opt])} each</span>` : ''}</div></div></div>`; }).join('') + (cart.some(l => l.id === 'discovery') || !shown('discovery') ? '' :
       `<div class="upsell"><h5>Not sure yet?</h5><a href="#/product/discovery" data-close><img src="${SM('discovery-1')}" alt=""><span><b>Discovery Set</b><br><span class="small">2ml vials · try at home</span></span><span class="gold">→</span></a></div>`) + bagRecs();
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
@@ -3056,7 +3057,12 @@ const stockLeft = (id, opt) => { const s = STOCK[id]; return s && s[String(opt)]
 const MAX_PER_ITEM = 30;
 const maxQty = (id, opt) => { const s = STOCK_MAX[id], n = s && s[String(opt)] !== undefined ? +s[String(opt)] : stockLeft(id, opt); return n === null ? MAX_PER_ITEM : Math.max(0, Math.min(MAX_PER_ITEM, n)); };
 const inBagQty = (id, opt, skip) => cart.reduce((a, x) => a + (x !== skip && x.id === id && String(x.opt) === String(opt) ? x.qty : 0), 0);
-const capMsg = n => n < MAX_PER_ITEM ? `Only ${n} available` : `Up to ${MAX_PER_ITEM} per item`;
+const capMsg = n => n < MAX_PER_ITEM ? `Only ${n} available` : MASS_TXT;
+/* over MAX_PER_ITEM of one item: "Contact FOMAXO for Massive Order", opening WhatsApp with a ready message (no emoji) */
+const MASS_TXT = 'Contact FOMAXO for Massive Order';
+const massLink = (id, opt) => { const p = P[id], ar = document.documentElement.lang === 'ar', it = `${p.name} ${optLabel(p, opt)}`;
+  return `https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent(ar ? `مرحباً FOMAXO، أرغب في طلب كمية كبيرة من ${it}.` : `Hello FOMAXO, I would like to place a massive order of ${it}.`)}`; };
+const capHTML = (id, opt) => { const n = maxQty(id, opt); return n < MAX_PER_ITEM ? capMsg(n) : `<a href="${massLink(id, opt)}" target="_blank" rel="noopener">${MASS_TXT}</a>`; };
 const slugOf = p => String(p.name || p.id).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || p.id;   // same as fomaxo_slug() in seo-lib.php: fomaxo.com/fomaxo-old-money (shows the product picture in WhatsApp)
 const stockHTML = (id, opt, long) => { const n = stockLeft(id, opt); return n === null ? '' : n <= 0 ? '<span class="stk out">Out of Stock — Restocking Soon</span>' : `<span class="stk${long ? ' low' : ''}">Only ${n} left${long ? ' in stock, order soon' : ''}</span>`; };   // only sizes really running low come from stock.php (admin → Stocks); long = the product page box
 function applyStock(){
@@ -3419,7 +3425,7 @@ function bindProduct(p){
   let size = +($('#sizes .on')?.dataset.s) || defaultSize(p);
   const isSet = p.kind === 'set'; let picks = [];
   const qty = $('#qty'), capQ = () => Math.max(1, maxQty(p.id, size) - inBagQty(p.id, size)), getQ = () => Math.max(1, Math.min(capQ(), parseInt(qty.value) || 1));
-  const qcap = () => { const c = capQ(), hit = (parseInt(qty.value) || 1) >= c && maxQty(p.id, size) < MAX_PER_ITEM && maxQty(p.id, size) > 0; $('#qcap').textContent = hit ? capMsg(maxQty(p.id, size)) : ''; $('#qp').classList.toggle('at-cap', hit); qty.closest('.qtyrow').classList.toggle('capped', hit); };
+  const qcap = () => { const c = capQ(), hit = (parseInt(qty.value) || 1) >= c && maxQty(p.id, size) > 0; $('#qcap').innerHTML = hit ? capHTML(p.id, size) : ''; $('#qp').classList.toggle('at-cap', hit); qty.closest('.qtyrow').classList.toggle('capped', hit); };
   $('#qm').onclick = () => { qty.value = Math.max(1, getQ() - 1); qcap(); };
   $('#qp').onclick = () => { qty.value = Math.min(capQ(), getQ() + 1); qcap(); };
   qty.onchange = () => { qty.value = getQ(); qcap(); };
