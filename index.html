@@ -37,7 +37,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=31";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=32";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -2372,6 +2372,195 @@ html[dir="rtl"] .rl-s{direction:rtl}
   .rl-nav{display:block}.rl-nav button{position:fixed;top:50%;transform:translateY(-50%);z-index:3;width:52px;height:52px}.rl-nav button[data-rl="-1"]{left:24px}.rl-nav button[data-rl="1"]{right:24px}.rl-nav svg{width:22px;height:22px}
   .rl-nav button[disabled]{opacity:.3;cursor:default}
 }
+/* ---------- Personal Care, Gifts and Combo pages (Dubai boutique look: arches, gold lattice, centred serif headings) ---------- */
+.dx-hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);padding:clamp(28px,4vw,64px) 0}
+.dx-hero::before{content:"";position:absolute;inset:0;opacity:.5;pointer-events:none;
+  background:repeating-linear-gradient(45deg,transparent 0 27px,var(--line) 27px 28px),repeating-linear-gradient(-45deg,transparent 0 27px,var(--line) 27px 28px);
+  -webkit-mask-image:linear-gradient(90deg,transparent 30%,#000 100%);mask-image:linear-gradient(90deg,transparent 30%,#000 100%)}
+.dx-hero-in{position:relative;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(28px,5vw,90px);align-items:center}
+.dx-hero-copy{display:flex;flex-direction:column;gap:18px;min-width:0}
+.dx-hero-copy h1{font-size:clamp(40px,5.6vw,88px);line-height:1.02}
+.dx-hero-copy .lead{max-width:560px}
+.dx-hero-copy .ctas{display:flex;gap:12px;flex-wrap:wrap}
+.dx-arch{position:relative;justify-self:end;width:min(100%,460px);aspect-ratio:4/5;border-radius:999px 999px 0 0;overflow:hidden;border:1px solid var(--line-2);padding:10px;background:var(--panel)}
+.dx-arch img{width:100%;height:100%;object-fit:cover;border-radius:999px 999px 0 0;display:block}
+.dx-arch::after{content:"";position:absolute;inset:4px;border-radius:999px 999px 0 0;border:1px solid var(--line);pointer-events:none}
+.dx-trust{list-style:none;margin:6px 0 0;padding:16px 0 0;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:10px 26px}
+.dx-trust li{display:flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.08em;color:var(--champagne)}
+.dx-trust svg{width:18px;height:18px;flex:none;color:var(--gold)}
+.dx-badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:2;font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:#0a0805;background:var(--metal);padding:5px 12px;white-space:nowrap}
+.dx-badge.in{position:static;transform:none;display:inline-block;vertical-align:middle;margin-left:8px;font-family:var(--sans)}
+.dx-pr{font-family:var(--serif);font-size:22px;color:var(--gold-hi)}
+.dx-pr.na{font-family:var(--sans);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+.dx-wa svg{width:17px;height:17px;flex:none}
+/* ritual step bar */
+.dx-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:clamp(24px,3vw,44px);border:1px solid var(--line)}
+.dx-steps a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:16px 8px;text-align:center;border-right:1px solid var(--line);transition:background .4s}
+.dx-steps a:last-child{border-right:0}
+.dx-steps a:hover{background:rgba(215,170,105,.07)}
+.dx-steps b{font-family:var(--serif);font-weight:400;font-size:24px;color:var(--gold)}
+.dx-steps span{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--ivory)}
+.dx-steps small{font-size:11px;letter-spacing:.14em;color:var(--muted)}
+.dx-step{padding:clamp(34px,4vw,64px) 0;border-bottom:1px solid var(--line)}
+.dx-step-in{display:grid;grid-template-columns:minmax(200px,280px) minmax(0,1fr);gap:clamp(24px,4vw,64px);align-items:start}
+.dx-step-head{position:sticky;top:110px;display:flex;flex-direction:column;gap:8px}
+.dx-step-head b{font-family:var(--serif);font-weight:300;font-size:clamp(54px,6vw,92px);line-height:.9;color:transparent;-webkit-text-stroke:1px var(--gold)}
+.dx-step-head h2{font-size:clamp(28px,2.8vw,42px)}
+.dx-step-head p{color:var(--muted);font-size:14.5px;line-height:1.65}
+.dx-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:clamp(16px,1.6vw,26px)}
+.dx-tile{display:flex;flex-direction:column;gap:14px;min-width:0}
+.dx-tile-img{position:relative;aspect-ratio:4/5;border-radius:999px 999px 0 0;overflow:hidden;border:1px solid var(--line);background:var(--panel)}
+.dx-tile-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.2s var(--ease)}
+.dx-tile:hover .dx-tile-img img{transform:scale(1.04)}
+.dx-tile-txt{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center}
+.dx-tile h3{font-family:var(--display);font-weight:400;font-size:17px;letter-spacing:.14em;text-transform:uppercase;color:var(--ivory)}
+.dx-type{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.dx-short{font-size:13.5px;line-height:1.6;color:var(--muted)}
+.dx-tile .dx-wa{width:100%;margin-top:6px}
+/* Passion Sin band */
+.dx-band{padding:clamp(40px,5vw,80px) 0;background:var(--panel);border-bottom:1px solid var(--line)}
+.dx-band-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);align-items:center}
+.dx-band-pics{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;align-items:end}
+.dx-band-pics img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:999px 999px 0 0;border:1px solid var(--line)}
+.dx-band-pics img:first-child{aspect-ratio:3/4.6}
+.dx-band-copy{display:flex;flex-direction:column;gap:16px}
+.dx-band-copy p{color:var(--muted);line-height:1.7}
+.dx-band-copy .ctas{display:flex;gap:12px;flex-wrap:wrap}
+.dx-deal{display:flex;align-items:flex-end;justify-content:space-between;gap:8px 14px;flex-wrap:wrap}
+.dx-deal small{display:block;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+.dx-deal b{font-family:var(--serif);font-weight:400;font-size:26px;color:var(--gold-hi);margin-right:8px}
+.dx-deal s{font-size:15px;color:var(--dim)}
+.dx-save{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5fb878;border:1px solid rgba(95,184,120,.4);padding:5px 9px}
+html[data-mode="light"] .dx-save{color:#2e7d45;border-color:rgba(46,125,69,.4)}
+/* concierge band */
+.dx-conc{padding:clamp(44px,5vw,84px) 0;text-align:center}
+.dx-conc-in{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:640px}
+.dx-conc h2{font-size:clamp(28px,3vw,44px)}
+.dx-conc p{color:var(--muted);line-height:1.7}
+.dx-conc .btn svg{width:18px;height:18px}
+.dx-star{width:34px;height:34px;border:1px solid var(--gold);transform:rotate(45deg);position:relative;margin-bottom:6px}
+.dx-star::after{content:"";position:absolute;inset:-1px;border:1px solid var(--gold);transform:rotate(45deg)}
+/* gifts */
+.dx-gifts{padding:clamp(30px,4vw,60px) 0}
+.dx-for{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:clamp(24px,3vw,44px)}
+.dx-for>div{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.dx-for .chip{cursor:pointer;height:38px;padding:0 16px}
+.dx-gift-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(18px,2vw,32px)}
+.dx-gift{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--panel);min-width:0}
+.dx-gift[hidden]{display:none}
+.dx-gift-img{position:relative;aspect-ratio:1/1;overflow:hidden;margin:12px 12px 0;border-radius:999px 999px 0 0;background:var(--panel-2)}
+.dx-gift-img>img{width:100%;height:100%;object-fit:cover;display:block}
+.dx-mosaic{display:grid;grid-template-columns:1fr 1fr;height:100%;gap:2px;background:var(--line)}
+.dx-mosaic img{width:100%;height:100%;object-fit:cover;display:block;min-height:0}
+.dx-mosaic.n2{grid-template-rows:1fr}
+.dx-gift-txt{display:flex;flex-direction:column;gap:12px;padding:clamp(16px,1.6vw,24px);flex:1;text-align:center}
+.dx-gift h3{font-family:var(--display);font-weight:400;font-size:clamp(18px,1.4vw,22px);letter-spacing:.1em;text-transform:uppercase;color:var(--ivory)}
+.dx-gift-txt>p{font-size:14px;color:var(--muted);line-height:1.6}
+.dx-gift .dx-deal{justify-content:center}
+.dx-gift .btn{margin-top:auto;width:100%}
+.dx-in{list-style:none;margin:0;padding:0;border-top:1px solid var(--line);text-align:left}
+.dx-in li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.dx-in b{font-weight:500;color:var(--gold-hi);letter-spacing:.04em}
+.dx-in span{color:var(--muted);text-align:right}
+.dx-extras{padding:clamp(34px,4vw,60px) 0;background:var(--panel);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.dx-extras-in{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(20px,3vw,48px);text-align:center}
+.dx-extras-in>div{display:flex;flex-direction:column;align-items:center;gap:10px}
+.dx-extras svg{width:30px;height:30px;color:var(--gold)}
+.dx-extras h3{font-family:var(--display);font-weight:400;font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:var(--ivory)}
+.dx-extras p{font-size:14px;color:var(--muted);line-height:1.6;max-width:320px}
+/* combos: numbered rows, products shown as "a + b + c" */
+.dx-combos{padding:clamp(24px,3vw,48px) 0}
+.dx-combo{display:grid;grid-template-columns:70px minmax(0,1.1fr) minmax(0,1.3fr) minmax(220px,.8fr);gap:clamp(16px,2.4vw,40px);align-items:center;padding:clamp(22px,2.4vw,34px) 0;border-bottom:1px solid var(--line)}
+.dx-combo-n{font-family:var(--serif);font-weight:300;font-size:54px;line-height:1;color:transparent;-webkit-text-stroke:1px var(--gold)}
+.dx-thumbs{display:flex;align-items:center;gap:6px}
+.dx-thumbs i{font-style:normal;font-family:var(--serif);font-size:24px;color:var(--gold)}
+.dx-th{flex:0 1 84px;min-width:0;aspect-ratio:3/4;border-radius:999px 999px 0 0;overflow:hidden;border:1px solid var(--line-2);background:var(--panel)}
+.dx-th img{width:100%;height:100%;object-fit:cover;display:block}
+.dx-combo-txt{display:flex;flex-direction:column;gap:8px;min-width:0}
+.dx-combo h3{font-family:var(--display);font-weight:400;font-size:clamp(19px,1.5vw,24px);letter-spacing:.1em;text-transform:uppercase;color:var(--ivory)}
+.dx-combo-txt>p{font-size:14px;color:var(--muted);line-height:1.6}
+.dx-combo .dx-in{display:none}
+.dx-combo-buy{display:flex;flex-direction:column;gap:12px;align-items:stretch}
+.dx-combo-buy .btn{width:100%}
+.dx-own{padding:clamp(40px,5vw,80px) 0;background:var(--panel);border-top:1px solid var(--line)}
+.dx-own-in{display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center}
+.dx-own-head{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:620px}
+.dx-own-head p{color:var(--muted)}
+.dx-own-pick{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:1100px}
+.dx-pick{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 16px;border:1px solid var(--line-2);background:transparent;color:var(--ivory);cursor:pointer;transition:.3s}
+.dx-pick b{font-weight:400;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+.dx-pick small{font-size:11px;color:var(--muted)}
+.dx-pick[aria-pressed="true"]{border-color:var(--gold);background:rgba(215,170,105,.12)}
+.dx-pick[aria-pressed="true"] b{color:var(--gold-hi)}
+.dx-own-go{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center}
+.dx-own-n{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.dx-own .btn svg{width:18px;height:18px}
+@media(max-width:1100px){
+  .dx-gift-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dx-combo{grid-template-columns:56px minmax(0,1fr) minmax(200px,.7fr);grid-template-areas:"n vis buy" "n txt buy"}
+  .dx-combo-n{grid-area:n;align-self:start}.dx-combo-vis{grid-area:vis}.dx-combo-txt{grid-area:txt}.dx-combo-buy{grid-area:buy}
+}
+@media(max-width:760px){
+  .dx-hero{padding:18px 0 22px}
+  .dx-hero::before{-webkit-mask-image:linear-gradient(180deg,#000,transparent 70%);mask-image:linear-gradient(180deg,#000,transparent 70%);opacity:.35}
+  .dx-hero-in{grid-template-columns:minmax(0,1fr) 112px;gap:14px;align-items:start}
+  .dx-hero-copy{display:contents}
+  .dx-hero-copy>*{grid-column:1/-1}
+  .dx-hero-copy .crumbs,.dx-hero-copy .eyebrow,.dx-hero-copy h1{grid-column:1}
+  .dx-hero-copy .crumbs{grid-row:1}.dx-hero-copy .eyebrow{grid-row:2}.dx-hero-copy h1{grid-row:3;font-size:clamp(34px,10vw,44px)}
+  .dx-arch{grid-column:2;grid-row:1/4;width:112px;padding:5px;align-self:center}
+  .dx-arch::after{inset:2px}
+  .dx-hero-copy .lead{font-size:15px}
+  .dx-hero-copy .ctas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .dx-hero-copy .ctas .btn{min-height:46px;padding:0 10px;letter-spacing:.14em;font-size:11px}
+  .dx-trust{flex-direction:column;gap:8px;padding-top:12px}
+  .dx-steps{display:flex;overflow-x:auto;scrollbar-width:none;margin-top:18px;-webkit-overflow-scrolling:touch}
+  .dx-steps::-webkit-scrollbar{display:none}
+  .dx-steps a{flex:0 0 auto;min-width:86px;padding:10px 12px}
+  .dx-steps b{font-size:19px}.dx-steps span{font-size:11px;letter-spacing:.16em}
+  .dx-step{padding:26px 0}
+  .dx-step-in{grid-template-columns:minmax(0,1fr);gap:16px}
+  .dx-step-head{position:static;display:grid;grid-template-columns:auto 1fr;column-gap:14px;row-gap:2px;align-items:center}
+  .dx-step-head b{grid-row:1/3;font-size:52px}
+  .dx-step-head h2{font-size:26px}
+  .dx-step-head p{grid-column:1/-1;font-size:14px;margin-top:6px}
+  .dx-tiles{grid-template-columns:minmax(0,1fr);gap:12px}
+  .dx-tile{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .dx-tile:last-child{border-bottom:0;padding-bottom:0}
+  .dx-tile-img{aspect-ratio:4/5}
+  .dx-badge{font-size:8px;letter-spacing:.18em;padding:3px 7px;top:8px}
+  .dx-tile-txt{align-items:flex-start;text-align:left;gap:4px}
+  .dx-tile h3{font-size:15px}
+  .dx-type{font-size:11px}
+  .dx-short{font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .dx-pr.na{font-size:10px}
+  .dx-tile .dx-wa{min-height:38px;margin-top:4px;padding:0 10px;letter-spacing:.12em}
+  .dx-band-in{grid-template-columns:minmax(0,1fr);gap:20px}
+  .dx-band-pics{max-width:340px}
+  .dx-band-copy .ctas .btn{flex:1 1 auto;padding:0 14px;letter-spacing:.14em}
+  .dx-gift-grid{grid-template-columns:minmax(0,1fr)}
+  .dx-for{align-items:stretch}.dx-for .eyebrow{text-align:center}
+  .dx-for>div{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;margin:0 calc(var(--pad) * -1);padding:0 var(--pad)}
+  .dx-for>div::-webkit-scrollbar{display:none}
+  .dx-for .chip{flex:0 0 auto}
+  .dx-gift-img{aspect-ratio:4/3.4}
+  .dx-extras-in{grid-template-columns:minmax(0,1fr);gap:26px}
+  .dx-combo{grid-template-columns:minmax(0,1fr);grid-template-areas:none;gap:12px;position:relative;padding:22px 0}
+  .dx-combo-n{position:absolute;top:18px;right:0;font-size:40px}
+  .dx-combo-n,.dx-combo-vis,.dx-combo-txt,.dx-combo-buy{grid-area:auto}
+  .dx-th{flex-basis:66px}
+  .dx-thumbs i{font-size:18px}
+  .dx-combo-buy .dx-deal{justify-content:flex-start}
+  .dx-pick{padding:8px 12px}
+  .dx-own-go{flex-direction:column;width:100%}.dx-own-go .btn{width:100%}
+}
+html[data-mode="light"] .dx-badge{color:#fffaf1}
+html[dir="rtl"] .dx-tile-txt{text-align:right}
+html[dir="rtl"] .dx-in{text-align:right}
+html[dir="rtl"] .dx-in span{text-align:left}
+html[dir="rtl"] .dx-badge.in{margin-left:0;margin-right:8px}
+html[dir="rtl"] .dx-combo-n{right:auto;left:0}
+@media(max-width:760px){html[dir="rtl"] .dx-tile-txt{align-items:flex-start}}
 </style>
 </head>
 <body>
@@ -2399,6 +2588,8 @@ html[dir="rtl"] .rl-s{direction:rtl}
     <nav class="menu" id="menu" aria-label="Main">
       <a href="#/fragrances" data-r="fragrances">Fragrances</a>
       <a href="#/personal-care" data-r="personal-care">PC</a>
+      <a href="#/gifts" data-r="gifts">Gifts</a>
+      <a href="#/combo" data-r="combo">Combo</a>
       <a href="#/collections" data-r="collections">Collections</a>
       <a href="#/about" data-r="about">About FOMAXO</a>
       <a href="#/contact" data-r="contact">Contact</a>
@@ -2417,7 +2608,7 @@ html[dir="rtl"] .rl-s{direction:rtl}
 <div class="mnav" id="mnav" aria-hidden="true">
   <div class="top"><a class="brand" href="#/"><svg class="em" aria-hidden="true"><use href="#emblem"/></svg><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><use href="#wordmark"/></svg><sup class="tm">™</sup></a><button class="icon" data-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
   <nav>
-    <a href="#/fragrances">Fragrances</a><a href="#/personal-care">PC</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
+    <a href="#/fragrances">Fragrances</a><a href="#/personal-care">PC</a><a href="#/gifts">Gifts</a><a href="#/combo">Combo</a><a href="#/collections">Collections</a><a href="#/about">About FOMAXO</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a class="nav-india" href="http://fomaxo.in" target="_blank" rel="noopener" aria-label="Visit India (FOMAXO India website, opens in a new tab)"><span class="dz" aria-hidden="true">India</span><span class="vd" aria-hidden="true"><small>Visit</small>India</span></a>
   </nav>
   <div class="foot" id="mnavFoot"></div>
 </div>
@@ -2436,7 +2627,7 @@ html[dir="rtl"] .rl-s{direction:rtl}
       </div>
       <div><h5>Shop</h5><div id="footShop"></div></div>
       <div><h5>Discover</h5><a href="#/collections/fragrance">Fragrance Collection</a><a href="#/collections/mini">Mini Collection</a><a href="#/collections/name">Personalized Gifting</a><a href="#/collections/gifting">Bespoke Gifting</a><a href="#/collections/elite">Elite Membership</a></div>
-      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">PC</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
+      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/personal-care">PC</a><a href="#/gifts">Gifts</a><a href="#/combo">Combo</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
     </div>
     <div class="fbase"><span>© 2026 FOMAXO™. All rights reserved.</span><span>Inspire greatness</span></div>
     <p class="fpriv">We count anonymous visits (no cookies, nothing shared) to improve the store.</p>
@@ -3691,16 +3882,164 @@ function bindElite(){
   inp.addEventListener('input', () => { v = elVal(+inp.value / 10); upd(); });
   upd();
 }
+/* PERSONAL CARE, GIFTS and COMBO pages (#/personal-care, #/gifts, #/combo): fomaxo.in's products in a Dubai boutique look.
+   Personal care has no AED price yet (aed: null), so those cards read "Price coming soon" and are ordered on WhatsApp.
+   Gift sets and combos made only of parfums are real shop products: Add to bag puts each bottle in the bag at today's price,
+   and the bag's multi-buy offer applies as usual. A set with a hidden product, or a size that is not sold, is left out. */
+const CARE = [
+  {id: 'pc-aloevita-wash', name: 'Aloe Vita', type: 'Face Wash', cat: 'face', vol: '100ml', aed: null, short: 'Foaming face wash with aloe vera for radiant, naturally refreshed skin.'},
+  {id: 'pc-radiant-wash', name: 'Radiant Bloom', type: 'Face Wash', cat: 'face', vol: '100ml', aed: null, short: 'Foaming face wash for tan removal and brighter-looking skin.'},
+  {id: 'pc-passionsin-gel', name: 'Passion Sin', type: 'Shower Gel', cat: 'body', vol: '250ml', aed: null, short: 'Moisturizing shower gel with the bold, juicy signature of Passion Sin.'},
+  {id: 'pc-radiant-gel', name: 'Radiant Bloom', type: 'Shower Gel', cat: 'body', aed: null, short: 'Moisturizing shower gel with aloe vera and vitamin E.'},
+  {id: 'pc-passionsin-shampoo', name: 'Passion Sin', type: 'Shampoo', cat: 'hair', vol: '250ml', aed: null, short: 'Strengthens hair, deeply hydrates and cares for a healthy scalp.'},
+  {id: 'pc-radiant-shampoo', name: 'Radiant Bloom', type: 'Shampoo', cat: 'hair', badge: 'New', aed: null, short: 'Moisturizing shampoo with aloe vera and vitamin E.'},
+  {id: 'pc-radiant-conditioner', name: 'Radiant Bloom', type: 'Conditioner', cat: 'hair', badge: 'New', aed: null, short: 'For dry and frizzy hair, with aloe vera and vitamin E.'},
+  {id: 'pc-melondrip', name: 'Melon Drip', type: 'Hair Mist', cat: 'hair', badge: 'New', aed: null, short: 'Hair mist made with 100% pure watermelon natural oil.'},
+  {id: 'pc-kissberry', name: 'Kiss Berry', type: 'Lip Balm', cat: 'lips', aed: null, short: 'Berry lip balm for soft, cared-for lips.'},
+  {id: 'pc-avokiss', name: 'Avo Kiss', type: 'Lip Balm', cat: 'lips', aed: null, short: 'Nourish, hydrate, glow, with avocado oil and peppermint.'}
+];
+const CARE_BY = Object.fromEntries(CARE.map(c => [c.id, c]));
+/* the ritual, in the order it is used: each step is a section of the Personal Care page */
+const RITUAL = [['face', 'Cleanse', 'Face', 'Start fresh: a gentle foam for clear, bright skin.'], ['body', 'Shower', 'Body', 'Soft skin and a first layer of scent.'],
+  ['hair', 'Nourish', 'Hair', 'Shampoo, conditioner and a scented mist to finish.'], ['lips', 'Finish', 'Lips', 'The last touch before you leave the house.']];
+/* gift sets: items = [product id, size] or [personal care id]. for = who it suits (the "Who is it for?" chips) */
+const GIFTS = [
+  {id: 'birthday-box', name: 'Happy Birthday Box', badge: 'Keepsake', img: 'gift-name-birthday', for: ['her', 'him'], v: 'Old Money in a clear keepsake box with a rose, flowers and “Happy Birthday” on the glass.', items: [['oldmoney', 50]], wa: true},
+  {id: 'wishes-box', name: 'Best Wishes Box', badge: 'Most gifted', img: 'gift-box-wishes', for: ['her', 'two', 'thanks'], v: 'Two parfums and a Passion Sin care duo in a clear box, finished with flowers and ribbon.', items: [['royalcandy', 50], ['oldmoney', 50], ['pc-passionsin-gel'], ['pc-passionsin-shampoo']], wa: true},
+  {id: 'signature-duo', name: 'The Signature Duo', for: ['him', 'eid'], v: 'Gold and Dollar in 100ml, side by side. A strong scent for the evening, a fresh one for the day.', items: [['gold', 100], ['dollar', 100]]},
+  {id: 'mini-quartet', name: 'Prestige Minis', for: ['her', 'him', 'thanks'], v: 'Four 10ml parfums to discover and share. Small enough for every handbag.', items: [['royalcandy', 10], ['oldmoney', 10], ['matchacoco', 10], ['passionsin', 10]]},
+  {id: 'care-box', name: 'Care Box', for: ['her', 'thanks'], v: 'Everyday luxury for hair, body, face and lips.', items: [['pc-passionsin-gel'], ['pc-passionsin-shampoo'], ['pc-radiant-wash'], ['pc-kissberry']]},
+  {id: 'lip-love', name: 'Lip Love', for: ['her', 'thanks'], v: 'Both lip balms together. A sweet little thank-you.', items: [['pc-kissberry'], ['pc-avokiss']]}
+];
+const GIFT_FOR = [['all', 'All gifts'], ['her', 'For her'], ['him', 'For him'], ['two', 'For two'], ['thanks', 'Thank you'], ['eid', 'Eid']];
+const COMBOS = [
+  {id: 'morning-midnight', tag: 'Scent layering', name: 'Morning to Midnight', badge: 'Signature', v: 'One scent from the shower to the evening. The body care builds a base, the parfum lasts longer on top.', items: [['passionsin', 50], ['pc-passionsin-gel'], ['pc-passionsin-shampoo']]},
+  {id: 'big-three', tag: 'Parfum wardrobe', name: 'The Big Three', badge: 'Best value', v: 'A strong, a fresh and a classic parfum. One for every mood.', items: [['gold', 100], ['dollar', 100], ['oldmoney', 50]]},
+  {id: 'discovery-four', tag: 'Try before the big bottle', name: 'The Discovery Four', badge: 'First order', v: 'Four 10ml parfums to find your favourite. A great first order and great to share.', items: [['oldmoney', 10], ['royalcandy', 10], ['matchacoco', 10], ['passionsin', 10]]},
+  {id: 'date-night', tag: 'For two', name: 'Date Night', v: 'A strong parfum, a sweet parfum and a lip balm for the evening out.', items: [['gold', 100], ['royalcandy', 50], ['pc-kissberry']]},
+  {id: 'eid-mubarak', tag: 'Eid', name: 'Eid Mubarak Pair', v: 'Gold, with its Arabic heritage, and fresh Dollar. One for the morning prayer, one for the evening.', items: [['gold', 100], ['dollar', 100]]},
+  {id: 'eid-eidi', tag: 'Eid', name: 'Eidi Minis', v: 'Two 10ml parfums and a lip balm. A sweet Eidi for the little ones and cousins.', items: [['passionsin', 10], ['oldmoney', 10], ['pc-avokiss']]},
+  {id: 'glow-up', tag: 'Face, body and lips', name: 'Glow Up Kit', v: 'Two face washes for day and night, a shower gel and a lip balm.', items: [['pc-radiant-wash'], ['pc-aloevita-wash'], ['pc-radiant-gel'], ['pc-avokiss']]},
+  {id: 'salon-hair', tag: 'Hair care', name: 'Salon Hair at Home', v: 'Shampoo, conditioner and a hair mist for soft, scented hair.', items: [['pc-radiant-shampoo'], ['pc-radiant-conditioner'], ['pc-melondrip']]},
+  {id: 'kiss-tell', tag: 'Lip duo', name: 'Kiss & Tell', v: 'Both lip balms together. An easy thank-you or add-on gift.', items: [['pc-kissberry'], ['pc-avokiss']]}
+];
+const waTo = t => `https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent(t)}`;
+const careLabel = c => `${c.name} ${c.type}${c.vol ? ' ' + c.vol : ''}`;
+const dxPrice = v => hasPrice(v) ? `<span class="dx-pr">${moneyHTML(v)}</span>` : '<span class="dx-pr na">Price coming soon</span>';
+const dxWA = (t, cls = '') => `<a class="btn sm line dx-wa ${cls}" href="${waTo(t)}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Order on WhatsApp</span></a>`;
+/* a set's products as they stand today: null when one is hidden or its size is not sold */
+const dxItems = g => { const out = [];
+  for (const [id, s] of g.items) {
+    if (CARE_BY[id]) { const c = CARE_BY[id]; out.push({img: IMG(id), name: c.name, sub: c.type, price: c.aed, label: careLabel(c)}); continue; }
+    if (!shown(id) || !P[id].sizes.includes(s)) return null;
+    const p = P[id]; out.push({id, s, img: SM(imgFor(p, s)), name: p.name, sub: sizeLabel(s), price: p.prices[s], label: `${p.name} ${sizeLabel(s)}`});
+  }
+  return out; };
+/* parfum-only sets: today's total, and what the bag's multi-buy takes off when the set is added to an empty bag */
+function dxDeal(ls){
+  if (!ls.every(x => x.id && hasPrice(x.price))) return null;
+  const worth = ls.reduce((t, x) => t + +x.price, 0), n = ls.filter(x => !QTY_DISCOUNT_SKIP.includes(x.id)).length, t = qtyTier(n);
+  const off = Math.round(ls.filter(x => !QTY_DISCOUNT_SKIP.includes(x.id)).reduce((a, x) => a + +x.price, 0) * t.pct) / 100;
+  return {worth, pay: worth - off, pct: t.pct, mini: t.mini && !ls.some(x => String(x.s) === '10')};
+}
+const dxDealHTML = d => `<div class="dx-deal"><div><small>${d.pct ? 'In your bag' : 'Price'}</small><b>${moneyHTML(d.pay)}</b>${d.pct ? `<s>${moneyHTML(d.worth)}</s>` : ''}</div>${d.pct ? `<span class="dx-save">${d.pct}% multi-buy off${d.mini ? ' + FREE 10ml mini' : ''}</span>` : ''}</div>`;
+const dxThumbs = ls => `<div class="dx-thumbs">${ls.map((x, i) => `${i ? '<i aria-hidden="true">+</i>' : ''}<span class="dx-th"><img src="${x.img}" alt="" loading="lazy"></span>`).join('')}</div>`;
+const dxInside = ls => `<ul class="dx-in">${ls.map(x => `<li><b>${esc(x.name)}</b><span>${esc(x.sub)}</span></li>`).join('')}</ul>`;
+const dxSetMsg = (kind, g, ls) => `Hello FOMAXO, I would like to order the ${g.name} ${kind}:\n${ls.map(x => '- ' + x.label).join('\n')}\n\nPlease share the price.`;
+/* the trust row under each page title (only what is true for every order) */
+const dxTrust = () => `<ul class="dx-trust">${[[ICON.truck, 'Free delivery anywhere in UAE'], [ICON.gift, 'Ready-to-gift luxury packaging'], [CO_ICON.whatsapp, 'Quick replies on WhatsApp']].map(([i, t]) => `<li>${i}<span>${t}</span></li>`).join('')}</ul>`;
+const dxHero = (eyebrow, title, lead, img, ctas) => `<section class="dx-hero"><div class="wrap dx-hero-in">
+    <div class="dx-hero-copy rv-up"><div class="crumbs"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; ${eyebrow}</div><span class="eyebrow">Dubai · ${eyebrow}</span><h1>${title}</h1><p class="lead">${lead}</p><div class="ctas">${ctas}</div>${dxTrust()}</div>
+    <div class="dx-arch rv-up d1"><img src="${IMG(img)}" alt="" width="900" height="1100"></div>
+  </div></section>`;
+function careTile(c){
+  return `<article class="dx-tile">
+    <div class="dx-tile-img">${c.badge ? `<span class="dx-badge">${esc(c.badge)}</span>` : ''}<img src="${IMG(c.id)}" alt="FOMAXO ${esc(c.name)} ${esc(c.type)}" loading="lazy" width="528" height="662"></div>
+    <div class="dx-tile-txt"><h3>${esc(c.name)}</h3><p class="dx-type">${esc(c.type)}${c.vol ? ` · ${c.vol}` : ''}</p><p class="dx-short">${esc(c.short)}</p>${dxPrice(c.aed)}
+      ${dxWA(`Hello FOMAXO, I would like to order ${careLabel(c)}.`)}</div>
+  </article>`;
+}
 function personalCare(){
-  return pageHead('Personal Care', 'Personal <em class="metal">Care</em>', 'The FOMAXO universe is expanding beyond fragrance.') + `
-  <section class="sec"><div class="wrap"><div class="pc pc-poster rv-up">
-    <div class="pc-media pc-photo"><img ${pic('personal-care-poster')} alt="FOMAXO Personal Care poster: crafted by nature, elevated by luxury" loading="lazy" width="1024" height="1536"></div>
-    <div class="pc-copy"><span class="soon">Coming soon</span><h2>Elevating <em class="metal">everyday rituals</em></h2>
-      <p class="lead">Looking ahead, our ambition extends beyond fragrances. We are launching a diverse range of high-end, luxury products designed to elevate lifestyles and inspire aspirational minds.</p>
-      <p class="lead">Every new introduction is guided by the same principles as our perfumes: simplicity, quality and recognisability.</p>
-      <form class="notify" data-interest="Personal Care"><input type="email" required placeholder="Email for first access" aria-label="Email"><button class="btn sm" type="submit">Notify me</button></form>
-    </div></div></div></section>
-  <section class="sec" style="padding-top:0"><div class="wrap">${secHead('Meanwhile','Discover the <em class="metal">collection</em>')}<div class="grid">${FRAG.slice(0,3).map((p,i)=>card(p,{d:'d'+i})).join('')}</div></div></section>`;
+  document.title = 'Personal Care — FOMAXO';
+  const ps = shown('passionsin') && P.passionsin.sizes.includes(50) ? P.passionsin : null;
+  return dxHero('Personal Care', 'The <em class="metal">Ritual</em>', 'Face, body, hair and lips, crafted with the same care as every FOMAXO parfum. Four steps, one signature.', 'personal-care',
+      `<a class="btn" href="#/personal-care" data-dxgo="dxRitual">Shop the ritual</a><a class="btn line" href="#/combo">See combos</a>`) + `
+  <nav class="dx-steps wrap" id="dxRitual" aria-label="Ritual steps">${RITUAL.map((r, i) => `<a href="#/personal-care" data-dxgo="dx-${r[0]}"><b>0${i + 1}</b><span>${r[1]}</span><small>${r[2]}</small></a>`).join('')}<a href="#/fragrances"><b>05</b><span>Scent</span><small>Parfum</small></a></nav>
+  ${RITUAL.map((r, i) => `<section class="dx-step" id="dx-${r[0]}"><div class="wrap dx-step-in">
+    <header class="dx-step-head rv-up"><b>0${i + 1}</b><h2>${r[1]}</h2><span class="eyebrow">${r[2]}</span><p>${r[3]}</p></header>
+    <div class="dx-tiles">${CARE.filter(c => c.cat === r[0]).map(careTile).join('')}</div>
+  </div></section>`).join('')}
+  ${ps ? `<section class="dx-band"><div class="wrap dx-band-in rv-up">
+    <div class="dx-band-pics"><img src="${SM(imgFor(ps, 50))}" alt="" loading="lazy"><img src="${IMG('pc-passionsin-gel')}" alt="" loading="lazy"><img src="${IMG('pc-passionsin-shampoo')}" alt="" loading="lazy"></div>
+    <div class="dx-band-copy"><span class="eyebrow">05 · Scent</span><h2>Finish with <em class="metal">Passion Sin</em></h2>
+      <p>The shower gel and shampoo carry the Passion Sin signature. Add the parfum on top and the scent lasts from morning to midnight.</p>
+      <div class="dx-deal"><div><small>Passion Sin parfum · 50ml</small><b>${moneyHTML(ps.prices[50])}</b>${hasPrice(ps.compareAt && ps.compareAt[50]) && +ps.compareAt[50] > +ps.prices[50] ? `<s>${moneyHTML(ps.compareAt[50])}</s>` : ''}</div></div>
+      <div class="ctas"><button class="btn" type="button" data-dxadd="passionsin.50">Add parfum to bag</button><a class="btn line" href="#/combo">The full combo</a></div></div>
+  </div></section>` : ''}
+  ${dxConcierge('Not sure what suits you?', 'Tell us your skin and hair type, and we reply on WhatsApp with the right ritual for you.', 'Hello FOMAXO, please help me choose personal care. My skin type is: ... My hair type is: ...', 'Ask our concierge')}`;
+}
+const dxConcierge = (h, p, msg, btn) => `<section class="dx-conc"><div class="wrap dx-conc-in rv-up"><span class="dx-star" aria-hidden="true"></span><h2>${h}</h2><p>${p}</p>
+  <a class="btn" href="${waTo(msg)}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>${btn}</span></a></div></section>`;
+function giftCard(g, ls){
+  const d = !g.wa && dxDeal(ls);
+  return `<article class="dx-gift" data-for="${g.for.join(' ')}">
+    <div class="dx-gift-img">${g.badge ? `<span class="dx-badge">${esc(g.badge)}</span>` : ''}${g.img ? `<img src="${IMG(g.img)}" alt="FOMAXO ${esc(g.name)}" loading="lazy">` : `<div class="dx-mosaic n${Math.min(ls.length, 4)}">${ls.slice(0, 4).map(x => `<img src="${x.img}" alt="" loading="lazy">`).join('')}</div>`}</div>
+    <div class="dx-gift-txt"><h3>${esc(g.name)}</h3><p>${esc(g.v)}</p>${dxInside(ls)}
+      ${d ? dxDealHTML(d) + `<button class="btn sm" type="button" data-dxset="${ls.map(x => x.id + '.' + x.s).join(',')}">Add gift to bag</button>` : `<span class="dx-pr na">Price coming soon</span>${dxWA(dxSetMsg('gift', g, ls))}`}</div>
+  </article>`;
+}
+function giftsPage(q){
+  document.title = 'Gifts — FOMAXO';
+  const f = GIFT_FOR.some(x => x[0] === q.get('for')) ? q.get('for') : 'all';
+  const sets = GIFTS.map(g => [g, dxItems(g)]).filter(x => x[1]);
+  return dxHero('Gifts', 'The Gift <em class="metal">Atelier</em>', 'Luxury gifts from Dubai, ready to give. Pick who it is for, and we deliver it beautifully packed.', 'gift-box-wishes',
+      `<a class="btn" href="#/gifts" data-dxgo="dxGifts">Find a gift</a><a class="btn line" href="#/collections/name">Personalized gifting</a>`) + `
+  <section class="dx-gifts" id="dxGifts"><div class="wrap">
+    <div class="dx-for" role="group" aria-label="Who is it for?"><span class="eyebrow">Who is it for?</span><div>${GIFT_FOR.map(x => `<button type="button" class="chip${x[0] === f ? ' on' : ''}" data-dxfor="${x[0]}">${x[1]}</button>`).join('')}</div></div>
+    <div class="dx-gift-grid">${sets.map(([g, ls]) => giftCard(g, ls)).join('')}</div>
+  </div></section>
+  <section class="dx-extras"><div class="wrap dx-extras-in">${[
+    [ICON.gift, 'Gift note', 'Write your message in the note at checkout and we add it to the box.'],
+    [ICON.drop, 'Make it theirs', 'A parfum made after the person you love, with their name on it.', '#/collections/name', 'Personalized gifting'],
+    [ICON.truck, 'Weddings and companies', 'Gifting tables and branded boxes for events of every size.', '#/collections/gifting', 'Bespoke gifting']
+  ].map(x => `<div class="rv-up">${x[0]}<h3>${x[1]}</h3><p>${x[2]}</p>${x[3] ? `<a class="link" href="${x[3]}">${x[4]} →</a>` : ''}</div>`).join('')}</div></section>
+  ${dxConcierge('Need help choosing?', 'Tell us who it is for and your budget. We suggest a gift on WhatsApp.', 'Hello FOMAXO, I need help choosing a gift. It is for: ... My budget is: AED ...', 'Ask our gift concierge')}`;
+}
+function comboRow(g, ls, i){
+  const d = dxDeal(ls);
+  return `<article class="dx-combo rv-up">
+    <div class="dx-combo-n">${String(i + 1).padStart(2, '0')}</div>
+    <div class="dx-combo-vis">${dxThumbs(ls)}</div>
+    <div class="dx-combo-txt"><span class="eyebrow">${esc(g.tag)}</span><h3>${esc(g.name)}${g.badge ? ` <span class="dx-badge in">${esc(g.badge)}</span>` : ''}</h3><p>${esc(g.v)}</p>${dxInside(ls)}</div>
+    <div class="dx-combo-buy">${d ? dxDealHTML(d) + `<button class="btn sm" type="button" data-dxset="${ls.map(x => x.id + '.' + x.s).join(',')}">Add combo to bag</button>` : `<span class="dx-pr na">Combo price coming soon</span>${dxWA(dxSetMsg('combo', g, ls))}`}</div>
+  </article>`;
+}
+function comboPage(){
+  document.title = 'Combos — FOMAXO';
+  const sets = COMBOS.map(g => [g, dxItems(g)]).filter(x => x[1]);
+  const pick = [...FRAG.filter(p => p.kind !== 'set').map(p => [p.id, p.name, 'Parfum']), ...CARE.map(c => [c.id, c.name, c.type])];
+  return dxHero('Combo', 'Better <em class="metal">together</em>', 'Parfums and personal care, paired the way you use them. Parfum combos get the multi-buy offer in your bag.', 'personal-care-poster',
+      `<a class="btn" href="#/combo" data-dxgo="dxCombos">Shop combos</a><a class="btn line" href="#/combo" data-dxgo="dxOwn">Build your own</a>`) + `
+  <section class="dx-combos" id="dxCombos"><div class="wrap">${sets.map(([g, ls], i) => comboRow(g, ls, i)).join('')}</div></section>
+  <section class="dx-own" id="dxOwn"><div class="wrap dx-own-in rv-up">
+    <div class="dx-own-head"><span class="eyebrow">Your own combo</span><h2>Build your <em class="metal">own</em></h2><p>Tap the products you want together. We reply on WhatsApp with your combo price.</p></div>
+    <div class="dx-own-pick">${pick.map(x => `<button type="button" class="dx-pick" data-dxpick="${x[0]}" aria-pressed="false"><b>${esc(x[1])}</b><small>${esc(x[2])}</small></button>`).join('')}</div>
+    <div class="dx-own-go"><span class="dx-own-n" id="dxOwnN">Pick 2 or more</span><a class="btn dx-wa" id="dxOwnGo" href="${waTo('Hello FOMAXO, I would like to build my own combo.')}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Send my combo</span></a></div>
+  </div></section>`;
+}
+function bindDx(){
+  $$('[data-dxgo]', app).forEach(a => a.onclick = e => { e.preventDefault(); const t = document.getElementById(a.dataset.dxgo); if (t) window.scrollTo({top: t.getBoundingClientRect().top + scrollY - ($('header') ? $('header').offsetHeight : 0) - 12, behavior: 'smooth'}); });
+  $$('[data-dxadd]', app).forEach(b => b.onclick = () => { const [id, s] = b.dataset.dxadd.split('.'); addToCart(id, +s); });
+  $$('[data-dxset]', app).forEach(b => b.onclick = () => { const ls = b.dataset.dxset.split(',').map(x => x.split('.')); let ok = 0;
+    ls.forEach(([id, s], i) => { if (addToCart(id, +s, 1, i < ls.length - 1)) ok++; });
+    if (ok && ok < ls.length) toast('Part of this set is out of stock. The rest is in your bag'); });
+  const fs = $$('[data-dxfor]', app), show = f => { fs.forEach(b => b.classList.toggle('on', b.dataset.dxfor === f)); $$('.dx-gift', app).forEach(g => g.hidden = f !== 'all' && !g.dataset.for.split(' ').includes(f)); };
+  fs.forEach(b => b.onclick = () => show(b.dataset.dxfor)); if (fs.length) show(($('[data-dxfor].on', app) || fs[0]).dataset.dxfor);
+  const go = $('#dxOwnGo', app); if (!go) return;
+  const names = () => $$('.dx-pick[aria-pressed="true"]', app).map(b => { const c = CARE_BY[b.dataset.dxpick]; return c ? careLabel(c) : P[b.dataset.dxpick].name + ' parfum'; });
+  $$('.dx-pick', app).forEach(b => b.onclick = () => { b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+    const n = names(); $('#dxOwnN').textContent = n.length ? `${n.length} picked` : 'Pick 2 or more';
+    go.href = waTo(n.length ? `Hello FOMAXO, I would like to build my own combo:\n${n.map(x => '- ' + x).join('\n')}\n\nPlease share the combo price.` : 'Hello FOMAXO, I would like to build my own combo.'); });
 }
 function about(){
   return pageHead('About FOMAXO', 'About <em class="metal">FOMAXO</em>', 'For Outstanding Minds, Acquiring Xtraordinary Opulence.') + `
@@ -4626,7 +4965,9 @@ function route(){
     case 'fragrances': html = fragrances(q); break;
     case 'product': html = product(seg[1], q); after = () => P[seg[1]] && !P[seg[1]].hidden && bindProduct(P[seg[1]]); break;
     case 'collections': html = collections(seg[1]); if (seg[1] === 'elite') after = bindElite; if (seg[1] === 'fragrance') after = bindFragColl; break;
-    case 'personal-care': html = personalCare(); break;
+    case 'personal-care': html = personalCare(); after = bindDx; break;
+    case 'gifts': html = giftsPage(q); after = bindDx; break;
+    case 'combo': html = comboPage(); after = bindDx; break;
     case 'about': html = about(); break;
     case 'contact': html = contact(q); after = bindContact; break;
     case 'partnership': location.replace('#/franchise'); return;
