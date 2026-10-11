@@ -725,15 +725,9 @@ function fomaxo_stock_problem($lines, $catalog) {
     $p = $catalog[$id] ?? ['name' => $id, 'kind' => ''];
     $label = $p['name'] . ' ' . ($p['kind'] === 'set' ? "(set of $opt)" : "{$opt}ml");
     return $have[$k] <= 0 ? "Sorry, $label is out of stock (restocking soon). Please remove it from your bag."
-                          : "Sorry, only {$have[$k]} available of $label. Please lower the quantity in your bag.";
+                          : "Sorry, only {$have[$k]} left of $label. Please lower the quantity in your bag.";
   }
   return null;
-}
-/* One order at a time between the stock check and taking it out of stock, so two customers can't both buy the last bottles.
-   MySQL lets go of it by itself if the page stops. */
-function fomaxo_stock_lock($on = true) {
-  $pdo = fomaxo_db(); if (!$pdo) return;
-  try { $pdo->query($on ? "SELECT GET_LOCK('fomaxo_stock', 15)" : "SELECT RELEASE_LOCK('fomaxo_stock')"); } catch (Throwable $e) {}
 }
 /* Takes an order's items out of stock (once), or puts them back ($back = true) when it is cancelled. */
 function fomaxo_stock_move($no, $back = false) {

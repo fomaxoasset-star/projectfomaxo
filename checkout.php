@@ -98,7 +98,6 @@ if ($miniName) $rows[] = "FREE 10ml mini: $miniName";
 if ($COD_FEE > 0) $rows[] = 'Cash on delivery fee: ' . aed($COD_FEE * 100);
 /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
 $saveLines = array_map(fn($l) => ['id' => $l['id'] ?? '', 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? []))], $lines);
-fomaxo_stock_lock();   // checked and taken out of stock in one go, never two orders for the last bottles
 if ($msg = fomaxo_stock_problem($saveLines, $CATALOG)) fail(409, $msg);
 if ($freeCp) {
   $saveLines[] = ['id' => $freeCp['free']['id'], 'opt' => $freeCp['free']['opt'], 'qty' => 1, 'free' => true, 'coupon' => $freeCp['code']];
@@ -111,7 +110,6 @@ $no = fomaxo_save_order(['payment' => 'Cash on delivery', 'status' => 'New', 'su
 $inDb = (bool)$no;
 if ($no) { fomaxo_stock_move($no); fx_coupon_spent(fomaxo_db(), $couponCode); }   // stock goes down as soon as a cash order is placed; a used-up one-use coupon deletes itself
 else $no = 'FX' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
-fomaxo_stock_lock(false);
 $cell = fn($v) => preg_match('/^[=+\-@]/', (string)$v) ? "'" . $v : $v;   // stop spreadsheet formulas
 $order = [date('Y-m-d H:i:s'), $no, $cu['name'], $cu['phone'], $cu['email'], $cu['emirate'], $cu['address'], $cu['note'],
           implode(' | ', $rows), number_format($subFils / 100, 2, '.', ''), number_format($discFils / 100, 2, '.', ''),
