@@ -466,7 +466,7 @@ function fx_order_trash($pdo, $no) {
   if (!$o || str_starts_with($no, 'CARD-')) return false;
   $took = (int)$o['stock_taken'] === 1 && fomaxo_stock_move($no, true);
   $o['stock_taken'] = $took ? 1 : (int)$o['stock_taken'];   // as it was, for Put back
-  $o['_web'] = fx_trash_web($pdo, $no);   // its checkout visit and Purchased step in Analytics, kept with it for Put back
+  $o['_web'] = fx_trash_web($pdo, $no);   // its customer's checkout record in Analytics, kept with it for Put back
   try {
     $pdo->beginTransaction();
     $pdo->prepare('REPLACE INTO fx_orders_trash (order_no, trashed_at, created_at, name, phone, total, payment, status, row_json) VALUES (?, NOW(), ?, ?, ?, ?, ?, ?, ?)')
@@ -486,7 +486,7 @@ function fx_order_restore($pdo, $no) {
   try {
     $pdo->beginTransaction();
     $pdo->prepare('INSERT INTO fx_orders (' . implode(', ', array_keys($o)) . ') VALUES (' . implode(',', array_fill(0, count($o), '?')) . ')')->execute(array_values($o));
-    foreach (['fx_leads' => $web['leads'] ?? [], 'fx_events' => $web['buys'] ?? []] as $t => $rows) {   // its checkout visit and Purchased step come back too
+    foreach (['fx_leads' => $web['leads'] ?? []] as $t => $rows) {   // its customer's checkout record comes back too
       if (!$rows) continue; $tc = array_flip(array_column($pdo->query("SHOW COLUMNS FROM $t")->fetchAll(PDO::FETCH_ASSOC), 'Field'));
       foreach ($rows as $r) { $r = array_intersect_key((array)$r, $tc); if ($r) $pdo->prepare("INSERT IGNORE INTO $t (" . implode(', ', array_keys($r)) . ') VALUES (' . implode(',', array_fill(0, count($r), '?')) . ')')->execute(array_values($r)); }
     }
@@ -496,22 +496,30 @@ function fx_order_restore($pdo, $no) {
   if ($took) fomaxo_stock_move($no);
   return true;
 }
-/* a trashed order leaves Analytics too: its checkout record (Left at checkout, its Excel) and the Purchased step of its visit (funnel, sources, devices) */
+/* a trashed order's customer leaves Analytics too (Left at checkout and its Excel). Its purchase still counts: the Purchased step in Analytics,
+   bottles sold on Products and "X people bought this year" (fx_trash_sold) */
 function fx_trash_web($pdo, $no) {
-  $w = ['leads' => [], 'buys' => []];
-  try {
-    $s = $pdo->prepare('SELECT * FROM fx_leads WHERE order_no = ?'); $s->execute([$no]); $w['leads'] = $s->fetchAll(PDO::FETCH_ASSOC);
-    if ($sids = array_column($w['leads'], 'sid')) { $s = $pdo->prepare("SELECT * FROM fx_events WHERE ev = 'buy' AND sid IN (" . implode(',', array_fill(0, count($sids), '?')) . ')'); $s->execute($sids); $w['buys'] = $s->fetchAll(PDO::FETCH_ASSOC); }
-  } catch (Throwable $e) {}
+  $w = ['leads' => []];
+  try { $s = $pdo->prepare('SELECT * FROM fx_leads WHERE order_no = ?'); $s->execute([$no]); $w['leads'] = $s->fetchAll(PDO::FETCH_ASSOC); } catch (Throwable $e) {}
   return $w;
 }
 function fx_trash_web_drop($pdo, $no, $w) {
-  if ($ids = array_column($w['buys'] ?? [], 'id')) $pdo->prepare('DELETE FROM fx_events WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')')->execute($ids);
   if ($w['leads'] ?? []) $pdo->prepare('DELETE FROM fx_leads WHERE order_no = ?')->execute([$no]);
+}
+/* trashed orders that were real purchases (New, Paid or Delivered, not a test), as [lines_json, phone, created_at]: added to the purchase counts */
+function fx_trash_sold($pdo, $from = null, $to = null) {
+  $out = [];
+  try { foreach ($pdo->query('SELECT row_json FROM fx_orders_trash') as $t) {
+    $o = json_decode((string)$t['row_json'], true);
+    if (!is_array($o) || !empty($o['test']) || !in_array($o['status'] ?? '', ['New', 'Paid', 'Delivered'], true) || empty($o['lines_json'])) continue;
+    if (($from !== null && $o['created_at'] < $from) || ($to !== null && $o['created_at'] > $to)) continue;
+    $out[] = ['lines_json' => $o['lines_json'], 'phone' => (string)($o['phone'] ?? ''), 'created_at' => (string)$o['created_at']];
+  } } catch (Throwable $e) {}
+  return $out;
 }
 /* orders trashed before Analytics was cleared with them: cleared once, kept with the order for Put back */
 function fx_trash_web_sweep($pdo) {
-  if (fomaxo_setting($pdo, 'trash_web') === '1') return;
+  if (fomaxo_setting($pdo, 'trash_web') === '1') return;   // (the first version also took the Purchased step out; it now stays)
   try {
     foreach ($pdo->query('SELECT order_no, row_json FROM fx_orders_trash')->fetchAll(PDO::FETCH_ASSOC) as $t) {
       $o = json_decode((string)$t['row_json'], true); if (!is_array($o) || isset($o['_web'])) continue;

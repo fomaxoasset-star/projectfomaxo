@@ -906,7 +906,7 @@ if (isset($_GET['orders'], $_GET['trash'])) {
     . '<td class="muted small">Closed ' . h(date('d/m/Y', strtotime($o['trashed_at']))) . '</td>'
     . '<td class="num"><button class="btn sm line" name="untrash" value="' . h($o['order_no']) . '">Put back</button></td></tr>';
   page('Trash', flash() . '<div class="pagehead"><h1>Trash <span class="muted small">' . count($rows) . '</span></h1><a class="btn line sm" href="./?orders=1">‹ Back to Orders</a></div>'
-    . '<p class="muted small trnote">Closed orders are kept here. They do not count anywhere: not in Sales, the COD and online boxes, status counts, Products sold, Members, Analytics, Review requests, Refill reminders or Excel. Only its number stays used, so new orders never take it. Put back returns an order as it was.</p>'
+    . '<p class="muted small trnote">Closed orders are kept here. They leave Orders, Sales, the COD and online boxes, status counts, Members, Left at checkout, Review requests, Refill reminders and Excel. Only the number purchased stays: bottles sold on Products, Purchased in Analytics and the website line people bought this year. Put back returns an order as it was.</p>'
     . ($tr ? '<form method="post" class="trform fitform">' . csrf_field() . '<div class="trbar"><label class="trall"><input type="checkbox" data-trall> Select all</label><button class="btn sm" name="untrash_sel" value="1" data-trsel disabled>Put back selected (0)</button></div>' : '')
     . '<div class="fill">' . ($tr ? '<table class="olist trlist"><thead><tr><th class="tck"></th><th>Order</th><th>Customer</th><th class="num">Total</th><th>Closed</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty" style="padding:14px">Trash is empty.</p>') . '</div>' . ($tr ? '</form><script>(function(){var f=document.querySelector(".trform"),all=f.querySelector("[data-trall]"),b=f.querySelector("[data-trsel]"),bx=[].slice.call(f.querySelectorAll("input[name=\'nos[]\']"));'
     . 'var up=function(){var n=bx.filter(function(x){return x.checked}).length;b.disabled=!n;b.textContent="Put back selected ("+n+")";all.checked=n===bx.length;all.indeterminate=n>0&&n<bx.length};'
@@ -1385,11 +1385,11 @@ if (isset($_GET['products'])) {
   if ($pid === '') {   // the list
     $tr = ''; $bt = fomaxo_bt($pdo);
     /* Sold: bottles bought per product and size in the period picked (Today / 7 days / 30 days / All / From–To), from real orders only:
-       New, Paid and Delivered (no test payments, unpaid card attempts, cancelled or trashed orders); the free 10ml minis are not counted */
+       New, Paid and Delivered, trashed ones too (no test payments, unpaid card attempts or cancelled orders); the free 10ml minis are not counted */
     $rg = adm_range('products', '30', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
     $sold = []; $soldAll = 0;
     try { $q = $pdo->prepare("SELECT lines_json FROM fx_orders WHERE test = 0 AND status IN ('New', 'Paid', 'Delivered') AND lines_json IS NOT NULL" . ($rg['span'] ? ' AND created_at BETWEEN ? AND ?' : '')); $q->execute($rg['span'] ?: []);
-      foreach ($q as $o) foreach ((array)json_decode((string)$o['lines_json'], true) as $l) { if (!is_array($l) || ($n = max(0, (int)($l['qty'] ?? 0))) < 1) continue; $id = (string)($l['id'] ?? ''); $sold[$id]['n'] = ($sold[$id]['n'] ?? 0) + $n; $sold[$id]['s'][(string)($l['opt'] ?? '')] = ($sold[$id]['s'][(string)($l['opt'] ?? '')] ?? 0) + $n; $soldAll += $n; }
+      foreach (array_merge($q->fetchAll(PDO::FETCH_ASSOC), fx_trash_sold($pdo, $rg['span'][0] ?? null, $rg['span'][1] ?? null)) as $o) foreach ((array)json_decode((string)$o['lines_json'], true) as $l) { if (!is_array($l) || ($n = max(0, (int)($l['qty'] ?? 0))) < 1) continue; $id = (string)($l['id'] ?? ''); $sold[$id]['n'] = ($sold[$id]['n'] ?? 0) + $n; $sold[$id]['s'][(string)($l['opt'] ?? '')] = ($sold[$id]['s'][(string)($l['opt'] ?? '')] ?? 0) + $n; $soldAll += $n; }
     } catch (Throwable $e) {}
     foreach ($sold as &$x) ksort($x['s'], SORT_NUMERIC); unset($x); uasort($sold, fn($a, $b) => $b['n'] <=> $a['n']); $top = array_key_first($sold);
     foreach ($rows as $r) {
