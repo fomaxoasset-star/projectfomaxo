@@ -4779,13 +4779,9 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   /* phones: the soft mist and dust are drawn at half screen size (they are soft glows, so it looks the same) and 24 times a second, which leaves the phone free for taps and scrolling */
   function size(){ D = phone ? .5 : Math.min(devicePixelRatio || 1, 1.5); W = cv.width = innerWidth * D; H = cv.height = innerHeight * D; }
   size(); addEventListener('resize', size);
-  /* phones: soft light follows the tilt where the device allows it */
-  if (!finePointer && window.DeviceOrientationEvent){
-    const tilt = e => { if (e.gamma == null) return; mouse.tx = Math.max(-1, Math.min(1, e.gamma / 30)); mouse.ty = Math.max(-1, Math.min(1, (e.beta - 45) / 30)); };
-    const listen = () => addEventListener('deviceorientation', tilt, {passive: true});
-    if (typeof DeviceOrientationEvent.requestPermission === 'function'){
-      addEventListener('touchend', function ask(){ removeEventListener('touchend', ask); DeviceOrientationEvent.requestPermission().then(r => { if (r === 'granted') listen(); }).catch(() => {}); });
-    } else listen();
+  /* phones: soft light follows the tilt where the device gives it freely; never asks for motion access (iPhone would show a pop-up) */
+  if (!finePointer && window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function'){
+    addEventListener('deviceorientation', e => { if (e.gamma == null) return; mouse.tx = Math.max(-1, Math.min(1, e.gamma / 30)); mouse.ty = Math.max(-1, Math.min(1, (e.beta - 45) / 30)); }, {passive: true});
   }
   let last = performance.now(), sy = scrollY, vel = 0, emKey = '';
   function frame(t){
