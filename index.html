@@ -3115,7 +3115,7 @@ function card(p, opts={}){
     <div class="row1"><h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3><span data-price>${priceHTML(p, size)}</span></div>
     ${saleCD(lineOn(p) && p.sizes.some(s => onSale(p, s)))}
     <p class="desc">${esc(p.short)}</p>
-    <div class="rate-row">${chips}<div class="rate-r"><span class="pd-sold card-sold" data-sold="${p.id}">${soldHTML(p.id, 'all')}</span>${rateHTML(p)}</div></div>
+    <div class="rate-row">${chips}<div class="rate-r"><span class="pd-sold card-sold" data-sold="${p.id}" data-k="${soldKey(p, size)}">${soldHTML(p.id, soldKey(p, size))}</span>${rateHTML(p)}</div></div>
     <p class="stk-line" data-stk>${stockHTML(p.id, size)}</p>
     <div class="acts"><button class="btn line sm" data-add>Add to bag</button><button class="btn sm" data-buy>Buy now</button></div>
   </article>`;
@@ -3124,7 +3124,7 @@ app.addEventListener('click', e => {
   const c = e.target.closest('.card'); if (!c) return;
   const p = P[c.dataset.id];
   const chip = e.target.closest('[data-size]');
-  if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s);
+  if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s); const sd = $('[data-sold]', c); if (sd) { sd.dataset.k = soldKey(p, s); sd.innerHTML = soldHTML(p.id, sd.dataset.k); }
     const im = $('.media img', c); const k = imgFor(p, s); if (im.getAttribute('src') !== IMG(k)) setPic(im, k);
     const al = $('.media img.alt', c), ak = altFor(p, s); if (al) { if (ak) { setPic(al, ak); al.hidden = false; } else al.hidden = true; }
     applyStock(); }
@@ -5029,7 +5029,7 @@ async function loadProducts(){
   if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, aed: +d.bt.aed || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.also && typeof d.also === 'object' && JSON.stringify(d.also) !== JSON.stringify(ALSO)) { ALSO = d.also; try { localStorage.setItem('fomaxo_also', JSON.stringify(ALSO)); } catch(e) {} const row = $('#alsoRow'); if (row) alsoOrder(row.dataset.p).forEach(x => { const c = row.querySelector(`.card[data-id="${x.id}"]`); if (c) row.appendChild(c); }); }
-  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, 'all')); }
+  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
