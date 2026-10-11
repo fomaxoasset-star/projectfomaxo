@@ -89,14 +89,17 @@
       say('Uploading… 0%. Keep this page open.'); pump();
     });
   }
+  var keeps = function (file) { return /^video\/(mp4|webm|x-m4v|quicktime)$/i.test(file.type) || /\.(mp4|m4v|webm|mov)$/i.test(file.name); };
+  var skipBtn = function (file, also) { if (!keeps(file)) return null; var b = document.createElement('button'); b.type = 'button'; b.className = 'btn line sm vskip'; b.textContent = 'Skip, upload original';
+    b.onclick = function () { b.remove(); also && also.remove(); how = 'as is (skipped by tap)'; send(null); }; note.appendChild(b); return b; };
   function tapOnce(file) {
     btn.disabled = true; say('One more step: tap "Make it smaller" (this browser needs a tap). It takes as long as the video. Keep this page open.');
-    var go = document.createElement('button'); go.type = 'button'; go.className = 'btn sm vskip'; go.textContent = 'Make it smaller'; note.appendChild(go); try { go.scrollIntoView({block: 'center', behavior: 'smooth'}); } catch (e) {}
+    var go = document.createElement('button'); go.type = 'button'; go.className = 'btn sm vskip'; go.textContent = 'Make it smaller'; note.appendChild(go); var sb = skipBtn(file, go); try { go.scrollIntoView({block: 'center', behavior: 'smooth'}); } catch (e) {}
     go.onclick = function () {
-      go.remove(); why = '';
+      go.remove(); sb && sb.remove(); why = '';
       shrink(file).then(function (r) { return playable(r).then(function (y) { return y ? r : Promise.reject(); }); }).then(function (r) {
         how = 'recorded after tap ' + r.type; send(new File([r], file.name.replace(/\.\w+$/, '') + '.' + (/mp4/.test(r.type) ? 'mp4' : 'webm'), {type: r.type}));
-      }, function () { if (file.size <= 10 * MB && (/^video\/(mp4|webm|x-m4v|quicktime)$/i.test(file.type) || /\.(mp4|m4v|webm|mov)$/i.test(file.name))) send(null); else { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again. (' + why + ')'); } });
+      }, function () { if (file.size <= 10 * MB && (/^video\/(mp4|webm|x-m4v|quicktime)$/i.test(file.type) || /\.(mp4|m4v|webm|mov)$/i.test(file.name))) send(null); else { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again. (' + why + ')'); skipBtn(file); } });
     };
   }
   function send(file) {
@@ -124,13 +127,13 @@
     var plain = /^video\/(mp4|webm|x-m4v)$/i.test(file.type) || /\.(mp4|m4v|webm)$/i.test(file.name), mov = /quicktime/i.test(file.type) || /\.mov$/i.test(file.name);
     var big = file.size > 10 * MB || !plain, asIs = file.size <= 10 * MB && (plain || mov);
     var can = mime && HTMLCanvasElement.prototype.captureStream;
-    var cant = function () { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again. (' + (why || 'no way to convert') + ')'); };
+    var cant = function () { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again. (' + (why || 'no way to convert') + ')'); skipBtn(file); };
     if (!big) { send(null); return; }
     if (!can && !window.VideoEncoder) { if (asIs) send(null); else cant(); return; }
     btn.disabled = true; setTimeout(function () { btn.textContent = 'Please wait…'; });
     /* making it smaller: no progress for 45 seconds, or a tap on Skip = upload the original instead (in pieces) */
     var t0 = Date.now(), last = -1, moved = t0, bail, gaveUp = new Promise(function (ok) { bail = ok; });
-    var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; sk.onclick = function () { bail(); }; if (asIs) note.appendChild(sk);   // a video over 10 MB never goes up as it is
+    var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; var skipped = false; sk.onclick = function () { skipped = true; bail(); }; if (keeps(file)) note.appendChild(sk);   // any size: the original goes up as it is when Skip is tapped
     var dog = setInterval(function () { var now = Date.now(); if (pct !== last) { last = pct; moved = now; } if (now - moved > 45000) bail(); }, 1000);
     var quit = false; gaveUp.then(function () { quit = true; clearInterval(dog); try { stopNow && stopNow.cancel(); } catch (e) {} });
     var shrunk = fast(file).then(function (b) {   // still over 5 MB (some phones' encoders overshoot): once more, with the quality lowered by just that much
@@ -142,7 +145,7 @@
       clearInterval(dog); sk.remove();
       send(new File([b], file.name.replace(/\.\w+$/, '') + '.' + (/mp4/.test(b.type) ? 'mp4' : 'webm'), {type: b.type}));
     }, function () {
-      clearInterval(dog); sk.remove(); bail(); if (how === 'as is') how = 'as is (' + (why || 'slow way failed') + ')';
+      clearInterval(dog); sk.remove(); bail(); if (skipped) { send(null); return; } if (how === 'as is') how = 'as is (' + (why || 'slow way failed') + ')';
       try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['shrink failed: ' + why + ' | ' + (file.type || '?') + ' ' + Math.round(file.size / MB) + ' MB']})], {type: 'application/json'})); } catch (x) {}
       /* some browsers (Safari with auto-play off) only play a video after a tap: then the slow way gets one more go, started by a tap */
       if (can && /NotAllowed/.test(why)) { tapOnce(file); return; }
