@@ -453,15 +453,16 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .recs-nav button:hover{border-color:var(--gold)}
 .recs-row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:2px}
 .recs-row::-webkit-scrollbar{display:none}
-/* product page "You may also like": every product in one sideways row (swipe on phone, arrows or trackpad on laptop) */
+/* product page "You may also like": every product except the one being viewed */
 .also-nav{display:flex;gap:8px}
 .also-nav button{width:42px;height:42px;border:1px solid var(--line-2);background:none;color:var(--gold);font-size:22px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0;transition:border-color .3s}
 .also-nav button:hover{border-color:var(--gold)}
-.also-row{display:flex;gap:clamp(18px,2vw,30px);overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:4px}
-.also-row::-webkit-scrollbar{display:none}
-.also-row>.card{flex:0 0 calc((100% - 3 * clamp(18px,2vw,30px)) / 4);scroll-snap-align:start;height:auto}
-@media(max-width:1100px){.also-row>.card{flex-basis:calc((100% - clamp(18px,2vw,30px)) / 2.2)}}
-@media(max-width:600px){.also-row>.card{flex-basis:80%}.also-nav{display:none}}
+/* laptop + tablet: every product shown at once (4 a row, then 3), no arrows; phone: sideways swipe row so the page stays short */
+.also-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(30px,3vw,46px) clamp(18px,2vw,30px)}
+.also-row>.card{height:auto;min-width:0}
+.also-nav{display:none}
+@media(max-width:1100px){.also-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.also-row{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:4px;gap:18px}.also-row::-webkit-scrollbar{display:none}.also-row>.card{flex:0 0 80%;scroll-snap-align:start}}
 .rec{position:relative;min-width:0;flex:0 0 calc((100% - 30px) / 3.6);scroll-snap-align:start}
 .rec a{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;text-align:left}
 .rec img{width:100%;max-width:100%;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
@@ -3309,6 +3310,16 @@ const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' 
 /* Bought together: this perfume + up to two others. Partners come from real orders (TOGETHER, from products.php: 2+ orders together);
    with too few orders yet, the Distinct Blends stand in. The title is always "Customers bought together" (AJAY's pick, 2026-10-10, same as fomaxo.in).
    King and the Discovery Set are not in it (not part of multi-buy), nor hidden or out-of-stock bottles. Partners take this page's size when they have it. */
+/* "You may also like" order (AJAY 2026-10-11: by previous customer orders, changing): first the products most often bought in the same order as this one,
+   then the best sellers, then the rest in a random order that changes each visit. ALSO comes from products.php (only the order, no numbers). */
+let ALSO = {}; try { ALSO = JSON.parse(localStorage.getItem('fomaxo_also') || '{}') || {}; } catch(e) {}
+const ALSO_RND = {};
+function alsoOrder(id){
+  const rank = {}, add = l => (l || []).forEach(x => { if (!(x in rank)) rank[x] = Object.keys(rank).length; });
+  add((ALSO.pairs || {})[id]); add(ALSO.top);
+  const r = x => x.id in rank ? rank[x.id] : 1e4 + (ALSO_RND[x.id] ??= Math.random());
+  return S.products.filter(x => x.id !== id).sort((a, b) => r(a) - r(b));
+}
 let TOGETHER = {}; try { TOGETHER = JSON.parse(localStorage.getItem('fomaxo_together') || '{}') || {}; } catch(e) {}
 const btOK = p => p && !p.hidden && p.kind !== 'set' && !QTY_DISCOUNT_SKIP.includes(p.id);
 const btSize = (p, size) => p.sizes.includes(+size) ? +size : defaultSize(p);
@@ -3384,7 +3395,7 @@ function product(id, q){
   const perks = isSet
     ? [[ICON.drop,'Try before you buy'],[ICON.travel,'Pocket-friendly, ideal for travel'],[ICON.gift,'Luxury mini-box, ready to gift'],[ICON.truck,'Free delivery anywhere in UAE']]
     : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.drop,'Concentrated fragrance oils'],[ICON.truck,'Free delivery anywhere in UAE']];
-  const related = S.products.filter(x => x.id !== p.id).sort((a, b) => (a.id === 'king') - (b.id === 'king'));   // every product on sale except this one, in a sideways swipe row, King last
+  const related = alsoOrder(p.id);   // every product on sale except this one, ordered by real orders (see alsoOrder)
   const ship = S.shipping.length ? S.shipping.map(s => `<p>${esc(s)}</p>`).join('') : `<p class="ph">Add your delivery &amp; returns information in assets/data.js.</p>`;
   document.title = `${p.name} ${p.family || ''} | FOMAXO Dubai`;
   return `<div class="wrap page-fade">
@@ -3434,7 +3445,7 @@ function product(id, q){
 
     <section class="also-sec" style="border-top:1px solid var(--line)">
       <div class="sec-head"><div class="t rv-up"><span class="eyebrow">You may also like</span><h2>Complete your <em class="metal">collection</em></h2></div><span class="also-nav"><button type="button" data-alsoscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-alsoscroll="1" aria-label="Scroll for more">›</button></span></div>
-      <div class="also-row" id="alsoRow">${related.map((r,i) => card(r, {d: i < 4 ? 'd'+i : ''})).join('')}</div>
+      <div class="also-row" id="alsoRow" data-p="${p.id}">${related.map((r,i) => card(r, {d: i < 4 ? 'd'+i : ''})).join('')}</div>
     </section>
   </div>`;
 }
@@ -5005,6 +5016,7 @@ async function loadProducts(){
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) ? d.saleLines : null; SALE_SIZE = d.saleSize || null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES, sz: SALE_SIZE})); } catch(e) {} saleTick(); promoMaybe(); }
   if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, aed: +d.bt.aed || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
+  if (d && d.also && typeof d.also === 'object' && JSON.stringify(d.also) !== JSON.stringify(ALSO)) { ALSO = d.also; try { localStorage.setItem('fomaxo_also', JSON.stringify(ALSO)); } catch(e) {} const row = $('#alsoRow'); if (row) alsoOrder(row.dataset.p).forEach(x => { const c = row.querySelector(`.card[data-id="${x.id}"]`); if (c) row.appendChild(c); }); }
   if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
