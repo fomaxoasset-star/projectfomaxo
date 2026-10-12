@@ -82,7 +82,7 @@ window.fxCover = function (src) {
       say('Making the video smaller… 0%. Keep this page open.');
       return F.exec(['-hide_banner', '-i', '/in/' + name, '-map', '0:v:0', '-map', '0:a:0?', '-vf', 'scale=w=' + L + ':h=' + L + ':force_original_aspect_ratio=decrease:force_divisible_by=2',
         '-c:v', 'libx264', '-preset', 'veryfast', '-b:v', String(br), '-maxrate', String(Math.round(br * 1.3)), '-bufsize', String(br * 2), '-pix_fmt', 'yuv420p',
-        '-c:a', 'aac', '-b:a', '48k', '-ac', '2', '-movflags', '+faststart', '/out.mp4']);
+        '-c:a', 'aac', '-b:a', '96k', '-ac', '2', '-movflags', '+faststart', '/out.mp4']);
     }).then(function (code) { if (code) { why += ' / ffmpeg: exit ' + code; return null; } return F.readFile('/out.mp4'); })
     .then(function (d) { return d && d.length ? new Blob([d.buffer], {type: 'video/mp4'}) : null; },
       function (e) { why += ' / ffmpeg: ' + String(e && (e.message || e.name) || e).slice(0, 60); return null; })
