@@ -25,10 +25,13 @@
 <link rel="preload" as="image" href="assets/img/banner-sizes3-m.webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="preload" as="image" href="assets/img/banner-sizes3.webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="assets/fonts/CharlesWrightSingapore.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"></noscript>
+<!-- the two text fonts (Cormorant Garamond, Jost) come from our own server instead of Google Fonts: no extra connections to two other sites before the words can show. Same font files Google sends (latin + latin-ext); each file is fetched only when the page uses it. The Arabic fonts still come from Google, only for Arabic visitors -->
+<style>@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 600;font-display:swap;src:url(/assets/fonts/cormorant-latin-ext.woff2?v=1) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 600;font-display:swap;src:url(/assets/fonts/cormorant-latin.woff2?v=1) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:300 400;font-display:swap;src:url(/assets/fonts/cormorant-italic-latin-ext.woff2?v=1) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:300 400;font-display:swap;src:url(/assets/fonts/cormorant-italic-latin.woff2?v=1) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Jost';font-style:normal;font-weight:300 500;font-display:swap;src:url(/assets/fonts/jost-latin-ext.woff2?v=1) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Jost';font-style:normal;font-weight:300 500;font-display:swap;src:url(/assets/fonts/jost-latin.woff2?v=1) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}</style>
 
 <script>(function(){var r=document.documentElement,saved=null;try{saved=localStorage.getItem("fomaxo_mode")}catch(e){}
 var mq=window.matchMedia?matchMedia("(prefers-color-scheme: light)"):null;
@@ -3126,7 +3129,7 @@ function card(p, opts={}){
   return `<article class="card rv-up ${opts.d||''}" data-id="${p.id}" data-sel="${size}">
     <a class="media" href="#/product/${p.id}${opts.size ? '?size=' + opts.size : ''}" aria-label="${esc(p.name)}">
       ${p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ''}
-      <img ${cardPic(img)} alt="FOMAXO ${esc(p.name)}" loading="lazy">
+      <img ${cardPic(img)} alt="FOMAXO ${esc(p.name)}" ${opts.top ? 'fetchpriority="high"' : 'loading="lazy"'}>
       ${alt && HOVER ? `<img class="alt" ${cardPic(alt)} alt="" loading="lazy">` : ''}
       <span class="quick"><span class="btn line sm block" style="background:rgba(5,5,5,.7)">View details</span></span>
     </a>
@@ -3313,7 +3316,7 @@ function fragrances(q){
   return pageHead('Fragrances', 'The <em class="metal">Fragrances</em>', 'Fragrances crafted in the spirit of Dubai. Select a size, add to your bag, or buy instantly.') +
   `<section style="padding-bottom:0"><div class="wrap">
     <div class="filters">${filters.map(x => `<a class="chip${x[0]===f?' on':''}" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
-    <div class="grid shop-grid">${list.map((p,i) => card(p, {d:'d'+(i%3), size: sizeOverride})).join('')}</div>
+    <div class="grid shop-grid">${list.map((p,i) => card(p, {d:'d'+(i%3), size: sizeOverride, top: i < 2})).join('')}</div>
   </div></section>` + finalCTA();
 }
 
@@ -4695,12 +4698,13 @@ const FXT = (() => {
   };
   // how far down the homepage a visit scrolls (25 / 50 / 75 / 100 %), once each per homepage visit
   let depth = {};
-  addEventListener('scroll', () => {
+  let sdWait = 0;   // checked at most 3 times a second, not on every scroll step, so scrolling stays smooth on phones
+  addEventListener('scroll', () => { if (sdWait) return; sdWait = setTimeout(() => { sdWait = 0;
     if ((location.hash || '#/') !== '#/' || !sid) return;
     const h = document.documentElement.scrollHeight; if (h < 10) return;
     const pc = (scrollY + innerHeight) / h * 100;
     for (const m of [25, 50, 75, 100]) if (pc >= (m === 100 ? 98 : m) && !depth[m]) { depth[m] = 1; send('scroll', {d: m}); }
-  }, {passive: true});
+  }, 300); }, {passive: true});
   setInterval(() => { if (!document.hidden && sid && Date.now() - lastT < 18e5) post({v: vid, s: sid, e: 'ping', p: (location.hash || '#/').slice(1, 81)}); }, 6e4);
   return {
     send,
@@ -4810,8 +4814,9 @@ function bindHome(){
   const figs = $$('#heroCine .hc-slide'), btns = $$('#hcNav button'); let i = 0, nextT;
   // banners after the first load only when needed: the shown one now, the next one a moment later
   const wake = f => f && f.querySelectorAll('[data-src],[data-srcset]').forEach(el => { if (el.dataset.srcset){ el.srcset = el.dataset.srcset; delete el.dataset.srcset; } if (el.dataset.src){ el.src = el.dataset.src; delete el.dataset.src; } });
+  let shown = false;
   const show = n => { i = n; wake(figs[i]); clearTimeout(nextT); nextT = setTimeout(() => wake(figs[(i+1) % figs.length]), 2500); figs.forEach((f,k) => f.classList.toggle('on', k === i)); btns.forEach((b,k) => { b.classList.toggle('on', k === i); b.classList.remove('run'); });
-    void btns[i].offsetWidth; btns[i].classList.add('run');
+    if (shown) void btns[i].offsetWidth; shown = true; btns[i].classList.add('run');   // restart the bar's fill (not needed the first time, which saves a full page layout while the page opens)
     const s = heroSlides()[i]; $('#hcName').textContent = heroName(s); $('#hcNow').href = heroHref(s); $('#hcPrice').innerHTML = heroPrice(s); $('#hcAdd').textContent = s.own ? 'Shop all sizes' : 'Add to bag'; };
   $('#hcAdd').onclick = () => { const s = heroSlides()[i]; if (s.own){ location.hash = '#/fragrances'; return; } const p = P[s.id]; addToCart(p.id, defaultSize(p)); };
   const start = () => { clearInterval(heroTimer); heroTimer = setInterval(() => show((i+1) % figs.length), 6500); };
@@ -4991,7 +4996,8 @@ let ticking = false;
 addEventListener('scroll', () => { if (ticking) return; ticking = true; requestAnimationFrame(() => {
   $('#nav').classList.toggle('solid', scrollY > 30);
   const vh = innerHeight;
-  $$('[data-parallax]').forEach(el => { const r = el.parentElement.getBoundingClientRect(); if (r.bottom < 0 || r.top > vh) return; const k = +el.dataset.parallax; el.style.transform = `translate3d(0,${((r.top + r.height/2) - vh/2) * -k}px,0)`; });
+  $$('[data-parallax]').map(el => [el, el.parentElement.getBoundingClientRect()])   // measure them all first, then move them, so the page is measured once per frame
+    .forEach(([el, r]) => { if (r.bottom < 0 || r.top > vh) return; const k = +el.dataset.parallax; el.style.transform = `translate3d(0,${((r.top + r.height/2) - vh/2) * -k}px,0)`; });
   mobileBarCheck && mobileBarCheck();
   ticking = false; }); }, {passive: true});
 
