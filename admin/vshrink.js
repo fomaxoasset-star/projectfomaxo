@@ -261,22 +261,23 @@ window.fxPick = function (src, done) {
    made here in the browser and kept next to it (vid/name-p.mp4). The row plays that; the full video loads only when the player opens.
    Runs by itself on this page for every video that has none yet (new uploads and older videos), one at a time. */
 setTimeout(function () {   // after the page has loaded (the list comes after this script)
-  var rows = [].slice.call(document.querySelectorAll('.vrow[data-mkprev]')), f = document.querySelector('form[data-vshrink]');
+  var rows = [].slice.call(document.querySelectorAll('.vrow[data-pvsrc]')), f = document.querySelector('form[data-vshrink]');   // every uploaded video: data-mkprev = no preview yet (made by itself), data-pv = has one
   if (!rows.length || !f || !window.fetch || !window.Promise) return;
   var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 8, BR = 600000, pill = null, made = 0, conv = null, how = '', noFast = false, noWasm = false, Fok = false, fails = 0, gone = false, last = '';
   addEventListener('pagehide', function () { gone = true; });   // leaving or reloading the page: stop, don't log the cut-off ones as failed
   var KEY = 'fxPrevFail', bad = {}; try { bad = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {}
   var mark = function (nm) { bad[nm] = (bad[nm] || 0) + 1; try { localStorage.setItem(KEY, JSON.stringify(bad)); } catch (e) {} };
-  var nmOf = function (r) { return r.dataset.mkprev.split(/[\/=]/).pop(); };
+  var nmOf = function (r) { return r.dataset.pvsrc.split(/[\/=]/).pop(); };
   var CANT = 'fxPrevCant', cant = false; try { cant = Date.now() - (+localStorage.getItem(CANT) || 0) < 7 * 864e5; } catch (e) {}
   /* every video still without a preview gets a "Make preview" button. By itself this page only tries the ones that never failed in this browser,
      and none at all for 7 days in a browser that couldn't make any (Mac Safari), so nothing is downloaded on every visit */
-  var queue = cant ? [] : rows.filter(function (r) { return !bad[nmOf(r)]; }), busy = false, total = queue.length;
+  var queue = cant ? [] : rows.filter(function (r) { return r.hasAttribute('data-mkprev') && !bad[nmOf(r)]; }), busy = false, total = queue.length;
   var save = function () { try { localStorage.setItem(KEY, JSON.stringify(bad)); } catch (e) {} };
-  var showBtn = function (r, failed) { var b = r._mk; if (!b) return; b.hidden = false; b.disabled = false; b.textContent = 'Make preview'; if (failed) b.title = 'Could not be made in this browser. Chrome works best.'; };
+  var label = function (r) { return r.hasAttribute('data-pv') ? 'Preview ✓ · Make again' : 'Make preview'; };
+  var showBtn = function (r, failed) { var b = r._mk; if (!b) return; b.hidden = false; b.disabled = false; b.textContent = failed ? 'Preview failed · Try again' : label(r); if (failed) b.title = 'Could not be made in this browser. Chrome works best.'; };
   rows.forEach(function (r) {
     var inf = r.querySelector('.vinfo'); if (!inf) return;
-    var b = r._mk = document.createElement('button'); b.type = 'button'; b.className = 'vmkp'; b.textContent = 'Make preview'; b.hidden = queue.indexOf(r) >= 0;
+    var b = r._mk = document.createElement('button'); b.type = 'button'; b.className = 'vmkp'; var q = queue.indexOf(r) >= 0; b.textContent = q ? 'Making preview…' : label(r); b.disabled = q;   // always shown: the preview's state, and a tap makes it (again)
     b.style.cssText = 'margin-left:8px;font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:0 9px;cursor:pointer';
     b.onclick = function () { delete bad[nmOf(r)]; save(); try { localStorage.removeItem(CANT); } catch (e) {} noFast = false; noWasm = false; fails = 0;
       b.disabled = true; b.textContent = 'Making preview…'; if (queue.indexOf(r) < 0) { queue.push(r); total++; } if (!busy) next(); };
@@ -328,7 +329,7 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
     idle().then(function () {
       say('Making quick previews for the home page: ' + i + ' of ' + total + '…'); t0 = Date.now(); tell('start ' + i + ' of ' + total);
       var ac = window.AbortController ? new AbortController() : null;   // a download that hangs is given up after 90 seconds
-      return limit(fetch(row.dataset.mkprev, {credentials: 'same-origin', signal: ac && ac.signal}).then(function (r) { return r.ok ? r.blob() : null; }), 90000, function () { ac && ac.abort(); });
+      return limit(fetch(row.dataset.pvsrc, {credentials: 'same-origin', signal: ac && ac.signal}).then(function (r) { return r.ok ? r.blob() : null; }), 90000, function () { ac && ac.abort(); });
     }).then(function (b) {
       how = ''; if (!b) { how = 'not loaded'; return null; }
       tell('loaded ' + (b.size / 1048576).toFixed(1) + ' MB in ' + Math.round((Date.now() - t0) / 1000) + ' s');
@@ -337,12 +338,12 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
         if (noWasm) return null;
         return limit(wasmPrev(b), 180000, function () { how += ' ffmpeg: too slow (last: ' + last + ')'; try { F && F.terminate(); } catch (e) {} F = null; }).then(function (w) { if (w) how = 'ffmpeg'; return w; }); });
     }).then(function (p) {
-        var nm = row.dataset.mkprev.split(/[\/=]/).pop(); if (gone) return;
+        var nm = nmOf(row); if (gone) return;
         if (p) fails = 0; else { fails++; mark(nm); showBtn(row, true); }
         tell(nm + (p ? ' ' + Math.round(p.size / 1024) + ' KB ' + how : ' failed' + how) + ' in ' + Math.round((Date.now() - t0) / 1000) + ' s | ' + navigator.userAgent.slice(0, 120));
         if (!p || p.size > 3 * 1048576) { if (p) showBtn(row, true); return; }
         var fd = new FormData(); fd.append('csrf', csrf); if (f.querySelector('[name=action]')) fd.append('action', 'vid_prev'); else fd.append('act', 'prev'); fd.append('vid', row.dataset.vid); fd.append('prev', p, 'prev.mp4');
-        return fetch(location.href, {method: 'POST', body: fd, credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) { made++; row.removeAttribute('data-mkprev'); row._mk && row._mk.remove(); } else showBtn(row, true); });
+        return fetch(location.href, {method: 'POST', body: fd, credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) { made++; row.removeAttribute('data-mkprev'); row.setAttribute('data-pv', '1'); if (row._mk) { row._mk.disabled = false; row._mk.textContent = 'Preview ✓ · Make again'; } } else showBtn(row, true); });
       }).catch(function (e) { if (!gone) { tell('error ' + String(e && (e.message || e.name) || e).slice(0, 80)); showBtn(row, true); } }).then(next);
   }
   if (queue.length) next();
