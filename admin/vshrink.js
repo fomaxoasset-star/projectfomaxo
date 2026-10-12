@@ -28,6 +28,41 @@ window.fxCover = function (src) {
     v.onerror = end; v.src = u;
   });
 };
+/* pick the cover yourself: play or slide the video to the moment you like, then "Use this frame" (a JPEG of that exact frame) */
+window.fxPick = function (src, done) {
+  if (!document.getElementById('vpick-css')) { var st = document.createElement('style'); st.id = 'vpick-css';
+    st.textContent = '.vpick-bg{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px}'
+      + '.vpick-box{background:var(--panel,#fff);color:inherit;border:1px solid var(--gold,#b8913a);border-radius:12px;padding:14px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 32px)}'
+      + '.vpick-box h3{margin:0;font-size:16px}.vpick-box video{width:100%;max-height:58vh;background:#000;border-radius:8px;object-fit:contain}'
+      + '.vpick-box input[type=range]{width:100%;accent-color:var(--gold,#b8913a);margin:0}.vpick-box p{margin:0;font-size:13px;color:var(--muted,#777)}'
+      + '.vpick-btns{display:flex;gap:8px;justify-content:flex-end}.vpick-btns .btn{margin:0}';
+    document.head.appendChild(st); }
+  var u = '', gone = false, bg = document.createElement('div'); bg.className = 'vpick-bg';
+  bg.innerHTML = '<div class="vpick-box" role="dialog" aria-modal="true" aria-label="Pick the cover"><h3>Pick the cover</h3><video playsinline muted controls preload="auto"></video>'
+    + '<input type="range" min="0" max="1000" value="0" step="1" aria-label="Move through the video"><p>Play or slide to the moment you like, then tap Use this frame.</p>'
+    + '<div class="vpick-btns"><button type="button" class="btn line sm" data-x>Cancel</button><button type="button" class="btn sm" data-ok disabled>Use this frame</button></div></div>';
+  document.body.appendChild(bg);
+  var v = bg.querySelector('video'), sl = bg.querySelector('input'), ok = bg.querySelector('[data-ok]'), msg = bg.querySelector('p');
+  var close = function () { gone = true; v.pause(); v.removeAttribute('src'); v.load(); if (u) URL.revokeObjectURL(u); bg.remove(); removeEventListener('keydown', key); };
+  var key = function (e) { if (e.key === 'Escape') close(); }; addEventListener('keydown', key);
+  bg.querySelector('[data-x]').onclick = close; bg.onclick = function (e) { if (e.target === bg) close(); };
+  v.onloadeddata = function () { ok.disabled = false; if (v.currentTime < .05 && v.duration > 1) v.currentTime = Math.min(1, v.duration / 4); };
+  v.ontimeupdate = function () { if (v.duration) sl.value = Math.round(v.currentTime / v.duration * 1000); };
+  sl.oninput = function () { v.pause(); if (v.duration) v.currentTime = sl.value / 1000 * v.duration; };
+  v.onerror = function () { msg.textContent = 'This browser can\'t open this video. Chrome works best.'; };
+  ok.onclick = function () {
+    v.pause(); var w = v.videoWidth, h = v.videoHeight; if (!w || !h) return;
+    var z = Math.min(1, 1280 / Math.max(w, h)), c = document.createElement('canvas'); c.width = Math.round(w * z); c.height = Math.round(h * z);
+    try { c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); } catch (e) { msg.textContent = 'This frame could not be saved. Please try again.'; return; }
+    ok.disabled = true; ok.textContent = 'Saving…';
+    c.toBlob(function (b) { if (!b) { ok.disabled = false; ok.textContent = 'Use this frame'; return; } close(); done(b); }, 'image/jpeg', .9);
+  };
+  /* the video is loaded whole first (a few MB, admin only), so sliding to any moment works on every server and browser */
+  var go = function (b) { if (gone) return; u = URL.createObjectURL(b); v.src = u; };
+  if (typeof src === 'string') { msg.textContent = 'Loading the video…';
+    fetch(src, {credentials: 'same-origin'}).then(function (r) { return r.ok ? r.blob() : Promise.reject(); }).then(function (b) { msg.textContent = 'Play or slide to the moment you like, then tap Use this frame.'; go(b); }, function () { msg.textContent = 'The video could not be loaded. Please try again.'; });
+  } else go(src);
+};
 (function () {
   var f = document.querySelector('form[data-vshrink]'); if (!f) return;
   var inp = f.querySelector('input[type=file][name=video]'), MB = 1048576, note = f.querySelector('.vsh'), btn = f.querySelector('.btn');
@@ -154,7 +189,11 @@ window.fxCover = function (src) {
       }, function () { if (file.size <= 10 * MB && (/^video\/(mp4|webm|x-m4v|quicktime)$/i.test(file.type) || /\.(mp4|m4v|webm|mov)$/i.test(file.name))) send(null); else { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again. (' + why + ')'); skipBtn(file); } });
     };
   }
-  var cin = f.querySelector('input[type=file][name=cover]'), auto = null;   // no cover photo chosen: the best frame of the video becomes its cover
+  var cin = f.querySelector('input[type=file][name=cover]'), auto = null;
+  var pk = document.createElement('button'); pk.type = 'button'; pk.className = 'lnk vpickup'; pk.hidden = true; pk.textContent = 'Pick cover from the video';   // the chosen frame becomes the cover (a cover photo chosen after it wins)
+  pk.style.cssText = 'margin:4px 0 0;font-size:12px';
+  pk.onclick = function () { var file = inp.files && inp.files[0]; if (!file) return; window.fxPick(file, function (b) { if (cin) cin.value = ''; auto = Promise.resolve(b); pk.textContent = 'Cover picked from the video ✓ (tap to change)'; }); };
+  if (cin) { cin.parentNode.appendChild(pk); cin.addEventListener('change', function () { if (cin.files && cin.files.length && /✓/.test(pk.textContent)) pk.textContent = 'Pick cover from the video'; }); }   // no cover photo chosen: the best frame of the video becomes its cover
   function send(file) {
     if (auto) { var a = auto; auto = null; btn.disabled = true; a.then(function (b) { if (b && cin && !(cin.files && cin.files.length)) send.cover = b; send(file); }); return; }
     var src = file || inp.files[0];
@@ -212,7 +251,7 @@ window.fxCover = function (src) {
   });
   /* 9:16 or 16:9: the ring is picked from the chosen video's real shape (it can still be changed by hand) */
   inp.addEventListener('change', function () {
-    var file = inp.files && inp.files[0], r = f.querySelectorAll('input[name=shape]'); auto = file && window.fxCover ? window.fxCover(file) : null; if (!file || r.length < 2) return;
+    var file = inp.files && inp.files[0], r = f.querySelectorAll('input[name=shape]'); auto = file && window.fxCover ? window.fxCover(file) : null; pk.hidden = !file; pk.textContent = 'Pick cover from the video'; if (!file || r.length < 2) return;
     var v = document.createElement('video'); v.preload = 'metadata'; v.muted = true; v.src = URL.createObjectURL(file);
     v.onloadedmetadata = function () { if (v.videoWidth && v.videoHeight) (v.videoWidth > v.videoHeight ? r[1] : r[0]).checked = true; URL.revokeObjectURL(v.src); };
     v.onerror = function () { URL.revokeObjectURL(v.src); };
@@ -329,3 +368,23 @@ setTimeout(function () {
     }).catch(function () {}).then(function () { setTimeout(next, 500); });
   })();
 }, 2500);
+
+/* every uploaded video gets "Pick cover": choose the frame yourself (replaces the cover it has) */
+setTimeout(function () {
+  var f = document.querySelector('form[data-vshrink]'); if (!f || !window.fxPick) return;
+  var csrf = (f.querySelector('[name=csrf]') || {}).value;
+  [].slice.call(document.querySelectorAll('.vrow[data-vid]')).forEach(function (r) {
+    var th = r.querySelector('video.vth'), inf = r.querySelector('.vinfo'); if (!th || !inf || !th.getAttribute('src')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'vpk'; b.textContent = 'Pick cover';
+    b.style.cssText = 'margin-left:8px;font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:0 9px;cursor:pointer';
+    b.onclick = function () { window.fxPick(th.getAttribute('src').split('#')[0], function (c) {
+      b.disabled = true; b.textContent = 'Saving cover…';
+      var fd = new FormData(); fd.append('csrf', csrf); fd.append('act', 'cover'); fd.append('vid', r.dataset.vid); fd.append('pick', '1'); fd.append('cover', c, 'cover.jpg');
+      fetch(location.href, {method: 'POST', body: fd, credentials: 'same-origin'}).then(function (x) { return x.json(); }).then(function (j) {
+        b.disabled = false; b.textContent = j && j.ok ? 'Cover saved ✓' : 'Not saved, try again';
+        if (j && j.ok) { r.removeAttribute('data-mkcover'); if (j.src) th.poster = j.src; th.pause(); th.currentTime = 0; th.load(); }
+      }, function () { b.disabled = false; b.textContent = 'Not saved, try again'; });
+    }); };
+    inf.appendChild(b);
+  });
+}, 1200);

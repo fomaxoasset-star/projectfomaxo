@@ -1104,10 +1104,10 @@ if (isset($_GET['videos'])) {
       }
       exit(json_encode(['ok' => $ok ? 1 : 0]));
     }
-    if ($act === 'cover') {   // a cover picked from the video by this page (vshrink.js), for a video uploaded without one; a cover already there is kept
+    if ($act === 'cover') {   // a cover picked from the video by this page (vshrink.js): by itself for a video without one (a cover already there is kept), or the frame chosen with "Pick cover" (pick=1, replaces it)
       header('Content-Type: application/json'); header('Cache-Control: no-store'); $c = $_FILES['cover'] ?? null; $src = '';
-      if ($at !== false && empty($vids[$at]['embed']) && ($vids[$at]['cover'] ?? '') === '' && $c && ($c['error'] ?? 1) === UPLOAD_ERR_OK && $c['size'] <= 3 * 1048576
-        && ($cv = fx_save_photo($c['tmp_name'], (($vprods($vids[$at])[0] ?? '') ?: 'fomaxo') . '-cover'))) { $vids[$at]['cover'] = $cv; fomaxo_setting($pdo, 'videos', json_encode(array_values($vids))); $src = "../assets/img/$cv.webp"; }
+      if ($at !== false && empty($vids[$at]['embed']) && (($vids[$at]['cover'] ?? '') === '' || !empty($_POST['pick'])) && $c && ($c['error'] ?? 1) === UPLOAD_ERR_OK && $c['size'] <= 3 * 1048576
+        && ($cv = fx_save_photo($c['tmp_name'], (($vprods($vids[$at])[0] ?? '') ?: 'fomaxo') . '-cover'))) { if (($vids[$at]['cover'] ?? '') !== '') fx_media_delete($vids[$at]['cover']); $vids[$at]['cover'] = $cv; fomaxo_setting($pdo, 'videos', json_encode(array_values($vids))); $src = "../assets/img/$cv.webp"; }
       exit(json_encode(['ok' => $src !== '' ? 1 : 0, 'src' => $src]));
     }
     if ($act === 'order') {   // drag the dots to reorder (the page sends it without reloading): the video ids in their new order
