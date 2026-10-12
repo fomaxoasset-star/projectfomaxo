@@ -3,21 +3,19 @@
    GET  reviews.php?summary          → average rating and count for every product
    GET  reviews.php?product=ID       → the visible reviews of one product
    GET  reviews.php?link=TOKEN       → the products of an order's private review link (Verified Purchaser)
-   GET  reviews.php?photo=FILE       → a customer photo (or a review video's cover)
-   POST reviews.php  action=review   → new review (form data: product, rating, name, anon, text, token, photos[], video + vprev + vcover)
+   GET  reviews.php?photo=FILE       → a customer photo
+   POST reviews.php  action=review   → new review (form data: product, rating, name, anon, text, token, photos[])
    POST reviews.php  action=helpful  → "Helpful" vote (one per browser)
    GET  reviews.php?manage&k=KEY     → FOMAXO's page to hide or show reviews (the link is in every new-review email)
    Reviews publish straight away. Every new review is emailed to $STORE_EMAIL with the link to hide it. */
 header('Cache-Control: no-store');
 require __DIR__ . '/store-lib.php';
 require __DIR__ . '/reviews-lib.php';
-require_once __DIR__ . '/media-lib.php';
 
 $STORE_EMAIL = 'fomaxoasset@gmail.com';
 $MAX_PHOTOS  = 3;            // photos per review
 $MAX_PHOTO_MB = 12;          // per photo, before we shrink it
 $PHOTO_PX    = 1600;         // longest side after shrinking
-$MAX_VIDEO_MB = 25;          // one video per review, made about 5 MB in the customer's browser first (assets/rvid.js)
 
 date_default_timezone_set('Asia/Dubai');
 $method = $_SERVER['REQUEST_METHOD'];
@@ -26,8 +24,7 @@ function out($data, $code = 200) { http_response_code($code); header('Content-Ty
 function rv_public($r) {
   return ['id' => $r['id'], 'name' => $r['name'], 'rating' => $r['rating'], 'text' => $r['text'], 'verified' => !empty($r['verified']),
           'city' => $r['city'] ?? '', 'country' => $r['country'] ?? '', 'date' => substr($r['created'], 0, 10), 'helpful' => (int)($r['helpful'] ?? 0),
-          'photos' => array_map(fn($p) => 'reviews.php?photo=' . rawurlencode($p), $r['photos'] ?? []), 'reply' => empty($r['reply_hidden']) ? (string)($r['reply'] ?? '') : '']
-    + (!empty($r['video']) ? ['video' => $r['video'], 'vprev' => (string)($r['vprev'] ?? ''), 'vcover' => !empty($r['vcover']) ? 'reviews.php?photo=' . rawurlencode($r['vcover']) : ''] : []);   // the product page's video row plays it (vprev = small silent preview)
+          'photos' => array_map(fn($p) => 'reviews.php?photo=' . rawurlencode($p), $r['photos'] ?? []), 'reply' => empty($r['reply_hidden']) ? (string)($r['reply'] ?? '') : ''];
 }
 /* send the answer now and keep working after it (translating), so the customer never waits */
 function rv_send_then($data) {
@@ -75,7 +72,7 @@ function rv_mob_ok($d) { if (strpos($d, '00') === 0) $d = substr($d, 2); return 
 if ($method === 'GET' && isset($_GET['photo'])) {
   $n = (string)$_GET['photo'];
   $f = rv_dir('photos') . '/' . $n;
-  if (!preg_match('/^[a-f0-9]{16}-(\d|v)\.jpg$/', $n) || !is_file($f)) { http_response_code(404); exit; }
+  if (!preg_match('/^[a-f0-9]{16}-\d\.jpg$/', $n) || !is_file($f)) { http_response_code(404); exit; }
   header_remove('Cache-Control');
   header('Content-Type: image/jpeg'); header('Cache-Control: public, max-age=31536000, immutable');
   header('X-Content-Type-Options: nosniff'); header('Content-Length: ' . filesize($f));
@@ -178,7 +175,6 @@ if (isset($_GET['manage']) || ($_POST['action'] ?? '') === 'toggle') {
        . '<div class="m">' . $h($r['name']) . ($r['anon'] ? ' (real name: ' . $h($r['real'] ?? '') . ')' : '') . (($r['city'] ?? '') . ($r['country'] ?? '') !== '' ? ' · ' . $h(trim(($r['city'] ?? '') . ' ' . ($r['country'] ?? ''))) : '') . ' · ' . ($r['verified'] ? 'Verified Purchaser, order ' . $h($r['order']) : 'not verified') . ' · ' . $h(substr($r['created'], 0, 16)) . ($off ? ' · HIDDEN' : '') . '</div>'
        . '<p>' . $h($r['text']) . '</p>';
     foreach ($r['photos'] ?? [] as $p) echo '<a href="reviews.php?photo=' . $h($p) . '" target="_blank"><img src="reviews.php?photo=' . $h($p) . '" alt=""></a>';
-    if (!empty($r['video'])) echo ' <a href="assets/' . $h($r['video']) . '" target="_blank">▶ Video</a>';
     echo '<form method="post" action="reviews.php"><input type="hidden" name="action" value="toggle"><input type="hidden" name="k" value="' . $h($k) . '"><input type="hidden" name="id" value="' . $h($r['id']) . '">'
        . '<input type="hidden" name="hide" value="' . ($off ? '0' : '1') . '"><button>' . ($off ? 'Show on website' : 'Hide from website') . '</button></form></div>';
   }
@@ -208,7 +204,7 @@ if (is_array($json) && ($json['action'] ?? '') === 'helpful') {
 
 /* ---------------- new review ---------------- */
 if (($_POST['action'] ?? '') !== 'review') {
-  if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0 && !$_POST) out(['error' => 'Your photos or video are too large. Please choose smaller ones.'], 413);
+  if ((int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0 && !$_POST) out(['error' => 'Your photos are too large. Please choose smaller photos.'], 413);
   out(['error' => 'Unknown request.'], 400);
 }
 if (!empty($_POST['website'])) out(['ok' => true, 'review' => null]);   // spam trap (hidden box people never see)
@@ -247,7 +243,7 @@ $mobile = $link ? '' : substr(preg_replace('/\D/', '', strtr((string)($_POST['mo
 if ($issue !== '' && $mobile === '') out(['error' => 'Please add your mobile number, so we can send your coupon on WhatsApp upon proof.'], 400);
 if ($mobile !== '' && !rv_mob_ok($mobile)) out(['error' => 'Please enter a valid UAE mobile number, e.g. 050 123 4567.'], 400);
 /* photos chosen (counted before saving): proof of a damaged or faulty product */
-$photoCount = count(array_filter((array)($_FILES['photos']['error'] ?? []), fn($e) => $e === UPLOAD_ERR_OK)) + (($_FILES['video']['error'] ?? 4) === UPLOAD_ERR_OK ? 1 : 0);   // a video shows it too
+$photoCount = count(array_filter((array)($_FILES['photos']['error'] ?? []), fn($e) => $e === UPLOAD_ERR_OK));
 if ($link && $rating <= 3 && preg_match(RV_FAULTY, $text) && !$photoCount) out(['error' => 'Sorry about that. Your review is about a damaged or faulty product, so please add a photo of it for proof. We will check it and send you a coupon on WhatsApp.'], 400);
 if ($issue === 'faulty' && !$photoCount) out(['error' => 'Please add a photo of faulty or damaged product for proof.'], 400);
 
@@ -267,27 +263,11 @@ if ($files && is_array($files['tmp_name'])) {
   }
 }
 
-/* one video (optional): kept in fomaxo-media/vid with the shop videos (safe from GitHub updates), with its small preview and cover photo made in the customer's browser */
-$video = $vprev = $vcover = '';
-$vf = $_FILES['video'] ?? null;
-if ($vf && ($vf['error'] ?? 4) !== UPLOAD_ERR_NO_FILE) {
-  $vt = ($vf['error'] ?? 1) === UPLOAD_ERR_OK && ($vf['size'] ?? 0) > 0 && $vf['size'] <= $MAX_VIDEO_MB * 1048576 && is_uploaded_file($vf['tmp_name']) && function_exists('finfo_open') ? (string)finfo_file(finfo_open(FILEINFO_MIME_TYPE), $vf['tmp_name']) : '';
-  $ext = ['video/mp4' => 'mp4', 'video/quicktime' => 'mov', 'video/webm' => 'webm', 'video/x-m4v' => 'mp4'][$vt] ?? '';
-  if ($ext !== '' && @move_uploaded_file($vf['tmp_name'], $to = fx_media('vid') . "/rv-$id.$ext")) {
-    @chmod($to, 0644); $video = "vid/rv-$id.$ext"; fx_media_link($video);
-    $pf = $_FILES['vprev'] ?? null;
-    if ($pf && ($pf['error'] ?? 1) === UPLOAD_ERR_OK && $pf['size'] > 0 && $pf['size'] <= 3 * 1048576 && is_uploaded_file($pf['tmp_name']) && finfo_file(finfo_open(FILEINFO_MIME_TYPE), $pf['tmp_name']) === 'video/mp4'
-      && @move_uploaded_file($pf['tmp_name'], $to = fx_media('vid') . "/rv-$id-p.mp4")) { @chmod($to, 0644); $vprev = "vid/rv-$id-p.mp4"; fx_media_link($vprev); }
-    $cf = $_FILES['vcover'] ?? null;
-    if ($cf && ($cf['error'] ?? 1) === UPLOAD_ERR_OK && $cf['size'] <= 3 * 1048576 && is_uploaded_file($cf['tmp_name']) && rv_save_photo($cf['tmp_name'], "$id-v.jpg", 1280)) $vcover = "$id-v.jpg";
-  } else $photoNote = trim($photoNote . ' The video could not be added.');
-}
-
 $rec = ['id' => $id, 'product' => $pid, 'rating' => $rating, 'name' => $name, 'anon' => $anon, 'real' => $real, 'city' => $city, 'country' => $country, 'text' => $text,
         'verified' => (bool)$link, 'order' => $link['no'] ?? null, 'photos' => $photos, 'helpful' => 0, 'hidden' => false,
-        'created' => date('c'), 'ip' => $ip, 'mobile' => $mobile, 'issue' => $issue] + ($video !== '' ? ['video' => $video, 'vprev' => $vprev, 'vcover' => $vcover] : []);   // mobile and issue: for FOMAXO only, never in the public list
+        'created' => date('c'), 'ip' => $ip, 'mobile' => $mobile, 'issue' => $issue];   // mobile and issue: for FOMAXO only, never in the public list
 $saved = rv_change(function (&$list) use ($rec) { $list[] = $rec; return true; });
-if (!$saved) { foreach ($photos as $p) @unlink(rv_dir('photos') . "/$p"); if ($video !== '') { fx_media_delete($video); fx_media_delete($vprev); @unlink(rv_dir('photos') . "/$id-v.jpg"); } out(['error' => 'We could not save your review right now. Please try again.'], 500); }
+if (!$saved) { foreach ($photos as $p) @unlink(rv_dir('photos') . "/$p"); out(['error' => 'We could not save your review right now. Please try again.'], 500); }
 if ($link) {
   $done = (array)($link['done'] ?? []); $done[$pid] = $id; $file = $link['file']; unset($link['file']);
   $link['done'] = $done; @file_put_contents($file, json_encode($link), LOCK_EX);
@@ -301,7 +281,7 @@ fomaxo_en_many([$text, $name, trim("$city $country")]);   // Arabic review: Engl
 $body = "New review on fomaxo.com — it is live now.\n\nProduct: $pname\nRating: " . str_repeat('★', $rating) . str_repeat('☆', 5 - $rating) . " ($rating/5)\n"
       . 'Name shown: ' . fomaxo_en_both($name) . ($anon ? " (real name: $real)" : '') . "\n" . ($city . $country !== '' ? 'From: ' . fomaxo_en_both(trim("$city $country")) . "\n" : '') . ($link ? "Verified Purchaser — order {$link['no']}\n" : "Not a verified purchase\n")
       . ($issue !== '' ? 'Problem: ' . ($issue === 'late' ? 'Late delivery' : 'Faulty or damaged product') . "\n" : '') . ($mobile !== '' ? "Mobile: $mobile\n" : '')
-      . 'Photos: ' . count($photos) . ($video !== '' ? " · Video: yes" : '') . "\n\n" . (fx_has_ar($text) ? fomaxo_en($text) . "\n\nAs written: $text" : $text) . "\n\nTo hide this review (or any other), open:\n$manage\n";
+      . 'Photos: ' . count($photos) . "\n\n" . (fx_has_ar($text) ? fomaxo_en($text) . "\n\nAs written: $text" : $text) . "\n\nTo hide this review (or any other), open:\n$manage\n";
 fomaxo_mail(fomaxo_orders_email($STORE_EMAIL), '=?UTF-8?B?' . base64_encode("New $rating★ review — $pname") . '?=', $body, "From: FOMAXO Reviews <mail@fomaxo.com>\r\nContent-Type: text/plain; charset=UTF-8");
 
 rv_send_then(['ok' => true, 'review' => rv_public($rec), 'note' => $photoNote]);

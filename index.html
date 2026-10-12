@@ -1750,15 +1750,6 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-ph-prev span{position:relative;width:78px;height:78px;border:1px solid var(--line)}
 .rw-ph-prev img{width:100%;height:100%;object-fit:cover}
 .rw-ph-prev button{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.75);color:#fff;font-size:15px;line-height:24px}
-.rw-v-prev{display:contents}   /* the picked review video: its cover photo, how far it is while it is made ready, then a play sign */
-.rw-vt{position:relative;width:78px;height:78px;border:1px solid var(--line);background:#000;display:grid;place-items:center;overflow:hidden}
-.rw-vt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.rw-v-st{position:relative;z-index:1;font-style:normal;font-size:10.5px;line-height:1.3;letter-spacing:.04em;color:#f0d3a0;text-align:center;padding:0 4px;text-shadow:0 1px 3px #000}
-.rw-v-st svg{width:20px;height:20px;display:block;filter:drop-shadow(0 1px 3px #000)}
-.rw-vt button{position:absolute;top:3px;right:3px;z-index:2;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.75);color:#fff;font-size:15px;line-height:24px}
-.rw-v-msg{color:#e0705f;margin-top:8px}html[data-mode="light"] .rw-v-msg{color:#c0503c}
-.rw-photos .rw-vbtn{position:relative;background:#000}
-.rw-vbtn i{position:absolute;inset:0;display:grid;place-items:center;color:#f0d3a0;background:rgba(0,0,0,.25)}.rw-vbtn i svg{width:16px;height:16px;margin-left:2px;filter:drop-shadow(0 1px 3px #000)}
 .form label.rw-add{display:flex;align-items:center;justify-content:center;width:78px;height:78px;border:1px dashed var(--line-2);font-size:10px;letter-spacing:.14em;text-align:center;color:var(--gold);cursor:pointer;line-height:1.4}
 .rw-hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
 .rw-ok{padding:14px 16px;border:1px solid var(--line-2);color:var(--gold-hi);font-size:14px;margin-bottom:18px}
@@ -1844,7 +1835,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 @media(min-width:900px) and (max-height:800px){.rw-sec.sec{padding:14px 0 16px!important}.rwp{height:calc(100vh - var(--ann-h,40px) - 112px)}
   .rwp-main{padding:14px 26px 14px;gap:8px}.rwp-head{padding-bottom:10px;gap:12px}.rwp-head img{width:48px;height:48px}.rwp-head b{font-size:21px}
   .rwp-main .rw-c1,.rwp-main .rw-c2{gap:7px}.rwp-main .rw-form{row-gap:8px}.rwp-main .rw-form textarea{min-height:72px}.rwp-main .rw-form .rw-rate button{font-size:30px}
-  .rwp-main .rw-form .row2 input{height:40px}.rwp-main .form.rw-form input{padding:8px 12px}.rwp-main .form.rw-form label.rw-add,.rwp-main .rw-ph-prev span,.rwp-main .rw-vt{height:46px}.rwp-main .rw-foot{padding-top:10px}.rwp-main .rw-foot .btn{min-height:44px}
+  .rwp-main .rw-form .row2 input{height:40px}.rwp-main .form.rw-form input{padding:8px 12px}.rwp-main .form.rw-form label.rw-add,.rwp-main .rw-ph-prev span{height:46px}.rwp-main .rw-foot{padding-top:10px}.rwp-main .rw-foot .btn{min-height:44px}
   .rwp-side{padding:16px 18px}.rwp-no{font-size:24px}.rwp-list{gap:6px}.rwp-it{padding:6px}}
 /* review form: title row, two parts (rating, problem, words | name, mobile, place, photos), footer with the error left and the buttons right */
 .rw-form .rw-fhead{justify-content:flex-start;align-items:baseline;gap:6px 14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
@@ -1870,7 +1861,7 @@ html[data-mode="light"] .form .rw-need select,html[data-mode="light"] .form labe
   .rw-c1,.rw-c2{gap:12px}.rw-form .rw-fhead b{font-size:22px}.rw-form textarea{min-height:110px}.rw-form .rw-rate button{font-size:30px}.rw-form .opt-label{margin-bottom:8px}
   .form.rw-form input,.form.rw-form select{padding:11px 14px}.form.rw-form textarea{padding:12px 14px}.rw-form .row2 input,.rw-form .row2 select{height:44px}.rw-form .row2{gap:12px}
   .rw-form .rw-issue,.rw-form .rw-hint{font-size:13px;margin:-4px 0 0}.rw-form .rw-emo{margin-top:-6px}.rw-form .rw-foot{padding-top:14px}
-  .rw-form .rw-ph-prev span,.rw-form .rw-vt{width:52px;height:52px}.rw-form .rw-vt button{width:20px;height:20px;line-height:20px;font-size:13px}.rw-form .rw-v-st{font-size:9.5px}.form.rw-form label.rw-add{width:64px;height:52px;font-size:9px}.rw-form .rw-ph-prev button{width:20px;height:20px;line-height:20px;font-size:13px}}
+  .rw-form .rw-ph-prev span{width:52px;height:52px}.form.rw-form label.rw-add{width:64px;height:52px;font-size:9px}.rw-form .rw-ph-prev button{width:20px;height:20px;line-height:20px;font-size:13px}}
 @keyframes rwPop{from{opacity:0}}
 @media(max-width:600px){.rw-avg>b{font-size:52px}.rw-text{font-size:19px}.rw-rate button{font-size:38px}}
 /* ===== conversion upgrade (Oct 2026): added-to-bag panel, multi-buy progress, product page savings/offer/payment line, order again, email sign-up ===== */
@@ -2367,11 +2358,7 @@ html[dir="rtl"] .rl-s{direction:rtl}
 .rl-shop{grid-template-columns:minmax(0,1fr) auto!important}
 .rl-shop .btn{min-height:44px;padding:0 22px;letter-spacing:.18em;font-size:11px}
 .vt-more{font-style:normal;font-size:12px;color:#f0d3a0;letter-spacing:.06em}
-.vt-st{color:#f0d3a0;letter-spacing:.08em;white-space:nowrap}   /* a customer's review video: their stars and name */
-.rl-rv{margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:12.5px;color:#f2ebdd;text-shadow:0 1px 4px rgba(0,0,0,.7)}
-.rl-rv b{font-weight:500;letter-spacing:.06em}.rl-cards.many .rl-rv{margin:0 12px 8px}
-.rl-rv-v{display:inline-flex;align-items:center;gap:4px;font-size:11px;letter-spacing:.08em;color:#f0d3a0}.rl-rv-v svg{width:14px;height:14px}
-.pdp-vids{padding:56px 0 8px}.pdp-vids>.wrap{padding:0}   /* product page: the product's own videos, between Customers bought together and the reviews */
+.pdp-vids{padding:56px 0 8px}.pdp-vids>.wrap{padding:0}   /* product page: Review videos, between Customers bought together and the reviews */
 .rl-card{position:relative;z-index:2;background:rgba(var(--bg-rgb),.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line-2);color:var(--ivory);padding:12px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 12px;align-items:center}
 .rl-pi img{width:56px;height:56px;object-fit:cover;border:1px solid var(--line)}
 .rl-info{display:flex;flex-direction:column;min-width:0;line-height:1.3}
@@ -3555,7 +3542,7 @@ function bindProduct(p){
   const addBtn = $('#addBtn');
   mobileBarCheck = () => { const r = addBtn.getBoundingClientRect(), off = r.bottom < 0 || r.top > innerHeight - 70; mb.classList.toggle('show', off && $('#reviews').getBoundingClientRect().top > innerHeight*.6); };
   setTimeout(() => mobileBarCheck && mobileBarCheck(), 400);
-  renderVids();   // the product's own shop videos straight away; its review videos join when the reviews arrive
+  renderVids();   // Review videos: this product's own shop videos, just above its reviews
   rwLoad(p);
 }
 let mobileBarCheck = null;
@@ -4368,7 +4355,7 @@ function rwItem(r){
   return `<article class="rv rw-item"><div class="rw-top"><span class="rw-who"><b class="rw-name">${esc(capWords(r.name || ''))}</b>${rwPlace(r)}</span><span class="small">${rwDate(r.date)}</span></div>
     <div class="rw-meta">${rwStars(r.rating)}${r.verified ? `<span class="rw-ver">${RW_TICK}Verified Purchaser</span>` : ''}<button type="button" class="rw-help${voted ? ' on' : ''}" data-rwh="${r.id}"${voted ? ' disabled' : ''}>${rwHelpLabel(r.helpful)}</button></div>
     <div class="rw-body">${rwText(r)}
-    ${r.photos.length || r.video ? `<div class="rw-photos">${r.video ? `<button type="button" class="rw-vbtn" data-rwvid="${esc(r.id)}" aria-label="Play video from ${esc(capWords(r.name || ''))}">${r.vcover ? `<img src="${esc(r.vcover)}" alt="" loading="lazy">` : ''}<i aria-hidden="true">${VI.play}</i></button>` : ''}${r.photos.map(u => `<button type="button" data-rwph="${esc(u)}" aria-label="Open customer photo"><img src="${esc(u)}" alt="Customer photo of ${esc(r.name)}" loading="lazy"></button>`).join('')}</div>` : ''}</div>
+    ${r.photos.length ? `<div class="rw-photos">${r.photos.map(u => `<button type="button" data-rwph="${esc(u)}" aria-label="Open customer photo"><img src="${esc(u)}" alt="Customer photo of ${esc(r.name)}" loading="lazy"></button>`).join('')}</div>` : ''}</div>
     ${rwReply(r)}</article>`;
 }
 function rwSection(p, d){   // d = null while the reviews are loading: the text and the note still show
@@ -4402,15 +4389,12 @@ function rwForm(p, link, x){
     ${link ? '' : `<label class="rw-mob"><span>Mobile <i class="rw-mob-why">(optional, only FOMAXO sees it)</i></span><input name="mobile" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="e.g. 050 123 4567"></label>`}
     <div class="row2"><label>State / City (optional)<span class="rw-clr-w"><input name="city" maxlength="40" autocomplete="off" data-cap="words" autocapitalize="words" placeholder="Type or pick, e.g. Dubai" role="combobox" aria-autocomplete="list" aria-expanded="false"><div class="rw-sug" role="listbox" hidden></div><button type="button" class="rw-clr" data-clr="city" aria-label="Clear city" hidden>×</button></span></label>
       <label>Nation (optional)<span class="rw-clr-w"><input name="nation" maxlength="40" autocomplete="off" data-cap="words" autocapitalize="words" placeholder="Type or pick, e.g. India" role="combobox" aria-autocomplete="list" aria-expanded="false"><input type="hidden" name="country"><div class="rw-sug rw-sug-n" role="listbox" hidden></div><button type="button" class="rw-clr" data-clr="nation" aria-label="Clear nation" hidden>×</button></span></label></div>
-    <div><div class="opt-label"><span>Photos &amp; video</span><span>Optional</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label><button type="button" class="rw-ph-n" hidden></button><div class="rw-v-prev"></div><label class="rw-add rw-addv">+ Add<br>video<input type="file" accept="video/*" hidden></label></div><p class="small rw-v-msg" role="alert" hidden></p></div></div>
+    <div><div class="opt-label"><span>Photos (optional)</span><span>Up to 3</span></div><div class="rw-ph-row"><div class="rw-ph-prev"></div><label class="rw-add">+ Add<br>photos<input type="file" accept="image/*" multiple hidden></label><button type="button" class="rw-ph-n" hidden></button></div></div></div>
     <input name="website" class="rw-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
     ${link ? `<p class="small rw-fnote">Order ${esc(link.no)} · please rate honestly, every star counts.</p>` : `<p class="small rw-fnote">Bought on fomaxo.com? Use the review link from your order confirmation to show Verified Purchaser.</p>`}
     <div class="rw-foot"><p class="small rw-err" role="alert"></p><div class="rw-btns">${x ? '<button class="btn line" type="button" data-cancel>Cancel</button>' : ''}<button class="btn" type="submit">Post review</button></div></div>
   </form>`;
 }
-/* the review video maker (assets/rvid.js) loads only when a customer picks a video */
-let rwVidP = null;
-const rwVidLib = () => rwVidP || (rwVidP = new Promise((ok, no) => { if (window.fxRvid) return ok(); const s = document.createElement('script'); s.src = 'assets/rvid.js?v=1'; s.onload = ok; s.onerror = () => { rwVidP = null; no(new Error('load')); }; document.head.appendChild(s); }));
 /* photos are shrunk in the browser before upload (fast on mobile data); reviews.php checks and re-encodes them again */
 async function rwShrink(f){
   try {
@@ -4470,7 +4454,7 @@ function rwBindForm(form, p, link, onDone){
   sug.onmousedown = e => e.preventDefault();
   sug.onclick = e => { const b = e.target.closest('button'); if (!b) return; ci.value = b.textContent; ci.dispatchEvent(new Event('change')); sugHide(); };
   co.addEventListener('change', () => { if (document.activeElement === ci) sugShow(); });
-  const fi = $('input[accept^="image"]', form), prev = $('.rw-ph-prev', form), add = $('.rw-add', form);
+  const fi = $('input[type=file]', form), prev = $('.rw-ph-prev', form), add = $('.rw-add', form);
   const phN = $('.rw-ph-n', form);
   const drawPrev = () => {
     prev.innerHTML = files.map((x, i) => `<span><img src="${x.url}" alt=""><button type="button" data-x="${i}" aria-label="Remove photo">×</button></span>`).join('');
@@ -4485,22 +4469,11 @@ function rwBindForm(form, p, link, onDone){
      Late delivery needs a mobile, a faulty product a mobile and a photo, for its coupon. Words about a problem ask them to pick it.
      Verified purchasers: a 1–3 star review about a damaged or faulty product needs a photo of it for proof. */
   const issue = form.elements.issue || {value: ''}, prob = $('.rw-prob', form), note = $('.rw-issue', form), hint = $('.rw-hint', form);
-  const check = () => !rating || rating > 3 ? '' : prob ? (!issue.value && rwProblem(ta.value) ? RW_ASK : rwMismatch(issue.value, ta.value)) : rwNeedsProof(rating, ta.value, files.length + (vid ? 1 : 0)) ? RW_PROOF : '';
+  const check = () => !rating || rating > 3 ? '' : prob ? (!issue.value && rwProblem(ta.value) ? RW_ASK : rwMismatch(issue.value, ta.value)) : rwNeedsProof(rating, ta.value, files.length) ? RW_PROOF : '';
   function warn(){ const msg = check(); hint.textContent = msg; hint.hidden = !msg; if (prob) prob.classList.toggle('rw-need', !!msg); else add.classList.toggle('rw-need', !!msg); }
   if (prob) issue.onchange = () => { note.hidden = !issue.value; note.textContent = RW_NOTE[issue.value] || ''; $('.rw-mob-why', form).textContent = `(${issue.value ? 'needed' : 'optional'}, only FOMAXO sees it)`; warn(); };
   ta.addEventListener('input', warn);
   stars.forEach(b => b.addEventListener('click', () => { if (prob) { prob.hidden = rating > 3; if (rating > 3 && issue.value) { issue.value = ''; issue.onchange(); } } warn(); }));
-  /* one video (optional): made ready in this browser as soon as it is picked (assets/rvid.js: about 5 MB, a cover photo and a small preview), so posting is quick */
-  let vid = null; const vi = $('input[accept^="video"]', form), addV = $('.rw-addv', form), vbox = $('.rw-v-prev', form), vmsg = $('.rw-v-msg', form);
-  const drawV = () => { addV.hidden = !!vid;
-    vbox.innerHTML = vid ? `<span class="rw-vt">${vid.cover ? `<img src="${vid.cover}" alt="">` : ''}<i class="rw-v-st">${vid.res ? VI.play : esc(vid.say || 'Preparing…')}</i><button type="button" data-xv aria-label="Remove video">×</button></span>` : '';
-    const x = $('[data-xv]', vbox); if (x) x.onclick = () => { if (vid && vid.cover) URL.revokeObjectURL(vid.cover); vid = null; drawV(); }; warn(); };
-  vi.onchange = () => { const f = vi.files[0]; vi.value = ''; if (!f) return; vmsg.hidden = true;
-    if (!/^video\//.test(f.type) && !/\.(mp4|mov|m4v|webm|3gp|mkv)$/i.test(f.name)) { vmsg.textContent = 'Please choose a video.'; vmsg.hidden = false; return; }
-    const me = vid = {f}; drawV();
-    me.job = rwVidLib().then(() => window.fxRvid(f, t => { if (vid !== me) return; me.say = t.replace(/^Preparing your video… ?/, '') || 'Preparing…'; const st = $('.rw-v-st', vbox); if (st) st.textContent = me.say; }))
-      .then(r => { if (vid !== me) return null; me.res = r; if (r.cover) me.cover = URL.createObjectURL(r.cover); drawV(); return r; },
-        e => { if (vid !== me) return null; vid = null; drawV(); vmsg.textContent = e && e.message && !/import|fetch|module/i.test(e.message) ? e.message : 'This video could not be added. Please try another one.'; vmsg.hidden = false; return null; }); };
   fi.onchange = () => { [...fi.files].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)).slice(0, 3 - files.length).forEach(f => files.push({f, url: URL.createObjectURL(f)})); fi.value = ''; drawPrev(); };
   form.onsubmit = async e => {
     e.preventDefault(); err.hidden = true;
@@ -4508,15 +4481,12 @@ function rwBindForm(form, p, link, onDone){
     const mob = form.elements.mobile ? form.elements.mobile.value.trim() : '', iss = rating <= 3 ? issue.value : '', prb = check();
     const bad = !rating ? 'Please choose a star rating.' : prob && prb ? prb : !an.checked && rwShort(nm.value).length < 2 ? 'Please enter your name, or choose Post anonymously.' : !text ? 'Please write your review.'
       : iss && !mob ? 'Please add your mobile number, so we can send your coupon on WhatsApp upon proof.' : mob && !rwMobOk(mob) ? 'Please enter a valid UAE mobile number, e.g. 050 123 4567.'
-      : prb ? prb : iss === 'faulty' && !files.length && !vid ? 'Please add a photo of faulty or damaged product for proof.' : '';
+      : prb ? prb : iss === 'faulty' && !files.length ? 'Please add a photo of faulty or damaged product for proof.' : '';
     if (bad) { err.textContent = bad; err.hidden = false; if (bad === prb && prob) $('select', prob).focus(); return; }
-    const btn = $('button[type=submit]', form); btn.disabled = true;
-    if (vid && !vid.res) { btn.textContent = 'Preparing your video…'; await vid.job; if (!vid) { btn.disabled = false; btn.textContent = 'Post review'; err.textContent = vmsg.textContent; err.hidden = false; return; } }
-    btn.textContent = vid ? 'Uploading video…' : files.length ? 'Uploading photos…' : 'Posting…';
+    const btn = $('button[type=submit]', form); btn.disabled = true; btn.textContent = files.length ? 'Uploading photos…' : 'Posting…';
     const fd = new FormData();
     [['action', 'review'], ['product', p.id], ['rating', rating], ['name', nm.value], ['anon', an.checked ? '1' : ''], ['city', form.elements.city.value], ['country', form.elements.country.value], ['text', text], ['website', form.elements.website.value], ['token', link ? link.t : ''], ['mobile', mob], ['issue', iss]].forEach(x => fd.append(x[0], x[1]));
     for (const x of files) fd.append('photos[]', await rwShrink(x.f), 'photo.jpg');
-    if (vid && vid.res) { fd.append('video', vid.res.video, vid.res.name); if (vid.res.prev) fd.append('vprev', vid.res.prev, 'preview.mp4'); if (vid.res.cover) fd.append('vcover', vid.res.cover, 'cover.jpg'); }
     let r = {};
     try { r = await (await fetch(RW_API, {method: 'POST', body: fd})).json(); } catch(x) {}
     if (r.ok) { if (link) rwMarkDone(link.t, p.id); onDone(r); return; }
@@ -4562,7 +4532,6 @@ async function rwLoad(p, msg){
   clearTimeout(stop);
   if ($('#reviews') !== box) return;
   if (!d || !Array.isArray(d.reviews)) d = {count: 0, avg: 0, dist: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}, reviews: []};
-  const rvl = rvVids(p, d); if (JSON.stringify(rvl) !== JSON.stringify(PV_RV.id === p.id ? PV_RV.l : [])) { PV_RV = {id: p.id, l: rvl}; renderVids(); }
   box.innerHTML = rwSection(p, d);
   const head = $('#rwHead');
   if (head) { head.innerHTML = rwHeadHTML(d); head.onclick = () => box.scrollIntoView({behavior: 'smooth', block: 'start'}); }
@@ -4580,7 +4549,7 @@ async function rwLoad(p, msg){
   const L0 = $('#rwList', box); let sx = null, sy = 0;
   if (L0) { L0.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive: true});
     L0.addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) turn(dx < 0 ? 1 : -1); }); }
-  box.onclick = e => { const rv = e.target.closest('[data-rwvid]'); if (rv) { const k = rowVids().findIndex(v => v.rid === rv.dataset.rwvid); if (k >= 0) openReel(k); return; } const h = e.target.closest('[data-rwh]'); if (h && !h.disabled) rwVote(h, d.reviews); const ph = e.target.closest('[data-rwph]'); if (ph) rwLightbox(ph.dataset.rwph, rwPhotoList(d)); const o = e.target.closest('[data-rwo-b]'); if (o) rwOrig(o, d.reviews); };
+  box.onclick = e => { const h = e.target.closest('[data-rwh]'); if (h && !h.disabled) rwVote(h, d.reviews); const ph = e.target.closest('[data-rwph]'); if (ph) rwLightbox(ph.dataset.rwph, rwPhotoList(d)); const o = e.target.closest('[data-rwo-b]'); if (o) rwOrig(o, d.reviews); };
   const fb = $('#rwFormBox', box);
   if (msg) { fb.hidden = false; fb.innerHTML = `<p class="rw-ok">${msg}</p>`; }
   /* laptop: Write a review opens as a window in the middle of the screen over a darkened page; phone: in the page */
@@ -4882,12 +4851,9 @@ function bindHome(){
 let VIDEOS = []; try { VIDEOS = JSON.parse(localStorage.getItem('fomaxo_videos') || '[]') || []; } catch(e) {}
 const vidProds = v => [v.p, ...(v.a || [])].filter((id, i, a) => shown(id) && a.indexOf(id) === i);   // v.p = first product, v.a = more; none = a general video with Shop now
 const vids = () => VIDEOS.filter(v => v && (v.v || v.e) && (vidProds(v).length || (!v.p && !(v.a || []).length)));   // v.e = an Instagram reel shown with Instagram's own player
-/* a product page has the same row with that product's own videos: its shop videos first, then its customers' review videos (from reviews.php, newest first).
-   A review video carries rv (the reviewer) and cu (its cover photo); hidden or deleted reviews never come back from reviews.php, so their videos go with them */
-let PV_RV = {id: '', l: []};
+/* a product page has the same row, as its Review videos: only the videos that sell that product (AJAY 2026-10-12) */
 const vidPage = () => { const m = /^#\/product\/([^?\/]+)/.exec(location.hash); return m && P[m[1]] && !P[m[1]].hidden ? m[1] : ''; };
-const rowVids = () => { const id = vidPage(); return id ? [...vids().filter(v => vidProds(v).includes(id)), ...(PV_RV.id === id ? PV_RV.l : [])] : vids(); };
-const rvVids = (p, d) => d.reviews.filter(r => r.video).map(r => ({v: r.video, p: p.id, rid: r.id, rv: {name: capWords(r.name || ''), rating: r.rating, verified: r.verified}, ...(r.vprev ? {pv: r.vprev} : {}), ...(r.vcover ? {cu: r.vcover} : {})}));
+const rowVids = () => { const id = vidPage(); return id ? vids().filter(v => vidProds(v).includes(id)) : vids(); };
 const VI = {
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -4898,14 +4864,14 @@ const VI = {
   up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 15l6-6 6 6"/></svg>',
   down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 9l6 6 6-6"/></svg>'
 };
-const vidPoster = v => { if (v.cu) return v.cu; if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; if (!p) return ''; const k = imgFor(p, defaultSize(p)); return IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };
+const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; if (!p) return ''; const k = imgFor(p, defaultSize(p)); return IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };
 function vidSecHTML(){
   const l = rowVids(); if (!l.length) return '';
-  return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
+  return `<div class="wrap">${(vidPage() ? secHead('Customer reviews', 'Review <em class="metal">videos</em>', '', false) : secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
     <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
       ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `${v.pv ? `<video autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : v.v)}"></video>` : ''}${vidPoster(v) ? `<img class="vt-pic" src="${vidPoster(v)}" alt="" loading="lazy">` : ''}`}
       <span class="vt-play" aria-hidden="true">${VI.play}</span>
-      ${v.rv ? `<span class="vt-p vt-shop vt-rv"><span><b>${esc(v.rv.name)}</b><i class="vt-more"><span class="vt-st" role="img" aria-label="${v.rv.rating} out of 5 stars">${'★'.repeat(v.rv.rating)}${'☆'.repeat(5 - v.rv.rating)}</span> <span>Customer review</span></i></span></span>` : p ? `<span class="vt-p"><img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now</i></span></span>`}</button>`; }).join('')}</div></div>`;
+      ${p ? `<span class="vt-p"><img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now</i></span></span>`}</button>`; }).join('')}</div></div>`;
 }
 let vrIO = null;
 function bindVids(){
@@ -4968,7 +4934,7 @@ function reelSlide(v, k){
     ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video playsinline loop muted preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
     <span class="rl-pause" aria-hidden="true">${VI.play}</span>
     ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'Eau de Parfum · Unisex'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`
-      : `<div class="rl-cards${ps.length > 1 ? ' many' : ''}">${v.rv ? `<p class="rl-rv"><span class="vt-st" role="img" aria-label="${v.rv.rating} out of 5 stars">${'★'.repeat(v.rv.rating)}${'☆'.repeat(5 - v.rv.rating)}</span> <b>${esc(v.rv.name)}</b>${v.rv.verified ? ` <span class="rl-rv-v">${RW_TICK}<span>Verified Purchaser</span></span>` : ''}</p>` : ''}${ps.length > 1 ? `<p class="rl-cnt">${ps.length} products in this video · swipe</p>` : ''}<div class="rl-cs">${ps.map(reelCard).join('')}</div></div>`}
+      : `<div class="rl-cards${ps.length > 1 ? ' many' : ''}">${ps.length > 1 ? `<p class="rl-cnt">${ps.length} products in this video · swipe</p>` : ''}<div class="rl-cs">${ps.map(reelCard).join('')}</div></div>`}
     </div></section>`;
 }
 function openReel(i){
