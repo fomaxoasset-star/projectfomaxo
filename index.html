@@ -4932,7 +4932,7 @@ function openReel(i){
   try { history.pushState({reel: 1}, ''); } catch(e) {}
   const track = $('.rl-track', el), slides = $$('.rl-s', el);
   const lent = [];   // the row's videos are already loaded: the player borrows them, so the tapped video plays at once (given back on close); a row tile playing its small preview (silent, first seconds) is not borrowed, the player loads the full video
-  $$('#vrow .vt').forEach(t => { const rv = $('video', t), sv = slides[+t.dataset.vi] && $('video', slides[+t.dataset.vi]); if (!rv || !rv.src || !sv || rv.dataset.src !== sv.dataset.src) return; const ph = document.createComment(''); rv.before(ph); sv.replaceWith(rv); lent.push([ph, rv]); });
+  $$('#vrow .vt').forEach(t => { const rv = $('video', t), sv = slides[+t.dataset.vi] && $('video', slides[+t.dataset.vi]); if (!rv || !rv.src || rv.readyState < 2 || !sv || rv.dataset.src !== sv.dataset.src) return; const ph = document.createComment(''); rv.before(ph); sv.replaceWith(rv); lent.push([ph, rv]); });
   let cur = -1;
   const go = k => { k = Math.max(0, Math.min(slides.length - 1, k)); track.scrollTo({left: k * track.clientWidth, behavior: 'smooth'}); };
   const act = k => { if (k === cur) return; cur = k;

@@ -1104,6 +1104,12 @@ if (isset($_GET['videos'])) {
       }
       exit(json_encode(['ok' => $ok ? 1 : 0]));
     }
+    if ($act === 'cover') {   // a cover picked from the video by this page (vshrink.js), for a video uploaded without one; a cover already there is kept
+      header('Content-Type: application/json'); header('Cache-Control: no-store'); $c = $_FILES['cover'] ?? null; $src = '';
+      if ($at !== false && empty($vids[$at]['embed']) && ($vids[$at]['cover'] ?? '') === '' && $c && ($c['error'] ?? 1) === UPLOAD_ERR_OK && $c['size'] <= 3 * 1048576
+        && ($cv = fx_save_photo($c['tmp_name'], (($vprods($vids[$at])[0] ?? '') ?: 'fomaxo') . '-cover'))) { $vids[$at]['cover'] = $cv; fomaxo_setting($pdo, 'videos', json_encode(array_values($vids))); $src = "../assets/img/$cv.webp"; }
+      exit(json_encode(['ok' => $src !== '' ? 1 : 0, 'src' => $src]));
+    }
     if ($act === 'order') {   // drag the dots to reorder (the page sends it without reloading): the video ids in their new order
       $ids = array_values(array_unique(array_filter(explode(',', (string)($_POST['ids'] ?? '')))));
       $byId = array_column($vids, null, 'id'); $new = array_values(array_filter(array_map(fn($id) => $byId[$id] ?? null, $ids)));
@@ -1192,7 +1198,7 @@ if (isset($_GET['videos'])) {
     $fnote = !empty($v['embed']) ? '' : ($fsz ? ' · ' . ($fsz >= 1048576 ? round($fsz / 1048576, 1) . ' MB' : max(1, round($fsz / 1024)) . ' KB') : ' · <b class="vbad">File missing, upload again</b>');
     $hid = $ps && !array_filter($ps, fn($id) => !$names[$id]['hidden']);
     $mk = $fsz > 1.5 * 1048576 && empty($v['embed']) && !(($v['prev'] ?? '') !== '' && is_file((string)fx_media_path($v['prev'])));   // no small preview yet: this page makes one (vshrink.js)
-    $tr .= '<div class="vrow' . (empty($v['on']) ? ' off' : '') . '" data-vid="' . h($v['id']) . '"' . ($mk ? ' data-mkprev="../assets/' . h($v['file']) . '"' : '') . '><span class="vdrag" title="Drag to change the order" aria-hidden="true"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.6"/><circle cx="8" cy="2" r="1.6"/><circle cx="2" cy="8" r="1.6"/><circle cx="8" cy="8" r="1.6"/><circle cx="2" cy="14" r="1.6"/><circle cx="8" cy="14" r="1.6"/></svg></span>'
+    $tr .= '<div class="vrow' . (empty($v['on']) ? ' off' : '') . '" data-vid="' . h($v['id']) . '"' . ($mk ? ' data-mkprev="../assets/' . h($v['file']) . '"' : '') . ($fsz && empty($v['embed']) && ($v['cover'] ?? '') === '' ? ' data-mkcover="../assets/' . h($v['file']) . '"' : '') . '><span class="vdrag" title="Drag to change the order" aria-hidden="true"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.6"/><circle cx="8" cy="2" r="1.6"/><circle cx="2" cy="8" r="1.6"/><circle cx="8" cy="8" r="1.6"/><circle cx="2" cy="14" r="1.6"/><circle cx="8" cy="14" r="1.6"/></svg></span>'
       . $post($v, 'vis', '<button class="rdot' . (empty($v['on']) ? '' : ' on') . '" name="show" value="' . (empty($v['on']) ? '1' : '') . '" title="' . (empty($v['on']) ? 'Hidden. Tap to show on the website' : 'On the website. Tap to hide') . '" aria-label="' . (empty($v['on']) ? 'Hidden, tap to show' : 'On the website, tap to hide') . '"></button>', ' class="vvis"')
       . (!empty($v['embed']) ? '<a class="vth vemb" href="https://www.instagram.com/reel/' . h($v['embed']) . '/" target="_blank" rel="noopener" title="Open on Instagram">' . ($poster ? '<img src="../assets/img/' . h($poster) . '.webp" alt="">' : '') . '<span>Instagram</span></a>'
         : '<video class="vth' . (empty($v['wide']) ? '' : ' wd') . '" src="../assets/' . h($v['file']) . '#t=0.1" preload="metadata" muted playsinline' . ($poster ? ' poster="../assets/img/' . h($poster) . '.webp"' : '') . ' onclick="this.paused?this.play():this.pause()"></video>')

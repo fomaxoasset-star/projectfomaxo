@@ -2,6 +2,32 @@
    Fast way: the video is re-encoded straight from the file (admin/mediabunny.js, WebCodecs), several times faster than playing it,
    Every video over 1 MB comes out at 1 MB or less: the quality is set from the video's length (720p for short videos, 540p or less for long ones).
    Browsers without it re-record the video while it plays (720p). Neither works = upload as it is. */
+/* a cover photo picked from the video itself: 5 moments are looked at (not the first second, often black or a fade) and the clearest,
+   best-lit one wins (sharp edges, not too dark, not washed out). Gives a JPEG, or null when the browser can't read the video */
+window.fxCover = function (src) {
+  return new Promise(function (ok) {
+    var v = document.createElement('video'), u = typeof src === 'string' ? src : URL.createObjectURL(src), done = false, best = null, bs = -1, ts = [], k = 0;
+    var end = function () { if (done) return; done = true; clearTimeout(t); v.onseeked = v.onloadeddata = v.onerror = null; v.removeAttribute('src'); v.load(); if (u !== src) URL.revokeObjectURL(u);
+      if (!best || bs < 2) return ok(null); best.toBlob(function (b) { ok(b && b.size ? b : null); }, 'image/jpeg', .88); };
+    var t = setTimeout(end, 20000);
+    var look = function () {
+      var w = v.videoWidth, h = v.videoHeight; if (!w || !h) return end();
+      var z = Math.min(1, 1280 / Math.max(w, h)), c = document.createElement('canvas'); c.width = Math.round(w * z); c.height = Math.round(h * z);
+      var sm = document.createElement('canvas'), q = 64 / Math.max(w, h); sm.width = Math.max(8, Math.round(w * q)); sm.height = Math.max(8, Math.round(h * q));
+      try { c.getContext('2d').drawImage(v, 0, 0, c.width, c.height); var g = sm.getContext('2d'); g.drawImage(c, 0, 0, sm.width, sm.height); var d = g.getImageData(0, 0, sm.width, sm.height).data; } catch (e) { return end(); }
+      var n = sm.width * sm.height, Y = new Float32Array(n), m = 0, s = 0, e = 0;
+      for (var i = 0; i < n; i++) { Y[i] = .299 * d[i * 4] + .587 * d[i * 4 + 1] + .114 * d[i * 4 + 2]; m += Y[i]; } m /= n;
+      for (i = 0; i < n; i++) { s += (Y[i] - m) * (Y[i] - m); if ((i + 1) % sm.width) e += Math.abs(Y[i + 1] - Y[i]); if (i + sm.width < n) e += Math.abs(Y[i + sm.width] - Y[i]); }
+      s = Math.sqrt(s / n); e /= n;
+      var sc = e * (s < 12 ? .3 : 1) * (m < 40 || m > 220 ? .2 : 1);   // a dark, blank or washed-out frame loses
+      if (sc > bs) { bs = sc; best = c; }
+      if (++k < ts.length) v.currentTime = ts[k]; else end();
+    };
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.onloadeddata = function () { var d = isFinite(v.duration) && v.duration > 0 ? v.duration : 4; ts = [.2, .35, .5, .65, .8].map(function (x) { return Math.max(.1, d * x); }); v.onseeked = look; v.currentTime = ts[0]; };
+    v.onerror = end; v.src = u;
+  });
+};
 (function () {
   var f = document.querySelector('form[data-vshrink]'); if (!f) return;
   var inp = f.querySelector('input[type=file][name=video]'), MB = 1048576, note = f.querySelector('.vsh'), btn = f.querySelector('.btn');
@@ -128,14 +154,16 @@
       }, function () { if (file.size <= 10 * MB && (/^video\/(mp4|webm|x-m4v|quicktime)$/i.test(file.type) || /\.(mp4|m4v|webm|mov)$/i.test(file.name))) send(null); else { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again. (' + why + ')'); skipBtn(file); } });
     };
   }
+  var cin = f.querySelector('input[type=file][name=cover]'), auto = null;   // no cover photo chosen: the best frame of the video becomes its cover
   function send(file) {
+    if (auto) { var a = auto; auto = null; btn.disabled = true; a.then(function (b) { if (b && cin && !(cin.files && cin.files.length)) send.cover = b; send(file); }); return; }
     var src = file || inp.files[0];
     btn.disabled = true; btn.textContent = 'Uploading…'; f.dataset.go = 1;
     if (src) return parts(src).then(function (p) {
-      var fd = new FormData(f); fd.delete('video'); fd.set('parts', p.up); fd.set('parts_n', p.n); fd.set('parts_size', src.size); fd.set('parts_type', src.type); fd.set('how', how + ', ' + p.n + ' pieces');
+      var fd = new FormData(f); fd.delete('video'); fd.set('parts', p.up); fd.set('parts_n', p.n); fd.set('parts_size', src.size); fd.set('parts_type', src.type); fd.set('how', how + ', ' + p.n + ' pieces'); if (send.cover) fd.set('cover', send.cover, 'cover.jpg');
       say('Saving the video…'); post(fd);
     }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
-    var fd = new FormData(f); fd.set('how', how); post(fd);
+    var fd = new FormData(f); fd.set('how', how); if (send.cover) fd.set('cover', send.cover, 'cover.jpg'); post(fd);
   }
   /* the video is already on the server in pieces: this only saves it. The page then loads afresh (not written over),
      so everything on it works again for the next upload, and it shows "Video added" or what went wrong */
@@ -184,7 +212,7 @@
   });
   /* 9:16 or 16:9: the ring is picked from the chosen video's real shape (it can still be changed by hand) */
   inp.addEventListener('change', function () {
-    var file = inp.files && inp.files[0], r = f.querySelectorAll('input[name=shape]'); if (!file || r.length < 2) return;
+    var file = inp.files && inp.files[0], r = f.querySelectorAll('input[name=shape]'); auto = file && window.fxCover ? window.fxCover(file) : null; if (!file || r.length < 2) return;
     var v = document.createElement('video'); v.preload = 'metadata'; v.muted = true; v.src = URL.createObjectURL(file);
     v.onloadedmetadata = function () { if (v.videoWidth && v.videoHeight) (v.videoWidth > v.videoHeight ? r[1] : r[0]).checked = true; URL.revokeObjectURL(v.src); };
     v.onerror = function () { URL.revokeObjectURL(v.src); };
@@ -280,3 +308,24 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
   }
   if (queue.length) next();
 }, 1500);
+
+/* videos uploaded without a cover photo get one picked from the video (window.fxCover), so the home page row shows the video's own picture,
+   not the product photo, when the browser holds back autoplay. One video at a time; a video that fails twice in this browser is left */
+setTimeout(function () {
+  var rows = [].slice.call(document.querySelectorAll('.vrow[data-mkcover]')), f = document.querySelector('form[data-vshrink]');
+  if (!rows.length || !f || !window.fetch || !window.fxCover) return;
+  var csrf = (f.querySelector('[name=csrf]') || {}).value, KEY = 'fxCoverFail', bad = {}; try { bad = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {}
+  rows = rows.filter(function (r) { return (bad[r.dataset.vid] || 0) < 2; });
+  var gone = false; addEventListener('pagehide', function () { gone = true; });
+  (function next() {
+    var r = rows.shift(); if (!r || gone) return;
+    if (document.hidden || f.dataset.go) { rows.unshift(r); return setTimeout(next, 3000); }   // an upload going on comes first
+    fetch(r.dataset.mkcover, {credentials: 'same-origin'}).then(function (x) { return x.ok ? x.blob() : null; }).then(function (b) { return b ? window.fxCover(b) : null; }).then(function (c) {
+      if (gone) return;
+      if (!c) { bad[r.dataset.vid] = (bad[r.dataset.vid] || 0) + 1; try { localStorage.setItem(KEY, JSON.stringify(bad)); } catch (e) {} return; }
+      var fd = new FormData(); fd.append('csrf', csrf); fd.append('act', 'cover'); fd.append('vid', r.dataset.vid); fd.append('cover', c, 'cover.jpg');
+      return fetch(location.href, {method: 'POST', body: fd, credentials: 'same-origin'}).then(function (x) { return x.json(); }).then(function (j) {
+        if (j && j.ok) { r.removeAttribute('data-mkcover'); var im = r.querySelector('.vth'); if (im && j.src) { if (im.tagName === 'VIDEO') im.poster = j.src; else im.src = j.src; } } });
+    }).catch(function () {}).then(function () { setTimeout(next, 500); });
+  })();
+}, 2500);
