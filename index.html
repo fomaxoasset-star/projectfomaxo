@@ -304,6 +304,8 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .thumbs button{aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line);opacity:.55;transition:.4s}
 .thumbs button.on,.thumbs button:hover{opacity:1;border-color:var(--gold)}
 .thumbs img{width:100%;height:100%;object-fit:cover}
+.thumbs .vthumb{position:relative;opacity:1;background:#000}.vthumb span{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}.vthumb svg{width:34%;max-width:28px;height:auto;padding:6px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.7);color:#fff;fill:currentColor;box-sizing:content-box}   /* a Review video beside the photo: tap opens the player */
+@media(max-width:960px){.thumbs{overflow-x:auto;scrollbar-width:none}.thumbs::-webkit-scrollbar{display:none}.thumbs button{flex:none}}   /* phone: many photos + videos scroll sideways inside the row, never the page */
 .stage{position:relative;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:zoom-in}
 .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease),opacity .5s;filter:saturate(.92) contrast(1.04)}
 .stage.zoom img{transform:scale(1.8)}
@@ -4909,7 +4911,14 @@ function bindVids(){
   vrIO = new IntersectionObserver(es => es.forEach(e => { run(e.target, e.isIntersecting); if (e.isIntersecting && !told) { told = true; setTimeout(report, 4000); } }), {rootMargin: '0px'});   // a video plays, muted, while its tile is on screen; off screen it pauses (and stops loading)
   tiles.forEach(t => vrIO.observe(t));
 }
-function renderVids(){ const el = $('#vidSec'); if (!el) return; const h = vidSecHTML(); el.innerHTML = h; el.hidden = !h; $$('.rv-up', el).forEach(x => x.classList.add('in')); bindVids(); }
+function renderVids(){ const el = $('#vidSec'); if (!el) return; const h = vidSecHTML(); el.innerHTML = h; el.hidden = !h; $$('.rv-up', el).forEach(x => x.classList.add('in')); bindVids(); vidThumbs(); }
+/* product page: its Review videos also sit beside the photo, under the small photos (cover picture only, no video loads); tap = the player (AJAY 2026-10-12) */
+function vidThumbs(){
+  const tb = $('.pdp .thumbs'); if (!tb) return; $$('.vthumb', tb).forEach(b => b.remove()); if (!vidPage()) return;
+  rowVids().forEach((v, i) => { const c = vidPoster(v); if (!c) return; const b = document.createElement('button'); b.type = 'button'; b.className = 'vthumb'; b.setAttribute('aria-label', 'Review video ' + (i + 1));
+    b.innerHTML = `<img src="${c}" alt="" loading="lazy"><span aria-hidden="true">${VI.play}</span>`; b.onclick = () => openReel(i); tb.appendChild(b); });
+  if ($('.vthumb', tb)) fitPdp();
+}
 let reelMuted = false;   // the player opens with sound on, quietly (the row stays muted)
 const REEL_VOL = .3; let reelAC = null;
 function quiet(v){   // low volume: iPhone ignores video.volume, so the sound goes through a gain of 0.3 (same-site videos); elsewhere video.volume does it too
