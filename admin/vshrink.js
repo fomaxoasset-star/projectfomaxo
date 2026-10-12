@@ -1,14 +1,15 @@
 /* Upload from your phone: a big or iPhone (.mov) video is made smaller in the browser first, then uploaded as usual.
    Fast way: the video is re-encoded straight from the file (admin/mediabunny.js, WebCodecs), several times faster than playing it,
-   Every video over 10 MB comes out under 5 MB: the quality is set from the video's length (1080p, 720p for long videos).
+   Every video over 1 MB comes out at 1 MB or less: the quality is set from the video's length (720p for short videos, 540p or less for long ones).
    Browsers without it re-record the video while it plays (720p). Neither works = upload as it is. */
 (function () {
   var f = document.querySelector('form[data-vshrink]'); if (!f) return;
   var inp = f.querySelector('input[type=file][name=video]'), MB = 1048576, note = f.querySelector('.vsh'), btn = f.querySelector('.btn');
   var mime = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'].filter(function (m) { return window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m); })[0];
   var why = '', pct = -1, say = function (t) { note.hidden = false; note.querySelector('span').textContent = t; var m = /smaller… (\d+)%/.exec(t); if (m) pct = +m[1]; };
-  var GOAL = 4.6 * MB * 8;   // bits: every made-smaller video lands under 5 MB
-  var rate = function (sec) { return Math.max(400000, Math.min(5000000, Math.floor(GOAL / Math.max(1, sec || 30)) - 96000)); };   // video bits per second for that length (96 kbit/s is the sound)
+  var GOAL = 0.9 * MB * 8, AB = 48000;   // bits: every made-smaller video lands at 1 MB or less (48 kbit/s sound)
+  var rate = function (sec) { return Math.max(120000, Math.min(1500000, Math.floor(GOAL / Math.max(1, sec || 30)) - AB)); };   // video bits per second for that length
+  var side = function (br) { return br < 350000 ? 720 : br < 700000 ? 960 : 1280; };   // longest side: fewer pixels when there are fewer bits, so it stays sharp instead of blocky
   /* fast: re-encode from the file itself, no playing; null = this browser can't, use the slow way */
   function fast(file, scale) {
     if (!window.VideoEncoder) { why = 'no VideoEncoder'; return Promise.resolve(null); }
@@ -17,12 +18,12 @@
       M = m; src = new M.Input({source: new M.BlobSource(file), formats: M.ALL_FORMATS});
       return Promise.all([src.getPrimaryVideoTrack(), src.computeDuration().catch(function () { return 0; }), src.getPrimaryAudioTrack().catch(function () { return null; })]);
     }).then(function (r) {
-      var t = r[0], at = r[2], br = Math.max(300000, Math.round(rate(r[1]) * (scale || 1))); if (!t) { why = 'no video track'; return null; }
-      var w = t.displayWidth, h = t.displayHeight, k = Math.min(1, (br < 2500000 ? 1280 : 1920) / Math.max(w, h));
+      var t = r[0], at = r[2], br = Math.max(120000, Math.round(rate(r[1]) * (scale || 1))); if (!t) { why = 'no video track'; return null; }
+      var w = t.displayWidth, h = t.displayHeight, k = Math.min(1, side(br) / Math.max(w, h));
       w = Math.round(w * k / 2) * 2; h = Math.round(h * k / 2) * 2;
       return Promise.all([M.getFirstEncodableVideoCodec(['avc', 'hevc', 'vp9'], {width: w, height: h}), window.AudioEncoder ? M.getFirstEncodableAudioCodec(['aac', 'opus']).catch(function () { return null; }) : null]).then(function (cs) {
         if (!cs[0]) { why = 'no video encoder ' + w + 'x' + h; return null; }
-        var au = cs[1] ? {codec: cs[1], bitrate: 96000} : at ? {codec: at.codec} : undefined;   // no sound encoder (some Safari): the sound is copied as it is
+        var au = cs[1] ? {codec: cs[1], bitrate: AB} : at ? {codec: at.codec} : undefined;   // no sound encoder (some Safari): the sound is copied as it is
         var out = new M.Output({format: new M.Mp4OutputFormat({fastStart: 'in-memory'}), target: new M.BufferTarget()});
         return M.Conversion.init({input: src, output: out, showWarnings: false,
           video: {width: w, height: h, fit: 'contain', codec: cs[0], bitrate: br, forceTranscode: true},
@@ -51,11 +52,11 @@
     }).then(function () { return F.createDir('/in'); }).then(function () { return F.mount('WORKERFS', {files: [new File([file], name, {type: file.type})]}, '/in'); })
     .then(function () { return F.exec(['-hide_banner', '-i', '/in/' + name]).catch(function () {}); })   // reads the length (it says so in the log)
     .then(function () {
-      var br = Math.max(300000, Math.round(rate(dur) * (scale || 1))), L = br < 2500000 ? 1280 : 1920;
+      var br = Math.max(120000, Math.round(rate(dur) * (scale || 1))), L = side(br);
       say('Making the video smaller… 0%. Keep this page open.');
       return F.exec(['-hide_banner', '-i', '/in/' + name, '-map', '0:v:0', '-map', '0:a:0?', '-vf', 'scale=w=' + L + ':h=' + L + ':force_original_aspect_ratio=decrease:force_divisible_by=2',
         '-c:v', 'libx264', '-preset', 'veryfast', '-b:v', String(br), '-maxrate', String(Math.round(br * 1.3)), '-bufsize', String(br * 2), '-pix_fmt', 'yuv420p',
-        '-c:a', 'aac', '-b:a', '96k', '-ac', '2', '-movflags', '+faststart', '/out.mp4']);
+        '-c:a', 'aac', '-b:a', '48k', '-ac', '2', '-movflags', '+faststart', '/out.mp4']);
     }).then(function (code) { if (code) { why += ' / ffmpeg: exit ' + code; return null; } return F.readFile('/out.mp4'); })
     .then(function (d) { return d && d.length ? new Blob([d.buffer], {type: 'video/mp4'}) : null; },
       function (e) { why += ' / ffmpeg: ' + String(e && (e.message || e.name) || e).slice(0, 60); return null; })
@@ -68,11 +69,11 @@
       stopNow = {cancel: function () { v.onended = v.onerror = null; fail(); }};
       try { var AC = window.AudioContext || window.webkitAudioContext; if (AC) { ctx = new AC(); dest = ctx.createMediaStreamDestination(); ctx.createMediaElementSource(v).connect(dest); } } catch (e) { dest = null; }
       var fail = function () { cancelAnimationFrame(raf); try { rec && rec.state !== 'inactive' && rec.stop(); } catch (e) {} v.remove(); no(); };
-      v.onloadedmetadata = function () { var k = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight)); c.width = Math.round(v.videoWidth * k / 2) * 2; c.height = Math.round(v.videoHeight * k / 2) * 2; };
+      v.onloadedmetadata = function () { var k = Math.min(1, side(rate(v.duration)) / Math.max(v.videoWidth, v.videoHeight)); c.width = Math.round(v.videoWidth * k / 2) * 2; c.height = Math.round(v.videoHeight * k / 2) * 2; };
       v.onplaying = function () {
         if (rec) return;
         var st = c.captureStream(30); if (dest) dest.stream.getAudioTracks().forEach(function (t) { st.addTrack(t); });
-        try { rec = new MediaRecorder(st, {mimeType: mime, videoBitsPerSecond: Math.min(2500000, rate(v.duration)), audioBitsPerSecond: 96000}); } catch (e) { return fail(); }
+        try { rec = new MediaRecorder(st, {mimeType: mime, videoBitsPerSecond: rate(v.duration), audioBitsPerSecond: AB}); } catch (e) { return fail(); }
         rec.ondataavailable = function (e) { if (e.data && e.data.size) parts.push(e.data); };
         rec.onstop = function () { cancelAnimationFrame(raf); if (ctx) ctx.close(); URL.revokeObjectURL(v.src); v.remove(); var b = new Blob(parts, {type: mime.split(';')[0]}); b.size ? ok(b) : no(); };
         rec.start(1000);
@@ -147,10 +148,10 @@
   f.addEventListener('submit', function (e) {
     var file = inp.files[0]; if (!file || f.dataset.go) return;
     e.preventDefault();
-    /* over 10 MB (any type) is made smaller, under 5 MB, so the site stays fast; any type other than MP4/WebM (iPhone .mov, .mkv, .avi…) is turned into MP4.
+    /* over 1 MB (any type) is made smaller, to 1 MB or less, so the site stays fast; any type other than MP4/WebM (iPhone .mov, .mkv, .avi…) is turned into MP4.
        Only a video under 10 MB in a type the site keeps (MP4, WebM, MOV) may go up as it is when that can't be done here */
     var plain = /^video\/(mp4|webm|x-m4v)$/i.test(file.type) || /\.(mp4|m4v|webm)$/i.test(file.name), mov = /quicktime/i.test(file.type) || /\.mov$/i.test(file.name);
-    var big = file.size > 10 * MB || !plain, asIs = file.size <= 10 * MB && (plain || mov);
+    var big = file.size > 1 * MB || !plain, asIs = file.size <= 10 * MB && (plain || mov);
     var can = mime && HTMLCanvasElement.prototype.captureStream;
     var cant = function () { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again. (' + (why || 'no way to convert') + ')'); skipBtn(file); };
     if (!big) { send(null); return; }
@@ -160,11 +161,11 @@
     var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; var skipped = false; sk.onclick = function () { skipped = true; bail(); }; if (keeps(file)) note.appendChild(sk);   // any size: the original goes up as it is when Skip is tapped
     var dog = setInterval(function () { var now = Date.now(); if (pct !== last) { last = pct; moved = now; } if (inWasm) moved = now; if (now - moved > 45000) bail(); }, 1000);
     var quit = false; gaveUp.then(function () { quit = true; clearInterval(dog); try { stopNow && stopNow.cancel(); } catch (e) {} });
-    var shrunk = fast(file).then(function (b) {   // still over 5 MB (some phones' encoders overshoot): once more, with the quality lowered by just that much
-      if (!b || b.size <= 5 * MB || quit) return b; t0 = Date.now(); return fast(file, 4.6 * MB / b.size).then(function (c) { return c && c.size < b.size ? c : b; });
+    var shrunk = fast(file).then(function (b) {   // still over 1 MB (some phones' encoders overshoot): once more, with the quality lowered by just that much
+      if (!b || b.size <= 1 * MB || quit) return b; t0 = Date.now(); return fast(file, 0.9 * MB / b.size).then(function (c) { return c && c.size < b.size ? c : b; });
     }).then(function (b) { return b && b.size < file.size ? playable(b).then(function (y) { if (y) how = 'fast ' + b.type; return y ? b : null; }) : null; })
       .then(function (b) { if (b || quit) return b; return wasm(file).then(function (w) {   // the fast way couldn't: the sure way (FFmpeg)
-        if (!w || w.size <= 5 * MB || quit) return w; return wasm(file, 4.6 * MB / w.size).then(function (c) { return c && c.size < w.size ? c : w; });
+        if (!w || w.size <= 1 * MB || quit) return w; return wasm(file, 0.9 * MB / w.size).then(function (c) { return c && c.size < w.size ? c : w; });
       }).then(function (w) { if (w) how = 'ffmpeg ' + w.type; return w; }); })
       .then(function (b) { if (quit) return Promise.reject(); return b || (can ? shrink(file).then(function (r) { return playable(r).then(function (y) { if (y) how = 'recorded ' + r.type; return y ? r : Promise.reject(); }); }) : Promise.reject()); });
     shrunk.catch(function () {});
@@ -177,6 +178,7 @@
       /* some browsers (Safari with auto-play off) only play a video after a tap: then the slow way gets one more go, started by a tap */
       if (can && /NotAllowed/.test(why)) { tapOnce(file); return; }
       if (!asIs) { cant(); return; }
+      if (file.size > 1 * MB) { say('This browser can\'t make it 1 MB, so it goes up as it is (' + (file.size / MB).toFixed(1) + ' MB). Chrome makes it 1 MB.'); setTimeout(function () { send(null); }, 3500); return; }   // Safari on a Mac
       send(null);
     });
   });
