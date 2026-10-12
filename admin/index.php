@@ -435,6 +435,26 @@ main.fit nav.ems,main.fit .cpbar{display:flex!important;flex-wrap:nowrap!importa
 main.fit nav.ems .em,main.fit .cpbar>a{flex:0 0 auto!important;flex-direction:row!important;align-items:baseline!important;justify-content:flex-start!important;gap:5px;padding:3px 10px!important;font-size:11px!important;line-height:1.3!important;border-radius:999px!important;white-space:nowrap!important;text-align:left}main.fit nav.ems .em b,main.fit .cpbar>a b{font-size:12px!important}main.fit .cpbar>a small,main.fit .cpbar>a span{font-size:10px!important}
 .pfbar{display:flex;gap:6px;align-items:stretch;margin:0 0 6px;flex:none}.pfbar .btn{margin:0;padding:6px 12px;font-size:12px}.pfbar .pfbtn{flex:1 1 auto;display:flex;align-items:center;justify-content:space-between;gap:8px}.pfbar .pfbtn i{font-style:normal;transition:transform .2s}.pfbar .pfbtn.on i{transform:rotate(180deg)}.pfbar .pfbtn b{font-weight:600;color:var(--gold)}
 main.fit .pfh{display:none!important}}
+/* photo editor (Products → a product → tap a photo): the photo large, crop and turn it, Save puts it in its place (AJAY 12/10/2026) */
+.ph .pimgw img{cursor:zoom-in}.pedt{position:absolute;right:6px;top:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;display:grid;place-items:center;font-size:13px;pointer-events:none}
+.pedit{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;padding:16px}
+.pedit[hidden]{display:none}
+.pebox{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(920px,100%);height:min(760px,100%);display:flex;flex-direction:column;overflow:hidden}
+.pehd{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}.pehd h2{margin:0;font-size:18px;flex:1}
+.pex{background:none;border:1px solid var(--line);color:var(--ink);width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer}
+.pestage{flex:1;min-height:0;position:relative;overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none}
+.pestage canvas{position:absolute;display:block}
+.pecrop{position:absolute;box-shadow:0 0 0 9999px rgba(0,0,0,.55);outline:2px solid #fff;cursor:move;touch-action:none}
+.pecrop::before,.pecrop::after{content:"";position:absolute;inset:33.33% 0;border-top:1px solid rgba(255,255,255,.45);border-bottom:1px solid rgba(255,255,255,.45);pointer-events:none}
+.pecrop::after{inset:0 33.33%;border:0;border-left:1px solid rgba(255,255,255,.45);border-right:1px solid rgba(255,255,255,.45)}
+.pecrop i{position:absolute;width:26px;height:26px;border:4px solid var(--gold);touch-action:none}
+.pecrop i[data-h=nw]{left:-4px;top:-4px;border-right:0;border-bottom:0;cursor:nwse-resize}.pecrop i[data-h=ne]{right:-4px;top:-4px;border-left:0;border-bottom:0;cursor:nesw-resize}
+.pecrop i[data-h=sw]{left:-4px;bottom:-4px;border-right:0;border-top:0;cursor:nesw-resize}.pecrop i[data-h=se]{right:-4px;bottom:-4px;border-left:0;border-top:0;cursor:nwse-resize}
+.petools{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.petools .seg button{background:none;border:0;color:var(--muted);font:inherit;padding:6px 12px;border-radius:999px;cursor:pointer}.petools .seg button.on{background:var(--gold);color:var(--gold-ink)}
+.petools .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px}
+.peft{display:flex;align-items:center;gap:10px;padding:10px 16px 14px}.peft .muted{flex:1;margin:0}
+@media (max-width:759px){.pedit{padding:0}.pebox{border-radius:0;height:100%;border:0}.petools{gap:6px}.petools .seg button{padding:6px 9px}.peft{padding:10px 12px calc(12px + env(safe-area-inset-bottom))}}
 CSS;
 }
 function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
@@ -466,6 +486,78 @@ function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the 
   exit;
 }
 /* phone: filters, search, dates and Excel fold under one button, so the list below gets the screen (CSS "phone (AJAY 09/10/2026)") */
+/* the photo editor on a product's Photos (tap a photo): the photo large, crop (Free, Square, 4:5, 3:4) and turn it; Save photo sends the result,
+   which is saved at once in that photo's place (act photo_edit) */
+const FX_PHOTO_EDIT_JS = <<<'JS'
+(function(){
+  var g=document.querySelector(".phs");if(!g)return;
+  var box=document.createElement("div");box.className="pedit";box.hidden=true;
+  box.innerHTML='<div class="pebox" role="dialog" aria-modal="true" aria-label="Edit photo"><div class="pehd"><h2>Edit photo</h2><button type="button" class="pex" data-x aria-label="Close">✕</button></div>'
+   +'<div class="pestage"><canvas></canvas><div class="pecrop"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div>'
+   +'<div class="petools"><span class="seg" data-ar><button type="button" data-a="0" class="on">Free</button><button type="button" data-a="1">Square</button><button type="button" data-a="0.8">4:5</button><button type="button" data-a="0.75">3:4</button></span>'
+   +'<button type="button" class="btn line sm" data-r="-1">↺ Turn left</button><button type="button" class="btn line sm" data-r="1">↻ Turn right</button><button type="button" class="btn line sm" data-reset>Reset</button></div>'
+   +'<div class="peft"><p class="muted small" data-msg>Drag the gold corners to crop, or drag the box to move it.</p><button type="button" class="btn line" data-x>Cancel</button><button type="button" class="btn" data-save>Save photo</button></div></div>';
+  document.body.appendChild(box);
+  var stage=box.querySelector(".pestage"),cv=box.querySelector("canvas"),cr=box.querySelector(".pecrop"),msg=box.querySelector("[data-msg]"),sv=box.querySelector("[data-save]");
+  var img=null,rot=0,ar=0,c=null,sc=1,ox=0,oy=0,ph=null,busy=false;
+  var RW=function(){return rot%2?img.naturalHeight:img.naturalWidth},RH=function(){return rot%2?img.naturalWidth:img.naturalHeight};
+  function full(){var w=RW(),h=RH();if(!ar){c={x:0,y:0,w:w,h:h};return}var cw=w,ch=cw/ar;if(ch>h){ch=h;cw=ch*ar}c={x:(w-cw)/2,y:(h-ch)/2,w:cw,h:ch}}
+  function draw(){
+    var sw=stage.clientWidth-24,sh=stage.clientHeight-24,w=RW(),h=RH();sc=Math.min(sw/w,sh/h);
+    var dw=Math.round(w*sc),dh=Math.round(h*sc),d=window.devicePixelRatio||1;ox=Math.round((stage.clientWidth-dw)/2);oy=Math.round((stage.clientHeight-dh)/2);
+    cv.width=Math.round(dw*d);cv.height=Math.round(dh*d);cv.style.width=dw+"px";cv.style.height=dh+"px";cv.style.left=ox+"px";cv.style.top=oy+"px";
+    var x=cv.getContext("2d");x.setTransform(d*sc,0,0,d*sc,0,0);x.translate(w/2,h/2);x.rotate(rot*Math.PI/2);x.drawImage(img,-img.naturalWidth/2,-img.naturalHeight/2);
+    place();
+  }
+  function place(){cr.style.left=(ox+c.x*sc)+"px";cr.style.top=(oy+c.y*sc)+"px";cr.style.width=(c.w*sc)+"px";cr.style.height=(c.h*sc)+"px"}
+  function open(p){
+    ph=p;c=null;var k=p.querySelector("input[name='photo_order[]']").value;rot=0;ar=0;setAr(0);msg.textContent="Loading the photo…";sv.disabled=true;box.hidden=false;document.body.style.overflow="hidden";
+    img=new Image();img.onload=function(){full();draw();sv.disabled=false;msg.textContent="Drag the gold corners to crop, or drag the box to move it."};
+    img.onerror=function(){msg.textContent="This photo could not be opened."};img.src="../assets/img/"+k+".webp";
+  }
+  function close(){box.hidden=true;document.body.style.overflow="";img=null}
+  function setAr(a){ar=a;box.querySelectorAll("[data-ar] button").forEach(function(b){b.classList.toggle("on",+b.dataset.a===a)})}
+  g.addEventListener("click",function(e){var t=e.target.closest(".pimgw");if(t&&!busy)open(t.closest(".ph"))});
+  box.addEventListener("click",function(e){
+    var b=e.target.closest("button");if(!b||!img)return;
+    if(b.hasAttribute("data-x"))close();
+    else if(b.dataset.a!==undefined){setAr(+b.dataset.a);full();place()}
+    else if(b.dataset.r){rot=(rot+(+b.dataset.r)+4)%4;full();draw()}
+    else if(b.hasAttribute("data-reset")){rot=0;setAr(0);full();draw()}
+    else if(b.hasAttribute("data-save"))save();
+  });
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!box.hidden)close()});
+  window.addEventListener("resize",function(){if(!box.hidden&&img&&img.naturalWidth)draw()});
+  /* dragging: the box moves, a corner resizes (keeping the shape when one is picked) */
+  var dr=null;
+  cr.addEventListener("pointerdown",function(e){e.preventDefault();if(!c||sv.disabled)return;cr.setPointerCapture(e.pointerId);dr={h:e.target.dataset.h||"",x:e.clientX,y:e.clientY,c:{x:c.x,y:c.y,w:c.w,h:c.h}}});
+  cr.addEventListener("pointermove",function(e){
+    if(!dr)return;var dx=(e.clientX-dr.x)/sc,dy=(e.clientY-dr.y)/sc,o=dr.c,W=RW(),H=RH(),m=Math.max(40,Math.min(W,H)*.06);
+    if(!dr.h){c.x=Math.min(Math.max(0,o.x+dx),W-o.w);c.y=Math.min(Math.max(0,o.y+dy),H-o.h);place();return}
+    var l=dr.h[1]==="w",t=dr.h[0]==="n",ax=l?o.x+o.w:o.x,ay=t?o.y+o.h:o.y;   // the fixed corner
+    var w=Math.max(m,l?o.w-dx:o.w+dx),h=Math.max(m,t?o.h-dy:o.h+dy);
+    w=Math.min(w,l?ax:W-ax);h=Math.min(h,t?ay:H-ay);
+    if(ar){if(w/h>ar)w=h*ar;else h=w/ar}
+    c={x:l?ax-w:ax,y:t?ay-h:ay,w:w,h:h};place();
+  });
+  ["pointerup","pointercancel"].forEach(function(n){cr.addEventListener(n,function(){dr=null})});
+  function save(){
+    var W=RW(),H=RH(),s=Math.min(1,1600/Math.max(c.w,c.h)),ow=Math.max(1,Math.round(c.w*s)),oh=Math.max(1,Math.round(c.h*s));
+    var o=document.createElement("canvas");o.width=ow;o.height=oh;var x=o.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,ow,oh);
+    x.scale(s,s);x.translate(-c.x,-c.y);x.translate(W/2,H/2);x.rotate(rot*Math.PI/2);x.drawImage(img,-img.naturalWidth/2,-img.naturalHeight/2);
+    sv.disabled=true;busy=true;msg.textContent="Saving…";
+    o.toBlob(function(bl){
+      if(!bl){msg.textContent="This browser could not make the photo. Please try Chrome.";sv.disabled=false;busy=false;return}
+      var f=new FormData(),hid=ph.querySelector("input[name='photo_order[]']");
+      f.append("csrf",document.querySelector("form.pform input[name=csrf]").value);f.append("act","photo_edit");f.append("old",hid.value);f.append("photo",bl,"photo.jpg");
+      fetch(location.href,{method:"POST",body:f,credentials:"same-origin"}).then(function(r){return r.json()}).then(function(j){
+        busy=false;if(!j.ok){msg.textContent=j.msg||"The photo could not be saved. Please try again.";sv.disabled=false;return}
+        hid.value=j.key;ph.querySelectorAll("input[name='drop[]']").forEach(function(i){i.value=j.key});ph.querySelector(".pimgw img").src="../assets/img/"+j.key+".webp";close();
+      }).catch(function(){busy=false;msg.textContent="The photo could not be saved. Please check the internet and try again.";sv.disabled=false});
+    },"image/jpeg",.93);
+  }
+})();
+JS;
 const FX_PHONE_JS = <<<'JS'
 (function(){
   var m=document.querySelector('main.fit');if(!m||!matchMedia('(max-width:759px)').matches)return;
@@ -1329,6 +1421,16 @@ if (isset($_GET['products'])) {
 
   if ($pid !== '' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again. If you added big photos, try fewer at a time.'); go(['products' => 1, 'p' => $pid]); }
+    if (($_POST['act'] ?? '') === 'photo_edit' && !$isNew) {   // a photo cropped or turned in the photo editor: saved at once in its place, the rest of the form is not touched
+      header('Content-Type: application/json'); header('Cache-Control: no-store');
+      $p = json_decode($byId[$pid]['data'], true); $imgs = array_values(array_filter((array)($p['images'] ?? []), 'is_string'));
+      $at = array_search((string)($_POST['old'] ?? ''), $imgs, true);
+      if ($at === false || ($_FILES['photo']['error'] ?? 1) !== UPLOAD_ERR_OK || !($k = fx_save_photo($_FILES['photo']['tmp_name'], $pid)))
+        exit(json_encode(['ok' => false, 'msg' => $at === false ? 'This photo has changed. Please open the product again.' : 'The photo could not be saved. Please try again.']));
+      $imgs[$at] = $k; $p['images'] = $imgs;   // the old file stays where it is
+      $pdo->prepare('UPDATE fx_products SET data = ?, updated_at = NOW() WHERE id = ?')->execute([fomaxo_json($p), $pid]);
+      exit(json_encode(['ok' => true, 'key' => $k]));
+    }
     $p = $isNew ? ['id' => '', 'name' => '', 'family' => '', 'short' => '', 'description' => [], 'sizes' => [], 'prices' => [], 'images' => [], 'url' => ''] : json_decode($byId[$pid]['data'], true);
     $isSet = ($p['kind'] ?? '') === 'set';
     $t = fn($k, $max) => trim(mb_substr(preg_replace('/\s+/u', ' ', (string)($_POST[$k] ?? '')), 0, $max));
@@ -1444,7 +1546,7 @@ if (isset($_GET['products'])) {
   }
   $photos = '';
   foreach ((array)($p['images'] ?? []) as $i => $k) {
-    $photos .= '<div class="ph"><div class="pimgw"><img src="../assets/img/' . h($k) . '.webp" alt=""><span class="pno">' . ($i === 0 ? 'Main photo' : 'Photo ' . ($i + 1)) . '</span></div><input type="hidden" name="photo_order[]" value="' . h($k) . '">'
+    $photos .= '<div class="ph"><div class="pimgw"><img src="../assets/img/' . h($k) . '.webp" alt=""><span class="pno">' . ($i === 0 ? 'Main photo' : 'Photo ' . ($i + 1)) . '</span><span class="pedt" aria-hidden="true">✎</span></div><input type="hidden" name="photo_order[]" value="' . h($k) . '">'
       . '<div class="pmv"><button type="button" data-mv="-1" aria-label="Move left">‹</button><button type="button" data-mv="0">Make main</button><button type="button" data-mv="1" aria-label="Move right">›</button></div>'
       . '<label class="chk"><input type="checkbox" name="drop[]" value="' . h($k) . '"> Remove</label></div>';
   }
@@ -1466,8 +1568,9 @@ if (isset($_GET['products'])) {
         . '<div><label class="sub" for="nk">Or key notes only</label><input id="nk" name="note_key" value="' . h($notes['key'] ?? '') . '"></div></div>' : '')
     . '</div>'
     . '<div class="pside psz" data-t="2"><h2>Sizes and prices</h2><p class="muted small">Prices include VAT. "Was" shows a crossed-out price. Clear a price to remove that size.</p><div class="card">' . $rowsHtml . '</div></div>'
-    . '<div class="pside pph" data-t="3"><h2>Photos</h2><div class="card">' . ($photos ? '<p class="muted small" style="margin:0 0 8px">The first photo is the main one on the shop. Use ‹ › to change the order, then Save. The product page shows them in this order.</p><div class="phs">' . $photos . '</div>'
+    . '<div class="pside pph" data-t="3"><h2>Photos</h2><div class="card">' . ($photos ? '<p class="muted small" style="margin:0 0 8px">The first photo is the main one on the shop. Use ‹ › to change the order, then Save. The product page shows them in this order. Tap a photo to see it large, crop or turn it.</p><div class="phs">' . $photos . '</div>'
         . '<script>(function(){var g=document.querySelector(".phs");function fix(){var a=g.querySelectorAll(".ph");a.forEach(function(p,i){p.querySelector(".pno").textContent=i?"Photo "+(i+1):"Main photo";p.classList.toggle("first",!i);p.querySelector("[data-mv=\'-1\']").disabled=!i;p.querySelector("[data-mv=\'1\']").disabled=i==a.length-1;p.querySelector("[data-mv=\'0\']").disabled=!i})}g.addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;var p=b.closest(".ph"),d=+b.dataset.mv;if(d===0)g.prepend(p);else if(d<0&&p.previousElementSibling)g.insertBefore(p,p.previousElementSibling);else if(d>0&&p.nextElementSibling)g.insertBefore(p.nextElementSibling,p);fix()});fix()})()</script>' : '')
+    . ($photos ? '<script>' . FX_PHOTO_EDIT_JS . '</script>' : '')
     . '<label for="photos">' . ($photos ? 'Add more photos' : 'Add photos') . '</label><input id="photos" type="file" name="photos[]" accept="image/*" multiple>'
     . '<p class="muted small">Square or portrait photos look best. They are made smaller automatically.</p></div></div>'
     . '<div class="savebar psave"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true, true);
