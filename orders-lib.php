@@ -35,8 +35,9 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 28) return;
-  if ($ver === 27) { fomaxo_schema_v28($pdo); return; }   // the steps up to v27 are done; never run them (or the orders reset) again
+  if ($ver >= 29) return;
+  if ($ver === 28) { fomaxo_schema_v29($pdo); return; }   // the steps up to v28 are done; never run them (or the orders reset) again
+  if ($ver === 27) { fomaxo_schema_v28($pdo); fomaxo_schema_v29($pdo); return; }
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -178,6 +179,7 @@ function fomaxo_db_schema($pdo) {
   if ($ver > 0 && !fx_orders_reset($pdo)) return;   // tried again on the next visit; nothing is deleted until the backup is safe
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '27')");
   fomaxo_schema_v28($pdo);
+  fomaxo_schema_v29($pdo);
 }
 /* v28: new Discovery Set photos: the boxes photo is the main photo, the 3 vial photo shows for Set of 3 and the 5 vial photo for Set of 5;
    the old photos leave the gallery (only while the old main photo is still first, so a photo picked in admin stays) */
@@ -190,6 +192,17 @@ function fomaxo_schema_v28($pdo) {
     $set->execute([fomaxo_json($d), 'discovery']);
   }
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '28')");
+}
+/* v29: newer Discovery Set 3 vial and 5 vial photos (only where the v28 photo is still set, so a photo picked in admin stays) */
+function fomaxo_schema_v29($pdo) {
+  $get = $pdo->prepare('SELECT data FROM fx_products WHERE id = ?'); $set = $pdo->prepare('UPDATE fx_products SET data = ? WHERE id = ?');
+  $get->execute(['discovery']); $d = json_decode((string)$get->fetchColumn(), true);
+  if (is_array($d) && is_array($d['sizeImages'] ?? null)) {
+    $n = 0;
+    foreach (['3' => 'discovery-3v', '5' => 'discovery-5v'] as $s => $old) if (($d['sizeImages'][$s] ?? '') === $old) { $d['sizeImages'][$s] = $old . '2'; $n++; }
+    if ($n) $set->execute([fomaxo_json($d), 'discovery']);
+  }
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '29')");
 }
 
 /* AJAY, 11/10/2026: clear every order (Orders and Trash) and start again at FMX-1001. Reviews stay.
