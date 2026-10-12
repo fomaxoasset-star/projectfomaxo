@@ -134,7 +134,9 @@ function rv_link($t) {
   if (!is_string($t) || !preg_match('/^[a-f0-9]{24}$/', $t)) return null;
   $f = rv_dir('links') . "/$t.json";
   $l = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null;
-  return is_array($l) && rv_order_ok($l['no'] ?? '') ? $l + ['file' => $f] : null;
+  if (!is_array($l) || !rv_order_ok($l['no'] ?? '')) return null;
+  $l['products'] = array_values(array_unique([...(array)($l['products'] ?? []), 'giftbox']));   // every order comes in the gift box: it can be reviewed too (Verified Purchaser)
+  return $l + ['file' => $f];
 }
 /* the link's order must be a real order: placed, not a test, not cancelled or refunded, and a card order must be paid
    (when the database cannot be reached the link still works, so real customers are not turned away) */

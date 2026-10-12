@@ -839,6 +839,7 @@
 "Franchise — FOMAXO": "الامتياز التجاري — FOMAXO",
 "HURRY UP!!!": "أسرِع!!!",
 "Highest rating": "الأعلى تقييماً",
+"FOMAXO gift box": "علبة هدايا FOMAXO",
 "How did the box look, and how did they like the gift?": "كيف كان شكل الصندوق، وهل أعجبتهم الهدية؟",
 "How does it smell, how long does it last, would you wear it again?": "ما رائحته، وكم يدوم، وهل ستستخدمه مجدداً؟",
 "Just arrived": "وصل حديثاً",
