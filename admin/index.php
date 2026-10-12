@@ -201,7 +201,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 @media (min-width:760px){.szrow{grid-template-columns:repeat(4,1fr)}}
 label.chk{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);margin:8px 0 0}label.chk input{width:auto;margin:0}label.chk.big{font-size:16px;margin:0}
 .phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:6px}.ph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--line)}
-.pimgw{position:relative}.pno{position:absolute;left:6px;top:6px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.7);color:#fff;padding:2px 7px;border-radius:10px}.ph.first .pno{background:var(--gold);color:var(--gold-ink)}.ph.first img{border:2px solid var(--gold)}.pmv{display:grid;grid-template-columns:36px 1fr 36px;gap:4px;margin:6px 0 2px}.pmv button{height:34px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0}.pmv button[data-mv='-1'],.pmv button[data-mv='1']{font-size:20px;line-height:1;color:var(--gold)}.pmv button[data-mv='0']{border-color:var(--gold);color:var(--gold)}.pmv button:disabled{opacity:.3;cursor:default}.phrm{width:100%;height:30px;margin-top:2px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}.phrm:hover{color:var(--bad);border-color:var(--bad)}.phrm:disabled{opacity:.4}.ph.up img{opacity:.45}.ph.up .pmv,.ph.up .phrm,.ph.up .pedt{visibility:hidden}.ph.up .pimgw::after{content:"Adding…";position:absolute;inset:auto 0 42% 0;text-align:center;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px #000}.phnew{margin-top:8px}
+.pimgw{position:relative}.pno{position:absolute;left:6px;top:6px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.7);color:#fff;padding:2px 7px;border-radius:10px}.ph.first .pno{background:var(--gold);color:var(--gold-ink)}.ph.first img{border:2px solid var(--gold)}.pmv{display:grid;grid-template-columns:36px 1fr 36px;gap:4px;margin:6px 0 2px}.pmv button{height:34px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0}.pmv button[data-mv='-1'],.pmv button[data-mv='1']{font-size:20px;line-height:1;color:var(--gold)}.pmv button[data-mv='0']{border-color:var(--gold);color:var(--gold)}.pmv button:disabled{opacity:.3;cursor:default}.phrm{width:100%;height:30px;margin-top:2px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}.phrm:hover{color:var(--bad);border-color:var(--bad)}.phrm:disabled{opacity:.4}.ph.up img{opacity:.45}.ph.up .pmv,.ph.up .phrm,.ph.up .pedt{visibility:hidden}.ph.up .pimgw::after{content:"Adding…";position:absolute;inset:auto 0 42% 0;text-align:center;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px #000}.phnew{margin-top:8px}.szph small{display:block;margin:5px 0 4px;font-size:11.5px;color:var(--muted)}.szph.own small{color:var(--gold)}.szph .szpick{display:block;text-align:center;margin:0;cursor:pointer}.szph.up img{opacity:.45}.szph .pimgw:not(:has(img)){aspect-ratio:1;border:1px dashed var(--line);border-radius:8px}
 @media (min-width:760px){.tabs{display:flex;justify-content:center;gap:10px}.tabs a{padding:11px 22px}}
 /* tabs in two rows of six, no sideways scrolling (AJAY's order) */.tabsw .tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));overflow:visible}.tabsw .tnav{display:none!important}.tabsw .tabs a{white-space:nowrap;overflow:hidden;text-overflow:clip}@media (max-width:759px){.tabsw .tabs{grid-template-columns:repeat(6,auto);justify-content:space-evenly;padding:0 2px}.tabsw .tabs a{font-size:10.5px;letter-spacing:0;padding:8px 1px 6px}}@media (min-width:760px){.tabsw .tabs{grid-template-columns:repeat(12,auto);justify-content:center;column-gap:0}.tabsw .tabs a{padding:11px 7px;font-size:10.5px;letter-spacing:.03em}}@media (min-width:1100px){.tabsw .tabs a{padding:11px 13px;font-size:12px;letter-spacing:.08em}}@media (min-width:1500px){.tabsw .tabs a{padding:11px 20px;font-size:12.5px;letter-spacing:.1em}}
 .lvl-out{color:var(--bad)}.lvl-low{color:var(--warn)}.lvl-ok{color:var(--ok)}
@@ -592,6 +592,14 @@ const FX_PHOTO_ADD_JS = <<<'JS'
         t.querySelector("input").value=j.key;t.querySelector("img").src="../assets/img/"+j.key+".webp";t.classList.remove("up");say(busy?"Adding "+busy+" photo"+(busy>1?"s":"")+"…":"Added. It is saved.")
       }).catch(function(e){t.remove();g.fxFix();say(typeof e==="string"?e:"The photo could not be added. Please check the internet and try again.",true)});
     });
+  });
+  document.querySelectorAll(".szph").forEach(function(z){
+    var im=z.querySelector(".pimgw"),fi=z.querySelector("input[type=file]"),cl=z.querySelector("[data-szclear]"),tx=z.querySelector("[data-szt]");
+    function done(j,own){if(!j.ok)throw j.msg;var i=im.querySelector("img");if(!i){i=document.createElement("img");i.alt="";im.prepend(i)}if(j.src)i.src=j.src;z.classList.toggle("own",own);z.classList.remove("up");cl.hidden=!own;tx.textContent=own?"Own photo":"Usual photo";say("Saved.")}
+    function fail(e){z.classList.remove("up");say(typeof e==="string"?e:"Please check the internet and try again.",true)}
+    fi.addEventListener("change",function(){var fl=fi.files[0];fi.value="";if(!fl)return;var i=im.querySelector("img");if(i)i.src=URL.createObjectURL(fl);z.classList.add("up");say("Adding the photo…");
+      jpg(fl).then(function(b){var d=new FormData();d.append("act","size_photo");d.append("size",z.dataset.size);d.append("photo",b,"photo.jpg");return post(d)}).then(function(j){done(j,true)}).catch(fail)});
+    cl.addEventListener("click",function(){var d=new FormData();d.append("act","size_photo");d.append("size",z.dataset.size);d.append("clear","1");z.classList.add("up");post(d).then(function(j){done(j,false)}).catch(fail)});
   });
   g.addEventListener("click",function(e){
     var b=e.target.closest("[data-rm]");if(!b)return;var p=b.closest(".ph"),k=p.querySelector("input[name='photo_order[]']").value;
@@ -1474,6 +1482,19 @@ if (isset($_GET['products'])) {
       $pdo->prepare('UPDATE fx_products SET data = ?, updated_at = NOW() WHERE id = ?')->execute([fomaxo_json($p), $pid]);
       exit(json_encode(['ok' => true, 'key' => $k]));
     }
+    if (($_POST['act'] ?? '') === 'size_photo' && !$isNew) {   // Photo for each size (sizeImages, e.g. Discovery Set 3 / 5 vials, 100ml): a new photo, or back to the usual one
+      header('Content-Type: application/json'); header('Cache-Control: no-store');
+      $p = json_decode($byId[$pid]['data'], true); $sz = (string)(int)($_POST['size'] ?? 0); $si = (array)($p['sizeImages'] ?? []);
+      if (!in_array((int)$sz, array_map('intval', (array)($p['sizes'] ?? [])), true)) exit(json_encode(['ok' => false, 'msg' => 'This size has changed. Please open the product again.']));
+      if (!empty($_POST['clear'])) { unset($si[$sz]); $k = ''; }
+      elseif (($_FILES['photo']['error'] ?? 1) !== UPLOAD_ERR_OK || !($k = fx_save_photo($_FILES['photo']['tmp_name'], $pid)))
+        exit(json_encode(['ok' => false, 'msg' => 'This photo could not be added. Please use a JPG or PNG photo.']));
+      else $si[$sz] = $k;   // the old file stays where it is
+      if ($si) $p['sizeImages'] = (object)$si; else unset($p['sizeImages']);
+      $pdo->prepare('UPDATE fx_products SET data = ?, updated_at = NOW() WHERE id = ?')->execute([fomaxo_json($p), $pid]);
+      $u = $k !== '' ? $k : (($sz === '10' && !empty($p['miniImage'])) ? $p['miniImage'] : ((array)($p['images'] ?? []))[0] ?? '');
+      exit(json_encode(['ok' => true, 'key' => $k, 'src' => $u !== '' ? "../assets/img/$u.webp" : '']));
+    }
     if (in_array($_POST['act'] ?? '', ['photo_add', 'photo_drop'], true) && !$isNew) {   // Add photos / Remove on the Photos box: saved at once, the rest of the form is not touched
       header('Content-Type: application/json'); header('Cache-Control: no-store');
       $p = json_decode($byId[$pid]['data'], true); $imgs = array_values(array_filter((array)($p['images'] ?? []), 'is_string'));
@@ -1612,6 +1633,13 @@ if (isset($_GET['products'])) {
       . '<div class="pmv"><button type="button" data-mv="-1" aria-label="Move left">‹</button><button type="button" data-mv="0">Make main</button><button type="button" data-mv="1" aria-label="Move right">›</button></div>'
       . '<button type="button" class="phrm" data-rm>Remove</button></div>';
   }
+  $sizePh = '';   // Photo for each size: the photo the shop shows when that size is picked
+  if (!$isNew) foreach ((array)($p['sizes'] ?? []) as $sz) {
+    $own = (string)(((array)($p['sizeImages'] ?? []))[(string)$sz] ?? '');
+    $u = $own !== '' ? $own : (((int)$sz === 10 && !empty($p['miniImage'])) ? $p['miniImage'] : ((array)($p['images'] ?? []))[0] ?? '');
+    $sizePh .= '<div class="ph szph' . ($own !== '' ? ' own' : '') . '" data-size="' . (int)$sz . '"><div class="pimgw">' . ($u !== '' ? '<img src="../assets/img/' . h($u) . '.webp" alt="">' : '') . '<span class="pno">' . ($isSet ? (int)$sz . ' vials' : (int)$sz . 'ml') . '</span></div>'
+      . '<small data-szt>' . ($own !== '' ? 'Own photo' : 'Usual photo') . '</small><label class="btn line sm szpick">Change<input type="file" accept="image/*" hidden></label><button type="button" class="phrm" data-szclear' . ($own !== '' ? '' : ' hidden') . '>Use usual photo</button></div>';
+  }
   $tiers = ['' => 'None', 'elite' => 'Elite', 'signature' => 'Signature', 'prestige' => 'Prestige'];
   page($isNew ? 'Add product' : 'Edit ' . ($p['name'] ?? ''), '<div class="odhead"><a class="small" href="' . h(self_url(['products' => 1])) . '">← All products</a>'
     . '<h1>' . ($isNew ? 'Add product' : h($p['name'] ?? '')) . '</h1></div>' . flash() . fx_tabs(['Details', 'Prices', 'Photos'], 'Product')
@@ -1634,7 +1662,9 @@ if (isset($_GET['products'])) {
         . '<script>(function(){var g=document.querySelector(".phs");function fix(){var a=g.querySelectorAll(".ph");a.forEach(function(p,i){p.querySelector(".pno").textContent=i?"Photo "+(i+1):"Main photo";p.classList.toggle("first",!i);p.querySelector("[data-mv=\'-1\']").disabled=!i;p.querySelector("[data-mv=\'1\']").disabled=i==a.length-1;p.querySelector("[data-mv=\'0\']").disabled=!i})}g.addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;var p=b.closest(".ph"),d=+b.dataset.mv;if(d===0)g.prepend(p);else if(d<0&&p.previousElementSibling)g.insertBefore(p,p.previousElementSibling);else if(d>0&&p.nextElementSibling)g.insertBefore(p.nextElementSibling,p);fix()});g.fxFix=fix;fix()})()</script>' : '')
     . (!$isNew ? '<script>' . FX_PHOTO_EDIT_JS . '</script>' : '')
     . '<label for="photos">' . ($photos ? 'Add more photos' : 'Add photos') . '</label><input id="photos" type="file" name="photos[]" accept="image/*" multiple>'
-    . '<p class="muted small" data-phmsg>Square or portrait photos look best. They are made smaller automatically.</p><script>' . FX_PHOTO_ADD_JS . '</script></div></div>'
+    . '<p class="muted small" data-phmsg>Square or portrait photos look best. They are made smaller automatically.</p>'
+    . ($sizePh ? '<label>Photo for each ' . ($isSet ? 'set' : 'size') . '</label><p class="muted small" style="margin:0 0 6px">The shop shows this photo when a customer picks that ' . ($isSet ? 'set' : 'size') . '. Saved at once.</p><div class="phs szphs">' . $sizePh . '</div>' : '')
+    . '<script>' . FX_PHOTO_ADD_JS . '</script></div></div>'
     . '<div class="savebar psave"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true, true);
 }
 
