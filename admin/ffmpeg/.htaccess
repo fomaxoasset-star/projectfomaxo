@@ -1,0 +1,5 @@
+# the admin's video tool (FFmpeg, 32 MB): these files never change, so the browser and the Hostinger CDN keep them 30 days
+# and the Videos page does not download them again on every visit
+<IfModule mod_headers.c>
+  Header set Cache-Control "public, max-age=2592000"
+</IfModule>

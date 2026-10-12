@@ -73,3 +73,15 @@ AddType font/otf .otf
   ExpiresByType font/woff2 "access plus 1 year"
   ExpiresByType font/otf "access plus 1 year"
 </IfModule>
+
+# Hostinger CDN and browsers: the shop page itself is always checked for a newer copy (a GitHub update shows straight away,
+# unchanged pages answer "not modified" in a few bytes); the Arabic word list is kept 7 days (its ?v= number in index.html is
+# bumped whenever it changes). Checkout, payments, admin and the shop's data pages send their own "never keep" header.
+<IfModule mod_headers.c>
+  <FilesMatch "^index\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "^i18n-ar\.js$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>
