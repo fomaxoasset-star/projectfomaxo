@@ -40,7 +40,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
-if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=33";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+if(l==="ar"){r.lang="ar";r.dir="rtl";r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=34";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("link");f.rel="stylesheet";f.href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&family=Amiri:wght@400;700&display=swap";document.head.appendChild(f)}})();</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -3739,6 +3739,7 @@ const GIFTS = [
   {id: 'care-box', name: 'Care Box', for: ['her', 'thanks'], v: 'Everyday luxury for hair, body, face and lips.', items: [['pc-passionsin-gel'], ['pc-passionsin-shampoo'], ['pc-radiant-wash'], ['pc-kissberry']]},
   {id: 'lip-love', name: 'Lip Love', for: ['her', 'thanks'], v: 'Both lip balms together. A sweet little thank-you.', items: [['pc-kissberry'], ['pc-avokiss']]}
 ];
+const GIFT_RV = {id: 'giftbox', name: 'Gift Box', gift: true};   // the Gift Box has its own reviews on the Gifts page (reviews.php RV_EXTRA)
 const GIFT_FOR = [['all', 'All gifts'], ['her', 'For her'], ['him', 'For him'], ['two', 'For two'], ['thanks', 'Thank you'], ['eid', 'Eid']];
 const COMBOS = [
   {id: 'morning-midnight', tag: 'Scent layering', name: 'Morning to Midnight', badge: 'Signature', v: 'One scent from the shower to the evening. The body care builds a base, the parfum lasts longer on top.', items: [['passionsin', 50], ['pc-passionsin-gel'], ['pc-passionsin-shampoo']]},
@@ -3809,6 +3810,7 @@ function giftsPage(q){
   return pageHead('Gifts', 'The <em class="metal">Gifts</em>', 'Luxury gifts from Dubai, ready to give and delivered free anywhere in the UAE.') + `
   <section style="padding-bottom:0"><div class="wrap">${cxFilters('gifts', 'for', GIFT_FOR, f)}
     <div class="grid shop-grid">${sets.map(cxCard).join('')}</div>
+    <div class="reviews" id="reviews">${rwSection(GIFT_RV, null)}</div>
   </div></section>` +
   cxSplit('gift-2-hq', 'Make it personal', 'Personalized <em class="metal">gifting</em>', 'Write your gift message in the note at checkout and we add it to the box. For a parfum made after the person you love, or gifting for weddings and companies, talk to us.',
     `<a class="btn" href="#/collections/name">Personalized gifting</a><a class="btn line" href="#/collections/gifting">Bespoke gifting</a>`) + finalCTA();
@@ -4356,7 +4358,7 @@ function rwSection(p, d){   // d = null while the reviews are loading: the text 
   <div class="rw-main"><div id="rwFormBox" hidden></div>
     ${n ? `${rwGallery(d)}<div class="rw-tools"><span class="small">${n} review${n > 1 ? 's' : ''}</span><label class="rw-sort"><span>Sort by</span><select id="rwSort" aria-label="Sort reviews">${[['new', 'Newest'], ['help', 'Most helpful'], ['high', 'Highest rating'], ['low', 'Lowest rating']].map(x => `<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label></div>
       <div id="rwList"></div><div class="rw-pager" id="rwPager" hidden><button type="button" data-rwp="-1" aria-label="Previous reviews">‹</button><span class="rw-pg"></span><button type="button" data-rwp="1" aria-label="Next reviews">›</button></div>`
-      : !d ? '' : `<div class="rv-empty" id="rwEmpty"><h3>Be the first to review ${esc(p.name)}</h3><p class="small">Worn ${esc(p.name)}? Share your experience with the FOMAXO community.</p></div>`}
+      : !d ? '' : `<div class="rv-empty" id="rwEmpty"><h3>Be the first to review ${esc(p.name)}</h3><p class="small">${p.gift ? `Gave or received a FOMAXO ${esc(p.name)}?` : `Worn ${esc(p.name)}?`} Share your experience with the FOMAXO community.</p></div>`}
   </div>`;
 }
 function rwForm(p, link, x){
@@ -4366,7 +4368,7 @@ function rwForm(p, link, x){
       <div class="rw-rate" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map(s => `<button type="button" role="radio" aria-checked="false" data-r="${s}" aria-label="${s} star${s > 1 ? 's' : ''}, ${RW_WORDS[s]}">★</button>`).join('')}</div></div>
     ${link ? '' : `<label class="rw-prob" hidden>Any problem with your order?<select name="issue"><option value="">No problem</option><option value="late">Late delivery</option><option value="faulty">Faulty or damaged product</option></select></label>
     <p class="small rw-issue" hidden></p>`}
-    <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="How does it smell, how long does it last, would you wear it again?"></textarea></label>
+    <label>Your review *<textarea name="text" data-cap="sentences" autocapitalize="sentences" placeholder="${p.gift ? 'How did the box look, and how did they like the gift?' : 'How does it smell, how long does it last, would you wear it again?'}"></textarea></label>
     <p class="small rw-hint" role="alert" hidden></p>
     <div class="rw-emo" role="group" aria-label="Add an emoji to your review">${RW_EMO.map(e => `<button type="button" data-emo="${e}" aria-label="Add ${e}">${e}</button>`).join('')}</div></div>
     <div class="rw-c2"><label>Your name *<input name="name" maxlength="60" autocomplete="name" data-cap="words" autocapitalize="words" placeholder="e.g. Ahmed Saleh"></label>
@@ -4785,7 +4787,7 @@ function route(){
     case 'collections': html = collections(seg[1]); if (seg[1] === 'elite') after = bindElite; if (seg[1] === 'fragrance') after = bindFragColl; break;
     case 'personal-care': html = personalCare(); break;
     case 'pc': html = pcPage(q); after = bindDx; break;
-    case 'gifts': html = giftsPage(q); after = bindDx; break;
+    case 'gifts': html = giftsPage(q); after = () => { bindDx(); rwLoad(GIFT_RV); }; break;
     case 'combo': html = comboPage(); after = bindDx; break;
     case 'about': html = about(); break;
     case 'contact': html = contact(q); after = bindContact; break;
