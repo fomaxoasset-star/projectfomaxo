@@ -201,6 +201,7 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
   /* a video that failed before in this browser goes last; after 2 failures it is not tried again here (so one stubborn video never holds up the rest) */
   rows = rows.filter(function (r) { return (bad[r.dataset.mkprev.split(/[\/=]/).pop()] || 0) < 2; }).sort(function (a, b) { return (bad[a.dataset.mkprev.split(/[\/=]/).pop()] || 0) - (bad[b.dataset.mkprev.split(/[\/=]/).pop()] || 0); });
   if (!rows.length) return;
+  var CANT = 'fxPrevCant'; try { if (Date.now() - (+localStorage.getItem(CANT) || 0) < 7 * 864e5) return; } catch (e) {}   // this browser couldn't make previews in the last 7 days: no video is downloaded here again
   /* a way that hangs (some Mac Safari videos never finish in the fast way) is given up after a while, so the next way or the next video goes on */
   var limit = function (p, ms, stop) { var t; return Promise.race([p, new Promise(function (ok) { t = setTimeout(function () { try { stop && stop(); } catch (e) {} ok(null); }, ms); })]).then(function (r) { clearTimeout(t); return r; }); };
   var tell = function (t) { if (f.querySelector('[name=act]')) try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['preview ' + t]})], {type: 'application/json'})); } catch (e) {} };   // fomaxo.com: written to vid-report.txt
@@ -241,7 +242,7 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
   function next() {
     if (gone) return;
     if ((fails >= 2 && noFast && noWasm) || (i >= rows.length && !made && fails)) {   // neither way works in this browser: say so plainly instead of sitting on "1 of 9"
-      tell('stopped: this browser cannot make previews'); say('Quick previews can\'t be made in this browser. Open this page once in Chrome to make them.'); setTimeout(function () { say(''); }, 15000); return; }
+      tell('stopped: this browser cannot make previews'); try { localStorage.setItem(CANT, String(Date.now())); } catch (e) {} say('Quick previews can\'t be made in this browser. Open this page once in Chrome to make them.'); setTimeout(function () { say(''); }, 15000); return; }
     if (i >= rows.length) { try { F && F.terminate(); } catch (e) {} if (made) { say('Quick previews ready for the home page (' + made + ').'); setTimeout(function () { say(''); }, 5000); } else say(''); return; }
     var row = rows[i++];
     idle().then(function () {

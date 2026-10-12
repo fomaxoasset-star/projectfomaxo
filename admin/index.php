@@ -1170,7 +1170,7 @@ if (isset($_GET['videos'])) {
     fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
     go($back);
   }
-  if (fomaxo_ig_sync($pdo)) $vids = fx_videos($pdo);   // Automatic: new reels that name a product
+  /* Automatic Instagram reels are fetched by products.php after a shopper's page has its answer (at most once an hour), never while this page loads */
   /* Product in the video: one box to type a name in, or pick from its own dropdown (the free product picker, fx_free_pick_js) */
   $vpick = fn(string $aria, string $id = '') => '<span class="fpick vpick"><input type="text"' . ($id !== '' ? ' id="' . $id . '"' : '') . ' name="product_text" maxlength="60" data-ffind data-free required placeholder="Type anything, or pick a product" aria-label="' . $aria . '" autocomplete="off">'
     . '<input type="hidden" name="product"><ul class="fplist" hidden>'
