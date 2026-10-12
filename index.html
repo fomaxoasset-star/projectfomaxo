@@ -3215,7 +3215,7 @@ function home(){
     <div>${ICON.drop}<span><b>Try first</b><span class="perk-line">${shown('discovery') ? `Discovery Set from ${moneyHTML(Math.min(...Object.values(P.discovery.prices)))}` : S.mini.products.length ? `Mini 10ml from ${moneyHTML(Math.min(...S.mini.products.map(id => P[id].prices[10]).filter(hasPrice)))}` : 'Ask us for a sample'}</span></span></div>
   </div></div>
   ${lastOrder() ? `<section class="sec ro-sec"><div class="wrap">${orderAgainHTML()}</div></section>` : ''}
-  <section class="sec vid-sec" id="vidSec" style="padding-bottom:0"${vids().length ? '' : ' hidden'}>${vidSecHTML()}</section>
+  <section class="sec vid-sec" id="vidSec" style="padding-bottom:0"${vids().some(v => v.wh !== 'p') ? '' : ' hidden'}>${vidSecHTML()}</section>
 
   <section class="sec"><div class="wrap">
     <div class="sec-head"><div class="t rv-up"><span class="eyebrow">Shop the collection</span><h2>Featured <em class="metal">FOMAXO</em></h2></div><a class="link rv-up" href="#/fragrances">View all →</a></div>
@@ -4853,7 +4853,7 @@ const vidProds = v => [v.p, ...(v.a || [])].filter((id, i, a) => shown(id) && a.
 const vids = () => VIDEOS.filter(v => v && (v.v || v.e) && (vidProds(v).length || (!v.p && !(v.a || []).length)));   // v.e = an Instagram reel shown with Instagram's own player
 /* a product page has the same row, as its Review videos: only the videos that sell that product (AJAY 2026-10-12) */
 const vidPage = () => { const m = /^#\/product\/([^?\/]+)/.exec(location.hash); return m && P[m[1]] && !P[m[1]].hidden ? m[1] : ''; };
-const rowVids = () => { const id = vidPage(); return id ? vids().filter(v => vidProds(v).includes(id)) : vids(); };
+const rowVids = () => { const id = vidPage(); return id ? vids().filter(v => v.wh !== 'h' && vidProds(v).includes(id)) : vids().filter(v => v.wh !== 'p'); };   // admin → Videos: Home + product page (both), Home page only (wh h), Product page only (wh p)
 const VI = {
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6L6 18"/></svg>',
