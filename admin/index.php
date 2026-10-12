@@ -7,7 +7,7 @@
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src 'self'; img-src 'self' https://*.cdninstagram.com https://*.fbcdn.net" . (defined('FX_IG_API') ? ' ' . FX_IG_API : '') . "; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; media-src 'self' blob:; worker-src 'self' blob:; form-action 'self'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'self'; img-src 'self' blob: https://*.cdninstagram.com https://*.fbcdn.net" . (defined('FX_IG_API') ? ' ' . FX_IG_API : '') . "; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; media-src 'self' blob:; worker-src 'self' blob:; form-action 'self'; frame-ancestors 'none'");
 require dirname(__DIR__) . '/orders-lib.php';
 require_once dirname(__DIR__) . '/media-lib.php';
 date_default_timezone_set('Asia/Dubai');
@@ -201,7 +201,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 @media (min-width:760px){.szrow{grid-template-columns:repeat(4,1fr)}}
 label.chk{display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);margin:8px 0 0}label.chk input{width:auto;margin:0}label.chk.big{font-size:16px;margin:0}
 .phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:6px}.ph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--line)}
-.pimgw{position:relative}.pno{position:absolute;left:6px;top:6px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.7);color:#fff;padding:2px 7px;border-radius:10px}.ph.first .pno{background:var(--gold);color:var(--gold-ink)}.ph.first img{border:2px solid var(--gold)}.pmv{display:grid;grid-template-columns:36px 1fr 36px;gap:4px;margin:6px 0 2px}.pmv button{height:34px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0}.pmv button[data-mv='-1'],.pmv button[data-mv='1']{font-size:20px;line-height:1;color:var(--gold)}.pmv button[data-mv='0']{border-color:var(--gold);color:var(--gold)}.pmv button:disabled{opacity:.3;cursor:default}
+.pimgw{position:relative}.pno{position:absolute;left:6px;top:6px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.7);color:#fff;padding:2px 7px;border-radius:10px}.ph.first .pno{background:var(--gold);color:var(--gold-ink)}.ph.first img{border:2px solid var(--gold)}.pmv{display:grid;grid-template-columns:36px 1fr 36px;gap:4px;margin:6px 0 2px}.pmv button{height:34px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0}.pmv button[data-mv='-1'],.pmv button[data-mv='1']{font-size:20px;line-height:1;color:var(--gold)}.pmv button[data-mv='0']{border-color:var(--gold);color:var(--gold)}.pmv button:disabled{opacity:.3;cursor:default}.phrm{width:100%;height:30px;margin-top:2px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}.phrm:hover{color:var(--bad);border-color:var(--bad)}.phrm:disabled{opacity:.4}.ph.up img{opacity:.45}.ph.up .pmv,.ph.up .phrm,.ph.up .pedt{visibility:hidden}.ph.up .pimgw::after{content:"Adding…";position:absolute;inset:auto 0 42% 0;text-align:center;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px #000}.phnew{margin-top:8px}
 @media (min-width:760px){.tabs{display:flex;justify-content:center;gap:10px}.tabs a{padding:11px 22px}}
 /* tabs in two rows of six, no sideways scrolling (AJAY's order) */.tabsw .tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));overflow:visible}.tabsw .tnav{display:none!important}.tabsw .tabs a{white-space:nowrap;overflow:hidden;text-overflow:clip}@media (max-width:759px){.tabsw .tabs{grid-template-columns:repeat(6,auto);justify-content:space-evenly;padding:0 2px}.tabsw .tabs a{font-size:10.5px;letter-spacing:0;padding:8px 1px 6px}}@media (min-width:760px){.tabsw .tabs{grid-template-columns:repeat(12,auto);justify-content:center;column-gap:0}.tabsw .tabs a{padding:11px 7px;font-size:10.5px;letter-spacing:.03em}}@media (min-width:1100px){.tabsw .tabs a{padding:11px 13px;font-size:12px;letter-spacing:.08em}}@media (min-width:1500px){.tabsw .tabs a{padding:11px 20px;font-size:12.5px;letter-spacing:.1em}}
 .lvl-out{color:var(--bad)}.lvl-low{color:var(--warn)}.lvl-ok{color:var(--ok)}
@@ -517,7 +517,7 @@ const FX_PHOTO_EDIT_JS = <<<'JS'
   }
   function close(){box.hidden=true;document.body.style.overflow="";img=null}
   function setAr(a){ar=a;box.querySelectorAll("[data-ar] button").forEach(function(b){b.classList.toggle("on",+b.dataset.a===a)})}
-  g.addEventListener("click",function(e){var t=e.target.closest(".pimgw");if(t&&!busy)open(t.closest(".ph"))});
+  g.addEventListener("click",function(e){var t=e.target.closest(".pimgw");if(t&&!busy&&!t.closest(".ph.up"))open(t.closest(".ph"))});
   box.addEventListener("click",function(e){
     var b=e.target.closest("button");if(!b||!img)return;
     if(b.hasAttribute("data-x"))close();
@@ -552,10 +552,53 @@ const FX_PHOTO_EDIT_JS = <<<'JS'
       f.append("csrf",document.querySelector("form.pform input[name=csrf]").value);f.append("act","photo_edit");f.append("old",hid.value);f.append("photo",bl,"photo.jpg");
       fetch(location.href,{method:"POST",body:f,credentials:"same-origin"}).then(function(r){return r.json()}).then(function(j){
         busy=false;if(!j.ok){msg.textContent=j.msg||"The photo could not be saved. Please try again.";sv.disabled=false;return}
-        hid.value=j.key;ph.querySelectorAll("input[name='drop[]']").forEach(function(i){i.value=j.key});ph.querySelector(".pimgw img").src="../assets/img/"+j.key+".webp";close();
+        hid.value=j.key;ph.querySelector(".pimgw img").src="../assets/img/"+j.key+".webp";close();
       }).catch(function(){busy=false;msg.textContent="The photo could not be saved. Please check the internet and try again.";sv.disabled=false});
     },"image/jpeg",.93);
   }
+})();
+JS;
+/* Photos box: a photo picked in Add photos shows at once and is saved at once (act photo_add, one photo per request, made a JPG of at most
+   2400 px in the browser first, so iPhone HEIC photos work too); Remove takes it away at once (act photo_drop). A new product (no id yet) shows
+   the picked photos and saves them with the Add product button. */
+const FX_PHOTO_ADD_JS = <<<'JS'
+(function(){
+  var inp=document.getElementById("photos"),f=inp&&inp.form,g=document.querySelector(".phs"),msg=document.querySelector("[data-phmsg]"),tip=msg.textContent;if(!f)return;
+  var say=function(t,bad){msg.textContent=t||tip;msg.style.color=bad?"var(--bad)":""};
+  function jpg(file){return new Promise(function(ok){
+    var u=URL.createObjectURL(file),im=new Image();
+    im.onload=function(){var s=Math.min(1,2400/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);
+      var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(function(b){ok(b||file)},"image/jpeg",.92)};
+    im.onerror=function(){URL.revokeObjectURL(u);ok(file)};im.src=u})}
+  if(!g){   // a new product: show what was picked; Add product saves them
+    var pv=document.createElement("div");pv.className="phs phnew";inp.after(pv);
+    inp.addEventListener("change",function(){pv.innerHTML="";[].forEach.call(inp.files,function(fl){var d=document.createElement("div");d.className="ph";var i=document.createElement("img");i.src=URL.createObjectURL(fl);i.alt="";d.appendChild(i);pv.appendChild(d)})});
+    return;
+  }
+  inp.removeAttribute("name");   // Save no longer sends them again
+  var csrf=f.querySelector("input[name=csrf]").value;
+  function post(d){d.append("csrf",csrf);return fetch(location.href,{method:"POST",body:d,credentials:"same-origin"}).then(function(r){return r.json()})}
+  function tile(src){var d=document.createElement("div");d.className="ph";
+    d.innerHTML='<div class="pimgw"><img alt=""><span class="pno"></span><span class="pedt" aria-hidden="true">✎</span></div><input type="hidden" name="photo_order[]">'
+     +'<div class="pmv"><button type="button" data-mv="-1" aria-label="Move left">‹</button><button type="button" data-mv="0">Make main</button><button type="button" data-mv="1" aria-label="Move right">›</button></div><button type="button" class="phrm" data-rm>Remove</button>';
+    d.querySelector("img").src=src;return d}
+  var q=Promise.resolve(),busy=0;
+  inp.addEventListener("change",function(){
+    var fs=[].slice.call(inp.files);inp.value="";if(!fs.length)return;
+    fs.forEach(function(fl){
+      var t=tile(URL.createObjectURL(fl));t.classList.add("up");g.appendChild(t);g.fxFix();t.scrollIntoView({block:"nearest"});busy++;say("Adding "+busy+" photo"+(busy>1?"s":"")+"…");
+      q=q.then(function(){return jpg(fl)}).then(function(b){var d=new FormData();d.append("act","photo_add");d.append("photo",b,"photo.jpg");return post(d)}).finally(function(){busy--}).then(function(j){
+        if(!j.ok)throw j.msg;
+        t.querySelector("input").value=j.key;t.querySelector("img").src="../assets/img/"+j.key+".webp";t.classList.remove("up");say(busy?"Adding "+busy+" photo"+(busy>1?"s":"")+"…":"Added. It is saved.")
+      }).catch(function(e){t.remove();g.fxFix();say(typeof e==="string"?e:"The photo could not be added. Please check the internet and try again.",true)});
+    });
+  });
+  g.addEventListener("click",function(e){
+    var b=e.target.closest("[data-rm]");if(!b)return;var p=b.closest(".ph"),k=p.querySelector("input[name='photo_order[]']").value;
+    if(p.classList.contains("up")||!confirm("Remove this photo?"))return;
+    b.disabled=true;var d=new FormData();d.append("act","photo_drop");d.append("key",k);
+    post(d).then(function(j){if(!j.ok)throw j.msg;p.remove();g.fxFix();say("Removed. It is saved.")}).catch(function(e){b.disabled=false;say(typeof e==="string"?e:"Please check the internet and try again.",true)});
+  });
 })();
 JS;
 const FX_PHONE_JS = <<<'JS'
@@ -1431,6 +1474,25 @@ if (isset($_GET['products'])) {
       $pdo->prepare('UPDATE fx_products SET data = ?, updated_at = NOW() WHERE id = ?')->execute([fomaxo_json($p), $pid]);
       exit(json_encode(['ok' => true, 'key' => $k]));
     }
+    if (in_array($_POST['act'] ?? '', ['photo_add', 'photo_drop'], true) && !$isNew) {   // Add photos / Remove on the Photos box: saved at once, the rest of the form is not touched
+      header('Content-Type: application/json'); header('Cache-Control: no-store');
+      $p = json_decode($byId[$pid]['data'], true); $imgs = array_values(array_filter((array)($p['images'] ?? []), 'is_string'));
+      if ($_POST['act'] === 'photo_drop') {
+        $k = (string)($_POST['key'] ?? '');
+        if (!in_array($k, $imgs, true)) exit(json_encode(['ok' => false, 'msg' => 'This photo has changed. Please open the product again.']));
+        if (count($imgs) < 2) exit(json_encode(['ok' => false, 'msg' => 'A product needs at least one photo. Add another photo first.']));
+        $imgs = array_values(array_diff($imgs, [$k]));   // the file itself stays where it is
+        $new = '';
+      } else {
+        if (count($imgs) >= 12) exit(json_encode(['ok' => false, 'msg' => 'A product can have up to 12 photos. Remove one first.']));
+        if (($_FILES['photo']['error'] ?? 1) !== UPLOAD_ERR_OK || !($new = fx_save_photo($_FILES['photo']['tmp_name'], $pid)))
+          exit(json_encode(['ok' => false, 'msg' => 'This photo could not be added. Please use a JPG or PNG photo.']));
+        $imgs[] = $new;
+      }
+      $p['images'] = $imgs;
+      $pdo->prepare('UPDATE fx_products SET data = ?, updated_at = NOW() WHERE id = ?')->execute([fomaxo_json($p), $pid]);
+      exit(json_encode(['ok' => true, 'key' => $new]));
+    }
     $p = $isNew ? ['id' => '', 'name' => '', 'family' => '', 'short' => '', 'description' => [], 'sizes' => [], 'prices' => [], 'images' => [], 'url' => ''] : json_decode($byId[$pid]['data'], true);
     $isSet = ($p['kind'] ?? '') === 'set';
     $t = fn($k, $max) => trim(mb_substr(preg_replace('/\s+/u', ' ', (string)($_POST[$k] ?? '')), 0, $max));
@@ -1495,7 +1557,7 @@ if (isset($_GET['products'])) {
       if (($old === null ? null : round((float)$old, 2)) !== $c) $setCost->execute([$id, (string)$s, $c]);
     }
     flash(($hidden ? 'Saved. It is hidden from the website.' : 'Saved. The website shows the change within a minute.') . ($bad ? " $bad photo" . ($bad > 1 ? 's' : '') . ' could not be added (use JPG or PNG).' : ''), !$bad);
-    go(['products' => 1]);
+    go(['products' => 1, 'p' => $id]);   // stays on the product (AJAY 12/10/2026)
   }
 
   if ($pid === '') {   // the list
@@ -1548,7 +1610,7 @@ if (isset($_GET['products'])) {
   foreach ((array)($p['images'] ?? []) as $i => $k) {
     $photos .= '<div class="ph"><div class="pimgw"><img src="../assets/img/' . h($k) . '.webp" alt=""><span class="pno">' . ($i === 0 ? 'Main photo' : 'Photo ' . ($i + 1)) . '</span><span class="pedt" aria-hidden="true">✎</span></div><input type="hidden" name="photo_order[]" value="' . h($k) . '">'
       . '<div class="pmv"><button type="button" data-mv="-1" aria-label="Move left">‹</button><button type="button" data-mv="0">Make main</button><button type="button" data-mv="1" aria-label="Move right">›</button></div>'
-      . '<label class="chk"><input type="checkbox" name="drop[]" value="' . h($k) . '"> Remove</label></div>';
+      . '<button type="button" class="phrm" data-rm>Remove</button></div>';
   }
   $tiers = ['' => 'None', 'elite' => 'Elite', 'signature' => 'Signature', 'prestige' => 'Prestige'];
   page($isNew ? 'Add product' : 'Edit ' . ($p['name'] ?? ''), '<div class="odhead"><a class="small" href="' . h(self_url(['products' => 1])) . '">← All products</a>'
@@ -1568,11 +1630,11 @@ if (isset($_GET['products'])) {
         . '<div><label class="sub" for="nk">Or key notes only</label><input id="nk" name="note_key" value="' . h($notes['key'] ?? '') . '"></div></div>' : '')
     . '</div>'
     . '<div class="pside psz" data-t="2"><h2>Sizes and prices</h2><p class="muted small">Prices include VAT. "Was" shows a crossed-out price. Clear a price to remove that size.</p><div class="card">' . $rowsHtml . '</div></div>'
-    . '<div class="pside pph" data-t="3"><h2>Photos</h2><div class="card">' . ($photos ? '<p class="muted small" style="margin:0 0 8px">The first photo is the main one on the shop. Use ‹ › to change the order, then Save. The product page shows them in this order. Tap a photo to see it large, crop or turn it.</p><div class="phs">' . $photos . '</div>'
-        . '<script>(function(){var g=document.querySelector(".phs");function fix(){var a=g.querySelectorAll(".ph");a.forEach(function(p,i){p.querySelector(".pno").textContent=i?"Photo "+(i+1):"Main photo";p.classList.toggle("first",!i);p.querySelector("[data-mv=\'-1\']").disabled=!i;p.querySelector("[data-mv=\'1\']").disabled=i==a.length-1;p.querySelector("[data-mv=\'0\']").disabled=!i})}g.addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;var p=b.closest(".ph"),d=+b.dataset.mv;if(d===0)g.prepend(p);else if(d<0&&p.previousElementSibling)g.insertBefore(p,p.previousElementSibling);else if(d>0&&p.nextElementSibling)g.insertBefore(p.nextElementSibling,p);fix()});fix()})()</script>' : '')
-    . ($photos ? '<script>' . FX_PHOTO_EDIT_JS . '</script>' : '')
+    . '<div class="pside pph" data-t="3"><h2>Photos</h2><div class="card">' . (!$isNew ? '<p class="muted small" style="margin:0 0 8px">The first photo is the main one on the shop. Use ‹ › to change the order, then Save. Tap a photo to see it large, crop or turn it. Added and removed photos are saved at once.</p><div class="phs">' . $photos . '</div>'
+        . '<script>(function(){var g=document.querySelector(".phs");function fix(){var a=g.querySelectorAll(".ph");a.forEach(function(p,i){p.querySelector(".pno").textContent=i?"Photo "+(i+1):"Main photo";p.classList.toggle("first",!i);p.querySelector("[data-mv=\'-1\']").disabled=!i;p.querySelector("[data-mv=\'1\']").disabled=i==a.length-1;p.querySelector("[data-mv=\'0\']").disabled=!i})}g.addEventListener("click",function(e){var b=e.target.closest("[data-mv]");if(!b)return;var p=b.closest(".ph"),d=+b.dataset.mv;if(d===0)g.prepend(p);else if(d<0&&p.previousElementSibling)g.insertBefore(p,p.previousElementSibling);else if(d>0&&p.nextElementSibling)g.insertBefore(p.nextElementSibling,p);fix()});g.fxFix=fix;fix()})()</script>' : '')
+    . (!$isNew ? '<script>' . FX_PHOTO_EDIT_JS . '</script>' : '')
     . '<label for="photos">' . ($photos ? 'Add more photos' : 'Add photos') . '</label><input id="photos" type="file" name="photos[]" accept="image/*" multiple>'
-    . '<p class="muted small">Square or portrait photos look best. They are made smaller automatically.</p></div></div>'
+    . '<p class="muted small" data-phmsg>Square or portrait photos look best. They are made smaller automatically.</p><script>' . FX_PHOTO_ADD_JS . '</script></div></div>'
     . '<div class="savebar psave"><button class="btn big">' . ($isNew ? 'Add product' : 'Save') . '</button></div></form>', true, true);
 }
 
