@@ -194,7 +194,13 @@
 setTimeout(function () {   // after the page has loaded (the list comes after this script)
   var rows = [].slice.call(document.querySelectorAll('.vrow[data-mkprev]')), f = document.querySelector('form[data-vshrink]');
   if (!rows.length || !f || !window.fetch || !window.Promise) return;
-  var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 8, BR = 600000, pill = null, made = 0, conv = null, how = '', noFast = false, last = '';
+  var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 8, BR = 600000, pill = null, made = 0, conv = null, how = '', noFast = false, noWasm = false, Fok = false, fails = 0, gone = false, last = '';
+  addEventListener('pagehide', function () { gone = true; });   // leaving or reloading the page: stop, don't log the cut-off ones as failed
+  var KEY = 'fxPrevFail', bad = {}; try { bad = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {}
+  var mark = function (nm) { bad[nm] = (bad[nm] || 0) + 1; try { localStorage.setItem(KEY, JSON.stringify(bad)); } catch (e) {} };
+  /* a video that failed before in this browser goes last; after 2 failures it is not tried again here (so one stubborn video never holds up the rest) */
+  rows = rows.filter(function (r) { return (bad[r.dataset.mkprev.split(/[\/=]/).pop()] || 0) < 2; }).sort(function (a, b) { return (bad[a.dataset.mkprev.split(/[\/=]/).pop()] || 0) - (bad[b.dataset.mkprev.split(/[\/=]/).pop()] || 0); });
+  if (!rows.length) return;
   /* a way that hangs (some Mac Safari videos never finish in the fast way) is given up after a while, so the next way or the next video goes on */
   var limit = function (p, ms, stop) { var t; return Promise.race([p, new Promise(function (ok) { t = setTimeout(function () { try { stop && stop(); } catch (e) {} ok(null); }, ms); })]).then(function (r) { clearTimeout(t); return r; }); };
   var tell = function (t) { if (f.querySelector('[name=act]')) try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['preview ' + t]})], {type: 'application/json'})); } catch (e) {} };   // fomaxo.com: written to vid-report.txt
@@ -221,18 +227,21 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
   var F = null;   // FFmpeg (admin/ffmpeg), loaded once for all previews when the fast way can't
   function wasmPrev(blob) {
     var base = new URL('ffmpeg/', location.href).href;
-    return (F ? Promise.resolve() : import(base + 'index.js?v=0.12.15').then(function (m) { F = new m.FFmpeg(); F.on('log', function (e) { last = String(e && e.message || '').slice(0, 80); }); var t = Date.now(); return F.load({coreURL: base + 'ffmpeg-core.js?v=0.12.10', wasmURL: base + 'ffmpeg-core.wasm?v=0.12.10'}).then(function () { tell('ffmpeg loaded in ' + Math.round((Date.now() - t) / 1000) + ' s'); }); }))
+    return (F ? Promise.resolve() : import(base + 'index.js?v=0.12.15').then(function (m) { F = new m.FFmpeg(); F.on('log', function (e) { last = String(e && e.message || '').slice(0, 80); }); var t = Date.now(); return F.load({coreURL: base + 'ffmpeg-core.js?v=0.12.10', wasmURL: base + 'ffmpeg-core.wasm?v=0.12.10'}).then(function () { Fok = true; tell('ffmpeg loaded in ' + Math.round((Date.now() - t) / 1000) + ' s'); }); }))
       .then(function () { return F.createDir('/p').catch(function () {}); })
       .then(function () { return F.mount('WORKERFS', {files: [new File([blob], 'in')]}, '/p'); })
       .then(function () { return F.exec(['-hide_banner', '-t', String(SEC), '-i', '/p/in', '-map', '0:v:0', '-an', '-vf', 'scale=w=640:h=640:force_original_aspect_ratio=decrease:force_divisible_by=2',
         '-c:v', 'libx264', '-preset', 'ultrafast', '-b:v', String(BR), '-maxrate', String(BR * 1.4), '-bufsize', String(BR * 2), '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '/p.mp4']); })
       .then(function (code) { return code ? null : F.readFile('/p.mp4'); })
       .then(function (d) { F.unmount('/p').catch(function () {}); F.deleteFile('/p.mp4').catch(function () {}); return d && d.length ? new Blob([d.buffer], {type: 'video/mp4'}) : null; })
-      .catch(function (e) { how += ' ffmpeg: ' + String(e && (e.message || e.name) || e).slice(0, 50) + ' (last: ' + last + ')'; try { F && F.terminate(); } catch (x) {} F = null; return null; });
+      .catch(function (e) { how += ' ffmpeg: ' + String(e && (e.message || e.name) || e).slice(0, 50) + ' (last: ' + last + ')'; if (!Fok) noWasm = true; /* FFmpeg itself won't load in this browser: not tried again */ try { F && F.terminate(); } catch (x) {} F = null; return null; });
   }
-  var idle = function () { return new Promise(function (ok) { (function w() { if (f.dataset.go || (btn && btn.disabled)) setTimeout(w, 3000); else ok(); })(); }); };   // an upload going on comes first
+  var idle = function () { return new Promise(function (ok) { (function w() { if (f.dataset.go || (btn && btn.disabled) || document.hidden) setTimeout(w, 3000); else ok(); })(); }); };   // an upload going on comes first; a tab in the background waits (the browser slows it right down)
   var i = 0, t0 = 0;
   function next() {
+    if (gone) return;
+    if ((fails >= 2 && noFast && noWasm) || (i >= rows.length && !made && fails)) {   // neither way works in this browser: say so plainly instead of sitting on "1 of 9"
+      tell('stopped: this browser cannot make previews'); say('Quick previews can\'t be made in this browser. Open this page once in Chrome to make them.'); setTimeout(function () { say(''); }, 15000); return; }
     if (i >= rows.length) { try { F && F.terminate(); } catch (e) {} if (made) { say('Quick previews ready for the home page (' + made + ').'); setTimeout(function () { say(''); }, 5000); } else say(''); return; }
     var row = rows[i++];
     idle().then(function () {
@@ -244,14 +253,16 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
       tell('loaded ' + (b.size / 1048576).toFixed(1) + ' MB in ' + Math.round((Date.now() - t0) / 1000) + ' s');
       /* the fast way gets 25 seconds; once it fails here, the rest go straight to FFmpeg (fast, 640px, first 8 seconds only) */
       return (noFast ? Promise.resolve(null) : limit(fastPrev(b), 25000, function () { how += ' fast: too slow'; conv && conv.cancel(); })).then(function (p) { if (p) { how = 'fast'; return p; } noFast = true;
+        if (noWasm) return null;
         return limit(wasmPrev(b), 180000, function () { how += ' ffmpeg: too slow (last: ' + last + ')'; try { F && F.terminate(); } catch (e) {} F = null; }).then(function (w) { if (w) how = 'ffmpeg'; return w; }); });
     }).then(function (p) {
-        var nm = row.dataset.mkprev.split(/[\/=]/).pop();
+        var nm = row.dataset.mkprev.split(/[\/=]/).pop(); if (gone) return;
+        if (p) fails = 0; else { fails++; mark(nm); }
         tell(nm + (p ? ' ' + Math.round(p.size / 1024) + ' KB ' + how : ' failed' + how) + ' in ' + Math.round((Date.now() - t0) / 1000) + ' s | ' + navigator.userAgent.slice(0, 120));
         if (!p || p.size > 3 * 1048576) return;
         var fd = new FormData(); fd.append('csrf', csrf); if (f.querySelector('[name=action]')) fd.append('action', 'vid_prev'); else fd.append('act', 'prev'); fd.append('vid', row.dataset.vid); fd.append('prev', p, 'prev.mp4');
         return fetch(location.href, {method: 'POST', body: fd, credentials: 'same-origin'}).then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) { made++; row.removeAttribute('data-mkprev'); } });
-      }).catch(function () {}).then(next);
+      }).catch(function (e) { if (!gone) tell('error ' + String(e && (e.message || e.name) || e).slice(0, 80)); }).then(next);
   }
   next();
 }, 1500);
