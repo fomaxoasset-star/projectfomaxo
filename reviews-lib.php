@@ -9,9 +9,6 @@
      secret.key     random key made on first use; signs the hide/show links emailed to FOMAXO */
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
 
-/* reviewable items that are not shop products (no prices, no stock): their reviews show on their own page (Gift Box: the Gifts page) */
-const RV_EXTRA = ['giftbox' => ['name' => 'Gift Box', 'kind' => 'gift', 'prices' => [], 'exclude' => [], 'images' => ['gift-box-wishes']]];
-
 function rv_dir($sub = '') {
   $d = dirname(__DIR__) . '/fomaxo-reviews' . ($sub !== '' ? "/$sub" : '');
   if (!is_dir($d)) @mkdir($d, 0700, true);
