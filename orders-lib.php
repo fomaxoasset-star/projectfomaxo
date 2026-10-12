@@ -229,7 +229,7 @@ function fx_orders_reset_run($pdo) {
     $pdo->exec('DELETE FROM fx_orders');
     try { $pdo->exec('DELETE FROM fx_orders_trash'); } catch (Throwable $e) {}
     if ($leads) $pdo->exec("UPDATE fx_leads SET order_no = CONCAT('OLD-', order_no) WHERE order_no REGEXP '^FMX-[0-9]+$'");
-    $pdo->exec("DELETE FROM fx_settings WHERE k = 'trash_max'");
+    $pdo->exec("DELETE FROM fx_settings WHERE k = 'trash_max'"); $GLOBALS['FX_SET'] = null;   // read the settings again after this
     foreach ($sets as $k => $v) if ($k !== 'trash_max' && is_array($j = json_decode((string)$v, true)) && $j) {
       $n = []; foreach ($j as $key => $val) $n[$old($key)] = $val; fomaxo_setting($pdo, $k, json_encode($n));
     }
@@ -391,9 +391,20 @@ function fomaxo_catalog_db() {
   return $cat ?: null;
 }
 
+/* The settings are read in one go the first time one is needed: admin pages asked for the same few up to 1,300 times (once per order row).
+   A long one (over 4000 characters, like the sent lists) is left out of that and read on its own each time it is asked for. */
 function fomaxo_setting($pdo, $k, $v = null) {
-  if ($v === null) { $s = $pdo->prepare('SELECT v FROM fx_settings WHERE k = ?'); $s->execute([$k]); $r = $s->fetchColumn(); return $r === false ? null : $r; }
+  global $FX_SET;
+  if ($v === null) {
+    if ($FX_SET === null) {
+      try { $all = []; foreach ($pdo->query('SELECT k, CASE WHEN LENGTH(v) <= 4000 THEN v END v, LENGTH(v) > 4000 big FROM fx_settings') as $r) $all[(string)$r['k']] = $r['big'] ? false : $r['v']; $FX_SET = $all; }
+      catch (Throwable $e) { $FX_SET = null; }
+    }
+    if (is_array($FX_SET) && (!array_key_exists($k, $FX_SET) || $FX_SET[$k] !== false)) return $FX_SET[$k] ?? null;
+    $s = $pdo->prepare('SELECT v FROM fx_settings WHERE k = ?'); $s->execute([$k]); $r = $s->fetchColumn(); return $r === false ? null : $r;
+  }
   $pdo->prepare('REPLACE INTO fx_settings (k, v) VALUES (?, ?)')->execute([$k, $v]);
+  if (is_array($FX_SET)) $FX_SET[$k] = strlen((string)$v) <= 4000 ? (string)$v : false;
   return $v;
 }
 
