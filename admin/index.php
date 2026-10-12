@@ -14,6 +14,10 @@ date_default_timezone_set('Asia/Dubai');
 
 $STORE_EMAIL = 'fomaxoasset@gmail.com';   // first set-up; after that password links go to the address in Settings
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+if (isset($_GET['css'])) {   // the admin look (fx_admin_css): kept by the browser for a year; its name changes when it changes
+  header('Content-Type: text/css; charset=utf-8'); header('Cache-Control: public, max-age=31536000, immutable');
+  exit(fx_admin_css());
+}
 session_name('fxadmin');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
 session_start(($_GET['do'] ?? '') === 'new_orders' || isset($_GET['vchunk']) ? ['read_and_close' => true] : []);   // the 30 second new order check only reads the sign-in, so it never keeps it alive
@@ -62,14 +66,8 @@ function fx_tabs(array $labels, string $name) {
   return '<nav class="ptabs" aria-label="' . h($name) . '">' . $b . '</nav><script>(function(){var n=document.currentScript.previousElementSibling,k="fxTab"+location.search.split("&")[0].split("=")[0]+n.getAttribute("aria-label");function go(t){var w=document.querySelector(".ptw");if(!w||!n.querySelector("[data-t=\'"+t+"\']"))return;w.setAttribute("data-t",t);n.querySelectorAll("button").forEach(function(b){b.classList.toggle("on",b.dataset.t==t)});try{sessionStorage.setItem(k,t)}catch(e){}}n.addEventListener("click",function(e){var b=e.target.closest("button");if(b)go(b.dataset.t)});document.addEventListener("invalid",function(e){var p=e.target.closest(".ptw>[data-t]");if(p)go(p.dataset.t)},true);document.addEventListener("DOMContentLoaded",function(){try{var t=sessionStorage.getItem(k);if(t)go(t)}catch(e){}})})();</script>';
 }
 
-function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
-  $ord = !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p', 'cp']));
-  $bd = [];   // coloured rounds on the tabs; opening a tab clears its rounds
-  if (!empty($_SESSION['admin']) && !empty($GLOBALS['pdo'])) {
-    foreach (['orders' => $ord, 'reviews' => isset($_GET['reviews']), 'leads' => isset($_GET['analytics'])] as $k => $open) if ($open) fx_seen($GLOBALS['pdo'], $k, true);
-    $bd = fx_badges($GLOBALS['pdo']);
-  }
-  $css = <<<'CSS'
+/* the admin look: one file the browser keeps (./?css=…, a new name whenever it changes), so each page only sends its own content */
+function fx_admin_css() { return <<<'CSS'
 .arx{display:block;font-size:.86em;font-weight:400;opacity:.72;line-height:1.5;margin-top:2px;font-family:Tahoma,Arial,sans-serif}
 .arx.in{display:inline;margin:0 0 0 6px;unicode-bidi:isolate}
 :root{--bg:#f7f3ec;--panel:#fff;--ink:#16130f;--muted:#5d554a;--line:#e3d9c8;--gold:#8f6b37;--gold-ink:#fff;--ok:#2f6b3a;--warn:#9a5b12;--bad:#9b2c2c}
@@ -438,10 +436,19 @@ main.fit nav.ems .em,main.fit .cpbar>a{flex:0 0 auto!important;flex-direction:ro
 .pfbar{display:flex;gap:6px;align-items:stretch;margin:0 0 6px;flex:none}.pfbar .btn{margin:0;padding:6px 12px;font-size:12px}.pfbar .pfbtn{flex:1 1 auto;display:flex;align-items:center;justify-content:space-between;gap:8px}.pfbar .pfbtn i{font-style:normal;transition:transform .2s}.pfbar .pfbtn.on i{transform:rotate(180deg)}.pfbar .pfbtn b{font-weight:600;color:var(--gold)}
 main.fit .pfh{display:none!important}}
 CSS;
+}
+function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
+  $ord = !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p', 'cp']));
+  $bd = [];   // coloured rounds on the tabs; opening a tab clears its rounds
+  if (!empty($_SESSION['admin']) && !empty($GLOBALS['pdo'])) {
+    foreach (['orders' => $ord, 'reviews' => isset($_GET['reviews']), 'leads' => isset($_GET['analytics'])] as $k => $open) if ($open) fx_seen($GLOBALS['pdo'], $k, true);
+    $bd = fx_badges($GLOBALS['pdo']);
+  }
+  $css = fx_admin_css();
   echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">'
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
      . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&family=Cinzel:wght@500;600&family=Jost:wght@300;400;500&family=Tajawal:wght@400;500;700&family=Manrope:wght@400;500;600;700&display=swap">'
-     . "<style>$css</style></head><body>"
+     . '<link rel="stylesheet" href="./?css=' . substr(md5($css), 0, 10) . '"></head><body>'
      . '<header class="top"><a class="brand" href="./">FOMAXO<small>ADMIN</small></a>'
      . (!empty($_SESSION['admin']) ? '<div class="hacts"><a class="btn line sm" href="../" target="_blank" rel="noopener"><span class="vw">View </span>website ↗</a><form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Sign out</button></form></div>' : '')
      . '</header>'
