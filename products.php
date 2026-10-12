@@ -21,13 +21,13 @@ if ($pdo = fomaxo_db()) { try { $v = (int)fomaxo_setting($pdo, 'sale_ends'); if 
 $ads = [];
 if ($pdo) { try { $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) ?: []; } catch (Throwable $e) {} }
 $ads = array_filter(array_intersect_key((array)$ads, array_flip(['meta', 'tiktok', 'google', 'gads', 'clarity'])), fn($v) => is_string($v) && $v !== '');
-/* shop videos (admin → Products → Videos): only the ones switched on, of products on the website; the website shows them on the home page and as Review videos on their product pages (wh: h = home page only, p = product pages only, none = both) */
+/* shop videos (admin → Products → Videos): only the ones switched on, of products on the website; the website shows them on the home page */
 $videos = [];
 if ($pdo && (string)fomaxo_setting($pdo, 'videos_off') !== '1') { try { $live = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) if (!$r['hidden']) $live[$r['id']] = true;
   foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (!empty($v['on']) && preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? '')) {   // only videos on our server: an Instagram-player entry sends shoppers off to Instagram
     $all = array_values(array_unique(array_filter(array_merge([(string)($v['product'] ?? '')], (array)($v['also'] ?? [])), fn($id) => is_string($id) && $id !== '')));   // one product, several, or none (a Shop now button)
     $ps = array_values(array_filter($all, fn($id) => isset($live[$id]))); if ($all && !$ps) continue;   // every product in it is hidden
-    $videos[] = ['v' => $v['file']] + ['p' => $ps[0] ?? ''] + (count($ps) > 1 ? ['a' => array_slice($ps, 1)] : []) + (($v['cover'] ?? '') !== '' ? ['c' => $v['cover']] : []) + (preg_match('~^vid/[a-z0-9-]+-p\.mp4$~', (string)($v['prev'] ?? '')) ? ['pv' => $v['prev']] : (fx_small_video($v['file'] ?? '') ? ['pv' => $v['file']] : [])) + (!$ps && ($v['words'] ?? '') !== '' ? ['w' => (string)$v['words']] : []) + (!empty($v['wide']) ? ['wd' => 1] : []) + (in_array($v['where'] ?? '', ['home', 'product'], true) ? ['wh' => $v['where'][0]] : []); } } catch (Throwable $e) {} }
+    $videos[] = ['v' => $v['file']] + ['p' => $ps[0] ?? ''] + (count($ps) > 1 ? ['a' => array_slice($ps, 1)] : []) + (($v['cover'] ?? '') !== '' ? ['c' => $v['cover']] : []) + (preg_match('~^vid/[a-z0-9-]+-p\.mp4$~', (string)($v['prev'] ?? '')) ? ['pv' => $v['prev']] : (fx_small_video($v['file'] ?? '') ? ['pv' => $v['file']] : [])) + (!$ps && ($v['words'] ?? '') !== '' ? ['w' => (string)$v['words']] : []) + (!empty($v['wide']) ? ['wd' => 1] : []); } } catch (Throwable $e) {} }
 /* bought together (product page): per product, the other products most often in the same real order (2+ orders together), best first.
    King and the Discovery Set are left out (not part of multi-buy); hidden products are left out on the website. */
 $together = [];
