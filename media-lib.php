@@ -17,6 +17,8 @@ function fx_media_path($file) {
   if (preg_match('~^up/([a-z0-9-]+)$~', $file, $m)) { $f = fx_media('up') . '/' . $m[1] . '.webp'; return is_file($f) ? $f : __DIR__ . '/assets/img/' . $file . '.webp'; }
   return null;
 }
+/* a video of 1.5 MB or less (every upload is made 1 MB now) is as light as a preview: the home row plays it as it is */
+function fx_small_video($file) { $f = fx_media_path($file); return $f && preg_match('~\.mp4$~', $f) && is_file($f) && filesize($f) <= 1.5 * 1048576; }
 function fx_media_delete($file) { $f = fx_media_path($file); if (($l = fx_media_public($file)) && (is_link($l) || ($f !== $l && is_file($l)))) @unlink($l); if ($f && is_file($f)) @unlink($f); }
 /* where the website shows it: assets/vid/x.mp4 or assets/img/up/x.webp in public_html */
 function fx_media_public($file) {
