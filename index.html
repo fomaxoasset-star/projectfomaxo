@@ -1739,6 +1739,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-emo button:hover{transform:scale(1.15)}
 .rw-emo button:focus-visible{outline:1px solid var(--gold-hi);outline-offset:2px}
 .rw-emo button:active{transform:scale(.9)}
+@media (max-width:480px){.rw-emo{gap:2px}.rw-emo button{width:30px}}   /* 9 emojis stay on one row on 360px phones */
 .rw-ph-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .rw-ph-prev{display:contents}
 .rw-ph-prev span{position:relative;width:78px;height:78px;border:1px solid var(--line)}
@@ -4306,7 +4307,7 @@ const rwPlace = r => (r.city || r.country) ? `<span class="rw-loc">· ${r.city ?
 let rwNations = null;
 const rwNationList = () => rwNations || (rwNations = RW_TOP.concat(RW_COUNTRIES.filter(c => !RW_TOP.includes(c)).sort((a, b) => rwCountryName(a).localeCompare(rwCountryName(b)))).map(c => [c, rwCountryName(c)]));
 /* one-tap emojis under the review box (phone keyboards' own emojis work too) */
-const RW_EMO = ['😍', '🔥', '✨', '💯', '👌', '❤️', '🌹', '👍'];
+const RW_EMO = ['😍', '🔥', '✨', '💯', '👌', '❤️', '🌹', '🎁', '👍'];
 /* words about a late delivery or a faulty / damaged product (English, Hinglish and Arabic), the same lists as reviews.php */
 const RW_LATE = /\b(?:late|delay(?:ed)?|not (?:yet )?(?:received|delivered|arrived)|never (?:came|arrived)|der(?:i|ee)? se)\b|تأخر|تاخر|متأخر|متاخر|تأخير|تاخير|لم يصل|ما وصل|ماوصل|ما جاني|لم يتم التوصيل/i,
   RW_FAULTY = /\b(?:faulty|defective|damaged?|broken|cracked|leak(?:ed|ing|s)?|spill(?:ed)?|wrong (?:item|product|perfume)|toot(?:a|i))\b|مكسور|انكسر|تكسر|تالف|خربان|معيوب|يسرب|يسرّب|تسريب|مسكوب|انسكب|منتج خطأ|منتج خطا|منتج غلط|طلب غلط/i,
