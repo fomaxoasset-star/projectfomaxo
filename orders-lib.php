@@ -1017,11 +1017,15 @@ function fomaxo_en_many(array $texts) {
     try {
       static $made = false;
       if (!$made) { $pdo->exec("CREATE TABLE IF NOT EXISTS fx_tr (h CHAR(40) NOT NULL PRIMARY KEY, en TEXT NOT NULL, created_at DATETIME NULL) DEFAULT CHARSET=utf8mb4"); $made = true; }
-      $q = $pdo->prepare('SELECT h, en FROM fx_tr WHERE h IN (' . implode(',', array_fill(0, count($need), '?')) . ')'); $q->execute(array_keys($need));
-      foreach ($q->fetchAll(PDO::FETCH_KEY_PAIR) as $h => $en) { $s = $need[$h]; $out[$s] = $memo[$s] = $en; unset($need[$h]); }
+      $q = $pdo->prepare('SELECT h, en, created_at > NOW() - INTERVAL 1 DAY FROM fx_tr WHERE h IN (' . implode(',', array_fill(0, count($need), '?')) . ')'); $q->execute(array_keys($need));
+      foreach ($q->fetchAll(PDO::FETCH_NUM) as [$h, $en, $new]) {
+        if ($en === '' && !$new) continue;   // the service could not translate it a day ago: try again
+        $s = $need[$h]; $out[$s] = $memo[$s] = $en !== '' ? $en : strtr($s, FX_AR_DIGITS); unset($need[$h]);   // '' = could not be translated today: shown as typed, not asked again
+      }
     } catch (Throwable $e) { error_log('FOMAXO translate cache: ' . $e->getMessage()); }
   }
   if (!$need || $budget <= 0 || !function_exists('curl_multi_init')) return $out;
+  if ($pdo && (int)fomaxo_setting($pdo, 'tr_down') > time()) return $out;   // the service was down or out of its daily allowance a moment ago: pages don't wait on it
   $need = array_slice($need, 0, $budget, true); $budget -= count($need);
   /* the free service takes about 450 bytes at a time: long reviews go in sentence-sized pieces */
   $parts = [];
@@ -1029,21 +1033,25 @@ function fomaxo_en_many(array $texts) {
   $mh = curl_multi_init(); $hs = [];
   foreach ($parts as $h => $list) foreach ($list as $i => $p) {
     $c = curl_init('https://api.mymemory.translated.net/get?' . http_build_query(['q' => $p, 'langpair' => 'ar|en']));
-    curl_setopt_array($c, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 6, CURLOPT_CONNECTTIMEOUT => 3]);
+    curl_setopt_array($c, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 4, CURLOPT_CONNECTTIMEOUT => 2]);
     curl_multi_add_handle($mh, $c); $hs[] = [$h, $i, $c];
   }
   do { $st = curl_multi_exec($mh, $run); if ($run) curl_multi_select($mh, 1); } while ($run && $st === CURLM_OK);
   $got = []; $bad = [];
   foreach ($hs as [$h, $i, $c]) {
     $j = json_decode((string)curl_multi_getcontent($c), true); curl_multi_remove_handle($mh, $c); curl_close($c);
-    if (!is_array($j)) $budget = 0;   // service not reachable: don't try again on this page
+    if (!is_array($j) || stripos((string)($j['responseData']['translatedText'] ?? ''), 'MYMEMORY WARNING') !== false) { $budget = 0; $down = true; }   // not reachable, or the day's allowance is used up
     $t = trim(html_entity_decode((string)($j['responseData']['translatedText'] ?? ''), ENT_QUOTES, 'UTF-8'));
     if ((int)($j['responseStatus'] ?? 0) !== 200 || $t === '' || stripos($t, 'MYMEMORY WARNING') !== false || fx_has_ar($t) && mb_strlen(preg_replace('/[^\x{0600}-\x{06FF}]/u', '', $t)) > mb_strlen($t) / 2) $bad[$h] = true;
     else $got[$h][$i] = $t;
   }
   curl_multi_close($mh);
+  if (!empty($down) && $pdo) { try { fomaxo_setting($pdo, 'tr_down', (string)(time() + 900)); } catch (Throwable $e) {} }   // the service: tried again in 15 minutes
   foreach ($need as $h => $s) {
-    if (!empty($bad[$h]) || count($got[$h] ?? []) !== count($parts[$h])) continue;
+    if (!empty($bad[$h]) || count($got[$h] ?? []) !== count($parts[$h])) {   // this text could not be translated: kept as typed for a day, so every page doesn't ask again
+      if ($pdo && empty($down)) { try { $pdo->prepare("REPLACE INTO fx_tr (h, en, created_at) VALUES (?, '', NOW())")->execute([$h]); } catch (Throwable $e) {} }
+      continue;
+    }
     ksort($got[$h]); $en = implode(' ', $got[$h]);
     $out[$s] = $memo[$s] = $en;
     if ($pdo) { try { $pdo->prepare('REPLACE INTO fx_tr (h, en, created_at) VALUES (?, ?, NOW())')->execute([$h, $en]); } catch (Throwable $e) {} }
