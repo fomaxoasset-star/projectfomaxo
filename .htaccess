@@ -20,6 +20,10 @@ RewriteRule ^assets/img/link-preview\.jpg$ assets/img/link-preview-square.jpg [L
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^assets/(vid/[a-z0-9-]+\.(?:mp4|mov|webm)|img/up/[a-z0-9-]+\.webp)$ media.php?f=$1 [L]
 
+# the home page as an Arabic link (fomaxo.com/?lang=ar): same page, Arabic words in the WhatsApp / Instagram preview
+RewriteCond %{QUERY_STRING} (^|&)lang=ar(&|$)
+RewriteRule ^(index\.html)?$ home.php [L,QSA]
+
 # product addresses for Google: fomaxo.com/fomaxo-gold → product.php; fomaxo.com/sitemap.xml → sitemap.php
 RewriteRule ^sitemap\.xml$ sitemap.php [L]
 RewriteCond %{REQUEST_FILENAME} !-f

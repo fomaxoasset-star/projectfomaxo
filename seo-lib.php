@@ -25,3 +25,27 @@ function fomaxo_seo_products() {
 function fomaxo_slug($s) { return trim(preg_replace('/[^a-z0-9]+/', '-', strtolower((string)$s)), '-'); }
 /* the product's own address, e.g. https://fomaxo.com/fomaxo-old-money */
 function fomaxo_seo_url($p) { return FOMAXO_SITE . '/fomaxo-' . (fomaxo_slug($p['name'] ?? '') ?: fomaxo_slug($p['id'])); }
+
+/* English → Arabic for link previews (WhatsApp, Instagram) of Arabic links (?lang=ar): the same word list the Arabic site uses
+   (assets/i18n-ar.js), then the translations already kept for the shop; '' when there is none (the English stays) */
+function fomaxo_ar_text($en) {
+  static $d = null;
+  if ($d === null) {
+    $d = [];
+    preg_match_all('/^("(?:[^"\\\\]|\\\\.)*")\s*:\s*("(?:[^"\\\\]|\\\\.)*"),?\s*$/m', (string)@file_get_contents(__DIR__ . '/assets/i18n-ar.js'), $m, PREG_SET_ORDER);
+    foreach ($m as $x) { $k = json_decode($x[1]); $v = json_decode($x[2]); if (is_string($k) && is_string($v)) $d[$k] = $v; }
+  }
+  $en = trim((string)$en);
+  if ($en === '') return '';
+  if (isset($d[$en])) return $d[$en];
+  return function_exists('fomaxo_ar_many') ? (string)(fomaxo_ar_many([$en])[$en] ?? '') : '';
+}
+/* the preview words of a page for an Arabic link: Arabic description, Arabic address, Arabic language tag */
+function fomaxo_ar_preview($html, $url, $title, $desc) {
+  $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+  $q = fn($s) => strtr((string)$s, ['\\' => '\\\\', '$' => '\$']);
+  if ($title !== '') $html = preg_replace('#<meta property="og:title" content="[^"]*">#', $q('<meta property="og:title" content="' . $h($title) . '">'), $html, 1);
+  if ($desc !== '') $html = preg_replace('#<meta property="og:description" content="[^"]*">#', $q('<meta property="og:description" content="' . $h($desc) . '">'), $html, 1);
+  $html = preg_replace('#<meta property="og:url" content="[^"]*">\n?#', '', $html);
+  return preg_replace('#(<meta property="og:site_name"[^>]*>\n)#', '$1' . $q('<meta property="og:url" content="' . $h($url) . "\">\n<meta property=\"og:locale\" content=\"ar_AE\">\n"), $html, 1);
+}

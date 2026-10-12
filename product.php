@@ -75,11 +75,13 @@ $html = preg_replace('#<meta property="og:description" content="[^"]*">#', '<met
 if ($images) $html = preg_replace('#<meta property="og:image" content="[^"]*">#', '<meta property="og:image" content="' . $h($images[0]) . '">', $html, 1);
 if ($images) $html = preg_replace(['#<meta property="og:image:(width|height)"[^>]*>\n?#', '#<meta name="twitter:image" content="[^"]*">#'], ['', '<meta name="twitter:image" content="' . $h($images[0]) . '">'], $html);  /* product photo has its own size */
 $html = preg_replace('#(<meta charset="utf-8">\n)#', '$1' . strtr($head, ['\\' => '\\\\', '$' => '\$']), $html, 1);
+if (($_GET['lang'] ?? '') === 'ar')   /* an Arabic link (shared from the Arabic site): Arabic words in the WhatsApp / Instagram preview */
+  $html = fomaxo_ar_preview($html, $url . '?lang=ar', 'FOMAXO ' . $name, fomaxo_ar_text($short) ?: fomaxo_ar_text($desc));
 /* the same words as plain text, for anything that reads the page without running it */
 $text = '<noscript><div style="max-width:720px;margin:40px auto;padding:0 16px"><h1>FOMAXO ' . $h($name) . '</h1><p>' . $h($family) . '</p><p>' . $h($desc ?: $short) . '</p>'
       . ($notes ? '<p>Notes: ' . $h(implode(' · ', $notes)) . '</p>' : '') . ($lines ? '<p>' . $h(implode(' · ', $lines)) . '</p>' : '') . '<p>Free delivery anywhere in the UAE.</p></div></noscript>';
 $html = preg_replace('#<body>#', '<body>' . strtr($text, ['\\' => '\\\\', '$' => '\$']), $html, 1);
 
 header('Content-Type: text/html; charset=utf-8');
-header('Cache-Control: public, max-age=300');
+header('Cache-Control: ' . (($_GET['lang'] ?? '') === 'ar' ? 'no-cache' : 'public, max-age=300'));   /* the Arabic link is never handed the English preview from a cache */
 echo $html;
