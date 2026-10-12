@@ -2746,6 +2746,7 @@ if (isset($_GET['reports'])) {
 if (isset($_GET['reviews'])) {
   require_once dirname(__DIR__) . '/store-lib.php';
   require_once dirname(__DIR__) . '/reviews-lib.php';
+  $CATALOG += RV_EXTRA;   // Gift Box reviews show in the lists and filters too
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['reviews' => 1]); }
     $back = array_filter(['reviews' => 1, 'v' => (string)($_POST['v'] ?? ''), 'rp' => (string)($_POST['rp'] ?? ''), 'rq' => (string)($_POST['rq'] ?? ''), 'vf' => (string)($_POST['vf'] ?? ''), 'rs' => (string)($_POST['rs'] ?? '')], fn($x) => $x !== '');
@@ -3279,6 +3280,7 @@ if (isset($_GET['members']) || (isset($_GET['orders']) && (isset($_GET['ask']) |
     /* reviews: the ones written from this customer's order links, plus any with the same name */
     require_once dirname(__DIR__) . '/store-lib.php';
     require_once dirname(__DIR__) . '/reviews-lib.php';
+    $CATALOG += RV_EXTRA;
     $nm = mb_strtolower(trim((string)($c['name'] ?? '')));
     $revs = array_filter(rv_all(), fn($r) => (!empty($r['order']) && in_array($r['order'], $nos, true))
       || ($nm !== '' && mb_strtolower(trim((string)(!empty($r['anon']) ? ($r['real'] ?? '') : $r['name']))) === $nm));

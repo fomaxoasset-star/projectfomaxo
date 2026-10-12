@@ -11,6 +11,7 @@
 header('Cache-Control: no-store');
 require __DIR__ . '/store-lib.php';
 require __DIR__ . '/reviews-lib.php';
+$CATALOG += RV_EXTRA;   // the Gift Box can be reviewed too
 
 $STORE_EMAIL = 'fomaxoasset@gmail.com';
 $MAX_PHOTOS  = 3;            // photos per review
