@@ -613,7 +613,7 @@ const FX_PHONE_JS = <<<'JS'
 (function(){
   var m=document.querySelector('main.fit');if(!m||!matchMedia('(max-width:759px)').matches)return;
   var F=[].slice.call(m.querySelectorAll('form.filters,.rgbar,.pagehead.rg,.rqtop form.arange,.mtop,form.rfilter,form.yearbar,form.rflistd,details.rfauto,form.card.add,.card.lowlvl,.stock-help,.pagehead>span'));
-  F=F.filter(function(f){return !F.some(function(g){return g!==f&&g.contains(f)})});if(!F.length)return;
+  F=F.filter(function(f){return !f.closest('.cpgrid')&&!F.some(function(g){return g!==f&&g.contains(f)})});if(!F.length)return;   // Coupons keeps its form open (it has its own tabs)
   var bar=document.createElement('div');bar.className='pfbar';
   var b=document.createElement('button');b.type='button';b.className='btn line pfbtn';
   var add=m.querySelector('form.card.add'),on=[].slice.call(m.querySelectorAll('form.filters input[name=q],form.mq input[type=search],form.mq input[type=text],form.mq input:not([type]),form.rfilter input[type=search],form.rfilter input[type=text]')).some(function(i){return i.value});
@@ -2424,11 +2424,15 @@ if (isset($_GET['coupons'])) {
     if ($st !== '' && $en !== '' && $en <= $st) { flash('The end must be after the start.'); go(['coupons' => 1]); }
     $had = $pdo->prepare('SELECT 1 FROM fx_coupons WHERE code = ?'); $had->execute([$code]); $had = (bool)$had->fetchColumn();
     $stack = ($_POST['stack'] ?? '') === '1' ? 1 : 0;   // with website offers: 0 = use the bigger offer, 1 = use both
-    $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, per_cust, free_id, free_opt) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, 1, NOW(), ?, ?, ?, ?)
+    /* WhatsApp mobile (optional): who to send the code to; anyone can still use the code */
+    $wa = trim(strtr((string)($_POST['wa_to'] ?? ''), FX_AR_DIGITS));
+    if ($wa !== '' && strlen(fomaxo_phone9($wa)) < 9) { flash('Please type the full WhatsApp mobile number, or leave it empty.'); go(['coupons' => 1]); }
+    $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, per_cust, free_id, free_opt, wa_to) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, 1, NOW(), ?, ?, ?, ?, ?)
                    ON DUPLICATE KEY UPDATE kind = VALUES(kind), amount = VALUES(amount), min_order = VALUES(min_order), expires = NULL, starts = VALUES(starts), ends = VALUES(ends), max_uses = VALUES(max_uses), active = 1, stack = VALUES(stack),
-                   per_cust = VALUES(per_cust), free_id = VALUES(free_id), free_opt = VALUES(free_opt)')
+                   per_cust = VALUES(per_cust), free_id = VALUES(free_id), free_opt = VALUES(free_opt), wa_to = COALESCE(VALUES(wa_to), wa_to)')
         ->execute([$code, $kind, round($amt, 2), $min !== null && $min > 0 ? round($min, 2) : null, $st !== '' ? $st : null, $en !== '' ? $en : null, $uses !== null && $uses > 0 ? $uses : null, $stack,
-                   !empty($_POST['per_cust']) ? 1 : 0, $fr[0] ?? null, $fr[1] ?? null]);
+                   !empty($_POST['per_cust']) ? 1 : 0, $fr[0] ?? null, $fr[1] ?? null, $wa !== '' ? substr($wa, 0, 25) : null]);
+    if ($wa !== '') $_SESSION['cpsend'] = $code;   // the saved code shows under the form with its WhatsApp button
     flash("Coupon $code " . ($had ? 'updated' : 'saved') . '. ' . ($st !== '' && $st > date('Y-m-d H:i:s') ? 'It starts ' . date('d/m/Y, g:i a', strtotime($st)) . '.' : 'Customers can use it now.'), true); go(['coupons' => 1]);
   }
   fx_coupon_sweep($pdo);   // one-use codes already used up (an order placed or paid before this was in place) go now
@@ -2438,6 +2442,7 @@ if (isset($_GET['coupons'])) {
   foreach ($pdo->query("SELECT coupon, COUNT(*) n, COALESCE(SUM(discount), 0) d, COALESCE(SUM(total), 0) t FROM fx_orders WHERE coupon IS NOT NULL AND test = 0
                         AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') GROUP BY coupon") as $r) $used[$r['coupon']] = $r;
   $now = date('Y-m-d H:i:s'); $tr = '';
+  $sendc = null; if (!empty($_SESSION['cpsend'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['cpsend']]); $sendc = $s->fetch() ?: null; unset($_SESSION['cpsend']); }
   $made = null; if (!empty($_SESSION['goodwill'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['goodwill']]); $made = $s->fetch() ?: null; unset($_SESSION['goodwill']); }
   $dt = fn($v) => date('d/m/Y, g:i a', strtotime($v));
   $left = function ($v) { $m = (int)floor((strtotime($v) - time()) / 60); $d = intdiv($m, 1440); $h = intdiv($m % 1440, 60);
@@ -2450,7 +2455,7 @@ if (isset($_GET['coupons'])) {
     $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($ends && $ends < $now ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled']
            : ($starts && $starts > $now ? ['Scheduled', 's-New'] : ['On', 'p-Paid'])));
     $time = $starts && $starts > $now ? 'Starts ' . $dt($starts) . ($ends ? ' · ends ' . $dt($ends) : '') : ($ends ? 'Ends ' . $dt($ends) . ($state[0] === 'On' ? ' · ' . $left($ends) : '') : '');
-    $rules = array_filter([!empty($c['phone']) ? $tag($c['code']) . ' · for ' . $c['phone'] : '', $c['kind'] === 'free' ? '' : (!empty($c['stack']) ? 'Use both' : 'Bigger offer'),
+    $rules = array_filter([!empty($c['phone']) ? $tag($c['code']) . ' · for ' . $c['phone'] : (!empty($c['wa_to']) ? 'WhatsApp ' . $c['wa_to'] : ''), $c['kind'] === 'free' ? '' : (!empty($c['stack']) ? 'Use both' : 'Bigger offer'),
       (float)$c['min_order'] > 0 ? ($c['kind'] === 'free' ? 'Spend at least ' : 'Min. order ') . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '',
       !empty($c['per_cust']) ? 'One use per customer' : '']);
     $btn = fn($name, $val, $label, $ask = '') => '<form method="post" style="margin:0"' . ($ask ? ' onsubmit="return confirm(\'' . h($ask) . '\')"' : '') . '>' . csrf_field()
@@ -2461,7 +2466,7 @@ if (isset($_GET['coupons'])) {
       . '<div class="cpacts">' . ((int)$c['active'] ? $btn('toggle', 'off', 'Turn off') : $btn('toggle', 'on', 'Turn on'))
       . $btn('delete', '1', 'Delete', 'Delete coupon ' . $c['code'] . '? Orders that used it keep the code.')
       /* WhatsApp on every coupon that works: to its customer when it has a mobile, else WhatsApp opens and you pick who; Sent dd/mm once sent */
-      . (in_array($state[0], ['On', 'Scheduled'], true) ? fx_wa_btn((string)($c['phone'] ?? ''), (string)($c['phone'] ?: $c['code']), str_starts_with($c['code'], 'GOODWILL-') ? fx_goodwill_text($c) : fx_coupon_share_text($c), '', 'cp:' . $c['code'], 'g', false, 'btn sm wag cpwa', true) : '') . '</div></div>';
+      . (in_array($state[0], ['On', 'Scheduled'], true) ? fx_wa_btn((string)($c['phone'] ?: ($c['wa_to'] ?? '')), (string)($c['phone'] ?: ($c['wa_to'] ?: $c['code'])), str_starts_with($c['code'], 'GOODWILL-') ? fx_goodwill_text($c) : fx_coupon_share_text($c), '', 'cp:' . $c['code'], 'g', false, 'btn sm wag cpwa', true) : '') . '</div></div>';
   }
   page('Coupons', '<div class="pagehead"><h1>Coupons</h1></div>' . flash() . fx_tabs(['Make a coupon', 'Your coupons (' . count($list) . ')'], 'Coupons')
     . '<style>.cpcode{letter-spacing:.06em}.cpin{text-transform:uppercase;letter-spacing:.06em}.cpin::placeholder{text-transform:none;letter-spacing:0}'
@@ -2476,6 +2481,7 @@ if (isset($_GET['coupons'])) {
     . '.cpr .cprow{grid-template-columns:1fr auto;gap:6px 16px}.cpr .cpacts{grid-column:2;grid-row:1/3;flex-direction:column;align-items:stretch}.cpr .cpacts .btn{width:100%}.cpr .cpused{text-align:left}}</style>'
     . fx_free_pick_js()
     . '<div class="cpgrid fitbox ptw" data-t="1"><div class="cpl" data-t="1"><form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Make a coupon</h2>'
+    . ($sendc ? '<div class="cpmade" style="margin:0 0 8px"><span>Saved <b class="cpcode">' . h($sendc['code']) . '</b> · ' . h(fomaxo_coupon_label($sendc)) . ' · to ' . h((string)$sendc['wa_to']) . '</span>' . fx_wa_btn((string)$sendc['wa_to'], (string)$sendc['wa_to'], fx_coupon_share_text($sendc), '', 'cp:' . $sendc['code'], 'g', false, 'btn sm wag', true) . '</div>' : '')
     . '<div class="g3 cpg1"><div><label for="code">Code</label><div class="cpcodebox"><input id="code" class="cpin" name="code" maxlength="30" placeholder="e.g. WELCOME10" autocapitalize="characters" autocomplete="off" required><button type="button" class="btn line sm" data-mkcode>Make code</button></div></div>'
     . '<div><label for="kind">Type</label><select id="kind" name="kind" data-cpkind><option value="pct">% off</option><option value="aed">AED off</option><option value="free">Free product</option></select></div>'
     . '<div class="cpamt"><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" placeholder="e.g. 10" required></div>'
@@ -2483,6 +2489,7 @@ if (isset($_GET['coupons'])) {
     . '<div class="g3"><div><label for="min_order"><span class="cpminl">Minimum order AED</span> (optional)</label><input id="min_order" type="number" min="0" step="0.01" inputmode="decimal" name="min_order"></div>'
     . '<div><label for="max_uses">Max uses (optional)</label><input id="max_uses" type="number" min="1" step="1" inputmode="numeric" name="max_uses"></div></div>'
     . '<label class="cptick"><input type="checkbox" name="per_cust" value="1"> One use per customer (mobile number)</label>'
+    . '<label for="wa_to">WhatsApp mobile (optional)</label><input id="wa_to" name="wa_to" type="tel" inputmode="tel" placeholder="050 123 4567 · to send this coupon" maxlength="20" autocomplete="off">'
     /* website offers (multi-buy): use the bigger saving, or the coupon on top of the offer */
     . '<label>With website offers</label><div class="cpst" role="radiogroup"><label><input type="radio" name="stack" value="0" checked><span><b>Use the bigger offer</b>Customer gets the coupon or the offer, whichever saves more</span></label>'
     . '<label><input type="radio" name="stack" value="1"><span><b>Use both</b>Customer gets the offer, then the coupon on top</span></label></div>'

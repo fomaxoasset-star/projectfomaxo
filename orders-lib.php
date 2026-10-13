@@ -307,6 +307,8 @@ function fomaxo_coupons_table($pdo) {
   /* kind 'free': a free product (free_id in size free_opt) joins the order at AED 0; per_cust = 1: each mobile number can use the code once */
   try { if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'per_cust'")->fetch()) $pdo->exec("ALTER TABLE fx_coupons MODIFY kind VARCHAR(4) NOT NULL DEFAULT 'pct',
           ADD COLUMN per_cust TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN free_id VARCHAR(40) NULL, ADD COLUMN free_opt VARCHAR(10) NULL"); } catch (Throwable $e) {}
+  /* wa_to: the mobile a coupon is sent to on WhatsApp (Coupons → Make a coupon); unlike phone it does not stop anyone else using the code */
+  try { if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'wa_to'")->fetch()) $pdo->exec("ALTER TABLE fx_coupons ADD COLUMN wa_to VARCHAR(25) NULL"); } catch (Throwable $e) {}
 }
 /* the same mobile written any way (+971 50…, 050…, Arabic digits) gives the same last 9 digits */
 function fomaxo_phone9($p) { return substr(preg_replace('/\D/', '', strtr((string)$p, FX_AR_DIGITS)), -9); }
