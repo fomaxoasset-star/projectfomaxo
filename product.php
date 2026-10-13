@@ -1,7 +1,9 @@
 <?php
 /* FOMAXO — a product's own address for Google: fomaxo.com/fomaxo-gold, fomaxo.com/fomaxo-old-money … (.htaccess sends them here).
    Sends the normal website (index.html, looks exactly the same) with that product's title, description, photo and price data
-   (schema.org Product) in the page head, and opens the product page straight away. */
+   (schema.org Product) in the page head, and opens the product page straight away.
+   The Arabic address (fomaxo.com/fomaxo-gold?lang=ar) gets an Arabic Google title and description and is its own page for Google;
+   both point to each other (hreflang). ?size=50 opens that size (the Google Shopping list links to each size). */
 require __DIR__ . '/seo-lib.php';
 require_once __DIR__ . '/reviews-lib.php';
 
@@ -28,8 +30,10 @@ $name = (string)$p['name'];
 $family = (string)($p['family'] ?? '');
 $desc = trim(implode(' ', array_map('strval', (array)($p['description'] ?? []))));
 $short = trim((string)($p['short'] ?? '')) ?: mb_substr($desc, 0, 150);
-$img = fn($k) => FOMAXO_SITE . '/assets/img/' . rawurlencode((string)$k) . '.webp';
-$images = array_values(array_map($img, array_filter((array)($p['images'] ?? []), 'is_string')));
+$images = array_values(array_map('fomaxo_img_url', array_filter((array)($p['images'] ?? []), 'is_string')));
+$ar = ($_GET['lang'] ?? '') === 'ar';
+$size = (string)($_GET['size'] ?? '');
+if (!in_array($size, array_map('strval', (array)($p['sizes'] ?? [])), true)) $size = '';
 
 /* prices and stock, size by size (stock typed in on admin → Stock; not typed in = in stock) */
 $stock = [];
@@ -60,11 +64,19 @@ $crumbs = ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'ite
 
 $title = "$name $family | FOMAXO Dubai";
 $meta = "FOMAXO $name, " . ($isSet ? $family : "$family perfume") . '. ' . $short . ($min !== null ? ' From AED ' . $min . '.' : '') . ' Free delivery anywhere in the UAE.';
+if ($ar) {   /* Arabic Google title and description (names, FOMAXO, AED and ml stay English); a missing translation keeps the English */
+  $familyAr = fomaxo_ar_text($family); $shortAr = fomaxo_ar_text($short) ?: fomaxo_ar_text($desc);
+  if ($familyAr !== '') $title = "$name $familyAr | FOMAXO دبي";
+  if ($familyAr !== '' && $shortAr !== '')
+    $meta = "FOMAXO {$name}، " . ($isSet ? $familyAr : "عطر $familyAr") . '. ' . $shortAr . ($min !== null ? ' يبدأ من AED ' . $min . '.' : '') . ' توصيل مجاني إلى جميع أنحاء الإمارات.';
+}
 $J = fn($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
 
-$head = "<link rel=\"canonical\" href=\"{$h($url)}\">\n"
+$head = "<link rel=\"canonical\" href=\"{$h($url . ($ar ? '?lang=ar' : ''))}\">\n"
+      . "<link rel=\"alternate\" hreflang=\"en\" href=\"{$h($url)}\">\n<link rel=\"alternate\" hreflang=\"ar\" href=\"{$h($url . '?lang=ar')}\">\n"
+      . "<link rel=\"alternate\" hreflang=\"x-default\" href=\"{$h($url)}\">\n"
       . "<meta property=\"og:url\" content=\"{$h($url)}\">\n<meta property=\"og:type\" content=\"product\">\n"
-      . "<script>if(!location.hash)history.replaceState(null,'',location.pathname+location.search+'#/product/'+" . $J($p['id']) . ");</script>\n"
+      . "<script>if(!location.hash)history.replaceState(null,'',location.pathname+location.search+'#/product/'+" . $J($p['id'] . ($size !== '' ? "?size=$size" : '')) . ");</script>\n"
       . "<script type=\"application/ld+json\">" . $J($ld) . "</script>\n"
       . "<script type=\"application/ld+json\">" . $J($crumbs) . "</script>\n";
 $html = preg_replace('#<link rel="canonical"[^>]*>\n?#', '', $html);
@@ -78,8 +90,14 @@ $html = preg_replace('#(<meta charset="utf-8">\n)#', '$1' . strtr($head, ['\\' =
 if (($_GET['lang'] ?? '') === 'ar')   /* an Arabic link (shared from the Arabic site): Arabic words in the WhatsApp / Instagram preview */
   $html = fomaxo_ar_preview($html, $url . '?lang=ar', 'FOMAXO ' . $name, fomaxo_ar_text($short) ?: fomaxo_ar_text($desc));
 /* the same words as plain text, for anything that reads the page without running it */
+if ($ar) $html = preg_replace('#<html lang="en">#', '<html lang="ar" dir="rtl">', $html, 1);
+if ($ar) {   /* the plain text in Arabic too, paragraph by paragraph */
+  $descAr = implode(' ', array_filter(array_map('fomaxo_ar_text', array_map('strval', (array)($p['description'] ?? [])))));
+  if ($descAr !== '' || fomaxo_ar_text($short) !== '') { $desc = $descAr; $short = fomaxo_ar_text($short) ?: $short; $family = fomaxo_ar_text($family) ?: $family; }
+}
+$tNotes = $ar ? 'النفحات: ' : 'Notes: '; $tFree = $ar ? 'توصيل مجاني إلى جميع أنحاء الإمارات.' : 'Free delivery anywhere in the UAE.';
 $text = '<noscript><div style="max-width:720px;margin:40px auto;padding:0 16px"><h1>FOMAXO ' . $h($name) . '</h1><p>' . $h($family) . '</p><p>' . $h($desc ?: $short) . '</p>'
-      . ($notes ? '<p>Notes: ' . $h(implode(' · ', $notes)) . '</p>' : '') . ($lines ? '<p>' . $h(implode(' · ', $lines)) . '</p>' : '') . '<p>Free delivery anywhere in the UAE.</p></div></noscript>';
+      . ($notes ? '<p>' . $tNotes . $h(implode(' · ', $notes)) . '</p>' : '') . ($lines ? '<p>' . $h(implode(' · ', $lines)) . '</p>' : '') . '<p>' . $tFree . '</p></div></noscript>';
 $html = preg_replace('#<body>#', '<body>' . strtr($text, ['\\' => '\\\\', '$' => '\$']), $html, 1);
 
 header('Content-Type: text/html; charset=utf-8');
