@@ -2504,7 +2504,8 @@ html[dir="rtl"] .rl-s{direction:rtl}
 .gf-set .cb-price + .ctas{margin-top:0}
 .gf-set .ctas.cb-ctas{grid-template-columns:1fr 1fr}.gf-set .ctas .cb-soon{grid-column:1/-1;opacity:.7;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px}.cb-soon .cb-soon-t{font-variant-numeric:tabular-nums;font-size:.92em;color:var(--gold-hi)}.cb-tab .cb-left{font-weight:500;font-variant-numeric:tabular-nums;opacity:1;color:var(--gold-hi)}.cb-tab.on .cb-left{color:#0a0805}.cb-tab > svg:last-child{transform:scaleX(-1)}.cb-tab .cb-live{display:inline-flex;align-items:center;gap:5px;font-weight:600;color:var(--gold-hi);opacity:1}.cb-tab.on .cb-live{color:#0a0805}.cb-tab.cb-open:not(.on){border-color:var(--gold-hi);box-shadow:inset 0 0 0 1px var(--gold-hi)}.cb-live i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 currentColor;animation:cbLive 1.8s ease-out infinite}@keyframes cbLive{0%{box-shadow:0 0 0 0 rgba(212,175,95,.7)}100%{box-shadow:0 0 0 7px rgba(212,175,95,0)}}@media(prefers-reduced-motion:reduce){.cb-live i{animation:none}}.cb-in{color:var(--gold-hi)!important;letter-spacing:.14em;text-transform:uppercase;font-size:10px}
 .cb-slot:hover,.cb-slot:focus-visible{border-color:var(--gold);outline:none}
-.gf-pick > small.cb-gift-h{display:block;margin-top:12px}   /* like fomaxo.in: a small label line, then the free 10ml row in the usual row style */
+.gf-pick > small.cb-gift-h{display:block;margin-top:12px}
+.dr-foot .mini-pick.mini-fixed{display:flex;flex-wrap:nowrap;flex-direction:row;align-items:center;gap:12px}.dr-foot .mini-pick.mini-fixed label.mini-l{flex:none;width:auto;text-align:left}html[dir=rtl] .dr-foot .mini-pick.mini-fixed label.mini-l{text-align:right}.dr-foot .mini-fixed .mini-g{flex:1;min-width:0;display:flex;align-items:center;gap:10px;color:var(--ivory)}.dr-foot .mini-fixed .mini-g img{width:40px;height:40px;object-fit:cover;flex:none;border:1px solid var(--line)}.dr-foot .mini-fixed .mini-g b{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dr-foot .mini-fixed .price{flex:none}.co-free .mini-n{margin-top:4px;font-size:14px}   /* like fomaxo.in: a small label line, then the free 10ml row in the usual row style */
 .cb-slot img,.cb-slot .ph0{width:58px;height:58px;object-fit:cover;flex:none;background:#000;border:1px solid var(--line)}
 .cb-slot .ph0{display:grid;place-items:center;background:transparent;border:1px dashed var(--gold-hi)}.cb-slot .ph0::after{content:"+";color:var(--gold-hi);font-size:22px;line-height:1}   /* empty slot: a gold + to add a product */
 .cb-slot .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -3024,6 +3025,9 @@ function miniPick(){
   const ok = miniScents().map(p => p.id);
   return ok.includes(saved) ? saved : ok[0];
 }
+/* the free 10ml picked on the Combo Buy 3 card is the order's one free gift: the bag and checkout show it, without asking again */
+const miniFixed = () => { let f = null; try { f = localStorage.getItem('fomaxo_mini_card'); } catch(e) {} return f === '1' && miniScents().some(p => p.id === miniPick()); };
+const miniGiftHTML = id => { const p = P[id]; return p ? `<span class="mini-g"><img src="${SM(imgFor(p, 10))}" alt=""><b>${esc(p.name)} · 10ml</b></span>` : ''; };
 function qtyDiscount(lines){
   let units = 0, base = 0, has10 = false;
   for (const l of lines){ if (QTY_DISCOUNT_SKIP.includes(l.id)) continue; if (String(l.opt) === '10') has10 = true; const v = P[l.id].prices[l.opt]; if (!hasPrice(v)) continue; units += l.qty; base += Number(v) * l.qty; }
@@ -3179,7 +3183,8 @@ function renderCart(){
   const t0 = subtotal(cart), dc = qtyDiscount(cart);
   const t = t0 !== null ? Math.round((t0 - dc.amount) * 100) / 100 : null;   // total after the multi-buy discount
   const nudge = `<div class="qd-nudge">${ICON.gift || ''}<span>${qtyNudge(dc)}${qdBar(dc)}${dc.has10 && dc.units >= 2 ? '<small class="qd-note">The FREE 10ml mini is not included when your bag has a 10ml bottle.</small>' : ''}</span></div>`;
-  const mini = dc.mini ? `<div class="mini-pick qd-row"><label for="miniSel" class="mini-l">Choose your free 10ml scent</label><select id="miniSel" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select><span class="price">FREE</span></div>` : '';
+  const mini = dc.mini && miniFixed() ? `<div class="mini-pick qd-row mini-fixed"><label class="mini-l">Your free gift</label>${miniGiftHTML(dc.miniId)}<span class="price">FREE</span></div>`
+    : dc.mini ? `<div class="mini-pick qd-row"><label for="miniSel" class="mini-l">Choose your free 10ml scent</label><select id="miniSel" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select><span class="price">FREE</span></div>` : '';
   const disc = dc.amount > 0 ? `<div class="sub-row qd-row"><span>${dcLabel(dc)}</span><span class="price">−${moneyHTML(dc.amount, true)}</span></div>` : '';
   const delivery = `<div class="sub-row" style="font-size:10px"><span>Delivery</span><span class="gold" style="letter-spacing:.2em">Free · anywhere in UAE</span></div>`;
   foot.innerHTML = `${delivery}${nudge}${mini}${t !== null ? `<div class="sub-row ph-sub"><span>Subtotal · <span class="gold">Free delivery</span></span><span class="price">${moneyHTML(t0, true)}</span></div><div class="sub-row"><span>Subtotal</span><span class="price">${moneyHTML(t0, true)}</span></div>${disc}` : ''}<div class="sub-row total-row"><span>Total</span>${t !== null ? `<span class="price">${moneyHTML(t, true)}</span>` : `<span class="small" style="letter-spacing:0;text-transform:none">Confirmed with your order</span>`}</div>
@@ -4271,7 +4276,7 @@ function cbAdd(gid, buy){
   if (g.offer ? ls.length < 3 : ls.length < 2) { toast(g.offer ? 'Please choose all three parfums' : 'Please choose at least two products'); return; }
   const out = ls.find(([id, s]) => cbOut(id, s) || inBagQty(id, +s) + 1 > maxQty(id, +s));
   if (out) { toast(`${P[out[0]].name} · ${out[1]}ml is out of stock. Please change it`); return; }
-  const gm = g.offer && $(`[data-gmini="${gid}"]`); if (gm) try { localStorage.setItem('fomaxo_mini', gm.value.split('|')[0]); } catch(e) {}   // the free 10ml chosen on the card is the one in the bag
+  const gm = g.offer && $(`[data-gmini="${gid}"]`); if (gm) try { localStorage.setItem('fomaxo_mini', gm.value.split('|')[0]); localStorage.setItem('fomaxo_mini_card', '1'); } catch(e) {}   // the free 10ml chosen on the card is the one in the bag
   ls.forEach(([id, s]) => addToCart(id, +s, 1, true));
   if (buy) location.hash = '#/checkout'; else toast(`${g.name} added to your bag`);
 }
@@ -4637,7 +4642,8 @@ function bindCheckout(q){
     const T = orderTotals(ls, coPay, true), dc = T.dc;
     // order summary
     const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${SM(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l, true)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
-    const mini = dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${SM(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b class="mini-l">Choose your free 10ml scent</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
+    const mini = dc.mini && miniFixed() ? `<div class="co-item co-free"><span class="co-img"><img src="${SM(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b class="mini-l">Your free gift</b><div class="mini-n">${esc(P[dc.miniId].name)} · 10ml</div></div><span class="price">FREE</span></div>`
+    : dc.mini ? `<div class="co-item co-free"><span class="co-img"><img src="${SM(imgFor(P[dc.miniId], 10))}" alt=""><i>1</i></span><div><b class="mini-l">Choose your free 10ml scent</b><select id="coMini" aria-label="Choose your free 10ml mini">${miniScents().map(p => `<option value="${p.id}"${p.id === dc.miniId ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></div><span class="price">FREE</span></div>` : '';
     // a free product coupon: its product shows in the summary at AED 0 (checkout.php and ziina.php add it to the order)
     const fv = T.freeOn ? coupon.free : null, fp = fv && P[fv.id];
     const freeIt = fv ? `<div class="co-item co-free co-gift"><span class="co-img">${fp ? `<img src="${SM(imgFor(fp, fv.opt))}" alt="">` : ''}<i>1</i></span><div><h4>${esc(fp ? fp.name : fv.name)}</h4><div class="o">${fp ? optLabel(fp, fv.opt) + ' · ' : ''}<span>Free with ${esc(coupon.code)}</span></div></div><span class="price">FREE</span></div>` : '';
