@@ -3343,8 +3343,8 @@ const soldKey = (p, s) => s;   // every choice on its own: 10ml, 50ml, 100ml, an
 const soldHTML = (id, s) => soldN(id, s) > 0 ? `${ICON.bag}<span>${soldN(id, s)} purchased this week</span>` : '';
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
-  // sale: "Regular price" with the old price struck on top, "Offer price" with the new price below it, each word centred with its number (AJAY 2026-10-13); the saving in a small green box on the right
-  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><div class="pp-line pp-lab"><span class="pp-lb">Regular price</span><s class="was">${moneyHTML(c)}</s><span class="pp-lb">Offer price</span><span class="pprice">${moneyHTML(v)}</span></div><div class="pp-r"><span class="p-save">You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span><div id="pstk">${stockHTML(p.id, size, true)}</div></div></div>${saleCD(lineOn(p))}`;
+  // sale: "Original price" with the old price struck on top, "Exclusive price" with the new price below it, each word centred with its number (AJAY 2026-10-13); the saving in a small green box on the right
+  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><div class="pp-line pp-lab"><span class="pp-lb">Original price</span><s class="was">${moneyHTML(c)}</s><span class="pp-lb">Exclusive price</span><span class="pprice">${moneyHTML(v)}</span></div><div class="pp-r"><span class="p-save">You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span><div id="pstk">${stockHTML(p.id, size, true)}</div></div></div>${saleCD(lineOn(p))}`;
   return priceHTML(p, size, 'pprice') + `<div id="pstk">${stockHTML(p.id, size, true)}</div>`; };   // AJAY: the low-stock box sits right under the green "You save" box
 // the multi-buy offer, shown before the customer adds to bag (King and the Discovery Set are not part of it)
 const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
