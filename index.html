@@ -4162,7 +4162,12 @@ const cbSwap = g => { const used = new Set(g.items.filter(([id, s]) => !cbOut(id
 const MOOD = {gold: 'Strong · Seductive', dollar: 'Fresh · Zesty', oldmoney: 'Quiet luxury', royalcandy: 'Sweet · Bold', matchacoco: 'Matcha · Coconut', passionsin: 'Warm · Magnetic'};
 const cbName = (p, sz) => p.kind ? p.name : `${p.name} · ${sz}ml`;
 const cbSub = p => p.kind ? (p.vol || 'Personal care') : (MOOD[p.id] || '');
-const cbImg = (p, sz) => p.kind ? IMG(p.id) : SM(imgFor(p, sz));
+const cbImg = (p, sz) => p.kind ? IMG(p.id) : SM(imgFor(p, sz));   // small pictures (the Change rows): the 240px copy
+/* big pictures (the card photos and the picture window): the browser picks the 480px, 720px or full photo for the screen, so they stay sharp */
+const CB_TILE = '(max-width:700px) 50vw, 360px', CB_WIN = '(max-width:700px) 46vw, 240px';
+const cbKey = (p, sz) => p.kind ? p.id : imgFor(p, sz);
+const cbPic = (p, sz, sizes) => { const k = cbKey(p, sz); return `src="${IMG(k)}"` + (IMG_W[k] ? ` srcset="${picSet(k)}" sizes="${sizes}"` : ''); };
+function setCbPic(im, p, sz, sizes){ const k = cbKey(p, sz); if (IMG_W[k]) { im.srcset = picSet(k); im.sizes = sizes; } else im.removeAttribute('srcset'); im.src = IMG(k); }
 const cbSlot = (id, sz) => { const p = id && cbP(id); return p
   ? `<img src="${cbImg(p, sz)}" alt="" loading="lazy"><span class="t"><b>${esc(cbName(p, sz))}</b><small>${esc(cbSub(p))}</small></span><span class="go">Change ›</span>`
   : `<span class="ph0"></span><span class="t"><b>No product</b><small>Tap to add one</small></span><span class="go">Add ›</span>`; };
@@ -4175,7 +4180,7 @@ const cbCTA = (g, picks) => g.closed ? `<button class="btn line sm cb-soon" type
   : `<button class="btn sm cb-wa" type="button" data-cbwa="${g.id}">${CO_ICON.whatsapp}<span>Order on WhatsApp</span></button>`;
 const gfCard = (g, i) => { const slots = Array.from({length: g.slots}, (_, k) => g.items[k] || []), picks = g.items.filter(x => x.length);
   return `<article class="gf-set rv-up d${i % 3}${g.badge ? ' hl' : ''}">
-    <div class="gf-pics">${g.badge ? `<span class="gf-badge">${esc(g.badge)}</span>` : ''}${(g.flex ? slots : g.items.slice(0, 4)).map(([id, s], k) => { const p = id && cbP(id); return `<img src="${p ? cbImg(p, s) : NOPIC}"${p ? '' : ' class="none"'} data-gimg="${g.id}-${k}" alt="" loading="lazy">`; }).join('')}</div>
+    <div class="gf-pics">${g.badge ? `<span class="gf-badge">${esc(g.badge)}</span>` : ''}${(g.flex ? slots : g.items.slice(0, 4)).map(([id, s], k) => { const p = id && cbP(id); return `<img ${p ? cbPic(p, s, CB_TILE) : `src="${NOPIC}"`}${p ? '' : ' class="none"'} data-gimg="${g.id}-${k}" alt="" loading="lazy">`; }).join('')}</div>
     <div class="gf-body">${g.tag ? `<small class="cb-tag">${g.offer || g.fest ? '' : String(i + 1).padStart(2, '0') + ' · '}${esc(g.tag)}</small>` : ''}<h3>${esc(g.name)}</h3><p class="v">${esc(g.v)}</p>
       <div class="gf-pick"><small${g.flex ? ' class="cb-hint"' : ''}>${g.flex ? `Add or remove products, up to ${g.slots}` : 'Choose your products'}</small>${slots.map(([id, s], k) => `<select data-gpick="${g.id}" data-gslot="${k}" aria-label="${esc(g.name)}: product ${k + 1}" hidden>${cbOptions(id, s, g.only[k], g.none && g.none.includes(k))}</select><button type="button" class="cb-slot" data-cbslot="${g.id}|${k}" aria-label="${esc(g.name)}: change product ${k + 1}">${cbSlot(id, s)}</button>`).join('')}</div>
       <div class="cb-price" data-cbprice="${g.id}">${cbPriceHTML(g, picks)}</div>
@@ -4272,7 +4277,7 @@ function bindCombo(){
     const row = $(`[data-cbslot="${gid}|${k}"]`); if (row) row.innerHTML = cbSlot(id, sz);
     const pr = $(`[data-cbprice="${gid}"]`), picks = cbPicks(gid); if (pr && g) pr.innerHTML = cbPriceHTML(g, picks);
     const ct = $(`[data-cbcta="${gid}"]`); if (ct && g && !ct.querySelector('.cb-soon')) { ct.innerHTML = cbCTA(g, picks); bindCards(ct); }
-    const im = $(`[data-gimg="${gid}-${k}"]`); if (!im) return; im.classList.toggle('none', !p); im.src = p ? cbImg(p, sz) : NOPIC; });
+    const im = $(`[data-gimg="${gid}-${k}"]`); if (!im) return; im.classList.toggle('none', !p); if (p) setCbPic(im, p, sz, CB_TILE); else { im.removeAttribute('srcset'); im.src = NOPIC; } });
   $$('[data-gjump]', app).forEach(a => a.onclick = e => { e.preventDefault(); const t = document.getElementById(a.dataset.gjump); t && t.scrollIntoView({behavior: 'smooth'}); });
   $$('[data-cbslot]', app).forEach(b => b.onclick = () => cbPicker(b));
   clearInterval(bindCombo.t); if ($('[data-cbleft]')) bindCombo.t = setInterval(() => { const e = $$('[data-cbleft]'); if (!e.length) return clearInterval(bindCombo.t); e.forEach(x => x.textContent = festLeft(+x.dataset.cbleft)); }, 30000);   // the tabs' countdown
@@ -4303,7 +4308,7 @@ function cbPicker(btn){
   let [cur, curSz] = sel.value.split('|');
   const allParfum = [...groups.keys()].every(id => !cbP(id).kind);
   const card = id => { const p = cbP(id), szs = groups.get(id), sz = id === cur ? curSz : szs[0];
-    return `<button type="button" class="cb-card${id === cur ? ' on' : ''}" data-cbp="${id}"><img src="${cbImg(p, sz)}" alt="" loading="lazy"><span class="t"><b>${esc(p.name)}</b><small>${esc(cbSub(p))}</small>${p.kind ? '' : `<span class="sz">${szs.map(s => `<span data-cbs="${s}"${id === cur && s === curSz ? ' class="on"' : ''}>${s}ml</span>`).join('')}</span>`}</span></button>`; };
+    return `<button type="button" class="cb-card${id === cur ? ' on' : ''}" data-cbp="${id}"><img ${cbPic(p, sz, CB_WIN)} alt="" loading="lazy"><span class="t"><b>${esc(p.name)}</b><small>${esc(cbSub(p))}</small>${p.kind ? '' : `<span class="sz">${szs.map(s => `<span data-cbs="${s}"${id === cur && s === curSz ? ' class="on"' : ''}>${s}ml</span>`).join('')}</span>`}</span></button>`; };
   const d = document.createElement('div'); d.className = 'cb-sheet';
   d.innerHTML = `<div class="in" role="dialog" aria-modal="true" aria-label="Choose a product"><div class="hd"><div><h3>Choose ${allParfum ? 'your parfum' : 'a product'}</h3><p>${esc(g.name)} · ${allParfum ? 'tap a parfum, then pick the size' : 'tap a product to put it in your combo'}</p></div><button type="button" class="x" data-cbx aria-label="Close">✕</button></div>
     <div class="g">${[...groups.keys()].map(card).join('')}${none ? `<button type="button" class="cb-card${cur ? '' : ' on'}" data-cbp=""><span class="ph0">—</span><span class="t"><b>No product</b><small>Leave this one empty</small></span></button>` : ''}</div>
@@ -4312,7 +4317,7 @@ function cbPicker(btn){
   const key = e => { if (e.key === 'Escape') close(); };
   const set = (id, sz) => { cur = id; curSz = sz; sel.value = id ? `${id}|${sz}` : ''; sel.dispatchEvent(new Event('change'));
     $$('.cb-card', d).forEach(c => { const on = c.dataset.cbp === id; c.classList.toggle('on', on); $$('[data-cbs]', c).forEach(s => s.classList.toggle('on', on && s.dataset.cbs === sz));
-      const im = $('img', c); if (on && im) im.src = cbImg(cbP(id), sz); }); };
+      const im = $('img', c); if (on && im) setCbPic(im, cbP(id), sz, CB_WIN); }); };
   d.onclick = e => { if (e.target === d || e.target.closest('[data-cbx]')) return close();
     const c = e.target.closest('[data-cbp]'); if (!c) return; const id = c.dataset.cbp, s = e.target.closest('[data-cbs]');
     set(id, s ? s.dataset.cbs : id === cur ? curSz : (groups.get(id) || [''])[0]); };
