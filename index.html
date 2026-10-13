@@ -366,7 +366,6 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .mbuy .n{flex:1;min-width:0}
 .mbuy .n b{display:block;font-family:var(--display);font-weight:300;font-size:15px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mbuy .n small{font-size:10px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
-.mbuy small .was{display:inline;margin:0 8px 0 0;font-size:.9em;line-height:inherit}   /* phone bottom bar: struck Original price before the Exclusive price */
 @media(max-width:960px){.mbuy{display:flex}}
 
 /* reviews */
@@ -3537,7 +3536,7 @@ function bindProduct(p){
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
-  function renderMbuy(){ mb.innerHTML = `<div class="n"><b>${esc(p.name)}</b><small>${optLabel(p, size)} · ${hasPrice(p.prices[size]) && p.compareAt && hasPrice(p.compareAt[size]) && +p.compareAt[size] > +p.prices[size] ? `<s class="was">${moneyHTML(p.compareAt[size])}</s>` : ''}${moneyHTML(p.prices[size]) || 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
+  function renderMbuy(){ mb.innerHTML = `<div class="n"><b>${esc(p.name)}</b><small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) || 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
   renderMbuy();
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
