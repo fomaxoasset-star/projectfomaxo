@@ -8,9 +8,14 @@ require __DIR__ . '/orders-lib.php';
 require_once __DIR__ . '/media-lib.php';
 $out = [];
 foreach (fomaxo_product_rows() ?: [] as $r) {
-  if (!$r['hidden']) { $out[] = $r['data']; continue; }
+  if (!$r['hidden'] && strpos($r['data'], '"saleOff"') === false) { $out[] = $r['data']; continue; }
   $p = json_decode($r['data']); if (!is_object($p)) continue;
-  $p->hidden = true;   // still sent, so links to it don't break, but not listed or sold
+  if (!empty($p->saleOff)) {   // discount Off (admin → Products): the Original price, no crossed-out price; same rule as fomaxo_sale_apply()
+    foreach ((array)($p->compareAt ?? []) as $s => $c) if (is_numeric($c) && isset($p->prices->{$s}) && $c > $p->prices->{$s}) $p->prices->{$s} = $c + 0;
+    unset($p->compareAt);
+  }
+  unset($p->saleOff);
+  if ($r['hidden']) $p->hidden = true;   // still sent, so links to it don't break, but not listed or sold
   $out[] = fomaxo_json($p);
 }
 /* limited-time sale: when it ends (Unix time), as set on fomaxo.com/admin → Offer; null = no countdown */

@@ -12,7 +12,7 @@ function fomaxo_seo_products() {
   $out = [];
   $rows = fomaxo_product_rows();
   if ($rows) {
-    foreach ($rows as $r) { $p = json_decode($r['data'], true); if (!is_array($p) || empty($p['id'])) continue; $p['hidden'] = !empty($r['hidden']); $out[] = $p; }
+    foreach ($rows as $r) { $p = fomaxo_sale_apply(json_decode($r['data'], true)); if (!is_array($p) || empty($p['id'])) continue; $p['hidden'] = !empty($r['hidden']); $out[] = $p; }
   } else {
     foreach ((array)json_decode((string)@file_get_contents(__DIR__ . '/products-seed.json'), true) as $p) if (is_array($p) && !empty($p['id'])) { $p['hidden'] = !empty($p['hidden']); $out[] = $p; }
   }
