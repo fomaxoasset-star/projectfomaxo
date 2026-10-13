@@ -402,13 +402,24 @@ function fomaxo_product_rows($pdo = null) {
   try { $r = $pdo->query('SELECT id, pos, hidden, data FROM fx_products ORDER BY pos, id')->fetchAll(); } catch (Throwable $e) { return null; }
   return $r ?: null;
 }
+/* Discount switch (admin → Products, AJAY 2026-10-13): a product with its discount Off ('saleOff') sells at its Original price (compareAt) and shows no
+   crossed-out price. Both prices stay saved, so switching the discount On again brings the Exclusive price back. Used for everything customers see and pay. */
+function fomaxo_sale_apply($p) {
+  if (!is_array($p)) return $p;
+  if (!empty($p['saleOff'])) {
+    foreach ((array)($p['compareAt'] ?? []) as $s => $c) if (is_numeric($c) && isset($p['prices'][(string)$s]) && $c > $p['prices'][(string)$s]) $p['prices'][(string)$s] = $c + 0;
+    unset($p['compareAt']);
+  }
+  unset($p['saleOff']);
+  return $p;
+}
 /* Price list for checkout.php / ziina.php built from the database (shown products only), or null to keep the built-in list. */
 function fomaxo_catalog_db() {
   $rows = fomaxo_product_rows(); if (!$rows) return null;
   $cat = [];
   foreach ($rows as $r) {
     if ($r['hidden']) continue;
-    $p = json_decode($r['data'], true); if (!is_array($p)) continue;
+    $p = fomaxo_sale_apply(json_decode($r['data'], true)); if (!is_array($p)) continue;
     $prices = [];
     foreach ((array)($p['sizes'] ?? []) as $s) { $v = $p['prices'][(string)$s] ?? null; if (is_numeric($v) && $v > 0) $prices[(string)$s] = $v + 0; }
     if (!$prices) continue;
