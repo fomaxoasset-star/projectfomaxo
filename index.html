@@ -299,6 +299,12 @@ html[data-mode="light"] .best{color:#fff8ea}
 .crumbs{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--dim)}
 .crumbs a:hover{color:var(--gold-hi)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;padding:30px 0 40px}
+.sort-row{display:flex;justify-content:flex-end;margin:-22px 0 26px}
+.sort-by{display:inline-flex;align-items:center;gap:12px;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
+.sort-by select{height:40px;padding:0 34px 0 14px;border:1px solid var(--line);background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23c99a5c' stroke-width='1.4'/%3E%3C/svg%3E") no-repeat right 12px center/11px;color:var(--ivory,inherit);font:inherit;font-size:11px;letter-spacing:.18em;text-transform:uppercase;-webkit-appearance:none;appearance:none;cursor:pointer}
+.sort-by select option{background:var(--black-2,#111);color:var(--ivory,#eee)}
+html[data-mode="light"] .sort-by select{color:var(--ink,#1a140c)}html[data-mode="light"] .sort-by select option{background:#fff;color:#1a140c}
+@media(max-width:760px){.sort-row{margin:-8px 0 16px}.sort-by select{font-size:16px;letter-spacing:.02em;text-transform:none;height:40px}}
 .filters .chip{height:40px;padding:0 18px;font-size:10px;letter-spacing:.25em;text-transform:uppercase}
 
 /* ---------- product page ---------- */
@@ -3126,7 +3132,7 @@ const rateHTML = p => { const r = RATES && RATES[p.id], n = r ? r.count : 0;
   return `<a class="crate${n ? '' : ' none'}" data-rate="${p.id}" href="#/product/${p.id}?reviews=1" aria-label="${n ? `Rated ${r.avg.toFixed(1)} out of 5 from ${n} review${n > 1 ? 's' : ''}` : 'No reviews yet'}">${rwStars(n ? r.avg : 0, 'sm')}${n ? `<span>${r.avg.toFixed(1)} (${n})</span>` : ''}</a>`; };
 async function loadRates(){
   try { const r = await fetch(`${RW_API}?summary`, {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.products) RATES = d.products; } } catch(e) {}
-  if (RATES) $$('[data-rate]').forEach(el => { const p = P[el.dataset.rate]; if (p) el.outerHTML = rateHTML(p); });
+  if (RATES) { $$('[data-rate]').forEach(el => { const p = P[el.dataset.rate]; if (p) el.outerHTML = rateHTML(p); }); shopResort(); }
 }
 /* stock from stock.php: only sizes running low are listed (null = in stock). Typed in on fomaxo.com/admin → Stock. */
 let STOCK = {}, STOCK_MAX = {}, pdpStock = null;
@@ -3253,7 +3259,7 @@ function home(){
 
   <section class="sec"><div class="wrap">
     <div class="sec-head"><div class="t rv-up"><span class="eyebrow">Shop the collection</span><h2>Featured <em class="metal">FOMAXO</em></h2></div><a class="link rv-up" href="#/fragrances">View all →</a></div>
-    <div class="filters home-filters rv-up">${[['all','All'],['best','Best selling'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || x[0] === 'best' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
+    <div class="filters home-filters rv-up">${[['all','All'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
     <div class="grid">${FRAG.map((p,i) => card(p, {d:'d'+(i%3)})).join('')}</div>
   </div></section>
 
@@ -3350,20 +3356,28 @@ function home(){
   ${finalCTA()}`;
 }
 
+/* Fragrances "Sort by": each one from highest to lowest. Best selling = real bottles bought this week (products.php), Price = the price the card shows, Rating = real review stars (then the number of reviews). */
+const SORTS = [['best','Best selling'],['price','Price: high to low'],['rate','Rating: high to low']];
+const sortVal = (p, so) => so === 'best' ? soldAll(p.id) : so === 'price' ? +p.prices[defaultSize(p)] || 0 : (r => r && r.count ? r.avg * 1000 + r.count : 0)(RATES && RATES[p.id]);
+const shopSort = (list, so) => [...list].sort((a, b) => sortVal(b, so) - sortVal(a, so));
+const shopResort = () => { const g = $('[data-sort]'); if (g) shopSort([...g.children].map(c => P[c.dataset.id]).filter(Boolean), g.dataset.sort).forEach(p => g.appendChild(g.querySelector(`.card[data-id="${p.id}"]`))); };   // again once sales / reviews arrive
+document.addEventListener('change', e => { if (e.target.id === 'shopSort') location.hash = `#/fragrances?f=${e.target.dataset.f}${e.target.value ? '&s=' + e.target.value : ''}`; });
 function fragrances(q){
   const f = q.get('f') || 'all';
-  const filters = [['all','All'],['best','Best selling'],['set','Discovery Sets'],['elite','Elite'],['signature','Signature'],['prestige','Prestige'],['100','100ml'],['50','50ml'],['10','Mini 10ml']].filter(x => x[0] === 'all' || x[0] === 'best' || (x[0] === 'set' ? shown('discovery') : /^\d+$/.test(x[0]) ? FRAG.some(p => p.sizes.map(String).includes(x[0])) : FRAG.some(p => p.tier === x[0])));
+  const filters = [['all','All'],['set','Discovery Sets'],['elite','Elite'],['signature','Signature'],['prestige','Prestige'],['100','100ml'],['50','50ml'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : /^\d+$/.test(x[0]) ? FRAG.some(p => p.sizes.map(String).includes(x[0])) : FRAG.some(p => p.tier === x[0])));
   const ORDER = {set:0, signature:1, prestige:2, elite:3};
   const rank = p => ORDER[p.kind === 'set' ? 'set' : p.tier] ?? 9;
   let list = [...S.products].sort((a, b) => rank(a) - rank(b)), sizeOverride = null;
   if (['elite','signature','prestige'].includes(f)) list = list.filter(p => p.tier === f);
   else if (f === 'set') list = list.filter(p => p.kind === 'set');
   else if (['10','50','100'].includes(f)) { list = list.filter(p => p.sizes.includes(+f)); sizeOverride = +f; }
-  else if (f === 'best') list.sort((a, b) => soldAll(b.id) - soldAll(a.id));   // most bottles bought this week first, down to the least (real orders)
+  const so = SORTS.some(x => x[0] === q.get('s')) ? q.get('s') : '';
+  if (so) list = shopSort(list, so);
   return pageHead('Fragrances', 'The <em class="metal">Fragrances</em>', 'Fragrances crafted in the spirit of Dubai. Select a size, add to your bag, or buy instantly.') +
   `<section style="padding-bottom:0"><div class="wrap">
-    <div class="filters">${filters.map(x => `<a class="chip${x[0]===f?' on':''}" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
-    <div class="grid shop-grid"${f === 'best' ? ' data-bestsort' : ''}>${list.map((p,i) => card(p, {d:'d'+(i%3), size: sizeOverride, top: i < 2})).join('')}</div>
+    <div class="filters">${filters.map(x => `<a class="chip${x[0]===f?' on':''}" href="#/fragrances?f=${x[0]}${so ? '&s=' + so : ''}">${x[1]}</a>`).join('')}</div>
+    <div class="sort-row"><label class="sort-by"><span>Sort by</span><select id="shopSort" data-f="${f}" aria-label="Sort by">${[['','Featured'], ...SORTS].map(x => `<option value="${x[0]}"${x[0] === so ? ' selected' : ''}>${x[1]}</option>`).join('')}</select></label></div>
+    <div class="grid shop-grid"${so ? ` data-sort="${so}"` : ''}>${list.map((p,i) => card(p, {d:'d'+(i%3), size: sizeOverride, top: i < 2})).join('')}</div>
   </div></section>` + finalCTA();
 }
 
@@ -5306,7 +5320,7 @@ async function loadProducts(){
   if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, aed: +d.bt.aed || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.also && typeof d.also === 'object' && JSON.stringify(d.also) !== JSON.stringify(ALSO)) { ALSO = d.also; try { localStorage.setItem('fomaxo_also', JSON.stringify(ALSO)); } catch(e) {} const row = $('#alsoRow'); if (row) alsoOrder(row.dataset.p).forEach(x => { const c = row.querySelector(`.card[data-id="${x.id}"]`); if (c) row.appendChild(c); }); }
-  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); bestSync(); const bg = $('[data-bestsort]'); if (bg) [...bg.children].sort((a, b) => soldAll(b.dataset.id) - soldAll(a.dataset.id)).forEach(c => bg.appendChild(c)); }
+  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); bestSync(); shopResort(); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
