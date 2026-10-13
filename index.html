@@ -4164,10 +4164,13 @@ const cbName = (p, sz) => p.kind ? p.name : `${p.name} · ${sz}ml`;
 const cbSub = p => p.kind ? (p.vol || 'Personal care') : (MOOD[p.id] || '');
 const cbImg = (p, sz) => p.kind ? IMG(p.id) : SM(imgFor(p, sz));   // small pictures (the Change rows): the 240px copy
 /* big pictures (the card photos and the picture window): the browser picks the 480px, 720px or full photo for the screen, so they stay sharp */
-const CB_TILE = '(max-width:700px) 50vw, 360px', CB_WIN = '(max-width:700px) 46vw, 240px';
+const CB_TILE = '(max-width:700px) 70vw, 360px', CB_WIN = '(max-width:700px) 46vw, 240px';
 const cbKey = (p, sz) => p.kind ? p.id : imgFor(p, sz);
-const cbPic = (p, sz, sizes) => { const k = cbKey(p, sz); return `src="${IMG(k)}"` + (IMG_W[k] ? ` srcset="${picSet(k)}" sizes="${sizes}"` : ''); };
-function setCbPic(im, p, sz, sizes){ const k = cbKey(p, sz); if (IMG_W[k]) { im.srcset = picSet(k); im.sizes = sizes; } else im.removeAttribute('srcset'); im.src = IMG(k); }
+/* photos whose original is small (under 650px wide): an enhanced 960px copy (-hd) for the big combo pictures, so they stay sharp */
+const CB_HD = {'passionsin-50-v2': 591, 'royalcandy-50-v2': 636, 'matchacoco-50-v2': 524, 'pc-aloevita-wash': 528, 'pc-avokiss': 528, 'pc-kissberry': 529, 'pc-melondrip': 528, 'pc-passionsin-gel': 528, 'pc-passionsin-shampoo': 528, 'pc-radiant-conditioner': 528, 'pc-radiant-gel': 528, 'pc-radiant-shampoo': 528, 'pc-radiant-wash': 529};
+const cbSet = k => CB_HD[k] ? `${IMG(k)} ${CB_HD[k]}w, ${IMG(k + '-hd')} 960w` : IMG_W[k] ? picSet(k) : '';
+const cbPic = (p, sz, sizes) => { const k = cbKey(p, sz), set = cbSet(k); return `src="${IMG(k)}"` + (set ? ` srcset="${set}" sizes="${sizes}"` : ''); };
+function setCbPic(im, p, sz, sizes){ const k = cbKey(p, sz), set = cbSet(k); if (set) { im.srcset = set; im.sizes = sizes; } else im.removeAttribute('srcset'); im.src = IMG(k); }
 const cbSlot = (id, sz) => { const p = id && cbP(id); return p
   ? `<img src="${cbImg(p, sz)}" alt="" loading="lazy"><span class="t"><b>${esc(cbName(p, sz))}</b><small>${esc(cbSub(p))}</small></span><span class="go">Change ›</span>`
   : `<span class="ph0"></span><span class="t"><b>No product</b><small>Tap to add one</small></span><span class="go">Add ›</span>`; };
