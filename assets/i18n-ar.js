@@ -236,6 +236,7 @@
 "Discover →": "اكتشف ←",
 "Add to bag": "أضف إلى الحقيبة",
 "Best seller": "الأكثر مبيعاً",
+"Best selling": "الأكثر مبيعاً",
 "Watch & shop": "شاهد وتسوّق",
 "Shop the": "تسوّق من",
 "video": "الفيديو",

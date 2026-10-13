@@ -3253,7 +3253,7 @@ function home(){
 
   <section class="sec"><div class="wrap">
     <div class="sec-head"><div class="t rv-up"><span class="eyebrow">Shop the collection</span><h2>Featured <em class="metal">FOMAXO</em></h2></div><a class="link rv-up" href="#/fragrances">View all →</a></div>
-    <div class="filters home-filters rv-up">${[['all','All'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
+    <div class="filters home-filters rv-up">${[['all','All'],['best','Best selling'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || x[0] === 'best' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
     <div class="grid">${FRAG.map((p,i) => card(p, {d:'d'+(i%3)})).join('')}</div>
   </div></section>
 
@@ -3352,17 +3352,18 @@ function home(){
 
 function fragrances(q){
   const f = q.get('f') || 'all';
-  const filters = [['all','All'],['set','Discovery Sets'],['elite','Elite'],['signature','Signature'],['prestige','Prestige'],['100','100ml'],['50','50ml'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : /^\d+$/.test(x[0]) ? FRAG.some(p => p.sizes.map(String).includes(x[0])) : FRAG.some(p => p.tier === x[0])));
+  const filters = [['all','All'],['best','Best selling'],['set','Discovery Sets'],['elite','Elite'],['signature','Signature'],['prestige','Prestige'],['100','100ml'],['50','50ml'],['10','Mini 10ml']].filter(x => x[0] === 'all' || x[0] === 'best' || (x[0] === 'set' ? shown('discovery') : /^\d+$/.test(x[0]) ? FRAG.some(p => p.sizes.map(String).includes(x[0])) : FRAG.some(p => p.tier === x[0])));
   const ORDER = {set:0, signature:1, prestige:2, elite:3};
   const rank = p => ORDER[p.kind === 'set' ? 'set' : p.tier] ?? 9;
   let list = [...S.products].sort((a, b) => rank(a) - rank(b)), sizeOverride = null;
   if (['elite','signature','prestige'].includes(f)) list = list.filter(p => p.tier === f);
   else if (f === 'set') list = list.filter(p => p.kind === 'set');
   else if (['10','50','100'].includes(f)) { list = list.filter(p => p.sizes.includes(+f)); sizeOverride = +f; }
+  else if (f === 'best') list.sort((a, b) => soldAll(b.id) - soldAll(a.id));   // most bottles bought this week first, down to the least (real orders)
   return pageHead('Fragrances', 'The <em class="metal">Fragrances</em>', 'Fragrances crafted in the spirit of Dubai. Select a size, add to your bag, or buy instantly.') +
   `<section style="padding-bottom:0"><div class="wrap">
     <div class="filters">${filters.map(x => `<a class="chip${x[0]===f?' on':''}" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
-    <div class="grid shop-grid">${list.map((p,i) => card(p, {d:'d'+(i%3), size: sizeOverride, top: i < 2})).join('')}</div>
+    <div class="grid shop-grid"${f === 'best' ? ' data-bestsort' : ''}>${list.map((p,i) => card(p, {d:'d'+(i%3), size: sizeOverride, top: i < 2})).join('')}</div>
   </div></section>` + finalCTA();
 }
 
@@ -3373,7 +3374,7 @@ const soldKey = (p, s) => s;   // every choice on its own: 10ml, 50ml, 100ml, an
 const soldHTML = (id, s) => soldN(id, s) > 0 ? `${ICON.bag}<span>${soldN(id, s)} purchased this week</span>` : '';
 /* "Best seller" on the product photo, top right: only the product that sold the most real bottles this week (the "X purchased this week" numbers, all sizes together). Never made up. */
 const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7.3L12 17.8 5.8 21.5l1.6-7.3L2 9.5l7.1-.6z"/></svg>';
-const soldAll = id => Object.entries(SOLD[id] || {}).reduce((t, [k, n]) => k === 'all' ? t : t + (+n || 0), 0);   // all sizes of one product this week
+const soldAll = id => +((SOLD[id] || {}).all) || 0;   // all sizes of one product this week (products.php sends it from 6 up)
 const isBest = id => { const t = soldAll(id); return t > 0 && Object.keys(SOLD).every(x => soldAll(x) <= t); };   // only the product(s) that sold the most bottles this week
 const bestHTML = (id, s) => `<span class="best" data-best="${id}" data-k="${s}"${isBest(id) ? '' : ' hidden'}>${STAR}<span>Best seller</span></span>`;
 const bestSync = () => $$('[data-best]').forEach(b => b.hidden = !isBest(b.dataset.best));
@@ -5305,7 +5306,7 @@ async function loadProducts(){
   if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, aed: +d.bt.aed || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.also && typeof d.also === 'object' && JSON.stringify(d.also) !== JSON.stringify(ALSO)) { ALSO = d.also; try { localStorage.setItem('fomaxo_also', JSON.stringify(ALSO)); } catch(e) {} const row = $('#alsoRow'); if (row) alsoOrder(row.dataset.p).forEach(x => { const c = row.querySelector(`.card[data-id="${x.id}"]`); if (c) row.appendChild(c); }); }
-  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); bestSync(); }
+  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); bestSync(); const bg = $('[data-bestsort]'); if (bg) [...bg.children].sort((a, b) => soldAll(b.dataset.id) - soldAll(a.dataset.id)).forEach(c => bg.appendChild(c)); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
