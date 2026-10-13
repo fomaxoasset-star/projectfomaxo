@@ -3173,7 +3173,7 @@ function card(p, opts={}){
   return `<article class="card rv-up ${opts.d||''}" data-id="${p.id}" data-sel="${size}">
     <a class="media" href="#/product/${p.id}${opts.size ? '?size=' + opts.size : ''}" aria-label="${esc(p.name)}">
       ${p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ''}
-      ${bestHTML(p.id)}
+      ${bestHTML(p.id, soldKey(p, size))}
       <img ${cardPic(img)} alt="FOMAXO ${esc(p.name)}" ${opts.top ? 'fetchpriority="high"' : 'loading="lazy"'}>
       ${alt && HOVER ? `<img class="alt" ${cardPic(alt)} alt="" loading="lazy">` : ''}
       <span class="quick"><span class="btn line sm block" style="background:rgba(5,5,5,.7)">View details</span></span>
@@ -3190,7 +3190,7 @@ app.addEventListener('click', e => {
   const c = e.target.closest('.card[data-id]'); if (!c) return;   // personal care, gift and combo cards have no data-id
   const p = P[c.dataset.id];
   const chip = e.target.closest('[data-size]');
-  if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s); const sd = $('[data-sold]', c); if (sd) { sd.dataset.k = soldKey(p, s); sd.innerHTML = soldHTML(p.id, sd.dataset.k); }
+  if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s); const sd = $('[data-sold]', c); if (sd) { sd.dataset.k = soldKey(p, s); sd.innerHTML = soldHTML(p.id, sd.dataset.k); } const bd = $('[data-best]', c); if (bd) { bd.dataset.k = soldKey(p, s); bestSync(); }
     const im = $('.media img', c); const k = imgFor(p, s); if (im.getAttribute('src') !== IMG(k)) setPic(im, k);
     const al = $('.media img.alt', c), ak = altFor(p, s); if (al) { if (ak) { setPic(al, ak); al.hidden = false; } else al.hidden = true; }
     applyStock(); }
@@ -3370,10 +3370,10 @@ let SOLD = {};
 const soldN = (id, s) => +((SOLD[id] || {})[s]) || 0;   // bottles of that one size (10ml, 50ml, 100ml each counted on their own)
 const soldKey = (p, s) => s;   // every choice on its own: 10ml, 50ml, 100ml, and the Discovery Set of 3 / of 5
 const soldHTML = (id, s) => soldN(id, s) > 0 ? `${ICON.bag}<span>${soldN(id, s)} purchased this week</span>` : '';
-/* "Best seller" on the product photo, top right: only the product(s) with the most real bottles bought this week (products.php "best", more than 5). Never made up. */
-let BEST = [];
+/* "Best seller" on the product photo, top right: shows exactly when that size shows "X purchased this week" (real bottles, more than 5). Never made up. */
 const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7.3L12 17.8 5.8 21.5l1.6-7.3L2 9.5l7.1-.6z"/></svg>';
-const bestHTML = id => `<span class="best" data-best="${id}"${BEST.includes(id) ? '' : ' hidden'}>${STAR}<span>Best seller</span></span>`;
+const bestHTML = (id, s) => `<span class="best" data-best="${id}" data-k="${s}"${soldN(id, s) > 0 ? '' : ' hidden'}>${STAR}<span>Best seller</span></span>`;
+const bestSync = () => $$('[data-best]').forEach(b => b.hidden = !(soldN(b.dataset.best, b.dataset.k) > 0));
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
   // sale: "Original price" with the old price struck on top, "Exclusive price" with the new price below it, each word centred with its number (AJAY 2026-10-13); the saving in a small green box on the right
@@ -3485,7 +3485,7 @@ function product(id, q){
     <div class="pdp">
       <div class="gallery">
         <div class="thumbs">${gallery.map((g,i) => `<button class="${i?'':'on'}" data-g="${g}" aria-label="Image ${i+1}"><img src="${SM(g)}" alt="" loading="lazy"></button>`).join('')}</div>
-        <div class="stage" id="stage">${bestHTML(p.id)}<img id="stageImg" src="${IMG(isSet && !q.get('size') ? p.images[0] : imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}"></div>
+        <div class="stage" id="stage">${bestHTML(p.id, soldKey(p, size))}<img id="stageImg" src="${IMG(isSet && !q.get('size') ? p.images[0] : imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}"></div>
       </div>
       <div class="buy">
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -3547,7 +3547,7 @@ function bindProduct(p){
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
     $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = pdpPrice(p, size);
     setImg(imgFor(p, size));
-    qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } fitPdp();
+    qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } const sb = $('#stage [data-best]'); if (sb) { sb.dataset.k = soldKey(p, size); bestSync(); } fitPdp();
   });
   const stage = $('#stage');
   /* laptop: a click zooms. Phone: only a double tap zooms (at the tapped spot) and a double tap zooms back out; a single tap does nothing */
@@ -5302,8 +5302,7 @@ async function loadProducts(){
   if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, aed: +d.bt.aed || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.also && typeof d.also === 'object' && JSON.stringify(d.also) !== JSON.stringify(ALSO)) { ALSO = d.also; try { localStorage.setItem('fomaxo_also', JSON.stringify(ALSO)); } catch(e) {} const row = $('#alsoRow'); if (row) alsoOrder(row.dataset.p).forEach(x => { const c = row.querySelector(`.card[data-id="${x.id}"]`); if (c) row.appendChild(c); }); }
-  if (d && Array.isArray(d.best)) { BEST = d.best; $$('[data-best]').forEach(b => b.hidden = !BEST.includes(b.dataset.best)); }
-  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); }
+  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); bestSync(); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
