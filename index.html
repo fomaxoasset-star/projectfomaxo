@@ -361,7 +361,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 @media(max-width:960px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:static;grid-template-columns:minmax(0,1fr)}.thumbs{flex-direction:row;order:2}.thumbs button{width:72px}}
 /* AJAY: on phone the product photos show whole, not cut or zoomed in: each photo frame takes the photo's own shape (--ar, set by fitPhoto);
    a shop row with different shapes takes the tallest and a wider photo shows whole (fit-c); swipe moves between photos */
-@media(max-width:960px){.stage{aspect-ratio:var(--ar,4/5);touch-action:pan-y pinch-zoom}.card .media{aspect-ratio:var(--ar-row,var(--ar,4/5))}.card .media.fit-c{background:#0b0a08}.card .media.fit-c img{object-fit:contain}}
+@media(max-width:960px){.stage{aspect-ratio:var(--ar,4/5);touch-action:pan-y pinch-zoom}.stage::before{content:"";position:absolute;inset:-24px;z-index:0;background:var(--bg) center/cover no-repeat;filter:blur(22px) brightness(.75);pointer-events:none}.stage img{z-index:1;object-fit:contain}.card .media{aspect-ratio:var(--ar-row,var(--ar,4/5))}.card .media.fit-c{background:#0b0a08}.card .media.fit-c img{object-fit:contain}}
 @media(hover:none){.card:hover .media img{transform:none}}   /* a tap on a phone doesn't leave the card photo enlarged */
 
 /* mobile sticky buy */
@@ -2903,6 +2903,9 @@ let fitFrame = 0;
 const fitPhoto = im => {
   const box = im.parentElement; if (!box || !box.matches('.stage,.card .media') || im.classList.contains('alt') || im.classList.contains('peek') || !im.naturalWidth) return;
   const r = Math.min(box.matches('.stage') ? 1.4 : 1, Math.max(.55, im.naturalWidth / im.naturalHeight));
+  if (box.matches('.stage')) {   // phone: the big photo frame keeps the first photo's shape, so swiping doesn't change its size; other photos show whole on a soft blurred copy of themselves
+    box.style.setProperty('--bg', `url("${im.src}")`); if (box.style.getPropertyValue('--ar')) return;
+  }
   box.style.setProperty('--ar', r.toFixed(4)); if (!box.matches('.stage')) { cancelAnimationFrame(fitFrame); fitFrame = requestAnimationFrame(fitRows); }
 };
 document.addEventListener('load', e => { if (e.target.tagName === 'IMG') fitPhoto(e.target); }, true);
