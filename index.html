@@ -42,7 +42,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
-r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=34";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=35";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("style");f.textContent="@font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/amiri-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/amiri-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:300;font-display:swap;src:url(/assets/fonts/tajawal-300-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/tajawal-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/tajawal-500-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/tajawal-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}";document.head.appendChild(f)}})();   /* Arabic fonts (Tajawal, Amiri; Arabic letters only) from our own server, same files Google Fonts sends */</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -2404,6 +2404,177 @@ html[dir="rtl"] .rl-s{direction:rtl}
   .rl-nav{display:block}.rl-nav button{position:fixed;top:50%;transform:translateY(-50%);z-index:3;width:52px;height:52px}.rl-nav button[data-rl="-1"]{left:24px}.rl-nav button[data-rl="1"]{right:24px}.rl-nav svg{width:22px;height:22px}
   .rl-nav button[disabled]{opacity:.3;cursor:default}
 }
+/* COMBO page (same as fomaxo.in): hero, promise strip, combo cards with Change rows, festival tabs, picture window, steps, bulk box */
+.gf-hero{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:min(86svh,820px);border-bottom:1px solid var(--line);overflow:hidden}
+.gf-hero .gf-copy{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;gap:24px;padding:clamp(60px,8vw,120px) clamp(30px,5vw,80px) clamp(60px,8vw,120px) var(--pad)}
+.gf-hero .gf-copy::before{content:"";position:absolute;left:-20%;top:-30%;width:80%;aspect-ratio:1;background:radial-gradient(circle,rgba(215,170,105,.13),transparent 65%);z-index:-1}
+.gf-hero h1{font-family:var(--brand-font);font-weight:400;font-size:clamp(34px,4.6vw,78px);letter-spacing:.06em;line-height:1}
+.gf-hero h1 small{display:block;font-family:var(--display);font-weight:300;font-size:.34em;letter-spacing:.38em;color:var(--champagne);margin-bottom:.7em}
+.gf-hero .lead{max-width:520px}
+.gf-hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
+.gf-hero .gf-media{position:relative;min-height:420px}
+.gf-hero .gf-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 45%}
+.gf-hero .gf-media::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--black),transparent 34%),linear-gradient(0deg,rgba(0,0,0,.5),transparent 40%)}
+.gf-promise{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line)}
+.gf-promise div{display:flex;gap:16px;align-items:flex-start;padding:30px clamp(18px,2.4vw,36px);border-left:1px solid var(--line)}
+.gf-promise div:first-child{border-left:0}
+.gf-promise svg{width:28px;height:28px;flex:none;color:var(--gold)}
+.gf-promise b{display:block;font-family:var(--display);font-weight:400;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--ivory);margin-bottom:6px}
+.gf-promise span{font-size:13.5px;line-height:1.6;color:var(--muted)}
+.gf-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:8px 0 6px}
+.gf-opts div{background:var(--black);padding:18px 20px}
+.gf-opts b{display:block;font-family:var(--display);font-weight:400;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-hi);margin-bottom:6px}
+.gf-opts span{font-size:13.5px;line-height:1.6;color:var(--ivory);opacity:.85}
+.gf-sets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+.gf-set{position:relative;display:flex;flex-direction:column;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),var(--black));transition:border-color .5s,transform .6s var(--ease)}
+.gf-set:hover{border-color:var(--line-2);transform:translateY(-4px)}
+.gf-set.hl{border-color:var(--gold)}
+.gf-set .gf-pics{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1px;aspect-ratio:4/3;background:var(--line);overflow:hidden}
+.gf-set .gf-pics img{width:100%;height:100%;object-fit:cover;background:#0b0a08}
+.gf-set .gf-pics img.none{background:#000}  /* No product chosen: plain black tile */
+#cb-sets .gf-pics img.none{display:none}   /* Made to Match: an empty slot drops its picture, the rest fill the row */
+#cb-sets .gf-pick > small.cb-hint{letter-spacing:.08em;text-transform:none;font-size:12px;color:var(--gold-hi)}
+.gf-set .gf-pics.photo{display:block;background:#0b0a08}
+.gf-set .gf-pics.photo img{position:absolute;inset:0;width:100%;height:100%}
+.gf-set .gf-pics.photo img.bg{object-fit:cover;filter:blur(18px) brightness(.55);transform:scale(1.15)}
+.gf-set .gf-pics.photo img.fg{object-fit:contain;background:transparent}
+.gf-set .gf-badge{position:absolute;left:14px;top:14px;z-index:2;padding:6px 12px;background:var(--gold);color:#0a0805;font-size:10px;font-weight:500;letter-spacing:.24em;text-transform:uppercase}
+#cb-offer .gf-badge{background:linear-gradient(100deg,#c99a5c 0%,#e2bd80 30%,#f3dcb0 50%,#e2bd80 70%,#c99a5c 100%);color:#0a0805;font-weight:600;box-shadow:0 4px 14px -6px rgba(0,0,0,.6)}   /* the offer's Free gift tag: bright gold like the Buy now button, the same in light and dark */
+.gf-set .gf-body{display:flex;flex-direction:column;gap:14px;padding:26px 26px 28px;flex:1}
+.gf-set h3{font-size:22px;letter-spacing:.12em}
+.gf-set .v{font-family:var(--serif);color:var(--champagne);font-size:17px;line-height:1.4}
+.gf-set ul{list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:var(--ivory);border-top:1px solid var(--line);padding-top:14px}
+.gf-set li{display:flex;justify-content:space-between;gap:12px}
+.gf-set li span:first-child{display:flex;gap:10px}
+.gf-set li span:first-child::before{content:"";width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none;margin-top:8px}
+.gf-set li span:last-child{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.gf-set .ctas{display:grid;grid-template-columns:1fr;gap:10px;margin-top:auto}
+.gf-set .ctas .btn svg{width:18px;height:18px}
+.gf-pick{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:16px;padding-bottom:6px}
+.gf-pick small{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+.gf-pick select{width:100%;appearance:none;-webkit-appearance:none;background-color:transparent;border:1px solid var(--line-2);border-radius:0;padding:12px 40px 12px 14px;font:inherit;font-size:14px;color:var(--ivory);cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,var(--gold) 50%),linear-gradient(135deg,var(--gold) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 15px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.gf-pick select:focus{outline:none;border-color:var(--gold)}
+.gf-pick option{background:var(--black);color:var(--ivory)}
+.gf-set,.gf-body,.gf-pick{min-width:0}
+.cb-slot{display:flex;align-items:center;gap:14px;width:100%;padding:10px 14px 10px 10px;border:1px solid var(--line-2);background:transparent;color:var(--ivory);font:inherit;text-align:left;cursor:pointer;transition:border-color .3s}
+.cb-free{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-hi);margin-top:6px}
+.gf-sets.cb-wide{grid-template-columns:minmax(0,1fr)}
+@media(min-width:901px){.cb-wide .gf-set{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}.cb-wide .gf-pics{aspect-ratio:auto;height:100%;min-height:440px}.cb-wide .gf-body{padding:34px 36px}}
+.cb-fhead{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;margin-bottom:34px}
+.cb-fhead h2{font-size:clamp(30px,3.6vw,52px)}
+.cb-fhead h2::after{content:"";display:block;width:70px;height:1px;background:var(--gold);margin:22px auto 0}
+.cb-tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:34px}
+.cb-tab{display:flex;align-items:center;gap:10px;padding:13px 24px;border:1px solid var(--line-2);border-radius:999px;background:transparent;color:var(--ivory);font:inherit;font-size:14px;letter-spacing:.06em;cursor:pointer;transition:background .3s,border-color .3s,color .3s}
+.cb-tab svg{width:20px;height:20px;color:var(--gold)}
+.cb-tab:hover{border-color:var(--gold)}
+.cb-tab.on{background:linear-gradient(135deg,#b8894a,#e3c08a 55%,#c99a5b);border-color:transparent;color:#0a0805;font-weight:500;box-shadow:0 10px 30px rgba(184,137,74,.25)}
+.cb-tab.on svg{color:#0a0805}
+@media(max-width:700px){.cb-tabs{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1 * var(--pad)) 26px;padding:4px var(--pad)}.cb-tabs::-webkit-scrollbar{display:none}.cb-tab{flex:none;padding:11px 18px;font-size:13px}}
+.cb-tab span{display:flex;flex-direction:column;align-items:center;text-align:center;line-height:1.2}
+.cb-tab small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin-top:2px}
+.cb-when{text-align:center;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:-12px 0 26px}
+.cb-when b{font-weight:500;color:var(--gold-hi)}
+.gf-sets.cb-two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:1000px;margin:0 auto}
+@media(max-width:700px){.gf-sets.cb-two{grid-template-columns:minmax(0,1fr)}}
+/* laptop: each combo section (offer, festivals, favourites) fits one screen with its title, so a customer sees
+   every combo of a section at once. Festival and offer combos are side-by-side cards (pictures left, products right) */
+@media(min-width:901px){
+.cb-fit .sec-head{margin-bottom:22px}.cb-fit .sec-head .t{gap:8px;max-width:900px}.cb-fit .sec-head h2,.cb-fit .cb-fhead h2{font-size:clamp(28px,2.6vw,40px)}.cb-fit .sec-head .lead{font-size:15px;max-width:none}
+.cb-fit .cb-fhead{gap:6px;margin-bottom:12px}.cb-fit .cb-fhead h2::after{margin-top:12px}.cb-fit .cb-fhead .lead{font-size:15px}
+.cb-fit .cb-tabs{flex-wrap:nowrap;gap:8px;margin-bottom:14px}.cb-fit .cb-tabs{justify-content:space-between}.cb-fit .cb-tab{flex:0 1 auto;gap:6px;padding:7px 11px;font-size:12.5px;letter-spacing:.03em;white-space:nowrap}.cb-fit .cb-tab svg{width:14px;height:14px;flex:none}.cb-fit .cb-tab small{font-size:9.5px;letter-spacing:.06em}@media(max-width:1500px){.cb-fit .cb-tabs{gap:6px}.cb-fit .cb-tab{gap:5px;padding:7px 8px;font-size:12px;letter-spacing:.02em}.cb-fit .cb-tab svg{width:12px;height:12px}.cb-fit .cb-tab small{font-size:9px;letter-spacing:.04em}}
+.cb-fit .cb-when{margin:0 0 10px;font-size:12px}
+.cb-fit .gf-sets{gap:20px}.cb-fit .gf-sets.cb-two{max-width:none}
+.cb-fit .cb-two .gf-set{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1fr)}
+.cb-fit .cb-two .gf-pics{aspect-ratio:auto;height:100%;min-height:0;contain:size;grid-auto-flow:row;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(0,1fr)}   /* contain: the pictures take the card's height, never set it */
+.cb-fit .cb-wide .gf-set{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cb-fit .cb-wide .gf-pics{min-height:0;aspect-ratio:auto;height:100%}
+.cb-fit .cb-two .gf-pics img:nth-child(odd):last-child{grid-column:span 2}
+.cb-fit .gf-pics{aspect-ratio:2/1}#cb-sets .gf-pics{aspect-ratio:auto;height:min(150px,13.5vh)}#cb-sets .gf-set .gf-body{gap:8px}#cb-sets .sec-head{margin-bottom:14px}@media(max-width:1500px){#cb-sets .gf-pics{height:min(118px,13.5vh)}#cb-sets .gf-set .gf-body{padding-top:16px;padding-bottom:16px}#cb-sets .cb-slot{padding-top:4px;padding-bottom:4px}#cb-sets .cb-slot img,#cb-sets .cb-slot .ph0{width:36px;height:36px}}#cb-sets .gf-pics img.none{display:none}#cb-sets .gf-pick > small.cb-hint{display:block;letter-spacing:.08em;text-transform:none;font-size:12px;color:var(--gold-hi)}.cb-fit .cb-fhead .lead,.cb-fit .cb-fhead h2::after{display:none}
+.cb-fit .gf-set .gf-body{gap:10px;padding:20px 22px}.cb-fit .gf-set h3{font-size:18px}.cb-fit .gf-set .v{font-size:15px;line-height:1.35}
+.cb-fit .gf-pick{gap:6px;padding-top:10px;padding-bottom:0}.cb-fit .cb-two .gf-body{display:flex;flex-direction:column}.cb-fit .cb-two .gf-pick{flex:1;min-height:0;gap:8px}.cb-fit .cb-two .cb-slot{flex:1 1 0;min-height:50px;max-height:104px}.gf-set .ctas .btn.cb-soon{padding-top:9px;padding-bottom:9px;line-height:1.3}.cb-fit .cb-two .cb-slot img,.cb-fit .cb-two .cb-slot .ph0{width:auto;height:min(100%,64px);aspect-ratio:1;max-height:64px;min-height:40px}.cb-fit .gf-pick > small:first-child{display:none}
+.cb-fit .cb-slot{gap:10px;padding:5px 12px 5px 5px}.cb-fit .cb-slot img,.cb-fit .cb-slot .ph0{width:40px;height:40px}.cb-fit .cb-slot b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cb-fit .cb-slot small{font-size:9.5px}
+.cb-fit .cb-price{padding-top:10px}.cb-fit .cb-price b{font-size:24px}.cb-fit .ctas .btn{padding-top:12px;padding-bottom:12px}
+}
+.cb-tag{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-hi);margin-bottom:-6px}
+.cb-price{display:flex;align-items:flex-end;flex-wrap:wrap;gap:8px 22px;border-top:1px solid var(--line);padding-top:14px;margin-top:auto}
+.cb-price div{display:flex;flex-direction:column;gap:2px}
+.cb-price small{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.cb-price s{font-size:16px;color:var(--muted)}
+.cb-price b{font-family:var(--display);font-weight:400;font-size:28px;line-height:1.1;color:var(--gold-hi);letter-spacing:.04em}
+.cb-save{margin-left:auto;padding:6px 10px;border:1px solid var(--gold);color:var(--gold-hi);font-size:11px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.gf-set .cb-price + .ctas{margin-top:0}
+.gf-set .ctas.cb-ctas{grid-template-columns:1fr 1fr}.gf-set .ctas .cb-soon{grid-column:1/-1;opacity:.7;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px}.cb-soon .cb-soon-t{font-variant-numeric:tabular-nums;font-size:.92em;color:var(--gold-hi)}.cb-tab .cb-left{font-weight:500;font-variant-numeric:tabular-nums;opacity:1;color:var(--gold-hi)}.cb-tab.on .cb-left{color:#0a0805}.cb-tab > svg:last-child{transform:scaleX(-1)}.cb-tab .cb-live{display:inline-flex;align-items:center;gap:5px;font-weight:600;color:var(--gold-hi);opacity:1}.cb-tab.on .cb-live{color:#0a0805}.cb-tab.cb-open:not(.on){border-color:var(--gold-hi);box-shadow:inset 0 0 0 1px var(--gold-hi)}.cb-live i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 currentColor;animation:cbLive 1.8s ease-out infinite}@keyframes cbLive{0%{box-shadow:0 0 0 0 rgba(212,175,95,.7)}100%{box-shadow:0 0 0 7px rgba(212,175,95,0)}}@media(prefers-reduced-motion:reduce){.cb-live i{animation:none}}.cb-in{color:var(--gold-hi)!important;letter-spacing:.14em;text-transform:uppercase;font-size:10px}
+.cb-slot:hover,.cb-slot:focus-visible{border-color:var(--gold);outline:none}
+.cb-slot img,.cb-slot .ph0{width:58px;height:58px;object-fit:cover;flex:none;background:#000;border:1px solid var(--line)}
+.cb-slot .ph0{display:grid;place-items:center;background:transparent;border:1px dashed var(--gold-hi)}.cb-slot .ph0::after{content:"+";color:var(--gold-hi);font-size:22px;line-height:1}   /* empty slot: a gold + to add a product */
+.cb-slot .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.cb-slot b{font-weight:400;font-size:14.5px;letter-spacing:.03em;line-height:1.3}
+.cb-slot small{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.cb-slot .go{flex:none;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-hi);white-space:nowrap}
+.cb-sheet{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transition:opacity .3s}
+.cb-sheet.show{opacity:1}
+.cb-sheet .in{width:min(780px,100%);max-height:min(88svh,900px);display:flex;flex-direction:column;background:var(--black);border:1px solid var(--gold)}
+.cb-sheet .hd{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:26px 28px 16px}
+.cb-sheet h3{font-size:20px;letter-spacing:.14em}
+.cb-sheet .hd p{font-size:13px;color:var(--muted);margin-top:6px}
+.cb-sheet .x{background:none;border:0;color:var(--ivory);font-size:22px;line-height:1;padding:4px;cursor:pointer}
+.cb-sheet .g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:4px 28px 8px;overflow-y:auto;overscroll-behavior:contain}
+.cb-card{position:relative;display:flex;flex-direction:column;border:1px solid var(--line-2);background:transparent;color:var(--ivory);font:inherit;text-align:left;cursor:pointer;padding:0;transition:border-color .3s}
+.cb-card:hover{border-color:var(--gold)}
+.cb-card.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.cb-card.on::after{content:"✓";position:absolute;right:8px;top:8px;width:22px;height:22px;border-radius:50%;background:var(--gold);color:#0a0805;font-size:12px;line-height:22px;text-align:center}
+.cb-card img,.cb-card .ph0{width:100%;aspect-ratio:4/3;object-fit:cover;background:#000;display:block}
+.cb-card .ph0{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:28px}
+.cb-card .t{display:flex;flex-direction:column;gap:4px;padding:10px 12px 12px}
+.cb-card b{font-weight:400;font-size:13.5px;letter-spacing:.08em;text-transform:uppercase;line-height:1.3}
+.cb-card small{font-size:11.5px;color:var(--muted);line-height:1.4}
+.cb-card .sz{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cb-card .sz span{font-size:11px;letter-spacing:.06em;padding:5px 9px;border:1px solid var(--line-2);color:var(--muted)}
+.cb-card .sz span.on{border-color:var(--gold);color:var(--gold-hi)}
+.cb-sheet .ft{padding:16px 28px 24px;border-top:1px solid var(--line)}
+.cb-sheet .ft .btn{width:100%}
+html.cb-lock,html.cb-lock body{overflow:hidden}
+@media(max-width:700px){
+  .cb-sheet{align-items:flex-end;padding:0}
+  .cb-sheet .in{max-height:90svh;border-width:1px 0 0;transform:translateY(30px);transition:transform .35s var(--ease)}
+  .cb-sheet.show .in{transform:none}
+  .cb-sheet .hd{padding:20px 16px 12px}
+  .cb-sheet h3{font-size:17px}
+  .cb-sheet .g{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:4px 16px 8px}
+  .cb-card img,.cb-card .ph0{aspect-ratio:1}
+  .cb-sheet .ft{padding:12px 16px calc(16px + env(safe-area-inset-bottom))}
+}
+.gf-set .ctas .btn{padding:0 12px}
+.gf-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;counter-reset:gf}
+.gf-steps div{border-top:1px solid var(--line-2);padding-top:22px;display:flex;flex-direction:column;gap:10px}
+.gf-steps div::before{counter-increment:gf;content:"0" counter(gf);font-family:var(--display);font-weight:200;font-size:54px;line-height:1;color:transparent;-webkit-text-stroke:1px var(--gold)}
+.gf-steps b{font-family:var(--display);font-weight:400;font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--ivory)}
+.gf-steps span{font-size:14px;line-height:1.65;color:var(--muted)}
+.gf-enq{position:relative;border:1px solid var(--gold);padding:clamp(40px,6vw,90px) clamp(24px,5vw,80px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:20px;overflow:hidden;background:radial-gradient(ellipse at top,rgba(215,170,105,.12),transparent 60%)}
+.gf-enq h2{font-size:clamp(28px,3.6vw,52px)}
+.gf-enq .lead{max-width:640px}
+.gf-enq .ctas{display:grid;grid-template-columns:repeat(2,300px);gap:14px;justify-content:center;width:100%}
+.gf-enq .ctas .btn{width:100%;padding-left:16px;padding-right:16px;min-height:56px}
+@media(max-width:760px){.gf-enq .ctas{grid-template-columns:minmax(0,1fr);max-width:380px;gap:12px}}
+.gf-enq .btn svg{width:20px;height:20px}
+.gf-enq .small{color:var(--muted);font-size:13px;letter-spacing:.06em}
+@media(max-width:1100px){.gf-sets{grid-template-columns:repeat(2,minmax(0,1fr))}.gf-promise{grid-template-columns:repeat(2,minmax(0,1fr))}.gf-promise div:nth-child(3){border-left:0}.gf-promise div:nth-child(n+3){border-top:1px solid var(--line)}.gf-steps{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:34px}}
+@media(max-width:820px){
+  .gf-hero{grid-template-columns:1fr;min-height:0}
+  .gf-hero .gf-media{order:-1;min-height:0;aspect-ratio:4/3.4}
+  .gf-hero .gf-media::after{background:linear-gradient(0deg,var(--black),transparent 45%)}
+  .gf-hero .gf-copy{padding:22px var(--pad) 50px;text-align:center;align-items:center}
+  .gf-hero .ctas{justify-content:center}
+}
+@media(max-width:640px){
+  .gf-sets,.gf-opts{grid-template-columns:1fr}
+  .gf-promise{grid-template-columns:1fr}
+  .gf-promise div{border-left:0!important;border-top:1px solid var(--line)}
+  .gf-promise div:first-child{border-top:0}
+  .gf-steps{grid-template-columns:1fr}
+  .gf-hero .ctas .btn,.gf-enq .ctas .btn{width:100%}
+}.cb-price b.na{font-size:18px;letter-spacing:.08em}
+.gf-set .ctas.cb-ctas .cb-wa{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:8px}
+
 /* ---------- Personal Care, Gifts and Combo cards (same layout as the Fragrances cards) ---------- */
 .cx-card .acts{grid-template-columns:1fr}
 .cx-card .acts .btn svg{width:17px;height:17px;flex:none}
@@ -3845,17 +4016,6 @@ const GIFTS = [
   {id: 'lip-love', name: 'Lip Love', for: ['her', 'thanks'], v: 'Both lip balms together. A sweet little thank-you.', items: [['pc-kissberry'], ['pc-avokiss']]}
 ];
 const GIFT_FOR = [['all', 'All gifts'], ['her', 'For her'], ['him', 'For him'], ['two', 'For two'], ['thanks', 'Thank you'], ['eid', 'Eid']];
-const COMBOS = [
-  {id: 'morning-midnight', tag: 'Scent layering', name: 'Morning to Midnight', badge: 'Signature', v: 'One scent from the shower to the evening. The body care builds a base, the parfum lasts longer on top.', items: [['passionsin', 50], ['pc-passionsin-gel'], ['pc-passionsin-shampoo']]},
-  {id: 'big-three', tag: 'Parfum wardrobe', name: 'The Big Three', badge: 'Best value', v: 'A strong, a fresh and a classic parfum. One for every mood.', items: [['gold', 100], ['dollar', 100], ['oldmoney', 50]]},
-  {id: 'discovery-four', tag: 'Try before the big bottle', name: 'The Discovery Four', badge: 'First order', v: 'Four 10ml parfums to find your favourite. A great first order and great to share.', items: [['oldmoney', 10], ['royalcandy', 10], ['matchacoco', 10], ['passionsin', 10]]},
-  {id: 'date-night', tag: 'For two', name: 'Date Night', v: 'A strong parfum, a sweet parfum and a lip balm for the evening out.', items: [['gold', 100], ['royalcandy', 50], ['pc-kissberry']]},
-  {id: 'eid-mubarak', tag: 'Eid', name: 'Eid Mubarak Pair', v: 'Gold, with its Arabic heritage, and fresh Dollar. One for the morning prayer, one for the evening.', items: [['gold', 100], ['dollar', 100]]},
-  {id: 'eid-eidi', tag: 'Eid', name: 'Eidi Minis', v: 'Two 10ml parfums and a lip balm. A sweet Eidi for the little ones and cousins.', items: [['passionsin', 10], ['oldmoney', 10], ['pc-avokiss']]},
-  {id: 'glow-up', tag: 'Face, body and lips', name: 'Glow Up Kit', v: 'Two face washes for day and night, a shower gel and a lip balm.', items: [['pc-radiant-wash'], ['pc-aloevita-wash'], ['pc-radiant-gel'], ['pc-avokiss']]},
-  {id: 'salon-hair', tag: 'Hair care', name: 'Salon Hair at Home', v: 'Shampoo, conditioner and a hair mist for soft, scented hair.', items: [['pc-radiant-shampoo'], ['pc-radiant-conditioner'], ['pc-melondrip']]},
-  {id: 'kiss-tell', tag: 'Lip duo', name: 'Kiss & Tell', v: 'Both lip balms together. An easy thank-you or add-on gift.', items: [['pc-kissberry'], ['pc-avokiss']]}
-];
 const waTo = t => `https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent(t)}`;
 const careLabel = c => `${c.name} ${c.type}${c.vol ? ' ' + c.vol : ''}`;
 const cxWA = t => `<a class="btn sm" href="${waTo(t)}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Order on WhatsApp</span></a>`;
@@ -3918,13 +4078,252 @@ function giftsPage(q){
   cxSplit('gift-2-hq', 'Make it personal', 'Personalized <em class="metal">gifting</em>', 'Write your gift message in the note at checkout and we add it to the box. For a parfum made after the person you love, or gifting for weddings and companies, talk to us.',
     `<a class="btn" href="#/collections/name">Personalized gifting</a><a class="btn line" href="#/collections/gifting">Bespoke gifting</a>`) + finalCTA();
 }
+/* COMBO page (#/combo): the same page as fomaxo.in's Combo page. Each combo card has one "Change" row per product (a picture window
+   picks the product), Add to bag and Buy now. Prices: a combo of parfums costs what the bag charges for those bottles with the
+   multi-buy offer (2 = 5%, 3-4 = 10% + FREE 10ml mini, 5+ = 15%), so the card never promises a price the checkout does not give.
+   Personal care has no AED price yet: a combo holding one reads "Price coming soon" and is ordered on WhatsApp.
+   slots: how many products; only: what each slot may hold (parfum = 50/100ml, mini = 10ml, gift = 10ml or lip balm, care:body|hair|face|lips, any).
+   fest: festival tab (bought from one month before the day until the day), offer: the Buy 3 offer shown on its own above the combos */
+const COMBO_DATA = [
+  {id: 'onam-sadya', fest: 'onam', tag: 'Onam', name: 'Onam Sadya Combo', v: 'Coconut-fresh Matcha Coco with body care and a lip balm, for the day of the feast.', slots: 3, only: ['parfum', 'care:body', 'care:lips'], items: [['matchacoco', 50], ['pc-radiant-gel', 'one'], ['pc-kissberry', 'one']]},
+  {id: 'onam-pookalam', fest: 'onam', tag: 'Onam', name: 'Pookalam Duo', v: 'Two flower-bright parfums, as colourful as the pookalam at the door.', slots: 2, only: ['parfum', 'parfum'], items: [['royalcandy', 50], ['passionsin', 50]]},
+  {id: 'vishu-kani', fest: 'vishu', tag: 'Vishu', name: 'Vishukkani Gold', v: 'Gold for the kani, a 10ml parfum and a lip balm. A golden start to the new year.', slots: 3, only: ['parfum', 'mini', 'care:lips'], items: [['gold', 100], ['oldmoney', 10], ['pc-avokiss', 'one']]},
+  {id: 'vishu-kaineettam', fest: 'vishu', tag: 'Vishu', name: 'Kaineettam Care', v: 'Face wash, shower gel, shampoo and conditioner. A Vishu gift for the whole family.', slots: 4, only: ['care:face', 'care:body', 'care:hair', 'care:hair'], items: [['pc-radiant-wash', 'one'], ['pc-radiant-gel', 'one'], ['pc-radiant-shampoo', 'one'], ['pc-radiant-conditioner', 'one']]},
+  {id: 'diwali-diya', fest: 'diwali', tag: 'Diwali', name: 'Diwali Diya Combo', v: 'Two parfums, a shower gel and a lip balm for a glowing Diwali.', slots: 4, only: ['parfum', 'parfum', 'care:body', 'care:lips'], items: [['gold', 100], ['royalcandy', 50], ['pc-passionsin-gel', 'one'], ['pc-kissberry', 'one']]},
+  {id: 'diwali-mini', fest: 'diwali', tag: 'Diwali', name: 'Diwali Mini Combo', v: 'Three 10ml parfums and a lip balm. Easy to give to family and friends.', slots: 4, only: ['mini', 'mini', 'care:lips', 'mini'], items: [['oldmoney', 10], ['royalcandy', 10], ['pc-kissberry', 'one'], ['passionsin', 10]]},
+  {id: 'eid-mubarak', fest: 'eid', tag: 'Eid', name: 'Eid Mubarak Pair', v: 'Gold, with its Arabic heritage, and fresh Dollar. One for the morning prayer, one for the evening.', slots: 2, only: ['parfum', 'parfum'], items: [['gold', 100], ['dollar', 100]]},
+  {id: 'eid-eidi', fest: 'eid', tag: 'Eid', name: 'Eidi Minis', v: 'Two 10ml parfums and a lip balm. A sweet Eidi for the little ones and cousins.', slots: 3, only: ['mini', 'mini', 'care:lips'], items: [['passionsin', 10], ['oldmoney', 10], ['pc-avokiss', 'one']]},
+  {id: 'xmas-candy', fest: 'christmas', tag: 'Christmas', name: 'Candy Christmas', v: 'Sweet Royal Candy with both lip balms, for the Christmas season.', slots: 3, only: ['parfum', 'care:lips', 'care:lips'], items: [['royalcandy', 50], ['pc-kissberry', 'one'], ['pc-avokiss', 'one']]},
+  {id: 'xmas-santa', fest: 'christmas', tag: 'Christmas', name: 'Secret Santa', v: 'Two 10ml parfums and a hair mist. A perfect Secret Santa gift.', slots: 3, only: ['mini', 'care:hair', 'mini'], items: [['matchacoco', 10], ['pc-melondrip', 'one'], ['oldmoney', 10]]},
+  {id: 'rakhi-brother', fest: 'rakhi', tag: 'Raksha Bandhan', name: 'Rakhi for Brother', v: 'Fresh Dollar, a 10ml parfum and a face wash. For the brother who has everything.', slots: 3, only: ['parfum', 'mini', 'care:face'], items: [['dollar', 100], ['oldmoney', 10], ['pc-radiant-wash', 'one']]},
+  {id: 'rakhi-sister', fest: 'rakhi', tag: 'Raksha Bandhan', name: 'Rakhi for Sister', v: 'Royal Candy, a lip balm and a hair mist. A thank-you she will use every day.', slots: 3, only: ['parfum', 'care:lips', 'care:hair'], items: [['royalcandy', 50], ['pc-kissberry', 'one'], ['pc-melondrip', 'one']]},
+  {id: 'val-bemine', fest: 'valentine', tag: "Valentine's Day", name: 'Be Mine', v: 'Warm Passion Sin for him, sweet Royal Candy for her, and a Kiss Berry lip balm to seal it.', slots: 3, only: ['parfum', 'parfum', 'care:lips'], items: [['passionsin', 50], ['royalcandy', 50], ['pc-kissberry', 'one']]},
+  {id: 'val-minis', fest: 'valentine', tag: "Valentine's Day", name: 'Sweetheart Minis', v: 'Two 10ml parfums and both lip balms. A little love note.', slots: 4, only: ['mini', 'mini', 'care:lips', 'care:lips'], items: [['passionsin', 10], ['royalcandy', 10], ['pc-kissberry', 'one'], ['pc-avokiss', 'one']]},
+  {id: 'mom-love', fest: 'mother', tag: "Mother's Day", name: 'For Mom, With Love', v: 'Quiet, elegant Old Money with a shower gel and a lip balm. A thank-you she will wear every day.', slots: 3, only: ['parfum', 'care:body', 'care:lips'], items: [['oldmoney', 50], ['pc-radiant-gel', 'one'], ['pc-avokiss', 'one']]},
+  {id: 'mom-spa', fest: 'mother', tag: "Mother's Day", name: "Mom's Spa Day", v: 'Face wash, shampoo, conditioner and a hair mist. A day of pampering at home.', slots: 4, only: ['care:face', 'care:hair', 'care:hair', 'care:hair'], items: [['pc-radiant-wash', 'one'], ['pc-radiant-shampoo', 'one'], ['pc-radiant-conditioner', 'one'], ['pc-melondrip', 'one']]},
+  {id: 'dad-signature', fest: 'father', tag: "Father's Day", name: "Dad's Signature", v: 'Fresh Dollar for the office, a 10ml parfum for his pocket and a face wash for the morning.', slots: 3, only: ['parfum', 'mini', 'care:face'], items: [['dollar', 100], ['oldmoney', 10], ['pc-radiant-wash', 'one']]},
+  {id: 'dad-move', fest: 'father', tag: "Father's Day", name: 'Dad on the Move', v: 'Three 10ml parfums for his pocket, his car and his desk.', slots: 3, only: ['mini', 'mini', 'mini'], items: [['oldmoney', 10], ['passionsin', 10], ['matchacoco', 10]]},
+  {id: 'buy3-gift', offer: true, tag: 'Offer', name: 'Buy 3, Get 1 Gift', badge: 'Free gift', v: 'Pick any three parfums. You get 10% off and a free 10ml parfum of your choice, chosen in your bag.', slots: 3, only: ['parfum', 'parfum', 'parfum'], items: [['gold', 100], ['oldmoney', 50], ['passionsin', 50]]},
+  {id: 'morning-midnight', tag: 'Scent layering', name: 'Morning to Midnight', badge: 'Signature', flex: true, v: 'One scent from the shower to the evening. The body care builds a base, the parfum lasts longer on top.', slots: 4, only: ['parfum', 'care:body', 'care:hair', 'any'], items: [['passionsin', 50], ['pc-passionsin-gel', 'one'], ['pc-passionsin-shampoo', 'one']]},
+  {id: 'discovery-four', tag: 'Try before the big bottle', name: 'The Discovery Four', badge: 'First order', flex: true, v: 'Four 10ml parfums to find your favourite. A great first order and great to share.', slots: 4, only: ['mini', 'mini', 'mini', 'mini'], items: [['oldmoney', 10], ['royalcandy', 10], ['matchacoco', 10], ['passionsin', 10]]},
+  {id: 'date-night', tag: 'For two', name: 'Date Night', badge: 'Couples', flex: true, v: 'A strong parfum, a sweet parfum and a lip balm for the evening out.', slots: 4, only: ['parfum', 'parfum', 'care:lips', 'any'], items: [['gold', 100], ['royalcandy', 50], ['pc-kissberry', 'one']]}
+];
+/* a product a combo can hold: a parfum from the shop, or a personal care item (one size, 'one', priced when CARE has an AED price) */
+const CB_CARE = Object.fromEntries(CARE.map(c => [c.id, {id: c.id, name: `${c.name} ${c.type}`, kind: 'care', cat: c.cat, vol: c.vol, sizes: ['one'], prices: {one: c.aed}, images: [c.id]}]));
+const cbP = id => (shown(id) && P[id]) || CB_CARE[id];
+const cbOut = (id, s) => { const p = cbP(id); return !p || !p.sizes.map(String).includes(String(s)) || (!p.kind && stockLeft(id, s) === 0); };
+const PARFUM = (p, sz) => !p.kind && p.tier !== 'elite' && sz != 10;   // 50ml and 100ml parfums (not King)
+const MINI = (p, sz) => !p.kind && sz == 10, CAREF = cat => p => p.kind === 'care' && p.cat === cat;
+const CB_RULE = {any: (p, sz) => PARFUM(p, sz) || MINI(p, sz) || p.kind === 'care', parfum: PARFUM, mini: MINI, gift: (p, sz) => MINI(p, sz) || CAREF('lips')(p),
+  'care:body': CAREF('body'), 'care:hair': CAREF('hair'), 'care:face': CAREF('face'), 'care:lips': CAREF('lips')};
+const COMBO_SHOW = ['morning-midnight', 'discovery-four', 'date-night'];   // the combos in Made to match (the rest stay ready to bring back)
+const COMBO_SETS = COMBO_DATA.map(g => ({...g, only: g.only.map(r => CB_RULE[r])}));
+/* combos of 3 or more products (not the offer): every product after the first can be left out (flex: any of them, the 4th takes any product) */
+COMBO_SETS.forEach(g => { if (!g.offer && g.slots >= 3) g.none = [...Array(g.slots).keys()].slice(g.flex ? 0 : 1); });
+/* festival tabs, nearest festival first. dates: the day of each festival (check the moving ones each year, keep 3 years ahead) */
+const FI = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const FESTS = [
+  {key: 'onam', name: 'Onam', dates: [['2026-08-26'], ['2027-09-12'], ['2028-08-31']], when: [8], icon: FI('<circle cx="12" cy="12" r="2.5"/><path d="M12 3c1.6 2.2 1.6 4.2 0 6.5C10.4 7.2 10.4 5.2 12 3zm0 18c-1.6-2.2-1.6-4.2 0-6.5 1.6 2.3 1.6 4.3 0 6.5zM3 12c2.2-1.6 4.2-1.6 6.5 0C7.2 13.6 5.2 13.6 3 12zm18 0c-2.2 1.6-4.2 1.6-6.5 0 2.3-1.6 4.3-1.6 6.5 0z"/>')},
+  {key: 'vishu', name: 'Vishu', dates: [['2026-04-14'], ['2027-04-15'], ['2028-04-14']], when: [2, 3], icon: FI('<path d="M12 3v6M8 5l4 4 4-4"/><circle cx="8" cy="14" r="2"/><circle cx="16" cy="14" r="2"/><circle cx="12" cy="18" r="2"/><path d="M12 9v7"/>')},
+  {key: 'diwali', name: 'Diwali', dates: [['2026-11-08'], ['2027-10-29'], ['2028-10-17']], when: [9, 10], icon: FI('<path d="M12 4c2 2.5 2 4.5 0 6.5-2-2-2-4 0-6.5z"/><path d="M4 14h16c-1 3.5-4.2 6-8 6s-7-2.5-8-6z"/>')},
+  {key: 'eid', name: 'Eid', dates: [['2026-03-20', 'Eid al-Fitr'], ['2026-05-27', 'Eid al-Adha'], ['2027-03-10', 'Eid al-Fitr'], ['2027-05-17', 'Eid al-Adha'], ['2028-02-27', 'Eid al-Fitr'], ['2028-05-05', 'Eid al-Adha']], when: [4, 5, 6], icon: FI('<path d="M15 4a8 8 0 1 0 5 13A7 7 0 0 1 15 4z"/><path d="M18 6l.6 1.4L20 8l-1.4.6L18 10l-.6-1.4L16 8l1.4-.6z"/>')},
+  {key: 'christmas', name: 'Christmas', dates: [['2026-12-25'], ['2027-12-25'], ['2028-12-25']], when: [11, 0, 1], icon: FI('<path d="M12 3l5 7h-3l4 6H6l4-6H7z"/><path d="M12 16v4"/>')},
+  {key: 'valentine', name: "Valentine's Day", dates: [['2026-02-14'], ['2027-02-14'], ['2028-02-14']], when: [0, 1], icon: FI('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>')},
+  {key: 'mother', name: "Mother's Day", dates: [['2026-03-21'], ['2027-03-21'], ['2028-03-21']], when: [2], icon: FI('<circle cx="12" cy="9" r="2.5"/><path d="M12 4.5c1.5-2 4-1 3.6 1.3M12 4.5c-1.5-2-4-1-3.6 1.3M14.4 8c2.4-.4 3.4 2.2 1.3 3.4M9.6 8c-2.4-.4-3.4 2.2-1.3 3.4M12 11.5V21M12 17c2-2.5 4.5-2.5 5-2M12 17c-2-2.5-4.5-2.5-5-2"/>')},   // UAE Mother's Day: 21 March
+  {key: 'father', name: "Father's Day", dates: [['2026-06-21'], ['2027-06-20'], ['2028-06-18']], when: [5], icon: FI('<path d="M9 3h6l-1.5 3h-3z"/><path d="M10.5 6 8 17l4 4 4-4-2.5-11"/>')},
+  {key: 'rakhi', name: 'Raksha Bandhan', dates: [['2026-08-28'], ['2027-08-17'], ['2028-08-05']], when: [7], icon: FI('<circle cx="12" cy="12" r="3"/><path d="M2 12h7M15 12h7M9.5 9.5 7 7m7.5 2.5L17 7m-7.5 7.5L7 17m7.5-2.5L17 17"/>')}
+];
+const DAY = 864e5, today0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const fDay = d => { const [y, mo, dd] = d.split('-').map(Number); return new Date(y, mo - 1, dd); };
+const festNext = f => { const t = today0().getTime(); for (const [d, label] of f.dates) { const at = fDay(d).getTime(); if (at >= t - DAY) return {at, label: label || f.name, days: Math.round((at - t) / DAY)}; } return null; };
+const festOpen = f => { const t = today0().getTime(); for (const [d] of f.dates) { const x = fDay(d); if (t >= new Date(x.getFullYear(), x.getMonth() - 1, x.getDate()).getTime() && t <= x.getTime()) return x.getTime(); } return null; };
+const festOpens = f => { const n = f.next; if (!n) return null; const d = new Date(n.at); return new Date(d.getFullYear(), d.getMonth() - 1, d.getDate()); };
+const fDate = (at, o) => new Date(at).toLocaleDateString('en-GB', o);
+/* time left to the festival day, for the tab: "31d 04h 12m" */
+const festLeft = at => { const ms = at - Date.now(); if (ms <= 0) return ms > -DAY ? 'Today' : 'Over'; const d = Math.floor(ms / DAY), h = Math.floor(ms % DAY / 36e5), m = Math.floor(ms % 36e5 / 6e4);
+  return `${d ? d + 'd ' : ''}${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m`; };
+const festWhen = f => { const n = f.next; if (!n) return ''; const day = fDate(n.at, {weekday: 'long', day: 'numeric', month: 'long'});
+  if (!festOpen(f) && n.days > 0) return `${esc(n.label)} · ${day} · <b>Combos open ${fDate(festOpens(f).getTime(), {weekday: 'long', day: 'numeric', month: 'long'})}</b>`;
+  return `${esc(n.label)} · ${day} · <b>${n.days < 0 ? 'Happy ' + esc(n.label) : n.days === 0 ? 'Today' : n.days === 1 ? 'Tomorrow' : n.days + ' days to go'}</b>`; };
+/* worth = today's price of each product picked; combo price = what the bag charges with the multi-buy offer. null: a product has no AED price yet */
+const cbVal = ([id, sz]) => { const p = cbP(id); return p ? p.prices[sz] : null; };
+function cbPrices(picks){
+  if (!picks.every(x => hasPrice(cbVal(x)))) return null;
+  const worth = picks.reduce((a, x) => a + +cbVal(x), 0), el = picks.filter(([id]) => !QTY_DISCOUNT_SKIP.includes(id)), t = qtyTier(el.length);
+  const save = Math.round(el.reduce((a, x) => a + +cbVal(x), 0) * t.pct) / 100;
+  return {worth, save, price: worth - save, pct: t.pct, mini: t.mini && !picks.some(([, s]) => String(s) === '10')};
+}
+const cbPriceHTML = (g, picks) => { const c = cbPrices(picks);
+  if (!c) return `<div><small>Combo price</small><b class="na">Price coming soon</b></div>`;
+  const one = picks.length < 2;
+  return `${one ? '' : `<div><small>Worth</small><s>${moneyHTML(c.worth)}</s></div>`}<div><small>${g.offer ? 'You pay' : one ? 'Price' : 'Combo price'}</small><b>${moneyHTML(c.price)}</b></div>${one ? '<span class="cb-save">Add one more product to get the combo price</span>' : c.save ? `<span class="cb-save">${c.mini ? `${c.pct}% off + FREE 10ml` : `Save ${money(c.save)} · ${c.pct}%`}</span>` : ''}`; };
+const cbPicks = gid => $$(`[data-gpick="${gid}"]`).filter(sel => sel.value).map(sel => sel.value.split('|'));
+/* a product that is sold out or switched off is swapped for the one its slot allows that is closest in price (not already in the combo) */
+const cbAll = () => [...Object.values(P).filter(p => shown(p.id)), ...Object.values(CB_CARE)].flatMap(p => p.sizes.map(sz => [p.id, String(sz)]));
+const cbSwap = g => { const used = new Set(g.items.filter(([id, s]) => !cbOut(id, s)).map(([id]) => id));
+  const items = g.items.map((it, k) => { if (!cbOut(...it)) return it; const was = +cbVal(it) || 0, f = g.only[k];
+    const pick = cbAll().filter(x => !cbOut(...x) && !used.has(x[0]) && f(cbP(x[0]), x[1])).sort((a, b) => Math.abs((+cbVal(a) || 0) - was) - Math.abs((+cbVal(b) || 0) - was))[0];
+    if (pick) used.add(pick[0]); return pick || (g.none && g.none.includes(k) ? [] : null); });
+  return items.every(Boolean) ? {...g, items} : null; };
+const MOOD = {gold: 'Strong · Seductive', dollar: 'Fresh · Zesty', oldmoney: 'Quiet luxury', royalcandy: 'Sweet · Bold', matchacoco: 'Matcha · Coconut', passionsin: 'Warm · Magnetic'};
+const cbName = (p, sz) => p.kind ? p.name : `${p.name} · ${sz}ml`;
+const cbSub = p => p.kind ? (p.vol || 'Personal care') : (MOOD[p.id] || '');
+const cbImg = (p, sz) => p.kind ? IMG(p.id) : SM(imgFor(p, sz));
+const cbSlot = (id, sz) => { const p = id && cbP(id); return p
+  ? `<img src="${cbImg(p, sz)}" alt="" loading="lazy"><span class="t"><b>${esc(cbName(p, sz))}</b><small>${esc(cbSub(p))}</small></span><span class="go">Change ›</span>`
+  : `<span class="ph0"></span><span class="t"><b>No product</b><small>Tap to add one</small></span><span class="go">Add ›</span>`; };
+/* the hidden dropdown behind each Change row: every product the slot allows, one option per size */
+const cbOptions = (selId, selSize, only, none) => (none ? `<option value=""${selId ? '' : ' selected'}>No product</option>` : '') +
+  cbAll().filter(([id, sz]) => !cbOut(id, sz) && only(cbP(id), sz)).map(([id, sz]) => `<option value="${id}|${sz}"${id === selId && String(sz) === String(selSize) ? ' selected' : ''}>${esc(cbName(cbP(id), sz))}</option>`).join('');
+const NOPIC = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const cbCTA = (g, picks) => g.closed ? `<button class="btn line sm cb-soon" type="button" disabled><span>Opens ${esc(g.closed)}</span>${g.opensAt ? `<span class="cb-soon-t" data-cbleft="${g.opensAt}">${festLeft(g.opensAt)}</span>` : ''}</button>`
+  : cbPrices(picks) ? `<button class="btn line sm" type="button" data-cbadd="${g.id}">Add to bag</button><button class="btn sm" type="button" data-cbbuy="${g.id}">Buy now</button>`
+  : `<button class="btn sm cb-wa" type="button" data-cbwa="${g.id}">${CO_ICON.whatsapp}<span>Order on WhatsApp</span></button>`;
+const gfCard = (g, i) => { const slots = Array.from({length: g.slots}, (_, k) => g.items[k] || []), picks = g.items.filter(x => x.length);
+  return `<article class="gf-set rv-up d${i % 3}${g.badge ? ' hl' : ''}">
+    <div class="gf-pics">${g.badge ? `<span class="gf-badge">${esc(g.badge)}</span>` : ''}${(g.flex ? slots : g.items.slice(0, 4)).map(([id, s], k) => { const p = id && cbP(id); return `<img src="${p ? cbImg(p, s) : NOPIC}"${p ? '' : ' class="none"'} data-gimg="${g.id}-${k}" alt="" loading="lazy">`; }).join('')}</div>
+    <div class="gf-body">${g.tag ? `<small class="cb-tag">${g.offer || g.fest ? '' : String(i + 1).padStart(2, '0') + ' · '}${esc(g.tag)}</small>` : ''}<h3>${esc(g.name)}</h3><p class="v">${esc(g.v)}</p>
+      <div class="gf-pick"><small${g.flex ? ' class="cb-hint"' : ''}>${g.flex ? `Add or remove products, up to ${g.slots}` : 'Choose your products'}</small>${slots.map(([id, s], k) => `<select data-gpick="${g.id}" data-gslot="${k}" aria-label="${esc(g.name)}: product ${k + 1}" hidden>${cbOptions(id, s, g.only[k], g.none && g.none.includes(k))}</select><button type="button" class="cb-slot" data-cbslot="${g.id}|${k}" aria-label="${esc(g.name)}: change product ${k + 1}">${cbSlot(id, s)}</button>`).join('')}</div>
+      <div class="cb-price" data-cbprice="${g.id}">${cbPriceHTML(g, picks)}</div>
+      <div class="ctas cb-ctas" data-cbcta="${g.id}">${cbCTA(g, picks)}</div>
+    </div></article>`; };
 function comboPage(){
   document.title = 'Combos — FOMAXO';
-  const sets = COMBOS.map(g => ({...g, ls: cxItems(g)})).filter(g => g.ls);
-  return pageHead('Combo', 'The <em class="metal">Combos</em>', 'Parfums and personal care, paired the way you use them. Parfum combos get the multi-buy offer in your bag.') + `
-  <section style="padding-bottom:0"><div class="wrap"><div class="grid shop-grid cx-top">${sets.map(cxCard).join('')}</div></div></section>` +
-  cxSplit('personal-care-poster', 'Your own combo', 'Build your <em class="metal">own</em>', 'Want something different? Mix any FOMAXO parfums and personal care into one combo. Tell us what you would like inside and we reply with the price.',
-    `<a class="btn" href="${waTo('Hello FOMAXO, I would like to build my own combo.')}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Build your own combo</span></a>`) + finalCTA();
+  const all = COMBO_SETS.map(cbSwap).filter(Boolean), sets = all.filter(g => !g.offer && !g.fest && COMBO_SHOW.includes(g.id)), offers = all.filter(g => g.offer);
+  const m = new Date().getMonth(), fests = FESTS.map(f => { const o = festOpen(f), x = {...f, next: festNext(f), open: o}, at = festOpens(x);
+      return {...x, sets: all.filter(g => g.fest === f.key).map(g => o ? g : {...g, closed: at ? fDate(at.getTime(), {day: 'numeric', month: 'short'}) : 'soon', opensAt: at ? at.getTime() : 0})}; }).filter(f => f.sets.length)
+    .sort((a, b) => (b.open ? 1 : 0) - (a.open ? 1 : 0) || (a.next ? a.next.at : 9e15) - (b.next ? b.next.at : 9e15)), open = ((fests.find(f => f.open) || (fests[0] && fests[0].next ? fests[0] : fests.find(f => f.when.includes(m))) || fests[0]) || {}).key;   /* a festival open for buying comes first and is the tab the page opens on */
+  { const c = Math.floor((fests.length - 1) / 2), i = fests.findIndex(f => f.key === open); if (i >= 0) fests.unshift(...fests.splice(fests.length - c + i)); }   /* ...and sits in the middle of the row: festivals just gone on its left, the next ones on its right */
+  const C = S.contact, own = waTo('Hello FOMAXO, I would like to build my own combo.');
+  return `
+  <section class="gf-hero">
+    <div class="gf-copy">
+      <div class="crumbs"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; Combo</div>
+      <span class="eyebrow rv-up">Fragrance · Personal care · One price</span>
+      <h1 class="rv-up d1"><small>Better together</small><span class="metal">FOMAXO</span><br><span class="metal">Combos</span></h1>
+      <p class="lead rv-up d1">Parfums and personal care, paired the way you use them. Pick a combo, change any product in it, and add it to your bag. Parfum combos get the multi-buy offer.</p>
+      <div class="ctas rv-up d2"><a class="btn" href="#cb-sets" data-gjump="cb-sets">Shop combos</a><a class="btn line" href="${own}" target="_blank" rel="noopener">Build your own combo</a></div>
+    </div>
+    <div class="gf-media"><img ${pic('personal-care')} alt="FOMAXO parfums, shower gels, shampoos, face washes and lip balms together" fetchpriority="high" style="object-position:center 40%"></div>
+  </section>
+  <div class="gf-promise">
+    <div>${ICON.gift}<p><b>Save up to 10%</b><span>Parfum combos get the multi-buy offer in your bag.</span></p></div>
+    <div>${ICON.drop}<p><b>Made to match</b><span>Parfum and care chosen to go together.</span></p></div>
+    <div>${ICON.lasting}<p><b>Your choice</b><span>Change any product in a combo.</span></p></div>
+    <div>${ICON.truck}<p><b>Free delivery</b><span>Across the UAE, on every order.</span></p></div>
+  </div>
+  ${offers.length ? `<section class="sec cb-fit" id="cb-offer"><div class="wrap">
+    ${secHead('Offer', 'Buy 3, get <em class="metal">1 gift</em>', '<p class="lead">Choose any three parfums. You get 10% off and a free 10ml parfum of your choice.</p>')}
+    <div class="gf-sets cb-wide">${offers.map(gfCard).join('')}</div>
+  </div></section>` : ''}
+  ${fests.length ? `<section class="sec cb-fit" id="cb-fest" style="padding-top:0"><div class="wrap">
+    <div class="cb-fhead"><span class="eyebrow">Festive celebrations</span><h2>Festive <em class="metal">combos</em></h2><p class="lead">Combos made for the festivals we celebrate across the UAE.</p></div>
+    <div class="cb-tabs" role="tablist" aria-label="Festivals">${fests.map(f => `<button type="button" role="tab" class="cb-tab${f.key === open ? ' on' : ''}${f.next && festOpen(f) ? ' cb-open' : ''}" data-cbfest="${f.key}" aria-selected="${f.key === open}">${f.icon}<span>${esc(f.name)}${f.next ? `<small>${fDate(f.next.at, {day: 'numeric', month: 'short'})}</small>${festOpen(f) ? '<small class="cb-live"><i aria-hidden="true"></i>Buy now</small>' : `<small class="cb-left" data-cbleft="${f.next.at}">${festLeft(f.next.at)}</small>`}` : ''}</span>${f.icon}</button>`).join('')}</div>
+    ${fests.map(f => `<div role="tabpanel" data-cbpanel="${f.key}"${f.key === open ? '' : ' hidden'}>${f.next ? `<p class="cb-when">${festWhen(f)}</p>` : ''}<div class="gf-sets cb-two">${f.sets.map(gfCard).join('')}</div></div>`).join('')}
+  </div></section>` : ''}
+  <section class="sec cb-fit" id="cb-sets" style="padding-top:0"><div class="wrap">
+    ${secHead('Combos', 'Made to <em class="metal">match</em>', '<p class="lead">Our favourite combos. Swap, add or remove products, up to 4 in each.</p>')}
+    <div class="gf-sets">${sets.map(gfCard).join('')}</div>
+  </div></section>
+  <section class="sec" style="padding-top:0"><div class="wrap"><div class="split">
+    <div class="img rv-up"><img ${pic('boutique')} alt="A FOMAXO boutique with parfums on display" loading="lazy"></div>
+    <div class="prose rv-up d1"><span class="eyebrow">Your own combo</span><h2>Build your <em class="metal">own</em></h2>
+      <p>Want something different? Mix any FOMAXO parfums and personal care into one combo. Tell us what you would like inside and we put it together for you.</p>
+      <div class="gf-opts">
+        <div><b>Parfums</b><span>Any 10ml, 50ml or 100ml FOMAXO parfum.</span></div>
+        <div><b>Personal care</b><span>Shower gels, shampoos, face washes and lip balms.</span></div>
+        <div><b>Gift box</b><span>Packed ready to give, with your note inside.</span></div>
+        <div><b>Quantity</b><span>One combo for you or many for an event.</span></div>
+      </div>
+      <div><a class="btn line" href="${own}" target="_blank" rel="noopener">Build your own combo</a></div></div>
+  </div></div></section>
+  <section class="sec" style="padding-top:0"><div class="wrap">
+    ${secHead('How it works', 'Four steps to <em class="metal">your combo</em>')}
+    <div class="gf-steps">
+      <div class="rv-up"><b>Pick</b><span>Choose a combo you like from the list above.</span></div>
+      <div class="rv-up d1"><b>Change</b><span>Tap Change to swap any product, or add and remove products up to 4. The price updates as you go.</span></div>
+      <div class="rv-up d2"><b>Order</b><span>Tap Add to bag or Buy now and pay at checkout. The multi-buy offer is taken off there.</span></div>
+      <div class="rv-up d3"><b>Delivered</b><span>Delivered free across the UAE.</span></div>
+    </div>
+  </div></section>
+  <section class="sec" style="padding-top:0"><div class="wrap"><div class="gf-enq rv-up">
+    <span class="eyebrow">Bulk &amp; event orders</span>
+    <h2>Combos for <span class="metal">every guest</span></h2>
+    <p class="lead">Weddings, Eid, teams or return gifts. Tell us how many combos you need and we will reply with ideas and a quote.</p>
+    <div class="ctas"><a class="btn" href="${waTo('Hello FOMAXO, I would like to order combos in bulk.')}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Chat on WhatsApp</span></a><a class="btn line" href="#/contact">Send an enquiry</a></div>
+    <p class="small">${esc((C.phones[0] || {}).number || '')} · ${esc(C.email)}</p>
+  </div></div></section>` + finalCTA();
+}
+/* Add to bag / Buy now: each product of the combo goes in the bag as its own line (the bag's multi-buy offer prices them) */
+function cbAdd(gid, buy){
+  const g = COMBO_SETS.find(x => x.id === gid); if (!g) return;
+  const ls = cbPicks(gid);
+  if (g.offer ? ls.length < 3 : ls.length < 2) { toast(g.offer ? 'Please choose all three parfums' : 'Please choose at least two products'); return; }
+  const out = ls.find(([id, s]) => cbOut(id, s) || inBagQty(id, +s) + 1 > maxQty(id, +s));
+  if (out) { toast(`${P[out[0]].name} · ${out[1]}ml is out of stock. Please change it`); return; }
+  ls.forEach(([id, s]) => addToCart(id, +s, 1, true));
+  if (buy) location.hash = '#/checkout'; else toast(`${g.name} added to your bag`);
+}
+/* the buttons on the combo cards (again for one card when its price or buttons change) */
+function bindCards(root){
+  $$('[data-cbwa]', root).forEach(b => b.onclick = () => { const g = COMBO_SETS.find(x => x.id === b.dataset.cbwa); if (!g) return;
+    const picks = cbPicks(g.id).map(([id, sz]) => `- ${cbName(cbP(id), sz)}`);
+    open(waTo(`Hello FOMAXO, I would like to order this combo: ${g.name}, with these products:\n${picks.join('\n')}\n\nPlease share the price and delivery details.`), '_blank', 'noopener'); });
+  $$('[data-cbadd]', root).forEach(b => b.onclick = () => cbAdd(b.dataset.cbadd));
+  $$('[data-cbbuy]', root).forEach(b => b.onclick = () => cbAdd(b.dataset.cbbuy, true));
+}
+function bindCombo(){
+  bindCards(app);
+  $$('[data-gslot]', app).forEach(sel => sel.onchange = () => { const gid = sel.dataset.gpick, k = sel.dataset.gslot, [id, sz] = sel.value.split('|'), p = id && cbP(id), g = COMBO_SETS.find(x => x.id === gid);
+    const row = $(`[data-cbslot="${gid}|${k}"]`); if (row) row.innerHTML = cbSlot(id, sz);
+    const pr = $(`[data-cbprice="${gid}"]`), picks = cbPicks(gid); if (pr && g) pr.innerHTML = cbPriceHTML(g, picks);
+    const ct = $(`[data-cbcta="${gid}"]`); if (ct && g && !ct.querySelector('.cb-soon')) { ct.innerHTML = cbCTA(g, picks); bindCards(ct); }
+    const im = $(`[data-gimg="${gid}-${k}"]`); if (!im) return; im.classList.toggle('none', !p); im.src = p ? cbImg(p, sz) : NOPIC; });
+  $$('[data-gjump]', app).forEach(a => a.onclick = e => { e.preventDefault(); const t = document.getElementById(a.dataset.gjump); t && t.scrollIntoView({behavior: 'smooth'}); });
+  $$('[data-cbslot]', app).forEach(b => b.onclick = () => cbPicker(b));
+  clearInterval(bindCombo.t); if ($('[data-cbleft]')) bindCombo.t = setInterval(() => { const e = $$('[data-cbleft]'); if (!e.length) return clearInterval(bindCombo.t); e.forEach(x => x.textContent = festLeft(+x.dataset.cbleft)); }, 30000);   // the tabs' countdown
+  const tabRow = $('.cb-tabs'), tabOn = $('.cb-tab.on');
+  if (tabRow && tabOn && document.documentElement.dir !== 'rtl') tabRow.scrollLeft = tabOn.offsetLeft - tabRow.offsetLeft - (tabRow.clientWidth - tabOn.offsetWidth) / 2;   // phone: the open tab starts in the middle of the sliding row
+  $$('[data-cbfest]', app).forEach(b => b.onclick = () => { const k = b.dataset.cbfest;
+    if (tabRow && tabRow.scrollWidth > tabRow.clientWidth) tabRow.scrollTo({left: tabRow.scrollLeft + b.getBoundingClientRect().left - tabRow.getBoundingClientRect().left - (tabRow.clientWidth - b.offsetWidth) / 2, behavior: 'smooth'});
+    $$('[data-cbfest]').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-selected', on); });
+    $$('[data-cbpanel]').forEach(p => p.hidden = p.dataset.cbpanel !== k); });
+  cbEven(); removeEventListener('resize', cbEven.r); addEventListener('resize', cbEven.r = () => { clearTimeout(cbEven.t); cbEven.t = setTimeout(cbEven, 150); });
+}
+/* laptop: every festival combo card is the height of the tallest one, so all tabs look the same and the buttons line up */
+function cbEven(){
+  const ps = $$('[data-cbpanel]'), cs = $$('[data-cbpanel] .gf-set'); if (!cs.length) return;
+  cs.forEach(c => c.style.height = ''); if (!matchMedia('(min-width:901px)').matches) return;
+  const hid = ps.filter(p => p.hidden); hid.forEach(p => p.hidden = false);
+  const nat = Math.max(...cs.map(c => c.offsetHeight)); hid.forEach(p => p.hidden = true);
+  const sec = $('#cb-fest'), card = cs.find(c => c.offsetParent), nav = $('header.nav');
+  const top = card && sec ? card.parentElement.getBoundingClientRect().top - sec.querySelector('.wrap').firstElementChild.getBoundingClientRect().top : 0;
+  const room = innerHeight - (nav ? nav.getBoundingClientRect().bottom : 0) - top - 28;
+  cs.forEach(c => c.style.height = Math.max(nat, Math.min(room, 760)) + 'px');
+}
+/* combo picture window: every product the slot's (hidden) dropdown offers, one card per product with its sizes */
+function cbPicker(btn){
+  const [gid, k] = btn.dataset.cbslot.split('|'), sel = $(`[data-gpick="${gid}"][data-gslot="${k}"]`), g = COMBO_SETS.find(x => x.id === gid); if (!sel || !g) return;
+  const groups = new Map(); let none = false;
+  [...sel.options].forEach(o => { if (!o.value) { none = true; return; } const [id, sz] = o.value.split('|'); if (cbP(id)) groups.has(id) ? groups.get(id).push(sz) : groups.set(id, [sz]); });
+  let [cur, curSz] = sel.value.split('|');
+  const allParfum = [...groups.keys()].every(id => !cbP(id).kind);
+  const card = id => { const p = cbP(id), szs = groups.get(id), sz = id === cur ? curSz : szs[0];
+    return `<button type="button" class="cb-card${id === cur ? ' on' : ''}" data-cbp="${id}"><img src="${cbImg(p, sz)}" alt="" loading="lazy"><span class="t"><b>${esc(p.name)}</b><small>${esc(cbSub(p))}</small>${p.kind ? '' : `<span class="sz">${szs.map(s => `<span data-cbs="${s}"${id === cur && s === curSz ? ' class="on"' : ''}>${s}ml</span>`).join('')}</span>`}</span></button>`; };
+  const d = document.createElement('div'); d.className = 'cb-sheet';
+  d.innerHTML = `<div class="in" role="dialog" aria-modal="true" aria-label="Choose a product"><div class="hd"><div><h3>Choose ${allParfum ? 'your parfum' : 'a product'}</h3><p>${esc(g.name)} · ${allParfum ? 'tap a parfum, then pick the size' : 'tap a product to put it in your combo'}</p></div><button type="button" class="x" data-cbx aria-label="Close">✕</button></div>
+    <div class="g">${[...groups.keys()].map(card).join('')}${none ? `<button type="button" class="cb-card${cur ? '' : ' on'}" data-cbp=""><span class="ph0">—</span><span class="t"><b>No product</b><small>Leave this one empty</small></span></button>` : ''}</div>
+    <div class="ft"><button type="button" class="btn" data-cbx>Done</button></div></div>`;
+  const close = () => { d.classList.remove('show'); document.documentElement.classList.remove('cb-lock'); removeEventListener('keydown', key); setTimeout(() => d.remove(), 300); const b = $(`[data-cbslot="${btn.dataset.cbslot}"]`); b && b.focus({preventScroll: true}); };
+  const key = e => { if (e.key === 'Escape') close(); };
+  const set = (id, sz) => { cur = id; curSz = sz; sel.value = id ? `${id}|${sz}` : ''; sel.dispatchEvent(new Event('change'));
+    $$('.cb-card', d).forEach(c => { const on = c.dataset.cbp === id; c.classList.toggle('on', on); $$('[data-cbs]', c).forEach(s => s.classList.toggle('on', on && s.dataset.cbs === sz));
+      const im = $('img', c); if (on && im) im.src = cbImg(cbP(id), sz); }); };
+  d.onclick = e => { if (e.target === d || e.target.closest('[data-cbx]')) return close();
+    const c = e.target.closest('[data-cbp]'); if (!c) return; const id = c.dataset.cbp, s = e.target.closest('[data-cbs]');
+    set(id, s ? s.dataset.cbs : id === cur ? curSz : (groups.get(id) || [''])[0]); };
+  document.body.appendChild(d); document.documentElement.classList.add('cb-lock'); addEventListener('keydown', key);
+  requestAnimationFrame(() => { d.classList.add('show'); const on = $('.cb-card.on', d); (on || $('.cb-card', d)).focus({preventScroll: true}); on && on.scrollIntoView({block: 'nearest'}); });
 }
 function bindDx(){
   $$('[data-cxset]', app).forEach(b => b.onclick = () => { const ls = b.dataset.cxset.split(',').map(x => x.split('.')); let ok = 0;
@@ -4907,7 +5306,7 @@ function route(){
     case 'personal-care': html = personalCare(); break;
     case 'pc': html = pcPage(q); after = bindDx; break;
     case 'gifts': html = giftsPage(q); after = bindDx; break;
-    case 'combo': html = comboPage(); after = bindDx; break;
+    case 'combo': html = comboPage(); after = bindCombo; break;
     case 'about': html = about(); break;
     case 'returns': html = returnsPage(); document.title = 'Returns & refunds | FOMAXO Dubai'; break;
     case 'contact': html = contact(q); after = bindContact; break;
