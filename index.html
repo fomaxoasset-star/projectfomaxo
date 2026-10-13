@@ -3539,7 +3539,7 @@ function bindProduct(p){
     qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } fitPdp();
   });
   const stage = $('#stage');
-  stage.onclick = () => { if (matchMedia('(hover: hover)').matches) stage.classList.toggle('zoom'); };   // laptop only: phones swipe instead
+  stage.onclick = () => { if (matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches) stage.classList.toggle('zoom'); };   // laptop only: phones swipe instead
   stage.onmousemove = e => { if (!stage.classList.contains('zoom')) return; const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${(e.clientX-r.left)/r.width*100}% ${(e.clientY-r.top)/r.height*100}%`; };
   stage.onmouseleave = () => stage.classList.remove('zoom');
   /* phone: swipe the big photo left / right for the next / previous photo (goes round at the ends); the neighbour photo slides in beside it */
