@@ -2432,8 +2432,7 @@ if (isset($_GET['coupons'])) {
                    per_cust = VALUES(per_cust), free_id = VALUES(free_id), free_opt = VALUES(free_opt), wa_to = COALESCE(VALUES(wa_to), wa_to)')
         ->execute([$code, $kind, round($amt, 2), $min !== null && $min > 0 ? round($min, 2) : null, $st !== '' ? $st : null, $en !== '' ? $en : null, $uses !== null && $uses > 0 ? $uses : null, $stack,
                    !empty($_POST['per_cust']) ? 1 : 0, $fr[0] ?? null, $fr[1] ?? null, $wa !== '' ? substr($wa, 0, 25) : null]);
-    if ($wa !== '' || !empty($_POST['sendwa'])) $_SESSION['cpsend'] = $code;   // the saved code shows on top of the form with its WhatsApp button
-    if (!empty($_POST['sendwa'])) $_SESSION['cpopen'] = 1;   // WhatsApp next to Save coupon: saved first, then the WhatsApp box opens by itself
+    if (!empty($_POST['sendwa'])) $_SESSION['cpsend'] = $code;   // WhatsApp next to Save coupon: saved first, then the WhatsApp box opens by itself
     flash("Coupon $code " . ($had ? 'updated' : 'saved') . '. ' . ($st !== '' && $st > date('Y-m-d H:i:s') ? 'It starts ' . date('d/m/Y, g:i a', strtotime($st)) . '.' : 'Customers can use it now.'), true); go(['coupons' => 1]);
   }
   fx_coupon_sweep($pdo);   // one-use codes already used up (an order placed or paid before this was in place) go now
@@ -2444,7 +2443,6 @@ if (isset($_GET['coupons'])) {
                         AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') GROUP BY coupon") as $r) $used[$r['coupon']] = $r;
   $now = date('Y-m-d H:i:s'); $tr = '';
   $sendc = null; if (!empty($_SESSION['cpsend'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['cpsend']]); $sendc = $s->fetch() ?: null; unset($_SESSION['cpsend']); }
-  $cpopen = $sendc && !empty($_SESSION['cpopen']); unset($_SESSION['cpopen']);
   $made = null; if (!empty($_SESSION['goodwill'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['goodwill']]); $made = $s->fetch() ?: null; unset($_SESSION['goodwill']); }
   $dt = fn($v) => date('d/m/Y, g:i a', strtotime($v));
   $left = function ($v) { $m = (int)floor((strtotime($v) - time()) / 60); $d = intdiv($m, 1440); $h = intdiv($m % 1440, 60);
@@ -2483,8 +2481,8 @@ if (isset($_GET['coupons'])) {
     . '.cpr .cprow{grid-template-columns:1fr auto;gap:6px 16px}.cpr .cpacts{grid-column:2;grid-row:1/3;flex-direction:column;align-items:stretch}.cpr .cpacts .btn{width:100%}.cpr .cpused{text-align:left}}</style>'
     . fx_free_pick_js()
     . '<div class="cpgrid fitbox ptw" data-t="1"><div class="cpl" data-t="1"><form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Make a coupon</h2>'
-    . ($sendc ? '<div class="cpmade" style="margin:0 0 8px"><span>Saved <b class="cpcode">' . h($sendc['code']) . '</b> · ' . h(fomaxo_coupon_label($sendc)) . ($sendc['wa_to'] ? ' · to ' . h((string)$sendc['wa_to']) : '') . '</span>' . fx_wa_btn((string)$sendc['wa_to'], (string)$sendc['wa_to'], fx_coupon_share_text($sendc), '', 'cp:' . $sendc['code'], 'g', false, 'btn sm wag' . ($cpopen ? ' cpopen' : ''), true) . '</div>'
-      . ($cpopen ? '<script>addEventListener("load",function(){var b=document.querySelector(".cpopen");if(b)b.click()})</script>' : '') : '')
+    . ($sendc ? '<span hidden>' . fx_wa_btn((string)$sendc['wa_to'], (string)($sendc['wa_to'] ?: $sendc['code']), fx_coupon_share_text($sendc), '', 'cp:' . $sendc['code'], 'g', false, 'btn sm wag cpopen', true) . '</span>'
+      . '<script>addEventListener("load",function(){var b=document.querySelector(".cpopen");if(b)b.click()})</script>' : '')
     . '<div class="g3 cpg1"><div><label for="code">Code</label><div class="cpcodebox"><input id="code" class="cpin" name="code" maxlength="30" placeholder="e.g. WELCOME10" autocapitalize="characters" autocomplete="off" required><button type="button" class="btn line sm" data-mkcode>Make code</button></div></div>'
     . '<div><label for="kind">Type</label><select id="kind" name="kind" data-cpkind><option value="pct">% off</option><option value="aed">AED off</option><option value="free">Free product</option></select></div>'
     . '<div class="cpamt"><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" placeholder="e.g. 10" required></div>'
