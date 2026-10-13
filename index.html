@@ -359,6 +359,10 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .notes-list b{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:400}
 .notes-list span{font-family:var(--serif);font-size:20px;color:var(--ivory)}
 @media(max-width:960px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:static;grid-template-columns:minmax(0,1fr)}.thumbs{flex-direction:row;order:2}.thumbs button{width:72px}}
+/* AJAY: on phone the product photos show whole, not cut or zoomed in: each photo frame takes the photo's own shape (--ar, set by fitPhoto);
+   a shop row with different shapes takes the tallest and a wider photo shows whole (fit-c); swipe moves between photos */
+@media(max-width:960px){.stage{aspect-ratio:var(--ar,4/5);touch-action:pan-y pinch-zoom}.card .media{aspect-ratio:var(--ar-row,var(--ar,4/5))}.card .media.fit-c{background:#0b0a08}.card .media.fit-c img{object-fit:contain}}
+@media(hover:none){.card:hover .media img{transform:none}}   /* a tap on a phone doesn't leave the card photo enlarged */
 
 /* mobile sticky buy */
 .mbuy{position:fixed;left:0;right:0;bottom:0;z-index:35;background:rgba(var(--bg-rgb),.94);backdrop-filter:blur(14px);border-top:1px solid var(--line-2);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:none;gap:12px;align-items:center;transform:translateY(110%);transition:transform .5s var(--ease)}
@@ -2885,6 +2889,24 @@ function fitCo(){
 }
 addEventListener('resize', () => requestAnimationFrame(fitCo));
 /* laptop product page: photos and thumbnails no taller than the screen, and the buy side scaled down (never below 72%) so it all fits one screen, also with a section opened */
+/* phone: a product photo frame takes the shape of its photo, so the whole photo shows (see .stage / .card .media CSS) */
+const fitRows = () => {
+  const rows = new Map();
+  $$('.grid > .card').forEach(c => { const k = c.parentElement, t = c.offsetTop; if (!rows.has(k)) rows.set(k, new Map()); const m = rows.get(k); m.has(t) ? m.get(t).push(c) : m.set(t, [c]); });
+  rows.forEach(m => m.forEach(row => {
+    const ims = row.map(c => $('.media', c)).filter(Boolean); ims.forEach(x => { x.style.removeProperty('--ar-row'); x.classList.remove('fit-c'); });
+    const rs = ims.map(x => parseFloat(x.style.getPropertyValue('--ar')) || .8), lo = Math.min(...rs);
+    if (Math.max(...rs) - lo > .01) ims.forEach((x, i) => { x.style.setProperty('--ar-row', lo); x.classList.toggle('fit-c', rs[i] - lo > .01); });
+  }));
+};
+let fitFrame = 0;
+const fitPhoto = im => {
+  const box = im.parentElement; if (!box || !box.matches('.stage,.card .media') || im.classList.contains('alt') || im.classList.contains('peek') || !im.naturalWidth) return;
+  const r = Math.min(box.matches('.stage') ? 1.4 : 1, Math.max(.55, im.naturalWidth / im.naturalHeight));
+  box.style.setProperty('--ar', r.toFixed(4)); if (!box.matches('.stage')) { cancelAnimationFrame(fitFrame); fitFrame = requestAnimationFrame(fitRows); }
+};
+document.addEventListener('load', e => { if (e.target.tagName === 'IMG') fitPhoto(e.target); }, true);
+addEventListener('resize', () => { cancelAnimationFrame(fitFrame); fitFrame = requestAnimationFrame(fitRows); });
 function fitPdp(){
   const pdp = $('.pdp'), buy = pdp && $('.buy', pdp), gal = pdp && $('.gallery', pdp); if (!buy) return;
   buy.style.zoom = ''; buy.style.removeProperty('--bz'); if (gal) { gal.style.gridTemplateColumns = ''; const tb0 = $('.thumbs', gal); if (tb0) tb0.style.maxHeight = ''; gal.style.removeProperty('--stage-w'); }
@@ -3517,9 +3539,38 @@ function bindProduct(p){
     qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } fitPdp();
   });
   const stage = $('#stage');
-  stage.onclick = () => stage.classList.toggle('zoom');
+  stage.onclick = () => { if (matchMedia('(hover: hover)').matches) stage.classList.toggle('zoom'); };   // laptop only: phones swipe instead
   stage.onmousemove = e => { if (!stage.classList.contains('zoom')) return; const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${(e.clientX-r.left)/r.width*100}% ${(e.clientY-r.top)/r.height*100}%`; };
   stage.onmouseleave = () => stage.classList.remove('zoom');
+  /* phone: swipe the big photo left / right for the next / previous photo (goes round at the ends); the neighbour photo slides in beside it */
+  const thumbs = $$('.thumbs button');
+  if (thumbs.length > 1) {
+    let x0 = 0, y0 = 0, dx = 0, drag = 0, peekDir = 0;   // drag: 1 = sideways swipe, -1 = page scroll or zoomed, 0 = not decided yet
+    const im = () => $('#stageImg'), n = thumbs.length;
+    const peek = document.createElement('img'); peek.className = 'peek'; peek.alt = ''; peek.hidden = true; stage.appendChild(peek);
+    const at = d => thumbs[(Math.max(0, thumbs.findIndex(b => b.classList.contains('on'))) + d + n) % n];
+    const move = (x, t) => { const w = stage.clientWidth, tr = t ? `transform ${t}s ease-out` : 'none'; im().style.transition = tr; im().style.transform = x ? `translateX(${x}px)` : ''; peek.style.transition = tr; peek.style.transform = `translateX(${x + peekDir * w}px)`; };
+    stage.addEventListener('touchstart', e => { dx = 0; peekDir = 0; drag = stage.classList.contains('zoom') || e.touches.length > 1 ? -1 : 0; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive: true});
+    stage.addEventListener('touchmove', e => {
+      if (drag < 0) return; const t = e.touches[0]; dx = t.clientX - x0; const dy = t.clientY - y0;
+      if (!drag) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; drag = Math.abs(dx) > Math.abs(dy) ? 1 : -1; if (drag < 0) return; }
+      e.preventDefault();
+      const d = dx < 0 ? 1 : -1; if (d !== peekDir) { peekDir = d; peek.src = IMG(at(d).dataset.g); peek.hidden = false; }
+      move(dx);
+    }, {passive: false});
+    const swipeEnd = () => {
+      if (drag !== 1) return; drag = 0; const w = stage.clientWidth;
+      if (Math.abs(dx) < Math.min(60, w * .18)) { move(0, .2); setTimeout(() => { peek.hidden = true; im().style.transition = ''; }, 220); return; }   // a short drag springs back
+      const next = at(peekDir); move(-peekDir * w, .22);
+      setTimeout(() => {
+        setImg(next.dataset.g);
+        const show = () => { peek.hidden = true; im().style.transition = 'none'; im().style.transform = ''; requestAnimationFrame(() => { im().style.transition = ''; }); };
+        (im().decode ? im().decode() : Promise.resolve()).then(show, show);   // swap once the new photo is ready, so it doesn't flash
+        const tb = next.parentElement; tb.scrollLeft = next.offsetLeft - tb.offsetLeft - (tb.clientWidth - next.offsetWidth) / 2;
+      }, 230);
+    };
+    stage.addEventListener('touchend', swipeEnd); stage.addEventListener('touchcancel', swipeEnd);
+  }
   function updPicks(){
     if (!isSet) return;
     $$('.pick').forEach(b => { const on = picks.includes(b.dataset.pick); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.classList.toggle('dim', !on && picks.length >= size); });
