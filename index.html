@@ -1904,9 +1904,11 @@ html[data-mode="light"] .form .rw-need select,html[data-mode="light"] .form labe
 .pp-row .pp-line{flex-direction:column;align-items:flex-start;gap:4px}
 .pp-row .p-save{margin:0;flex:none;white-space:nowrap;font-size:10.5px;letter-spacing:.12em;line-height:1;color:#2f8a4e;border:1px solid #2f8a4e;background:rgba(47,138,78,.08);padding:7px 10px}
 .pp-row .p-save .amt{font-size:1.15em}
-.pp-row .pp-line.pp-lab{display:grid;grid-template-columns:auto auto;align-items:center;justify-items:start;gap:4px 16px}
-.pp-lb{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;line-height:1.2}
-@media(max-width:600px){.pp-row:has(.pp-lab){flex-wrap:wrap;row-gap:12px}.pp-lb{font-size:11px;letter-spacing:.14em}}   /* phone: the green You save box moves under the prices so nothing goes off screen */
+.pp-row .pp-line.pp-lab{display:grid;grid-template-columns:auto auto;align-items:baseline;justify-items:start;gap:10px 16px;padding-bottom:8px}
+.pp-row:has(.pp-lab){flex-wrap:wrap;row-gap:12px}.pp-row .pp-lab{flex:none}   /* a narrow laptop window puts the You save box under the prices instead of on top of them */
+.pp-lab .was .amt,.pp-lab .pprice .amt{position:relative;top:calc(.36em - 4.2px)}   /* word and number share a baseline, then the number drops by half the difference in height (its digits are .72em tall, the word's capitals 8.4px), so the word sits at the exact middle of the number in every browser and size (AJAY 2026-10-13) */
+.pp-lb{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;line-height:1.2;white-space:nowrap}
+@media(max-width:600px){.pp-lb{font-size:11px;letter-spacing:.14em}.pp-lab .was .amt,.pp-lab .pprice .amt{top:calc(.36em - 3.85px)}}   /* phone: the green You save box moves under the prices so nothing goes off screen */
 html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483;background:rgba(92,196,131,.1)}
 .pp-row .pp-line .was{font-size:22px}
 /* limited-time sale: a real countdown to the end date set on fomaxo.com/admin → Offer (hidden when none is set or it has passed) */
