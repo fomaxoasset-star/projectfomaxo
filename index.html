@@ -186,9 +186,10 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .card .media:hover img.alt{opacity:1}
 .card .media::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,.55));pointer-events:none}
 .tag{position:absolute;top:16px;left:16px;z-index:2;font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-hi);border:1px solid var(--line-2);padding:6px 10px;background:rgba(var(--bg-rgb),.65);backdrop-filter:blur(6px)}
-.best{position:absolute;top:14px;right:14px;z-index:3;display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:#0a0805;background:var(--metal,var(--gold));padding:6px 10px 6px 9px;box-shadow:0 6px 18px -8px rgba(0,0,0,.6);pointer-events:none}.best svg{width:11px;height:11px;flex:none}.best[hidden]{display:none}
+.card{position:relative}   /* the badge sits on the photo's top right corner, a little outside the frame */
+.best{position:absolute;top:-8px;right:-8px;z-index:5;display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:#0a0805;background:var(--metal,var(--gold));padding:6px 10px 6px 9px;box-shadow:0 6px 18px -8px rgba(0,0,0,.6);pointer-events:none}.best svg{width:11px;height:11px;flex:none}.best[hidden]{display:none}
 html[data-mode="light"] .best{color:#fff8ea}
-@media(max-width:560px){.best{top:8px;right:8px;font-size:9px;letter-spacing:.16em;padding:5px 7px;gap:4px}.best svg{width:9px;height:9px}}
+@media(max-width:560px){.also-row{padding-top:8px}.best{top:-6px;right:-6px;font-size:9px;letter-spacing:.16em;padding:5px 7px;gap:4px}.best svg{width:9px;height:9px}}
 .card .quick{position:absolute;left:16px;right:16px;bottom:16px;z-index:2;opacity:0;transform:translateY(10px);transition:.6s var(--ease)}
 .card:hover .quick{opacity:1;transform:none}
 @media(hover:none){.card .quick{display:none}}
@@ -361,7 +362,7 @@ html[data-mode="light"] .best{color:#fff8ea}
 .notes-list div{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:baseline}
 .notes-list b{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:400}
 .notes-list span{font-family:var(--serif);font-size:20px;color:var(--ivory)}
-@media(max-width:960px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:static;grid-template-columns:minmax(0,1fr)}.thumbs{flex-direction:row;order:2}.thumbs button{width:72px}}
+@media(max-width:960px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:relative;grid-template-columns:minmax(0,1fr)}.thumbs{flex-direction:row;order:2}.thumbs button{width:72px}}
 /* AJAY: on phone the product photos show whole, not cut or zoomed in: each photo frame takes the photo's own shape (--ar, set by fitPhoto);
    a shop row with different shapes takes the tallest and a wider photo shows whole (fit-c); swipe moves between photos */
 @media(max-width:960px){.stage{aspect-ratio:3/4;touch-action:pan-y pinch-zoom}.stage img{object-fit:cover}.card .media{aspect-ratio:var(--ar-row,var(--ar,4/5))}.card .media.fit-c{background:#0b0a08}.card .media.fit-c img{object-fit:contain}}
@@ -3171,9 +3172,9 @@ function card(p, opts={}){
   const alt = altFor(p, size);
   const chips = p.sizes.length > 1 && !opts.size ? `<div class="chips">${p.sizes.map(s => `<button class="chip${s===size?' on':''}" data-size="${s}">${optLabel(p, s)}</button>`).join('')}</div>` : `<div class="meta">${p.kind==='set' ? '2ml vials' : sizeLabel(size)} · ${esc(p.family.split('·')[0].trim())}</div>`;
   return `<article class="card rv-up ${opts.d||''}" data-id="${p.id}" data-sel="${size}">
+    ${bestHTML(p.id, soldKey(p, size))}
     <a class="media" href="#/product/${p.id}${opts.size ? '?size=' + opts.size : ''}" aria-label="${esc(p.name)}">
       ${p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ''}
-      ${bestHTML(p.id, soldKey(p, size))}
       <img ${cardPic(img)} alt="FOMAXO ${esc(p.name)}" ${opts.top ? 'fetchpriority="high"' : 'loading="lazy"'}>
       ${alt && HOVER ? `<img class="alt" ${cardPic(alt)} alt="" loading="lazy">` : ''}
       <span class="quick"><span class="btn line sm block" style="background:rgba(5,5,5,.7)">View details</span></span>
@@ -3483,9 +3484,9 @@ function product(id, q){
   return `<div class="wrap page-fade">
     <div class="crumbs pdp-crumbs" style="padding-top:34px"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; <a href="#/fragrances">Fragrances</a> &nbsp;/&nbsp; ${esc(p.name)}</div>
     <div class="pdp">
-      <div class="gallery">
+      <div class="gallery">${bestHTML(p.id, soldKey(p, size))}
         <div class="thumbs">${gallery.map((g,i) => `<button class="${i?'':'on'}" data-g="${g}" aria-label="Image ${i+1}"><img src="${SM(g)}" alt="" loading="lazy"></button>`).join('')}</div>
-        <div class="stage" id="stage">${bestHTML(p.id, soldKey(p, size))}<img id="stageImg" src="${IMG(isSet && !q.get('size') ? p.images[0] : imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}"></div>
+        <div class="stage" id="stage"><img id="stageImg" src="${IMG(isSet && !q.get('size') ? p.images[0] : imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}"></div>
       </div>
       <div class="buy">
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -3547,7 +3548,7 @@ function bindProduct(p){
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
     $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = pdpPrice(p, size);
     setImg(imgFor(p, size));
-    qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } const sb = $('#stage [data-best]'); if (sb) { sb.dataset.k = soldKey(p, size); bestSync(); } fitPdp();
+    qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } const sb = $('.gallery > [data-best]'); if (sb) { sb.dataset.k = soldKey(p, size); bestSync(); } fitPdp();
   });
   const stage = $('#stage');
   /* laptop: a click zooms. Phone: only a double tap zooms (at the tapped spot) and a double tap zooms back out; a single tap does nothing */
