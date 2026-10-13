@@ -1789,6 +1789,14 @@ const OFFER_JS = <<<'JS'
   if (sale) {
     var mode = function () { return (sale.querySelector('input[name=mode]:checked') || {}).value; };
     sale.addEventListener('change', function (e) { if (e.target.name === 'mode') sale.querySelector('.oend').hidden = mode() !== 'date'; });
+    /* % off fixes itself: more than the biggest real saving of the picked products = that saving, 0 or less = empty (biggest saving), no browser error */
+    var pctFix = function () {
+      var i = sale.querySelector('input[name=pct]'); if (!i || i.disabled || i.value.trim() === '') return;
+      var picked = [].slice.call(sale.querySelectorAll('input[name="items[]"]:checked')), best = picked.length ? Math.max.apply(null, picked.map(function (x) { return +x.dataset.pct; })) : +sale.dataset.best;
+      var n = Math.round(parseFloat(i.value)); i.value = !(n >= 1) ? '' : best ? Math.min(n, best) : Math.min(n, 99);
+    };
+    sale.addEventListener('change', function (e) { if (e.target.name === 'pct' || e.target.name === 'items[]') pctFix(); });
+    sale.addEventListener('submit', pctFix, true);
     /* quick end: now + 24h / 48h / 3 days / 7 days, in UAE time */
     sale.querySelectorAll('.cpq button').forEach(function (b) { b.onclick = function () {
       var p = function (n) { return ('0' + n).slice(-2); }, e = new Date(Date.now() + (new Date().getTimezoneOffset() + 240) * 60000 + b.dataset.h * 3600000);
@@ -1844,7 +1852,7 @@ const OFFER_JS = <<<'JS'
     var picked = [].slice.call(sale.querySelectorAll('input[name="items[]"]:checked'));
     var best = picked.length ? Math.max.apply(null, picked.map(function (i) { return +i.dataset.pct; })) : +sale.dataset.best;
     var typed = parseInt(val(sale, 'pct'), 10), pct = typed > 0 ? Math.min(typed, best) : best;
-    var note = md === 'off' ? 'The timer is Off, so this popup will not show.' : !sale.querySelector('input[name=popup]').checked ? 'Popup is not ticked, so this popup will not show.' : typed > best ? 'You typed ' + typed + '%, but the biggest real saving is ' + best + '%, so it shows ' + best + '%.' : '';
+    var note = md === 'off' ? 'The timer is Off, so this popup will not show.' : !sale.querySelector('input[name=popup]').checked ? 'Popup is not ticked, so this popup will not show.' : typed > best ? 'You typed ' + typed + '%, but the biggest real saving is ' + best + '%, so it changes to ' + best + '%.' : '';
     var end = endAt(), left = Math.max(0, Math.floor((end - Date.now()) / 1000));
     var cd = md === 'date' ? '<div class="pv-cd">' + [Math.floor(left / 86400), pad(Math.floor(left % 86400 / 3600)), pad(Math.floor(left % 3600 / 60)), pad(left % 60)].map(function (n, i) {
       return '<div><b>' + (end ? n : '–') + '</b><span>' + T(['Days', 'Hours', 'Min', 'Sec'][i]) + '</span></div>'; }).join('') + '</div>' : '';
@@ -1967,7 +1975,7 @@ if (isset($_GET['offer'])) {
       fomaxo_setting($pdo, 'sale_items', $items ? fomaxo_json($items) : '');
       $realMax = $bestOf($items);   // the % in the popup: empty = the biggest real saving of the picked products; never more than that
       $pc = trim((string)($_POST['pct'] ?? ''));
-      if ($pc !== '' && (!ctype_digit($pc) || (int)$pc < 1 || (int)$pc > 99)) { flash('Please type a % between 1 and 99, or leave it empty.'); go(['offer' => 1]); }
+      if ($pc !== '') { $n = is_numeric($pc) ? (int)round((float)$pc) : 0; $pc = $n < 1 ? '' : (string)min($n, 99); }   // a wrong % fixes itself: 0 or not a number = empty (biggest saving), never over 99
       if ($pc !== '' && $realMax && (int)$pc > $realMax) { $pc = (string)$realMax; $capped = $realMax; }
       fomaxo_setting($pdo, 'sale_pct', $pc);
       fomaxo_setting($pdo, 'sale_size', fomaxo_json(fomaxo_popup_sizes($_POST['size'] ?? null)));   // part sizes from Preview → size bar ("Turn off" keeps them)
@@ -2020,7 +2028,7 @@ if (isset($_GET['offer'])) {
     . '<span class="od"><input type="date" name="sale_end_d" aria-label="End date" value="' . ($on ? date('Y-m-d', $e) : '') . '"><input type="time" name="sale_end_t" aria-label="End time (UAE)" title="UAE time; empty = 11:59 pm" value="' . ($on ? date('H:i', $e) : '') . '"></span></div></div>'
     . '<div class="orow" data-op="p"><div class="olab"><b>Popup</b>' . $tick('popup', $pop, 'On') . '</div><div class="ocol"><div class="owords">'
     . $word('title', 'Top line', 30, 'LIMITED TIME OFFER', ['Limited time offer', 'Flash sale', 'Festive sale', 'Eid offer', 'National Day offer', 'Weekend sale', 'Mega sale', 'Special offer', 'New launch offer'], $W['title'])
-    . '<label>% off<input name="pct" type="number" min="1" max="' . ($best ?: 99) . '" step="1" inputmode="numeric" value="' . h($pct) . '" placeholder="' . ($best ? "max $best" : 'No old prices') . '"' . ($best ? '' : ' disabled') . '></label>'
+    . '<label>% off<input name="pct" type="number" step="any" inputmode="numeric" value="' . h($pct) . '" placeholder="' . ($best ? "max $best" : 'No old prices') . '"' . ($best ? '' : ' disabled') . '></label>'
     . $word('sub', 'Under the %', 40, 'ON SELECTED FRAGRANCES', ['ON SELECTED PRODUCTS', 'ON SELECTED FRAGRANCES', 'ON SELECTED PERSONAL CARE', 'ON ALL FRAGRANCES', 'ON PERFUMES', 'ON GIFT SETS', 'ON EVERYTHING', 'ON YOUR FIRST ORDER'], $W['sub'])
     . $word('btn', 'Button', 24, 'Shop the offer', ['Shop the offer', 'Shop now', 'Grab the deal', 'Shop fragrances', 'See the offer'], $W['btn'])
     . '</div>' . ($sale ? $picker('items', $items, 'None picked: the popup counts every product with an old price.', 'Add a product to the popup') : '<p class="small" style="margin:0;color:var(--warn)">No product has an old price on Products yet, so the popup stays hidden.</p>') . '</div></div>'
