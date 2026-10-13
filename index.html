@@ -1904,6 +1904,9 @@ html[data-mode="light"] .form .rw-need select,html[data-mode="light"] .form labe
 .pp-row .pp-line{flex-direction:column;align-items:flex-start;gap:4px}
 .pp-row .p-save{margin:0;flex:none;white-space:nowrap;font-size:10.5px;letter-spacing:.12em;line-height:1;color:#2f8a4e;border:1px solid #2f8a4e;background:rgba(47,138,78,.08);padding:7px 10px}
 .pp-row .p-save .amt{font-size:1.15em}
+.pp-row .pp-line.pp-lab{display:grid;grid-template-columns:auto auto;align-items:center;justify-items:start;gap:4px 16px}
+.pp-lb{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:500;line-height:1.2}
+@media(max-width:600px){.pp-row:has(.pp-lab){flex-wrap:wrap;row-gap:12px}.pp-lb{font-size:11px;letter-spacing:.14em}}   /* phone: the green You save box moves under the prices so nothing goes off screen */
 html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483;background:rgba(92,196,131,.1)}
 .pp-row .pp-line .was{font-size:22px}
 /* limited-time sale: a real countdown to the end date set on fomaxo.com/admin → Offer (hidden when none is set or it has passed) */
@@ -3340,8 +3343,8 @@ const soldKey = (p, s) => s;   // every choice on its own: 10ml, 50ml, 100ml, an
 const soldHTML = (id, s) => soldN(id, s) > 0 ? `${ICON.bag}<span>${soldN(id, s)} purchased this week</span>` : '';
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
-  // sale: old price struck on top, new price below it, on the left; the saving in a small green box on the right
-  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><div class="pp-line"><s class="was">${moneyHTML(c)}</s><span class="pprice">${moneyHTML(v)}</span></div><div class="pp-r"><span class="p-save">You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span><div id="pstk">${stockHTML(p.id, size, true)}</div></div></div>${saleCD(lineOn(p))}`;
+  // sale: "Original price" with the old price struck on top, "Exclusive price" with the new price below it, each word centred with its number (AJAY 2026-10-13); the saving in a small green box on the right
+  if (hasPrice(v) && hasPrice(c) && +c > +v) return `<div class="pp-row"><div class="pp-line pp-lab"><span class="pp-lb">Original price</span><s class="was">${moneyHTML(c)}</s><span class="pp-lb">Exclusive price</span><span class="pprice">${moneyHTML(v)}</span></div><div class="pp-r"><span class="p-save">You save ${moneyHTML(c - v)} · ${Math.round((c - v) / c * 100)}% off</span><div id="pstk">${stockHTML(p.id, size, true)}</div></div></div>${saleCD(lineOn(p))}`;
   return priceHTML(p, size, 'pprice') + `<div id="pstk">${stockHTML(p.id, size, true)}</div>`; };   // AJAY: the low-stock box sits right under the green "You save" box
 // the multi-buy offer, shown before the customer adds to bag (King and the Discovery Set are not part of it)
 const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' :
