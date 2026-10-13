@@ -1755,6 +1755,8 @@ label.oall:has(input:checked){background:var(--gold);color:#1a1408;border-color:
 .oallon{display:none;margin:-4px 0 0}.olines:has(input[name=lines_all]:checked){gap:6px}.olines:has(input[name=lines_all]:checked) .opick{gap:0}.olines:has(input[name=lines_all]:checked) .oallon{display:block}
 .olines:has(input[name=lines_all]:checked) :is(.oadd,.ofits,[data-osame]){display:none!important}
 @media (max-width:820px){.olines .oaddrow{flex-wrap:wrap}.olines .oaddrow .oadd{flex-basis:100%}}
+/* phones: the Save / Preview / Turn off words sit in the middle of their buttons */
+@media (max-width:820px){.ob .obtns>.btn,.ob .obtns .btn{justify-content:center;text-align:center}}
 CSS;
 const OFFER_JS = <<<'JS'
 (function () {
