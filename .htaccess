@@ -26,6 +26,9 @@ RewriteRule ^(index\.html)?$ home.php [L,QSA]
 
 # product addresses for Google: fomaxo.com/fomaxo-gold → product.php; fomaxo.com/sitemap.xml → sitemap.php
 RewriteRule ^sitemap\.xml$ sitemap.php [L]
+# product list for free Google Shopping listings (Merchant Center): English and Arabic
+RewriteRule ^google-shopping\.xml$ google-feed.php [L]
+RewriteRule ^google-shopping-ar\.xml$ google-feed.php?lang=ar [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^fomaxo-([A-Za-z0-9-]+)/$ /fomaxo-$1 [L,R=301]

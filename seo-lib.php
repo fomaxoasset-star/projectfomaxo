@@ -22,6 +22,14 @@ function fomaxo_seo_products() {
   unset($p);
   return $out;
 }
+/* a shop photo's full address: built-in names (oldmoney-2) and admin uploads (up/abc123) */
+function fomaxo_img_url($k) { return FOMAXO_SITE . '/assets/img/' . implode('/', array_map('rawurlencode', explode('/', (string)$k))) . '.webp'; }
+/* the photo of one size, same rule as the website (imgFor): the size's own photo, the 10ml photo, else the main photo */
+function fomaxo_size_img($p, $s) {
+  $k = $p['sizeImages'][(string)$s] ?? null;
+  if (!is_string($k) || $k === '') $k = ((string)$s === '10' && !empty($p['miniImage'])) ? $p['miniImage'] : (($p['images'] ?? [])[0] ?? '');
+  return is_string($k) && $k !== '' ? fomaxo_img_url($k) : '';
+}
 function fomaxo_slug($s) { return trim(preg_replace('/[^a-z0-9]+/', '-', strtolower((string)$s)), '-'); }
 /* the product's own address, e.g. https://fomaxo.com/fomaxo-old-money */
 function fomaxo_seo_url($p) { return FOMAXO_SITE . '/fomaxo-' . (fomaxo_slug($p['name'] ?? '') ?: fomaxo_slug($p['id'])); }
