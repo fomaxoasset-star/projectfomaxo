@@ -3358,7 +3358,7 @@ function home(){
 }
 
 /* Fragrances "Sort by": each one from highest to lowest. Best selling = real bottles bought this week (products.php), Price = the price the card shows, Rating = real review stars (then the number of reviews). */
-const SORTS = [['best','Best selling'],['price','Price: high to low'],['plo','Price: low to high'],['off','Biggest discount'],['rate','Rating: high to low']];
+const SORTS = [['best','Best selling'],['off','Biggest discount'],['plo','Price: low to high'],['rate','Rating: high to low'],['price','Price: high to low']];
 const sortVal = (p, so) => !so ? -FRAG.indexOf(p) : so === 'best' ? soldAll(p.id) : so === 'price' ? +p.prices[defaultSize(p)] || 0 : so === 'plo' ? -(+p.prices[defaultSize(p)] || 1e9) : so === 'off' ? (c => { const s = defaultSize(p), v = +p.prices[s] || 0; return c && c[s] > v && v ? (c[s] - v) / c[s] : 0; })(p.compareAt) : (r => r && r.count ? r.avg * 1000 + r.count : 0)(RATES && RATES[p.id]);
 const shopSort = (list, so) => [...list].sort((a, b) => sortVal(b, so) - sortVal(a, so));
 const shopResort = () => $$('[data-sort]').forEach(g => shopSort([...g.children].map(c => P[c.dataset.id]).filter(Boolean), g.dataset.sort).forEach(p => g.appendChild(g.querySelector(`.card[data-id="${p.id}"]`))));   // again once sales / reviews arrive
