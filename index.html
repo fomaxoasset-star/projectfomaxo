@@ -3371,10 +3371,12 @@ let SOLD = {};
 const soldN = (id, s) => +((SOLD[id] || {})[s]) || 0;   // bottles of that one size (10ml, 50ml, 100ml each counted on their own)
 const soldKey = (p, s) => s;   // every choice on its own: 10ml, 50ml, 100ml, and the Discovery Set of 3 / of 5
 const soldHTML = (id, s) => soldN(id, s) > 0 ? `${ICON.bag}<span>${soldN(id, s)} purchased this week</span>` : '';
-/* "Best seller" on the product photo, top right: shows exactly when that size shows "X purchased this week" (real bottles, more than 5). Never made up. */
+/* "Best seller" on the product photo, top right: only the product that sold the most real bottles this week (the "X purchased this week" numbers, all sizes together). Never made up. */
 const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7.3L12 17.8 5.8 21.5l1.6-7.3L2 9.5l7.1-.6z"/></svg>';
-const bestHTML = (id, s) => `<span class="best" data-best="${id}" data-k="${s}"${soldN(id, s) > 0 ? '' : ' hidden'}>${STAR}<span>Best seller</span></span>`;
-const bestSync = () => $$('[data-best]').forEach(b => b.hidden = !(soldN(b.dataset.best, b.dataset.k) > 0));
+const soldAll = id => Object.entries(SOLD[id] || {}).reduce((t, [k, n]) => k === 'all' ? t : t + (+n || 0), 0);   // all sizes of one product this week
+const isBest = id => { const t = soldAll(id); return t > 0 && Object.keys(SOLD).every(x => soldAll(x) <= t); };   // only the product(s) that sold the most bottles this week
+const bestHTML = (id, s) => `<span class="best" data-best="${id}" data-k="${s}"${isBest(id) ? '' : ' hidden'}>${STAR}<span>Best seller</span></span>`;
+const bestSync = () => $$('[data-best]').forEach(b => b.hidden = !isBest(b.dataset.best));
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
   // sale: "Original price" with the old price struck on top, "Exclusive price" with the new price below it, each word centred with its number (AJAY 2026-10-13); the saving in a small green box on the right
