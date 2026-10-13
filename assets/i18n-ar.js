@@ -241,6 +241,7 @@
 "Featured": "مميز",
 "Price: high to low": "السعر: من الأعلى إلى الأقل",
 "Price: low to high": "السعر: من الأقل إلى الأعلى",
+"Biggest discount": "أكبر خصم",
 "Rating: high to low": "التقييم: من الأعلى إلى الأقل",
 "Watch & shop": "شاهد وتسوّق",
 "Shop the": "تسوّق من",
