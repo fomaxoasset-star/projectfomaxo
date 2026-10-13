@@ -239,6 +239,7 @@
 "Pick any three parfums. You get 10% off and a free 10ml parfum of your choice, chosen in your bag.": "اختر أي ثلاثة عطور. تحصل على خصم 10% وعطر 10ml مجاني من اختيارك، تختاره في حقيبتك.",
 "Pick any three parfums. You get 10% off and a free 10ml parfum. Choose it here, and you can still change it in your bag.": "اختر أي ثلاثة عطور. تحصل على خصم 10% وعطر 10ml مجاني. اختره هنا، ويمكنك تغييره في حقيبتك أيضاً.",
 "Choose your free 10ml": "اختر عطرك المجاني 10ml",
+"Your free gift": "هديتك المجانية",
 "Choose your products": "اختر منتجاتك",
 "Strong": "قوي",
 "Seductive": "جذاب",
