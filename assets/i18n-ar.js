@@ -235,6 +235,7 @@
 "Now showing": "المعروض الآن",
 "Discover →": "اكتشف ←",
 "Add to bag": "أضف إلى الحقيبة",
+"Best seller": "الأكثر مبيعاً",
 "Watch & shop": "شاهد وتسوّق",
 "Shop the": "تسوّق من",
 "video": "الفيديو",
