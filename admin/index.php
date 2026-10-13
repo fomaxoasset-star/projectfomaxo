@@ -613,7 +613,7 @@ const FX_PHONE_JS = <<<'JS'
 (function(){
   var m=document.querySelector('main.fit');if(!m||!matchMedia('(max-width:759px)').matches)return;
   var F=[].slice.call(m.querySelectorAll('form.filters,.rgbar,.pagehead.rg,.rqtop form.arange,.mtop,form.rfilter,form.yearbar,form.rflistd,details.rfauto,form.card.add,.card.lowlvl,.stock-help,.pagehead>span'));
-  F=F.filter(function(f){return !F.some(function(g){return g!==f&&g.contains(f)})});if(!F.length)return;
+  F=F.filter(function(f){return !f.closest('.cpgrid')&&!F.some(function(g){return g!==f&&g.contains(f)})});if(!F.length)return;   // Coupons keeps its form open (it has its own tabs)
   var bar=document.createElement('div');bar.className='pfbar';
   var b=document.createElement('button');b.type='button';b.className='btn line pfbtn';
   var add=m.querySelector('form.card.add'),on=[].slice.call(m.querySelectorAll('form.filters input[name=q],form.mq input[type=search],form.mq input[type=text],form.mq input:not([type]),form.rfilter input[type=search],form.rfilter input[type=text]')).some(function(i){return i.value});
@@ -2424,11 +2424,15 @@ if (isset($_GET['coupons'])) {
     if ($st !== '' && $en !== '' && $en <= $st) { flash('The end must be after the start.'); go(['coupons' => 1]); }
     $had = $pdo->prepare('SELECT 1 FROM fx_coupons WHERE code = ?'); $had->execute([$code]); $had = (bool)$had->fetchColumn();
     $stack = ($_POST['stack'] ?? '') === '1' ? 1 : 0;   // with website offers: 0 = use the bigger offer, 1 = use both
-    $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, per_cust, free_id, free_opt) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, 1, NOW(), ?, ?, ?, ?)
+    /* WhatsApp mobile (optional): who to send the code to; anyone can still use the code */
+    $wa = trim(strtr((string)($_POST['wa_to'] ?? ''), FX_AR_DIGITS));
+    if ($wa !== '' && strlen(fomaxo_phone9($wa)) < 9) { flash('Please type the full WhatsApp mobile number, or leave it empty.'); go(['coupons' => 1]); }
+    $pdo->prepare('INSERT INTO fx_coupons (code, kind, amount, min_order, expires, starts, ends, max_uses, active, created_at, stack, per_cust, free_id, free_opt, wa_to) VALUES (?, ?, ?, ?, NULL, ?, ?, ?, 1, NOW(), ?, ?, ?, ?, ?)
                    ON DUPLICATE KEY UPDATE kind = VALUES(kind), amount = VALUES(amount), min_order = VALUES(min_order), expires = NULL, starts = VALUES(starts), ends = VALUES(ends), max_uses = VALUES(max_uses), active = 1, stack = VALUES(stack),
-                   per_cust = VALUES(per_cust), free_id = VALUES(free_id), free_opt = VALUES(free_opt)')
+                   per_cust = VALUES(per_cust), free_id = VALUES(free_id), free_opt = VALUES(free_opt), wa_to = COALESCE(VALUES(wa_to), wa_to)')
         ->execute([$code, $kind, round($amt, 2), $min !== null && $min > 0 ? round($min, 2) : null, $st !== '' ? $st : null, $en !== '' ? $en : null, $uses !== null && $uses > 0 ? $uses : null, $stack,
-                   !empty($_POST['per_cust']) ? 1 : 0, $fr[0] ?? null, $fr[1] ?? null]);
+                   !empty($_POST['per_cust']) ? 1 : 0, $fr[0] ?? null, $fr[1] ?? null, $wa !== '' ? substr($wa, 0, 25) : null]);
+    if (!empty($_POST['sendwa'])) $_SESSION['cpsend'] = $code;   // WhatsApp next to Save coupon: saved first, then the WhatsApp box opens by itself
     flash("Coupon $code " . ($had ? 'updated' : 'saved') . '. ' . ($st !== '' && $st > date('Y-m-d H:i:s') ? 'It starts ' . date('d/m/Y, g:i a', strtotime($st)) . '.' : 'Customers can use it now.'), true); go(['coupons' => 1]);
   }
   fx_coupon_sweep($pdo);   // one-use codes already used up (an order placed or paid before this was in place) go now
@@ -2438,6 +2442,7 @@ if (isset($_GET['coupons'])) {
   foreach ($pdo->query("SELECT coupon, COUNT(*) n, COALESCE(SUM(discount), 0) d, COALESCE(SUM(total), 0) t FROM fx_orders WHERE coupon IS NOT NULL AND test = 0
                         AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') GROUP BY coupon") as $r) $used[$r['coupon']] = $r;
   $now = date('Y-m-d H:i:s'); $tr = '';
+  $sendc = null; if (!empty($_SESSION['cpsend'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['cpsend']]); $sendc = $s->fetch() ?: null; unset($_SESSION['cpsend']); }
   $made = null; if (!empty($_SESSION['goodwill'])) { $s = $pdo->prepare('SELECT * FROM fx_coupons WHERE code = ?'); $s->execute([$_SESSION['goodwill']]); $made = $s->fetch() ?: null; unset($_SESSION['goodwill']); }
   $dt = fn($v) => date('d/m/Y, g:i a', strtotime($v));
   $left = function ($v) { $m = (int)floor((strtotime($v) - time()) / 60); $d = intdiv($m, 1440); $h = intdiv($m % 1440, 60);
@@ -2450,7 +2455,7 @@ if (isset($_GET['coupons'])) {
     $state = !(int)$c['active'] ? ['Off', 's-Cancelled'] : ($ends && $ends < $now ? ['Expired', 's-Cancelled'] : ($c['max_uses'] !== null && $n >= (int)$c['max_uses'] ? ['Used up', 's-Cancelled']
            : ($starts && $starts > $now ? ['Scheduled', 's-New'] : ['On', 'p-Paid'])));
     $time = $starts && $starts > $now ? 'Starts ' . $dt($starts) . ($ends ? ' · ends ' . $dt($ends) : '') : ($ends ? 'Ends ' . $dt($ends) . ($state[0] === 'On' ? ' · ' . $left($ends) : '') : '');
-    $rules = array_filter([!empty($c['phone']) ? $tag($c['code']) . ' · for ' . $c['phone'] : '', $c['kind'] === 'free' ? '' : (!empty($c['stack']) ? 'Use both' : 'Bigger offer'),
+    $rules = array_filter([!empty($c['phone']) ? $tag($c['code']) . ' · for ' . $c['phone'] : (!empty($c['wa_to']) ? 'WhatsApp ' . $c['wa_to'] : ''), $c['kind'] === 'free' ? '' : (!empty($c['stack']) ? 'Use both' : 'Bigger offer'),
       (float)$c['min_order'] > 0 ? ($c['kind'] === 'free' ? 'Spend at least ' : 'Min. order ') . money($c['min_order']) : '', $c['max_uses'] !== null ? 'Max ' . (int)$c['max_uses'] . ' use' . ((int)$c['max_uses'] === 1 ? '' : 's') : '',
       !empty($c['per_cust']) ? 'One use per customer' : '']);
     $btn = fn($name, $val, $label, $ask = '') => '<form method="post" style="margin:0"' . ($ask ? ' onsubmit="return confirm(\'' . h($ask) . '\')"' : '') . '>' . csrf_field()
@@ -2461,13 +2466,13 @@ if (isset($_GET['coupons'])) {
       . '<div class="cpacts">' . ((int)$c['active'] ? $btn('toggle', 'off', 'Turn off') : $btn('toggle', 'on', 'Turn on'))
       . $btn('delete', '1', 'Delete', 'Delete coupon ' . $c['code'] . '? Orders that used it keep the code.')
       /* WhatsApp on every coupon that works: to its customer when it has a mobile, else WhatsApp opens and you pick who; Sent dd/mm once sent */
-      . (in_array($state[0], ['On', 'Scheduled'], true) ? fx_wa_btn((string)($c['phone'] ?? ''), (string)($c['phone'] ?: $c['code']), str_starts_with($c['code'], 'GOODWILL-') ? fx_goodwill_text($c) : fx_coupon_share_text($c), '', 'cp:' . $c['code'], 'g', false, 'btn sm wag cpwa', true) : '') . '</div></div>';
+      . (in_array($state[0], ['On', 'Scheduled'], true) ? fx_wa_btn((string)($c['phone'] ?: ($c['wa_to'] ?? '')), (string)($c['phone'] ?: ($c['wa_to'] ?: $c['code'])), str_starts_with($c['code'], 'GOODWILL-') ? fx_goodwill_text($c) : fx_coupon_share_text($c), '', 'cp:' . $c['code'], 'g', false, 'btn sm wag cpwa', true) : '') . '</div></div>';
   }
   page('Coupons', '<div class="pagehead"><h1>Coupons</h1></div>' . flash() . fx_tabs(['Make a coupon', 'Your coupons (' . count($list) . ')'], 'Coupons')
     . '<style>.cpcode{letter-spacing:.06em}.cpin{text-transform:uppercase;letter-spacing:.06em}.cpin::placeholder{text-transform:none;letter-spacing:0}'
     . '.cplist{background:var(--panel);border:1px solid var(--line);border-radius:10px}.cprow{display:grid;grid-template-columns:1fr auto auto;gap:6px 24px;align-items:center;padding:10px 12px}.cprow+.cprow{border-top:1px solid var(--line)}'
     . '.cpused{text-align:right}.cptime{color:var(--gold);margin-top:2px}.cpq{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 4px}.cpq button{font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}.cpq button.on,.cpq button:hover{border-color:var(--gold);color:var(--gold)}.g4{display:grid;gap:0 12px;grid-template-columns:1fr 1fr}@media (min-width:760px){.g4{grid-template-columns:1.3fr 1fr 1.3fr 1fr}}.cpacts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}.cpone{margin:0 0 12px;padding:12px 16px;flex:none}.cpone h2{margin:0 0 2px;font-size:15px}.cpone p{margin:0 0 6px}.cpone-f{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 10px;align-items:end}.cpone-f label{margin:4px 0 3px}.cpone-f input,.cpone-f select{padding:6px 10px}.cpone-f .btn{grid-column:1/-1;height:38px;margin-top:8px}.cpmade{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 12px;border:1px solid var(--gold);border-radius:10px}@media (min-width:1100px){.cpone-f{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1.2fr) minmax(0,1fr) auto}.cpone-f .btn{grid-column:auto;margin-top:0}}@media (max-width:599px){.cpone-f .btn{height:44px}}.cpst{display:grid;gap:8px;margin:2px 0 14px}.cpst label{display:flex;gap:10px;align-items:flex-start;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--muted);line-height:1.4}.cpst label:has(input:checked){border-color:var(--gold)}.cpst b{display:block;color:var(--ink);font-size:14px;font-weight:600}.cpst input{flex:none;appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border:1.5px solid var(--gold);border-radius:50%;background:transparent;cursor:pointer}.cpst input:checked{background:var(--gold);box-shadow:inset 0 0 0 4px var(--panel)}@media (max-width:759px){.cprow{grid-template-columns:1fr;padding:12px 14px}.cpused{text-align:left}.cpacts{grid-column:1/-1;justify-content:flex-start}}'
-    . '.cpcodebox{display:flex;gap:6px}.cpcodebox input{flex:1 1 auto;min-width:0}.cpcodebox .btn{flex:none;padding:6px 10px;white-space:nowrap}.cpg1 [hidden],.cpone-f [hidden]{display:none!important}.cptick{display:flex!important;gap:8px;align-items:center;margin:8px 0 4px!important;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);cursor:pointer}.cptick input{width:auto;margin:0}'
+    . '.cpcodebox{display:flex;gap:6px}.cpcodebox input{flex:1 1 auto;min-width:0}.cpcodebox .btn{flex:none;padding:6px 10px;white-space:nowrap}.cpg1 [hidden],.cpone-f [hidden]{display:none!important}.cptick{display:flex!important;gap:8px;align-items:center;margin:8px 0 4px!important;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink);cursor:pointer}.cptick input{width:auto;margin:0}.cpsave{display:flex;gap:8px;flex-wrap:wrap}.cpsave .wag{display:inline-flex;align-items:center;gap:6px}.cpsave .wag svg{width:16px;height:16px}'
     /* laptop: the form is a tall card on the left, the coupons made so far are listed beside it */
     . '.cpgrid .card.add{margin:0;padding:12px 16px}.cpgrid .add h2{font-size:15px;margin-bottom:2px}.cpgrid .add label{margin:7px 0 3px}.cpgrid .add input,.cpgrid .add select{padding:6px 10px}.cpgrid .cpst{grid-template-columns:1fr 1fr;margin:0 0 4px}.cpgrid .cpst label{margin:0;padding:8px 10px}.cpgrid .cpg1>div:last-child{grid-column:auto}.cpgrid .g3:not(.cpg1){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cpgrid .g3:not(.cpg1)>div:last-child{grid-column:auto}.cpgrid .g4{grid-template-columns:1.3fr 1fr 1.3fr 1fr}.cpgrid .exsum{margin-top:0}.cpgrid .cpr{display:flex;flex-direction:column}.cpgrid .cpr>.fill{overflow:auto;min-height:0}'
     . '.cpacts .cpwa{margin:0}@media (max-width:759px){.cpacts .cpwa{order:-1}}'
@@ -2476,6 +2481,8 @@ if (isset($_GET['coupons'])) {
     . '.cpr .cprow{grid-template-columns:1fr auto;gap:6px 16px}.cpr .cpacts{grid-column:2;grid-row:1/3;flex-direction:column;align-items:stretch}.cpr .cpacts .btn{width:100%}.cpr .cpused{text-align:left}}</style>'
     . fx_free_pick_js()
     . '<div class="cpgrid fitbox ptw" data-t="1"><div class="cpl" data-t="1"><form class="card add" method="post">' . csrf_field() . '<h2 style="margin-top:0">Make a coupon</h2>'
+    . ($sendc ? '<span hidden>' . fx_wa_btn((string)$sendc['wa_to'], (string)($sendc['wa_to'] ?: $sendc['code']), fx_coupon_share_text($sendc), '', 'cp:' . $sendc['code'], 'g', false, 'btn sm wag cpopen', true) . '</span>'
+      . '<script>addEventListener("load",function(){var b=document.querySelector(".cpopen");if(b)b.click()})</script>' : '')
     . '<div class="g3 cpg1"><div><label for="code">Code</label><div class="cpcodebox"><input id="code" class="cpin" name="code" maxlength="30" placeholder="e.g. WELCOME10" autocapitalize="characters" autocomplete="off" required><button type="button" class="btn line sm" data-mkcode>Make code</button></div></div>'
     . '<div><label for="kind">Type</label><select id="kind" name="kind" data-cpkind><option value="pct">% off</option><option value="aed">AED off</option><option value="free">Free product</option></select></div>'
     . '<div class="cpamt"><label for="amount">Amount</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal" name="amount" placeholder="e.g. 10" required></div>'
@@ -2483,13 +2490,14 @@ if (isset($_GET['coupons'])) {
     . '<div class="g3"><div><label for="min_order"><span class="cpminl">Minimum order AED</span> (optional)</label><input id="min_order" type="number" min="0" step="0.01" inputmode="decimal" name="min_order"></div>'
     . '<div><label for="max_uses">Max uses (optional)</label><input id="max_uses" type="number" min="1" step="1" inputmode="numeric" name="max_uses"></div></div>'
     . '<label class="cptick"><input type="checkbox" name="per_cust" value="1"> One use per customer (mobile number)</label>'
+    . '<label for="wa_to">WhatsApp mobile (optional)</label><input id="wa_to" name="wa_to" type="tel" inputmode="tel" placeholder="050 123 4567 · to send this coupon" maxlength="20" autocomplete="off">'
     /* website offers (multi-buy): use the bigger saving, or the coupon on top of the offer */
     . '<label>With website offers</label><div class="cpst" role="radiogroup"><label><input type="radio" name="stack" value="0" checked><span><b>Use the bigger offer</b>Customer gets the coupon or the offer, whichever saves more</span></label>'
     . '<label><input type="radio" name="stack" value="1"><span><b>Use both</b>Customer gets the offer, then the coupon on top</span></label></div>'
     . '<label>Time limit (optional)</label><div class="cpq" role="group" aria-label="Quick time limit"><button type="button" data-h="24">24 hours</button><button type="button" data-h="48">48 hours</button><button type="button" data-h="72">3 days</button><button type="button" data-h="168">7 days</button><button type="button" data-h="0">No limit</button></div>'
     . '<div class="g4"><div><label for="start_d">Starts</label><input id="start_d" type="date" name="start_d"></div><div><label for="start_t">Start time</label><input id="start_t" type="time" name="start_t"></div>'
     . '<div><label for="end_d">Ends</label><input id="end_d" type="date" name="end_d"></div><div><label for="end_t">End time</label><input id="end_t" type="time" name="end_t"></div></div>'
-    . '<p style="margin:10px 0 0"><button class="btn">Save coupon</button></p>'
+    . '<p class="cpsave" style="margin:10px 0 0"><button class="btn">Save coupon</button><button class="btn wag" name="sendwa" value="1">' . FX_WA_SVG . '<span>WhatsApp</span></button></p>'
     . '<p class="muted small" style="margin:8px 0 0">Saving a code that already exists updates it. A coupon does not add to the multi-buy discount: the customer gets whichever saves more. A free product coupon adds its product at AED 0 on top. The free 10ml mini still applies. Times are UAE time. Leave the time limit empty for a code with no end.</p></form>'
     . '<script>document.querySelectorAll(".cpq button").forEach(function(b){b.onclick=function(){var h=+b.dataset.h,f=b.form,p=function(n){return ("0"+n).slice(-2)},set=function(n,v){var i=f.querySelector("input[name="+n+"]");i.value=v;i.dispatchEvent(new Event("change"))},d=function(x){return x.getFullYear()+"-"+p(x.getMonth()+1)+"-"+p(x.getDate())},t=function(x){return p(x.getHours())+":"+p(x.getMinutes())};'
     . 'var n=new Date(Date.now()+(new Date().getTimezoneOffset()+240)*60000),e=new Date(n.getTime()+h*3600000);if(!h){["start_d","start_t","end_d","end_t"].forEach(function(k){set(k,"")});}else{set("start_d",d(n));set("start_t",t(n));set("end_d",d(e));set("end_t",t(e));}document.querySelectorAll(".cpq button").forEach(function(x){x.classList.toggle("on",x===b)})}})</script></div>'
