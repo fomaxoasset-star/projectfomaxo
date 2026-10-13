@@ -3260,7 +3260,8 @@ function home(){
   <section class="sec"><div class="wrap">
     <div class="sec-head"><div class="t rv-up"><span class="eyebrow">Shop the collection</span><h2>Featured <em class="metal">FOMAXO</em></h2></div><a class="link rv-up" href="#/fragrances">View all →</a></div>
     <div class="filters home-filters rv-up">${[['all','All'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
-    <div class="grid">${FRAG.map((p,i) => card(p, {d:'d'+(i%3)})).join('')}</div>
+    <div class="sort-row"><label class="sort-by"><span>Sort by</span><select id="homeSort" aria-label="Sort by">${[['','Featured'], ...SORTS].map(x => `<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label></div>
+    <div class="grid" data-sort="">${FRAG.map((p,i) => card(p, {d:'d'+(i%3)})).join('')}</div>
   </div></section>
 
   ${shown('discovery') ? `<section class="sec" style="padding-top:0"><div class="wrap">
@@ -3358,10 +3359,10 @@ function home(){
 
 /* Fragrances "Sort by": each one from highest to lowest. Best selling = real bottles bought this week (products.php), Price = the price the card shows, Rating = real review stars (then the number of reviews). */
 const SORTS = [['best','Best selling'],['price','Price: high to low'],['rate','Rating: high to low']];
-const sortVal = (p, so) => so === 'best' ? soldAll(p.id) : so === 'price' ? +p.prices[defaultSize(p)] || 0 : (r => r && r.count ? r.avg * 1000 + r.count : 0)(RATES && RATES[p.id]);
+const sortVal = (p, so) => !so ? -FRAG.indexOf(p) : so === 'best' ? soldAll(p.id) : so === 'price' ? +p.prices[defaultSize(p)] || 0 : (r => r && r.count ? r.avg * 1000 + r.count : 0)(RATES && RATES[p.id]);
 const shopSort = (list, so) => [...list].sort((a, b) => sortVal(b, so) - sortVal(a, so));
-const shopResort = () => { const g = $('[data-sort]'); if (g) shopSort([...g.children].map(c => P[c.dataset.id]).filter(Boolean), g.dataset.sort).forEach(p => g.appendChild(g.querySelector(`.card[data-id="${p.id}"]`))); };   // again once sales / reviews arrive
-document.addEventListener('change', e => { if (e.target.id === 'shopSort') location.hash = `#/fragrances?f=${e.target.dataset.f}${e.target.value ? '&s=' + e.target.value : ''}`; });
+const shopResort = () => $$('[data-sort]').forEach(g => shopSort([...g.children].map(c => P[c.dataset.id]).filter(Boolean), g.dataset.sort).forEach(p => g.appendChild(g.querySelector(`.card[data-id="${p.id}"]`))));   // again once sales / reviews arrive
+document.addEventListener('change', e => { if (e.target.id === 'homeSort') { const g = e.target.closest('.wrap').querySelector('.grid[data-sort]'); g.dataset.sort = e.target.value; shopResort(); return; } if (e.target.id === 'shopSort') location.hash = `#/fragrances?f=${e.target.dataset.f}${e.target.value ? '&s=' + e.target.value : ''}`; });
 function fragrances(q){
   const f = q.get('f') || 'all';
   const filters = [['all','All'],['set','Discovery Sets'],['elite','Elite'],['signature','Signature'],['prestige','Prestige'],['100','100ml'],['50','50ml'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : /^\d+$/.test(x[0]) ? FRAG.some(p => p.sizes.map(String).includes(x[0])) : FRAG.some(p => p.tier === x[0])));
