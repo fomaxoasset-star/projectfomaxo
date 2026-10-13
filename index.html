@@ -186,6 +186,10 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .card .media:hover img.alt{opacity:1}
 .card .media::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,.55));pointer-events:none}
 .tag{position:absolute;top:16px;left:16px;z-index:2;font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-hi);border:1px solid var(--line-2);padding:6px 10px;background:rgba(var(--bg-rgb),.65);backdrop-filter:blur(6px)}
+.card{position:relative}   /* the badge sits on the photo's top right corner, a little outside the frame */
+.best{position:absolute;top:-14px;right:-14px;z-index:5;display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:#0a0805;background:var(--metal,var(--gold));padding:6px 10px 6px 9px;box-shadow:0 6px 18px -8px rgba(0,0,0,.6);pointer-events:none}.best svg{width:11px;height:11px;flex:none}.best[hidden]{display:none}
+html[data-mode="light"] .best{color:#fff8ea}
+@media(max-width:560px){.also-row{padding-top:12px}.best{top:-11px;right:-11px;font-size:9px;letter-spacing:.16em;padding:5px 7px;gap:4px}.best svg{width:9px;height:9px}}
 .card .quick{position:absolute;left:16px;right:16px;bottom:16px;z-index:2;opacity:0;transform:translateY(10px);transition:.6s var(--ease)}
 .card:hover .quick{opacity:1;transform:none}
 @media(hover:none){.card .quick{display:none}}
@@ -358,7 +362,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .notes-list div{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:baseline}
 .notes-list b{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:400}
 .notes-list span{font-family:var(--serif);font-size:20px;color:var(--ivory)}
-@media(max-width:960px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:static;grid-template-columns:minmax(0,1fr)}.thumbs{flex-direction:row;order:2}.thumbs button{width:72px}}
+@media(max-width:960px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:relative;grid-template-columns:minmax(0,1fr)}.thumbs{flex-direction:row;order:2}.thumbs button{width:72px}}
 /* AJAY: on phone the product photos show whole, not cut or zoomed in: each photo frame takes the photo's own shape (--ar, set by fitPhoto);
    a shop row with different shapes takes the tallest and a wider photo shows whole (fit-c); swipe moves between photos */
 @media(max-width:960px){.stage{aspect-ratio:3/4;touch-action:pan-y pinch-zoom}.stage img{object-fit:cover}.card .media{aspect-ratio:var(--ar-row,var(--ar,4/5))}.card .media.fit-c{background:#0b0a08}.card .media.fit-c img{object-fit:contain}}
@@ -3168,6 +3172,7 @@ function card(p, opts={}){
   const alt = altFor(p, size);
   const chips = p.sizes.length > 1 && !opts.size ? `<div class="chips">${p.sizes.map(s => `<button class="chip${s===size?' on':''}" data-size="${s}">${optLabel(p, s)}</button>`).join('')}</div>` : `<div class="meta">${p.kind==='set' ? '2ml vials' : sizeLabel(size)} · ${esc(p.family.split('·')[0].trim())}</div>`;
   return `<article class="card rv-up ${opts.d||''}" data-id="${p.id}" data-sel="${size}">
+    ${bestHTML(p.id, soldKey(p, size))}
     <a class="media" href="#/product/${p.id}${opts.size ? '?size=' + opts.size : ''}" aria-label="${esc(p.name)}">
       ${p.tag ? `<span class="tag">${esc(p.tag)}</span>` : ''}
       <img ${cardPic(img)} alt="FOMAXO ${esc(p.name)}" ${opts.top ? 'fetchpriority="high"' : 'loading="lazy"'}>
@@ -3186,7 +3191,7 @@ app.addEventListener('click', e => {
   const c = e.target.closest('.card[data-id]'); if (!c) return;   // personal care, gift and combo cards have no data-id
   const p = P[c.dataset.id];
   const chip = e.target.closest('[data-size]');
-  if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s); const sd = $('[data-sold]', c); if (sd) { sd.dataset.k = soldKey(p, s); sd.innerHTML = soldHTML(p.id, sd.dataset.k); }
+  if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s); const sd = $('[data-sold]', c); if (sd) { sd.dataset.k = soldKey(p, s); sd.innerHTML = soldHTML(p.id, sd.dataset.k); } const bd = $('[data-best]', c); if (bd) { bd.dataset.k = soldKey(p, s); bestSync(); }
     const im = $('.media img', c); const k = imgFor(p, s); if (im.getAttribute('src') !== IMG(k)) setPic(im, k);
     const al = $('.media img.alt', c), ak = altFor(p, s); if (al) { if (ak) { setPic(al, ak); al.hidden = false; } else al.hidden = true; }
     applyStock(); }
@@ -3366,6 +3371,10 @@ let SOLD = {};
 const soldN = (id, s) => +((SOLD[id] || {})[s]) || 0;   // bottles of that one size (10ml, 50ml, 100ml each counted on their own)
 const soldKey = (p, s) => s;   // every choice on its own: 10ml, 50ml, 100ml, and the Discovery Set of 3 / of 5
 const soldHTML = (id, s) => soldN(id, s) > 0 ? `${ICON.bag}<span>${soldN(id, s)} purchased this week</span>` : '';
+/* "Best seller" on the product photo, top right: shows exactly when that size shows "X purchased this week" (real bottles, more than 5). Never made up. */
+const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7.3L12 17.8 5.8 21.5l1.6-7.3L2 9.5l7.1-.6z"/></svg>';
+const bestHTML = (id, s) => `<span class="best" data-best="${id}" data-k="${s}"${soldN(id, s) > 0 ? '' : ' hidden'}>${STAR}<span>Best seller</span></span>`;
+const bestSync = () => $$('[data-best]').forEach(b => b.hidden = !(soldN(b.dataset.best, b.dataset.k) > 0));
 // product page price: sale price with the original crossed out, and how much the customer saves (from the prices set on the admin)
 const pdpPrice = (p, size) => { const v = p.prices[size], c = p.compareAt && p.compareAt[size];
   // sale: "Original price" with the old price struck on top, "Exclusive price" with the new price below it, each word centred with its number (AJAY 2026-10-13); the saving in a small green box on the right
@@ -3475,7 +3484,7 @@ function product(id, q){
   return `<div class="wrap page-fade">
     <div class="crumbs pdp-crumbs" style="padding-top:34px"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; <a href="#/fragrances">Fragrances</a> &nbsp;/&nbsp; ${esc(p.name)}</div>
     <div class="pdp">
-      <div class="gallery">
+      <div class="gallery">${bestHTML(p.id, soldKey(p, size))}
         <div class="thumbs">${gallery.map((g,i) => `<button class="${i?'':'on'}" data-g="${g}" aria-label="Image ${i+1}"><img src="${SM(g)}" alt="" loading="lazy"></button>`).join('')}</div>
         <div class="stage" id="stage"><img id="stageImg" src="${IMG(isSet && !q.get('size') ? p.images[0] : imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}"></div>
       </div>
@@ -3539,7 +3548,7 @@ function bindProduct(p){
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
     $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = pdpPrice(p, size);
     setImg(imgFor(p, size));
-    qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } fitPdp();
+    qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } const sb = $('.gallery > [data-best]'); if (sb) { sb.dataset.k = soldKey(p, size); bestSync(); } fitPdp();
   });
   const stage = $('#stage');
   /* laptop: a click zooms. Phone: only a double tap zooms (at the tapped spot) and a double tap zooms back out; a single tap does nothing */
@@ -5294,7 +5303,7 @@ async function loadProducts(){
   if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, aed: +d.bt.aed || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.also && typeof d.also === 'object' && JSON.stringify(d.also) !== JSON.stringify(ALSO)) { ALSO = d.also; try { localStorage.setItem('fomaxo_also', JSON.stringify(ALSO)); } catch(e) {} const row = $('#alsoRow'); if (row) alsoOrder(row.dataset.p).forEach(x => { const c = row.querySelector(`.card[data-id="${x.id}"]`); if (c) row.appendChild(c); }); }
-  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); }
+  if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); bestSync(); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
