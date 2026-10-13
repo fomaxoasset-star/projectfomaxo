@@ -30,6 +30,21 @@ function fomaxo_size_img($p, $s) {
   if (!is_string($k) || $k === '') $k = ((string)$s === '10' && !empty($p['miniImage'])) ? $p['miniImage'] : (($p['images'] ?? [])[0] ?? '');
   return is_string($k) && $k !== '' ? fomaxo_img_url($k) : '';
 }
+/* the words people type into Google for each perfume (scent and occasion), taken from its notes; used only in Google titles,
+   descriptions and the Shopping list, never on the page itself. Products not listed here keep their usual title. [English, Arabic] */
+function fomaxo_scent($id, $ar = false) {
+  static $w = [
+    'king'       => ['Luxury Vanilla & Amber Perfume with Real Gold', 'عطر فاخر بالفانيليا والعنبر بلمسات من الذهب الحقيقي'],
+    'gold'       => ['Oud & Leather Arabic Perfume', 'عطر عربي بالعود والجلد'],
+    'oldmoney'   => ['Fresh Citrus & Sandalwood Perfume', 'عطر منعش بالحمضيات وخشب الصندل'],
+    'royalcandy' => ['Sweet Candy & Praline Gourmand Perfume', 'عطر حلو بالحلوى والبرالين'],
+    'dollar'     => ['Fresh Mint & Incense Winter Perfume', 'عطر شتوي منعش بالنعناع والبخور'],
+    'matchacoco' => ['Coconut & Vanilla Summer Perfume', 'عطر صيفي بجوز الهند والفانيليا'],
+    'passionsin' => ['Fruity Passion Fruit Evening Perfume', 'عطر مسائي فاكهي بالباشن فروت'],
+    'discovery'  => ['Perfume Sample & Gift Set', 'مجموعة عينات وهدايا عطور'],
+  ];
+  return $w[$id][$ar ? 1 : 0] ?? '';
+}
 function fomaxo_slug($s) { return trim(preg_replace('/[^a-z0-9]+/', '-', strtolower((string)$s)), '-'); }
 /* the product's own address, e.g. https://fomaxo.com/fomaxo-old-money */
 function fomaxo_seo_url($p) { return FOMAXO_SITE . '/fomaxo-' . (fomaxo_slug($p['name'] ?? '') ?: fomaxo_slug($p['id'])); }

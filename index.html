@@ -3443,7 +3443,7 @@ function product(id, q){
     : [[ICON.lasting,'Smart Scent Technology for lasting wear'],[ICON.gift,'Premium packaging, ready to gift'],[ICON.drop,'Concentrated fragrance oils'],[ICON.truck,'Free delivery anywhere in UAE']];
   const related = alsoOrder(p.id);   // every product on sale except this one, ordered by real orders (see alsoOrder)
   const ship = S.shipping.length ? S.shipping.map(s => `<p>${esc(s)}</p>`).join('') : `<p class="ph">Add your delivery &amp; returns information in assets/data.js.</p>`;
-  document.title = `${p.name} ${p.family || ''} | FOMAXO Dubai`;
+  document.title = (window.FX_TITLE && FX_TITLE[p.id]) || `${p.name} ${p.family || ''} | FOMAXO Dubai`;   // a product address (product.php) keeps its Google title
   return `<div class="wrap page-fade">
     <div class="crumbs pdp-crumbs" style="padding-top:34px"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; <a href="#/fragrances">Fragrances</a> &nbsp;/&nbsp; ${esc(p.name)}</div>
     <div class="pdp">

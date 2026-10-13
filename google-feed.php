@@ -20,6 +20,7 @@ foreach (fomaxo_seo_products() as $p) {
   $family = (string)($p['family'] ?? '');
   $desc = trim(implode(' ', array_map($tr, array_map('strval', (array)($p['description'] ?? []))))) ?: $tr((string)($p['short'] ?? ''));
   $notes = array_filter([$p['notes']['top'] ?? '', $p['notes']['heart'] ?? '', $p['notes']['base'] ?? ''], fn($v) => is_string($v) && $v !== '');
+  if (($kw0 = fomaxo_scent($p['id'], $ar)) !== '') $desc = "FOMAXO $name: " . $kw0 . '. ' . $desc;
   if ($notes) $desc .= ($ar ? ' النفحات: ' : ' Notes: ') . implode(' · ', $notes) . '.';
   $desc .= $ar ? ' توصيل مجاني إلى جميع أنحاء الإمارات.' : ' Free delivery anywhere in the UAE.';
   $sizes = array_values(array_filter((array)($p['sizes'] ?? []), fn($s) => is_numeric($p['prices'][(string)$s] ?? null) && $p['prices'][(string)$s] > 0));
@@ -28,6 +29,8 @@ foreach (fomaxo_seo_products() as $p) {
     $s = (string)$s; $v = (float)$p['prices'][$s]; $was = $p['compareAt'][$s] ?? null;
     $fam = str_replace(' · ', ' ', $tr($family));
     $title = $isSet ? ($ar ? "FOMAXO $name من {$s}، $fam" : "FOMAXO $name of $s, $family") : "FOMAXO $name $fam {$s}ml";
+    $kw = fomaxo_scent($p['id'], $ar);   // scent words people search for, e.g. "Oud & Leather Arabic Perfume"
+    if ($kw !== '') $title = $isSet ? ($ar ? "FOMAXO $name من {$s}، {$kw}، قوارير 2ml" : "FOMAXO $name of $s, $kw, 2ml Vials") : "FOMAXO $name $kw" . ($ar ? '، ' : ', ') . "$fam {$s}ml";
     $link = fomaxo_seo_url($p) . '?size=' . $s . ($ar ? '&lang=ar' : '');
     $img = fomaxo_size_img($p, $s);
     $more = array_slice(array_values(array_diff($extra, [$img])), 0, 10);

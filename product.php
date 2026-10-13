@@ -62,13 +62,17 @@ $crumbs = ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'ite
   ['@type' => 'ListItem', 'position' => 1, 'name' => 'FOMAXO', 'item' => FOMAXO_SITE . '/'],
   ['@type' => 'ListItem', 'position' => 2, 'name' => $name, 'item' => $url]]];
 
-$title = "$name $family | FOMAXO Dubai";
-$meta = "FOMAXO $name, " . ($isSet ? $family : "$family perfume") . '. ' . $short . ($min !== null ? ' From AED ' . $min . '.' : '') . ' Free delivery anywhere in the UAE.';
+$kw = fomaxo_scent($p['id']);   // scent words people search for, e.g. "Oud & Leather Arabic Perfume"
+$title = $kw !== '' ? "$name $kw · Unisex | FOMAXO Dubai" : "$name $family | FOMAXO Dubai";
+if ($kw !== '' && $isSet) $title = "$name, $kw | FOMAXO Dubai";
+$meta = "FOMAXO $name, " . ($kw !== '' ? "$kw, " : '') . ($isSet ? $family : "$family perfume") . '. ' . $short . ($min !== null ? ' From AED ' . $min . '.' : '') . ' Free delivery anywhere in the UAE.';
 if ($ar) {   /* Arabic Google title and description (names, FOMAXO, AED and ml stay English); a missing translation keeps the English */
   $familyAr = fomaxo_ar_text($family); $shortAr = fomaxo_ar_text($short) ?: fomaxo_ar_text($desc);
-  if ($familyAr !== '') $title = "$name $familyAr | FOMAXO دبي";
+  $kwAr = fomaxo_scent($p['id'], true);
+  if ($familyAr !== '') $title = $kwAr !== '' ? "$name $kwAr · للجنسين | FOMAXO دبي" : "$name $familyAr | FOMAXO دبي";
+  if ($kwAr !== '' && $isSet) $title = "{$name}، $kwAr | FOMAXO دبي";
   if ($familyAr !== '' && $shortAr !== '')
-    $meta = "FOMAXO {$name}، " . ($isSet ? $familyAr : "عطر $familyAr") . '. ' . $shortAr . ($min !== null ? ' يبدأ من AED ' . $min . '.' : '') . ' توصيل مجاني إلى جميع أنحاء الإمارات.';
+    $meta = "FOMAXO {$name}، " . ($kwAr !== '' ? "{$kwAr}، " : '') . ($isSet ? $familyAr : "عطر $familyAr") . '. ' . $shortAr . ($min !== null ? ' يبدأ من AED ' . $min . '.' : '') . ' توصيل مجاني إلى جميع أنحاء الإمارات.';
 }
 $J = fn($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
 
@@ -76,6 +80,7 @@ $head = "<link rel=\"canonical\" href=\"{$h($url . ($ar ? '?lang=ar' : ''))}\">\
       . "<link rel=\"alternate\" hreflang=\"en\" href=\"{$h($url)}\">\n<link rel=\"alternate\" hreflang=\"ar\" href=\"{$h($url . '?lang=ar')}\">\n"
       . "<link rel=\"alternate\" hreflang=\"x-default\" href=\"{$h($url)}\">\n"
       . "<meta property=\"og:url\" content=\"{$h($url)}\">\n<meta property=\"og:type\" content=\"product\">\n"
+      . "<script>window.FX_TITLE=" . $J([$p['id'] => $title]) . ";</script>\n"
       . "<script>if(!location.hash)history.replaceState(null,'',location.pathname+location.search+'#/product/'+" . $J($p['id'] . ($size !== '' ? "?size=$size" : '')) . ");</script>\n"
       . "<script type=\"application/ld+json\">" . $J($ld) . "</script>\n"
       . "<script type=\"application/ld+json\">" . $J($crumbs) . "</script>\n";
