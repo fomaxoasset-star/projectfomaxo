@@ -3,6 +3,23 @@
    To change a translation, edit the English → Arabic list below. */
 (function(){
   var D = {
+"Returns": "الإرجاع",
+"Returns &": "الإرجاع",
+"refunds": "واسترداد المبلغ",
+"Simple, fair returns on every FOMAXO order in the UAE.": "إرجاع بسيط وعادل لكل طلب من FOMAXO داخل الإمارات.",
+"7-day returns": "الإرجاع خلال 7 أيام",
+"You can return any FOMAXO product within 7 days of delivery if it is unopened, with its seal and box intact.": "يمكنك إرجاع أي منتج من FOMAXO خلال 7 أيام من الاستلام إذا كان غير مفتوح، مع الختم والعلبة سليمين.",
+"Damaged or wrong item": "منتج تالف أو خاطئ",
+"If your order arrives damaged, or you received the wrong item, tell us within 7 days of delivery and we will replace it or refund you in full.": "إذا وصل طلبك تالفاً أو استلمت منتجاً غير الذي طلبته، أخبرنا خلال 7 أيام من الاستلام وسنستبدله أو نعيد لك المبلغ كاملاً.",
+"Free collection": "استلام مجاني",
+"We collect the item from your address anywhere in the UAE, free of charge.": "نستلم المنتج من عنوانك في أي مكان داخل الإمارات مجاناً.",
+"Refunds": "استرداد المبلغ",
+"We refund you within 5 working days of receiving the item: to the card you paid with, or by bank transfer for cash on delivery orders.": "نعيد لك المبلغ خلال 5 أيام عمل من استلامنا للمنتج: إلى البطاقة التي دفعت بها، أو بتحويل بنكي لطلبات الدفع عند الاستلام.",
+"Opened bottles": "الزجاجات المفتوحة",
+"For hygiene reasons, opened or used perfumes cannot be returned unless they arrived damaged or faulty.": "لأسباب صحية، لا يمكن إرجاع العطور المفتوحة أو المستعملة إلا إذا وصلت تالفة أو معيبة.",
+"How to return": "طريقة الإرجاع",
+"Message us on WhatsApp or email us with your order number (FMX-…) and we will arrange the collection.": "راسلنا على WhatsApp أو عبر البريد الإلكتروني مع رقم طلبك (FMX-…) وسنرتّب الاستلام.",
+"Email us": "راسلنا بالبريد",
 "1 product": "منتج واحد",
 "Combos": "الباقات",
 "Better together": "أفضل معاً",

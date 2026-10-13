@@ -42,7 +42,7 @@ apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{s
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
-r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=33";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=34";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("style");f.textContent="@font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/amiri-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/amiri-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:300;font-display:swap;src:url(/assets/fonts/tajawal-300-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/tajawal-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/tajawal-500-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/tajawal-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}";document.head.appendChild(f)}})();   /* Arabic fonts (Tajawal, Amiri; Arabic letters only) from our own server, same files Google Fonts sends */</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -410,6 +410,8 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .split .img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .prose{display:flex;flex-direction:column;gap:20px;color:var(--muted);font-size:16px;line-height:1.9}
 .prose h2{color:var(--ivory)}
+.ret{max-width:760px;display:flex;flex-direction:column;gap:28px}.ret-i h3{margin:0 0 8px;color:var(--ivory);font-size:22px}.ret-i p{margin:0;color:var(--muted);font-size:16px;line-height:1.8}
+.ret-c{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}   /* Returns page (#/returns) */
 @media(max-width:900px){.split{grid-template-columns:minmax(0,1fr)}}
 .form{display:grid;gap:14px}
 .form label{display:grid;gap:8px;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
@@ -2468,7 +2470,7 @@ if(!location.hash||location.hash==='#'||location.hash==='#/')document.getElement
       </div>
       <div><h5>Shop</h5><div id="footShop"></div></div>
       <div><h5>Discover</h5><a href="#/collections/fragrance">Fragrance Collection</a><a href="#/collections/mini">Mini Collection</a><a href="#/collections/name">Personalized Gifting</a><a href="#/collections/gifting">Bespoke Gifting</a><a href="#/collections/elite">Elite Membership</a></div>
-      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/pc">PC</a><a href="#/personal-care">Personal Care</a><a href="#/gifts">Gifts</a><a href="#/combo">Combo</a><a href="#/contact">Contact</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
+      <div><h5>FOMAXO</h5><a href="#/about">About FOMAXO</a><a href="#/pc">PC</a><a href="#/personal-care">Personal Care</a><a href="#/gifts">Gifts</a><a href="#/combo">Combo</a><a href="#/contact">Contact</a><a href="#/returns">Returns</a><a href="#/franchise">Franchise</a><a id="footIg" href="#" target="_blank" rel="noopener">Instagram</a></div>
     </div>
     <div class="fbase"><span>© 2026 FOMAXO™. All rights reserved.</span><span>Inspire greatness</span></div>
     <p class="fpriv">We count anonymous visits (no cookies, nothing shared) to improve the store.</p>
@@ -3959,6 +3961,22 @@ function bindPartner(){
     const body = `Name: ${f.get('name')}\nPhone: ${f.get('phone')}\nCountry: ${f.get('country')}\nOutlets planned: ${f.get('outlets') || '-'}\nEmail: ${f.get('email')}\n\n${f.get('msg')}`;
     location.href = `mailto:${S.contact.email}?subject=${encodeURIComponent('FOMAXO Franchise enquiry — ' + f.get('country'))}&body=${encodeURIComponent(body)}`; };
 }
+/* Returns: the shop's return policy (also the policy page Google Merchant Center links to, fomaxo.com/returns → returns.php) */
+function returnsPage(){
+  const wa = S.checkout.whatsapp;
+  const items = [
+    ['7-day returns', 'You can return any FOMAXO product within 7 days of delivery if it is unopened, with its seal and box intact.'],
+    ['Damaged or wrong item', 'If your order arrives damaged, or you received the wrong item, tell us within 7 days of delivery and we will replace it or refund you in full.'],
+    ['Free collection', 'We collect the item from your address anywhere in the UAE, free of charge.'],
+    ['Refunds', 'We refund you within 5 working days of receiving the item: to the card you paid with, or by bank transfer for cash on delivery orders.'],
+    ['Opened bottles', 'For hygiene reasons, opened or used perfumes cannot be returned unless they arrived damaged or faulty.']];
+  return pageHead('Returns', 'Returns &amp; <em class="metal">refunds</em>', 'Simple, fair returns on every FOMAXO order in the UAE.') + `
+  <section class="sec" style="padding-top:40px"><div class="wrap"><div class="ret">
+    ${items.map(([h, p]) => `<div class="ret-i"><h3>${h}</h3><p>${p}</p></div>`).join('')}
+    <div class="ret-i"><h3>How to return</h3><p>Message us on WhatsApp or email us with your order number (FMX-…) and we will arrange the collection.</p>
+      <div class="ret-c"><a class="btn" href="https://wa.me/${wa}" target="_blank" rel="noopener">Chat on WhatsApp</a><a class="btn line" href="mailto:${esc(S.contact.email)}">Email us</a></div></div>
+  </div></div></section>`;
+}
 function notFound(){ return pageHead('Not found', 'Page <em class="metal">not found</em>', 'The page you are looking for does not exist.') + `<section class="sec"><div class="wrap"><a class="btn" href="#/">Return home</a></div></section>`; }
 
 /* ============================ CHECKOUT PAGE ============================ */
@@ -4798,6 +4816,7 @@ function route(){
     case 'gifts': html = giftsPage(q); after = bindDx; break;
     case 'combo': html = comboPage(); after = bindDx; break;
     case 'about': html = about(); break;
+    case 'returns': html = returnsPage(); document.title = 'Returns & refunds | FOMAXO Dubai'; break;
     case 'contact': html = contact(q); after = bindContact; break;
     case 'partnership': location.replace('#/franchise'); return;
     case 'franchise': html = partnership(); after = bindPartner; break;

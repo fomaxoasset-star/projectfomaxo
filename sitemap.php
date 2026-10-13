@@ -5,7 +5,7 @@
 require __DIR__ . '/seo-lib.php';
 header('Content-Type: application/xml; charset=utf-8');
 header('Cache-Control: public, max-age=3600');
-$urls = [FOMAXO_SITE . '/'];
+$urls = [FOMAXO_SITE . '/', FOMAXO_SITE . '/returns'];
 foreach (fomaxo_seo_products() as $p) if (!$p['hidden']) $urls[] = fomaxo_seo_url($p);
 $x = fn($s) => htmlspecialchars($s, ENT_XML1);
 $ar = fn($u) => $u . '?lang=ar';
