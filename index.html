@@ -384,7 +384,7 @@ html[data-mode="light"] .sort-by select{color:var(--ink,#1a140c)}html[data-mode=
 .notes-list div{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:baseline}
 .notes-list b{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:400}
 .notes-list span{font-family:var(--serif);font-size:20px;color:var(--ivory)}
-@media(max-width:960px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:relative;grid-template-columns:minmax(0,1fr)}.thumbs{flex-direction:row;order:2}.thumbs button{width:72px}}
+@media(max-width:960px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:relative;top:0;grid-template-columns:minmax(0,1fr)}.thumbs{flex-direction:row;order:2}.thumbs button{width:72px}}
 /* AJAY: on phone the product photos show whole, not cut or zoomed in: each photo frame takes the photo's own shape (--ar, set by fitPhoto);
    a shop row with different shapes takes the tallest and a wider photo shows whole (fit-c); swipe moves between photos */
 @media(max-width:960px){.stage{aspect-ratio:3/4;touch-action:pan-y pinch-zoom}.stage img{object-fit:cover}.card .media{aspect-ratio:var(--ar-row,var(--ar,4/5))}.card .media.fit-c{background:#0b0a08}.card .media.fit-c img{object-fit:contain}}
