@@ -13,7 +13,7 @@ $d = json_decode((string)$raw, true);
 if (!is_array($d)) exit;
 $id = fn($k) => preg_match('/^[a-z0-9]{8,16}$/', (string)($d[$k] ?? '')) ? (string)$d[$k] : null;
 $vid = $id('v'); $sid = $id('s'); $ev = (string)($d['e'] ?? '');
-if (!$vid || !$sid || !in_array($ev, ['view', 'product', 'cart', 'checkout', 'pay', 'card', 'buy', 'ping', 'lead', 'scroll'], true)) exit;
+if (!$vid || !$sid || !in_array($ev, ['view', 'product', 'cart', 'checkout', 'pay', 'card', 'buy', 'ping', 'lead', 'scroll', 'invite'], true)) exit;
 $t = fn($k, $max) => trim(mb_substr(preg_replace('/[\x00-\x1f]+/u', ' ', (string)($d[$k] ?? '')), 0, $max));
 
 require __DIR__ . '/orders-lib.php';
@@ -41,6 +41,15 @@ try {
     $o = $s->fetch(PDO::FETCH_ASSOC); if (!$o) exit;
     $pdo->prepare("INSERT IGNORE INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone) VALUES (?, ?, NOW(), NOW(), 'buyer', ?, ?)")->execute([$sid, $vid, mb_substr((string)$o['name'], 0, 80), mb_substr((string)$o['phone'], 0, 25)]);
     exit;   // like 'visit': at checkout the same visit moves on to details / payment / card
+  }
+  if ($ev === 'invite') {   // tapped Share with a friend (Invite a Friend, Get a Coupon): this visitor's mobile, for the coupon when a friend orders through their link
+    require_once __DIR__ . '/whatsapp-lib.php';
+    $ph = ($w = (string)($d['w'] ?? '')) !== '' ? fx_who_phone($w) : $t('ph', 25); if (strlen(fomaxo_phone9($ph)) !== 9) exit;
+    $name = $t('n', 80);
+    if ($name === '') { $s = $pdo->prepare("SELECT name FROM fx_orders WHERE RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) = ? ORDER BY created_at DESC LIMIT 1"); $s->execute([fomaxo_phone9($ph)]); $name = (string)$s->fetchColumn(); }
+    $pdo->exec("CREATE TABLE IF NOT EXISTS fx_inviters (vid CHAR(16) NOT NULL PRIMARY KEY, phone VARCHAR(25) NOT NULL, name VARCHAR(80) NOT NULL DEFAULT '', at DATETIME NOT NULL) DEFAULT CHARSET=utf8mb4");
+    $pdo->prepare('REPLACE INTO fx_inviters (vid, phone, name, at) VALUES (?, ?, ?, NOW())')->execute([$vid, mb_substr($ph, 0, 25), mb_substr($name, 0, 80)]);
+    exit;
   }
   if ($ev === 'lead') {   // checkout details, kept only once the customer typed a name or mobile
     $stages = ['details' => 1, 'payment' => 2, 'card' => 3];
@@ -89,6 +98,15 @@ try {
         ->execute([$vid, $sid, $ev, $page, $product, $source, $ref, $device]);
   } } }
   if ($ev === 'buy' && ($no = $t('o', 40)) !== '') $pdo->prepare('UPDATE fx_leads SET order_no = ? WHERE sid = ?')->execute([$no, $sid]);
+  if ($ev === 'buy' && ($no ?? '') !== '' && preg_match('/^[a-f0-9]{16}$/', $iv = (string)($d['iv'] ?? '')) && $iv !== $vid) try {   // ordered through a friend's Share link:
+    $s = $pdo->prepare('SELECT phone, name FROM fx_inviters WHERE vid = ?'); $s->execute([$iv]); $inv = $s->fetch(PDO::FETCH_ASSOC);   // the friend shows in Left at checkout
+    $s = $pdo->prepare('SELECT name, phone FROM fx_orders WHERE order_no = ? AND created_at > NOW() - INTERVAL 3 HOUR'); $s->execute([$no]); $o = $s->fetch(PDO::FETCH_ASSOC);   // as "Invited a friend"
+    if ($inv && $o && fomaxo_phone9($inv['phone']) !== fomaxo_phone9($o['phone'])) {   // not their own order
+      $first = preg_split('/\s+/u', trim((string)$o['name']))[0] ?? '';
+      $pdo->prepare("INSERT IGNORE INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone, items) VALUES (?, ?, NOW(), NOW(), 'invite', ?, ?, ?)")
+          ->execute([substr(md5('invite:' . $no), 0, 16), $iv, $inv['name'], $inv['phone'], mb_substr('Their friend ' . ($first !== '' ? $first . ' ' : '') . 'ordered ' . $no, 0, 600)]);
+    }
+  } catch (Throwable $e) { error_log("FOMAXO invite: " . $e->getMessage()); }
   if (mt_rand(1, 500) === 1) {   // keep the tables small: 400 days of steps, one day of "on the website now" (checkout details are kept for good)
     $pdo->exec('DELETE FROM fx_events WHERE at < NOW() - INTERVAL 400 DAY');
     $pdo->exec('DELETE FROM fx_live WHERE seen < NOW() - INTERVAL 1 DAY');
