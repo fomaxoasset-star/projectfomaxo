@@ -1034,6 +1034,10 @@ function fx_left_msg($l, $ar = null) {
   $link = 'https://fomaxo.com/?' . ($ar ? 'lang=ar&' : '') . 'utm_source=whatsapp&utm_campaign=left-checkout#/' . ($bag !== '' ? 'checkout?bag=' . $bag : 'checkout');
   $items = implode("\n", array_filter(array_map('trim', preg_split('/,\s*(?=\d+ ×)/u', (string)$l['items']))));
   $n2 = "\n\n";
+  if (($l['stage'] ?? '') === 'invite') {   // their friend ordered through their Share link: the WhatsApp box adds their coupon (THANKS-, % off first)
+    if ($ar) return [($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،') . $n2 . 'شكراً لدعوة صديقك إلى FOMAXO. لقد قام صديقك بطلب للتو.', $n2 . 'FOMAXO', true];
+    return ['Hi' . ($first !== '' ? ' ' . $first : '') . ',' . $n2 . 'Thank you for inviting your friend to FOMAXO. They just placed an order.', $n2 . 'FOMAXO', false];
+  }
   if (in_array($l['stage'] ?? '', ['visit', 'buyer'], true)) {   // opened our WhatsApp link, or a past buyer back, but never reached checkout: a short hello, no bag
     $again = ($l['stage'] ?? '') === 'buyer';
     $site = 'https://fomaxo.com/' . ($ar ? '?lang=ar' : '');
