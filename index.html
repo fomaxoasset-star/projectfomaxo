@@ -3726,8 +3726,8 @@ function product(id, q){
     <div class="crumbs pdp-crumbs" style="padding-top:34px"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; <a href="#/fragrances">Fragrances</a> &nbsp;/&nbsp; ${esc(p.name)}</div>
     <div class="pdp">
       <div class="gallery">${bestHTML(p.id, soldKey(p, size))}
-        <div class="thumbs">${gallery.map((g,i) => `<button class="${i?'':'on'}" data-g="${g}" aria-label="Image ${i+1}"><img src="${SM(g)}" alt="" loading="lazy"></button>`).join('')}</div>
-        <div class="stage" id="stage"><img id="stageImg" src="${IMG(isSet && !q.get('size') ? p.images[0] : imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}"></div>
+        <div class="thumbs">${gallery.map((g,i) => `<button class="${i?'':'on'}" data-g="${g}" aria-label="Image ${i+1}"><img data-src="${SM(g)}" alt="" loading="lazy"></button>`).join('')}</div>
+        <div class="stage" id="stage"><img id="stageImg" src="${IMG(isSet && !q.get('size') ? p.images[0] : imgFor(p, size))}" alt="FOMAXO ${esc(p.name)}" fetchpriority="high"></div>
       </div>
       <div class="buy">
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -3774,6 +3774,8 @@ function product(id, q){
   </div>`;
 }
 function bindProduct(p){
+  const stImg = $('#stageImg'), thumbsIn = () => $$('.thumbs img[data-src]').forEach(i => { i.src = i.dataset.src; i.removeAttribute('data-src'); });   // the big photo downloads first, the small photos right after it
+  if (!stImg || stImg.complete) thumbsIn(); else { stImg.addEventListener('load', thumbsIn, {once: true}); stImg.addEventListener('error', thumbsIn, {once: true}); setTimeout(thumbsIn, 2500); }
   $$('[data-alsoscroll]').forEach(b => b.onclick = () => { const row = $('#alsoRow'); row.scrollBy({left: +b.dataset.alsoscroll * row.clientWidth * .8, behavior: 'smooth'}); });
   let size = +($('#sizes .on')?.dataset.s) || defaultSize(p);
   const isSet = p.kind === 'set'; let picks = [];
