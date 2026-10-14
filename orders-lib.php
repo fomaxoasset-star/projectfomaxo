@@ -1034,6 +1034,13 @@ function fx_left_msg($l, $ar = null) {
   $link = 'https://fomaxo.com/?' . ($ar ? 'lang=ar&' : '') . 'utm_source=whatsapp&utm_campaign=left-checkout#/' . ($bag !== '' ? 'checkout?bag=' . $bag : 'checkout');
   $items = implode("\n", array_filter(array_map('trim', preg_split('/,\s*(?=\d+ ×)/u', (string)$l['items']))));
   $n2 = "\n\n";
+  if (($l['stage'] ?? '') === 'visit') {   // opened our WhatsApp link but never reached checkout: a short hello, no bag
+    $site = 'https://fomaxo.com/' . ($ar ? '?lang=ar' : '');
+    if ($ar) return [($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،') . $n2 . 'شكراً لزيارتك FOMAXO.',
+      $n2 . "يمكنك الطلب من هنا:\n" . $site . $n2 . 'توصيل مجاني داخل الإمارات خلال 1–3 أيام.' . $n2 . 'إن كان لديك أي سؤال عن العطور أو الأحجام، راسلنا هنا.' . $n2 . 'FOMAXO', true];
+    return ['Hi' . ($first !== '' ? ' ' . $first : '') . ',' . $n2 . 'Thank you for visiting FOMAXO.',
+      $n2 . "You can order here anytime:\n" . $site . $n2 . 'Free delivery across the UAE in 1–3 days.' . $n2 . 'If you have any questions about the scents or sizes, just reply here.' . $n2 . 'FOMAXO', false];
+  }
   if ($ar) return [($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،') . ($items !== '' ? $n2 . "تركت هذه في حقيبة FOMAXO:\n" . $items : $n2 . 'لاحظنا أنك لم تكمل طلبك من FOMAXO.'),
     $n2 . "حقيبتك محفوظة. اضغط هنا لإكمال طلبك:\n" . $link . $n2 . 'توصيل مجاني داخل الإمارات خلال 1–3 أيام.' . $n2 . 'إن كان لديك أي سؤال عن العطور أو الأحجام، راسلنا هنا.' . $n2 . 'FOMAXO', true];
   return ['Hi' . ($first !== '' ? ' ' . $first : '') . ',' . ($items !== '' ? $n2 . "You left these in your FOMAXO bag:\n" . $items : $n2 . 'We noticed you did not finish your FOMAXO order.'),
