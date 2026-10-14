@@ -349,8 +349,8 @@ html[data-mode="light"] .sort-by select{color:var(--ink,#1a140c)}html[data-mode=
 .sizes button.on{border-color:var(--gold);background:rgba(215,170,105,.08)}
 .sizes button.on b{color:var(--gold-hi)}
 .sizes button{position:relative}
-.sizes:has(.bv){padding-top:12px}
-.sizes .bv{position:absolute;top:-17px;left:50%;transform:translateX(-50%);padding:5px 11px;overflow:hidden;background:linear-gradient(135deg,#8f6b37 0%,#d7aa69 22%,#f6e3b8 48%,#d7aa69 70%,#a8792f 100%);color:#0a0a0a;font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;line-height:1.4;box-shadow:0 0 0 1px rgba(240,211,160,.55),0 4px 16px rgba(215,170,105,.45)}
+.sizes:has(.bv){padding-top:20px}   /* room for the Best value tag, which sits on the 100ml box's top line and never covers the size */
+.sizes .bv{position:absolute;top:auto;bottom:calc(100% - 3px);left:50%;transform:translateX(-50%);padding:5px 11px;overflow:hidden;background:linear-gradient(135deg,#8f6b37 0%,#d7aa69 22%,#f6e3b8 48%,#d7aa69 70%,#a8792f 100%);color:#0a0a0a;font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;line-height:1.4;box-shadow:0 0 0 1px rgba(240,211,160,.55),0 4px 16px rgba(215,170,105,.45)}
 .sizes .bv::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-20deg);animation:bvShine 3.2s ease-in-out infinite}
 @keyframes bvShine{0%,55%{left:-60%}100%{left:130%}}
 @media (prefers-reduced-motion:reduce){.sizes .bv::after{display:none}}
