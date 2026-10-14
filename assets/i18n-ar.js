@@ -1022,7 +1022,6 @@
 "Share with a friend on WhatsApp": "شارك مع صديق على واتساب",
 "Get offers on WhatsApp": "احصل على العروض عبر واتساب",
 "Share with a friend": "شارك مع صديق",
-"Get offers": "احصل على العروض",
 "Out of stock": "نفد المخزون",
 "Payment not completed": "لم تكتمل عملية الدفع",
 "Placing your order…": "جارٍ تقديم طلبك…",

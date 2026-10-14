@@ -116,7 +116,7 @@ em{font-style:italic}
 .pwx{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 10px;border:1px solid var(--line-2);color:var(--champagne);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;text-align:center;line-height:1.25;transition:border-color .2s,color .2s,background .2s}
 .pwx svg{width:16px;height:16px;flex:none;color:var(--gold)}.pwx:hover{border-color:var(--gold);color:var(--gold)}
 .pwx-gold{border-color:var(--gold);color:var(--gold)}.pwx-gold:hover{background:var(--gold);color:var(--black)}.pwx-gold:hover svg{color:var(--black)}
-@media (max-width:420px){.pwx{letter-spacing:.06em;font-size:11px;padding:8px 6px;gap:6px}}
+@media (max-width:520px){.pwrow{grid-template-columns:1fr;gap:8px}}   /* phone: one per line, each label on one line */
 /* out-of-stock size tile: shaded, size struck through, "Out of stock" under it */
 .sizes button.so{background:rgba(215,170,105,.07)}.sizes button.so b{text-decoration:line-through;text-decoration-thickness:1px;color:var(--muted)}
 .sizes button.so.on{border-color:var(--line-2)}.sizes button.so.on b{color:var(--muted)}
@@ -3715,7 +3715,7 @@ function product(id, q){
           <button class="btn line" id="addBtn">Add to bag</button>
         </div>
         <button class="btn block" id="buyBtn">Buy now</button>
-        <div class="pwrow"><a class="pwx" href="https://wa.me/?text=${encodeURIComponent(document.documentElement.lang === 'ar' ? `${p.name} من FOMAXO، ألقِ نظرة: https://fomaxo.com/fomaxo-${slugOf(p)}?lang=ar` : `${p.name} by FOMAXO, have a look: https://fomaxo.com/fomaxo-${slugOf(p)}`)}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Share with a friend</span></a><a class="pwx pwx-gold" href="https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent(document.documentElement.lang === 'ar' ? `مرحباً FOMAXO، أرسلوا لي أحدث العروض من فضلكم. (أتصفح ${p.name})` : `Hi FOMAXO, please send me your latest offers. (I am looking at ${p.name})`)}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Get offers</span></a></div>
+        <div class="pwrow"><a class="pwx" href="https://wa.me/?text=${encodeURIComponent(document.documentElement.lang === 'ar' ? `${p.name} من FOMAXO، ألقِ نظرة: https://fomaxo.com/fomaxo-${slugOf(p)}?lang=ar` : `${p.name} by FOMAXO, have a look: https://fomaxo.com/fomaxo-${slugOf(p)}`)}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Share with a friend</span></a><a class="pwx pwx-gold" href="https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent(document.documentElement.lang === 'ar' ? `مرحباً FOMAXO، أرسلوا لي أحدث العروض من فضلكم. (أتصفح ${p.name})` : `Hi FOMAXO, please send me your latest offers. (I am looking at ${p.name})`)}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Get offers on WhatsApp</span></a></div>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
           <details${matchMedia('(min-width:961px)').matches ? '' : ' open'}><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
