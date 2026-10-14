@@ -40,7 +40,7 @@ function apply(){var light=saved?saved==="light":!!(mq&&mq.matches);if(light)r.d
 apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{saved=localStorage.getItem("fomaxo_mode")}catch(e){}if(!saved){apply();var t=document.getElementById("modeToggle");if(t)t.setAttribute("aria-checked",String(r.dataset.mode!=="light"))}})})();</script>
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
 /* a link from our WhatsApp carries the customer's personal code (?w=): kept on this device for checkout to fill in their mobile, and taken out of the address */
-(function(){var m=location.search.match(/[?&]w=(\d{10,15}-[a-f0-9]{12})(?=&|$)/);if(!m)return;try{localStorage.setItem("fomaxo_who",m[1])}catch(e){}
+(function(){var m=location.search.match(/[?&]w=(\d{10,15}-[a-f0-9]{12})(?=&|$)/);if(!m)return;try{localStorage.setItem("fomaxo_who",m[1]);sessionStorage.setItem("fomaxo_who_visit",m[1])}catch(e){}
 if(history.replaceState)try{history.replaceState(history.state,"",location.pathname+location.search.replace(/([?&])w=[^&]*&?/,"$1").replace(/[?&]$/,"")+location.hash)}catch(e){}})();
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
@@ -5234,6 +5234,7 @@ const FXT = (() => {
     if (s && /^[a-f0-9]{16}$/.test(s.id) && Date.now() - s.t < 18e5) { sid = s.id; lastT = s.t; first = false; }
   } catch(e) {}
   vid = vid || rid();
+  let who = ''; try { who = sessionStorage.getItem('fomaxo_who_visit') || ''; } catch(e) {}   // opened from a link in our WhatsApp: told to the admin (Left at checkout) once, on the first page
   const post = body => { if (off) return; const b = JSON.stringify(body); try { if (navigator.sendBeacon && navigator.sendBeacon('track.php', new Blob([b], {type: 'text/plain'}))) return; } catch(e) {} fetch('track.php', {method: 'POST', body: b, keepalive: true}).catch(() => {}); };
   const send = (e, data) => {
     const now = Date.now();
@@ -5262,6 +5263,7 @@ const FXT = (() => {
       if (k === lastView && now - lastViewT < 2000) return;
       lastView = k; lastViewT = now;
       send('view'); ADS.page(); if (k === '' || k === '#/') depth = {};
+      if (who) { send('lead', {st: 'visit', who}); who = ''; try { sessionStorage.removeItem('fomaxo_who_visit'); } catch(e) {} }
       if (seg[0] === 'product' && P[seg[1]] && !P[seg[1]].hidden) { send('product', {id: seg[1]}); ADS.view(P[seg[1]]); }
       if (seg[0] === 'checkout' && (cart.length || buyLines.length)) { send('checkout'); ADS.checkout(new URLSearchParams(k.split('?')[1] || '').get('buy') && buyLines.length ? buyLines : cart); }
     },

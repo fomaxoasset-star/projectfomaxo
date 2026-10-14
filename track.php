@@ -28,6 +28,13 @@ try {
     exit;
   }
 
+  if ($ev === 'lead' && ($d['st'] ?? '') === 'visit') {   // opened the site from a link in our WhatsApp (?w= personal code): in Left at checkout right away, with the number we wrote to
+    require_once __DIR__ . '/whatsapp-lib.php';
+    $phone = fx_who_phone((string)($d['who'] ?? '')); if ($phone === '') exit;
+    $name = ''; try { $s = $pdo->prepare("SELECT name FROM fx_orders WHERE RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) = ? ORDER BY created_at DESC LIMIT 1"); $s->execute([substr(preg_replace('/\D/', '', $phone), -9)]); $name = (string)$s->fetchColumn(); } catch (Throwable $e) {}   // their name from their last order
+    $pdo->prepare("INSERT IGNORE INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone) VALUES (?, ?, NOW(), NOW(), 'visit', ?, ?)")->execute([$sid, $vid, mb_substr($name, 0, 80), $phone]);
+    exit;   // at checkout the same visit moves on to details / payment / card (FIELD below counts 'visit' as 0)
+  }
   if ($ev === 'lead') {   // checkout details, kept only once the customer typed a name or mobile
     $stages = ['details' => 1, 'payment' => 2, 'card' => 3];
     $stage = isset($stages[$d['st'] ?? '']) ? $d['st'] : 'details';
