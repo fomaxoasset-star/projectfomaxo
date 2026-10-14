@@ -24,6 +24,8 @@ session_start(($_GET['do'] ?? '') === 'new_orders' || isset($_GET['vchunk']) ? [
 if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
 
 function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
+/* a small list picture (26-52px): the small 240px copy of the photo when there is one (about 15 KB instead of 100-190 KB), else the photo itself */
+function fx_small_img($k) { $k = (string)$k; return '../assets/img/' . (preg_match('~^[a-z0-9-]+$~i', $k) && is_file(dirname(__DIR__) . '/assets/img/s/' . $k . '.webp') ? 's/' : '') . $k . '.webp'; }
 /* text a customer typed: Arabic shows in English for FOMAXO, with the Arabic as typed in small underneath (for the driver); Arabic digits become 0-9 */
 function hx($v, $nl = false, $inline = false) {
   $f = fn($s) => $nl ? nl2br(h($s)) : h($s); $v = (string)$v; $d = strtr($v, FX_AR_DIGITS);
@@ -1616,7 +1618,7 @@ if (isset($_GET['products'])) {
       $img = $p['images'][0] ?? '';
       $tr .= '<tr class="row" onclick="location.href=this.dataset.href" data-href="' . h(self_url(['products' => 1, 'p' => $r['id']])) . '">'
            . '<td class="pvis" onclick="event.stopPropagation()"><form method="post">' . csrf_field() . '<input type="hidden" name="vis" value="' . h($r['id']) . '"><button class="rdot' . ($r['hidden'] ? '' : ' on') . '" name="show" value="' . ($r['hidden'] ? '1' : '') . '" title="' . ($r['hidden'] ? 'Hidden. Tap to show on the website' : 'On the website. Tap to hide') . '" aria-label="' . h(($p['name'] ?? $r['id']) . ($r['hidden'] ? ': hidden, tap to show on the website' : ': on the website, tap to hide')) . '"></button></form></td>'
-           . '<td class="pimg">' . ($img ? '<img src="../assets/img/' . h($img) . '.webp" alt="">' : '') . '</td>'
+           . '<td class="pimg">' . ($img ? '<img src="' . h(fx_small_img($img)) . '" alt="">' : '') . '</td>'
            . '<td><b>' . h($p['name'] ?? $r['id']) . '</b><div class="small muted psz">' . $sz . '</div></td>'
            . '<td class="psold">' . (!empty($sold[$r['id']]) ? '<b>' . number_format($sold[$r['id']]['n']) . '<span class="pslbl"> sold</span></b>' . ($r['id'] === $top ? ' <span class="tag pbest">Top</span>' : '') . '<div class="small muted">' . h(implode(' · ', array_map(fn($o, $n) => ($isSet ? "Set of $o" : "{$o}ml") . " $n", array_keys($sold[$r['id']]['s']), $sold[$r['id']]['s']))) . '</div>' : '<span class="muted">0<span class="pslbl"> sold</span></span>') . '</td>'
            . '<td class="pdisc" onclick="event.stopPropagation()">' . ($hasWas ? '<form method="post">' . csrf_field() . '<input type="hidden" name="sale" value="' . h($r['id']) . '"><label class="btsw" title="Discount On / Off"><input type="checkbox" role="switch" name="on" value="1"' . ($dOn ? ' checked' : '') . ' aria-label="' . h(($p['name'] ?? $r['id']) . ' discount on or off') . '" onchange="this.form.submit()"><i></i></label></form>' : '<span class="muted small" title="No Original price set">—</span>') . '</td>'
@@ -1939,7 +1941,7 @@ if (isset($_GET['offer'])) {
     if ($r['hidden']) continue; $n = 0; $bz = null; $bn = -1;
     foreach ((array)($p['prices'] ?? []) as $z => $v) { $c = $p['compareAt'][$z] ?? null;
       $k = is_numeric($v) && is_numeric($c) && $c > $v ? ($c - $v) / $c : 0; if ($k > $bn) [$bn, $bz] = [$k, $z]; if ($k) $n = max($n, (int)round($k * 100)); }
-    if ($n) $sale[$p['id']] = ['pct' => $n, 'name' => $p['name'] ?? $p['id'], 'img' => $plist[$p['id']]['img'], 'price' => 'AED ' . number_format((float)$p['prices'][$bz]), 'was' => 'AED ' . number_format((float)$p['compareAt'][$bz])];
+    if ($n) $sale[$p['id']] = ['pct' => $n, 'name' => $p['name'] ?? $p['id'], 'img' => $plist[$p['id']]['img'], 'sm' => !empty($p['images'][0]) ? fx_small_img($p['images'][0]) : '', 'price' => 'AED ' . number_format((float)$p['prices'][$bz]), 'was' => 'AED ' . number_format((float)$p['compareAt'][$bz])];
   }
   uasort($sale, fn($a, $b) => $b['pct'] <=> $a['pct']);
   $items = array_values(array_filter(json_decode((string)fomaxo_setting($pdo, 'sale_items'), true) ?: [], fn($id) => isset($sale[$id])));
@@ -2009,7 +2011,7 @@ if (isset($_GET['offer'])) {
   $picker = function ($k, $on, $none, $ph, $extra = '') use ($sale) {
     $c = '';
     foreach ($sale as $id => $s) $c .= '<label class="ofit" title="' . h($s['name']) . '"><input type="checkbox" name="' . $k . '[]" value="' . h($id) . '" data-pct="' . $s['pct'] . '" data-name="' . h($s['name']) . '" data-img="' . h($s['img']) . '" data-price="' . h($s['price']) . '" data-was="' . h($s['was']) . '"' . (in_array($id, $on, true) ? ' checked' : '') . '>'
-      . ($s['img'] ? '<img src="' . h($s['img']) . '" alt="">' : '<i></i>') . '<span>' . h($s['name']) . '</span><small>' . $s['pct'] . '% off</small></label>';
+      . ($s['sm'] ? '<img src="' . h($s['sm']) . '" alt="">' : '<i></i>') . '<span>' . h($s['name']) . '</span><small>' . $s['pct'] . '% off</small></label>';
     return '<div class="opick"><div class="oaddrow"><input class="oadd" list="ow-items" placeholder="' . $ph . '" autocomplete="off" aria-label="' . $ph . '">' . $extra . '</div>'
       . '<div class="ofits">' . $c . '<span class="onone muted small">' . $none . '</span></div></div>'; };
   /* popup sizes: hidden boxes in each form, moved by the size bar in Preview and saved with the form */
@@ -2229,7 +2231,7 @@ if (isset($_GET['stock'])) {
     $lvl = $q === null ? '<span class="muted">Not counted</span>' : ((int)$q <= 0 ? '<span class="lvl-out">Sold out</span>' : ((int)$q <= fomaxo_low_stock() ? '<span class="lvl-low">Only ' . (int)$q . ' left</span>' : '<span class="lvl-ok">In stock</span>'));
     $margin = ' · <span class="muted">sells at AED ' . h(number_format($p['prices'][$opt], 0)) . '</span>';
     $img = $pic[$id] ?? ($p['images'][0] ?? '');
-    $tr .= '<tr class="row' . ($w !== '' && $st !== $w ? ' wf' : '') . '" data-k="' . h($k) . '"><td class="sp"><span class="sdrag" title="Drag to change the order of this list" aria-hidden="true"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.6"/><circle cx="8" cy="2" r="1.6"/><circle cx="2" cy="8" r="1.6"/><circle cx="8" cy="8" r="1.6"/><circle cx="2" cy="14" r="1.6"/><circle cx="8" cy="14" r="1.6"/></svg></span>' . ($img ? '<img class="sth" src="../assets/img/' . h($img) . '.webp" alt="" loading="lazy">' : '<span class="sth"></span>') . '<div><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
+    $tr .= '<tr class="row' . ($w !== '' && $st !== $w ? ' wf' : '') . '" data-k="' . h($k) . '"><td class="sp"><span class="sdrag" title="Drag to change the order of this list" aria-hidden="true"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.6"/><circle cx="8" cy="2" r="1.6"/><circle cx="2" cy="8" r="1.6"/><circle cx="8" cy="8" r="1.6"/><circle cx="2" cy="14" r="1.6"/><circle cx="8" cy="14" r="1.6"/></svg></span>' . ($img ? '<img class="sth" src="' . h(fx_small_img($img)) . '" alt="" loading="lazy">' : '<span class="sth"></span>') . '<div><b>' . h($p['name']) . '</b> <span class="muted">' . h($p['kind'] === 'set' ? "Set of $opt" : "{$opt}ml") . '</span>'
          . '<div class="small">' . $lvl . $margin . (!empty($sold[$k]) ? ' <span class="muted">· ' . (int)$sold[$k] . ' sold in 30 days</span>' : '') . '</div></div></td>'
          . '<td class="num"><label class="mini">Stock</label><input type="number" min="0" inputmode="numeric" name="q[' . h($id) . '][' . h($opt) . ']" value="' . ($q === null ? '' : (int)$q) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' stock"></td>'
          . '<td class="num"><label class="mini">Cost AED</label><input type="number" min="0" step="0.01" inputmode="decimal" name="c[' . h($id) . '][' . h($opt) . ']" value="' . ($c === null ? '' : h(rtrim(rtrim($c, '0'), '.'))) . '" placeholder="—" aria-label="' . h($p['name'] . ' ' . $opt) . ' cost price"></td></tr>';
@@ -3152,7 +3154,7 @@ if (isset($_GET['reviews'])) {
 
   /* product photo (Products tab first, then the built-in list) and one review row like fomaxo.in */
   $pic = []; try { foreach ($pdo->query('SELECT id, data FROM fx_products') as $q) { $d = json_decode($q['data'], true); if (!empty($d['images'][0])) $pic[$q['id']] = $d['images'][0]; } } catch (Throwable $e) {}
-  $thumb = function ($id) use ($pic, $CATALOG) { $im = $pic[$id] ?? ($CATALOG[$id]['images'][0] ?? ''); return '<span class="rthumb">' . ($im !== '' ? '<img src="../assets/img/t/' . h($im) . '.webp" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'../assets/img/' . h($im) . '.webp\'">' : '') . '</span>'; };
+  $thumb = function ($id) use ($pic, $CATALOG) { $im = $pic[$id] ?? ($CATALOG[$id]['images'][0] ?? ''); return '<span class="rthumb">' . ($im !== '' ? '<img src="' . h(fx_small_img($im)) . '" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'../assets/img/' . h($im) . '.webp\'">' : '') . '</span>'; };
   $ckey = fn($phone) => strlen($d = preg_replace('/\D/', '', (string)$phone)) >= 7 ? 'm' . substr($d, -9) : '';
   $telAll = [];   // mobile of every review that has an order (Top reviewers and Customer page links)
   $nos = array_values(array_unique(array_filter(array_column($all, 'order'))));
@@ -3883,7 +3885,7 @@ foreach ($rows as $o) {
   foreach (json_decode((string)($o['lines_json'] ?? ''), true) ?: [] as $l) if (is_array($l) && empty($l['free']) && !empty($l['id'])) { $img = $pic[$l['id']] ?? ($CATALOG[$l['id']]['images'][0] ?? ''); break; }
   $days = in_array($o['status'], ['New', 'Paid'], true) ? (int)floor((time() - strtotime($o['created_at'])) / 86400) : 0;
   $tr .= '<tr class="row st-' . h(strtok($o['status'], ' ')) . '" onclick="location.href=\'' . $u . '\'">'
-       . '<td class="oi"><form method="post" class="otx" onclick="event.stopPropagation()" onsubmit="return confirm(\'Close ' . h($o['order_no']) . '? It leaves Sales, the boxes and every count, and is kept in Trash.\')">' . csrf_field() . '<input type="hidden" name="trash" value="' . h($o['order_no']) . '"><input type="hidden" name="back" value="' . h((string)($_SERVER['QUERY_STRING'] ?? '')) . '"><button class="rmx" title="Close this order (kept in Trash)" aria-label="Close ' . h($o['order_no']) . '">✕</button></form><span class="oth">' . ($img ? '<img src="../assets/img/t/' . h($img) . '.webp" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'../assets/img/' . h($img) . '.webp\'">' : '') . '</span>'
+       . '<td class="oi"><form method="post" class="otx" onclick="event.stopPropagation()" onsubmit="return confirm(\'Close ' . h($o['order_no']) . '? It leaves Sales, the boxes and every count, and is kept in Trash.\')">' . csrf_field() . '<input type="hidden" name="trash" value="' . h($o['order_no']) . '"><input type="hidden" name="back" value="' . h((string)($_SERVER['QUERY_STRING'] ?? '')) . '"><button class="rmx" title="Close this order (kept in Trash)" aria-label="Close ' . h($o['order_no']) . '">✕</button></form><span class="oth">' . ($img ? '<img src="' . h(fx_small_img($img)) . '" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'../assets/img/' . h($img) . '.webp\'">' : '') . '</span>'
        . '<span class="onb"><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['seen_at'] === null && !$o['test'] && !in_array($o['status'], ['Awaiting payment', 'Cancelled', 'Refunded'], true) ? '<span class="newo">NEW</span>' : '') . ($o['test'] ? ' <span class="muted small">test</span>' : '')
        . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '') . '</span></td>'
        . '<td class="od">' . h(date('d M Y', strtotime($o['created_at']))) . '<span class="odt">' . h(date('H:i', strtotime($o['created_at']))) . '</span></td>'
