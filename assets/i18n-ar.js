@@ -1020,6 +1020,7 @@
 "Next": "التالي",
 "Out of Stock — Restocking Soon": "نفد المخزون — يعود قريباً",
 "Share with a friend on WhatsApp": "شارك مع صديق على واتساب",
+"Get offers on WhatsApp": "احصل على العروض عبر واتساب",
 "Out of stock": "نفد المخزون",
 "Payment not completed": "لم تكتمل عملية الدفع",
 "Placing your order…": "جارٍ تقديم طلبك…",
