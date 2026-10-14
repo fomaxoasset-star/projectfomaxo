@@ -1022,6 +1022,8 @@
 "Share with a friend on WhatsApp": "شارك مع صديق على واتساب",
 "Get offers on WhatsApp": "احصل على العروض عبر واتساب",
 "Share with a friend": "شارك مع صديق",
+"Send this perfume to a friend": "أرسل هذا العطر إلى صديق",
+"Our latest deals, sent to your WhatsApp": "أحدث عروضنا تصلك على واتساب",
 "Out of stock": "نفد المخزون",
 "Payment not completed": "لم تكتمل عملية الدفع",
 "Placing your order…": "جارٍ تقديم طلبك…",
