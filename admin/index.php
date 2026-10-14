@@ -726,7 +726,7 @@ function fx_wa_box() {
     . 'var w=PH?null:window.open("","_blank"),f=new FormData(),b=btn;f.append("csrf",' . json_encode($_SESSION['csrf'] ?? '') . ');f.append("box",b.dataset.wabox);f.append("mark",b.dataset.mark||"");f.append("phone",b.dataset.phone||"");'
     . 'f.append("gkind",k);f.append("val",val.value||(k==="pct"?(b.dataset.pct||"10"):"20"));f.append("min",min.value);f.append("end",end.value);f.append("gfree",freeV()?freeV().value:"");send.disabled=true;'
     . 'fetch("./?wabox=1",{method:"POST",body:f,credentials:"same-origin"}).then(function(r){return r.json()}).then(function(j){send.disabled=false;if(j.error||(k&&!j.code))throw new Error(j.error||"The code could not be made.");'
-    . 'if(j.code)text.value=text.value.split("[CODE]").join(j.code);var msg=text.value;'
+    . 'if(j.code)text.value=text.value.split("[CODE]").join(j.code);var msg=j.who?text.value.replace(/https:\\/\\/(?:www\\.)?fomaxo\\.com(\\/[^\\s?#*]*)?(\\?[^\\s#*]*)?(#[^\\s*]*)?/g,function(u,p,q,h){return"https://fomaxo.com"+(p||"/")+(q?q+"&":"?")+"w="+j.who+(h||"")}):text.value;'
     . 'if(b.dataset.mark)document.querySelectorAll("[data-wabox][data-mark=\'"+b.dataset.mark+"\']").forEach(function(x){fxSent(x,j.day)});else fxSent(b,j.day);'
     . 'document.dispatchEvent(new CustomEvent("fxwa-sent",{detail:{btn:b,day:j.day}}));d.close();if(PH)app(msg);else if(w)w.location=wa(msg);else location.href=wa(msg)}).catch(function(x){send.disabled=false;if(w)w.close();err.textContent=x.message;err.hidden=false})})})();</script>';
 }
@@ -1012,6 +1012,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['wabox'])) {
       $min !== '' ? (float)$min : 0, $end, $kind === 'free' ? $fid : '', $kind === 'free' ? $fopt : '');
     if (!$code) $no('The code could not be made. Please try again.');
   }
+  require_once dirname(__DIR__) . '/whatsapp-lib.php';   // fx_who_token
   [$t, $k] = array_pad(explode(':', $mark, 2), 2, '');
   if ($t === 'rq' && preg_match('/^FMX-\d+$/', $k)) { require_once dirname(__DIR__) . '/review-req-lib.php'; fx_rq_mark($pdo, $k); }
   elseif ($t === 'rf' && preg_match('/^FMX-\d+$/', $k)) { require_once dirname(__DIR__) . '/refill-lib.php'; fx_refill_mark($pdo, $k); }
@@ -1019,7 +1020,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['wabox'])) {
     $s = array_filter(json_decode((string)fomaxo_setting($pdo, 'wa_sent'), true) ?: [], fn($d) => $d >= date('Y-m-d', strtotime('-400 days')));   // days older than 400 are forgotten
     $s[$t === 'ph' ? 'ph:' . fomaxo_phone9($k) : $t . ':' . mb_substr($k, 0, 60)] = date('Y-m-d'); fomaxo_setting($pdo, 'wa_sent', json_encode($s));
   }
-  exit(json_encode(['code' => $code, 'day' => date('d/m')]));
+  exit(json_encode(['code' => $code, 'day' => date('d/m'), 'who' => fx_who_token($phone)]));   // who: the personal code put on the fomaxo.com links in the message
 }
 
 /* an order that is only in the order files (the database could not take it): put it in the list with its own number */
