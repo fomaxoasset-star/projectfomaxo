@@ -5235,6 +5235,7 @@ const FXT = (() => {
   } catch(e) {}
   vid = vid || rid();
   let who = ''; try { who = sessionStorage.getItem('fomaxo_who_visit') || ''; } catch(e) {}   // opened from a link in our WhatsApp: told to the admin (Left at checkout) once, on the first page
+  let buyer = ''; try { if (localStorage.getItem('fomaxo_last') && !sessionStorage.getItem('fomaxo_buyer_seen')) { buyer = String(JSON.parse(localStorage.getItem('fomaxo_details') || '{}').phone || ''); sessionStorage.setItem('fomaxo_buyer_seen', '1'); } } catch(e) {}   // once per visit
   const post = body => { if (off) return; const b = JSON.stringify(body); try { if (navigator.sendBeacon && navigator.sendBeacon('track.php', new Blob([b], {type: 'text/plain'}))) return; } catch(e) {} fetch('track.php', {method: 'POST', body: b, keepalive: true}).catch(() => {}); };
   const send = (e, data) => {
     const now = Date.now();
@@ -5264,6 +5265,7 @@ const FXT = (() => {
       lastView = k; lastViewT = now;
       send('view'); ADS.page(); if (k === '' || k === '#/') depth = {};
       if (who) { send('lead', {st: 'visit', who}); who = ''; try { sessionStorage.removeItem('fomaxo_who_visit'); } catch(e) {} }
+      else if (buyer) { send('lead', {st: 'buyer', phone: buyer}); buyer = ''; }   // ordered before on this device: the admin sees them by name when they come back
       if (seg[0] === 'product' && P[seg[1]] && !P[seg[1]].hidden) { send('product', {id: seg[1]}); ADS.view(P[seg[1]]); }
       if (seg[0] === 'checkout' && (cart.length || buyLines.length)) { send('checkout'); ADS.checkout(new URLSearchParams(k.split('?')[1] || '').get('buy') && buyLines.length ? buyLines : cart); }
     },

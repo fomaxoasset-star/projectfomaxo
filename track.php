@@ -35,6 +35,13 @@ try {
     $pdo->prepare("INSERT IGNORE INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone) VALUES (?, ?, NOW(), NOW(), 'visit', ?, ?)")->execute([$sid, $vid, mb_substr($name, 0, 80), $phone]);
     exit;   // at checkout the same visit moves on to details / payment / card (FIELD below counts 'visit' as 0)
   }
+  if ($ev === 'lead' && ($d['st'] ?? '') === 'buyer') {   // came back on the device they ordered from: in Left at checkout right away, only if that mobile really has an order
+    $p9 = substr(preg_replace('/\D/', '', $t('phone', 25)), -9); if (strlen($p9) !== 9) exit;
+    $s = $pdo->prepare("SELECT name, phone FROM fx_orders WHERE status IN ('New', 'Paid', 'Delivered') AND RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) = ? ORDER BY created_at DESC LIMIT 1"); $s->execute([$p9]);
+    $o = $s->fetch(PDO::FETCH_ASSOC); if (!$o) exit;
+    $pdo->prepare("INSERT IGNORE INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone) VALUES (?, ?, NOW(), NOW(), 'buyer', ?, ?)")->execute([$sid, $vid, mb_substr((string)$o['name'], 0, 80), mb_substr((string)$o['phone'], 0, 25)]);
+    exit;   // like 'visit': at checkout the same visit moves on to details / payment / card
+  }
   if ($ev === 'lead') {   // checkout details, kept only once the customer typed a name or mobile
     $stages = ['details' => 1, 'payment' => 2, 'card' => 3];
     $stage = isset($stages[$d['st'] ?? '']) ? $d['st'] : 'details';
