@@ -39,6 +39,14 @@ function fx_wa_number($phone) {
   elseif (strlen($d) === 9 && $d[0] === '5') $d = '971' . $d;
   return strlen($d) >= 10 && strlen($d) <= 15 ? $d : null;
 }
+/* the personal code on fomaxo.com links in the WhatsApp messages sent from the admin (?w=): the customer's own WhatsApp number, signed,
+   so checkout fills in their mobile by itself when they open the link. A changed or made-up code fills in nothing (fx_who_phone gives ''). */
+function fx_who_token($phone) { $n = fx_wa_number($phone); return $n ? $n . '-' . substr(rv_sign('who:' . $n), 0, 12) : ''; }
+function fx_who_phone($t) {
+  if (!preg_match('/^(\d{10,15})-([a-f0-9]{12})$/', (string)$t, $m) || !hash_equals(substr(rv_sign('who:' . $m[1]), 0, 12), $m[2])) return '';
+  $n = $m[1];
+  return strlen($n) === 12 && str_starts_with($n, '971') ? '+971 ' . substr($n, 3, 2) . ' ' . substr($n, 5, 3) . ' ' . substr($n, 8) : '+' . $n;   // +971 50 123 4567, as the checkout box shows it
+}
 function fx_wa_first($name) { $w = preg_split('/\s+/', trim((string)$name)); return $w[0] ?? ''; }
 function fx_wa_list($names) {
   $names = array_values(array_unique(array_filter($names)));

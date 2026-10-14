@@ -5,6 +5,9 @@
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error'=>'Method not allowed']); exit; }
+/* a fomaxo.com link from our WhatsApp (?w=personal code): checkout asks here for that customer's mobile, to fill it in by itself */
+$who = json_decode(file_get_contents('php://input'), true)['who'] ?? null;
+if (is_string($who)) { require __DIR__ . '/whatsapp-lib.php'; exit(json_encode(['phone' => fx_who_phone($who)])); }
 require __DIR__ . '/store-lib.php';   // $CATALOG, fomaxo_customer(), orders-lib.php
 
 /* ---- minimum order (AED) — keep in sync with the website ----

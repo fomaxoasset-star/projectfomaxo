@@ -39,6 +39,9 @@ var mq=window.matchMedia?matchMedia("(prefers-color-scheme: light)"):null;
 function apply(){var light=saved?saved==="light":!!(mq&&mq.matches);if(light)r.dataset.mode="light";else delete r.dataset.mode;var m=document.querySelector("meta[name=theme-color]");if(m)m.content=light?"#f6f0e4":"#050505"}
 apply();if(mq&&mq.addEventListener)mq.addEventListener("change",function(){try{saved=localStorage.getItem("fomaxo_mode")}catch(e){}if(!saved){apply();var t=document.getElementById("modeToggle");if(t)t.setAttribute("aria-checked",String(r.dataset.mode!=="light"))}})})();</script>
 <script>/* language: English or Arabic. First visit follows the device language (Arabic device → Arabic); the عربي / EN switch is remembered per visitor; ?lang=ar also works */
+/* a link from our WhatsApp carries the customer's personal code (?w=): kept on this device for checkout to fill in their mobile, and taken out of the address */
+(function(){var m=location.search.match(/[?&]w=(\d{10,15}-[a-f0-9]{12})(?=&|$)/);if(!m)return;try{localStorage.setItem("fomaxo_who",m[1])}catch(e){}
+if(history.replaceState)try{history.replaceState(history.state,"",location.pathname+location.search.replace(/([?&])w=[^&]*&?/,"$1").replace(/[?&]$/,"")+location.hash)}catch(e){}})();
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
@@ -4581,6 +4584,11 @@ function bindCheckout(q){
   const d0 = savedDetails();
   CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = CO_CAPS.includes(k) ? capWords(d0[k]) : k === 'phone' ? enDigits(d0[k]) : d0[k]; });
   CO_CAPS.forEach(k => form.elements[k] && form.elements[k].setAttribute('autocapitalize', 'words'));
+  // opened from a link in our WhatsApp (?w=): the mobile box fills in by itself with the number we wrote to, unless the customer already has one here
+  let who = ''; try { who = localStorage.getItem('fomaxo_who') || ''; } catch(e) {}
+  if (who && !form.elements.phone.value) fetch(S.checkout.cod, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({who})}).then(r => r.json()).then(j => {
+    const el = form.elements.phone; if (j.phone && el && !el.value) { el.value = j.phone; el.dispatchEvent(new Event('input', {bubbles: true})); }
+    if (!j.phone) try { localStorage.removeItem('fomaxo_who'); } catch(e) {} }).catch(() => {});
   if (form.elements.wa) form.elements.wa.checked = d0.wa === '1';   // WhatsApp offers: unticked until the customer ticks it
   const details = () => Object.assign(Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()])), {wa: form.elements.wa && form.elements.wa.checked ? '1' : ''});
   const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad');
