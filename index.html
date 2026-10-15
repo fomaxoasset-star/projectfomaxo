@@ -209,6 +209,18 @@ html[data-mode="light"] .best{color:#fff8ea}
 .card .quick{position:absolute;left:16px;right:16px;bottom:16px;z-index:2;opacity:0;transform:translateY(10px);transition:.6s var(--ease)}
 .card:hover .quick{opacity:1;transform:none}
 @media(hover:none){.card .quick{display:none}}
+/* phones: small round gold bag on the photo's bottom corner (Arabic: bottom left); tap adds the shown size */
+.card .media .qa{display:none}
+@media(max-width:600px){
+  .card .media .qa{position:absolute;right:10px;bottom:10px;z-index:3;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--metal,var(--gold));background-size:220% 100%;color:#0a0805;box-shadow:0 6px 16px -6px rgba(0,0,0,.7);cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .card .media .qa[hidden]{display:none}
+  .card .media .qa svg{width:20px;height:20px}
+  html[data-mode="light"] .card .media .qa{color:#fffaf1}
+  [dir="rtl"] .card .media .qa{right:auto;left:10px}
+  .card .media .qa:active{transform:scale(.9)}
+  .card .media .qa.ok{animation:qaPop .5s var(--ease)}
+}
+@keyframes qaPop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
 .card .row1{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
 .card h3{font-size:clamp(17px,1.35vw,20px)}
 .card .desc{font-size:14px;color:var(--muted);line-height:1.65;min-height:46px}
@@ -3383,7 +3395,7 @@ const slugOf = p => String(p.name || p.id).toLowerCase().replace(/[^a-z0-9]+/g, 
 const stockHTML = (id, opt, long) => { const n = stockLeft(id, opt); return n === null ? '' : n <= 0 ? '<span class="stk out">Out of Stock — Restocking Soon</span>' : `<span class="stk${long ? ' low' : ''}">Only ${n} left${long ? ' in stock, order soon' : ''}</span>`; };   // only sizes really running low come from stock.php (admin → Stocks); long = the product page box
 function applyStock(){
   $$('.card[data-id]').forEach(c => { const p = P[c.dataset.id]; if (!p) return; const sel = c.dataset.sel, el = $('[data-stk]', c);
-    if (el) el.innerHTML = stockHTML(p.id, sel); $$('[data-add],[data-buy]', c).forEach(b => b.disabled = stockLeft(p.id, sel) === 0); });
+    if (el) el.innerHTML = stockHTML(p.id, sel); $$('[data-add],[data-buy]', c).forEach(b => b.disabled = stockLeft(p.id, sel) === 0); const qa = $('[data-qa]', c); if (qa) qa.hidden = stockLeft(p.id, sel) === 0; });
   pdpStock && pdpStock();
   refreshOrderAgain();
 }
@@ -3407,6 +3419,7 @@ function card(p, opts={}){
       <img ${cardPic(img)} alt="FOMAXO ${esc(p.name)}" ${opts.top ? 'fetchpriority="high"' : 'loading="lazy"'}>
       ${alt && HOVER ? `<img class="alt" ${cardPic(alt)} alt="" loading="lazy">` : ''}
       <span class="quick"><span class="btn line sm block" style="background:rgba(5,5,5,.7)">View details</span></span>
+      ${p.kind === 'set' ? '' : `<span class="qa" data-add data-qa role="button" aria-label="Add to bag"${stockLeft(p.id, size) === 0 ? ' hidden' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 8h14l-1 13H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M12 11.5v6M9 14.5h6"/></svg></span>`}
     </a>
     <div class="row1"><h3><a href="#/product/${p.id}">${esc(p.name)}</a></h3><span data-price>${priceHTML(p, size)}</span></div>
     ${saleCD(lineOn(p) && p.sizes.some(s => onSale(p, s)))}
@@ -3419,6 +3432,8 @@ function card(p, opts={}){
 app.addEventListener('click', e => {
   const c = e.target.closest('.card[data-id]'); if (!c) return;   // personal care, gift and combo cards have no data-id
   const p = P[c.dataset.id];
+  const qa = e.target.closest('[data-qa]');   // the small bag on the phone photo adds the card's size, without opening the product
+  if (qa) { e.preventDefault(); if (addToCart(p.id, c.dataset.sel === 'set' ? 'set' : +c.dataset.sel)) { qa.classList.remove('ok'); void qa.offsetWidth; qa.classList.add('ok'); } return; }
   const chip = e.target.closest('[data-size]');
   if (chip){ const s = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; c.dataset.sel = s; $$('.chip', c).forEach(x => x.classList.toggle('on', x === chip)); $('[data-price]', c).innerHTML = priceHTML(p, s); const sd = $('[data-sold]', c); if (sd) { sd.dataset.k = soldKey(p, s); sd.innerHTML = soldHTML(p.id, sd.dataset.k); } const bd = $('[data-best]', c); if (bd) { bd.dataset.k = soldKey(p, s); bestSync(); }
     const im = $('.media img', c); const k = imgFor(p, s); if (im.getAttribute('src') !== IMG(k)) setPic(im, k);
