@@ -1165,7 +1165,8 @@
 "AED 20 OFF": "خصم AED 20",
 "your first order": "على طلبك الأول",
 "Get your coupon on WhatsApp": "احصل على الكوبون على واتساب",
-"Welcome offer": "عرض الترحيب"
+"Welcome offer": "عرض الترحيب",
+"New here? Get your AED 20 coupon on WhatsApp": "جديد معنا؟ احصل على كوبون خصم AED 20 على واتساب"
 };
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };
