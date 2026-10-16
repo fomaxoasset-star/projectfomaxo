@@ -1156,7 +1156,7 @@
 "Secure Payment": "دفع آمن",
 "Original FOMAXO": "FOMAXO أصلي",
 "Free delivery on both": "توصيل مجاني للاثنين",
-"AED 20 off orders AED 80+ · coupon on WhatsApp": "خصم AED 20 على طلبات AED 80+ · الكوبون على واتساب",
+"New here? AED 20 off orders AED 80+ on WhatsApp": "جديد معنا؟ خصم AED 20 على طلبات AED 80+ عبر واتساب",
 "Your WhatsApp number": "رقم واتساب الخاص بك",
 "Send": "إرسال",
 "Thank you. We will send your AED 20 coupon on WhatsApp.": "شكراً لك. سنرسل لك كوبون خصم AED 20 على واتساب.",
