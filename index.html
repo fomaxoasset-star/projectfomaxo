@@ -47,7 +47,7 @@ if(history.replaceState)try{history.replaceState(history.state,"",location.pathn
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
-r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=47";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=48";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("style");f.textContent="@font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/amiri-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/amiri-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:300;font-display:swap;src:url(/assets/fonts/tajawal-300-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/tajawal-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/tajawal-500-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/tajawal-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}";document.head.appendChild(f)}})();   /* Arabic fonts (Tajawal, Amiri; Arabic letters only) from our own server, same files Google Fonts sends */</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -1985,6 +1985,13 @@ html:not([data-mode="light"]) .pp-row .p-save{color:#5cc483;border-color:#5cc483
 .promo .pm-item img{width:96px;height:112px;object-fit:cover;border:1px solid var(--line-2)}
 .promo .pm-item b{font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;line-height:1.25}
 .promo .pm-item span{font-size:12px;color:var(--gold-hi)}.promo .pm-item s{color:var(--muted);font-size:10.5px}
+/* welcome box: a new visitor's WhatsApp number for the AED 20 coupon (welcomeMaybe) */
+.promo.pwel .pm-line{margin:12px 0 0}
+.pwel-row{display:flex;gap:8px;margin-top:18px}
+.pwel-row input{flex:1;min-width:0;padding:11px 12px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font:inherit;font-size:16px}
+.promo .pwel-row .btn{flex:none;width:auto;min-height:44px;padding:0 20px;background:#25D366;border-color:#25D366;color:#fff}
+.pwel-ok{margin:18px 0 0;font-size:14px;line-height:1.5;color:#5fc48c}
+html[data-mode="light"] .pwel-ok{color:#1e7a47}
 .promo .pm-no{display:inline-block;margin-top:12px;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;letter-spacing:.12em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 @media (max-width:600px){.promo-box{max-width:340px;padding:30px 18px 18px}.promo .pm-big{font-size:44px}.pm-cd{gap:6px}.pm-cd span{min-width:0;flex:1;font-size:21px}}
 /* popup sizes from admin → Offer → Preview: laptop sizes, then phone sizes under 600px (pictures in px, the rest in % of the standard) */
@@ -2942,7 +2949,7 @@ const onSale = (p, s) => { const v = p.prices[s], c = p.compareAt && p.compareAt
 const saleLeft = () => { const ms = SALE_END - Date.now(); if (ms <= 0) return ''; const t = Math.floor(ms / 1000), d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), x = t % 60, p = n => String(n).padStart(2, '0');
   return (d ? `${d}d ` : '') + `${p(h)}h ${p(m)}m ${p(x)}s`; };
 const saleCD = on => { const l = on ? saleLeft() : ''; return `<p class="sale-cd" data-cd${on ? ' data-on' : ''}${SALE_LINE && (l || (on && SALE_ALWAYS)) ? '' : ' hidden'}>${ICON.lasting}<span>${esc(SALE_WORDS.title || 'Limited time offer')}</span><span class="cd-t"${l ? '' : ' hidden'}>Ends in <b>${l}</b></span></p>`; };
-function saleTick(){ const l = saleLeft(); const ms = SALE_END - Date.now(), pm = document.querySelector('.promo');
+function saleTick(){ const l = saleLeft(); const ms = SALE_END - Date.now(), pm = document.querySelector('.promo:not(.pwel)');
   if (pm && !pm.classList.contains('al')) { if (!l) pm.remove(); else { const t = Math.floor(ms / 1000), v = {Days: Math.floor(t / 86400), Hours: Math.floor(t % 86400 / 3600), Min: Math.floor(t % 3600 / 60), Sec: t % 60}; pm.querySelectorAll('[data-pm]').forEach(b => b.textContent = String(v[b.dataset.pm]).padStart(2, '0')); } }
   document.querySelectorAll('[data-cd]').forEach(e => { const show = SALE_LINE && (!!l || SALE_ALWAYS) && e.hasAttribute('data-on'); e.hidden = !show; e.querySelector('.cd-t').hidden = !l; if (l) e.querySelector('b').textContent = l; }); }
 setInterval(saleTick, 1000);
@@ -2980,6 +2987,30 @@ function promoMaybe(){
       ${al ? '' : `<div class="pm-cd">${u}</div>`}<p class="pm-hurry">HURRY UP!!!</p>
       <a class="btn" href="#/fragrances" data-pm-close>${esc(SALE_WORDS.btn || 'Shop the offer')}</a><button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
   }, 2500);
+}
+/* welcome box: once per visitor, after 20 seconds or half a page, never with the offer popup, never on checkout or after an order;
+   the number goes to Admin → Analytics → Left at checkout like the bag box (same AED 20 coupon, sent from there on WhatsApp) */
+let welT = 0, welOn = false;
+function welcomeMaybe(){
+  try { if (localStorage.getItem('fomaxo_wel') || bagWaKnown() || localStorage.getItem('fomaxo_last')) return; } catch(e) { return; }
+  if (welOn) return; welOn = true;
+  const go = () => { clearTimeout(welT); removeEventListener('scroll', half);
+    if (/^#\/(checkout|thank-you|order-confirmed|review)/.test(location.hash) || document.querySelector('.promo') || document.querySelector('.drawer.open,#cart.open')) { welOn = false; welT = setTimeout(welcomeMaybe, 20000); return; }
+    try { if (sessionStorage.getItem('fomaxo_promo')) return; localStorage.setItem('fomaxo_wel', '1'); sessionStorage.setItem('fomaxo_promo', '1'); } catch(e) { return; }
+    promoOpen(`<div class="promo pwel" role="dialog" aria-modal="true" aria-label="Welcome offer"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
+      <span class="pm-eye">New here?</span><b class="pm-big">AED 20 OFF</b><p class="pm-sub">your first order</p>
+      <p class="pm-line">Get your coupon on WhatsApp</p>
+      <form class="pwel-row" id="welWa" novalidate><input id="welWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="Your WhatsApp number" aria-label="Your WhatsApp number"><button class="btn" type="submit">Send</button></form>
+      <button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
+    const f = $('#welWa'); if (!f) return;
+    f.onsubmit = e => { e.preventDefault(); const v = $('#welWaIn').value.trim();
+      if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
+      try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
+      FXT.lead('details', {phone: v}, cart, subtotal(cart) || 0, true); renderCart();
+      f.outerHTML = '<p class="pwel-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; const n = $('.pwel .pm-no'); if (n) n.textContent = 'Continue shopping'; };
+  };
+  const half = () => { const h = document.documentElement.scrollHeight - innerHeight; if (h > 400 && scrollY / h >= .5) go(); };
+  welT = setTimeout(go, 20000); addEventListener('scroll', half, {passive: true});
 }
 function promoOpen(html){
     document.body.insertAdjacentHTML('beforeend', html);
@@ -5842,7 +5873,7 @@ async function loadProducts(){
   footShop(); save();
   if (!/^#\/checkout/.test(location.hash)) { route(); applyStock(); backToSpot(); }
 }
-renderCart(); route(); backToSpot(); bindCommon(); loadRates(); loadStock(); loadProducts(); promoMaybe();
+renderCart(); route(); backToSpot(); bindCommon(); loadRates(); loadStock(); loadProducts(); promoMaybe(); welcomeMaybe();
 let lpAt = Date.now(); const lpAgain = () => { if (document.hidden || Date.now() - lpAt < 3000) return; lpAt = Date.now(); loadProducts(); };   // back on the tab (e.g. after saving on admin): fetch the latest prices and offers again
 document.addEventListener('visibilitychange', lpAgain); addEventListener('focus', lpAgain);
 })();
