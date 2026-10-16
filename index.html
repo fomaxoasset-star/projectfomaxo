@@ -3012,7 +3012,7 @@ function welcomeMaybe(){
       if (!nm) { toast('Please enter your name'); return; }
       if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
       try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
-      FXT.lead('details', {name: nm, phone: v}, cart, subtotal(cart) || 0, true); renderCart();
+      FXT.lead('welcome', {name: nm, phone: v}, cart, subtotal(cart) || null, true); renderCart();
       f.outerHTML = '<p class="pwel-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; const n = $('.pwel .pm-no'); if (n) n.textContent = 'Continue shopping'; };
   };
   const half = () => { const h = document.documentElement.scrollHeight - innerHeight; if (h > 400 && scrollY / h >= .5) go(); };

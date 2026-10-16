@@ -52,7 +52,7 @@ try {
     exit;
   }
   if ($ev === 'lead') {   // checkout details, kept only once the customer typed a name or mobile
-    $stages = ['details' => 1, 'payment' => 2, 'card' => 3];
+    $stages = ['welcome' => 0, 'details' => 1, 'payment' => 2, 'card' => 3];   // welcome = the welcome box (name + WhatsApp for the AED 20 coupon)
     $stage = isset($stages[$d['st'] ?? '']) ? $d['st'] : 'details';
     $name = $t('name', 80); $phone = $t('phone', 25);
     if ($name === '' && $phone === '') exit;
