@@ -2553,9 +2553,9 @@ if (isset($_GET['analytics'])) {
     exit;
   }
   $isDay = fn($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$v) && strtotime($v);
-  $r = (string)($_GET['r'] ?? '7');
+  $r = (string)($_GET['r'] ?? 'today');   // Analytics opens on Today
   if ($r === 'custom' && $isDay($_GET['d1'] ?? '') && $isDay($_GET['d2'] ?? '')) { $d1 = min($_GET['d1'], $_GET['d2']); $d2 = max($_GET['d1'], $_GET['d2']); }
-  else { if (!in_array($r, ['today', '7', '30'], true)) $r = '7'; $d2 = date('Y-m-d'); $d1 = date('Y-m-d', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')); }
+  else { if (!in_array($r, ['today', '7', '30'], true)) $r = 'today'; $d2 = date('Y-m-d'); $d1 = date('Y-m-d', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')); }
   $span = [$d1 . ' 00:00:00', $d2 . ' 23:59:59'];
   $nDays = (int)round((strtotime($d2) - strtotime($d1)) / 86400) + 1;
   $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
@@ -2782,7 +2782,7 @@ if (isset($_GET['analytics'])) {
     $gr = ['custom' => $d1 === $d2 ? date('j M', strtotime($d1)) : (substr($d1, 0, 7) === substr($d2, 0, 7) ? date('j', strtotime($d1)) : date('j M', strtotime($d1))) . '–' . date('j M', strtotime($d2))] + $gr;
     $gFrom['custom'] = $span[0]; $gTo['custom'] = $span[1];
   }
-  $gOn = isset($gr[$r]) ? $r : '7';
+  $gOn = isset($gr[$r]) ? $r : 'today';
   /* countries and emirates follow the dates at the top of the page, like every other section (no separate period buttons) */
   $gr = [$gOn => $gr[$gOn]]; $gFrom[$gOn] = $span[0]; $gTo[$gOn] = $span[1];
   $gSince = fomaxo_setting($pdo, 'geo_since');
@@ -2885,7 +2885,7 @@ if (isset($_GET['analytics'])) {
                : '<p class="muted empty">No repeat orders in these dates.</p>')
     . '<p class="muted small gnote">Orders in these dates from a mobile that had ordered before.</p></section>';
   page('Analytics', '<div class="db an">'
-    . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== '7' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== '7' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . '<div class="seg">'
+    . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . '<div class="seg">'
     . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k] + $cvq)) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
     . '<input type="hidden" name="r" value="custom"><input type="date" name="d1" value="' . h($d1) . '" aria-label="From"><input type="date" name="d2" value="' . h($d2) . '" aria-label="To"><button class="btn sm' . ($r === 'custom' ? '' : ' line') . '">Show</button></form></div>'
     . '<div class="tiles at">'
