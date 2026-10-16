@@ -1160,6 +1160,7 @@
 "Your WhatsApp number": "رقم واتساب الخاص بك",
 "Your name": "اسمك",
 "NAME": "الاسم",
+"GET AED 20": "خصم AED 20",
 "WHATSAPP": "واتساب",
 "Please enter your name": "يرجى إدخال اسمك",
 "Send": "إرسال",

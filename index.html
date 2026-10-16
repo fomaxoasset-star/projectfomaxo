@@ -2330,6 +2330,7 @@ html[lang=ar] .co-nudge .qn-line,html[lang=ar] #cart .dr-foot .qd-nudge>span{whi
 html[lang=ar] h1,html[lang=ar] h2,html[lang=ar] h3,html[lang=ar] h4{line-height:1.3}
 html[lang=ar] .amt,html[lang=ar] .mode-switch,html[lang=ar] .acro{direction:ltr;unicode-bidi:isolate}
 html[lang=ar] input[type=tel],html[lang=ar] input[type=email]{direction:ltr;text-align:right}
+html[lang=ar] .pwel-row input{text-align:center}
 html[lang=ar] .promo :is(.pm-line,.pm-name,.pm-eye,.pm-sub){unicode-bidi:plaintext}   /* words typed in English keep their full stop at the end */
 html[lang=ar] .brand{direction:ltr}   /* the logo reads the same in Arabic: emblem, FOMAXO, then ™ right after it */
 html[lang=ar] .rw-s-fg{left:auto;right:0}   /* rating stars: the gold fill sits exactly on the stars and fills right to left in Arabic */
@@ -3001,7 +3002,7 @@ function welcomeMaybe(){
     if (/^#\/(checkout|thank-you|order-confirmed|review)/.test(location.hash) || document.querySelector('.promo') || document.querySelector('.drawer.open,#cart.open')) { welOn = false; welT = setTimeout(welcomeMaybe, 20000); return; }
     try { if (sessionStorage.getItem('fomaxo_promo')) return; localStorage.setItem('fomaxo_wel', '1'); sessionStorage.setItem('fomaxo_promo', '1'); } catch(e) { return; }
     promoOpen(`<div class="promo pwel" role="dialog" aria-modal="true" aria-label="Welcome offer"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
-      <span class="pm-eye">New here?</span><b class="pm-big">AED 20 OFF</b><p class="pm-sub">your first order</p>
+      <span class="pm-eye">New here?</span><b class="pm-big">GET AED 20</b><p class="pm-sub">your first order</p>
       <p class="pm-line">Get your coupon on WhatsApp</p>
       <form class="pwel-row" id="welWa" novalidate><input id="welName" type="text" autocomplete="name" maxlength="60" placeholder="NAME" aria-label="Your name"><input id="welWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WHATSAPP" aria-label="Your WhatsApp number"><button class="btn" type="submit">Send</button></form>
       <button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
