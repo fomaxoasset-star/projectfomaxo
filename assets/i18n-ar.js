@@ -1158,9 +1158,19 @@
 "Free delivery on both": "توصيل مجاني للاثنين",
 "New here? AED 20 off orders · Coupon on WhatsApp": "جديد معنا؟ خصم AED 20 على طلبك · الكوبون على واتساب",
 "Your WhatsApp number": "رقم واتساب الخاص بك",
+"Your name": "اسمك",
+"NAME": "الاسم",
+"GET AED 20": "خصم AED 20",
+"WHATSAPP": "واتساب",
+"Please enter your name": "يرجى إدخال اسمك",
 "Send": "إرسال",
 "Thank you. We will send your AED 20 coupon on WhatsApp.": "شكراً لك. سنرسل لك كوبون خصم AED 20 على واتساب.",
-"Please enter a valid WhatsApp number": "يرجى إدخال رقم واتساب صحيح"
+"Please enter a valid WhatsApp number": "يرجى إدخال رقم واتساب صحيح",
+"New here?": "جديد معنا؟",
+"AED 20 OFF": "خصم AED 20",
+"your first order": "على طلبك الأول",
+"Get your coupon on WhatsApp": "احصل على الكوبون على واتساب",
+"Welcome offer": "عرض الترحيب"
 };
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };
