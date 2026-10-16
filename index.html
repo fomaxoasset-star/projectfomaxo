@@ -3003,7 +3003,7 @@ function welcomeMaybe(){
     promoOpen(`<div class="promo pwel" role="dialog" aria-modal="true" aria-label="Welcome offer"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
       <span class="pm-eye">New here?</span><b class="pm-big">AED 20 OFF</b><p class="pm-sub">your first order</p>
       <p class="pm-line">Get your coupon on WhatsApp</p>
-      <form class="pwel-row" id="welWa" novalidate><input id="welName" type="text" autocomplete="name" maxlength="60" placeholder="Your name" aria-label="Your name"><input id="welWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="Your WhatsApp number" aria-label="Your WhatsApp number"><button class="btn" type="submit">Send</button></form>
+      <form class="pwel-row" id="welWa" novalidate><input id="welName" type="text" autocomplete="name" maxlength="60" placeholder="NAME" aria-label="Your name"><input id="welWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WHATSAPP" aria-label="Your WhatsApp number"><button class="btn" type="submit">Send</button></form>
       <button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
     const f = $('#welWa'); if (!f) return;
     f.onsubmit = e => { e.preventDefault(); const v = $('#welWaIn').value.trim();
