@@ -4986,6 +4986,7 @@ async function rwShrink(f){
     return (await new Promise(ok => c.toBlob(ok, 'image/jpeg', .86))) || f;
   } catch(e) { return f; }
 }
+let rwLast = null;   // the details of the last review posted from an order link, for that order's next item
 function rwBindForm(form, p, link, onDone){
   let rating = 0; const files = [];
   const ta = form.elements.text;
@@ -5033,6 +5034,9 @@ function rwBindForm(form, p, link, onDone){
   sug.onmousedown = e => e.preventDefault();
   sug.onclick = e => { const b = e.target.closest('button'); if (!b) return; ci.value = b.textContent; ci.dispatchEvent(new Event('change')); sugHide(); };
   co.addEventListener('change', () => { if (document.activeElement === ci) sugShow(); });
+  /* order review page: name, anonymous, State / City and Nation from the review just posted fill in the next item's form (all can still be changed) */
+  if (link && rwLast && rwLast.t === link.t) { nm.value = rwLast.name; an.checked = rwLast.anon; ci.value = rwLast.city; na.value = rwLast.nation; co.value = rwLast.country;
+    [ci, na].forEach(f => f.dispatchEvent(new Event('change'))); upd(); }
   const fi = $('input[type=file]', form), prev = $('.rw-ph-prev', form), add = $('.rw-add', form);
   const phN = $('.rw-ph-n', form);
   const drawPrev = () => {
@@ -5068,7 +5072,7 @@ function rwBindForm(form, p, link, onDone){
     for (const x of files) fd.append('photos[]', await rwShrink(x.f), 'photo.jpg');
     let r = {};
     try { r = await (await fetch(RW_API, {method: 'POST', body: fd})).json(); } catch(x) {}
-    if (r.ok) { if (link) rwMarkDone(link.t, p.id); onDone(r); return; }
+    if (r.ok) { if (link) { rwMarkDone(link.t, p.id); rwLast = {t: link.t, name: nm.value, anon: an.checked, city: ci.value, nation: na.value, country: co.value}; } onDone(r); return; }
     btn.disabled = false; btn.textContent = 'Post review';
     err.textContent = r.error || 'We could not post your review. Please check your connection and try again.'; err.hidden = false;
   };
