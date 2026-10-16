@@ -2839,7 +2839,7 @@ if (isset($_GET['analytics'])) {
     $left .= '<li class="lx"><details><summary>'
            . '<button type="button" class="lxx" data-sid="' . h(implode(',', $l['sids'])) . '" aria-label="Remove from this list" title="Remove from this list">×</button>'
            . '<span class="ldt">' . h(date('d M, H:i', $when)) . '</span>'
-           . '<span class="ln"><b><span class="lnm">' . hx($l['name'] ?: 'No name') . '</span>' . ($l['tries'] > 1 ? '<small class="ltr" title="Came to checkout ' . $l['tries'] . ' times">×' . $l['tries'] . '<span class="ltw"> tries</span></small>' : '') . '</b><span class="lsub muted">' . h(date('d M, H:i', $when)) . ($l['emirate'] !== '' ? ' · ' . h($l['emirate']) : '') . '</span></span>'
+           . '<span class="ln"><b><span class="lnm">' . hx($l['name'] ?: 'No name') . '</span>' . ($l['tries'] > 1 ? '<small class="ltr" title="Came to checkout ' . $l['tries'] . ' times">×' . $l['tries'] . '<span class="ltw"> tries</span></small>' : '') . '</b><span class="lsub muted">' . h(date('d M, H:i', $when)) . ($l['emirate'] !== '' ? ' · ' . h($l['emirate']) : '') . ($l['stage'] === 'welcome' ? ' · <span class="stage-welcome">Welcome box</span>' : '') . '</span></span>'
            . '<span class="lem" title="' . h(trim(($l['address'] ?? '') . (($l['address'] ?? '') !== '' && $l['emirate'] !== '' ? ', ' : '') . $l['emirate'])) . '">' . (($adr = trim(($l['address'] ?? '') . (($l['address'] ?? '') !== '' && $l['emirate'] !== '' ? ', ' : '') . $l['emirate'])) !== '' ? h($adr) : $na) . '</span>'
            . '<span class="lv">' . ($l['total'] !== null ? money($l['total']) : $na) . '</span>'
            . '<span class="lst">' . $pill . '</span><span class="lol">Not ordered</span>'
