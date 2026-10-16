@@ -1155,7 +1155,12 @@
 "Concentrated fragrance oils": "زيوت عطرية مركّزة",
 "Secure Payment": "دفع آمن",
 "Original FOMAXO": "FOMAXO أصلي",
-"Free delivery on both": "توصيل مجاني للاثنين"
+"Free delivery on both": "توصيل مجاني للاثنين",
+"Get 10% off · we send your coupon on WhatsApp": "خصم 10% · نرسل لك الكوبون على واتساب",
+"Your WhatsApp number": "رقم واتساب الخاص بك",
+"Send": "إرسال",
+"Thank you. We will send your 10% coupon on WhatsApp.": "شكراً لك. سنرسل لك كوبون خصم 10% على واتساب.",
+"Please enter a valid WhatsApp number": "يرجى إدخال رقم واتساب صحيح"
 };
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };
