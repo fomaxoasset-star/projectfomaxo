@@ -3195,7 +3195,7 @@ const bagWaKnown = () => { try { return localStorage.getItem('fomaxo_bagwa') || 
 function bagWaHTML(){
   try { if (localStorage.getItem('fomaxo_bagwa')) return '<p class="bag-wa-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; } catch(e) {}
   if (bagWaKnown()) return '';
-  return `<form class="bag-wa" id="bagWa" novalidate><label for="bagWaIn">New here? AED 20 off orders AED 80+ on WhatsApp</label><div class="bag-wa-row"><input id="bagWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="Your WhatsApp number" aria-label="Your WhatsApp number"><button class="btn sm" type="submit">Send</button></div></form>`;
+  return `<form class="bag-wa" id="bagWa" novalidate><label for="bagWaIn">New here? AED 20 off orders · Coupon on WhatsApp</label><div class="bag-wa-row"><input id="bagWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="Your WhatsApp number" aria-label="Your WhatsApp number"><button class="btn sm" type="submit">Send</button></div></form>`;
 }
 function bagWaWire(t){
   const f = $('#bagWa'); if (!f) return;
