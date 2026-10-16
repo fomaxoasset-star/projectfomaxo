@@ -701,7 +701,7 @@ function fx_wa_box() {
     . (function_exists('fx_free_pick_js') ? fx_free_pick_js() : '')
     . '<script>(function(){var d=document.getElementById("fxWa");if(!d)return;var q=function(s){return d.querySelector(s)},kind=q(".fxwa-kind"),val=q(".fxwa-val input"),min=q(".fxwa-min input"),end=q(".fxwa-end input[type=date]"),text=q(".fxwa-text"),err=q(".fxwa-err"),send=q("[data-fxwa-send]"),btn=null,'
     . 'free=function(){return q(".fxwa-free [data-ffind]")},freeV=function(){return q(".fxwa-free input[type=hidden]")},'
-    . 'PRE={g:"THANKS-",rf:"REFILL-",lt:"COMEBACK-",rv:"GOODWILL-"},K0={g:"",rf:"pct",lt:"",rv:"pct"};'
+    . 'PRE={g:"THANKS-",rf:"REFILL-",lt:"COMEBACK-",rv:"GOODWILL-"},K0={g:"",rf:"pct",lt:"aed",rv:"pct"};'
     /* the coupon lines that go between the ready message and its end, as on fomaxo.in (Arabic for an Arabic name) */
     . 'function isAr(){return !!btn.dataset.ar!==(d.dataset.alt==="1")}'
     . 'function lines(b,c){var ar=isAr(),box=b.dataset.wabox,n2="\n\n",site=ar?"https://fomaxo.com/?lang=ar":"https://fomaxo.com",how=ar?"اكتب الرمز عند الدفع على موقعنا:\n"+site:"Type the code at checkout on our website:\n"+site;'
@@ -719,7 +719,7 @@ function fx_wa_box() {
     . 'window.fxSent=function(b,day){b.classList.add("sent");b.lastChild.textContent="Sent "+day};'
     . 'document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest("[data-wabox]");if(!b)return;e.preventDefault();e.stopPropagation();btn=b;'
     . 'var noc=!!b.dataset.nocoupon;d.classList.toggle("noc",noc);d.dataset.alt="0";d.classList.toggle("lng",b.dataset.head2!==undefined);q(".fxwa-who").textContent=b.dataset.who||"";kind.value=noc?"":(b.dataset.k0!==undefined?b.dataset.k0:K0[b.dataset.wabox]||"");'
-    . 'val.value="";val.placeholder=b.dataset.pct||"10";min.value=b.dataset.min||"";end.min=new Date().toISOString().slice(0,10);end.value=b.dataset.wabox==="lt"?new Date(Date.now()+7*864e5).toISOString().slice(0,10):"";end.dispatchEvent(new Event("input"));if(free()){free().value="";freeV().value=""}err.hidden=true;send.disabled=false;'
+    . 'val.value="";val.placeholder=b.dataset.pct||"10";min.value=b.dataset.min||(b.dataset.wabox==="lt"?"80":"");end.min=new Date().toISOString().slice(0,10);end.value=b.dataset.wabox==="lt"?new Date(Date.now()+2*864e5).toISOString().slice(0,10):"";end.dispatchEvent(new Event("input"));if(free()){free().value="";freeV().value=""}err.hidden=true;send.disabled=false;'
     . 'q(".fxwa-note").textContent=noc?"":"A coupon makes a new "+PRE[b.dataset.wabox]+" code just for this customer: one use, only with their mobile number. It is made when you tap Open WhatsApp.";build();d.showModal()},true);'
     . 'kind.addEventListener("change",function(){val.placeholder=kind.value==="aed"?"20":(btn.dataset.pct||"10");build()});val.addEventListener("input",build);min.addEventListener("input",build);q(".fxwa-end").addEventListener("input",build);d.addEventListener("change",function(e){if(e.target.matches("[data-ffind]"))build()});'
     . 'q("[data-fxwa-close]").addEventListener("click",function(){d.close()});'

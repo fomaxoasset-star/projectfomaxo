@@ -1156,10 +1156,10 @@
 "Secure Payment": "دفع آمن",
 "Original FOMAXO": "FOMAXO أصلي",
 "Free delivery on both": "توصيل مجاني للاثنين",
-"Get 10% off · we send your coupon on WhatsApp": "خصم 10% · نرسل لك الكوبون على واتساب",
+"AED 20 off orders AED 80+ · coupon on WhatsApp": "خصم AED 20 على طلبات AED 80+ · الكوبون على واتساب",
 "Your WhatsApp number": "رقم واتساب الخاص بك",
 "Send": "إرسال",
-"Thank you. We will send your 10% coupon on WhatsApp.": "شكراً لك. سنرسل لك كوبون خصم 10% على واتساب.",
+"Thank you. We will send your AED 20 coupon on WhatsApp.": "شكراً لك. سنرسل لك كوبون خصم AED 20 على واتساب.",
 "Please enter a valid WhatsApp number": "يرجى إدخال رقم واتساب صحيح"
 };
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
