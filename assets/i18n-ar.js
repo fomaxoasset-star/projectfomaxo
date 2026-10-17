@@ -1155,6 +1155,7 @@
 "Concentrated fragrance oils": "زيوت عطرية مركّزة",
 "Secure Payment": "دفع آمن",
 "Original FOMAXO": "FOMAXO أصلي",
+"Delivered in 1–3 days": "التوصيل خلال 1–3 أيام",
 "Free delivery on both": "توصيل مجاني للاثنين",
 "New here? AED 20 off orders · Coupon on WhatsApp": "جديد معنا؟ خصم AED 20 على طلبك · الكوبون على واتساب",
 "Your WhatsApp number": "رقم واتساب الخاص بك",
