@@ -3853,7 +3853,8 @@ function bindProduct(p){
   $$('#sizes button').forEach(b => b.onclick = () => {
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
     $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = pdpPrice(p, size);
-    setImg(imgFor(p, size));
+    const k0 = $('#stageImg').getAttribute('src'); setImg(imgFor(p, size));
+    if (k0 !== $('#stageImg').getAttribute('src') && matchMedia('(max-width:960px)').matches) { const r = $('#stage').getBoundingClientRect(), nb = $('#nav').getBoundingClientRect().bottom; if (r.bottom < nb + r.height * .4) scrollTo({top: scrollY + r.top - nb - 12, behavior: 'smooth'}); }   // phone: the photo is above the sizes, out of sight; bring the new size's photo into view
     qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } const sb = $('.gallery > [data-best]'); if (sb) { sb.dataset.k = soldKey(p, size); bestSync(); } fitPdp();
   });
   const stage = $('#stage');
