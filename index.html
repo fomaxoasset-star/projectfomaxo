@@ -2992,7 +2992,7 @@ function promoMaybe(){
       <a class="btn" href="#/fragrances" data-pm-close>${esc(SALE_WORDS.btn || 'Shop the offer')}</a><button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
   }, 2500);
 }
-/* welcome box: once per visitor, after 20 seconds or half a page, never with the offer popup, never on checkout or after an order;
+/* welcome box: once per visitor, after 5 seconds or half a page, never with the offer popup, never on checkout or after an order;
    the number goes to Admin → Analytics → Left at checkout like the bag box (same AED 20 coupon, sent from there on WhatsApp) */
 let welT = 0, welOn = false;
 /* a new visitor: no welcome box yet, no number known, no order; they see only the welcome box (the offer popups wait for a later visit) */
@@ -3018,7 +3018,7 @@ function welcomeMaybe(){
       f.outerHTML = '<p class="pwel-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; const n = $('.pwel .pm-no'); if (n) n.textContent = 'Continue shopping'; };
   };
   const half = () => { const h = document.documentElement.scrollHeight - innerHeight; if (h > 400 && scrollY / h >= .5) go(); };
-  welT = setTimeout(go, 20000); addEventListener('scroll', half, {passive: true});
+  welT = setTimeout(go, 5000); addEventListener('scroll', half, {passive: true});
 }
 function promoOpen(html){
     document.body.insertAdjacentHTML('beforeend', html);
