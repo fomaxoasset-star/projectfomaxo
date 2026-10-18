@@ -4945,7 +4945,8 @@ const rwVoter = () => { let v = rwGet('fomaxo_voter'); if (!/^[a-z0-9]{12,64}$/.
 const rwShort = v => v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ').slice(0, 60);
 /* star line under the product name: shown straight away (card summary), always visible; no reviews yet = faint stars */
 /* product page: "Smells like" one note from the top, heart and base, so a first-time visitor knows the scent in one line */
-const smellHTML = p => { const n = p.notes; if (!n || n.key) return ''; const w = [n.top, n.heart, n.base].map(x => String(x || '').split('·')[0].trim()).filter(Boolean); return w.length ? `<p class="pd-smell"><span>Smells like</span>${w.map(esc).join(' · ')}</p>` : ''; };
+const SMELL_PICK = {gold: ['Bergamot', 'Agarwood', 'Musk']};   // AJAY's choice of notes for a product's Smells like line (instead of the first top/heart/base note)
+const smellHTML = p => { const n = p.notes; if (!n || n.key) return ''; const w = SMELL_PICK[p.id] || [n.top, n.heart, n.base].map(x => String(x || '').split('·')[0].trim()).filter(Boolean); return w.length ? `<p class="pd-smell"><span>Smells like</span>${w.map(esc).join(' · ')}</p>` : ''; };
 /* the 10ml as a cheap first try (only when the product has a 10ml with a price and another size is picked) */
 const tryHTML = (p, size) => p.kind !== 'set' && p.sizes.includes(10) && hasPrice(p.prices[10]) && size !== 10 ? `New to FOMAXO? <b>Try the 10ml first · ${moneyHTML(p.prices[10])}</b>` : '';
 /* best real review under the price: 5 stars with words, verified first, then most helpful, then newest */
