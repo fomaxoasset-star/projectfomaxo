@@ -1161,7 +1161,7 @@
 "Free delivery on both": "توصيل مجاني للاثنين",
 "New here? AED 20 off orders · Coupon on WhatsApp": "جديد معنا؟ خصم AED 20 على طلبك · الكوبون على واتساب",
 "Your WhatsApp number": "رقم واتساب الخاص بك",
-"WhatsApp number": "رقم واتساب",
+"WhatsApp Number": "رقم واتساب",
 "Your name": "اسمك",
 "NAME": "الاسم",
 "GET AED 20": "خصم AED 20",
