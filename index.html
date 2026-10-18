@@ -49,7 +49,7 @@ if(history.replaceState)try{history.replaceState(history.state,"",location.pathn
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
-r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=50";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=51";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("style");f.textContent="@font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/amiri-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/amiri-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:300;font-display:swap;src:url(/assets/fonts/tajawal-300-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/tajawal-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/tajawal-500-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/tajawal-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}";document.head.appendChild(f)}})();   /* Arabic fonts (Tajawal, Amiri; Arabic letters only) from our own server, same files Google Fonts sends */</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -1463,6 +1463,17 @@ html[data-mode="light"].cur-gold.cur-link .cur-ring{border-color:#f0d3a0;backgro
 .dr-foot .bag-wa .btn{flex:none;min-height:40px;padding:0 18px;background:#25D366;border-color:#25D366;color:#fff}
 .dr-foot .bag-wa-ok{font-size:12px;color:#5fc48c;text-align:center;margin:0}
 html[data-mode="light"] .dr-foot .bag-wa-ok{color:#1e7a47}
+/* product page WhatsApp coupon box, above Add to bag */
+.pd-wa{display:flex;flex-direction:column;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--gold)}
+.pd-wa label{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 10px;font-size:13px;letter-spacing:.02em;color:var(--ivory);text-align:center;line-height:1.3}
+.pd-wa label b{color:var(--gold);font-weight:600}
+.pd-wa-tag{padding:2px 8px;background:var(--gold);color:var(--black);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.pd-wa-row{display:flex;gap:8px}
+.pd-wa input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font:inherit;font-size:16px}
+.pd-wa .btn{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:42px;padding:0 18px;background:#25D366;border-color:#25D366;color:#fff}
+.pd-wa .btn svg{width:16px;height:16px}
+.pd-wa-ok{font-size:13px;color:#5fc48c;text-align:center;margin:0}
+html[data-mode="light"] .pd-wa-ok{color:#1e7a47}
 .dr-foot .qd-nudge{display:flex;align-items:center;gap:14px;margin:0 0 4px;padding:14px 18px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:14px;line-height:1.45;letter-spacing:.01em;color:var(--ivory)}
 .dr-foot .qd-nudge svg{flex:none;width:22px;height:22px;color:var(--gold)}
 .dr-foot .qd-nudge b,.qd-empty b{color:var(--gold);font-weight:600}
@@ -3019,6 +3030,7 @@ function welcomeMaybe(){
       if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
       try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
       FXT.lead('details', {name: nm, phone: v}, cart, subtotal(cart) || 0, true); renderCart();
+      const pw = $('#pdWa'); if (pw) pw.outerHTML = PDWA_OK;
       f.outerHTML = '<p class="pwel-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; const n = $('.pwel .pm-no'); if (n) n.textContent = 'Continue shopping'; };
   };
   const half = () => { const h = document.documentElement.scrollHeight - innerHeight; if (h > 400 && scrollY / h >= .5) go(); };
@@ -3246,6 +3258,22 @@ function bagWaWire(t){
     if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
     try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
     FXT.lead('details', {phone: v}, cart, t, true); renderCart(); };
+}
+/* product page: the same AED 20 WhatsApp coupon as the bag box and welcome box, right above Add to bag (AJAY, 2026-10-18).
+   Real offer: the coupon is sent from admin Left at checkout (AED 20 off, min AED 80, ends in 2 days). Hidden once we know their number. */
+const PDWA_OK = '<p class="pd-wa-ok" id="pdWa">Thank you. We will send your AED 20 coupon on WhatsApp.</p>';
+function pdWaHTML(){
+  try { if (localStorage.getItem('fomaxo_bagwa') || localStorage.getItem('fomaxo_last')) return ''; } catch(e) {}   // shown until they give their WhatsApp or order once
+  if (bagWaKnown()) return '';
+  return `<form class="pd-wa" id="pdWa" novalidate><label for="pdWaIn"><span class="pd-wa-tag">Limited offer</span><span><b>New here? AED 20 off</b> · Coupon on WhatsApp</span></label><div class="pd-wa-row"><input id="pdWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="Your WhatsApp number" aria-label="Your WhatsApp number"><button class="btn sm" type="submit">${CO_ICON.whatsapp}<span>Send</span></button></div></form>`;
+}
+function pdWaWire(){
+  const f = $('#pdWa'); if (!f || f.tagName !== 'FORM') return;
+  f.onsubmit = e => { e.preventDefault(); const v = $('#pdWaIn').value.trim();
+    if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
+    try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
+    FXT.lead('details', {phone: v}, cart, subtotal(cart) || 0, true); renderCart();
+    f.outerHTML = PDWA_OK; if (typeof fitPdp === 'function') fitPdp(); };
 }
 function renderCart(){
   const n = cart.reduce((a, l) => a + l.qty, 0);
@@ -3817,6 +3845,7 @@ function product(id, q){
         ${isSet ? `<div id="picker"><div class="opt-label"><span>Choose your fragrances</span><span id="pickCount">0 / ${size}</span></div>
           <div class="picks">${pickable(p).map(f => `<button type="button" class="pick" data-pick="${f.id}" aria-pressed="false"><img src="${SM(f.images[0])}" alt="" loading="lazy"><span>${esc(f.name)}</span><i>✓</i></button>`).join('')}</div>
           <p class="small" id="pickHint" style="margin-top:12px">Select ${size} fragrances to continue.</p></div>` : ''}
+        ${pdWaHTML()}
         <div class="qtyrow">
           <div class="qty"><button id="qm" aria-label="Decrease quantity">−</button><input id="qty" value="1" inputmode="numeric" aria-label="Quantity"><button id="qp" aria-label="Increase quantity">+</button><small class="qcap" id="qcap" aria-live="polite"></small></div>
           <button class="btn line" id="addBtn">Add to bag</button>
@@ -3919,6 +3948,7 @@ function bindProduct(p){
   const ready = () => { if (!isSet || picks.length === size) return true; $('#picker').scrollIntoView({behavior:'smooth', block:'center'}); $('#pickHint').classList.add('shake'); setTimeout(() => $('#pickHint').classList.remove('shake'), 600); return false; };
   $$('.pick').forEach(b => b.onclick = () => { const id = b.dataset.pick; if (picks.includes(id)) picks = picks.filter(x => x !== id); else if (picks.length < size) picks.push(id); updPicks(); });
   updPicks();
+  pdWaWire();
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
