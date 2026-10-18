@@ -26,6 +26,20 @@ function rv_public($r) {
           'city' => $r['city'] ?? '', 'country' => $r['country'] ?? '', 'date' => substr($r['created'], 0, 10), 'helpful' => (int)($r['helpful'] ?? 0),
           'photos' => array_map(fn($p) => 'reviews.php?photo=' . rawurlencode($p), $r['photos'] ?? []), 'reply' => empty($r['reply_hidden']) ? (string)($r['reply'] ?? '') : ''];
 }
+/* a Verified Purchaser who left State / City empty shows the emirate of the order the review came from (real delivery place, never made up) */
+function rv_order_city($pub, $list) {
+  $need = [];
+  foreach ($list as $i => $r) if (!empty($r['verified']) && !empty($r['order']) && trim((string)($r['city'] ?? '')) === '') $need[$i] = (string)$r['order'];
+  if (!$need) return $pub;
+  $pdo = fomaxo_db(); if (!$pdo) return $pub;
+  try {
+    $nos = array_values(array_unique($need));
+    $s = $pdo->prepare('SELECT order_no, emirate FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')');
+    $s->execute($nos); $em = $s->fetchAll(PDO::FETCH_KEY_PAIR);
+  } catch (Throwable $e) { return $pub; }
+  foreach ($need as $i => $no) if (trim((string)($em[$no] ?? '')) !== '') $pub[$i]['city'] = rv_caps(trim($em[$no]));
+  return $pub;
+}
 /* send the answer now and keep working after it (translating), so the customer never waits */
 function rv_send_then($data) {
   ignore_user_abort(true);
@@ -116,7 +130,7 @@ if ($method === 'GET' && isset($_GET['product'])) {
   if (!isset($CATALOG[$pid])) out(['error' => 'Unknown product.'], 404);
   $list = array_values(array_filter(rv_all(), fn($r) => $r['product'] === $pid && empty($r['hidden'])));
   usort($list, fn($a, $b) => strcmp($b['created'], $a['created']));
-  $pub = array_map('rv_public', $list);
+  $pub = rv_order_city(array_map('rv_public', $list), $list);
   if (($_GET['lang'] ?? '') !== 'ar') out(rv_stats($list) + ['reviews' => $pub]);
   /* Arabic site: English reviews and replies also come in Arabic (kept from before, so nothing waits); any not translated yet are done after this answer is sent */
   $texts = []; foreach ($pub as $r) { $texts[] = $r['text']; $texts[] = $r['reply']; }
