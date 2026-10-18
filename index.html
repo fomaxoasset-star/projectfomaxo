@@ -49,7 +49,7 @@ if(history.replaceState)try{history.replaceState(history.state,"",location.pathn
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
-r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=49";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=50";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("style");f.textContent="@font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/amiri-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/amiri-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:300;font-display:swap;src:url(/assets/fonts/tajawal-300-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/tajawal-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/tajawal-500-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/tajawal-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}";document.head.appendChild(f)}})();   /* Arabic fonts (Tajawal, Amiri; Arabic letters only) from our own server, same files Google Fonts sends */</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -1749,6 +1749,9 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-head{display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.06em;color:var(--muted);align-self:flex-start;padding:0}
 .rw-head:hover{color:var(--gold-hi)}
 .rw-head .rw-none{opacity:.45}
+.pd-smell{margin:-4px 0 0;font-size:13px;letter-spacing:.08em;color:var(--fg,inherit)}.pd-smell span{color:var(--gold);text-transform:uppercase;font-size:11px;letter-spacing:.18em;margin-right:8px}
+.pd-quote{margin:0;padding:12px 16px;border-left:2px solid var(--gold);background:rgba(201,162,92,.07);font-size:14px;line-height:1.55}.pd-quote[hidden]{display:none}.pd-quote .rw-stars{display:flex;margin-bottom:6px}.pd-quote small{display:block;margin-top:6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.pd-try{align-self:flex-start;background:none;border:0;padding:0;font:inherit;font-size:13.5px;letter-spacing:.04em;color:var(--fg,inherit);cursor:pointer;text-align:start}.pd-try b{color:var(--gold);font-weight:600;text-decoration:underline;text-underline-offset:4px}.pd-try[hidden]{display:none}
 .pd-sold{display:flex;align-items:center;gap:8px;margin:0;font-size:12.5px;letter-spacing:.06em;font-weight:700;font-style:normal;color:var(--fg,inherit)}.pd-sold:empty{display:none}.pd-sold svg{width:15px;height:15px;color:var(--gold);flex:none}   /* people bought this week: real orders only */
 .rw-fx{margin-left:auto;align-self:flex-start;font-size:28px;line-height:1;padding:0 4px;margin-top:-6px;color:var(--muted);transition:color .3s}.rw-fx:hover{color:var(--gold-hi)}
 .rw-form{border:1px solid var(--line-2);background:var(--panel);padding:clamp(18px,3vw,30px);margin-bottom:22px;gap:18px}
@@ -3796,10 +3799,13 @@ function product(id, q){
         <div style="display:flex;flex-direction:column;gap:14px">
           ${tierOf(p) ? `<span class="sub"><a href="#/collections/tier-${p.tier}">${esc(tierOf(p).name)}</a></span>` : ''}
           <div class="pd-name"><h1>${esc(p.name)}</h1><span class="sub">${esc(p.family)}</span></div>
+          ${smellHTML(p)}
           <button type="button" class="rw-head" id="rwHead">${rwHeadHTML(RATES && RATES[p.id])}</button>
           <p class="pd-sold" id="psold" data-p="${p.id}" data-s="${soldKey(p, size)}">${soldHTML(p.id, soldKey(p, size))}</p>
           <p class="lead" style="max-width:none">${esc(p.short)}</p>
           <div id="pprice">${pdpPrice(p, size)}</div>
+          <blockquote class="pd-quote" id="pquote" hidden></blockquote>
+          <button type="button" class="pd-try" id="pdTry"${tryHTML(p, size) ? '' : ' hidden'}>${tryHTML(p, size)}</button>
           ${pdpOffer(p)}
           <p class="pdel">${ICON.truck}<span><b>FREE delivery</b> ${delWindow()}</span></p>
           ${assureHTML()}
@@ -3850,9 +3856,11 @@ function bindProduct(p){
   qty.onchange = () => { if (overMax(parseInt(qty.value) || 1)) massPopup(p.id, size); qty.value = getQ(); qcap(); };
   const setImg = k => { $('#stageImg').src = IMG(k); $$('.thumbs button').forEach(b => b.classList.toggle('on', b.dataset.g === k)); };
   $$('.thumbs button').forEach(b => b.onclick = () => setImg(b.dataset.g));
+  const tr0 = $('#pdTry'); if (tr0) tr0.onclick = () => { const b = $('#sizes button[data-s="10"]'); if (b) b.click(); };
   $$('#sizes button').forEach(b => b.onclick = () => {
     size = +b.dataset.s; if (isSet) { picks = picks.slice(0, size); updPicks(); } $$('#sizes button').forEach(x => x.classList.toggle('on', x === b));
     $('#sizeName').textContent = optLabel(p, size); $('#pprice').innerHTML = pdpPrice(p, size);
+    const tr = $('#pdTry'); if (tr) { tr.innerHTML = tryHTML(p, size); tr.hidden = !tr.innerHTML; }
     const k0 = $('#stageImg').getAttribute('src'); setImg(imgFor(p, size));
     if (k0 !== $('#stageImg').getAttribute('src') && matchMedia('(max-width:960px)').matches) { const r = $('#stage').getBoundingClientRect(), nb = $('#nav').getBoundingClientRect().bottom; if (r.bottom < nb + r.height * .4) scrollTo({top: scrollY + r.top - nb - 12, behavior: 'smooth'}); }   // phone: the photo is above the sizes, out of sight; bring the new size's photo into view
     qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } const sb = $('.gallery > [data-best]'); if (sb) { sb.dataset.k = soldKey(p, size); bestSync(); } fitPdp();
@@ -4935,6 +4943,18 @@ const rwVoter = () => { let v = rwGet('fomaxo_voter'); if (!/^[a-z0-9]{12,64}$/.
 /* "ahmed saleh" → "Ahmed Saleh", full name (same rule as reviews.php) */
 const rwShort = v => v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ').slice(0, 60);
 /* star line under the product name: shown straight away (card summary), always visible; no reviews yet = faint stars */
+/* product page: "Smells like" one note from the top, heart and base, so a first-time visitor knows the scent in one line */
+const smellHTML = p => { const n = p.notes; if (!n || n.key) return ''; const w = [n.top, n.heart, n.base].map(x => String(x || '').split('·')[0].trim()).filter(Boolean); return w.length ? `<p class="pd-smell"><span>Smells like</span>${w.map(esc).join(' · ')}</p>` : ''; };
+/* the 10ml as a cheap first try (only when the product has a 10ml with a price and another size is picked) */
+const tryHTML = (p, size) => p.kind !== 'set' && p.sizes.includes(10) && hasPrice(p.prices[10]) && size !== 10 ? `New to FOMAXO? <b>Try the 10ml first · ${moneyHTML(p.prices[10])}</b>` : '';
+/* best real review under the price: 5 stars with words, verified first, then most helpful, then newest */
+function quoteFill(d){
+  const q = $('#pquote'); if (!q) return;
+  const r = (d && d.reviews || []).filter(x => x.rating === 5 && !x.hidden && String(x.text || '').trim().length >= 15).sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0) || (b.helpful || 0) - (a.helpful || 0) || String(b.date).localeCompare(String(a.date)))[0];
+  if (!r) { q.hidden = true; return; }
+  const t = String(RW_AR && r.text_ar ? r.text_ar : r.text).trim(), cut = t.length > 160 ? t.slice(0, 157).replace(/\s+\S*$/, '') + '…' : t;
+  q.innerHTML = `${rwStars(5, 'sm')}“${esc(cut)}”<small>${esc(capWords(r.name || ''))}${r.verified ? ' · <span>Verified Purchaser</span>' : ''}</small>`; q.hidden = false;
+}
 const rwHeadHTML = d => d && d.count ? `${rwStars(d.avg)}<span>${(+d.avg).toFixed(1)} · ${d.count} review${d.count > 1 ? 's' : ''}</span>` : `<span class="rw-none">${rwStars(0)}</span><span>No reviews yet</span>`;
 const rwStars = (v, cls = '') => `<span class="rw-stars ${cls}" role="img" aria-label="${v} out of 5 stars"><span class="rw-s-bg" aria-hidden="true">★★★★★</span><span class="rw-s-fg" aria-hidden="true" style="width:${Math.max(0, Math.min(5, v)) * 20}%">★★★★★</span></span>`;
 const rwDate = s => { const d = new Date(s + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}); };
@@ -5179,6 +5199,7 @@ async function rwLoad(p, msg){
   if (!d || !Array.isArray(d.reviews)) d = {count: 0, avg: 0, dist: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}, reviews: []};
   box.innerHTML = rwSection(p, d);
   const head = $('#rwHead');
+  quoteFill(d);
   if (head) { head.innerHTML = rwHeadHTML(d); head.onclick = () => box.scrollIntoView({behavior: 'smooth', block: 'start'}); }
   let sort = 'new', page = 0; const PER = 4;   // 4 reviews at a time, ‹ › (or swipe) for more
   const by = {new: (a, b) => b.date.localeCompare(a.date), help: (a, b) => b.helpful - a.helpful, high: (a, b) => b.rating - a.rating, low: (a, b) => a.rating - b.rating};
