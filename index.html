@@ -3547,14 +3547,7 @@ function home(){
   ${lastOrder() ? `<section class="sec ro-sec"><div class="wrap">${orderAgainHTML()}</div></section>` : ''}
   <section class="sec vid-sec" id="vidSec" style="padding-bottom:0"${vids().length ? '' : ' hidden'}>${vidSecHTML()}</section>
 
-  <section class="sec"><div class="wrap">
-    <div class="sec-head"><div class="t rv-up"><span class="eyebrow">Shop the collection</span><h2>Featured <em class="metal">FOMAXO</em></h2></div><a class="link rv-up" href="#/fragrances">View all →</a></div>
-    <div class="filters home-filters rv-up">${[['all','All'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
-    <div class="sort-row"><label class="sort-by"><span>Sort by</span><select id="homeSort" aria-label="Sort by">${[['','Featured'], ...SORTS].map(x => `<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label></div>
-    <div class="grid" data-sort="">${FRAG.map((p,i) => card(p, {d:'d'+(i%3)})).join('')}</div>
-  </div></section>
-
-  ${shown('discovery') ? `<section class="sec" style="padding-top:0"><div class="wrap">
+  ${shown('discovery') ? `<section class="sec" style="padding-bottom:0"><div class="wrap">
     <div class="ds-band rv-up">
       <a class="ds-media" href="#/product/discovery"><img ${pic(P.discovery.images[0])} alt="The FOMAXO Discovery Set" loading="lazy"></a>
       <div class="ds-copy">
@@ -3566,6 +3559,13 @@ function home(){
       </div>
     </div>
   </div></section>` : ''}
+
+  <section class="sec"><div class="wrap">
+    <div class="sec-head"><div class="t rv-up"><span class="eyebrow">Shop the collection</span><h2>Featured <em class="metal">FOMAXO</em></h2></div><a class="link rv-up" href="#/fragrances">View all →</a></div>
+    <div class="filters home-filters rv-up">${[['all','All'],['set','Discovery Sets'],['signature','Signature'],['prestige','Prestige'],['elite','Elite'],['10','Mini 10ml']].filter(x => x[0] === 'all' || (x[0] === 'set' ? shown('discovery') : x[0] === '10' ? S.mini.products.length : FRAG.some(p => p.tier === x[0]))).map(x => `<a class="chip" href="#/fragrances?f=${x[0]}">${x[1]}</a>`).join('')}</div>
+    <div class="sort-row"><label class="sort-by"><span>Sort by</span><select id="homeSort" aria-label="Sort by">${[['','Featured'], ...SORTS].map(x => `<option value="${x[0]}">${x[1]}</option>`).join('')}</select></label></div>
+    <div class="grid" data-sort="">${FRAG.map((p,i) => card(p, {d:'d'+(i%3)})).join('')}</div>
+  </div></section>
 
   <section class="sec" style="padding-top:0" id="tiers"><div class="wrap">
     ${secHead('The fragrance collection', 'Distinct <em class="metal">blends</em>', '<p class="lead">Four fragrances that define the house of FOMAXO.</p>')}
