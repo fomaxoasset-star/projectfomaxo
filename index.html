@@ -3263,7 +3263,7 @@ function bagWaWire(t){
 function pmWaHTML(){
   try { if (localStorage.getItem('fomaxo_last')) return ''; } catch(e) {}
   if (bagWaKnown()) return '';
-  return `<div class="pm-wa"><p class="pm-wa-t"><b>New here? AED 20 off</b><span>· Coupon on WhatsApp</span></p><form class="pm-wa-row" id="pmWa" novalidate><input id="pmWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WhatsApp number" aria-label="Your WhatsApp number"><button class="btn" type="submit">${CO_ICON.whatsapp}<span>Send</span></button></form></div>`;
+  return `<div class="pm-wa"><p class="pm-wa-t"><b>New here? GET AED 20</b><span>· Coupon on WhatsApp</span></p><form class="pm-wa-row" id="pmWa" novalidate><input id="pmWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WhatsApp number" aria-label="Your WhatsApp number"><button class="btn" type="submit">${CO_ICON.whatsapp}<span>Send</span></button></form></div>`;
 }
 function pmWaWire(){
   const f = $('#pmWa'); if (!f) return;

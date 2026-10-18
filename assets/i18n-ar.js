@@ -1171,7 +1171,7 @@
 "Thank you. We will send your AED 20 coupon on WhatsApp.": "شكراً لك. سنرسل لك كوبون خصم AED 20 على واتساب.",
 "Please enter a valid WhatsApp number": "يرجى إدخال رقم واتساب صحيح",
 "New here?": "جديد معنا؟",
-"New here? AED 20 off": "جديد معنا؟ خصم AED 20",
+"New here? GET AED 20": "جديد معنا؟ خصم AED 20",
 "· Coupon on WhatsApp": "· الكوبون على واتساب",
 "AED 20 OFF": "خصم AED 20",
 "your first order": "على طلبك الأول",
