@@ -46,6 +46,20 @@ function rv_all() {
   unset($r);
   return $list;
 }
+/* a Verified Purchaser who left State / City empty shows the emirate of the order the review came from (real delivery place, never made up).
+   For showing only (product page, Google): reviews.json is not changed. */
+function rv_order_city($list) {
+  $need = [];
+  foreach ($list as $i => $r) if (!empty($r['verified']) && !empty($r['order']) && trim((string)($r['city'] ?? '')) === '') $need[$i] = (string)$r['order'];
+  if (!$need || !function_exists('fomaxo_db') || !($pdo = fomaxo_db())) return $list;
+  try {
+    $nos = array_values(array_unique($need));
+    $s = $pdo->prepare('SELECT order_no, emirate FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')');
+    $s->execute($nos); $em = $s->fetchAll(PDO::FETCH_KEY_PAIR);
+  } catch (Throwable $e) { return $list; }
+  foreach ($need as $i => $no) if (trim((string)($em[$no] ?? '')) !== '') $list[$i]['city'] = rv_caps(trim($em[$no]));
+  return $list;
+}
 function rv_change(callable $fn) {
   $fh = @fopen(rv_dir() . '/reviews.json', 'c+'); if (!$fh) return false;
   if (!flock($fh, LOCK_EX)) { fclose($fh); return false; }
