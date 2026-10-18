@@ -1747,6 +1747,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-pager button:disabled{opacity:.3;cursor:default}
 .rw-pg{min-width:64px;text-align:center;font-size:13px;letter-spacing:.14em;color:var(--muted)}
 .rw-head{display:inline-flex;align-items:center;gap:10px;font-size:13px;letter-spacing:.06em;color:var(--muted);align-self:flex-start;padding:0}
+.rw-head:empty{display:none}   /* no reviews yet: the star line under the name stays hidden until the first review */
 .rw-head:hover{color:var(--gold-hi)}
 .rw-head .rw-none{opacity:.45}
 .pd-sold{display:flex;align-items:center;gap:8px;margin:0;font-size:12.5px;letter-spacing:.06em;font-weight:700;font-style:normal;color:var(--fg,inherit)}.pd-sold:empty{display:none}.pd-sold svg{width:15px;height:15px;color:var(--gold);flex:none}   /* people bought this week: real orders only */
@@ -4935,7 +4936,7 @@ const rwVoter = () => { let v = rwGet('fomaxo_voter'); if (!/^[a-z0-9]{12,64}$/.
 /* "ahmed saleh" → "Ahmed Saleh", full name (same rule as reviews.php) */
 const rwShort = v => v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ').slice(0, 60);
 /* star line under the product name: shown straight away (card summary), always visible; no reviews yet = faint stars */
-const rwHeadHTML = d => d && d.count ? `${rwStars(d.avg)}<span>${(+d.avg).toFixed(1)} · ${d.count} review${d.count > 1 ? 's' : ''}</span>` : `<span class="rw-none">${rwStars(0)}</span><span>No reviews yet</span>`;
+const rwHeadHTML = d => d && d.count ? `${rwStars(d.avg)}<span>${(+d.avg).toFixed(1)} · ${d.count} review${d.count > 1 ? 's' : ''}</span>` : '';
 const rwStars = (v, cls = '') => `<span class="rw-stars ${cls}" role="img" aria-label="${v} out of 5 stars"><span class="rw-s-bg" aria-hidden="true">★★★★★</span><span class="rw-s-fg" aria-hidden="true" style="width:${Math.max(0, Math.min(5, v)) * 20}%">★★★★★</span></span>`;
 const rwDate = s => { const d = new Date(s + 'T12:00:00'); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}); };
 /* state/city + country (optional) shown after the reviewer's name: "Name · Dubai 🇦🇪"; country is an ISO code → flag only */
