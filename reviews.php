@@ -116,7 +116,7 @@ if ($method === 'GET' && isset($_GET['product'])) {
   if (!isset($CATALOG[$pid])) out(['error' => 'Unknown product.'], 404);
   $list = array_values(array_filter(rv_all(), fn($r) => $r['product'] === $pid && empty($r['hidden'])));
   usort($list, fn($a, $b) => strcmp($b['created'], $a['created']));
-  $pub = array_map('rv_public', $list);
+  $pub = array_map('rv_public', rv_order_city($list));
   if (($_GET['lang'] ?? '') !== 'ar') out(rv_stats($list) + ['reviews' => $pub]);
   /* Arabic site: English reviews and replies also come in Arabic (kept from before, so nothing waits); any not translated yet are done after this answer is sent */
   $texts = []; foreach ($pub as $r) { $texts[] = $r['text']; $texts[] = $r['reply']; }

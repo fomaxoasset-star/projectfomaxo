@@ -58,6 +58,18 @@ $notes = array_filter([$p['notes']['top'] ?? '', $p['notes']['heart'] ?? '', $p[
 /* star rating from the Verified Purchaser reviews */
 $rs = array_filter(rv_all(), fn($r) => ($r['product'] ?? '') === $p['id'] && empty($r['hidden']) && is_numeric($r['rating'] ?? null));
 if ($rs) $ld['aggregateRating'] = ['@type' => 'AggregateRating', 'ratingValue' => round(array_sum(array_column($rs, 'rating')) / count($rs), 1), 'reviewCount' => count($rs), 'bestRating' => 5, 'worstRating' => 1];
+/* Google: the best real reviews with the buyer's city (typed by them, or the emirate of their order), so the page carries
+   "Verified buyer in Dubai" words for local searches; and the cities in the description. Nothing is shown that a buyer did not write. */
+$top = array_values(array_filter(rv_order_city(array_values($rs)), fn($r) => trim((string)($r['text'] ?? '')) !== ''));
+usort($top, fn($a, $b) => (empty($b['verified']) ? 0 : 1) - (empty($a['verified']) ? 0 : 1) ?: $b['rating'] - $a['rating'] ?: strcmp((string)$b['created'], (string)$a['created']));
+$top = array_slice($top, 0, 5);
+$rvCity = fn($r) => trim((string)($r['city'] ?? ''));
+if ($top) $ld['review'] = array_map(fn($r) => ['@type' => 'Review', 'reviewRating' => ['@type' => 'Rating', 'ratingValue' => (int)$r['rating'], 'bestRating' => 5, 'worstRating' => 1],
+  'author' => ['@type' => 'Person', 'name' => (string)$r['name']] + ($rvCity($r) !== '' ? ['address' => ['@type' => 'PostalAddress', 'addressLocality' => $rvCity($r)] + (($r['country'] ?? '') === 'AE' || in_array($rvCity($r), ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'], true) ? ['addressCountry' => 'AE'] : [])] : []),
+  'datePublished' => substr((string)$r['created'], 0, 10), 'reviewBody' => mb_substr((string)$r['text'], 0, 500)], $top);
+$buyCities = [];   /* emirates / cities of verified buyers, most reviews first */
+foreach (rv_order_city(array_values($rs)) as $r) if (!empty($r['verified']) && $rvCity($r) !== '') $buyCities[$rvCity($r)] = ($buyCities[$rvCity($r)] ?? 0) + 1;
+arsort($buyCities); $buyCities = array_slice(array_keys($buyCities), 0, 3);
 $crumbs = ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => [
   ['@type' => 'ListItem', 'position' => 1, 'name' => 'FOMAXO', 'item' => FOMAXO_SITE . '/'],
   ['@type' => 'ListItem', 'position' => 2, 'name' => $name, 'item' => $url]]];
@@ -74,6 +86,7 @@ if ($ar) {   /* Arabic Google title and description (names, FOMAXO, AED and ml s
   if ($familyAr !== '' && $shortAr !== '')
     $meta = "FOMAXO {$name}، " . ($kwAr !== '' ? "{$kwAr}، " : '') . ($isSet ? $familyAr : "عطر $familyAr") . '. ' . $shortAr . ($min !== null ? ' يبدأ من AED ' . $min . '.' : '') . ' توصيل مجاني إلى جميع أنحاء الإمارات.';
 }
+if ($buyCities) $meta .= $ar ? ' يحبه مشترون موثّقون في ' . implode('، ', $buyCities) . '.' : ' Loved by verified buyers in ' . implode(', ', $buyCities) . '.';
 $J = fn($v) => json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
 
 $head = "<link rel=\"canonical\" href=\"{$h($url . ($ar ? '?lang=ar' : ''))}\">\n"
@@ -102,7 +115,8 @@ if ($ar) {   /* the plain text in Arabic too, paragraph by paragraph */
 }
 $tNotes = $ar ? 'النفحات: ' : 'Notes: '; $tFree = $ar ? 'توصيل مجاني إلى جميع أنحاء الإمارات.' : 'Free delivery anywhere in the UAE.';
 $text = '<noscript><div style="max-width:720px;margin:40px auto;padding:0 16px"><h1>FOMAXO ' . $h($name) . '</h1><p>' . $h($family) . '</p><p>' . $h($desc ?: $short) . '</p>'
-      . ($notes ? '<p>' . $tNotes . $h(implode(' · ', $notes)) . '</p>' : '') . ($lines ? '<p>' . $h(implode(' · ', $lines)) . '</p>' : '') . '<p>' . $tFree . '</p></div></noscript>';
+      . ($notes ? '<p>' . $tNotes . $h(implode(' · ', $notes)) . '</p>' : '') . ($lines ? '<p>' . $h(implode(' · ', $lines)) . '</p>' : '') . '<p>' . $tFree . '</p>'
+      . implode('', array_map(fn($r) => '<blockquote><p>' . $h((string)$r['text']) . '</p><p>' . $h((string)$r['name']) . ($rvCity($r) !== '' ? ', ' . $h($rvCity($r)) : '') . (!empty($r['verified']) ? ($ar ? ' · مشترٍ موثّق' : ' · Verified Purchaser') : '') . ' · ' . (int)$r['rating'] . '/5</p></blockquote>', $top)) . '</div></noscript>';
 $html = preg_replace('#<body>#', '<body>' . strtr($text, ['\\' => '\\\\', '$' => '\$']), $html, 1);
 
 header('Content-Type: text/html; charset=utf-8');

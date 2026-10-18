@@ -29,6 +29,7 @@ RewriteRule ^sitemap\.xml$ sitemap.php [L]
 # product list for free Google Shopping listings (Merchant Center): English and Arabic
 RewriteRule ^google-shopping\.xml$ google-feed.php [L]
 RewriteRule ^google-shopping-ar\.xml$ google-feed.php?lang=ar [L]
+RewriteRule ^google-reviews\.xml$ google-reviews.php [L]
 # the Returns page at its own address (Google Merchant Center links to it)
 RewriteRule ^returns/?$ returns.php [L,QSA]
 RewriteCond %{REQUEST_FILENAME} !-f
