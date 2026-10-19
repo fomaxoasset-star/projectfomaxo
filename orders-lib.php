@@ -618,7 +618,7 @@ function fx_order_restore($pdo, $no) {
   try {
     $pdo->beginTransaction();
     $pdo->prepare('INSERT INTO fx_orders (' . implode(', ', array_keys($o)) . ') VALUES (' . implode(',', array_fill(0, count($o), '?')) . ')')->execute(array_values($o));
-    foreach (['fx_leads' => $web['leads'] ?? []] as $t => $rows) {   // its customer's checkout record comes back too
+    foreach (['fx_leads' => $web['leads'] ?? [], 'fx_events' => $web['buys'] ?? []] as $t => $rows) {   // its customer's checkout record and its purchase in Analytics come back too
       if (!$rows) continue; $tc = array_flip(array_column($pdo->query("SHOW COLUMNS FROM $t")->fetchAll(PDO::FETCH_ASSOC), 'Field'));
       foreach ($rows as $r) { $r = array_intersect_key((array)$r, $tc); if ($r) $pdo->prepare("INSERT IGNORE INTO $t (" . implode(', ', array_keys($r)) . ') VALUES (' . implode(',', array_fill(0, count($r), '?')) . ')')->execute(array_values($r)); }
     }
@@ -628,15 +628,24 @@ function fx_order_restore($pdo, $no) {
   if ($took) fomaxo_stock_move($no);
   return true;
 }
-/* a trashed order's customer leaves Analytics too (Left at checkout and its Excel). Its purchase still counts: the Purchased step in Analytics,
-   bottles sold on Products and "X people bought this year" (fx_trash_sold) */
+/* a trashed order leaves Analytics too: its customer in Left at checkout (and its Excel) and its purchase (the Purchased step, conversion,
+   Sources, Devices, Campaigns …), AJAY 19/10/2026. Bottles sold on Products and "X people bought this year" still count it (fx_trash_sold) */
 function fx_trash_web($pdo, $no) {
   $w = ['leads' => []];
   try { $s = $pdo->prepare('SELECT * FROM fx_leads WHERE order_no = ?'); $s->execute([$no]); $w['leads'] = $s->fetchAll(PDO::FETCH_ASSOC); } catch (Throwable $e) {}
+  $w['buys'] = fx_trash_buys($pdo, $w['leads']);
   return $w;
+}
+/* the purchase steps of the visit the order was placed in (its checkout record says which visit) */
+function fx_trash_buys($pdo, $leads) {
+  $sids = array_values(array_unique(array_filter(array_map(fn($l) => (string)($l['sid'] ?? ''), (array)$leads))));
+  if (!$sids) return [];
+  try { $s = $pdo->prepare("SELECT * FROM fx_events WHERE ev = 'buy' AND sid IN (" . implode(',', array_fill(0, count($sids), '?')) . ')'); $s->execute($sids); return $s->fetchAll(PDO::FETCH_ASSOC); } catch (Throwable $e) { return []; }
 }
 function fx_trash_web_drop($pdo, $no, $w) {
   if ($w['leads'] ?? []) $pdo->prepare('DELETE FROM fx_leads WHERE order_no = ?')->execute([$no]);
+  if ($ids = array_filter(array_map(fn($e) => (int)($e['id'] ?? 0), (array)($w['buys'] ?? []))))
+    $pdo->prepare('DELETE FROM fx_events WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')')->execute(array_values($ids));
 }
 /* trashed orders that were real purchases (New, Paid or Delivered, not a test), as [lines_json, phone, created_at]: added to the purchase counts */
 function fx_trash_sold($pdo, $from = null, $to = null) {
@@ -651,17 +660,18 @@ function fx_trash_sold($pdo, $from = null, $to = null) {
 }
 /* orders trashed before Analytics was cleared with them: cleared once, kept with the order for Put back */
 function fx_trash_web_sweep($pdo) {
-  if (fomaxo_setting($pdo, 'trash_web') === '1') return;   // (the first version also took the Purchased step out; it now stays)
+  if (fomaxo_setting($pdo, 'trash_web') === '2') return;   // '2': their purchase steps are out of Analytics too (AJAY 19/10/2026)
   try {
     foreach ($pdo->query('SELECT order_no, row_json FROM fx_orders_trash')->fetchAll(PDO::FETCH_ASSOC) as $t) {
-      $o = json_decode((string)$t['row_json'], true); if (!is_array($o) || isset($o['_web'])) continue;
-      $o['_web'] = fx_trash_web($pdo, $t['order_no']);
+      $o = json_decode((string)$t['row_json'], true); if (!is_array($o) || isset($o['_web']['buys'])) continue;
+      if (isset($o['_web'])) $o['_web']['buys'] = fx_trash_buys($pdo, $o['_web']['leads'] ?? []);   // trashed before: its checkout record is kept with it
+      else $o['_web'] = fx_trash_web($pdo, $t['order_no']);
       $pdo->beginTransaction();
       $pdo->prepare('UPDATE fx_orders_trash SET row_json = ? WHERE order_no = ?')->execute([json_encode($o, JSON_UNESCAPED_UNICODE), $t['order_no']]);
       fx_trash_web_drop($pdo, $t['order_no'], $o['_web']);
       $pdo->commit();
     }
-    fomaxo_setting($pdo, 'trash_web', '1');
+    fomaxo_setting($pdo, 'trash_web', '2');
   } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('FOMAXO trash sweep: ' . $e->getMessage()); }
 }
 function fx_trash_count($pdo) { fx_trash_web_sweep($pdo); try { return (int)$pdo->query('SELECT COUNT(*) FROM fx_orders_trash')->fetchColumn(); } catch (Throwable $e) { return 0; } }

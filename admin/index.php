@@ -1059,7 +1059,7 @@ if (isset($_GET['orders'], $_GET['trash'])) {
     . '<td class="muted small">Closed ' . h(date('d/m/Y', strtotime($o['trashed_at']))) . '</td>'
     . '<td class="num"><button class="btn sm line" name="untrash" value="' . h($o['order_no']) . '">Put back</button></td></tr>';
   page('Trash', flash() . '<div class="pagehead"><h1>Trash <span class="muted small">' . count($rows) . '</span></h1><a class="btn line sm" href="./?orders=1">‹ Back to Orders</a></div>'
-    . '<p class="muted small trnote">Closed orders are kept here. They leave Orders, Sales, the COD and online boxes, status counts, Members, Left at checkout, Review requests, Refill reminders and Excel. Only the number purchased stays: bottles sold on Products, Purchased in Analytics and the website line people bought this year. Put back returns an order as it was.</p>'
+    . '<p class="muted small trnote">Closed orders are kept here. They leave Orders, Sales, the COD and online boxes, status counts, Members, Analytics, Left at checkout, Review requests, Refill reminders and Excel. Only the number purchased stays: bottles sold on Products and the website line people bought this year. Put back returns an order as it was.</p>'
     . ($tr ? '<form method="post" class="trform fitform">' . csrf_field() . '<div class="trbar"><label class="trall"><input type="checkbox" data-trall> Select all</label><button class="btn sm" name="untrash_sel" value="1" data-trsel disabled>Put back selected (0)</button></div>' : '')
     . '<div class="fill">' . ($tr ? '<table class="olist trlist"><thead><tr><th class="tck"></th><th>Order</th><th>Customer</th><th class="num">Total</th><th>Closed</th><th></th></tr></thead><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty" style="padding:14px">Trash is empty.</p>') . '</div>' . ($tr ? '</form><script>(function(){var f=document.querySelector(".trform"),all=f.querySelector("[data-trall]"),b=f.querySelector("[data-trsel]"),bx=[].slice.call(f.querySelectorAll("input[name=\'nos[]\']"));'
     . 'var up=function(){var n=bx.filter(function(x){return x.checked}).length;b.disabled=!n;b.textContent="Put back selected ("+n+")";all.checked=n===bx.length;all.indeterminate=n>0&&n<bx.length};'
@@ -2531,6 +2531,7 @@ if (isset($_GET['coupons'])) {
 
 /* ---- analytics: visitors, where they come from, and where sales are lost (filled by track.php on the website) ---- */
 if (isset($_GET['analytics'])) {
+  fx_trash_web_sweep($pdo);   // orders already in Trash leave Analytics too (once)
   if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lead_hide'])) {   // the × on a Left at checkout row: hide it from the list (nothing is deleted)
     $sids = array_slice(array_values(array_filter(explode(',', (string)$_POST['lead_hide']), fn($x) => $x !== '')), 0, 500);   // all of that customer's visits
     $ok = csrf_ok() && $sids && $pdo->prepare('UPDATE fx_leads SET hidden = 1 WHERE sid IN (' . implode(',', array_fill(0, count($sids), '?')) . ')')->execute($sids);
