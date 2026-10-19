@@ -140,7 +140,9 @@ function rv_link($t) {
 function rv_order_ok($no) {
   if (str_starts_with((string)$no, 'OLD-')) return true;   // a real order from before the reset of 11/10/2026 (cleared from admin, still reviewable)
   $pdo = fomaxo_db(); if (!$pdo) return true;
-  try { $s = $pdo->prepare('SELECT status, test FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$no]); $o = $s->fetch(PDO::FETCH_ASSOC); }
+  try { $s = $pdo->prepare('SELECT status, test FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$no]); $o = $s->fetch(PDO::FETCH_ASSOC);
+    if (!$o) { $s = $pdo->prepare('SELECT row_json FROM fx_orders_trash WHERE order_no = ?'); $s->execute([(string)$no]);   // an order in Trash: its link still works (AJAY 19/10/2026)
+      $t = json_decode((string)$s->fetchColumn(), true); $o = is_array($t) ? ['status' => (string)($t['status'] ?? ''), 'test' => (int)($t['test'] ?? 0)] : false; } }
   catch (Throwable $e) { return true; }
   return $o && !(int)$o['test'] && !in_array($o['status'], ['Awaiting payment', 'Cancelled', 'Refunded'], true);
 }
