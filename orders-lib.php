@@ -502,12 +502,21 @@ const FX_SD_AREAS = [
   'Ajman' => ['Ajman Corniche' => 6, 'Ajman Industrial' => 6, 'Al Alia' => 17, 'Al Amerah' => 24, 'Al Bustan' => 5, 'Al Hamidiya' => 11, 'Al Helio' => 20, 'Al Jurf' => 9, 'Al Mowaihat' => 6, 'Al Nakhil' => 6, 'Al Nuaimiya' => 4, 'Al Rashidiya' => 5, 'Al Rawda' => 7, 'Al Tallah' => 13, 'Al Yasmeen' => 17, 'Al Zahra' => 10, 'Al Zorah' => 10],
   'Dubai' => ['Al Garhoud' => 23, 'Al Khawaneej' => 21, 'Al Mamzar' => 17, 'Al Muteena' => 22, 'Al Nahda' => 16, 'Al Qusais' => 17, 'Al Rashidiya' => 22, 'Al Twar' => 18, 'Deira' => 23, 'Hor Al Anz' => 19, 'Mirdif' => 23, 'Mizhar' => 19, 'Muhaisnah' => 18],
 ];
-/* ['on' => switched on and a fee typed, 'fee' => AED, 'free' => AED order total from which it is free (0 = never)] */
+/* ['on' => switched on and a fee typed, 'fee' => AED, 'free' => AED order total from which it is free (0 = never),
+    'max' => same-day orders a day (AJAY 2026-10-20: 3 to start; 0 = no limit)] */
 function fomaxo_sameday($pdo = null) {
   $c = null;
   try { $pdo = $pdo ?: fomaxo_db(); $c = $pdo ? json_decode((string)fomaxo_setting($pdo, 'sameday'), true) : null; } catch (Throwable $e) {}
   $fee = is_array($c) && isset($c['fee']) && is_numeric($c['fee']) ? max(0, (int)$c['fee']) : null;
-  return ['on' => is_array($c) && !empty($c['on']) && $fee !== null, 'fee' => $fee, 'free' => is_array($c) ? max(0, (int)($c['free'] ?? 0)) : 0];
+  return ['on' => is_array($c) && !empty($c['on']) && $fee !== null, 'fee' => $fee, 'free' => is_array($c) ? max(0, (int)($c['free'] ?? 0)) : 0,
+          'max' => is_array($c) && isset($c['max']) ? max(0, (int)$c['max']) : 3];
+}
+/* true when today's same-day orders (Dubai day; not test, unpaid card or cancelled) reached the daily limit */
+function fomaxo_sameday_full($sd, $pdo = null) {
+  if (empty($sd['max'])) return false;
+  try { $pdo = $pdo ?: fomaxo_db(); if (!$pdo) return false;
+    $n = (int)$pdo->query("SELECT COUNT(*) FROM fx_orders WHERE created_at >= CURDATE() AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') AND items LIKE '%Same-day delivery (%'")->fetchColumn();
+    return $n >= $sd['max']; } catch (Throwable $e) { return false; }
 }
 function fomaxo_sameday_open() { return (int)(new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('G') < FX_SD_CUTOFF; }
 /* the same-day choice sent with an order (the area name, or nothing for standard delivery), checked here, never trusted from the browser.
@@ -518,6 +527,7 @@ function fomaxo_sameday_pick($area, $emirate, $afterFils) {
   if (!$sd['on']) return ['error' => 'Same-day delivery is not available right now. Please choose standard delivery.'];
   if (!isset(FX_SD_AREAS[$emirate][$area])) return ['error' => 'Same-day delivery does not reach this area. Please choose standard delivery.'];
   if (!fomaxo_sameday_open()) return ['error' => 'Same-day delivery is for orders placed before 2 PM. Please choose standard delivery.'];
+  if (fomaxo_sameday_full($sd)) return ['error' => 'Same-day delivery is full for today. Please choose standard delivery.'];
   $fils = $sd['free'] > 0 && $afterFils >= $sd['free'] * 100 ? 0 : $sd['fee'] * 100;
   return ['fils' => $fils, 'area' => $area, 'row' => "Same-day delivery ($area, $emirate): " . ($fils ? 'AED ' . number_format($fils / 100, 2, '.', ',') : 'FREE')];
 }

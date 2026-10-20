@@ -2185,9 +2185,11 @@ if (isset($_GET['settings'])) {
       $sf = trim((string)($_POST['sd_fee'] ?? '')); $sr = trim((string)($_POST['sd_free'] ?? '')); $son = !empty($_POST['sd_on']);
       if ($sf !== '' && (!ctype_digit($sf) || (int)$sf > 1000)) { flash('Please type the same-day delivery fee in AED (numbers only).'); go(['settings' => 1]); }
       if ($sr !== '' && (!ctype_digit($sr) || (int)$sr > 1000000)) { flash('Please type the same-day "free from" amount in AED (numbers only), or leave it empty.'); go(['settings' => 1]); }
+      $sm = trim((string)($_POST['sd_max'] ?? ''));
+      if ($sm !== '' && (!ctype_digit($sm) || (int)$sm > 1000)) { flash('Please type how many same-day orders a day (numbers only), or leave it empty for no limit.'); go(['settings' => 1]); }
       if ($son && $sf === '') { flash('Type the same-day delivery fee (AED) before switching same-day on.'); go(['settings' => 1]); }
       fomaxo_setting($pdo, 'cod', json_encode(['min' => (int)$mn, 'max' => (int)$mx, 'fee' => (int)$fe]));
-      fomaxo_setting($pdo, 'sameday', json_encode(['on' => $son ? 1 : 0, 'fee' => $sf === '' ? null : (int)$sf, 'free' => (int)$sr]));
+      fomaxo_setting($pdo, 'sameday', json_encode(['on' => $son ? 1 : 0, 'fee' => $sf === '' ? null : (int)$sf, 'free' => (int)$sr, 'max' => (int)$sm]));
       flash('Saved. It shows on the website within a minute.', true); go(['settings' => 1]);
     }
     $email = trim((string)($_POST['orders_email'] ?? ''));
@@ -2229,8 +2231,9 @@ if (isset($_GET['settings'])) {
     . '<div><label for="cod_fee">Fee (AED)</label><input id="cod_fee" name="cod_fee" inputmode="numeric" pattern="[0-9]*" placeholder="0 = no fee" value="' . $codFee . '"></div></div>'
     . '<p class="muted small shelp">Cash on delivery works from the minimum up to just under the maximum (order after discounts, before the fee). Customers only see the maximum once their order reaches it; then they pay by card. Leave the maximum empty for no limit. The fee is added to every cash on delivery order; 0 = no fee.</p>'
     . '<div class="spages sdsw"><div class="pgs"><label class="pg"><span>Same-day delivery<small class="muted">Orders before 2 PM, ' . array_sum(array_map('count', FX_SD_AREAS)) . ' areas within 30 km of Al Azra</small></span><input type="checkbox" role="switch" name="sd_on" value="1"' . (!empty($sdRaw['on']) ? ' checked' : '') . ' aria-label="Same-day delivery"><i class="sw"></i></label></div></div>'
-    . '<div class="srow two"><div><label for="sd_fee">Same-day fee (AED)</label><input id="sd_fee" name="sd_fee" inputmode="numeric" pattern="[0-9]*" placeholder="Type your price" value="' . ($sd['fee'] ?? '') . '"></div>'
-    . '<div><label for="sd_free">Same-day free from (AED)</label><input id="sd_free" name="sd_free" inputmode="numeric" pattern="[0-9]*" placeholder="Empty = never free" value="' . ($sd['free'] ?: '') . '"></div></div>'
+    . '<div class="srow"><div><label for="sd_fee">Same-day fee (AED)</label><input id="sd_fee" name="sd_fee" inputmode="numeric" pattern="[0-9]*" placeholder="Your price" value="' . ($sd['fee'] ?? '') . '"></div>'
+    . '<div><label for="sd_free">Free from (AED)</label><input id="sd_free" name="sd_free" inputmode="numeric" pattern="[0-9]*" placeholder="Empty = never" value="' . ($sd['free'] ?: '') . '"></div>'
+    . '<div><label for="sd_max">Orders a day</label><input id="sd_max" name="sd_max" inputmode="numeric" pattern="[0-9]*" placeholder="Empty = no limit" value="' . ($sd['max'] ?: '') . '"></div></div>'
     . '<p class="sbtn"><button class="btn">Save</button></p></form>'
     . '<form class="card" method="post" data-t="3">' . csrf_field()
     . '<h2>Email sending</h2>'

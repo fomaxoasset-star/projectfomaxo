@@ -994,6 +994,8 @@
 "1–3 days": "1–3 أيام",
 "Order before 2 PM, arrives today": "اطلب قبل 2 ظهراً، يصلك اليوم",
 "Closed for today, order before 2 PM": "انتهى لليوم، اطلب قبل 2 ظهراً",
+"Full for today, try tomorrow": "اكتمل لليوم، جرّب غداً",
+"Same-day delivery is full for today. Please choose standard delivery.": "التوصيل في نفس اليوم مكتمل لليوم. يرجى اختيار التوصيل العادي.",
 "Your area": "منطقتك",
 "Choose your area": "اختر منطقتك",
 "Not in the list? Choose standard delivery.": "منطقتك غير موجودة؟ اختر التوصيل العادي.",
