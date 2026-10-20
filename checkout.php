@@ -83,6 +83,11 @@ if ($afterFils < $MIN_ORDER * 100) fail(400, 'Minimum order ' . aed_short($MIN_O
 if ($afterFils < $COD_MIN * 100) fail(400, 'Cash on delivery is available for orders above ' . aed_short($COD_MIN * 100) . '. Add ' . aed_short($COD_MIN * 100 - $afterFils) . ' more to activate COD.');
 if ($COD_MAX > 0 && $afterFils >= $COD_MAX * 100) fail(400, 'COD for orders under ' . aed_short($COD_MAX * 100) . '. Please pay by card.');
 
+/* same-day delivery (Parcel Link from Al Azra): area, 2 PM and fee checked here (orders-lib.php fomaxo_sameday_pick) */
+$sd = fomaxo_sameday_pick($in['sameday'] ?? null, $cu['emirate'], $afterFils);
+if (isset($sd['error'])) fail(400, $sd['error']);
+$shipFils = $sd['fils'] ?? 0;
+
 /* FREE 10ml mini: the customer's pick if it comes in 10ml, otherwise the first scent that does */
 $miniName = null;
 if (qty_mini($discUnits) && !$has10) {
@@ -94,11 +99,12 @@ if (qty_mini($discUnits) && !$has10) {
 }
 
 /* ---- save the order (database, plus a file outside public_html) and email it ---- */
-$totalFils = $afterFils + $COD_FEE * 100;
+$totalFils = $afterFils + $COD_FEE * 100 + $shipFils;
 $rows = $summary;
 if ($discFils > 0) $rows[] = "$discLabel: -" . aed($discFils);
 if ($miniName) $rows[] = "FREE 10ml mini: $miniName";
 if ($COD_FEE > 0) $rows[] = 'Cash on delivery fee: ' . aed($COD_FEE * 100);
+if ($sd) $rows[] = $sd['row'];
 /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
 $saveLines = array_map(fn($l) => ['id' => $l['id'] ?? '', 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? [])),
                                  'price' => $CATALOG[$l['id']]['prices'][(string)$l['opt']] + 0], $lines);   // price: the AED each, for the receipt
@@ -142,16 +148,16 @@ $review = fomaxo_review_link($no, $ids);
 $waLines = fomaxo_wa_review_request($no, $cu, array_map(fn($id) => $CATALOG[$id]['name'] ?? '', $ids), $review);
 $to = fomaxo_orders_email();   // Settings on fomaxo.com/admin, else the store inbox
 /* the order is already kept (database or order file): the shopper sees "order confirmed" now, the email goes out right after */
-$answer = ['order' => $no, 'total' => number_format($totalFils / 100, 2, '.', ''), 'review' => $review];
+$answer = ['order' => $no, 'total' => number_format($totalFils / 100, 2, '.', ''), 'review' => $review] + ($sd ? ['sd' => 1] : []);
 $early = $saved || $inDb;
 if ($early) fomaxo_reply_now($answer);
 if ($inDb) { require_once __DIR__ . '/ads-server-lib.php'; fomaxo_ads_server_buy($no); }   // the purchase also goes to Meta / TikTok ads from here (admin → Settings → Ads tracking)
 fomaxo_en_many([$cu['name'], $cu['address'], $cu['note']]);   // Arabic typed by the customer: English in this email and in admin
 $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) . "\n\n" . implode("\n", $rows)
       . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\n$discLabel: -" . aed($discFils) : '')
-      . ($COD_FEE > 0 ? "\nCash on delivery fee: " . aed($COD_FEE * 100) : '') . "\nTotal: " . aed($totalFils)
+      . ($COD_FEE > 0 ? "\nCash on delivery fee: " . aed($COD_FEE * 100) : '') . ($sd ? "\n{$sd['row']}" : '') . "\nTotal: " . aed($totalFils)
       . "\n\nName: " . fomaxo_en_both($cu['name']) . "\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: " . fomaxo_en_both($cu['address']) . ($cu['note'] !== '' ? "\nNote: " . fomaxo_en_both($cu['note']) : '') . "\nWhatsApp offers: " . ($cu['wa'] ? 'Yes' : 'No') . $waLines;
-$mailed = fomaxo_mail($to, "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
+$mailed = fomaxo_mail($to, ($sd ? 'SAME-DAY ' : '') . "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
                 "From: FOMAXO Orders <mail@fomaxo.com>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
 if ($early) exit;
 if (!$mailed) { error_log("FOMAXO COD order $no could not be saved or emailed: " . json_encode($order)); fail(500, 'We could not place your order right now. Please try again or contact us on WhatsApp.'); }

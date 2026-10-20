@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
   $file = ziina_dir() . "/$id.json";
   $rec = is_file($file) ? json_decode(file_get_contents($file), true) : null;
   $out = ['status' => $status === 'completed' ? 'paid' : (in_array($status, ['failed', 'canceled'], true) ? 'failed' : 'processing')];
-  if ($rec) { $out += ['order' => $rec['no'], 'total' => $rec['totalFils'] / 100, 'name' => $rec['cust']['name'], 'email' => $rec['cust']['email']]; }
+  if ($rec) { $out += ['order' => $rec['no'], 'total' => $rec['totalFils'] / 100, 'name' => $rec['cust']['name'], 'email' => $rec['cust']['email']] + (!empty($rec['ship']) ? ['sd' => 1] : []); }
 
   // first time we see it paid → record it and send the emails (only once)
   if ($status === 'completed' && $rec && empty($rec['paid'])) {
@@ -120,9 +120,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
     $from = "FOMAXO <mail@fomaxo.com>";
     fomaxo_en_many([$c['name'], $c['address'], $c['note']]);   // Arabic typed by the customer: English in this email and in admin
     $body = "NEW PAID ORDER (Ziina)  {$rec['no']}$note\n" . date('d M Y, H:i') . " (Dubai)\nZiina payment: $id\n\n" . implode("\n", $rec['rows']) . "\n\n"
-          . "TOTAL PAID: $total\nDelivery: Free\n\nName: " . fomaxo_en_both($c['name']) . "\nPhone: {$c['phone']}\n" . ($c['email'] !== '' ? "Email: {$c['email']}\n" : '') . 'Address: ' . fomaxo_en_both($c['address']) . ", {$c['emirate']}, UAE\n" . ($c['note'] ? 'Note: ' . fomaxo_en_both($c['note']) . "\n" : '') . $waLines;
-    fomaxo_mail(fomaxo_orders_email($STORE_EMAIL), '=?UTF-8?B?' . base64_encode("New paid order {$rec['no']} — $total") . '?=', $body, "From: $from\r\n" . ($c['email'] !== '' ? "Reply-To: {$c['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
-    $cb = "Thank you for your order, {$c['name']}.\n\nOrder number: {$rec['no']}\n\n" . implode("\n", $rec['rows']) . "\n\nTotal paid: $total\nDelivery: Free, to {$c['address']}, {$c['emirate']}\n\n"
+          . "TOTAL PAID: $total\n" . (!empty($rec['ship']) ? $rec['ship'] : 'Delivery: Free') . "\n\nName: " . fomaxo_en_both($c['name']) . "\nPhone: {$c['phone']}\n" . ($c['email'] !== '' ? "Email: {$c['email']}\n" : '') . 'Address: ' . fomaxo_en_both($c['address']) . ", {$c['emirate']}, UAE\n" . ($c['note'] ? 'Note: ' . fomaxo_en_both($c['note']) . "\n" : '') . $waLines;
+    fomaxo_mail(fomaxo_orders_email($STORE_EMAIL), '=?UTF-8?B?' . base64_encode((!empty($rec['ship']) ? 'SAME-DAY ' : '') . "New paid order {$rec['no']} — $total") . '?=', $body, "From: $from\r\n" . ($c['email'] !== '' ? "Reply-To: {$c['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
+    $cb = "Thank you for your order, {$c['name']}.\n\nOrder number: {$rec['no']}\n\n" . implode("\n", $rec['rows']) . "\n\nTotal paid: $total\n" . (!empty($rec['ship']) ? $rec['ship'] . ', to ' : 'Delivery: Free, to ') . "{$c['address']}, {$c['emirate']}\n\n"
         . "We will call or WhatsApp you on {$c['phone']} to arrange your delivery.\n\n"
         . (!empty($rec['review']) ? "Once your order arrives, we would love your honest review (it will show Verified Purchaser):\nhttps://$host/#/review?t={$rec['review']}\n\n" : '')
         . "FOMAXO\nhttps://$host";
@@ -142,6 +142,11 @@ if (isset($order['error'])) { http_response_code(400); echo json_encode(['error'
 $cust = fomaxo_customer($in);
 if (isset($cust['error'])) { http_response_code(400); echo json_encode(['error' => $cust['error']]); exit; }
 if ($order['totalFils'] < $MIN_ORDER * 100) { http_response_code(400); echo json_encode(['error' => "Minimum order is AED $MIN_ORDER."]); exit; }
+/* same-day delivery (Parcel Link from Al Azra): area, 2 PM and fee checked here (orders-lib.php fomaxo_sameday_pick) */
+require_once __DIR__ . '/orders-lib.php';
+$sd = fomaxo_sameday_pick($in['sameday'] ?? null, $cust['emirate'], $order['totalFils']);
+if (isset($sd['error'])) { http_response_code(400); echo json_encode(['error' => $sd['error']]); exit; }
+if ($sd) { $order['totalFils'] += $sd['fils']; $order['summary'][] = $sd['row']; }
 
 /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
 require_once __DIR__ . '/orders-lib.php';
@@ -186,11 +191,12 @@ foreach ($order['items'] as $it) $rows[] = "• {$it['qty']} x {$it['name']}" . 
 if ($order['free']) $rows[] = "• 1 x FOMAXO {$order['free']['name']} — FREE with coupon {$order['free']['coupon']}";
 if ($order['gift']) $rows[] = "• FREE 10ml {$order['gift']} mini";
 if ($order['discountFils']) $rows[] = "{$order['discLabel']}: -" . fomaxo_aed($order['discountFils']);
+if ($sd) $rows[] = $sd['row'];
 
 $pid = preg_replace('/[^A-Za-z0-9_\-]/', '', $pi['id']);
 fomaxo_order_set($no, ['ref' => $pid]);
 @file_put_contents(ziina_dir() . "/$pid.json", json_encode(['no' => $no, 'created' => date('Y-m-d H:i'), 'totalFils' => $order['totalFils'],
-  'summary' => $order['summary'], 'rows' => $rows, 'cust' => $cust, 'test' => $testMode, 'coupon' => $order['coupon'],
+  'summary' => $order['summary'], 'rows' => $rows, 'cust' => $cust, 'ship' => $sd ? $sd['row'] : '', 'test' => $testMode, 'coupon' => $order['coupon'],
   'pids' => array_values(array_unique(array_map(fn($l) => (string)($l['id'] ?? ''), (array)($in['lines'] ?? []))))]), LOCK_EX);
 fomaxo_log_order([date('Y-m-d H:i'), $no, 'Ziina — awaiting payment' . ($testMode ? ' (TEST)' : ''), fomaxo_aed($order['totalFils']), $cust['name'], $cust['phone'], $cust['email'],
                   $cust['emirate'], $cust['address'], $cust['note'], implode(' | ', $order['summary'])]);

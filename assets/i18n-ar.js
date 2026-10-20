@@ -988,6 +988,19 @@
 "Customer photos": "صور العملاء",
 "Dark mode": "الوضع الداكن",
 "Delivery is free anywhere in the UAE.": "التوصيل مجاني لجميع أنحاء الإمارات.",
+"Same-day delivery": "توصيل في نفس اليوم",
+"Standard delivery": "التوصيل العادي",
+"1–3 days": "1–3 أيام",
+"Order before 2 PM, arrives today": "اطلب قبل 2 ظهراً، يصلك اليوم",
+"Closed for today, order before 2 PM": "انتهى لليوم، اطلب قبل 2 ظهراً",
+"Your area": "منطقتك",
+"Choose your area": "اختر منطقتك",
+"Not in the list? Choose standard delivery.": "منطقتك غير موجودة؟ اختر التوصيل العادي.",
+"Same-day delivery: your order arrives today.": "توصيل في نفس اليوم: يصلك طلبك اليوم.",
+"Same-day delivery: your order arrives today. Questions? WhatsApp us on": "توصيل في نفس اليوم: يصلك طلبك اليوم. لديك أسئلة؟ راسلنا على واتساب",
+"Same-day delivery is not available right now. Please choose standard delivery.": "التوصيل في نفس اليوم غير متاح حالياً. يرجى اختيار التوصيل العادي.",
+"Same-day delivery does not reach this area. Please choose standard delivery.": "التوصيل في نفس اليوم لا يصل إلى هذه المنطقة. يرجى اختيار التوصيل العادي.",
+"Same-day delivery is for orders placed before 2 PM. Please choose standard delivery.": "التوصيل في نفس اليوم للطلبات قبل الساعة 2 ظهراً. يرجى اختيار التوصيل العادي.",
 "Explore FOMAXO": "اكتشف FOMAXO",
 "FOMAXO — The House of Modern Luxury": "FOMAXO — دار الفخامة العصرية",
 "Franchise — FOMAXO": "الامتياز التجاري — FOMAXO",
@@ -1273,7 +1286,7 @@
   ];
   // checkout boxes still missing ("full name, mobile number and area") → Arabic list
   var FLD = {'full name': 'اسمك الكامل', 'mobile number': 'رقم الجوال', 'correct mobile number': 'رقم جوال صحيح', 'correct email': 'بريد إلكتروني صحيح',
-    'emirate': 'الإمارة', 'villa / building no': 'رقم الفيلا / المبنى', 'street': 'الشارع', 'area': 'المنطقة'};
+    'emirate': 'الإمارة', 'villa / building no': 'رقم الفيلا / المبنى', 'street': 'الشارع', 'area': 'المنطقة', 'same-day area': 'منطقة التوصيل في نفس اليوم'};
   function fields(s){ var p = s.split(/, | and /), out = []; for (var i = 0; i < p.length; i++){ if (!FLD[p[i]]) return null; out.push(FLD[p[i]]); } return out.join(' و'); }
   var KEEP = /^(?:[\d\s.,:;·×+%()\/\-–—|•✓✕*#№AED]|ml|FOMAXO|™)*$/;   // numbers, prices, sizes: leave as they are
   function tr(s){
