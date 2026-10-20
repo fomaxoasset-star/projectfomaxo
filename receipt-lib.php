@@ -210,20 +210,20 @@ h2{margin:0 0 6px;font:500 10.5px/1.2 Jost,Tajawal,sans-serif;letter-spacing:.22
 .meta .no{margin:0;font:500 24px/1.1 'Charles Wright Singapore',Jost,sans-serif;letter-spacing:.02em}
 .meta .dt{margin:6px 0 0;font-weight:500}.meta .dt span{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-inline-end:6px}
 .it{width:100%;border-collapse:collapse;margin:0}
-.it th{font:500 10.5px/1.2 Jost,Tajawal,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--paper);background:var(--ink);padding:10px 10px;text-align:start}
-.it td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+.it th{font:500 10.5px/1.2 Jost,Tajawal,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--paper);background:var(--ink);padding:8px 10px;text-align:start}
+.it td{padding:5px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
 .it tbody tr:nth-child(even) td{background:var(--zebra)}
 .it tr{break-inside:avoid;page-break-inside:avoid}
 .it thead{display:table-header-group}
 .it .c-sz,.it .c-q{text-align:center;white-space:nowrap}
 .it .c-un,.it .c-am{text-align:end;white-space:nowrap}
 .it .c-am{font-weight:500}
-.pn{display:inline;font:600 17px/1.2 'Cormorant Garamond',Tajawal,serif;letter-spacing:.06em;text-transform:uppercase}
-.pf{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
-.gift{display:inline-block;margin-inline-start:8px;padding:2px 8px;border:1px solid var(--gold2);border-radius:999px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);vertical-align:2px}
+.pn{display:inline;font:600 15.5px/1.15 'Cormorant Garamond',Tajawal,serif;letter-spacing:.06em;text-transform:uppercase}
+.pf{display:block;font-size:10.5px;line-height:1.2;color:var(--muted);margin-top:1px}
+.gift{display:inline-block;margin-inline-start:8px;padding:1px 7px;border:1px solid var(--gold2);border-radius:999px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);vertical-align:2px}
 .m{font-family:'Charles Wright Singapore',Jost,sans-serif;white-space:nowrap;direction:ltr;unicode-bidi:isolate}
 .m small{font-size:.68em;margin-right:3px;letter-spacing:.04em}
-s{display:block;color:var(--muted);font-size:11.5px;text-decoration-thickness:1px}
+s{display:inline;color:var(--muted);font-size:11px;text-decoration-thickness:1px;margin-inline-end:6px}
 .fr{color:var(--gold);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:500}
 [dir=rtl] .fr{letter-spacing:0}
 .dash{color:var(--muted)}
@@ -260,7 +260,7 @@ s{display:block;color:var(--muted);font-size:11.5px;text-decoration-thickness:1p
   .sheet{padding:22px 16px 20px}
   .hd .em{width:42px;height:42px}.hd .wm{height:20px}.hd h1{font-size:21px;gap:10px}
   .meta{flex-direction:column;gap:14px;margin:18px 0 14px}.meta .rn{text-align:start}.meta .no{font-size:20px}
-  .it .c-un{display:none}.it th,.it td{padding:8px 6px}.it th{letter-spacing:.08em;font-size:9.5px}.pn{font-size:15px}
+  .it .c-un{display:none}.it th{padding:7px 6px}.it td{padding:5px 6px}.it th{letter-spacing:.08em;font-size:9.5px}.pn{font-size:15px}
   .bt{grid-template-columns:1fr;gap:18px}.bt .sm{order:-1}
   .sm .tt .m{font-size:24px}.ty{font-size:22px}
 }
