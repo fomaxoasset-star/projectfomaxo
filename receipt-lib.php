@@ -170,7 +170,7 @@ function fx_receipt_page($o, $ar = false) {
     . '<div class="py"><span>' . $e($w['payment']) . '</span><b>' . $e($payWord) . '</b><i class="st st-' . $d['pay'] . '">' . $e($w[$d['pay']]) . '</i></div></div>'
     . '<div class="sm">' . $sum . '</div></section>'
     . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si">' . $e($w['foot']) . '</p></footer>'
-    . '</main><div class="wmk" aria-hidden="true"><svg viewBox="0 0 2507 2506"><use href="#emblem"/></svg><svg viewBox="0 0 3196 481"><use href="#wordmark"/></svg></div><script>(function(){var s=document.querySelector(".sheet"),r=document.documentElement;addEventListener("beforeprint",function(){r.classList.add("pm");var mm=s.offsetWidth/186,n=Math.max(1,Math.ceil((s.offsetHeight+2*mm)/(271*mm)));r.classList.remove("pm");s.style.setProperty("--pages",n)})})();if(/[?&]print=1/.test(location.search))addEventListener("load",function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(print,200)})})</script><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
+    . '</main><div class="wmk" aria-hidden="true"><svg viewBox="0 0 2507 2506"><use href="#emblem"/></svg><svg viewBox="0 0 3196 481"><use href="#wordmark"/></svg></div><script>(function(){var s=document.querySelector(".sheet"),r=document.documentElement;addEventListener("beforeprint",function(){r.classList.add("pm");var mm=s.offsetWidth/186,n=Math.max(1,Math.ceil((s.offsetHeight+2*mm)/(271*mm)));r.classList.remove("pm");s.style.setProperty("--pages",n);r.classList.toggle("p1",n<2)})})();if(/[?&]print=1/.test(location.search))addEventListener("load",function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(print,200)})})</script><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
 }
 
 /* the watermark for the PDF, as a picture one A4 page tall (186 x 271 mm) with the logo in the middle */
@@ -288,7 +288,8 @@ s::after{content:"";position:absolute;left:-1px;right:-1px;top:52%;height:1.2px;
   body{padding:0;background:#fff;font-size:12.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .bar{display:none}
   .wmk{display:none}
-  .sheet{max-width:none;box-shadow:none;padding:6mm 6mm 4mm;border-width:4px;min-height:calc(var(--pages,1) * 271mm - 1mm);background:var(--wmprint) center top/100% 271mm repeat-y;-webkit-print-color-adjust:exact;print-color-adjust:exact}   /* one watermark per A4 page: the picture is one page tall (297mm less the page margins) */
+  .sheet{max-width:none;box-shadow:none;padding:6mm 6mm 4mm;border-width:4px;min-height:calc(var(--pages,1) * 271mm - 20mm);background:var(--wmprint) center top/100% 271mm repeat-y;-webkit-print-color-adjust:exact;print-color-adjust:exact}   /* one watermark per A4 page: the picture is one page tall (297mm less the page margins) */
+  .p1 .sheet{min-height:0;background-size:contain;background-position:center;background-repeat:no-repeat}   /* one page: no fixed height (some browsers, like Safari, print a shorter page), the watermark in the middle of the receipt */
   .it tbody tr:nth-child(even) td{background:rgba(120,100,50,.05)}
   .st-paid{color:#fff!important}
   .it .c-un{display:table-cell!important}
