@@ -35,10 +35,11 @@ function fomaxo_db() {
 function fomaxo_db_schema($pdo) {
   $ver = 0;
   try { $ver = (int)$pdo->query("SELECT v FROM fx_settings WHERE k = 'schema'")->fetchColumn(); } catch (Throwable $e) {}
-  if ($ver >= 30) return;
-  if ($ver === 29) { fomaxo_schema_v30($pdo); return; }
-  if ($ver === 28) { fomaxo_schema_v29($pdo); fomaxo_schema_v30($pdo); return; }   // the steps up to v28 are done; never run them (or the orders reset) again
-  if ($ver === 27) { fomaxo_schema_v28($pdo); fomaxo_schema_v29($pdo); fomaxo_schema_v30($pdo); return; }
+  if ($ver >= 31) return;
+  if ($ver === 30) { fomaxo_schema_v31($pdo); return; }
+  if ($ver === 29) { fomaxo_schema_v30($pdo); fomaxo_schema_v31($pdo); return; }
+  if ($ver === 28) { fomaxo_schema_v29($pdo); fomaxo_schema_v30($pdo); fomaxo_schema_v31($pdo); return; }   // the steps up to v28 are done; never run them (or the orders reset) again
+  if ($ver === 27) { fomaxo_schema_v28($pdo); fomaxo_schema_v29($pdo); fomaxo_schema_v30($pdo); fomaxo_schema_v31($pdo); return; }
   /* start from zero: remove the copies of old CSV orders that the first version pulled in (the CSV files themselves stay as a backup) */
   if ($ver === 1) $pdo->exec("DELETE FROM fx_orders WHERE source = 'import'");
   if ($ver === 0) fomaxo_db_tables($pdo);
@@ -182,6 +183,7 @@ function fomaxo_db_schema($pdo) {
   fomaxo_schema_v28($pdo);
   fomaxo_schema_v29($pdo);
   fomaxo_schema_v30($pdo);
+  fomaxo_schema_v31($pdo);
 }
 /* v28: new Discovery Set photos: the boxes photo is the main photo, the 3 vial photo shows for Set of 3 and the 5 vial photo for Set of 5;
    the old photos leave the gallery (only while the old main photo is still first, so a photo picked in admin stays) */
@@ -212,6 +214,13 @@ function fomaxo_schema_v30($pdo) {
   $get->execute(['oldmoney']); $d = json_decode((string)$get->fetchColumn(), true);
   if (is_array($d) && ($d['sizeImages']['100'] ?? '') === 'oldmoney-100-v2') { $d['sizeImages']['100'] = 'oldmoney-100-v3'; $set->execute([fomaxo_json($d), 'oldmoney']); }
   $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '30')");
+}
+/* v31: new Old Money 50ml splash photo (AJAY, 20/10/2026) as the main photo, only while the old one is still first */
+function fomaxo_schema_v31($pdo) {
+  $get = $pdo->prepare('SELECT data FROM fx_products WHERE id = ?'); $set = $pdo->prepare('UPDATE fx_products SET data = ? WHERE id = ?');
+  $get->execute(['oldmoney']); $d = json_decode((string)$get->fetchColumn(), true);
+  if (is_array($d) && ($d['images'][0] ?? '') === 'oldmoney-50-v2') { $d['images'][0] = 'oldmoney-50-v3'; $set->execute([fomaxo_json($d), 'oldmoney']); }
+  $pdo->exec("REPLACE INTO fx_settings (k, v) VALUES ('schema', '31')");
 }
 
 /* AJAY, 11/10/2026: clear every order (Orders and Trash) and start again at FMX-1001. Reviews stay.
