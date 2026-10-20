@@ -860,13 +860,15 @@ function fx_receipt_card($o) {
   $url = fx_receipt_url($no, $ar);
   $head = $ar ? 'مرحباً ' . $f . "،\n\nشكراً لتسوقك من FOMAXO. هذا إيصال طلبك *" . $no . "*:\n" . $url
               : 'Hi ' . ($f !== '' ? $f : 'there') . ",\n\nThank you for shopping with FOMAXO. Here is the receipt for your order *" . $no . "*:\n" . $url;
+  $cr = trim((string)($o['courier'] ?? '')); $tr = trim((string)($o['tracking'] ?? ''));   // courier and tracking go in the message too, when filled in
+  if ($cr !== '' || $tr !== '') $head .= "\n\n" . ($cr !== '' ? ($ar ? 'شركة الشحن: *' : 'Courier: *') . $cr . "*" . ($tr !== '' ? "\n" : '') : '') . ($tr !== '' ? ($ar ? 'رقم التتبع: *' : 'Tracking no: *') . $tr . "*" : '');
   $em = fx_wa_sent_day('rm:' . $no);
   $hasMail = filter_var($o['email'], FILTER_VALIDATE_EMAIL);
   return '<form class="card rcpt" method="post" data-t="4">' . csrf_field() . '<input type="hidden" name="rcpt" value="' . h($no) . '">'
     . '<h2 style="margin-top:0">Receipt</h2>'
     . '<div class="rcrow"><label>Courier<input name="courier" maxlength="60" list="fxCouriers" value="' . h($o['courier'] ?? '') . '" placeholder="Optional"></label>'
     . '<label>Tracking no<input name="tracking" maxlength="80" value="' . h($o['tracking'] ?? '') . '" placeholder="Optional"></label></div>'
-    . '<datalist id="fxCouriers"><option value="Jeebly"><option value="Aramex"><option value="Emirates Post"><option value="DHL"><option value="Quiqup"></datalist>'
+    . '<datalist id="fxCouriers"><option value="Parcel Link"><option value="Jeebly"><option value="Aramex"><option value="Emirates Post"><option value="DHL"><option value="Quiqup"></datalist>'
     . '<p class="muted small rchelp">Shown on the receipt only when filled in.</p>'
     . '<div class="rcbtn"><button class="btn sm">Save</button><a class="btn line sm" href="' . h(fx_receipt_url($no)) . '" target="_blank" rel="noopener">View receipt</a><a class="btn line sm" href="' . h(fx_receipt_url($no) . '&print=1') . '" target="_blank" rel="noopener">Download PDF</a>'
     . str_replace('<span>WhatsApp</span>', '<span>Send on WhatsApp</span>', fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], $head, $ar ? fx_wa_bye($o['name'], true) : fx_wa_bye($o['name'], false), 'rc:' . $no, 'g', $ar, 'btn sm wag', true))
