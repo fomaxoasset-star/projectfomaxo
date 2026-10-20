@@ -517,6 +517,8 @@ function fomaxo_sameday($pdo = null) {
   return ['on' => is_array($c) && !empty($c['on']) && $fee !== null, 'fee' => $fee, 'free' => is_array($c) ? max(0, (int)($c['free'] ?? 0)) : 0,
           'max' => is_array($c) && isset($c['max']) ? max(0, (int)$c['max']) : 3, 'cod' => !is_array($c) || !isset($c['cod']) || !empty($c['cod']),   // cod: cash on delivery allowed for same-day (AJAY 2026-10-20: a switch, on unless turned off)
           'by' => is_array($c) ? min(23, max(0, (int)($c['by'] ?? 0))) : 0,   // by: hour it arrives by, shown to customers (21 = 9 PM; 0 = not shown)
+          'inc' => is_array($c) && isset($c['inc']) ? min(90, max(0, (int)$c['inc'])) : 5,   // inc / perkm: the fee covers the first inc km, then perkm AED for each km more (AJAY 2026-10-20, like Parcel Link; perkm 0 = one fee everywhere)
+          'perkm' => is_array($c) ? min(100, max(0, (int)($c['perkm'] ?? 0))) : 0,
           'km' => is_array($c) && !empty($c['km']) ? min(90, max(5, (int)$c['km'])) : 25,   // up to 90 km, Parcel Link's same-day reach
           'from' => is_array($c) ? min(22, max(0, (int)($c['from'] ?? 0))) : 0,   // from / cut: same-day for orders from this hour until before that hour, Dubai time (0 / 14 = 12 AM to 2 PM)
           'cut' => is_array($c) && !empty($c['cut']) ? min(23, max(1, (int)$c['cut'])) : FX_SD_CUTOFF];
@@ -527,6 +529,8 @@ function fomaxo_hour12($h) { return ($h % 12 ?: 12) . ($h < 12 ? ' AM' : ' PM');
 function fomaxo_sameday_when($sd) {
   return $sd['from'] > 0 ? 'between ' . fomaxo_hour12($sd['from']) . ' and ' . fomaxo_hour12($sd['cut']) : 'before ' . fomaxo_hour12($sd['cut']);   // km: furthest area (estimated road km from Al Azra) that gets same-day
 }
+/* AED the customer pays for same-day to an area this many km from Al Azra (before any "free from") */
+function fomaxo_sameday_fee($sd, $km) { return (int)$sd['fee'] + max(0, $km - $sd['inc']) * $sd['perkm']; }
 /* the areas same-day reaches with this setting: [emirate => [area => km]], A-Z */
 function fomaxo_sameday_areas($sd) {
   $out = [];
@@ -550,7 +554,7 @@ function fomaxo_sameday_pick($area, $emirate, $afterFils) {
   if (!isset(fomaxo_sameday_areas($sd)[$emirate][$area])) return ['error' => 'Same-day delivery does not reach this area. Please choose standard delivery.'];
   if (!fomaxo_sameday_open($sd)) return ['error' => 'Same-day delivery is for orders placed ' . fomaxo_sameday_when($sd) . '. Please choose standard delivery.'];
   if (fomaxo_sameday_full($sd)) return ['error' => 'Same-day delivery is full for today. Please choose standard delivery.'];
-  $fils = $sd['free'] > 0 && $afterFils >= $sd['free'] * 100 ? 0 : $sd['fee'] * 100;
+  $fils = $sd['free'] > 0 && $afterFils >= $sd['free'] * 100 ? 0 : fomaxo_sameday_fee($sd, FX_SD_AREAS[$emirate][$area]) * 100;
   return ['fils' => $fils, 'area' => $area, 'row' => "Same-day delivery ($area, $emirate): " . ($fils ? 'AED ' . number_format($fils / 100, 2, '.', ',') : 'FREE')];
 }
 
