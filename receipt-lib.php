@@ -153,7 +153,7 @@ function fx_receipt_page($o, $ar = false) {
 
   return '<!doctype html><html lang="' . ($ar ? 'ar' : 'en') . '" dir="' . ($ar ? 'rtl' : 'ltr') . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     . '<meta name="robots" content="noindex,nofollow"><title>FOMAXO ' . $e($w['title']) . ' ' . $e($no) . '</title><link rel="icon" href="/assets/img/favicon-32.png">'
-    . '<style>' . fx_receipt_css() . '</style></head><body>'
+    . '<style>' . fx_receipt_css() . ':root{--wmprint:url("data:image/svg+xml,' . rawurlencode(fx_receipt_wm_svg()) . '")}</style></head><body>'
     . '<div class="bar"><a class="lng" href="' . $e($sw . ($ar ? '' : '&l=ar')) . '"' . ($ar ? '' : ' lang="ar"') . '>' . ($ar ? 'English' : 'عربي') . '</a>'
     . '<button type="button" class="pdf" onclick="window.print()">' . $e($w['pdf']) . '</button></div>'
     . '<main class="sheet">'
@@ -168,7 +168,15 @@ function fx_receipt_page($o, $ar = false) {
     . '<div class="py"><span>' . $e($w['payment']) . '</span><b>' . $e($payWord) . '</b><i class="st st-' . $d['pay'] . '">' . $e($w[$d['pay']]) . '</i></div></div>'
     . '<div class="sm">' . $sum . '</div></section>'
     . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si">' . $e($w['foot']) . '</p></footer>'
-    . '</main><script>if(/[?&]print=1/.test(location.search))addEventListener("load",function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(print,200)})})</script><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
+    . '</main><div class="wmk" aria-hidden="true"><svg viewBox="0 0 2507 2506"><use href="#emblem"/></svg><svg viewBox="0 0 3196 481"><use href="#wordmark"/></svg></div><script>(function(){var s=document.querySelector(".sheet"),r=document.documentElement;addEventListener("beforeprint",function(){r.classList.add("pm");var mm=s.offsetWidth/186,n=Math.max(1,Math.ceil((s.offsetHeight+2*mm)/(271*mm)));r.classList.remove("pm");s.style.setProperty("--pages",n)})})();if(/[?&]print=1/.test(location.search))addEventListener("load",function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(print,200)})})</script><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
+}
+
+/* the watermark for the PDF, as a picture one A4 page tall (186 x 271 mm) with the logo in the middle */
+function fx_receipt_wm_svg() {
+  preg_match_all('/<path[^>]*\/>/', FX_RECEIPT_SYMBOLS, $m);
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1860 2710"><g fill="#0b0b0b" opacity=".05">'
+    . '<g transform="translate(660 870) scale(.2155)">' . str_replace('currentColor', '#0b0b0b', $m[0][0] ?? '') . '</g>'
+    . '<g transform="translate(400 1530) scale(.3255)">' . str_replace('currentColor', '#0b0b0b', $m[0][1] ?? '') . '</g></g></svg>';
 }
 
 function fx_receipt_css() { return <<<'CSS'
@@ -191,6 +199,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.45 Jost,Taja
 .sheet{max-width:794px;margin:0 auto;background:var(--paper);border-top:6px solid var(--band);border-bottom:6px solid var(--band);box-shadow:0 10px 40px rgba(0,0,0,.08);padding:30px 44px 26px;position:relative}
 .sheet::before,.sheet::after{content:"";position:absolute;left:0;right:0;height:1px;background:var(--gold2)}
 .sheet::before{top:4px}.sheet::after{bottom:4px}
+/* the FOMAXO logo as a faint watermark in the middle (on every page of the PDF) */
+.wmk{position:fixed;left:50%;top:50%;width:min(460px,72vw);transform:translate(-50%,-50%);color:var(--ink);opacity:.045;pointer-events:none;z-index:2;display:flex;flex-direction:column;align-items:center;gap:6%}
+.wmk svg{display:block;width:62%;height:auto}.wmk svg+svg{width:100%;aspect-ratio:3196/481}
+@media (prefers-color-scheme:dark){.wmk{opacity:.06}}
 .hd{text-align:center;color:var(--ink)}
 .hd .em{width:52px;height:52px;display:block;margin:0 auto 10px;color:var(--ink)}
 .hd .wm{height:26px;width:auto;aspect-ratio:3196/481;display:block;margin:0 auto;color:var(--ink)}
@@ -265,13 +277,17 @@ s::after{content:"";position:absolute;left:-1px;right:-1px;top:52%;height:1.2px;
   .bt{grid-template-columns:1fr;gap:18px}.bt .sm{order:-1}
   .sm .tt .m{font-size:24px}.ty{font-size:22px}
 }
+/* .pm: the printed page's width and text size, used for a moment before printing to count the pages (so each page gets its watermark) */
+.pm .bar{display:none}.pm body{padding:0;font-size:12.5px}.pm .sheet{width:186mm;max-width:none;padding:6mm 6mm 4mm;border-width:4px}.pm .it .c-un{display:table-cell!important}
 @page{size:A4;margin:12mm 12mm 14mm}
 @page{@bottom-center{content:counter(page) " / " counter(pages);font:9px Jost,sans-serif;color:#8a8273}}
 @media print{
   :root{--bg:#fff;--paper:#fff;--ink:#0b0b0b;--soft:#3d3a35;--muted:#6f685c;--line:#e6dfcf;--gold:#9a7a2c;--gold2:#c9a64b;--zebra:#faf8f3;--red:#a3261b;color-scheme:light}
   body{padding:0;background:#fff;font-size:12.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .bar{display:none}
-  .sheet{max-width:none;box-shadow:none;padding:6mm 6mm 4mm;border-width:4px}
+  .wmk{display:none}
+  .sheet{max-width:none;box-shadow:none;padding:6mm 6mm 4mm;border-width:4px;min-height:calc(var(--pages,1) * 271mm - 1mm);background:var(--wmprint) center top/100% 271mm repeat-y;-webkit-print-color-adjust:exact;print-color-adjust:exact}   /* one watermark per A4 page: the picture is one page tall (297mm less the page margins) */
+  .it tbody tr:nth-child(even) td{background:rgba(120,100,50,.05)}
   .st-paid{color:#fff!important}
   .it .c-un{display:table-cell!important}
 }
