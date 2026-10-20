@@ -1270,7 +1270,6 @@
     [/^Order between (\d+ [AP]M) and (\d+ [AP]M)$/, function(m){ return 'اطلب بين ' + hrAr(m[1]) + ' و' + hrAr(m[2]); }],
     [/^Same-day delivery is for orders placed (?:before (\d+ [AP]M)|between (\d+ [AP]M) and (\d+ [AP]M))\. Please choose standard delivery\.$/, function(m){ return 'التوصيل في نفس اليوم للطلبات ' + (m[1] ? 'قبل الساعة ' + hrAr(m[1]) : 'بين ' + hrAr(m[2]) + ' و' + hrAr(m[3])) + '. يرجى اختيار التوصيل العادي.'; }],
     [/^Same-day delivery: your order arrives today by (\d+) PM\.( Questions\? WhatsApp us on)?$/, function(m){ return 'توصيل في نفس اليوم: يصلك طلبك اليوم قبل ' + m[1] + ' مساءً.' + (m[2] ? ' لديك أسئلة؟ راسلنا على واتساب' : ''); }],
-    [/^from (AED [\d,.]+)$/, function(m){ return 'من ' + m[1]; }],
     [/^Fee (AED [\d,.]+)$/, function(m){ return 'رسوم ' + m[1]; }],
     [/^For orders above (AED [\d,.]+)$/, function(m){ return 'للطلبات فوق ' + m[1]; }],
     [/^For orders above (AED [\d,.]+) · (AED [\d,.]+) fee$/, function(m){ return 'للطلبات فوق ' + m[1] + ' · رسوم ' + m[2]; }],
