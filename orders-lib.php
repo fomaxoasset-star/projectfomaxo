@@ -509,7 +509,7 @@ function fomaxo_sameday($pdo = null) {
   try { $pdo = $pdo ?: fomaxo_db(); $c = $pdo ? json_decode((string)fomaxo_setting($pdo, 'sameday'), true) : null; } catch (Throwable $e) {}
   $fee = is_array($c) && isset($c['fee']) && is_numeric($c['fee']) ? max(0, (int)$c['fee']) : null;
   return ['on' => is_array($c) && !empty($c['on']) && $fee !== null, 'fee' => $fee, 'free' => is_array($c) ? max(0, (int)($c['free'] ?? 0)) : 0,
-          'max' => is_array($c) && isset($c['max']) ? max(0, (int)$c['max']) : 3];
+          'max' => is_array($c) && isset($c['max']) ? max(0, (int)$c['max']) : 3, 'cod' => !is_array($c) || !isset($c['cod']) || !empty($c['cod'])];   // cod: cash on delivery allowed for same-day (AJAY 2026-10-20: a switch, on unless turned off)
 }
 /* true when today's same-day orders (Dubai day; not test, unpaid card or cancelled) reached the daily limit */
 function fomaxo_sameday_full($sd, $pdo = null) {

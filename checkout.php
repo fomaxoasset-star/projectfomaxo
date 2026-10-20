@@ -86,6 +86,7 @@ if ($COD_MAX > 0 && $afterFils >= $COD_MAX * 100) fail(400, 'COD for orders unde
 /* same-day delivery (Parcel Link from Al Azra): area, 2 PM and fee checked here (orders-lib.php fomaxo_sameday_pick) */
 $sd = fomaxo_sameday_pick($in['sameday'] ?? null, $cu['emirate'], $afterFils);
 if (isset($sd['error'])) fail(400, $sd['error']);
+if ($sd && !fomaxo_sameday()['cod']) fail(400, 'Same-day orders are paid by card. Please choose card, or standard delivery for cash on delivery.');
 $shipFils = $sd['fils'] ?? 0;
 
 /* FREE 10ml mini: the customer's pick if it comes in 10ml, otherwise the first scent that does */
