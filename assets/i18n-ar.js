@@ -988,6 +988,25 @@
 "Customer photos": "صور العملاء",
 "Dark mode": "الوضع الداكن",
 "Delivery is free anywhere in the UAE.": "التوصيل مجاني لجميع أنحاء الإمارات.",
+"Same-day delivery": "توصيل في نفس اليوم",
+"order before 2 PM": "اطلب قبل 2 ظهراً",
+"Standard delivery": "التوصيل العادي",
+"1–3 days": "1–3 أيام",
+"Order before 2 PM, arrives today": "اطلب قبل 2 ظهراً، يصلك اليوم",
+"Closed for today, order before 2 PM": "انتهى لليوم، اطلب قبل 2 ظهراً",
+"Full for today, try tomorrow": "اكتمل لليوم، جرّب غداً",
+"Not for same-day delivery": "غير متاح للتوصيل في نفس اليوم",
+"Same-day orders are paid by card": "طلبات التوصيل في نفس اليوم تُدفع بالبطاقة",
+"Same-day orders are paid by card. Please choose card, or standard delivery for cash on delivery.": "طلبات التوصيل في نفس اليوم تُدفع بالبطاقة. يرجى اختيار البطاقة، أو التوصيل العادي للدفع عند الاستلام.",
+"Same-day delivery is full for today. Please choose standard delivery.": "التوصيل في نفس اليوم مكتمل لليوم. يرجى اختيار التوصيل العادي.",
+"Your area": "منطقتك",
+"Choose your area": "اختر منطقتك",
+"Not in the list? Choose standard delivery.": "منطقتك غير موجودة؟ اختر التوصيل العادي.",
+"Same-day delivery: your order arrives today.": "توصيل في نفس اليوم: يصلك طلبك اليوم.",
+"Same-day delivery: your order arrives today. Questions? WhatsApp us on": "توصيل في نفس اليوم: يصلك طلبك اليوم. لديك أسئلة؟ راسلنا على واتساب",
+"Same-day delivery is not available right now. Please choose standard delivery.": "التوصيل في نفس اليوم غير متاح حالياً. يرجى اختيار التوصيل العادي.",
+"Same-day delivery does not reach this area. Please choose standard delivery.": "التوصيل في نفس اليوم لا يصل إلى هذه المنطقة. يرجى اختيار التوصيل العادي.",
+"Same-day delivery is for orders placed before 2 PM. Please choose standard delivery.": "التوصيل في نفس اليوم للطلبات قبل الساعة 2 ظهراً. يرجى اختيار التوصيل العادي.",
 "Explore FOMAXO": "اكتشف FOMAXO",
 "FOMAXO — The House of Modern Luxury": "FOMAXO — دار الفخامة العصرية",
 "Franchise — FOMAXO": "الامتياز التجاري — FOMAXO",
@@ -1248,6 +1267,7 @@
     [/^(\d+) vials$/, function(m){ return m[1] + ' قوارير'; }],
     [/^Secure checkout · (Card, Apple Pay, Google Pay · )?Cash on delivery over (AED [\d,.]+) · Free UAE delivery$/, function(m){ return 'دفع آمن · ' + (m[1] ? 'بطاقة، Apple Pay، Google Pay · ' : '') + 'الدفع عند الاستلام للطلبات فوق ' + m[2] + ' · توصيل مجاني داخل الإمارات'; }],
     [/^Pay in cash when your order arrives · (AED [\d,.]+) fee$/, function(m){ return 'ادفع نقداً عند وصول طلبك · رسوم ' + m[1]; }],
+    [/^in (Dubai|Sharjah|Ajman) · order before 2 PM$/, function(m){ return 'في ' + {Dubai: 'دبي', Sharjah: 'الشارقة', Ajman: 'عجمان'}[m[1]] + ' · اطلب قبل 2 ظهراً'; }],
     [/^Fee (AED [\d,.]+)$/, function(m){ return 'رسوم ' + m[1]; }],
     [/^For orders above (AED [\d,.]+)$/, function(m){ return 'للطلبات فوق ' + m[1]; }],
     [/^For orders above (AED [\d,.]+) · (AED [\d,.]+) fee$/, function(m){ return 'للطلبات فوق ' + m[1] + ' · رسوم ' + m[2]; }],
@@ -1273,7 +1293,7 @@
   ];
   // checkout boxes still missing ("full name, mobile number and area") → Arabic list
   var FLD = {'full name': 'اسمك الكامل', 'mobile number': 'رقم الجوال', 'correct mobile number': 'رقم جوال صحيح', 'correct email': 'بريد إلكتروني صحيح',
-    'emirate': 'الإمارة', 'villa / building no': 'رقم الفيلا / المبنى', 'street': 'الشارع', 'area': 'المنطقة'};
+    'emirate': 'الإمارة', 'villa / building no': 'رقم الفيلا / المبنى', 'street': 'الشارع', 'area': 'المنطقة', 'same-day area': 'منطقة التوصيل في نفس اليوم'};
   function fields(s){ var p = s.split(/, | and /), out = []; for (var i = 0; i < p.length; i++){ if (!FLD[p[i]]) return null; out.push(FLD[p[i]]); } return out.join(' و'); }
   var KEEP = /^(?:[\d\s.,:;·×+%()\/\-–—|•✓✕*#№AED]|ml|FOMAXO|™)*$/;   // numbers, prices, sizes: leave as they are
   function tr(s){

@@ -25,7 +25,7 @@ function fx_receipt_words($ar) {
   $en = ['tag' => 'Perfume & Personal Care', 'title' => 'Receipt', 'to' => 'Issued to', 'no' => 'Receipt no', 'date' => 'Date', 'name' => 'Name', 'mobile' => 'Mobile', 'email' => 'Email',
     'item' => 'Item', 'size' => 'Size', 'unit' => 'Unit price', 'qty' => 'Qty', 'amount' => 'Amount', 'free' => 'Free', 'gift' => 'Free gift', 'cgift' => 'Free with coupon',
     'sub' => 'Subtotal', 'multi' => 'Multi-buy discount', 'bt' => 'Bought together', 'coupon' => 'Coupon', 'disc' => 'Discount', 'codfee' => 'Cash on delivery fee',
-    'delivery' => 'Delivery', 'paid_total' => 'Total paid', 'due_total' => 'Amount to pay', 'total' => 'Total', 'saved' => 'You saved', 'saved2' => 'on this order',
+    'delivery' => 'Delivery', 'sameday' => 'Same-day delivery', 'paid_total' => 'Total paid', 'due_total' => 'Amount to pay', 'total' => 'Total', 'saved' => 'You saved', 'saved2' => 'on this order',
     'address' => 'Delivery address', 'ship' => 'Shipping', 'courier' => 'Courier', 'tracking' => 'Tracking no', 'payment' => 'Payment', 'cod' => 'Cash on delivery', 'card' => 'Card',
     'paid' => 'Paid', 'unpaid' => 'Unpaid', 'cancelled' => 'Cancelled', 'refunded' => 'Refunded', 'thanks' => 'Thank you for your purchase',
     'foot' => 'fomaxo.com · Dubai, United Arab Emirates', 'pdf' => 'Download PDF', 'page' => 'Page', 'sets' => 'Set of', 'vials' => 'vials', 'with' => 'Fragrances'];
@@ -33,7 +33,7 @@ function fx_receipt_words($ar) {
   return ['tag' => 'العطور والعناية الشخصية', 'title' => 'إيصال', 'to' => 'صادر إلى', 'no' => 'رقم الإيصال', 'date' => 'التاريخ', 'name' => 'الاسم', 'mobile' => 'الجوال', 'email' => 'البريد',
     'item' => 'المنتج', 'size' => 'الحجم', 'unit' => 'سعر الوحدة', 'qty' => 'الكمية', 'amount' => 'المبلغ', 'free' => 'مجاناً', 'gift' => 'هدية مجانية', 'cgift' => 'مجاناً مع الكوبون',
     'sub' => 'المجموع الفرعي', 'multi' => 'خصم الشراء المتعدد', 'bt' => 'خصم الشراء معاً', 'coupon' => 'كوبون', 'disc' => 'خصم', 'codfee' => 'رسوم الدفع عند الاستلام',
-    'delivery' => 'التوصيل', 'paid_total' => 'المبلغ المدفوع', 'due_total' => 'المبلغ المستحق', 'total' => 'الإجمالي', 'saved' => 'وفّرت', 'saved2' => 'في هذا الطلب',
+    'delivery' => 'التوصيل', 'sameday' => 'توصيل في نفس اليوم', 'paid_total' => 'المبلغ المدفوع', 'due_total' => 'المبلغ المستحق', 'total' => 'الإجمالي', 'saved' => 'وفّرت', 'saved2' => 'في هذا الطلب',
     'address' => 'عنوان التوصيل', 'ship' => 'الشحن', 'courier' => 'شركة الشحن', 'tracking' => 'رقم التتبع', 'payment' => 'الدفع', 'cod' => 'الدفع عند الاستلام', 'card' => 'بطاقة',
     'paid' => 'مدفوع', 'unpaid' => 'غير مدفوع', 'cancelled' => 'ملغي', 'refunded' => 'مسترد', 'thanks' => 'شكراً لشرائك من FOMAXO',
     'foot' => 'fomaxo.com · دبي، الإمارات العربية المتحدة', 'pdf' => 'تحميل PDF', 'page' => 'صفحة', 'sets' => 'مجموعة من', 'vials' => 'عينات', 'with' => 'العطور'];
@@ -106,7 +106,9 @@ function fx_receipt_data($o) {
   }
   $st = (string)$o['status'];
   $pay = in_array($st, ['Cancelled', 'Refunded'], true) ? strtolower($st) : (in_array($st, ['Paid', 'Delivered'], true) ? 'paid' : 'unpaid');
-  return ['lines' => $lines, 'priced' => $priced, 'disc' => $disc, 'save' => round($save, 2), 'pay' => $pay,
+  /* same-day delivery (checkout from 20/10/2026): kept as "Same-day delivery (Area, Emirate): AED 25.00" or ": FREE" in the items; null = standard, free */
+  $sd = preg_match('/(?:^|\|)\s*Same-day delivery \([^|]*\):\s*(FREE|AED\s*([\d,]+(?:\.\d+)?))\s*(?:\||$)/u', (string)$o['items'], $m) ? (isset($m[2]) && $m[2] !== '' ? (float)str_replace(',', '', $m[2]) : 0.0) : null;
+  return ['lines' => $lines, 'priced' => $priced, 'disc' => $disc, 'sd' => $sd, 'save' => round($save, 2), 'pay' => $pay,
           'cod' => stripos((string)$o['payment'], 'cash') !== false, 'sub' => $o['subtotal'] !== null ? (float)$o['subtotal'] : $sum];
 }
 
@@ -138,7 +140,7 @@ function fx_receipt_page($o, $ar = false) {
   $sum = '<div class="tr"><span>' . $e($w['sub']) . '</span>' . $M($d['sub']) . '</div>';
   foreach ($d['disc'] as $x) $sum .= '<div class="tr dc"><span>' . $e($ar ? fx_receipt_disc_label($x['label'], $w) : $x['label']) . '</span><span class="m">−&nbsp;<small>AED</small>' . number_format($x['amt'], 2) . '</span></div>';
   if ((float)$o['fee'] > 0) $sum .= '<div class="tr"><span>' . $e($w['codfee']) . '</span>' . $M($o['fee']) . '</div>';
-  $sum .= '<div class="tr"><span>' . $e($w['delivery']) . '</span><b class="fr">' . $e($w['free']) . '</b></div>';
+  $sum .= '<div class="tr"><span>' . $e($d['sd'] !== null ? $w['sameday'] : $w['delivery']) . '</span>' . ($d['sd'] ? $M($d['sd']) : '<b class="fr">' . $e($w['free']) . '</b>') . '</div>';
   $sum .= '<div class="tt"><span>' . $e($d['pay'] === 'paid' ? $w['paid_total'] : ($d['pay'] === 'unpaid' ? $w['due_total'] : $w['total'])) . '</span>' . $M($o['total']) . '</div>';
   if ($d['save'] > 0.009) $sum .= '<div class="sv">' . $e($w['saved']) . ' ' . $M($d['save']) . ' ' . $e($w['saved2']) . '</div>';
 
@@ -308,7 +310,7 @@ function fx_receipt_email($o) {
   $sum = $tr('Subtotal', $aed($d['sub']));
   foreach ($d['disc'] as $x) $sum .= $tr($x['label'], '-' . $aed($x['amt']), '#9a7a2c');
   if ((float)$o['fee'] > 0) $sum .= $tr('Cash on delivery fee', $aed($o['fee']));
-  $sum .= $tr('Delivery', 'FREE');
+  $sum .= $d['sd'] !== null ? $tr('Same-day delivery', $d['sd'] ? $aed($d['sd']) : 'FREE') : $tr('Delivery', 'FREE');
   $sum .= '<tr><td style="padding:10px 6px;border-top:1px solid #0b0b0b;font:bold 16px Arial,sans-serif;color:#0b0b0b">' . ($d['pay'] === 'paid' ? 'Total paid' : ($d['pay'] === 'unpaid' ? 'Amount to pay' : 'Total')) . '</td><td style="padding:10px 6px;border-top:1px solid #0b0b0b;font:bold 18px Arial,sans-serif;text-align:right;color:#0b0b0b;white-space:nowrap">' . $aed($o['total']) . '</td></tr>';
   $ship = (trim((string)($o['courier'] ?? '')) !== '' ? 'Courier: <b>' . $e($o['courier']) . '</b><br>' : '') . (trim((string)($o['tracking'] ?? '')) !== '' ? 'Tracking no: <b>' . $e($o['tracking']) . '</b><br>' : '');
   $url = fx_receipt_url((string)$o['order_no']);
