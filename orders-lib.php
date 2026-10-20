@@ -496,7 +496,7 @@ function fomaxo_cod_limits($pdo = null) {
 /* Same-day delivery from the Al Azra (Sharjah) warehouse by Parcel Link (AJAY 2026-10-20): orders placed before 2 PM Dubai time,
    to the areas below only (about 30 km by road or less; the km are estimates, shown nowhere). The customer picks their area at checkout,
    so the site never asks for their location. Fee and "free from" are set on admin → Settings → Cash; Off, or no fee typed = not offered. */
-const FX_SD_CUTOFF = 14;   // 2 PM
+const FX_SD_CUTOFF = 14;   // 2 PM, until AJAY picks other hours (Settings → Same-day → Orders from / until)
 const FX_SD_AREAS = [
   'Sharjah' => ['Abu Shagara' => 8, 'Al Azra' => 1, 'Al Butina' => 6, 'Al Falaj' => 3, 'Al Fisht' => 5, 'Al Ghafiya' => 2, 'Al Gharb' => 9, 'Al Hamriyah' => 17, 'Al Heera' => 4, 'Al Jazzat' => 9, 'Al Jubail' => 8, 'Al Khan' => 14, 'Al Khezamia' => 5, 'Al Layyeh' => 8, 'Al Majaz' => 11, 'Al Mirgab' => 8, 'Al Mujarrah' => 8, 'Al Nabba' => 7, 'Al Nahda' => 14, 'Al Nasserya' => 6, 'Al Nouf' => 13, 'Al Qadisiya' => 6, 'Al Qasimia' => 8, 'Al Rahmaniya' => 13, 'Al Ramtha' => 5, 'Al Riqqa' => 5, 'Al Sabkha' => 7, 'Al Shahba' => 7, 'Al Sharq' => 7, 'Al Suyoh' => 15, 'Al Taawun' => 14, 'Al Yarmook' => 7, 'Al Zahia' => 13, 'Halwan' => 5, 'Industrial Area' => 10, 'Maysaloon' => 5, 'Muwaileh' => 11, 'Rolla' => 8, 'Samnan' => 6, 'University City' => 12],
   'Ajman' => ['Ajman Corniche' => 6, 'Ajman Industrial' => 6, 'Al Alia' => 17, 'Al Amerah' => 24, 'Al Bustan' => 5, 'Al Hamidiya' => 11, 'Al Helio' => 20, 'Al Jurf' => 9, 'Al Mowaihat' => 6, 'Al Nakhil' => 6, 'Al Nuaimiya' => 4, 'Al Rashidiya' => 5, 'Al Rawda' => 7, 'Al Tallah' => 13, 'Al Yasmeen' => 17, 'Al Zahra' => 10, 'Al Zorah' => 10],
@@ -514,7 +514,15 @@ function fomaxo_sameday($pdo = null) {
   return ['on' => is_array($c) && !empty($c['on']) && $fee !== null, 'fee' => $fee, 'free' => is_array($c) ? max(0, (int)($c['free'] ?? 0)) : 0,
           'max' => is_array($c) && isset($c['max']) ? max(0, (int)$c['max']) : 3, 'cod' => !is_array($c) || !isset($c['cod']) || !empty($c['cod']),   // cod: cash on delivery allowed for same-day (AJAY 2026-10-20: a switch, on unless turned off)
           'by' => is_array($c) ? min(23, max(0, (int)($c['by'] ?? 0))) : 0,   // by: hour it arrives by, shown to customers (21 = 9 PM; 0 = not shown)
-          'km' => is_array($c) && !empty($c['km']) ? min(40, max(5, (int)$c['km'])) : 25];   // km: furthest area (estimated road km from Al Azra) that gets same-day
+          'km' => is_array($c) && !empty($c['km']) ? min(40, max(5, (int)$c['km'])) : 25,
+          'from' => is_array($c) ? min(22, max(0, (int)($c['from'] ?? 0))) : 0,   // from / cut: same-day for orders from this hour until before that hour, Dubai time (0 / 14 = 12 AM to 2 PM)
+          'cut' => is_array($c) && !empty($c['cut']) ? min(23, max(1, (int)$c['cut'])) : FX_SD_CUTOFF];
+}
+/* 14 → "2 PM", 0 → "12 AM" (also used in the messages customers see) */
+function fomaxo_hour12($h) { return ($h % 12 ?: 12) . ($h < 12 ? ' AM' : ' PM'); }
+/* "before 2 PM", or "between 9 AM and 2 PM" when it starts later than midnight */
+function fomaxo_sameday_when($sd) {
+  return $sd['from'] > 0 ? 'between ' . fomaxo_hour12($sd['from']) . ' and ' . fomaxo_hour12($sd['cut']) : 'before ' . fomaxo_hour12($sd['cut']);   // km: furthest area (estimated road km from Al Azra) that gets same-day
 }
 /* the areas same-day reaches with this setting: [emirate => [area => km]], A-Z */
 function fomaxo_sameday_areas($sd) {
@@ -529,7 +537,7 @@ function fomaxo_sameday_full($sd, $pdo = null) {
     $n = (int)$pdo->query("SELECT COUNT(*) FROM fx_orders WHERE created_at >= CURDATE() AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') AND items LIKE '%Same-day delivery (%'")->fetchColumn();
     return $n >= $sd['max']; } catch (Throwable $e) { return false; }
 }
-function fomaxo_sameday_open() { return (int)(new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('G') < FX_SD_CUTOFF; }
+function fomaxo_sameday_open($sd) { $h = (int)(new DateTime('now', new DateTimeZone('Asia/Dubai')))->format('G'); return $h >= $sd['from'] && $h < $sd['cut']; }
 /* the same-day choice sent with an order (the area name, or nothing for standard delivery), checked here, never trusted from the browser.
    null = standard delivery; ['error'] = can't be done; else ['fils' => fee, 'row' => line for the order items] */
 function fomaxo_sameday_pick($area, $emirate, $afterFils) {
@@ -537,7 +545,7 @@ function fomaxo_sameday_pick($area, $emirate, $afterFils) {
   $sd = fomaxo_sameday();
   if (!$sd['on']) return ['error' => 'Same-day delivery is not available right now. Please choose standard delivery.'];
   if (!isset(fomaxo_sameday_areas($sd)[$emirate][$area])) return ['error' => 'Same-day delivery does not reach this area. Please choose standard delivery.'];
-  if (!fomaxo_sameday_open()) return ['error' => 'Same-day delivery is for orders placed before 2 PM. Please choose standard delivery.'];
+  if (!fomaxo_sameday_open($sd)) return ['error' => 'Same-day delivery is for orders placed ' . fomaxo_sameday_when($sd) . '. Please choose standard delivery.'];
   if (fomaxo_sameday_full($sd)) return ['error' => 'Same-day delivery is full for today. Please choose standard delivery.'];
   $fils = $sd['free'] > 0 && $afterFils >= $sd['free'] * 100 ? 0 : $sd['fee'] * 100;
   return ['fils' => $fils, 'area' => $area, 'row' => "Same-day delivery ($area, $emirate): " . ($fils ? 'AED ' . number_format($fils / 100, 2, '.', ',') : 'FREE')];

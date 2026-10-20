@@ -78,9 +78,9 @@ if ($pdo) { try { $who = []; $year = date('Y-m-d', strtotime('-6 day')) . ' 00:0
 $hidePages = [];
 if ($pdo) { try { $hidePages = array_values(array_intersect(json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: [], array_keys(FX_SITE_PAGES))); } catch (Throwable $e) {} }
 $btSet = fomaxo_bt($pdo ?: null);
-/* same-day delivery (admin → Settings → Cash): fee, free from, 2 PM and the areas it reaches; null = not offered */
+/* same-day delivery (admin → Settings → Same-day): fee, free from, order hours and the areas it reaches; null = not offered */
 $sdSet = fomaxo_sameday($pdo ?: null);
-$sdOut = $sdSet['on'] ? ['fee' => $sdSet['fee'], 'free' => $sdSet['free'], 'cut' => FX_SD_CUTOFF, 'cod' => $sdSet['cod'], 'by' => $sdSet['by'], 'full' => fomaxo_sameday_full($sdSet, $pdo ?: null), 'areas' => array_map('array_keys', fomaxo_sameday_areas($sdSet))] : null;
+$sdOut = $sdSet['on'] ? ['fee' => $sdSet['fee'], 'free' => $sdSet['free'], 'from' => $sdSet['from'], 'cut' => $sdSet['cut'], 'cod' => $sdSet['cod'], 'by' => $sdSet['by'], 'full' => fomaxo_sameday_full($sdSet, $pdo ?: null), 'areas' => array_map('array_keys', fomaxo_sameday_areas($sdSet))] : null;
 if ($sdOut) {   // this visitor's emirate from their internet address (approximate, nothing asked), only when it has same-day areas: the product page says so
   require_once __DIR__ . '/geo-lib.php';
   [$geoCc, $geoEm] = fomaxo_geo(fomaxo_geo_ip());
