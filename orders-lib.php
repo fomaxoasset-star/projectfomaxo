@@ -498,12 +498,15 @@ function fomaxo_cod_limits($pdo = null) {
    so the site never asks for their location. Fee and "free from" are set on admin → Settings → Cash; Off, or no fee typed = not offered. */
 const FX_SD_CUTOFF = 14;   // 2 PM, until AJAY picks other hours (Settings → Same-day → Orders from / until)
 const FX_SD_AREAS = [
-  'Sharjah' => ['Abu Shagara' => 8, 'Al Azra' => 1, 'Al Butina' => 6, 'Al Falaj' => 3, 'Al Fisht' => 5, 'Al Ghafiya' => 2, 'Al Gharb' => 9, 'Al Hamriyah' => 17, 'Al Heera' => 4, 'Al Jazzat' => 9, 'Al Jubail' => 8, 'Al Khan' => 14, 'Al Khezamia' => 5, 'Al Layyeh' => 8, 'Al Majaz' => 11, 'Al Mirgab' => 8, 'Al Mujarrah' => 8, 'Al Nabba' => 7, 'Al Nahda' => 14, 'Al Nasserya' => 6, 'Al Nouf' => 13, 'Al Qadisiya' => 6, 'Al Qasimia' => 8, 'Al Rahmaniya' => 13, 'Al Ramtha' => 5, 'Al Riqqa' => 5, 'Al Sabkha' => 7, 'Al Shahba' => 7, 'Al Sharq' => 7, 'Al Suyoh' => 15, 'Al Taawun' => 14, 'Al Yarmook' => 7, 'Al Zahia' => 13, 'Halwan' => 5, 'Industrial Area' => 10, 'Maysaloon' => 5, 'Muwaileh' => 11, 'Rolla' => 8, 'Samnan' => 6, 'University City' => 12],
+  'Sharjah' => ['Abu Shagara' => 8, 'Al Azra' => 1, 'Al Butina' => 6, 'Al Falaj' => 3, 'Al Fisht' => 5, 'Al Ghafiya' => 2, 'Al Gharb' => 9, 'Al Hamriyah' => 17, 'Al Heera' => 4, 'Al Jazzat' => 9, 'Al Jubail' => 8, 'Al Khan' => 14, 'Al Khezamia' => 5, 'Al Layyeh' => 8, 'Al Majaz' => 11, 'Al Mirgab' => 8, 'Al Mujarrah' => 8, 'Al Nabba' => 7, 'Al Nahda' => 14, 'Al Nasserya' => 6, 'Al Nouf' => 13, 'Al Qadisiya' => 6, 'Al Qasimia' => 8, 'Al Rahmaniya' => 13, 'Al Ramtha' => 5, 'Al Riqqa' => 5, 'Al Sabkha' => 7, 'Al Shahba' => 7, 'Al Sharq' => 7, 'Al Suyoh' => 15, 'Al Taawun' => 14, 'Al Yarmook' => 7, 'Al Zahia' => 13, 'Halwan' => 5, 'Industrial Area' => 10, 'Maysaloon' => 5, 'Muwaileh' => 11, 'Rolla' => 8, 'Samnan' => 6, 'University City' => 12, 'Al Dhaid' => 60, 'Mleiha' => 69],
   'Ajman' => ['Ajman Corniche' => 6, 'Ajman Industrial' => 6, 'Al Alia' => 17, 'Al Amerah' => 24, 'Al Bustan' => 5, 'Al Hamidiya' => 11, 'Al Helio' => 20, 'Al Jurf' => 9, 'Al Mowaihat' => 6, 'Al Nakhil' => 6, 'Al Nuaimiya' => 4, 'Al Rashidiya' => 5, 'Al Rawda' => 7, 'Al Tallah' => 13, 'Al Yasmeen' => 17, 'Al Zahra' => 10, 'Al Zorah' => 10],
   'Dubai' => ['Al Garhoud' => 23, 'Al Khawaneej' => 21, 'Al Mamzar' => 17, 'Al Muteena' => 22, 'Al Nahda' => 16, 'Al Qusais' => 17, 'Al Rashidiya' => 22, 'Al Twar' => 18, 'Deira' => 23, 'Hor Al Anz' => 19, 'Mirdif' => 23, 'Mizhar' => 19, 'Muhaisnah' => 18,
               /* further Dubai areas, only offered when Settings → Same-day "Up to" reaches them */
               'Al Warqa' => 27, 'Nad Al Hamar' => 26, 'Al Karama' => 27, 'Bur Dubai' => 27, 'Oud Metha' => 27, 'Al Jaddaf' => 27, 'Dubai Festival City' => 26, 'Ras Al Khor' => 29,
-              'International City' => 31, 'Al Satwa' => 32, 'DIFC' => 32, 'Downtown Dubai' => 35, 'Jumeirah' => 35, 'Business Bay' => 36, 'Al Wasl' => 36, 'Dubai Silicon Oasis' => 39],
+              'International City' => 31, 'Al Satwa' => 32, 'DIFC' => 32, 'Downtown Dubai' => 35, 'Jumeirah' => 35, 'Business Bay' => 36, 'Al Wasl' => 36, 'Dubai Silicon Oasis' => 39,
+              'Al Warsan' => 30, 'Nad Al Sheba' => 35, 'Meydan' => 37, 'Al Safa' => 41, 'Al Quoz' => 43, 'Al Barari' => 44, 'Dubai Hills' => 48, 'Umm Suqeim' => 48,
+              'Al Barsha' => 51, 'Arabian Ranches' => 54, 'Al Sufouh' => 55, 'Motor City' => 56, 'Jumeirah Village Circle' => 56, 'Palm Jumeirah' => 57, 'Sports City' => 58,
+              'Dubai Marina' => 60, 'Jumeirah Lakes Towers' => 61, 'JBR' => 61, 'Al Furjan' => 65, 'Discovery Gardens' => 65, 'Jebel Ali' => 73, 'Dubai South' => 80],
 ];
 /* ['on' => switched on and a fee typed, 'fee' => AED, 'free' => AED order total from which it is free (0 = never),
     'max' => same-day orders a day (AJAY 2026-10-20: 3 to start; 0 = no limit)] */
@@ -514,7 +517,7 @@ function fomaxo_sameday($pdo = null) {
   return ['on' => is_array($c) && !empty($c['on']) && $fee !== null, 'fee' => $fee, 'free' => is_array($c) ? max(0, (int)($c['free'] ?? 0)) : 0,
           'max' => is_array($c) && isset($c['max']) ? max(0, (int)$c['max']) : 3, 'cod' => !is_array($c) || !isset($c['cod']) || !empty($c['cod']),   // cod: cash on delivery allowed for same-day (AJAY 2026-10-20: a switch, on unless turned off)
           'by' => is_array($c) ? min(23, max(0, (int)($c['by'] ?? 0))) : 0,   // by: hour it arrives by, shown to customers (21 = 9 PM; 0 = not shown)
-          'km' => is_array($c) && !empty($c['km']) ? min(40, max(5, (int)$c['km'])) : 25,
+          'km' => is_array($c) && !empty($c['km']) ? min(90, max(5, (int)$c['km'])) : 25,   // up to 90 km, Parcel Link's same-day reach
           'from' => is_array($c) ? min(22, max(0, (int)($c['from'] ?? 0))) : 0,   // from / cut: same-day for orders from this hour until before that hour, Dubai time (0 / 14 = 12 AM to 2 PM)
           'cut' => is_array($c) && !empty($c['cut']) ? min(23, max(1, (int)$c['cut'])) : FX_SD_CUTOFF];
 }
