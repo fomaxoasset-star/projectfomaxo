@@ -81,6 +81,11 @@ $btSet = fomaxo_bt($pdo ?: null);
 /* same-day delivery (admin → Settings → Cash): fee, free from, 2 PM and the areas it reaches; null = not offered */
 $sdSet = fomaxo_sameday($pdo ?: null);
 $sdOut = $sdSet['on'] ? ['fee' => $sdSet['fee'], 'free' => $sdSet['free'], 'cut' => FX_SD_CUTOFF, 'areas' => array_map('array_keys', FX_SD_AREAS)] : null;
+if ($sdOut) {   // this visitor's emirate from their internet address (approximate, nothing asked), only when it has same-day areas: the product page says so
+  require_once __DIR__ . '/geo-lib.php';
+  [$geoCc, $geoEm] = fomaxo_geo(fomaxo_geo_ip());
+  if ($geoEm !== null && isset(FX_SD_AREAS[$geoEm])) $sdOut['here'] = $geoEm;
+}
 echo '{"sold":' . fomaxo_json((object)$sold) . ',"bt":' . fomaxo_json(['pct' => $btSet['pct'], 'aed' => $btSet['aed'], 'on' => $btSet['on'], 'pairs' => (object)$btSet['pairs']]) . ',"together":' . fomaxo_json((object)$together) . ',"also":' . fomaxo_json($also) . ',"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"sameday":' . fomaxo_json($sdOut) . ',"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
 
 /* Automatic Instagram reels (admin → Products → Videos): at most once an hour, after the visitor already has the answer above */
