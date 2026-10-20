@@ -145,7 +145,8 @@ if ($order['totalFils'] < $MIN_ORDER * 100) { http_response_code(400); echo json
 
 /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
 require_once __DIR__ . '/orders-lib.php';
-$lineIn = array_map(fn($l) => ['id' => (string)($l['id'] ?? ''), 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? []))], (array)($in['lines'] ?? []));
+$lineIn = array_map(fn($l) => ['id' => (string)($l['id'] ?? ''), 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? [])),
+                               'price' => ($CATALOG[(string)($l['id'] ?? '')]['prices'][(string)($l['opt'] ?? '')] ?? 0) + 0], (array)($in['lines'] ?? []));   // price: the AED each, for the receipt
 if ($msg = fomaxo_stock_problem($lineIn, $CATALOG)) { http_response_code(409); echo json_encode(['error' => $msg]); exit; }
 if ($f = $order['free']) {   // a free product coupon: its product joins the order at AED 0 and comes off stock once paid
   $lineIn[] = ['id' => $f['id'], 'opt' => $f['opt'], 'qty' => 1, 'free' => true, 'coupon' => $f['coupon']];

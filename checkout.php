@@ -100,7 +100,8 @@ if ($discFils > 0) $rows[] = "$discLabel: -" . aed($discFils);
 if ($miniName) $rows[] = "FREE 10ml mini: $miniName";
 if ($COD_FEE > 0) $rows[] = 'Cash on delivery fee: ' . aed($COD_FEE * 100);
 /* order database: gives the counting order number (FMX-1001 …); the old random number is only used if the database is down */
-$saveLines = array_map(fn($l) => ['id' => $l['id'] ?? '', 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? []))], $lines);
+$saveLines = array_map(fn($l) => ['id' => $l['id'] ?? '', 'opt' => (string)($l['opt'] ?? ''), 'qty' => (int)($l['qty'] ?? 0), 'picks' => array_values((array)($l['picks'] ?? [])),
+                                 'price' => $CATALOG[$l['id']]['prices'][(string)$l['opt']] + 0], $lines);   // price: the AED each, for the receipt
 fomaxo_stock_lock();   // checked and taken out of stock in one go, never two orders for the last bottles
 if ($msg = fomaxo_stock_problem($saveLines, $CATALOG)) fail(409, $msg);
 if ($freeCp) {
