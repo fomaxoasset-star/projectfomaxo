@@ -868,7 +868,7 @@ function fx_receipt_card($o) {
     . '<label>Tracking no<input name="tracking" maxlength="80" value="' . h($o['tracking'] ?? '') . '" placeholder="Optional"></label></div>'
     . '<datalist id="fxCouriers"><option value="Jeebly"><option value="Aramex"><option value="Emirates Post"><option value="DHL"><option value="Quiqup"></datalist>'
     . '<p class="muted small rchelp">Shown on the receipt only when filled in.</p>'
-    . '<div class="rcbtn"><button class="btn sm">Save</button><a class="btn line sm" href="' . h(fx_receipt_url($no)) . '" target="_blank" rel="noopener">View receipt</a>'
+    . '<div class="rcbtn"><button class="btn sm">Save</button><a class="btn line sm" href="' . h(fx_receipt_url($no)) . '" target="_blank" rel="noopener">View receipt</a><a class="btn line sm" href="' . h(fx_receipt_url($no) . '&print=1') . '" target="_blank" rel="noopener">Download PDF</a>'
     . str_replace('<span>WhatsApp</span>', '<span>Send on WhatsApp</span>', fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], $head, $ar ? fx_wa_bye($o['name'], true) : fx_wa_bye($o['name'], false), 'rc:' . $no, 'g', $ar, 'btn sm wag', true))
     . '<button class="btn line sm" name="email" value="1"' . ($hasMail ? '' : ' disabled title="No email on this order"') . '>' . ($em !== '' ? 'Emailed ' . $em : 'Email') . '</button></div>'
     . '<p class="muted small rchelp">' . ($hasMail ? 'Email goes to ' . h($o['email']) . '.' : 'No email on this order, so send it on WhatsApp.') . ' Send only when the customer asks.</p></form>';

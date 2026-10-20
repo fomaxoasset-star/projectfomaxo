@@ -168,7 +168,7 @@ function fx_receipt_page($o, $ar = false) {
     . '<div class="py"><span>' . $e($w['payment']) . '</span><b>' . $e($payWord) . '</b><i class="st st-' . $d['pay'] . '">' . $e($w[$d['pay']]) . '</i></div></div>'
     . '<div class="sm">' . $sum . '</div></section>'
     . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si">' . $e($w['foot']) . '</p></footer>'
-    . '</main><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
+    . '</main><script>if(/[?&]print=1/.test(location.search))addEventListener("load",function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(print,200)})})</script><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
 }
 
 function fx_receipt_css() { return <<<'CSS'
@@ -223,7 +223,8 @@ h2{margin:0 0 6px;font:500 10.5px/1.2 Jost,Tajawal,sans-serif;letter-spacing:.22
 .gift{display:inline-block;margin-inline-start:8px;padding:1px 7px;border:1px solid var(--gold2);border-radius:999px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);vertical-align:2px}
 .m{font-family:'Charles Wright Singapore',Jost,sans-serif;white-space:nowrap;direction:ltr;unicode-bidi:isolate}
 .m small{font-size:.68em;margin-right:3px;letter-spacing:.04em}
-s{display:inline;color:var(--muted);font-size:11px;text-decoration-thickness:1px;margin-inline-end:6px}
+s{display:inline-block;position:relative;color:var(--muted);font-size:11px;text-decoration:none;margin-inline-end:6px}
+s::after{content:"";position:absolute;left:-1px;right:-1px;top:52%;height:1.2px;background:currentColor}   /* the price font draws its own strike line at the bottom, so the line is drawn here through the middle */
 .fr{color:var(--gold);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:500}
 [dir=rtl] .fr{letter-spacing:0}
 .dash{color:var(--muted)}
