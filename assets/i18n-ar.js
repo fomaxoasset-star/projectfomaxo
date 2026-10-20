@@ -989,11 +989,8 @@
 "Dark mode": "الوضع الداكن",
 "Delivery is free anywhere in the UAE.": "التوصيل مجاني لجميع أنحاء الإمارات.",
 "Same-day delivery": "توصيل في نفس اليوم",
-"order before 2 PM": "اطلب قبل 2 ظهراً",
 "Standard delivery": "التوصيل العادي",
 "1–3 days": "1–3 أيام",
-"Order before 2 PM, arrives today": "اطلب قبل 2 ظهراً، يصلك اليوم",
-"Closed for today, order before 2 PM": "انتهى لليوم، اطلب قبل 2 ظهراً",
 "Full for today, try tomorrow": "اكتمل لليوم، جرّب غداً",
 "Not for same-day delivery": "غير متاح للتوصيل في نفس اليوم",
 "Same-day orders are paid by card": "طلبات التوصيل في نفس اليوم تُدفع بالبطاقة",
@@ -1006,7 +1003,6 @@
 "Same-day delivery: your order arrives today. Questions? WhatsApp us on": "توصيل في نفس اليوم: يصلك طلبك اليوم. لديك أسئلة؟ راسلنا على واتساب",
 "Same-day delivery is not available right now. Please choose standard delivery.": "التوصيل في نفس اليوم غير متاح حالياً. يرجى اختيار التوصيل العادي.",
 "Same-day delivery does not reach this area. Please choose standard delivery.": "التوصيل في نفس اليوم لا يصل إلى هذه المنطقة. يرجى اختيار التوصيل العادي.",
-"Same-day delivery is for orders placed before 2 PM. Please choose standard delivery.": "التوصيل في نفس اليوم للطلبات قبل الساعة 2 ظهراً. يرجى اختيار التوصيل العادي.",
 "Explore FOMAXO": "اكتشف FOMAXO",
 "FOMAXO — The House of Modern Luxury": "FOMAXO — دار الفخامة العصرية",
 "Franchise — FOMAXO": "الامتياز التجاري — FOMAXO",
@@ -1197,6 +1193,7 @@
 "Get your coupon on WhatsApp": "احصل على الكوبون على واتساب",
 "Welcome offer": "عرض الترحيب"
 };
+  var hrAr = function(t){ var m = /^(\d+) ([AP]M)$/.exec(t), h = +m[1]; return h + ' ' + (m[2] === 'AM' ? (h === 12 ? 'منتصف الليل' : 'صباحاً') : (h === 12 || h < 5 ? 'ظهراً' : 'مساءً')); };   // "2 PM" → "2 ظهراً"
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
   var rv = function(n){ return cnt(n, 'تقييم واحد', 'تقييمان', 'تقييمات', 'تقييماً'); };
   var AR_MON = {Jan: 'يناير', Feb: 'فبراير', Mar: 'مارس', Apr: 'أبريل', May: 'مايو', Jun: 'يونيو', Jul: 'يوليو', Aug: 'أغسطس', Sep: 'سبتمبر', Oct: 'أكتوبر', Nov: 'نوفمبر', Dec: 'ديسمبر'};
@@ -1267,7 +1264,12 @@
     [/^(\d+) vials$/, function(m){ return m[1] + ' قوارير'; }],
     [/^Secure checkout · (Card, Apple Pay, Google Pay · )?Cash on delivery over (AED [\d,.]+) · Free UAE delivery$/, function(m){ return 'دفع آمن · ' + (m[1] ? 'بطاقة، Apple Pay، Google Pay · ' : '') + 'الدفع عند الاستلام للطلبات فوق ' + m[2] + ' · توصيل مجاني داخل الإمارات'; }],
     [/^Pay in cash when your order arrives · (AED [\d,.]+) fee$/, function(m){ return 'ادفع نقداً عند وصول طلبك · رسوم ' + m[1]; }],
-    [/^in (Dubai|Sharjah|Ajman) · order before 2 PM$/, function(m){ return 'في ' + {Dubai: 'دبي', Sharjah: 'الشارقة', Ajman: 'عجمان'}[m[1]] + ' · اطلب قبل 2 ظهراً'; }],
+    [/^in (Dubai|Sharjah|Ajman) · order before (\d+ [AP]M)(?:, get it by (\d+) PM)?$/, function(m){ return 'في ' + {Dubai: 'دبي', Sharjah: 'الشارقة', Ajman: 'عجمان'}[m[1]] + ' · اطلب قبل ' + hrAr(m[2]) + (m[3] ? '، يصلك قبل ' + m[3] + ' مساءً' : ''); }],
+    [/^Order before (\d+ [AP]M), arrives today(?: by (\d+) PM)?$/, function(m){ return 'اطلب قبل ' + hrAr(m[1]) + '، يصلك اليوم' + (m[2] ? ' قبل ' + m[2] + ' مساءً' : ''); }],
+    [/^Closed for today, order before (\d+ [AP]M)$/, function(m){ return 'انتهى لليوم، اطلب قبل ' + hrAr(m[1]); }],
+    [/^Order between (\d+ [AP]M) and (\d+ [AP]M)$/, function(m){ return 'اطلب بين ' + hrAr(m[1]) + ' و' + hrAr(m[2]); }],
+    [/^Same-day delivery is for orders placed (?:before (\d+ [AP]M)|between (\d+ [AP]M) and (\d+ [AP]M))\. Please choose standard delivery\.$/, function(m){ return 'التوصيل في نفس اليوم للطلبات ' + (m[1] ? 'قبل الساعة ' + hrAr(m[1]) : 'بين ' + hrAr(m[2]) + ' و' + hrAr(m[3])) + '. يرجى اختيار التوصيل العادي.'; }],
+    [/^Same-day delivery: your order arrives today by (\d+) PM\.( Questions\? WhatsApp us on)?$/, function(m){ return 'توصيل في نفس اليوم: يصلك طلبك اليوم قبل ' + m[1] + ' مساءً.' + (m[2] ? ' لديك أسئلة؟ راسلنا على واتساب' : ''); }],
     [/^Fee (AED [\d,.]+)$/, function(m){ return 'رسوم ' + m[1]; }],
     [/^For orders above (AED [\d,.]+)$/, function(m){ return 'للطلبات فوق ' + m[1]; }],
     [/^For orders above (AED [\d,.]+) · (AED [\d,.]+) fee$/, function(m){ return 'للطلبات فوق ' + m[1] + ' · رسوم ' + m[2]; }],
