@@ -80,7 +80,7 @@ if ($pdo) { try { $hidePages = array_values(array_intersect(json_decode((string)
 $btSet = fomaxo_bt($pdo ?: null);
 /* same-day delivery (admin → Settings → Cash): fee, free from, 2 PM and the areas it reaches; null = not offered */
 $sdSet = fomaxo_sameday($pdo ?: null);
-$sdOut = $sdSet['on'] ? ['fee' => $sdSet['fee'], 'free' => $sdSet['free'], 'cut' => FX_SD_CUTOFF, 'cod' => $sdSet['cod'], 'full' => fomaxo_sameday_full($sdSet, $pdo ?: null), 'areas' => array_map('array_keys', FX_SD_AREAS)] : null;
+$sdOut = $sdSet['on'] ? ['fee' => $sdSet['fee'], 'free' => $sdSet['free'], 'cut' => FX_SD_CUTOFF, 'cod' => $sdSet['cod'], 'by' => $sdSet['by'], 'full' => fomaxo_sameday_full($sdSet, $pdo ?: null), 'areas' => array_map('array_keys', FX_SD_AREAS)] : null;
 if ($sdOut) {   // this visitor's emirate from their internet address (approximate, nothing asked), only when it has same-day areas: the product page says so
   require_once __DIR__ . '/geo-lib.php';
   [$geoCc, $geoEm] = fomaxo_geo(fomaxo_geo_ip());
