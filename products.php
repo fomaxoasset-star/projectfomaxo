@@ -81,6 +81,8 @@ $btSet = fomaxo_bt($pdo ?: null);
 /* same-day delivery (admin → Settings → Same-day): fee, free from, order hours and the areas it reaches; null = not offered */
 $sdSet = fomaxo_sameday($pdo ?: null);
 $sdOut = $sdSet['on'] ? ['fee' => $sdSet['fee'], 'free' => $sdSet['free'], 'from' => $sdSet['from'], 'cut' => $sdSet['cut'], 'cod' => $sdSet['cod'], 'by' => $sdSet['by'], 'full' => fomaxo_sameday_full($sdSet, $pdo ?: null), 'areas' => array_map('array_keys', fomaxo_sameday_areas($sdSet))] : null;
+if ($sdOut && $sdSet['perkm'] > 0)   // fee by km: each area's own fee
+  $sdOut['fees'] = array_map(fn($list) => array_map(fn($km) => fomaxo_sameday_fee($sdSet, $km), $list), fomaxo_sameday_areas($sdSet));
 if ($sdOut) {   // this visitor's emirate from their internet address (approximate, nothing asked), only when it has same-day areas: the product page says so
   require_once __DIR__ . '/geo-lib.php';
   [$geoCc, $geoEm] = fomaxo_geo(fomaxo_geo_ip());
