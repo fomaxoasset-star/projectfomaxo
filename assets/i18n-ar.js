@@ -1171,6 +1171,7 @@
 "Cash on Delivery": "الدفع عند الاستلام",
 "COD Available": "الدفع عند الاستلام متاح",
 "Same-day Delivery": "توصيل في نفس اليوم",
+  "Same‑day Delivery": "توصيل في نفس اليوم",
 "Concentrated fragrance oils": "زيوت عطرية مركّزة",
 "Secure Payment": "دفع آمن",
 "Original FOMAXO": "FOMAXO أصلي",
