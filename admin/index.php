@@ -626,7 +626,7 @@ document.addEventListener("submit",function(e){if(!e.defaultPrevented)keep(e.tar
 var sub=HTMLFormElement.prototype.submit;HTMLFormElement.prototype.submit=function(){keep(this);return sub.apply(this,arguments)};   /* menus that save on change call form.submit(), which has no submit event */
 var p;try{p=JSON.parse(sessionStorage.getItem(K)||"null");sessionStorage.removeItem(K)}catch(x){}
 if(!p||Date.now()-p.t>60000||p.u!==pg(location.search))return;
-var row=p.v?document.querySelector('[data-vid="'+CSS.escape(p.v)+'"]'):document.querySelectorAll(p.s)[p.i];
+var all=document.querySelectorAll(p.s),row=(p.v&&document.querySelector('[data-vid="'+CSS.escape(p.v)+'"]'))||all[p.i]||all[all.length-1];   /* a deleted row: the one that took its place */
 window.scrollTo(0,p.w);if(!row)return;var b=box(row);if(b)b.scrollTop=p.b;
 var hold=true;["wheel","touchstart","keydown","mousedown"].forEach(function(t){addEventListener(t,function(){hold=false},{once:true,passive:true})});
 var go=function(){if(!hold)return;var d=row.getBoundingClientRect().top-p.y,c=box(row);if(c)c.scrollTop+=d;else window.scrollBy(0,d)};go();addEventListener("load",go);if(document.fonts)document.fonts.ready.then(go);[700,1500,2500].forEach(function(t){setTimeout(go,t)});   /* buttons added a moment later make the rows above taller */
