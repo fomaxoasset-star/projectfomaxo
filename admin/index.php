@@ -2693,11 +2693,18 @@ if (isset($_GET['analytics'])) {
   $nDays = (int)round((strtotime($d2) - strtotime($d1)) / 86400) + 1;
   $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
 
+  /* a purchase counts only while its order is a real one, as the Orders tile (New, Paid or Delivered, not a test). Purchases noted
+     before 21/10/2026 have no order number: they count from the orders reset of 11/10/2026 on, unless their checkout record names an
+     order that is cancelled, refunded, a test or still waiting for payment */
+  $realO = "o.status IN ('New', 'Paid', 'Delivered') AND o.test = 0";
+  $resetAt = (string)fomaxo_setting($pdo, 'orders_reset');
+  $buyOk = fn($a) => "($a.ev = 'buy' AND IF($a.ref IS NOT NULL, EXISTS (SELECT 1 FROM fx_orders o WHERE o.order_no = $a.ref AND $realO),
+                      " . ($resetAt !== '' ? "$a.at >= " . $pdo->quote($resetAt) . ' AND ' : '') . "NOT EXISTS (SELECT 1 FROM fx_leads lb JOIN fx_orders o ON o.order_no = lb.order_no WHERE lb.sid = $a.sid AND NOT ($realO))))";
   $f = $q("SELECT COUNT(DISTINCT vid) visitors, COUNT(DISTINCT sid) visits, SUM(ev = 'view') views,
                   COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) product, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) cart,
                   COUNT(DISTINCT CASE WHEN ev = 'checkout' THEN sid END) checkout, COUNT(DISTINCT CASE WHEN ev = 'pay' THEN sid END) pay,
-                  COUNT(DISTINCT CASE WHEN ev = 'card' THEN sid END) card, COUNT(DISTINCT CASE WHEN ev = 'buy' THEN sid END) buy
-           FROM fx_events WHERE at BETWEEN ? AND ?")->fetch();
+                  COUNT(DISTINCT CASE WHEN ev = 'card' THEN sid END) card, COUNT(DISTINCT CASE WHEN " . $buyOk('e') . " THEN sid END) buy
+           FROM fx_events e WHERE at BETWEEN ? AND ?")->fetch();
   $f = array_map('intval', $f);
   $live = (int)$pdo->query('SELECT COUNT(*) FROM fx_live WHERE seen > NOW() - INTERVAL 5 MINUTE')->fetchColumn();
   $ord = $q("SELECT COUNT(*) n, COALESCE(SUM(total), 0) t FROM fx_orders WHERE status IN ('New', 'Paid', 'Delivered') AND test = 0 AND created_at BETWEEN ? AND ?")->fetch();
@@ -2736,7 +2743,7 @@ if (isset($_GET['analytics'])) {
 
   /* where visits come from (the first page of each visit), and how many of them bought */
   $src = '';
-  foreach ($q("SELECT x.source, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND b.ev = 'buy')) bought
+  foreach ($q("SELECT x.source, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND " . $buyOk('b') . ")) bought
                FROM (SELECT sid, MIN(vid) vid, MIN(source) source FROM fx_events WHERE ev = 'view' AND source IS NOT NULL AND at BETWEEN ? AND ? GROUP BY sid) x
                GROUP BY x.source ORDER BY visits DESC") as $row)
     $src .= '<tr><td>' . h($row['source']) . '</td><td class="num">' . (int)$row['visitors'] . '</td><td class="num">' . (int)$row['visits'] . '</td><td class="num">' . (int)$row['bought'] . '</td><td class="num">' . $pctT($pct($row['bought'], $row['visits'])) . '</td></tr>';
@@ -2772,7 +2779,7 @@ if (isset($_GET['analytics'])) {
   /* devices: phone, tablet or computer, read from the browser when the visit starts (the browser details themselves are not kept) */
   $devN = ['phone' => 'Phone', 'computer' => 'Desktop', 'tablet' => 'Tablet'];
   $devR = []; foreach ($devN as $k => $l) $devR[$k] = ['visitors' => 0, 'visits' => 0, 'bought' => 0];
-  foreach ($q("SELECT x.device, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND b.ev = 'buy')) bought
+  foreach ($q("SELECT x.device, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND " . $buyOk('b') . ")) bought
                FROM (SELECT sid, MIN(vid) vid, MIN(device) device FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY sid) x
                WHERE x.device IN ('phone', 'tablet', 'computer') GROUP BY x.device") as $row)
     $devR[$row['device']] = ['visitors' => (int)$row['visitors'], 'visits' => (int)$row['visits'], 'bought' => (int)$row['bought']];
@@ -2784,7 +2791,7 @@ if (isset($_GET['analytics'])) {
   $langT = ''; $langS = '';   // table rows (Devices card) and the two boxes under the Visitors graph
   try {
     $lgR = ['en' => ['visitors' => 0, 'visits' => 0, 'bought' => 0], 'ar' => ['visitors' => 0, 'visits' => 0, 'bought' => 0]];
-    foreach ($q("SELECT IF(x.ar, 'ar', 'en') lg, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND b.ev = 'buy')) bought
+    foreach ($q("SELECT IF(x.ar, 'ar', 'en') lg, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND " . $buyOk('b') . ")) bought
                  FROM (SELECT sid, MIN(vid) vid, MAX(lang = 'ar') ar FROM fx_events WHERE ev = 'view' AND lang IS NOT NULL AND at BETWEEN ? AND ? GROUP BY sid) x GROUP BY lg") as $row)
       $lgR[$row['lg']] = ['visitors' => (int)$row['visitors'], 'visits' => (int)$row['visits'], 'bought' => (int)$row['bought']];
     $lgAll = $lgR['en']['visits'] + $lgR['ar']['visits'];
@@ -2847,7 +2854,7 @@ if (isset($_GET['analytics'])) {
     /* 3. campaigns: where each visit came from (utm_source / utm_campaign in the link, else the app or website it came from), and the orders it made */
     $hasCamp = (bool)$pdo->query("SHOW COLUMNS FROM fx_events LIKE 'campaign'")->fetch();
     $camp = '';
-    foreach ($q("SELECT x.source, x.campaign, COUNT(*) visits, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND b.ev = 'buy')) bought,
+    foreach ($q("SELECT x.source, x.campaign, COUNT(*) visits, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND " . $buyOk('b') . ")) bought,
                    COALESCE(SUM((SELECT SUM(o.total) FROM fx_leads l JOIN fx_orders o ON o.order_no = l.order_no WHERE l.sid = x.sid AND o.$ok)), 0) rev
                  FROM (SELECT sid, MIN(source) source, " . ($hasCamp ? 'MIN(campaign)' : 'NULL') . " campaign FROM fx_events WHERE ev = 'view' AND source IS NOT NULL AND at BETWEEN ? AND ? GROUP BY sid) x
                  GROUP BY x.source, x.campaign ORDER BY bought DESC, visits DESC LIMIT 60") as $row)

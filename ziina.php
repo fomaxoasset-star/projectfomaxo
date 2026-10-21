@@ -107,11 +107,11 @@ if ($sd) $rows[] = $sd['row'];
 
 $pid = preg_replace('/[^A-Za-z0-9_\-]/', '', $pi['id']);
 fomaxo_order_set($no, ['ref' => $pid]);
-@file_put_contents(ziina_dir() . "/$pid.json", json_encode(['no' => $no, 'created' => date('Y-m-d H:i'), 'totalFils' => $order['totalFils'],
+$visit = ziina_lead_card($cust, $order);   // admin → Left at checkout shows them at "Card payment page" now, paid or not
+@file_put_contents(ziina_dir() . "/$pid.json", json_encode(['no' => $no, 'sid' => $visit['sid'] ?? '', 'vid' => $visit['vid'] ?? '', 'created' => date('Y-m-d H:i'), 'totalFils' => $order['totalFils'],
   'summary' => $order['summary'], 'rows' => $rows, 'cust' => $cust, 'ship' => $sd ? $sd['row'] : '', 'test' => $testMode, 'coupon' => $order['coupon'],
   'pids' => array_values(array_unique(array_map(fn($l) => (string)($l['id'] ?? ''), (array)($in['lines'] ?? []))))]), LOCK_EX);
 fomaxo_log_order([date('Y-m-d H:i'), $no, 'Ziina — awaiting payment' . ($testMode ? ' (TEST)' : ''), fomaxo_aed($order['totalFils']), $cust['name'], $cust['phone'], $cust['email'],
                   $cust['emirate'], $cust['address'], $cust['note'], implode(' | ', $order['summary'])]);
 
-ziina_lead_card($cust, $order);   // admin → Left at checkout shows them at "Card payment page" now, paid or not
 echo json_encode(['url' => $pi['redirect_url']]);

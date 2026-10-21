@@ -99,6 +99,11 @@ function ziina_verify($id, $reply = false) {
     /* the paid order is recorded: show the shopper their confirmation now, the emails go out right after */
     if (!empty($rec['review'])) $out['review'] = $rec['review'];
     if ($reply) { fomaxo_reply_now($out); $out['replied'] = true; }
+    elseif (!empty($rec['sid']) && ($pdo = fomaxo_db())) try {   // recorded by the re-check (the shopper never came back): their visit gets its purchase, so Analytics matches Orders
+      $pdo->prepare("INSERT INTO fx_events (at, vid, sid, ev, page, ref, device) SELECT NOW(), ?, ?, 'buy', 'thank-you', ?, COALESCE((SELECT device FROM fx_events WHERE sid = ? LIMIT 1), '')
+                     FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM fx_events WHERE ev = 'buy' AND ref = ?)")->execute([$rec['vid'] ?? $rec['sid'], $rec['sid'], $rec['no'], $rec['sid'], $rec['no']]);
+      $pdo->prepare('UPDATE fx_leads SET order_no = ? WHERE sid = ?')->execute([$rec['no'], $rec['sid']]);
+    } catch (Throwable $e) { error_log('FOMAXO Ziina re-check purchase: ' . $e->getMessage()); }
     require_once __DIR__ . '/ads-server-lib.php'; fomaxo_ads_server_buy($rec['no']);   // the purchase also goes to Meta / TikTok ads from here (admin → Settings → Ads tracking)
     $host = preg_replace('/^www\./', '', preg_replace('/[^A-Za-z0-9.\-]/', '', $_SERVER['HTTP_HOST'] ?? 'fomaxo.com'));
     $from = "FOMAXO <mail@fomaxo.com>";
@@ -154,15 +159,19 @@ function ziina_sweep() {
    last hour (same mobile) moves to that step, else a new line. A paid order hides it there (same mobile, status Paid). */
 function ziina_lead_card($cust, $order) {
   $pdo = fomaxo_db(); $p9 = fomaxo_phone9((string)$cust['phone']);
-  if (!$pdo || $p9 === '') return;
+  if (!$pdo || $p9 === '') return null;
   try {
     $total = round($order['totalFils'] / 100, 2); $items = mb_substr(implode(', ', $order['summary']), 0, 600);
     $s = $pdo->prepare("UPDATE fx_leads SET stage = 'card', updated_at = NOW(), total = ?, items = ? WHERE order_no IS NULL AND updated_at > NOW() - INTERVAL 1 HOUR
                         AND RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) = ? ORDER BY updated_at DESC LIMIT 1");
     $s->execute([$total, $items, $p9]);
-    if ($s->rowCount()) return;
+    if ($s->rowCount()) {   // the shopper's own visit: kept with the payment, so a purchase recorded by the re-check still counts in Analytics
+      $s = $pdo->prepare("SELECT sid, vid FROM fx_leads WHERE stage = 'card' AND RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) = ? ORDER BY updated_at DESC LIMIT 1"); $s->execute([$p9]);
+      return $s->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
     $sid = substr(md5('ziina' . $cust['phone'] . microtime()), 0, 16);
     $pdo->prepare("INSERT INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone, email, emirate, items, total, address) VALUES (?, ?, NOW(), NOW(), 'card', ?, ?, ?, ?, ?, ?, ?)")
         ->execute([$sid, $sid, mb_substr($cust['name'], 0, 80), mb_substr($cust['phone'], 0, 25), mb_substr($cust['email'], 0, 120), mb_substr($cust['emirate'], 0, 30), $items, $total, mb_substr($cust['address'], 0, 300)]);
   } catch (Throwable $e) { error_log('FOMAXO Ziina lead: ' . $e->getMessage()); }
+  return null;
 }
