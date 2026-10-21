@@ -7,7 +7,7 @@ header('X-LiteSpeed-Cache-Control: no-cache');
 require __DIR__ . '/orders-lib.php';
 require_once __DIR__ . '/media-lib.php';
 /* card payments still waiting (the shopper paid on Ziina's page but never came back to the thank-you page): asked about again
-   after this visitor already has the answer, at most every 5 minutes (ziina-lib.php) */
+   after this visitor already has the answer, at most once a minute (ziina-lib.php; track.php does the same) */
 require_once __DIR__ . '/ziina-lib.php';
 if (ziina_sweep_due()) {
   require_once __DIR__ . '/store-lib.php';   // prices and order helpers the paid order needs, loaded only for the re-check
