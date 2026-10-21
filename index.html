@@ -49,7 +49,7 @@ if(history.replaceState)try{history.replaceState(history.state,"",location.pathn
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
-r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=59";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=60";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("style");f.textContent="@font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/amiri-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/amiri-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:300;font-display:swap;src:url(/assets/fonts/tajawal-300-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/tajawal-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/tajawal-500-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/tajawal-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}";document.head.appendChild(f)}})();   /* Arabic fonts (Tajawal, Amiri; Arabic letters only) from our own server, same files Google Fonts sends */</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -2428,6 +2428,7 @@ html[dir="rtl"] .rl-s{direction:rtl}
 .rl-shop{grid-template-columns:minmax(0,1fr) auto!important}
 .rl-shop .btn{min-height:44px;padding:0 22px;letter-spacing:.18em;font-size:11px}
 .vt-more{font-style:normal;font-size:12px;color:#f0d3a0;letter-spacing:.06em}
+.pdp-vids{padding:56px 0 8px}.pdp-vids>.wrap{padding:0}   /* product page: Review videos, just above Customers bought together */
 .rl-card{position:relative;z-index:2;background:rgba(var(--bg-rgb),.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line-2);color:var(--ivory);padding:12px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 12px;align-items:center}
 .rl-pi img{width:56px;height:56px;object-fit:cover;border:1px solid var(--line)}
 .rl-info{display:flex;flex-direction:column;min-width:0;line-height:1.3}
@@ -3583,7 +3584,7 @@ function home(){
     <div>${ICON.drop}<span><b>Try first</b><span class="perk-line">${shown('discovery') ? `Discovery Set from ${moneyHTML(Math.min(...Object.values(P.discovery.prices)))}` : S.mini.products.length ? `Mini 10ml from ${moneyHTML(Math.min(...S.mini.products.map(id => P[id].prices[10]).filter(hasPrice)))}` : 'Ask us for a sample'}</span></span></div>
   </div></div>
   ${lastOrder() ? `<section class="sec ro-sec"><div class="wrap">${orderAgainHTML()}</div></section>` : ''}
-  <section class="sec vid-sec" id="vidSec" style="padding-bottom:0"${vids().length ? '' : ' hidden'}>${vidSecHTML()}</section>
+  <section class="sec vid-sec" id="vidSec" style="padding-bottom:0"${vids().some(v => v.wh !== 'p') ? '' : ' hidden'}>${vidSecHTML()}</section>
 
   ${shown('discovery') ? `<section class="sec" style="padding-bottom:0"><div class="wrap">
     <div class="ds-band rv-up">
@@ -3877,6 +3878,8 @@ function product(id, q){
       </div>
     </div>
 
+    <section class="sec vid-sec pdp-vids" id="vidSec" hidden></section>
+
     ${btPick(p, size).length ? `<section class="fbt" id="bt" data-p="${p.id}"></section>` : ''}
 
     <div class="reviews" id="reviews">${rwSection(p, null)}</div>
@@ -3976,6 +3979,7 @@ function bindProduct(p){
   const addBtn = $('#addBtn');
   mobileBarCheck = () => { const r = addBtn.getBoundingClientRect(), off = r.bottom < 0 || r.top > innerHeight - 70; mb.classList.toggle('show', off && $('#reviews').getBoundingClientRect().top > innerHeight*.6); };
   setTimeout(() => mobileBarCheck && mobileBarCheck(), 400);
+  renderVids();   // Review videos: this product's own shop videos, just above its reviews
   rwLoad(p);
 }
 let mobileBarCheck = null;
@@ -5595,6 +5599,9 @@ function bindHome(){
 let VIDEOS = []; try { VIDEOS = JSON.parse(localStorage.getItem('fomaxo_videos') || '[]') || []; } catch(e) {}
 const vidProds = v => [v.p, ...(v.a || [])].filter((id, i, a) => shown(id) && a.indexOf(id) === i);   // v.p = first product, v.a = more; none = a general video with Shop now
 const vids = () => VIDEOS.filter(v => v && (v.v || v.e) && (vidProds(v).length || (!v.p && !(v.a || []).length)));   // v.e = an Instagram reel shown with Instagram's own player
+/* a product page has the same row, as its Review videos: only the videos that sell that product (AJAY 2026-10-12) */
+const vidPage = () => { const m = /^#\/product\/([^?\/]+)/.exec(location.hash); return m && P[m[1]] && !P[m[1]].hidden ? m[1] : ''; };
+const rowVids = () => { const id = vidPage(); return id ? vids().filter(v => v.wh !== 'h' && vidProds(v).includes(id)) : vids().filter(v => v.wh !== 'p'); };   // admin → Videos: Home + product page (both), Home page only (wh h), Product page only (wh p)
 const VI = {
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -5607,8 +5614,8 @@ const VI = {
 };
 const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; if (!p) return ''; const k = imgFor(p, defaultSize(p)); return IMG_W[k] ? `assets/img/t/${k}.webp` : IMG(k); };
 function vidSecHTML(){
-  const l = vids(); if (!l.length) return '';
-  return `<div class="wrap">${secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
+  const l = rowVids(); if (!l.length) return '';
+  return `<div class="wrap">${(vidPage() ? secHead('Watch &amp; shop', 'Review <em class="metal">videos</em>', '', false) : secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
     <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
       ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `${v.pv ? `<video autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : v.v)}"></video>` : ''}${vidPoster(v) ? `<img class="vt-pic" src="${vidPoster(v)}" alt="" loading="lazy">` : ''}`}
       <span class="vt-play" aria-hidden="true">${VI.play}</span>
@@ -5679,7 +5686,7 @@ function reelSlide(v, k){
     </div></section>`;
 }
 function openReel(i){
-  const l = vids(); if (!l[i] || $('#reel')) return;
+  const l = rowVids(); if (!l[i] || $('#reel')) return;
   $$('#vrow video').forEach(v => v.pause());
   const el = document.createElement('div');
   el.id = 'reel'; el.className = 'reel'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Shop the video');
