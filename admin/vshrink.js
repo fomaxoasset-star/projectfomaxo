@@ -269,17 +269,20 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
   var mark = function (nm) { bad[nm] = (bad[nm] || 0) + 1; try { localStorage.setItem(KEY, JSON.stringify(bad)); } catch (e) {} };
   var nmOf = function (r) { return r.dataset.pvsrc.split(/[\/=]/).pop(); };
   var CANT = 'fxPrevCant', cant = false; try { cant = Date.now() - (+localStorage.getItem(CANT) || 0) < 7 * 864e5; } catch (e) {}
+  /* Mac Safari: making previews by itself froze the admin page (FFmpeg "Load failed", AJAY 21/10/2026), so it never starts there on its own;
+     a tap on "Make preview" tries only the light way, never the 32 MB FFmpeg. Chrome makes them as before */
+  var SAFARI = /^((?!chrome|chromium|crios|fxios|edg|opr|android).)*safari/i.test(navigator.userAgent); if (SAFARI) cant = true;
   /* every video still without a preview gets a "Make preview" button. By itself this page only tries the ones that never failed in this browser,
      and none at all for 7 days in a browser that couldn't make any (Mac Safari), so nothing is downloaded on every visit */
   var queue = cant ? [] : rows.filter(function (r) { return r.hasAttribute('data-mkprev') && !bad[nmOf(r)]; }), busy = false, total = queue.length;
   var save = function () { try { localStorage.setItem(KEY, JSON.stringify(bad)); } catch (e) {} };
   var label = function (r) { return r.hasAttribute('data-pv') ? 'Preview ✓ · Make again' : 'Make preview'; };
-  var showBtn = function (r, failed) { var b = r._mk; if (!b) return; b.hidden = false; b.disabled = false; b.textContent = failed ? 'Preview failed · Try again' : label(r); if (failed) b.title = 'Could not be made in this browser. Chrome works best.'; };
+  var showBtn = function (r, failed) { var b = r._mk; if (!b) return; b.hidden = false; b.disabled = false; b.textContent = failed ? (SAFARI ? 'Preview: open admin in Chrome' : 'Preview failed · Try again') : label(r); if (failed) b.title = 'Could not be made in this browser. Chrome works best.'; };
   rows.forEach(function (r) {
     var inf = r.querySelector('.vinfo'); if (!inf) return;
     var b = r._mk = document.createElement('button'); b.type = 'button'; b.className = 'vmkp'; var q = queue.indexOf(r) >= 0; b.textContent = q ? 'Making preview…' : label(r); b.disabled = q;   // always shown: the preview's state, and a tap makes it (again)
     b.style.cssText = 'margin-left:8px;font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:0 9px;cursor:pointer';
-    b.onclick = function () { delete bad[nmOf(r)]; save(); try { localStorage.removeItem(CANT); } catch (e) {} noFast = false; noWasm = false; fails = 0;
+    b.onclick = function () { delete bad[nmOf(r)]; save(); try { localStorage.removeItem(CANT); } catch (e) {} noFast = false; noWasm = SAFARI; fails = 0;
       b.disabled = true; b.textContent = 'Making preview…'; if (queue.indexOf(r) < 0) { queue.push(r); total++; } if (!busy) next(); };
     inf.appendChild(b);
   });
