@@ -5600,7 +5600,8 @@ function bindHome(){
    with its product's sizes, Add to bag and Buy now, and a swipe up or down goes to the next video. Videos of hidden products are left out.
    Light on data: a video only loads when it is on screen; the ones on screen play straight away, muted, and pause when scrolled away. */
 let VIDEOS = []; try { VIDEOS = JSON.parse(localStorage.getItem('fomaxo_videos') || '[]') || []; } catch(e) {}
-const vidProds = v => [v.p, ...(v.a || [])].filter((id, i, a) => shown(id) && a.indexOf(id) === i);   // v.p = first product, v.a = more; none = a general video with Shop now
+const vidProds = v => { const l = [v.p, ...(v.a || [])].filter((id, i, a) => shown(id) && a.indexOf(id) === i), pg = vidPage(), k = pg ? l.indexOf(pg) : -1; if (k > 0) l.unshift(...l.splice(k, 1)); return l; };   // v.p = first product, v.a = more; none = a general video with Shop now
+// on a product page, that page's product comes first on the tile and in the player (a Gold + King video shows Gold on Gold's page, King on King's)
 const vids = () => VIDEOS.filter(v => v && (v.v || v.e) && (vidProds(v).length || (!v.p && !(v.a || []).length)));   // v.e = an Instagram reel shown with Instagram's own player
 /* a product page has the same row, as its Review videos: only the videos that sell that product (AJAY 2026-10-12) */
 const vidPage = () => { const m = /^#\/product\/([^?\/]+)/.exec(location.hash); return m && P[m[1]] && !P[m[1]].hidden ? m[1] : ''; };
