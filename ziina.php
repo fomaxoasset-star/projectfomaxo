@@ -113,4 +113,5 @@ fomaxo_order_set($no, ['ref' => $pid]);
 fomaxo_log_order([date('Y-m-d H:i'), $no, 'Ziina — awaiting payment' . ($testMode ? ' (TEST)' : ''), fomaxo_aed($order['totalFils']), $cust['name'], $cust['phone'], $cust['email'],
                   $cust['emirate'], $cust['address'], $cust['note'], implode(' | ', $order['summary'])]);
 
+ziina_lead_card($cust, $order);   // admin → Left at checkout shows them at "Card payment page" now, paid or not
 echo json_encode(['url' => $pi['redirect_url']]);

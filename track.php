@@ -18,6 +18,17 @@ $t = fn($k, $max) => trim(mb_substr(preg_replace('/[\x00-\x1f]+/u', ' ', (string
 
 require __DIR__ . '/orders-lib.php';
 $pdo = fomaxo_db();
+/* card payments still waiting on Ziina: asked about again after this message is answered, at most once a minute (ziina-lib.php, as in products.php).
+   Open pages send a message every minute, so a payment made while anyone is on the site is recorded within about a minute. */
+require_once __DIR__ . '/ziina-lib.php';
+if (ziina_sweep_due()) {
+  require_once __DIR__ . '/store-lib.php';
+  register_shutdown_function(function () {
+    while (ob_get_level()) ob_end_flush();
+    if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    ziina_sweep();
+  });
+}
 if (!$pdo) exit;
 date_default_timezone_set('Asia/Dubai');
 try {

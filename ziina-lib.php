@@ -1,6 +1,6 @@
 <?php
 /* FOMAXO — Ziina card payments, the parts used by ziina.php AND by the server's own re-check of card payments that were
-   still waiting (ziina_sweep, run by products.php after a visitor has their answer, at most every 5 minutes).
+   still waiting (ziina_sweep, run by products.php and track.php after the visitor has their answer, at most once a minute).
    Why the re-check: a shopper who pays on Ziina's page but closes it (or the Instagram app) before coming back to fomaxo.com
    never reaches the thank-you page, so the order would stay "Awaiting payment" with no email and no stock change. */
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
@@ -121,12 +121,12 @@ function ziina_verify($id, $reply = false) {
 }
 
 /* the re-check: every card payment from the last 3 days that is not paid and not failed/cancelled is asked about again.
-   ziina_sweep_due() is cheap (one file date, then a folder list every 5 minutes) so products.php can ask it on every visit. */
+   ziina_sweep_due() is cheap (one file date, then a folder list once a minute) so products.php and track.php can ask it on every call. */
 function ziina_waiting() {
   $out = [];
   foreach (glob(ziina_dir() . '/*.json') ?: [] as $f) {
     $t = filemtime($f);
-    if ($t < time() - 3 * 86400 || $t > time() - 120) continue;   // older than 3 days, or the shopper may still be on Ziina's page
+    if ($t < time() - 3 * 86400 || $t > time() - 60) continue;   // older than 3 days, or opened under a minute ago
     $rec = json_decode((string)@file_get_contents($f), true);
     if (is_array($rec) && empty($rec['paid']) && empty($rec['closed'])) $out[] = basename($f, '.json');
   }
@@ -134,7 +134,7 @@ function ziina_waiting() {
 }
 function ziina_sweep_due() {
   $stamp = ziina_dir() . '/.recheck';
-  if (is_file($stamp) && time() - filemtime($stamp) < 300) return false;
+  if (is_file($stamp) && time() - filemtime($stamp) < 60) return false;
   if (!ziina_waiting()) { @touch($stamp); return false; }
   return true;
 }
@@ -147,4 +147,22 @@ function ziina_sweep() {
   foreach (ziina_waiting() as $id) {
     try { ziina_verify($id); } catch (Throwable $e) { error_log('FOMAXO Ziina re-check: ' . $e->getMessage()); }
   }
+}
+
+/* the shopper is sent to Ziina's card page: they show in admin → Analytics → Left at checkout at "Card payment page" straight away,
+   from the server (the website's own note is sent just before it leaves for Ziina and can be lost). Their latest checkout line from the
+   last hour (same mobile) moves to that step, else a new line. A paid order hides it there (same mobile, status Paid). */
+function ziina_lead_card($cust, $order) {
+  $pdo = fomaxo_db(); $p9 = fomaxo_phone9((string)$cust['phone']);
+  if (!$pdo || $p9 === '') return;
+  try {
+    $total = round($order['totalFils'] / 100, 2); $items = mb_substr(implode(', ', $order['summary']), 0, 600);
+    $s = $pdo->prepare("UPDATE fx_leads SET stage = 'card', updated_at = NOW(), total = ?, items = ? WHERE order_no IS NULL AND updated_at > NOW() - INTERVAL 1 HOUR
+                        AND RIGHT(REGEXP_REPLACE(phone, '[^0-9]', ''), 9) = ? ORDER BY updated_at DESC LIMIT 1");
+    $s->execute([$total, $items, $p9]);
+    if ($s->rowCount()) return;
+    $sid = substr(md5('ziina' . $cust['phone'] . microtime()), 0, 16);
+    $pdo->prepare("INSERT INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone, email, emirate, items, total, address) VALUES (?, ?, NOW(), NOW(), 'card', ?, ?, ?, ?, ?, ?, ?)")
+        ->execute([$sid, $sid, mb_substr($cust['name'], 0, 80), mb_substr($cust['phone'], 0, 25), mb_substr($cust['email'], 0, 120), mb_substr($cust['emirate'], 0, 30), $items, $total, mb_substr($cust['address'], 0, 300)]);
+  } catch (Throwable $e) { error_log('FOMAXO Ziina lead: ' . $e->getMessage()); }
 }
