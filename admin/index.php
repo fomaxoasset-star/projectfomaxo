@@ -1402,15 +1402,16 @@ if (isset($_GET['videos'])) {
     elseif ($act === 'prods') {   // the products a video sells: remove one, add one, or none (a Shop now button)
       $ps = $vprods($vids[$at]); $rm = (string)($_POST['rm'] ?? ''); $add = (string)($_POST['add'] ?? '');
       if ($rm === '-words') unset($vids[$at]['words']); elseif ($rm !== '') $ps = array_values(array_diff($ps, [$rm]));
-      if ($add === '' && $rm === '' && $words !== '') {   // typed in the + Add box: a product's exact name adds it, any other words = no product, those words with a Shop now button
+      if ($add === '' && $rm === '' && $words !== '') {   // typed in the + Add box: a product's exact name adds it, any other words show on the video next to its products (no product: with a Shop now button)
         $hit = array_search(mb_strtolower(preg_replace('/ \(hidden\)$/', '', $words)), array_map(fn($n) => mb_strtolower($n['name']), $names), true);
-        if ($hit !== false) $add = (string)$hit; else { $ps = []; $vids[$at]['words'] = $words; }
+        if ($hit !== false) $add = (string)$hit; else $vids[$at]['words'] = $words;
       }
-      if ($add === '-') { $ps = []; unset($vids[$at]['words']); }
-      if (isset($names[$add]) && !in_array($add, $ps, true)) { $ps[] = $add; unset($vids[$at]['words']); }
+      if ($add === '-') $ps = [];
+      if (isset($names[$add]) && !in_array($add, $ps, true)) $ps[] = $add;
       $vids[$at]['product'] = $ps[0] ?? ''; $vids[$at]['also'] = array_slice($ps, 1); if (!$vids[$at]['also']) unset($vids[$at]['also']);
       $nm = array_map(fn($id) => $names[$id]['name'], $ps);
-      flash($nm ? 'Saved. The video sells ' . (count($nm) > 1 ? implode(', ', array_slice($nm, 0, -1)) . ' and ' . end($nm) : $nm[0]) . '.' : (($vids[$at]['words'] ?? '') !== '' ? 'Saved. The video shows “' . $vids[$at]['words'] . '” with a Shop now button.' : 'Saved. The video has no product: it shows a Shop now button.'), true);
+      $wd = (string)($vids[$at]['words'] ?? '');
+      flash($nm ? 'Saved. The video sells ' . (count($nm) > 1 ? implode(', ', array_slice($nm, 0, -1)) . ' and ' . end($nm) : $nm[0]) . ($wd !== '' ? ' and shows “' . $wd . '”' : '') . '.' : ($wd !== '' ? 'Saved. The video shows “' . $wd . '” with a Shop now button.' : 'Saved. The video has no product: it shows a Shop now button.'), true);
     }
     elseif ($act === 'product' && isset($names[$_POST['product'] ?? ''])) { $vids[$at]['product'] = (string)$_POST['product']; flash('Saved. The video now sells ' . $names[$vids[$at]['product']]['name'] . '.', true); }
     elseif ($act === 'up' || $act === 'down') { $to = $at + ($act === 'up' ? -1 : 1); if (isset($vids[$to])) [$vids[$at], $vids[$to]] = [$vids[$to], $vids[$at]]; }
@@ -1445,8 +1446,9 @@ if (isset($_GET['videos'])) {
       . (!empty($v['embed']) ? '<a class="vth vemb" href="https://www.instagram.com/reel/' . h($v['embed']) . '/" target="_blank" rel="noopener" title="Open on Instagram">' . ($poster ? '<img src="../assets/img/' . h($poster) . '.webp" alt="">' : '') . '<span>Instagram</span></a>'
         : '<video class="vth' . (empty($v['wide']) ? '' : ' wd') . '" src="../assets/' . h($v['file']) . '#t=0.1" preload="metadata" muted playsinline' . ($poster ? ' poster="../assets/img/' . h($poster) . '.webp"' : '') . ' onclick="this.paused?this.play():this.pause()"></video>')
       . '<div class="vinfo">' . $post($v, 'prods', '<label class="mini">Sells</label><div class="vps">'
-        . ($ps ? implode('', array_map(fn($id) => '<button class="vchip' . ($names[$id]['hidden'] ? ' hid' : '') . '" name="rm" value="' . h($id) . '" title="Remove ' . h($names[$id]['name']) . ' from this video">' . h($names[$id]['name']) . ' <span aria-hidden="true">✕</span></button>', $ps)) : (($v['words'] ?? '') !== '' ? '<button class="vchip none" name="rm" value="-words" title="Remove these words from this video">“' . h($v['words']) . '” · Shop now button <span aria-hidden="true">✕</span></button>' : '<span class="vchip none">No product · Shop now button</span>'))
-        . '<span class="fpick vpick vplus"><input type="text" name="product_text" maxlength="60" data-ffind data-free placeholder="+ Add or type anything" aria-label="Add a product to this video, or type any words for a Shop now button" autocomplete="off"><input type="hidden" name="add"><ul class="fplist" hidden>'
+        . (($v['words'] ?? '') !== '' ? '<button class="vchip none" name="rm" value="-words" title="Remove these words from this video">“' . h($v['words']) . '”' . ($ps ? '' : ' · Shop now button') . ' <span aria-hidden="true">✕</span></button>' : '')   // words typed in the + Add box: shown on the video, with its products or (none) a Shop now button
+        . ($ps ? implode('', array_map(fn($id) => '<button class="vchip' . ($names[$id]['hidden'] ? ' hid' : '') . '" name="rm" value="' . h($id) . '" title="Remove ' . h($names[$id]['name']) . ' from this video">' . h($names[$id]['name']) . ' <span aria-hidden="true">✕</span></button>', $ps)) : (($v['words'] ?? '') !== '' ? '' : '<span class="vchip none">No product · Shop now button</span>'))
+        . '<span class="fpick vpick vplus"><input type="text" name="product_text" maxlength="60" data-ffind data-free placeholder="+ Add or type anything" aria-label="Add a product to this video, or type any words to show on it" autocomplete="off"><input type="hidden" name="add"><ul class="fplist" hidden>'
         . implode('', array_map(fn($id, $n) => in_array($id, $ps, true) ? '' : '<li data-v="' . h($id) . '">' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</li>', array_keys($names), $names))
         . ($ps ? '<li data-v="-">No product · Shop now button</li>' : '') . '</ul></span></div>')
       . '<div class="small muted">' . (!empty($v['embed']) ? '' : ($gone ? 'Product deleted: not shown' : ($hid ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : (($v['where'] ?? '') === 'product' ? 'On product pages only' : 'On the home page, number <span class="vnum">' . ($i + 1) . '</span>' . (($v['where'] ?? '') === 'home' ? ' only' : ' + product pages')))))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : (!empty($v['embed']) ? '<b class="vbad">Not on the website: it opened Instagram. Paste its link again or upload the video</b>' : (!empty($v['link']) ? ' · From a link' : '')))) . $fnote . '</div>'
