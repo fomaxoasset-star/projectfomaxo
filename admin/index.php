@@ -620,8 +620,9 @@ function pg(u){var q=[];new URLSearchParams(u).forEach(function(v,k){q.push(k+"=
 function box(e){for(;e&&e!==document.body;e=e.parentElement){var o=getComputedStyle(e).overflowY;if((o=="auto"||o=="scroll")&&e.scrollHeight>e.clientHeight+2)return e}return null}
 var RS="[data-vid],tr,.vrow,li,.card";
 function sel(r){return r.tagName.toLowerCase()+(r.classList[0]?"."+CSS.escape(r.classList[0]):"")}
-function keep(f){if(!f||(f.method||"").toLowerCase()!=="post"||f.closest(".olist.acts"))return;var r=f.closest(RS)||f,b=box(r);
-try{sessionStorage.setItem(K,JSON.stringify({t:Date.now(),u:pg(location.search),w:window.scrollY,v:r.getAttribute("data-vid")||"",s:sel(r),i:[].indexOf.call(document.querySelectorAll(sel(r)),r),y:r.getBoundingClientRect().top,b:b?b.scrollTop:0}))}catch(x){}}
+function keep(f){if(!f||(f.method||"").toLowerCase()!=="post"||f.closest(".olist.acts"))return;var r=f.closest(RS)||f,b=box(r),a=f.querySelector("[name=act]"),stay=!!a&&/^(first|last)$/.test(a.value);   /* ⇈ / ⇊: the video moves away, the screen stays where it was */
+if(stay&&a.value==="first"){var nx=document.querySelectorAll(sel(r))[[].indexOf.call(document.querySelectorAll(sel(r)),r)+1];if(nx)r=nx}   /* ⇈: the row under it keeps its number and its place */
+try{sessionStorage.setItem(K,JSON.stringify({t:Date.now(),u:pg(location.search),w:window.scrollY,v:stay?"":r.getAttribute("data-vid")||"",s:sel(r),i:[].indexOf.call(document.querySelectorAll(sel(r)),r),y:r.getBoundingClientRect().top,b:b?b.scrollTop:0}))}catch(x){}}
 document.addEventListener("submit",function(e){if(!e.defaultPrevented)keep(e.target)});
 var sub=HTMLFormElement.prototype.submit;HTMLFormElement.prototype.submit=function(){keep(this);return sub.apply(this,arguments)};   /* menus that save on change call form.submit(), which has no submit event */
 var p;try{p=JSON.parse(sessionStorage.getItem(K)||"null");sessionStorage.removeItem(K)}catch(x){}
