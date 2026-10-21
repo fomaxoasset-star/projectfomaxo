@@ -121,4 +121,4 @@ $html = preg_replace('#<body>#', '<body>' . strtr($text, ['\\' => '\\\\', '$' =>
 
 header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: ' . (($_GET['lang'] ?? '') === 'ar' ? 'no-cache' : 'public, max-age=300'));   /* the Arabic link is never handed the English preview from a cache */
-echo $html;
+fomaxo_send_page($html);

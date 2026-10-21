@@ -17,4 +17,4 @@ $html = preg_replace('#(<meta charset="utf-8">\n)#', '$1' . $q('<link rel="canon
   . '<link rel="alternate" hreflang="ar" href="' . FOMAXO_SITE . "/?lang=ar\">\n<link rel=\"alternate\" hreflang=\"x-default\" href=\"" . FOMAXO_SITE . "/\">\n"), $html, 1);
 header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: no-cache');
-echo $html;
+fomaxo_send_page($html);

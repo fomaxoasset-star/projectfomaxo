@@ -72,3 +72,11 @@ function fomaxo_ar_preview($html, $url, $title, $desc) {
   $html = preg_replace('#<meta property="og:url" content="[^"]*">\n?#', '', $html);
   return preg_replace('#(<meta property="og:site_name"[^>]*>\n)#', '$1' . $q('<meta property="og:url" content="' . $h($url) . "\">\n<meta property=\"og:locale\" content=\"ar_AE\">\n"), $html, 1);
 }
+/* sends a page made here (product address, Arabic home) with its own fingerprint (ETag): on a reload, or a visit after the
+   5-minute keep time, a page that has not changed answers "not modified" in a few bytes instead of the whole 180 KB page again */
+function fomaxo_send_page($html) {
+  $tag = substr(md5($html), 0, 16);
+  header('ETag: "' . $tag . '"');
+  if (str_contains((string)($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''), $tag)) { http_response_code(304); return; }   // also matches "tag-gzip" from the server's compression
+  echo $html;
+}
