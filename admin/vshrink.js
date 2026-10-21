@@ -100,8 +100,9 @@ window.fxPick = function (src, done) {
   }
   /* sure way: FFmpeg itself, running inside this browser (admin/ffmpeg, ffmpeg.wasm 0.12). Slower, but it opens every video type
      (iPhone HEVC .mov, .mkv, .avi, .m4v…) on every browser and needs no playing, so no tap. Fetched only when the fast way can't */
-  var inWasm = false;
+  var inWasm = false, MAC_SAFARI = /^((?!chrome|chromium|crios|fxios|edg|opr|android).)*safari/i.test(navigator.userAgent);   // Mac Safari: FFmpeg "Load failed" and froze the page (AJAY 21/10/2026), so it is never fetched there
   function wasm(file, scale) {
+    if (MAC_SAFARI) { why += ' / ffmpeg: not in Safari'; return Promise.resolve(null); }
     var F = null, dur = 0, name = 'in' + ((/\.\w{1,5}$/.exec(file.name) || ['.mp4'])[0]).toLowerCase(), base = new URL('ffmpeg/', location.href).href;
     inWasm = true;
     return import(base + 'index.js?v=0.12.15').then(function (m) {
@@ -224,9 +225,9 @@ window.fxPick = function (src, done) {
     if (!big) { send(null); return; }
     btn.disabled = true; setTimeout(function () { btn.textContent = 'Please wait…'; });
     /* making it smaller: no progress for 45 seconds, or a tap on Skip = upload the original instead (in pieces) */
-    var t0 = Date.now(), last = -1, moved = t0, bail, gaveUp = new Promise(function (ok) { bail = ok; });
+    var t0 = Date.now(), last = -1, moved = t0, wasmAt = 0, bail, gaveUp = new Promise(function (ok) { bail = ok; });
     var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; var skipped = false; sk.onclick = function () { skipped = true; bail(); }; if (keeps(file)) note.appendChild(sk);   // any size: the original goes up as it is when Skip is tapped
-    var dog = setInterval(function () { var now = Date.now(); if (pct !== last) { last = pct; moved = now; } if (inWasm) moved = now; if (now - moved > 45000) bail(); }, 1000);
+    var dog = setInterval(function () { var now = Date.now(); if (pct !== last) { last = pct; moved = now; } if (!inWasm) wasmAt = 0; else if (!wasmAt) wasmAt = now; if (inWasm && now - wasmAt < 180000) moved = now;   /* FFmpeg gets 3 minutes to get ready, then no progress for 45 s = Skip */ if (now - moved > 45000) bail(); }, 1000);
     var quit = false; gaveUp.then(function () { quit = true; clearInterval(dog); try { stopNow && stopNow.cancel(); } catch (e) {} });
     var shrunk = fast(file).then(function (b) {   // still over 5 MB (some phones' encoders overshoot): once more, with the quality lowered by just that much
       if (!b || b.size <= 5 * MB || quit) return b; t0 = Date.now(); return fast(file, 4.6 * MB / b.size).then(function (c) { return c && c.size < b.size ? c : b; });
@@ -282,7 +283,8 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
     var inf = r.querySelector('.vinfo'); if (!inf) return;
     var b = r._mk = document.createElement('button'); b.type = 'button'; b.className = 'vmkp'; var q = queue.indexOf(r) >= 0; b.textContent = q ? 'Making preview…' : label(r); b.disabled = q;   // always shown: the preview's state, and a tap makes it (again)
     b.style.cssText = 'margin-left:8px;font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:0 9px;cursor:pointer';
-    b.onclick = function () { delete bad[nmOf(r)]; save(); try { localStorage.removeItem(CANT); } catch (e) {} noFast = false; noWasm = SAFARI; fails = 0;
+    if (SAFARI) { b.disabled = true; b.style.cursor = 'default'; if (r.hasAttribute('data-pv')) b.textContent = 'Preview ✓'; else if (r.hasAttribute('data-mkprev')) { b.textContent = 'Preview: make it in Chrome'; b.title = 'Safari can\'t make previews. Open admin in Chrome once and they are made by themselves.'; } else b.hidden = true; }   // Safari makes none (nothing heavy runs there)
+    b.onclick = function () { if (SAFARI) return; delete bad[nmOf(r)]; save(); try { localStorage.removeItem(CANT); } catch (e) {} noFast = false; noWasm = SAFARI; fails = 0;
       b.disabled = true; b.textContent = 'Making preview…'; if (queue.indexOf(r) < 0) { queue.push(r); total++; } if (!busy) next(); };
     inf.appendChild(b);
   });
@@ -363,7 +365,7 @@ setTimeout(function () {
   (function next() {
     var r = rows.shift(); if (!r || gone) return;
     if (document.hidden || f.dataset.go) { rows.unshift(r); return setTimeout(next, 3000); }   // an upload going on comes first
-    fetch(r.dataset.mkcover, {credentials: 'same-origin'}).then(function (x) { return x.ok ? x.blob() : null; }).then(function (b) { return b ? window.fxCover(b) : null; }).then(function (c) {
+    window.fxCover(r.dataset.mkcover).then(function (c) {   // straight from its address: the browser reads only the 5 moments it looks at, not the whole video (a slow line stayed busy for minutes)
       if (gone) return;
       if (!c) { bad[r.dataset.vid] = (bad[r.dataset.vid] || 0) + 1; try { localStorage.setItem(KEY, JSON.stringify(bad)); } catch (e) {} return; }
       var fd = new FormData(); fd.append('csrf', csrf); fd.append('act', 'cover'); fd.append('vid', r.dataset.vid); fd.append('cover', c, 'cover.jpg');
