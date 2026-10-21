@@ -6,6 +6,17 @@ header('Cache-Control: no-cache');   // the browser asks again on every page loa
 header('X-LiteSpeed-Cache-Control: no-cache');
 require __DIR__ . '/orders-lib.php';
 require_once __DIR__ . '/media-lib.php';
+/* card payments still waiting (the shopper paid on Ziina's page but never came back to the thank-you page): asked about again
+   after this visitor already has the answer, at most every 5 minutes (ziina-lib.php) */
+require_once __DIR__ . '/ziina-lib.php';
+if (ziina_sweep_due()) {
+  require_once __DIR__ . '/store-lib.php';   // prices and order helpers the paid order needs, loaded only for the re-check
+  register_shutdown_function(function () {
+    while (ob_get_level()) ob_end_flush();
+    if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    ziina_sweep();
+  });
+}
 /* Every visitor gets the same answer (apart from the same-day emirate, added below), so it is worked out at most once a minute and kept in
    fomaxo-cache/products.json: one quick file read instead of the database and up to three passes over the orders on every page load.
    Saving anything on admin, a saved setting and a deploy (a newer products.php or index.html) start a fresh one (fomaxo_products_drop in orders-lib.php). */
