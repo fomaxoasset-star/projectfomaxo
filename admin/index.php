@@ -2152,7 +2152,7 @@ if (isset($_GET['offer'])) {
     . '<label>Short line<input name="np_line" maxlength="90" value="' . h($np['line']) . '" placeholder="Optional"></label>'
     . $szIn('fs', $szNew) . '<div class="obtns"><button class="btn">Save</button><button type="button" class="btn line" data-preview="new">Preview</button></div>'
     . '<p class="muted small" style="margin:10px 0 0">Shows once per visitor, before the sale popup.</p></form></div>'
-    . '<script>window.FX_TR_ONLY=1;' . @file_get_contents(__DIR__ . '/../assets/i18n-ar.js') . '</script>'   /* the website's Arabic words, for the EN / عربي preview */
+    . '<script>window.FX_TR_ONLY=1</script><script src="../assets/i18n-ar.js?v=' . (int)@filemtime(__DIR__ . '/../assets/i18n-ar.js') . '"></script>'   /* the website's Arabic words, for the EN / عربي preview: the file the browser keeps (100 KB not sent again on every Offers page load) */
     . '<script>var OFFER_SZ=' . fomaxo_json(['sale' => fomaxo_popup_spec(), 'new' => fomaxo_popup_spec(true)]) . ';' . OFFER_JS . '</script>', true);
 }
 
