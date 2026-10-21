@@ -2700,11 +2700,17 @@ if (isset($_GET['analytics'])) {
   $resetAt = (string)fomaxo_setting($pdo, 'orders_reset');
   $buyOk = fn($a) => "($a.ev = 'buy' AND IF($a.ref IS NOT NULL, EXISTS (SELECT 1 FROM fx_orders o WHERE o.order_no = $a.ref AND $realO),
                       " . ($resetAt !== '' ? "$a.at >= " . $pdo->quote($resetAt) . ' AND ' : '') . "NOT EXISTS (SELECT 1 FROM fx_leads lb JOIN fx_orders o ON o.order_no = lb.order_no WHERE lb.sid = $a.sid AND NOT ($realO))))";
+  /* visits whose order went to the Trash (mostly test orders): their steps (bag, checkout, payment) are out of the funnel too, as their
+     purchase and their Left at checkout line already are; Put back brings them back */
+  $trashSids = [];
+  try { foreach ($pdo->query('SELECT row_json FROM fx_orders_trash') as $t) { $o = json_decode((string)$t['row_json'], true);
+    foreach (array_merge((array)($o['_web']['leads'] ?? []), (array)($o['_web']['buys'] ?? [])) as $w) if (preg_match('/^[a-z0-9]{8,16}$/', (string)($w['sid'] ?? ''))) $trashSids[$w['sid']] = 1; } } catch (Throwable $e) {}
+  $notTrash = $trashSids ? " AND sid NOT IN ('" . implode("','", array_keys($trashSids)) . "')" : '';
   $f = $q("SELECT COUNT(DISTINCT vid) visitors, COUNT(DISTINCT sid) visits, SUM(ev = 'view') views,
                   COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) product, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) cart,
                   COUNT(DISTINCT CASE WHEN ev = 'checkout' THEN sid END) checkout, COUNT(DISTINCT CASE WHEN ev = 'pay' THEN sid END) pay,
                   COUNT(DISTINCT CASE WHEN ev = 'card' THEN sid END) card, COUNT(DISTINCT CASE WHEN " . $buyOk('e') . " THEN sid END) buy
-           FROM fx_events e WHERE at BETWEEN ? AND ?")->fetch();
+           FROM fx_events e WHERE at BETWEEN ? AND ?$notTrash")->fetch();
   $f = array_map('intval', $f);
   $live = (int)$pdo->query('SELECT COUNT(*) FROM fx_live WHERE seen > NOW() - INTERVAL 5 MINUTE')->fetchColumn();
   $ord = $q("SELECT COUNT(*) n, COALESCE(SUM(total), 0) t FROM fx_orders WHERE status IN ('New', 'Paid', 'Delivered') AND test = 0 AND created_at BETWEEN ? AND ?")->fetch();
@@ -2817,7 +2823,7 @@ if (isset($_GET['analytics'])) {
     /* 1. per product: visits that viewed it → added it to the bag → orders that bought it (free minis not counted) */
     $pf = [];
     foreach ($q("SELECT product, COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) views, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) adds
-                 FROM fx_events WHERE ev IN ('product', 'cart') AND product IS NOT NULL AND at BETWEEN ? AND ? GROUP BY product") as $row)
+                 FROM fx_events WHERE ev IN ('product', 'cart') AND product IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY product") as $row)
       $pf[$row['product']] = ['v' => (int)$row['views'], 'a' => (int)$row['adds'], 'o' => 0, 'u' => 0];
     foreach ($orders as $o) {
       $seen = [];
