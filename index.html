@@ -206,6 +206,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .tag{position:absolute;top:16px;left:16px;z-index:2;font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-hi);border:1px solid var(--line-2);padding:6px 10px;background:rgba(var(--bg-rgb),.65);backdrop-filter:blur(6px)}
 .card{position:relative}   /* the badge sits on the photo's top right corner, a little outside the frame */
 .best{position:absolute;top:-14px;right:-14px;z-index:5;display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:#0a0805;background:var(--metal,var(--gold));padding:6px 10px 6px 9px;box-shadow:0 6px 18px -8px rgba(0,0,0,.6);pointer-events:none}.best svg{width:11px;height:11px;flex:none}.best[hidden]{display:none}
+@media(max-width:960px){.gallery>.best{grid-row:1;grid-column:1}.gallery:has(>.vstrip:not([hidden]))>.best{grid-row:2}}   /* phone: badge stays on the photo corner when the Review videos cards sit above the photo */
 html[data-mode="light"] .best{color:#fff8ea}
 @media(max-width:560px){.also-row{padding-top:12px}.best{top:-11px;right:-11px;font-size:9px;letter-spacing:.16em;padding:5px 7px;gap:4px}.best svg{width:9px;height:9px}}
 .card .quick{position:absolute;left:16px;right:16px;bottom:16px;z-index:2;opacity:0;transform:translateY(10px);transition:.6s var(--ease)}
