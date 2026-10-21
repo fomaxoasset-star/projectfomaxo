@@ -5600,7 +5600,8 @@ function bindHome(){
    with its product's sizes, Add to bag and Buy now, and a swipe up or down goes to the next video. Videos of hidden products are left out.
    Light on data: a video only loads when it is on screen; the ones on screen play straight away, muted, and pause when scrolled away. */
 let VIDEOS = []; try { VIDEOS = JSON.parse(localStorage.getItem('fomaxo_videos') || '[]') || []; } catch(e) {}
-const vidProds = v => [v.p, ...(v.a || [])].filter((id, i, a) => shown(id) && a.indexOf(id) === i);   // v.p = first product, v.a = more; none = a general video with Shop now
+const vidProds = v => { const l = [v.p, ...(v.a || [])].filter((id, i, a) => shown(id) && a.indexOf(id) === i), pg = vidPage(), k = pg ? l.indexOf(pg) : -1; if (k > 0) l.unshift(...l.splice(k, 1)); return l; };   // v.p = first product, v.a = more; none = a general video with Shop now
+// on a product page, that page's product comes first on the tile and in the player (a Gold + King video shows Gold on Gold's page, King on King's)
 const vids = () => VIDEOS.filter(v => v && (v.v || v.e) && (vidProds(v).length || (!v.p && !(v.a || []).length)));   // v.e = an Instagram reel shown with Instagram's own player
 /* a product page has the same row, as its Review videos: only the videos that sell that product (AJAY 2026-10-12) */
 const vidPage = () => { const m = /^#\/product\/([^?\/]+)/.exec(location.hash); return m && P[m[1]] && !P[m[1]].hidden ? m[1] : ''; };
@@ -5620,10 +5621,10 @@ const vidPoster = v => { if (v.c) return IMG(v.c); const p = P[vidProds(v)[0]]; 
 function vidSecHTML(){
   const l = rowVids(); if (!l.length) return '';
   return `<div class="wrap">${(vidPage() ? secHead('Watch &amp; shop', 'Review <em class="metal">videos</em>', '', false) : secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
-    <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
+    <div class="vrow" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = v.sn && !vidPage() ? null : P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
       ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `${v.pv ? `<video autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : v.v)}"></video>` : ''}${vidPoster(v) ? `<img class="vt-pic" src="${vidPoster(v)}" alt="" loading="lazy">` : ''}`}
       ${v.n && vidPage() ? `<span class="vt-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}<span class="vt-play" aria-hidden="true">${VI.play}</span>
-      ${p ? `<span class="vt-p${v.w ? ' has-w' : ''}">${v.w ? `<i class="vt-w">${esc(v.w)}</i>` : ''}<img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now</i></span></span>`}</button>`; }).join('')}</div></div>`;
+      ${p ? `<span class="vt-p${v.w ? ' has-w' : ''}">${v.w ? `<i class="vt-w">${esc(v.w)}</i>` : ''}<img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now${ps.length ? ` · + ${ps.length} more` : ''}</i></span></span>`}</button>`; }).join('')}</div></div>`;
 }
 let vrIO = null;
 function bindVids(){
@@ -5686,7 +5687,7 @@ function reelSlide(v, k){
     ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video playsinline loop muted preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
     <span class="rl-pause" aria-hidden="true">${VI.play}</span>
     ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'Eau de Parfum · Unisex'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`
-      : `<div class="rl-cards${ps.length + (v.sn ? 1 : 0) > 1 ? ' many' : ''}">${v.w ? `<p class="rl-w">${esc(v.w)}</p>` : ''}${ps.length > 1 ? `<p class="rl-cnt">${ps.length} products in this video · swipe</p>` : ''}<div class="rl-cs">${ps.map(reelCard).join('')}${v.sn ? `<div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">FOMAXO</span><span class="rl-f">All fragrances</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div>` : ''}</div></div>`}
+      : `<div class="rl-cards${ps.length + (v.sn ? 1 : 0) > 1 ? ' many' : ''}">${v.w && !v.sn ? `<p class="rl-w">${esc(v.w)}</p>` : ''}${ps.length > 1 ? `<p class="rl-cnt">${ps.length} products in this video · swipe</p>` : ''}<div class="rl-cs">${v.sn && !vidPage() ? `<div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'All fragrances'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div>` : ''}${ps.map(reelCard).join('')}${v.sn && vidPage() ? `<div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'All fragrances'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div>` : ''}</div></div>`}
     </div></section>`;
 }
 function openReel(i){
