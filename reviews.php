@@ -3,7 +3,7 @@
    GET  reviews.php?summary          → average rating and count for every product
    GET  reviews.php?product=ID       → the visible reviews of one product
    GET  reviews.php?link=TOKEN       → the products of an order's private review link (Verified Purchaser)
-   GET  reviews.php?photo=FILE       → a customer photo
+   GET  reviews.php?photo=FILE       → a customer photo (pages ask for media/r/FILE: .htaccess sends a photo with no public copy yet here, which makes the copy)
    POST reviews.php  action=review   → new review (form data: product, rating, name, anon, text, token, photos[])
    POST reviews.php  action=helpful  → "Helpful" vote (one per browser)
    GET  reviews.php?manage&k=KEY     → FOMAXO's page to hide or show reviews (the link is in every new-review email)
@@ -24,7 +24,7 @@ function out($data, $code = 200) { http_response_code($code); header('Content-Ty
 function rv_public($r) {
   return ['id' => $r['id'], 'name' => $r['name'], 'rating' => $r['rating'], 'text' => $r['text'], 'verified' => !empty($r['verified']),
           'city' => $r['city'] ?? '', 'country' => $r['country'] ?? '', 'date' => substr($r['created'], 0, 10), 'helpful' => (int)($r['helpful'] ?? 0),
-          'photos' => array_map(fn($p) => 'reviews.php?photo=' . rawurlencode($p), $r['photos'] ?? []), 'reply' => empty($r['reply_hidden']) ? (string)($r['reply'] ?? '') : ''];
+          'photos' => array_map(fn($p) => 'media/r/' . rawurlencode($p), $r['photos'] ?? []), 'reply' => empty($r['reply_hidden']) ? (string)($r['reply'] ?? '') : ''];
 }
 /* send the answer now and keep working after it (translating), so the customer never waits */
 function rv_send_then($data) {
@@ -76,6 +76,7 @@ if ($method === 'GET' && isset($_GET['photo'])) {
   header_remove('Cache-Control');
   header('Content-Type: image/jpeg'); header('Cache-Control: public, max-age=31536000, immutable');
   header('X-Content-Type-Options: nosniff'); header('Content-Length: ' . filesize($f));
+  rv_pub_photo($n, $f);   // the web server sends media/r/<photo> from now on
   readfile($f); exit;
 }
 /* Checks it is a real photo, turns it the right way up, shrinks it and saves a fresh JPEG (drops any hidden data). */
@@ -176,7 +177,7 @@ if (isset($_GET['manage']) || ($_POST['action'] ?? '') === 'toggle') {
     echo '<div class="r' . ($off ? ' off' : '') . '" id="r-' . $h($r['id']) . '"><div><b>' . $h($CATALOG[$r['product']]['name'] ?? $r['product']) . '</b> · <span class="s">' . str_repeat('★', $r['rating']) . str_repeat('☆', 5 - $r['rating']) . '</span></div>'
        . '<div class="m">' . $h($r['name']) . ($r['anon'] ? ' (real name: ' . $h($r['real'] ?? '') . ')' : '') . (($r['city'] ?? '') . ($r['country'] ?? '') !== '' ? ' · ' . $h(trim(($r['city'] ?? '') . ' ' . ($r['country'] ?? ''))) : '') . ' · ' . ($r['verified'] ? 'Verified Purchaser, order ' . $h($r['order']) : 'not verified') . ' · ' . $h(substr($r['created'], 0, 16)) . ($off ? ' · HIDDEN' : '') . '</div>'
        . '<p>' . $h($r['text']) . '</p>';
-    foreach ($r['photos'] ?? [] as $p) echo '<a href="reviews.php?photo=' . $h($p) . '" target="_blank"><img src="reviews.php?photo=' . $h($p) . '" alt=""></a>';
+    foreach ($r['photos'] ?? [] as $p) echo '<a href="media/r/' . $h($p) . '" target="_blank"><img src="media/r/' . $h($p) . '" alt=""></a>';
     echo '<form method="post" action="reviews.php"><input type="hidden" name="action" value="toggle"><input type="hidden" name="k" value="' . $h($k) . '"><input type="hidden" name="id" value="' . $h($r['id']) . '">'
        . '<input type="hidden" name="hide" value="' . ($off ? '0' : '1') . '"><button>' . ($off ? 'Show on website' : 'Hide from website') . '</button></form></div>';
   }

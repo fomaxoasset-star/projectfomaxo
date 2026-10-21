@@ -1025,6 +1025,7 @@ if (empty($_SESSION['admin'])) {
 }
 
 /* ================= 3) logged in: orders ================= */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') fomaxo_products_drop();   // a save here shows on the website at its next page load (products.php keeps its answer a minute otherwise)
 
 
 /* the alert sound switch on Orders (fx_sound_btn), the same setting as Settings → New orders */
@@ -3282,7 +3283,7 @@ if (isset($_GET['reviews'])) {
     $phone = (string)($tel[$r['order'] ?? '']['phone'] ?? ''); $ck = $ckey($phone);
     $is = fx_rv_issue($r); $mob = $phone !== '' ? $phone : (string)($r['mobile'] ?? '');   // the order's mobile, else the one typed on the review form (only FOMAXO sees it)
     $wa = $is !== '' && $mob !== '' ? fx_wa_btn($mob, $r['name'] ?: $mob, ($m = fx_rv_msg($r, $pname($r['product'])))[0], $m[1], 'rv:' . $r['id'], 'rv', $m[2], 'btn sm wag rvwa', false, array_slice(fx_rv_msg($r, $pname($r['product']), !$m[2]), 0, 2)) : '';
-    $ph = ''; foreach ($r['photos'] ?? [] as $p) $ph .= '<a href="../reviews.php?photo=' . h(rawurlencode($p)) . '" target="_blank" rel="noopener"><img src="../reviews.php?photo=' . h(rawurlencode($p)) . '" alt="" loading="lazy"></a>';
+    $ph = ''; foreach ($r['photos'] ?? [] as $p) $ph .= '<a href="../media/r/' . h(rawurlencode($p)) . '" target="_blank" rel="noopener"><img src="../media/r/' . h(rawurlencode($p)) . '" alt="" loading="lazy"></a>';
     $f = fn($fields, $label, $cls, $ask = '') => '<form method="post"' . ($ask ? ' onsubmit="return confirm(\'' . $ask . '\')"' : '') . '>' . csrf_field() . $hidden('id', $r['id']) . $keep . $fields . '<button class="btn sm ' . $cls . '">' . $label . '</button></form>';
     return '<li class="rv' . ($off ? ' off' : '') . ($is !== '' ? ' rv-' . $is : '') . '"><div class="rh">' . $thumb($r['product']) . '<b>' . h($pname($r['product'])) . '</b> ' . $stars($r['rating'])
       . (!empty($r['verified']) ? ' <span class="vpill">Verified purchaser</span>' : ' <span class="vpill no">Unverified</span>') . ($is !== '' ? ' <span class="vpill ib-' . $is . '">' . FX_RV_ISSUES[$is] . '</span>' : '') . ($off ? ' <span class="tag s-Cancelled">Hidden</span>' : '') . $wa . '</div>'
