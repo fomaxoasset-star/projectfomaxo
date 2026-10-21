@@ -444,14 +444,14 @@ setTimeout(function () {
   });
 }, 1200);
 /* the same video in the list twice: each copy says so in red on its row ("Same video as number 3"), so one can be deleted.
-   Matched like the upload warning: same fingerprint, or the same file size for videos that went up as they were */
-(function () {
+   Matched like the upload warning: same fingerprint, or the same file size for videos that went up as they were. Runs once the list is on the page */
+(function (go) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })(function () {
   var rows = [].slice.call(document.querySelectorAll('.vrow[data-vid]')); if (rows.length < 2) return;
   rows.forEach(function (r, i) {
     var twins = rows.filter(function (o) { return o !== r && ((r.dataset.fp && o.dataset.fp === r.dataset.fp) || (r.dataset.sz && o.dataset.sz === r.dataset.sz)); });
     var line = r.querySelector('.vinfo > .muted'); if (!twins.length || !line) return;
     var b = document.createElement('b'); b.className = 'vbad vsame';
-    b.textContent = ' · Same video as number ' + twins.map(function (o) { return rows.indexOf(o) + 1; }).join(', ');
+    b.textContent = ' · Same video as number\u00a0' + twins.map(function (o) { return rows.indexOf(o) + 1; }).join(', ');
     line.appendChild(b);
   });
-})();
+});
