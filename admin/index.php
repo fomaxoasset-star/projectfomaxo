@@ -1300,7 +1300,9 @@ function fx_vid_to_in(string $path, array $v): bool {
   $in = fx_in_inbox(); $name = basename($path); if ($in === '' || (!is_dir($in) && !@mkdir($in, 0750, true))) return false;
   $tmp = "$in/$name." . bin2hex(random_bytes(4)) . '.part';
   if (!@copy($path, $tmp) || !@rename($tmp, "$in/$name")) { @unlink($tmp); return false; }
-  return (bool)@file_put_contents("$in/$name.json", json_encode(['file' => $name] + array_intersect_key($v, array_flip(['product', 'words', 'wide', 'fp', 'person', 'where'])), JSON_UNESCAPED_SLASHES), LOCK_EX);
+  if (!@file_put_contents("$in/$name.json", json_encode(['file' => $name] + array_intersect_key($v, array_flip(['product', 'words', 'wide', 'fp', 'person', 'where'])), JSON_UNESCAPED_SLASHES), LOCK_EX)) return false;
+  @unlink(dirname($in) . '/live-cache.js');   // fomaxo.in's one-minute copy of its shop answer: its next page load adds the video straight away
+  return true;
 }
 function fx_vid_note(string $file, array $extra = []): void {
   $j = fx_media() . '/fomaxo-vid-info.json'; $all = is_file($j) ? (json_decode((string)file_get_contents($j), true) ?: []) : [];
