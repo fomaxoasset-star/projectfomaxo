@@ -1157,6 +1157,7 @@
 "+ Add": "+ أضف",
 "photos": "صوراً",
 "Review": "مراجعات",
+"Review videos": "فيديوهات المراجعات",
 "videos": "الفيديو",
 "State / City (optional)": "الإمارة / المدينة (اختياري)",
 "Nation (optional)": "الدولة (اختياري)",
