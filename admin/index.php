@@ -628,7 +628,8 @@ var p;try{p=JSON.parse(sessionStorage.getItem(K)||"null");sessionStorage.removeI
 if(!p||Date.now()-p.t>60000||p.u!==pg(location.search))return;
 var row=p.v?document.querySelector('[data-vid="'+CSS.escape(p.v)+'"]'):document.querySelectorAll(p.s)[p.i];
 window.scrollTo(0,p.w);if(!row)return;var b=box(row);if(b)b.scrollTop=p.b;
-var go=function(){var d=row.getBoundingClientRect().top-p.y,c=box(row);if(c)c.scrollTop+=d;else window.scrollBy(0,d)};go();addEventListener("load",go);if(document.fonts)document.fonts.ready.then(go);
+var hold=true;["wheel","touchstart","keydown","mousedown"].forEach(function(t){addEventListener(t,function(){hold=false},{once:true,passive:true})});
+var go=function(){if(!hold)return;var d=row.getBoundingClientRect().top-p.y,c=box(row);if(c)c.scrollTop+=d;else window.scrollBy(0,d)};go();addEventListener("load",go);if(document.fonts)document.fonts.ready.then(go);[700,1500,2500].forEach(function(t){setTimeout(go,t)});   /* buttons added a moment later make the rows above taller */
 row.classList.add("rjust");
 var m=document.querySelector("main .msg");if(m){var y=m.getBoundingClientRect();if(y.bottom<0||y.top>innerHeight){m.classList.add("rtoast");setTimeout(function(){m.classList.remove("rtoast")},3500)}}})();
 JS;
