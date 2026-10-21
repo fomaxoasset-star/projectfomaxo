@@ -5686,7 +5686,7 @@ function reelSlide(v, k){
     ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video playsinline loop muted preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}
     <span class="rl-pause" aria-hidden="true">${VI.play}</span>
     ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'Eau de Parfum · Unisex'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`
-      : `<div class="rl-cards${ps.length > 1 ? ' many' : ''}">${v.w ? `<p class="rl-w">${esc(v.w)}</p>` : ''}${ps.length > 1 ? `<p class="rl-cnt">${ps.length} products in this video · swipe</p>` : ''}<div class="rl-cs">${ps.map(reelCard).join('')}</div></div>`}
+      : `<div class="rl-cards${ps.length + (v.sn ? 1 : 0) > 1 ? ' many' : ''}">${v.w ? `<p class="rl-w">${esc(v.w)}</p>` : ''}${ps.length > 1 ? `<p class="rl-cnt">${ps.length} products in this video · swipe</p>` : ''}<div class="rl-cs">${ps.map(reelCard).join('')}${v.sn ? `<div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">FOMAXO</span><span class="rl-f">All fragrances</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div>` : ''}</div></div>`}
     </div></section>`;
 }
 function openReel(i){
