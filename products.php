@@ -46,6 +46,7 @@ if ($pdo) { try { $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) 
 $ads = array_filter(array_intersect_key((array)$ads, array_flip(['meta', 'tiktok', 'google', 'gads', 'clarity'])), fn($v) => is_string($v) && $v !== '');
 /* shop videos (admin → Products → Videos): only the ones switched on, of products on the website; the website shows them on the home page and as Review videos on their product pages (wh: h = home page only, p = product pages only, none = both) */
 $videos = [];
+if ($pdo) { try { fx_video_inbox($pdo); } catch (Throwable $e) {} }   // videos sent from fomaxo.in (media-lib.php)
 if ($pdo && (string)fomaxo_setting($pdo, 'videos_off') !== '1') { try { $live = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) if (!$r['hidden']) $live[$r['id']] = true;
   foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (!empty($v['on']) && preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $v['file'] ?? '')) {   // only videos on our server: an Instagram-player entry sends shoppers off to Instagram
     $all = array_values(array_unique(array_filter(array_merge([(string)($v['product'] ?? '')], (array)($v['also'] ?? [])), fn($id) => is_string($id) && $id !== '')));   // one product, several, or none (a Shop now button)
