@@ -84,6 +84,10 @@ try {
   $depth = null;
   if ($ev === 'scroll') { $depth = (int)($d['d'] ?? 0); if (!in_array($depth, [25, 50, 75, 100], true)) exit; }   // how far down the homepage
   $source = null; $ref = null; $country = null; $region = null; $campaign = null;
+  $dup = false;
+  if ($ev === 'buy' && ($ref = $t('o', 40)) !== '') {   // a purchase keeps its order number, so Analytics counts it only while the order is a real one (as the Orders tile)
+    $s = $pdo->prepare("SELECT 1 FROM fx_events WHERE ev = 'buy' AND ref = ? LIMIT 1"); $s->execute([$ref]); $dup = (bool)$s->fetchColumn();   // already noted (the server's card re-check, or a second thank-you page)
+  } elseif ($ev === 'buy') $ref = null;
   if ($ev === 'view' && !empty($d['first'])) {   // the first page of a visit says where it came from
     $ref = $t('r', 300);
     $source = fomaxo_source($ref, strtolower($t('u', 40)), $ua);
@@ -95,7 +99,7 @@ try {
   $device = preg_match('/iPad|Tablet|(Android(?!.*Mobile))/i', $ua) ? 'tablet' : (preg_match('/Mobi|iPhone|Android/i', $ua) ? 'phone' : 'computer');
   $product = $ev === 'product' || $ev === 'cart' ? (preg_match('/^[a-z0-9-]{1,40}$/', (string)($d['id'] ?? '')) ? $d['id'] : null) : null;
   $lang = $ev === 'view' && in_array($d['l'] ?? '', ['ar', 'en'], true) ? $d['l'] : null;   // English or Arabic site
-  try {
+  if (!$dup) try {
     $pdo->prepare('INSERT INTO fx_events (at, vid, sid, ev, page, product, source, ref, device, country, region, campaign, depth, lang) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
         ->execute([$vid, $sid, $ev, $page, $product, $source, $ref, $device, $country, $region, $campaign, $depth, $lang]);
   } catch (Throwable $e) { try {   // before the lang column exists
