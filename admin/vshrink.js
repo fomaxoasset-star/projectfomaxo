@@ -283,8 +283,8 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
     var inf = r.querySelector('.vinfo'); if (!inf) return;
     var b = r._mk = document.createElement('button'); b.type = 'button'; b.className = 'vmkp'; var q = queue.indexOf(r) >= 0; b.textContent = q ? 'Making preview…' : label(r); b.disabled = q;   // always shown: the preview's state, and a tap makes it (again)
     b.style.cssText = 'margin-left:8px;font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:0 9px;cursor:pointer';
-    if (SAFARI) { b.disabled = true; b.style.cursor = 'default'; if (r.hasAttribute('data-pv')) b.textContent = 'Preview ✓'; else if (r.hasAttribute('data-mkprev')) { b.textContent = 'Preview: make it in Chrome'; b.title = 'Safari can\'t make previews. Open admin in Chrome once and they are made by themselves.'; } else b.hidden = true; }   // Safari makes none (nothing heavy runs there)
-    b.onclick = function () { if (SAFARI) return; delete bad[nmOf(r)]; save(); try { localStorage.removeItem(CANT); } catch (e) {} noFast = false; noWasm = SAFARI; fails = 0;
+    if (SAFARI && !r.hasAttribute('data-pv') && !r.hasAttribute('data-mkprev')) b.hidden = true;   // Safari: only on a tap, and only where one is needed
+    b.onclick = function () { delete bad[nmOf(r)]; save(); try { localStorage.removeItem(CANT); } catch (e) {} noFast = false; noWasm = SAFARI; fails = 0;
       b.disabled = true; b.textContent = 'Making preview…'; if (queue.indexOf(r) < 0) { queue.push(r); total++; } if (!busy) next(); };
     inf.appendChild(b);
   });
@@ -311,6 +311,30 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
       });
     }).catch(function (e) { how += ' fast: ' + String(e && (e.message || e.name) || e).slice(0, 50); return null; });
   }
+  /* Safari: the video plays (muted, hidden) and its first 8 seconds are recorded at 640px. Streams from the address, so only those seconds are downloaded */
+  function recPrev(src) {
+    var mt = window.MediaRecorder && MediaRecorder.isTypeSupported && HTMLCanvasElement.prototype.captureStream ? ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1', 'video/mp4'].filter(function (m) { return MediaRecorder.isTypeSupported(m); })[0] : '';
+    if (!mt) return Promise.resolve(null);
+    return new Promise(function (ok) {
+      var v = document.createElement('video'), c = document.createElement('canvas'), g = c.getContext('2d'), rec = null, parts = [], raf = 0, t = 0, over = false;
+      var end = function (keep) { if (over) return; over = true; clearTimeout(t); cancelAnimationFrame(raf); conv = null;
+        if (rec && rec.state !== 'inactive') { rec.onstop = function () { v.remove(); var b = new Blob(parts, {type: 'video/mp4'}); ok(keep && b.size ? b : null); }; try { rec.stop(); } catch (e) { v.remove(); ok(null); } } else { v.remove(); ok(null); } v.pause(); };
+      conv = {cancel: function () { end(false); }};
+      v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto'; v.style.cssText = 'position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:.01;pointer-events:none';
+      v.onloadedmetadata = function () { var k = Math.min(1, 640 / Math.max(v.videoWidth, v.videoHeight)); c.width = Math.round(v.videoWidth * k / 2) * 2; c.height = Math.round(v.videoHeight * k / 2) * 2; };
+      v.onplaying = function () {
+        if (rec) return;
+        try { rec = new MediaRecorder(c.captureStream(30), {mimeType: mt, videoBitsPerSecond: BR}); } catch (e) { how += ' rec: ' + (e && e.name); return end(false); }
+        rec.ondataavailable = function (e) { if (e.data && e.data.size) parts.push(e.data); };
+        rec.start(1000); t = setTimeout(function () { end(true); }, SEC * 1000);
+        (function draw() { g.drawImage(v, 0, 0, c.width, c.height); raf = requestAnimationFrame(draw); })();
+      };
+      v.onended = function () { end(true); };
+      v.onerror = function () { how += ' rec: cannot open'; end(false); };
+      document.body.appendChild(v); v.src = src;
+      var p = v.play(); if (p && p.catch) p.catch(function (e) { how += ' rec: ' + (e && e.name || 'no play'); end(false); });
+    });
+  }
   var F = null;   // FFmpeg (admin/ffmpeg), loaded once for all previews when the fast way can't
   function wasmPrev(blob) {
     var base = new URL('ffmpeg/', location.href).href;
@@ -333,9 +357,11 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
     busy = true; var row = queue.shift(); i++;
     idle().then(function () {
       say('Making quick previews for the home page: ' + i + ' of ' + total + '…'); t0 = Date.now(); tell('start ' + i + ' of ' + total);
+      if (SAFARI) return limit(recPrev(row.dataset.pvsrc), 60000, function () { how += ' rec: too slow'; conv && conv.cancel(); }).then(function (p) { if (p) how = 'recorded'; return {p: p}; });
       var ac = window.AbortController ? new AbortController() : null;   // a download that hangs is given up after 90 seconds
       return limit(fetch(row.dataset.pvsrc, {credentials: 'same-origin', signal: ac && ac.signal}).then(function (r) { return r.ok ? r.blob() : null; }), 90000, function () { ac && ac.abort(); });
     }).then(function (b) {
+      if (b && b.p !== undefined) return b.p;   // Safari: already made (or not) by recording
       how = ''; if (!b) { how = 'not loaded'; return null; }
       tell('loaded ' + (b.size / 1048576).toFixed(1) + ' MB in ' + Math.round((Date.now() - t0) / 1000) + ' s');
       /* the fast way gets 25 seconds; once it fails here, the rest go straight to FFmpeg (fast, 640px, first 8 seconds only) */
