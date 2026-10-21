@@ -5,7 +5,8 @@
    "perItem": the most of one item per order (admin → Stocks, empty = 30).
    Stock is typed in on fomaxo.com/admin → Stock. */
 header('Content-Type: application/json');
-header('Cache-Control: public, max-age=30');
+header('Cache-Control: no-cache');   // asked again on every page load, so a stock count saved on admin shows straight away; "not changed" when nothing changed
+header('X-LiteSpeed-Cache-Control: no-cache');
 require __DIR__ . '/orders-lib.php';
 $out = []; $max = [];
 $pdo = fomaxo_db();
@@ -19,4 +20,7 @@ if ($pdo) {
     }
   } catch (Throwable $e) {}
 }
-echo json_encode(['low' => fomaxo_low_stock(), 'stock' => (object)$out, 'max' => (object)$max, 'perItem' => fomaxo_max_per_item()]);
+$json = json_encode(['low' => fomaxo_low_stock(), 'stock' => (object)$out, 'max' => (object)$max, 'perItem' => fomaxo_max_per_item()]);
+$tag = substr(md5($json), 0, 16); header('ETag: "' . $tag . '"');
+if (strpos((string)($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''), $tag) !== false) { http_response_code(304); exit; }
+echo $json;

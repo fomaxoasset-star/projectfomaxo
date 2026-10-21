@@ -120,5 +120,6 @@ $text = '<noscript><div style="max-width:720px;margin:40px auto;padding:0 16px">
 $html = preg_replace('#<body>#', '<body>' . strtr($text, ['\\' => '\\\\', '$' => '\$']), $html, 1);
 
 header('Content-Type: text/html; charset=utf-8');
-header('Cache-Control: ' . (($_GET['lang'] ?? '') === 'ar' ? 'no-cache' : 'public, max-age=300'));   /* the Arabic link is never handed the English preview from a cache */
+header('Cache-Control: no-cache');   /* asked again on every visit, so a name, photo or price saved on admin shows straight away (and the Arabic link never gets the English preview from a cache); a reload with nothing changed gets "not modified" (fomaxo_send_page) */
+header('X-LiteSpeed-Cache-Control: no-cache');
 fomaxo_send_page($html);
