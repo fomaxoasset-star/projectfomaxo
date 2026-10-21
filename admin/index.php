@@ -700,6 +700,15 @@ function fx_lead_groups($groups) {
     return $l;
   }, $groups));
 }
+/* visits whose order went to the Trash (mostly test orders): left out of every Analytics count and the Home visitors graph, as their
+   purchase and their Left at checkout line already are; Put back brings them back. Gives " AND sid NOT IN (…)", or '' */
+function fx_not_trash($pdo) {
+  static $sql = null; if ($sql !== null) return $sql;
+  $sids = [];
+  try { foreach ($pdo->query('SELECT row_json FROM fx_orders_trash') as $t) { $o = json_decode((string)$t['row_json'], true);
+    foreach (array_merge((array)($o['_web']['leads'] ?? []), (array)($o['_web']['buys'] ?? [])) as $w) if (preg_match('/^[a-z0-9]{8,16}$/', (string)($w['sid'] ?? ''))) $sids[$w['sid']] = 1; } } catch (Throwable $e) {}
+  return $sql = $sids ? " AND sid NOT IN ('" . implode("','", array_keys($sids)) . "')" : '';
+}
 function fx_wa_sent_day($mark) {
   global $pdo; static $s = null;
   [$t, $k] = array_pad(explode(':', (string)$mark, 2), 2, '');
@@ -2700,12 +2709,7 @@ if (isset($_GET['analytics'])) {
   $resetAt = (string)fomaxo_setting($pdo, 'orders_reset');
   $buyOk = fn($a) => "($a.ev = 'buy' AND IF($a.ref IS NOT NULL, EXISTS (SELECT 1 FROM fx_orders o WHERE o.order_no = $a.ref AND $realO),
                       " . ($resetAt !== '' ? "$a.at >= " . $pdo->quote($resetAt) . ' AND ' : '') . "NOT EXISTS (SELECT 1 FROM fx_leads lb JOIN fx_orders o ON o.order_no = lb.order_no WHERE lb.sid = $a.sid AND NOT ($realO))))";
-  /* visits whose order went to the Trash (mostly test orders): their steps (bag, checkout, payment) are out of the funnel too, as their
-     purchase and their Left at checkout line already are; Put back brings them back */
-  $trashSids = [];
-  try { foreach ($pdo->query('SELECT row_json FROM fx_orders_trash') as $t) { $o = json_decode((string)$t['row_json'], true);
-    foreach (array_merge((array)($o['_web']['leads'] ?? []), (array)($o['_web']['buys'] ?? [])) as $w) if (preg_match('/^[a-z0-9]{8,16}$/', (string)($w['sid'] ?? ''))) $trashSids[$w['sid']] = 1; } } catch (Throwable $e) {}
-  $notTrash = $trashSids ? " AND sid NOT IN ('" . implode("','", array_keys($trashSids)) . "')" : '';
+  $notTrash = fx_not_trash($pdo);
   $f = $q("SELECT COUNT(DISTINCT vid) visitors, COUNT(DISTINCT sid) visits, SUM(ev = 'view') views,
                   COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) product, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) cart,
                   COUNT(DISTINCT CASE WHEN ev = 'checkout' THEN sid END) checkout, COUNT(DISTINCT CASE WHEN ev = 'pay' THEN sid END) pay,
@@ -2731,14 +2735,14 @@ if (isset($_GET['analytics'])) {
       }
   } catch (Throwable $e) {}
   $retN = count($ret['people']); $retD = $ret['days'] ? (int)round(array_sum($ret['days']) / count($ret['days'])) : null;
-  $back = (int)$q('SELECT COUNT(DISTINCT e.vid) FROM fx_events e WHERE e.at BETWEEN ? AND ? AND EXISTS (SELECT 1 FROM fx_events o WHERE o.vid = e.vid AND o.at < ?)', [$span[0], $span[1], $span[0]])->fetchColumn();
+  $back = (int)$q('SELECT COUNT(DISTINCT e.vid) FROM fx_events e WHERE e.at BETWEEN ? AND ?' . $notTrash . ' AND EXISTS (SELECT 1 FROM fx_events o WHERE o.vid = e.vid AND o.at < ?)', [$span[0], $span[1], $span[0]])->fetchColumn();
   $pct = fn($a, $b) => $b > 0 ? round(100 * $a / $b, 1) : 0;
   $pctT = fn($v) => rtrim(rtrim(number_format($v, 1), '0'), '.') . '%';
 
   /* visitors over time: by hour for one day, by day up to three months, by month for longer */
   $mode = $nDays === 1 ? 'hour' : ($nDays <= 92 ? 'day' : 'month');
   $fmtKey = ['hour' => '%H', 'day' => '%Y-%m-%d', 'month' => '%Y-%m'][$mode];
-  $per = []; foreach ($q("SELECT DATE_FORMAT(at, '$fmtKey') k, COUNT(DISTINCT vid) n FROM fx_events WHERE at BETWEEN ? AND ? GROUP BY k") as $row) $per[$row['k']] = (int)$row['n'];
+  $per = []; foreach ($q("SELECT DATE_FORMAT(at, '$fmtKey') k, COUNT(DISTINCT vid) n FROM fx_events WHERE at BETWEEN ? AND ?$notTrash GROUP BY k") as $row) $per[$row['k']] = (int)$row['n'];
   $pts = [];
   if ($mode === 'hour') for ($h = 0; $h < 24; $h++) { $k = sprintf('%02d', $h); $pts[] = ['v' => $per[$k] ?? 0, 'l' => date('ga', mktime($h, 0)), 't' => date('ga', mktime($h, 0)) . '–' . date('ga', mktime($h + 1, 0)) . ': ' . ($per[$k] ?? 0) . ' visitors']; }
   else for ($t = strtotime($d1); $t <= strtotime($d2); $t = strtotime($mode === 'day' ? '+1 day' : 'first day of next month', $t)) {
@@ -2750,7 +2754,7 @@ if (isset($_GET['analytics'])) {
   /* where visits come from (the first page of each visit), and how many of them bought */
   $src = '';
   foreach ($q("SELECT x.source, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND " . $buyOk('b') . ")) bought
-               FROM (SELECT sid, MIN(vid) vid, MIN(source) source FROM fx_events WHERE ev = 'view' AND source IS NOT NULL AND at BETWEEN ? AND ? GROUP BY sid) x
+               FROM (SELECT sid, MIN(vid) vid, MIN(source) source FROM fx_events WHERE ev = 'view' AND source IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY sid) x
                GROUP BY x.source ORDER BY visits DESC") as $row)
     $src .= '<tr><td>' . h($row['source']) . '</td><td class="num">' . (int)$row['visitors'] . '</td><td class="num">' . (int)$row['visits'] . '</td><td class="num">' . (int)$row['bought'] . '</td><td class="num">' . $pctT($pct($row['bought'], $row['visits'])) . '</td></tr>';
 
@@ -2758,10 +2762,10 @@ if (isset($_GET['analytics'])) {
   $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $row) { $pd = json_decode($row['data'], true); $names[$row['id']] = $pd['name'] ?? $row['id']; }
   $prod = '';
   foreach ($q("SELECT product, COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) views, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) adds
-               FROM fx_events WHERE ev IN ('product', 'cart') AND product IS NOT NULL AND at BETWEEN ? AND ? GROUP BY product ORDER BY views DESC, adds DESC") as $row)
+               FROM fx_events WHERE ev IN ('product', 'cart') AND product IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY product ORDER BY views DESC, adds DESC") as $row)
     $prod .= '<tr><td>' . h($names[$row['product']] ?? $row['product']) . '</td><td class="num">' . (int)$row['views'] . '</td><td class="num">' . (int)$row['adds'] . '</td><td class="num">' . $pctT($pct($row['adds'], $row['views'])) . '</td></tr>';
   $dev = [];
-  foreach ($q("SELECT device, COUNT(DISTINCT sid) n FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY device ORDER BY n DESC") as $row) $dev[] = h(ucfirst($row['device'] ?: 'other')) . ' ' . $pctT($pct($row['n'], $f['visits']));
+  foreach ($q("SELECT device, COUNT(DISTINCT sid) n FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ?$notTrash GROUP BY device ORDER BY n DESC") as $row) $dev[] = h(ucfirst($row['device'] ?: 'other')) . ' ' . $pctT($pct($row['n'], $f['visits']));
   /* pages: views, visitors and the average time on each page (time = until the next page of the visit, or the last moment the page was seen open; tabs left open count at most 30 minutes) */
   $pgName = function ($pg) use ($names) {
     if ($pg === '/' ) return 'Home';
@@ -2773,11 +2777,11 @@ if (isset($_GET['analytics'])) {
     $pgRows = $q("SELECT pg, COUNT(*) views, COUNT(DISTINCT vid) visitors, ROUND(AVG(d)) secs FROM (
                     SELECT vid, CASE WHEN SUBSTRING_INDEX(page, '?', 1) IN ('', '/', 'home') THEN '/' ELSE SUBSTRING_INDEX(page, '?', 1) END pg,
                       LEAST(TIMESTAMPDIFF(SECOND, at, COALESCE(LEAD(at) OVER (PARTITION BY sid ORDER BY at, id), left_at)), 1800) d
-                    FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ?) x
+                    FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ?$notTrash) x
                   GROUP BY pg ORDER BY views DESC LIMIT 60")->fetchAll();
   } catch (Throwable $e) {
     try { $pgRows = $q("SELECT CASE WHEN SUBSTRING_INDEX(page, '?', 1) IN ('', '/', 'home') THEN '/' ELSE SUBSTRING_INDEX(page, '?', 1) END pg, COUNT(*) views, COUNT(DISTINCT vid) visitors, NULL secs
-                         FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY pg ORDER BY views DESC LIMIT 60")->fetchAll(); } catch (Throwable $e) {}
+                         FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ?$notTrash GROUP BY pg ORDER BY views DESC LIMIT 60")->fetchAll(); } catch (Throwable $e) {}
   }
   $dur = fn($t) => $t === null ? '–' : ($t >= 60 ? intdiv((int)$t, 60) . 'm ' . str_pad((string)((int)$t % 60), 2, '0', STR_PAD_LEFT) . 's' : (int)$t . 's');
   $pgMax = $pgRows ? max(array_column($pgRows, 'views')) : 0;
@@ -2786,7 +2790,7 @@ if (isset($_GET['analytics'])) {
   $devN = ['phone' => 'Phone', 'computer' => 'Desktop', 'tablet' => 'Tablet'];
   $devR = []; foreach ($devN as $k => $l) $devR[$k] = ['visitors' => 0, 'visits' => 0, 'bought' => 0];
   foreach ($q("SELECT x.device, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND " . $buyOk('b') . ")) bought
-               FROM (SELECT sid, MIN(vid) vid, MIN(device) device FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ? GROUP BY sid) x
+               FROM (SELECT sid, MIN(vid) vid, MIN(device) device FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ?$notTrash GROUP BY sid) x
                WHERE x.device IN ('phone', 'tablet', 'computer') GROUP BY x.device") as $row)
     $devR[$row['device']] = ['visitors' => (int)$row['visitors'], 'visits' => (int)$row['visits'], 'bought' => (int)$row['bought']];
   $devAll = array_sum(array_column($devR, 'visits'));
@@ -2798,7 +2802,7 @@ if (isset($_GET['analytics'])) {
   try {
     $lgR = ['en' => ['visitors' => 0, 'visits' => 0, 'bought' => 0], 'ar' => ['visitors' => 0, 'visits' => 0, 'bought' => 0]];
     foreach ($q("SELECT IF(x.ar, 'ar', 'en') lg, COUNT(*) visits, COUNT(DISTINCT x.vid) visitors, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND " . $buyOk('b') . ")) bought
-                 FROM (SELECT sid, MIN(vid) vid, MAX(lang = 'ar') ar FROM fx_events WHERE ev = 'view' AND lang IS NOT NULL AND at BETWEEN ? AND ? GROUP BY sid) x GROUP BY lg") as $row)
+                 FROM (SELECT sid, MIN(vid) vid, MAX(lang = 'ar') ar FROM fx_events WHERE ev = 'view' AND lang IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY sid) x GROUP BY lg") as $row)
       $lgR[$row['lg']] = ['visitors' => (int)$row['visitors'], 'visits' => (int)$row['visits'], 'bought' => (int)$row['bought']];
     $lgAll = $lgR['en']['visits'] + $lgR['ar']['visits'];
     $lgSince = fomaxo_setting($pdo, 'lang_since');
@@ -2862,7 +2866,7 @@ if (isset($_GET['analytics'])) {
     $camp = '';
     foreach ($q("SELECT x.source, x.campaign, COUNT(*) visits, SUM(EXISTS (SELECT 1 FROM fx_events b WHERE b.sid = x.sid AND " . $buyOk('b') . ")) bought,
                    COALESCE(SUM((SELECT SUM(o.total) FROM fx_leads l JOIN fx_orders o ON o.order_no = l.order_no WHERE l.sid = x.sid AND o.$ok)), 0) rev
-                 FROM (SELECT sid, MIN(source) source, " . ($hasCamp ? 'MIN(campaign)' : 'NULL') . " campaign FROM fx_events WHERE ev = 'view' AND source IS NOT NULL AND at BETWEEN ? AND ? GROUP BY sid) x
+                 FROM (SELECT sid, MIN(source) source, " . ($hasCamp ? 'MIN(campaign)' : 'NULL') . " campaign FROM fx_events WHERE ev = 'view' AND source IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY sid) x
                  GROUP BY x.source, x.campaign ORDER BY bought DESC, visits DESC LIMIT 60") as $row)
       $camp .= '<tr><td><b>' . h($row['source']) . '</b>' . ($row['campaign'] !== null ? '<span class="muted cn">' . h($row['campaign']) . '</span>' : '') . '</td><td class="num">' . number_format($row['visits']) . '</td><td class="num">' . number_format($row['bought'])
              . '</td><td class="num">' . $pctT($pct($row['bought'], $row['visits'])) . '</td><td class="num">' . ((float)$row['rev'] ? 'AED ' . number_format(round((float)$row['rev'])) : '–') . '</td></tr>';
@@ -2892,8 +2896,8 @@ if (isset($_GET['analytics'])) {
     $sc = ''; $home = 0;
     try {
       $from = max($span[0], ($cvSince ?: date('Y-m-d')) . ' 00:00:00');
-      $home = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_events WHERE ev = 'view' AND page IN ('', '/') AND at BETWEEN ? AND ?", [$from, $span[1]])->fetchColumn();
-      $dd = []; foreach ($q("SELECT depth, COUNT(DISTINCT sid) n FROM fx_events WHERE ev = 'scroll' AND at BETWEEN ? AND ? GROUP BY depth", [$from, $span[1]]) as $row) $dd[(int)$row['depth']] = (int)$row['n'];
+      $home = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_events WHERE ev = 'view' AND page IN ('', '/') AND at BETWEEN ? AND ?$notTrash", [$from, $span[1]])->fetchColumn();
+      $dd = []; foreach ($q("SELECT depth, COUNT(DISTINCT sid) n FROM fx_events WHERE ev = 'scroll' AND at BETWEEN ? AND ?$notTrash GROUP BY depth", [$from, $span[1]]) as $row) $dd[(int)$row['depth']] = (int)$row['n'];
       foreach ([0 => 'Opened the homepage', 25 => 'Scrolled 25%', 50 => 'Scrolled 50%', 75 => 'Scrolled 75%', 100 => 'Reached the bottom'] as $m => $l) {
         $n = $m ? min($home, $dd[$m] ?? 0) : $home;
         $sc .= '<li><div class="fl"><span>' . $l . '</span><span><b>' . number_format($n) . '</b> <span class="muted">' . $pctT($pct($n, $home)) . '</span></span></div>' . $bar($n, $home) . '</li>';
@@ -2941,10 +2945,10 @@ if (isset($_GET['analytics'])) {
   foreach ($gr as $k => $l) {
     $cRows = $eRows = [];
     try {
-      foreach ($q("SELECT country, COUNT(DISTINCT vid) n FROM fx_events WHERE country IS NOT NULL AND at BETWEEN ? AND ? GROUP BY country ORDER BY n DESC, country LIMIT 30", [$gFrom[$k], $gTo[$k]]) as $row)
+      foreach ($q("SELECT country, COUNT(DISTINCT vid) n FROM fx_events WHERE country IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY country ORDER BY n DESC, country LIMIT 30", [$gFrom[$k], $gTo[$k]]) as $row)
         $cRows[] = ['name' => fomaxo_flag($row['country']) . ' ' . h(fomaxo_country_name($row['country'])), 'n' => (int)$row['n']];
       $em = array_fill_keys(FOMAXO_EMIRATES, 0); $unk = 0;
-      foreach ($q("SELECT region, COUNT(DISTINCT vid) n FROM fx_events WHERE country = 'AE' AND at BETWEEN ? AND ? GROUP BY region", [$gFrom[$k], $gTo[$k]]) as $row)
+      foreach ($q("SELECT region, COUNT(DISTINCT vid) n FROM fx_events WHERE country = 'AE' AND at BETWEEN ? AND ?$notTrash GROUP BY region", [$gFrom[$k], $gTo[$k]]) as $row)
         if (isset($em[$row['region']])) $em[$row['region']] = (int)$row['n']; else $unk += (int)$row['n'];
       arsort($em); foreach ($em as $name => $n) $eRows[] = ['name' => h($name), 'n' => $n];
       if ($unk) $eRows[] = ['name' => '<span class="muted">Not known</span>', 'n' => $unk];
@@ -3876,10 +3880,11 @@ if (!isset($_GET['orders']) && !array_intersect_key($_GET, array_flip(['q', 'sta
   /* visitors (from track.php): different people per bar; the total counts each person once */
   $people = fn($n) => $n . ' visitor' . ($n === 1 ? '' : 's');
   $vc = []; $tot = ['sales' => money($sumT), 'visitors' => $people(0)]; $hasV = true;
+  $notTrash = fx_not_trash($pdo);   // visits of trashed (test) orders are not counted
   try {
-    $s = $pdo->prepare("SELECT DATE_FORMAT(at, '$fmt') k, COUNT(DISTINCT vid) n FROM fx_events WHERE at BETWEEN ? AND ? GROUP BY k"); $s->execute($rg['span']);
+    $s = $pdo->prepare("SELECT DATE_FORMAT(at, '$fmt') k, COUNT(DISTINCT vid) n FROM fx_events WHERE at BETWEEN ? AND ?$notTrash GROUP BY k"); $s->execute($rg['span']);
     foreach ($s as $r) $vc[$r['k']] = (int)$r['n'];
-    $s = $pdo->prepare('SELECT COUNT(DISTINCT vid) FROM fx_events WHERE at BETWEEN ? AND ?'); $s->execute($rg['span']); $tot['visitors'] = $people((int)$s->fetchColumn());
+    $s = $pdo->prepare('SELECT COUNT(DISTINCT vid) FROM fx_events WHERE at BETWEEN ? AND ?' . $notTrash); $s->execute($rg['span']); $tot['visitors'] = $people((int)$s->fetchColumn());
   } catch (Throwable $e) { $hasV = false; }
   $pts = ['sales' => [], 'visitors' => []];
   foreach ($slots as $k => [$l, $t]) {
