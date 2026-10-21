@@ -39,3 +39,23 @@ function fx_media_link($file) {
   $tmp = $pub . '.part' . getmypid(); if (@copy($real, $tmp) && filesize($tmp) === filesize($real) && @rename($tmp, $pub)) { @chmod($pub, 0644); return; }
   @unlink($tmp);
 }
+/* a video uploaded on fomaxo.in with "Also add to fomaxo.com" ticked: fomaxo.in puts the file and a small note (product, words, shape)
+   in fomaxo-media/video-inbox. It is added to the top of the list here, the first time the shop or the admin opens after.
+   A product this site does not sell is left out (the video then gets a Shop now button). One at a time (a lock), nothing to do = one folder read */
+function fx_video_inbox($pdo) {
+  $in = dirname(__DIR__) . '/fomaxo-media/video-inbox'; $notes = is_dir($in) ? (glob("$in/*.json") ?: []) : []; if (!$notes || !$pdo) return;
+  $lk = @fopen("$in/.lock", 'c'); if (!$lk || !flock($lk, LOCK_EX | LOCK_NB)) return;
+  try {
+    $vids = json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: []; $have = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) $have[$r['id']] = true; $added = 0;
+    foreach ($notes as $j) {
+      $m = json_decode((string)@file_get_contents($j), true); $f = basename((string)($m['file'] ?? ''));
+      if (!is_array($m) || !preg_match('~^[a-z0-9-]+\.(mp4|mov|webm)$~', $f) || !is_file("$in/$f")) { if (@filemtime($j) < time() - 3600) @unlink($j); continue; }   // the file is still being copied: next time
+      if (!@rename("$in/$f", fx_media('vid') . "/$f")) continue;
+      @chmod(fx_media('vid') . "/$f", 0644); @unlink($j); $prod = (string)($m['product'] ?? ''); $words = substr(trim((string)($m['words'] ?? '')), 0, 60);
+      array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$f", 'cover' => '', 'product' => isset($have[$prod]) ? $prod : '', 'on' => true, 'from' => 'fomaxo.in']
+        + (preg_match('/^[a-f0-9]{32}$/', (string)($m['fp'] ?? '')) ? ['fp' => (string)$m['fp']] : []) + ($words !== '' ? ['words' => $words] : []) + (!empty($m['wide']) ? ['wide' => true] : []));
+      $added++;
+    }
+    if ($added) fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
+  } catch (Throwable $e) {} finally { flock($lk, LOCK_UN); fclose($lk); }
+}

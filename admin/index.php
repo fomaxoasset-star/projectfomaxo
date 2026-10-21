@@ -1293,7 +1293,7 @@ function fx_vid_probe(string $path): array {
 }
 /* fomaxo.in is on the same Hostinger account: a video uploaded here can go to fomaxo.in in the same upload. The file and a small
    note (product, words, shape) are put in fomaxo.in's private video-inbox; fomaxo.in adds it to its own list the next time its shop
-   or admin opens (api/video-lib.php video_inbox). '' when fomaxo.in's folder is not there (then the tick is not shown) */
+   or admin opens (api/video-lib.php video_inbox; the other way round: fx_video_inbox in media-lib.php). '' when fomaxo.in's folder is not there (then the tick is not shown) */
 function fx_in_inbox(): string { $p = getenv('FOMAXO_IN_PRIVATE') ?: dirname(__DIR__, 3) . '/fomaxo.in/fomaxo-private'; return is_dir($p) && is_writable($p) ? "$p/video-inbox" : ''; }
 function fx_vid_to_in(string $path, array $v): bool {
   $in = fx_in_inbox(); $name = basename($path); if ($in === '' || (!is_dir($in) && !@mkdir($in, 0750, true))) return false;
@@ -1319,6 +1319,7 @@ if (isset($_GET['vchunk'])) {
 }
 if (isset($_GET['videos'])) {
   require_once dirname(__DIR__) . '/instagram-lib.php';
+  try { fx_video_inbox($pdo); } catch (Throwable $e) {}   // videos sent from fomaxo.in show here straight away
   $vids = fx_videos($pdo);
   $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) { $d = json_decode($r['data'], true) ?: []; $names[$r['id']] = ['name' => $d['name'] ?? $r['id'], 'img' => $d['images'][0] ?? '', 'hidden' => (bool)$r['hidden']]; }
   $back = ['products' => 1, 'videos' => 1];
