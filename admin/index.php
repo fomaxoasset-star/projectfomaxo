@@ -1291,6 +1291,16 @@ function fx_vid_probe(string $path): array {
   $codecs = []; $q = 0; while (($q = strpos($d, 'stsd', $q)) !== false) { $codecs[] = preg_replace('/[^\x20-\x7e]/', '?', substr($d, $q + 16, 4)); $q += 4; }
   return ['size' => $sz, 'container' => 'mp4/mov', 'brand' => substr($d, 8, 4), 'boxes' => $boxes, 'codecs' => array_values(array_unique($codecs)), 'moov_first' => strpos($d, 'moov') !== false && strpos($d, 'moov') < (int)strpos($d, 'mdat')];
 }
+/* fomaxo.in is on the same Hostinger account: a video uploaded here can go to fomaxo.in in the same upload. The file and a small
+   note (product, words, shape) are put in fomaxo.in's private video-inbox; fomaxo.in adds it to its own list the next time its shop
+   or admin opens (api/video-lib.php video_inbox). '' when fomaxo.in's folder is not there (then the tick is not shown) */
+function fx_in_inbox(): string { $p = getenv('FOMAXO_IN_PRIVATE') ?: dirname(__DIR__, 3) . '/fomaxo.in/fomaxo-private'; return is_dir($p) && is_writable($p) ? "$p/video-inbox" : ''; }
+function fx_vid_to_in(string $path, array $v): bool {
+  $in = fx_in_inbox(); $name = basename($path); if ($in === '' || (!is_dir($in) && !@mkdir($in, 0750, true))) return false;
+  $tmp = "$in/$name." . bin2hex(random_bytes(4)) . '.part';
+  if (!@copy($path, $tmp) || !@rename($tmp, "$in/$name")) { @unlink($tmp); return false; }
+  return (bool)@file_put_contents("$in/$name.json", json_encode(['file' => $name] + array_intersect_key($v, array_flip(['product', 'words', 'wide', 'fp'])), JSON_UNESCAPED_SLASHES), LOCK_EX);
+}
 function fx_vid_note(string $file, array $extra = []): void {
   $j = fx_media() . '/fomaxo-vid-info.json'; $all = is_file($j) ? (json_decode((string)file_get_contents($j), true) ?: []) : [];
   if (!$extra && isset($all[$file])) return;
@@ -1402,7 +1412,8 @@ if (isset($_GET['videos'])) {
       @file_put_contents(dirname(__DIR__) . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | upload ' . $name . ' ' . round(filesize("$dir/$name") / 1048576, 1) . ' MB | ' . substr(preg_replace('/[^a-z0-9 .:\/_=,%()-]+/i', '', (string)($_POST['how'] ?? 'as is')), 0, 120) . ' | ' . substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160) . "\n", FILE_APPEND | LOCK_EX);   // so a video that was not made smaller can be looked into
       fx_vid_note("vid/$name", ['how' => substr((string)($_POST['how'] ?? 'as is'), 0, 120), 'sent_type' => (string)($f['type'] ?? ''), 'mime' => $mime, 'browser' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160)]);
       array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => $cover, 'product' => $prod, 'on' => true] + (preg_match('/^[a-f0-9]{32}$/', (string)($_POST['fp'] ?? '')) ? ['fp' => (string)$_POST['fp']] : []) + ($words !== '' ? ['words' => $words] : []) + (($_POST['shape'] ?? '') === '169' ? ['wide' => true] : []));
-      flash('Video added. It shows on the home page within a minute.', true);
+      $toIn = !empty($_POST['to_in']) && fx_vid_to_in("$dir/$name", $vids[0]);   // the tick 'Also add to fomaxo.in'
+      flash('Video added' . ($toIn ? ' here and on fomaxo.in' : '') . '. It shows on the home page within a minute.' . (!empty($_POST['to_in']) && !$toIn ? ' It could not be sent to fomaxo.in: please upload it there too.' : ''), true);
     } elseif ($at === false) { flash('Please try again.'); go($back); }
     elseif ($act === 'where') { $w = (string)($_POST['where'] ?? ''); if (in_array($w, ['home', 'product'], true)) $vids[$at]['where'] = $w; else unset($vids[$at]['where']); flash('Saved. The video shows on ' . ['home' => 'the home page only.', 'product' => 'its product pages only (Review videos).'][$w] ?? 'the home page and its product pages.', true); }   // where it shows: both (default), home page only, or product pages only
     elseif ($act === 'person') { $nm = trim(preg_replace('/\s+/u', ' ', (string)($_POST['person'] ?? ''))); $nm = mb_substr($nm, 0, 30); if ($nm !== '') $vids[$at]['person'] = $nm; else unset($vids[$at]['person']); flash($nm !== '' ? 'Saved. ' . $nm . ' shows on the video on its product page.' : 'Name removed from the video.', true); }   // the person in the video: shown on the Review videos tile of its product page
@@ -1499,6 +1510,7 @@ if (isset($_GET['videos'])) {
     . '<div><label for="v_cover">Cover photo <span class="opt">(optional)</span></label><input id="v_cover" type="file" name="cover" accept="image/*"></div></div>'
     . '<div class="vshape" role="radiogroup" aria-label="Video shape"><span>Shape</span><label><input type="radio" name="shape" value="916" checked><i></i>9:16 upright</label><label><input type="radio" name="shape" value="169"><i></i>16:9 wide</label></div>'
     . '<div class="igadd">' . $vpick('Product in the video', 'v_prod') . '<button class="btn">Upload</button></div>'
+    . (fx_in_inbox() !== '' ? '<label class="vtoin" style="display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:13.5px;cursor:pointer"><input type="checkbox" name="to_in" value="1" checked style="width:18px;height:18px;accent-color:var(--gold,#c9a35b)">Also add to fomaxo.in</label>' : '')
     . '<p class="muted small shelp">9:16 or 16:9, picked from the video by itself, 10 to 30 seconds. Big videos are made smaller by themselves. Plays muted until tapped. No cover = product photo.</p>'
     . '<div class="vsh muted small" hidden><span></span></div></form><script>' . @file_get_contents(__DIR__ . '/vshrink.js') . '</script></div>'
     . '<div class="card vlist' . ($allOn ? '' : ' alloff') . '" data-t="1"><div class="igh"><h2>Your videos <small class="muted">' . $n . '</small> <b class="vok" aria-live="polite"></b></h2>'
