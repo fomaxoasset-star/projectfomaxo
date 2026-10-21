@@ -1299,7 +1299,7 @@ function fx_vid_to_in(string $path, array $v): bool {
   $in = fx_in_inbox(); $name = basename($path); if ($in === '' || (!is_dir($in) && !@mkdir($in, 0750, true))) return false;
   $tmp = "$in/$name." . bin2hex(random_bytes(4)) . '.part';
   if (!@copy($path, $tmp) || !@rename($tmp, "$in/$name")) { @unlink($tmp); return false; }
-  return (bool)@file_put_contents("$in/$name.json", json_encode(['file' => $name] + array_intersect_key($v, array_flip(['product', 'words', 'wide', 'fp'])), JSON_UNESCAPED_SLASHES), LOCK_EX);
+  return (bool)@file_put_contents("$in/$name.json", json_encode(['file' => $name] + array_intersect_key($v, array_flip(['product', 'words', 'wide', 'fp', 'person', 'where'])), JSON_UNESCAPED_SLASHES), LOCK_EX);
 }
 function fx_vid_note(string $file, array $extra = []): void {
   $j = fx_media() . '/fomaxo-vid-info.json'; $all = is_file($j) ? (json_decode((string)file_get_contents($j), true) ?: []) : [];
@@ -1337,6 +1337,12 @@ if (isset($_GET['videos'])) {
       if (!preg_match('/^[A-Za-z0-9_\-|.]{30,600}$/', $tok)) { flash('Please paste the whole Instagram access token.'); go($back); }
       $r = fomaxo_ig_connect($tok);
       flash(is_array($r) ? 'Instagram connected' . ($r['user'] !== '' ? ' as @' . $r['user'] : '') . '. Pick a reel below.' : 'Instagram did not accept the token: ' . $r, is_array($r)); go($back);
+    }
+    $toInOk = fn($v) => empty($v['embed']) && empty($v['from']) && empty($v['sent_in']) && ($fp = fx_media_path($v['file'] ?? '')) && is_file($fp);   // a video on this server, not from fomaxo.in, not sent yet
+    if ($act === 'to_in_all') {   // videos uploaded before the tick: send every one not sent yet to fomaxo.in
+      $ok = 0; $bad = 0; foreach ($vids as $k => $v) if ($toInOk($v)) { if (fx_vid_to_in(fx_media_path($v['file']), $v)) { $vids[$k]['sent_in'] = true; $ok++; } else $bad++; }
+      fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
+      flash($ok ? $ok . ' video' . ($ok > 1 ? 's' : '') . ' sent to fomaxo.in. They show there within a minute.' . ($bad ? " $bad could not be sent." : '') : 'Nothing could be sent to fomaxo.in. Please try again.', $ok > 0); go($back);
     }
     if ($act === 'all') { $on = !empty($_POST['on']); fomaxo_setting($pdo, 'videos_off', $on ? '0' : '1'); flash($on ? 'Videos are on the website again.' : 'Videos are off. The video row is hidden on the website.', true); go($back); }
     if ($act === 'ig_off') { fomaxo_ig_save(null); flash('Instagram disconnected. Videos already added stay on the website.', true); go($back); }
@@ -1414,6 +1420,7 @@ if (isset($_GET['videos'])) {
       fx_vid_note("vid/$name", ['how' => substr((string)($_POST['how'] ?? 'as is'), 0, 120), 'sent_type' => (string)($f['type'] ?? ''), 'mime' => $mime, 'browser' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160)]);
       array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => $cover, 'product' => $prod, 'on' => true] + (preg_match('/^[a-f0-9]{32}$/', (string)($_POST['fp'] ?? '')) ? ['fp' => (string)$_POST['fp']] : []) + ($words !== '' ? ['words' => $words] : []) + (($_POST['shape'] ?? '') === '169' ? ['wide' => true] : []));
       $toIn = !empty($_POST['to_in']) && fx_vid_to_in("$dir/$name", $vids[0]);   // the tick 'Also add to fomaxo.in'
+      if ($toIn) $vids[0]['sent_in'] = true;
       flash('Video added' . ($toIn ? ' here and on fomaxo.in' : '') . '. It shows on the home page within a minute.' . (!empty($_POST['to_in']) && !$toIn ? ' It could not be sent to fomaxo.in: please upload it there too.' : ''), true);
     } elseif ($at === false) { flash('Please try again.'); go($back); }
     elseif ($act === 'where') { $w = (string)($_POST['where'] ?? ''); if (in_array($w, ['home', 'product'], true)) $vids[$at]['where'] = $w; else unset($vids[$at]['where']); flash('Saved. The video shows on ' . ['home' => 'the home page only.', 'product' => 'its product pages only (Review videos).'][$w] ?? 'the home page and its product pages.', true); }   // where it shows: both (default), home page only, or product pages only
@@ -1436,6 +1443,7 @@ if (isset($_GET['videos'])) {
       flash($nm ? 'Saved. The video sells ' . (count($nm) > 1 ? implode(', ', array_slice($nm, 0, -1)) . ' and ' . end($nm) : $nm[0]) . ($wd !== '' ? ' and shows “' . $wd . '”' : '') . (!empty($vids[$at]['shop']) ? ', with a Shop now button' : '') . '.' : ($wd !== '' ? 'Saved. The video shows “' . $wd . '” with a Shop now button.' : 'Saved. The video has no product: it shows a Shop now button.'), true);
     }
     elseif ($act === 'product' && isset($names[$_POST['product'] ?? ''])) { $vids[$at]['product'] = (string)$_POST['product']; flash('Saved. The video now sells ' . $names[$vids[$at]['product']]['name'] . '.', true); }
+    elseif ($act === 'to_in') { if ($toInOk($vids[$at]) && fx_vid_to_in(fx_media_path($vids[$at]['file']), $vids[$at])) { $vids[$at]['sent_in'] = true; flash('Sent to fomaxo.in. It shows there within a minute.', true); } else flash('It could not be sent to fomaxo.in. Please try again.'); }   // a video uploaded before the tick
     elseif ($act === 'first' || $act === 'last') { $m = $vids[$at]; array_splice($vids, $at, 1); if ($act === 'first') array_unshift($vids, $m); else $vids[] = $m; }   // straight to the top or the bottom of the list
     elseif ($act === 'up' || $act === 'down') { $to = $at + ($act === 'up' ? -1 : 1); if (isset($vids[$to])) [$vids[$at], $vids[$to]] = [$vids[$to], $vids[$at]]; }
     elseif ($act === 'del') {
@@ -1456,7 +1464,8 @@ if (isset($_GET['videos'])) {
     . implode('', array_map(fn($id, $n) => '<li data-v="' . h($id) . '">' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</li>', array_keys($names), $names))
     . '<li data-v="-">No product · Shop now button</li></ul></span>';
   $post = fn($v, $act, $inner, $extra = '') => '<form method="post"' . $extra . '>' . csrf_field() . '<input type="hidden" name="vid" value="' . h($v['id']) . '"><input type="hidden" name="act" value="' . $act . '">' . $inner . '</form>';
-  $tr = ''; $n = count($vids);
+  $tr = ''; $n = count($vids); $inBox = fx_in_inbox() !== '';
+  $toInN = $inBox ? count(array_filter($vids, fn($v) => empty($v['embed']) && empty($v['from']) && empty($v['sent_in']) && ($fp = fx_media_path($v['file'] ?? '')) && is_file($fp))) : 0;   // videos not on fomaxo.in yet
   foreach ($vids as $i => $v) {
     $ps = $vprods($v); $pr = $names[$ps[0] ?? ''] ?? null; $poster = $v['cover'] ?: ($pr['img'] ?? '');
     $gone = !$ps && ((string)($v['product'] ?? '') !== '' || !empty($v['also']));   // had products, all deleted
@@ -1474,7 +1483,7 @@ if (isset($_GET['videos'])) {
         . '<span class="fpick vpick vplus"><input type="text" name="product_text" maxlength="60" data-ffind data-free placeholder="+ Add or type anything" aria-label="Add a product to this video, or type any words to show on it" autocomplete="off"><input type="hidden" name="add"><ul class="fplist" hidden>'
         . implode('', array_map(fn($id, $n) => in_array($id, $ps, true) ? '' : '<li data-v="' . h($id) . '">' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</li>', array_keys($names), $names))
         . ($ps ? (empty($v['shop']) ? '<li data-v="-">+ Shop now button</li>' : '') : '') . '</ul></span></div>')
-      . '<div class="small muted">' . (!empty($v['embed']) ? '' : ($gone ? 'Product deleted: not shown' : ($hid ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : (($v['where'] ?? '') === 'product' ? 'On product pages only' : 'On the home page, number <span class="vnum">' . ($i + 1) . '</span>' . (($v['where'] ?? '') === 'home' ? ' only' : ' + product pages')))))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : (!empty($v['embed']) ? '<b class="vbad">Not on the website: it opened Instagram. Paste its link again or upload the video</b>' : (!empty($v['link']) ? ' · From a link' : '')))) . $fnote . '</div>'
+      . '<div class="small muted">' . (!empty($v['embed']) ? '' : ($gone ? 'Product deleted: not shown' : ($hid ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : (($v['where'] ?? '') === 'product' ? 'On product pages only' : 'On the home page, number <span class="vnum">' . ($i + 1) . '</span>' . (($v['where'] ?? '') === 'home' ? ' only' : ' + product pages')))))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : (!empty($v['embed']) ? '<b class="vbad">Not on the website: it opened Instagram. Paste its link again or upload the video</b>' : (!empty($v['link']) ? ' · From a link' : '')))) . $fnote . (!empty($v['from']) ? ' · From ' . h($v['from']) : (!empty($v['sent_in']) ? ' · On fomaxo.in ✓' : ($inBox && $fsz && empty($v['embed']) ? ' · ' . $post($v, 'to_in', '<button class="lnk">Send to fomaxo.in</button>', ' style="display:inline"') : ''))) . '</div>'
       . (empty($v['embed']) ? $post($v, 'shape', '<button class="vsr' . (empty($v['wide']) ? ' on' : '') . '" name="shape" value="916"' . (empty($v['wide']) ? ' disabled' : '') . '><i></i>9:16</button><button class="vsr' . (empty($v['wide']) ? '' : ' on') . '" name="shape" value="169"' . (empty($v['wide']) ? '' : ' disabled') . '><i></i>16:9</button>', ' class="vshr" aria-label="Video shape"') . $post($v, 'where', '<select name="where" onchange="this.form.submit()" aria-label="Where the video shows">' . implode('', array_map(fn($k, $t) => '<option value="' . $k . '"' . (($v['where'] ?? '') === $k ? ' selected' : '') . '>' . $t . '</option>', ['', 'home', 'product'], ['Home + product page', 'Home page only', 'Product page only'])) . '</select>', ' class="vwh"') . $post($v, 'person', '<input name="person" maxlength="30" value="' . h($v['person'] ?? '') . '" placeholder="Name of the person in the video" aria-label="Name of the person in the video (shows on the product page)" onchange="this.form.submit()">', ' class="vperson"') : '') . '</div>'
       . '<div class="vmv">' . $post($v, 'first', '<button class="btn line sm"' . ($i ? '' : ' disabled') . ' aria-label="Move to first" title="Move to first">⇈</button>') . $post($v, 'up', '<button class="btn line sm"' . ($i ? '' : ' disabled') . ' aria-label="Move up">↑</button>') . $post($v, 'down', '<button class="btn line sm"' . ($i < $n - 1 ? '' : ' disabled') . ' aria-label="Move down">↓</button>') . $post($v, 'last', '<button class="btn line sm"' . ($i < $n - 1 ? '' : ' disabled') . ' aria-label="Move to last" title="Move to last">⇊</button>')
       . $post($v, 'del', '<button class="btn line sm vdel" aria-label="Delete video">✕</button>', ' onsubmit="return confirm(\'Delete this video?\')"') . '</div></div>';
@@ -1516,6 +1525,7 @@ if (isset($_GET['videos'])) {
     . '<div class="vsh muted small" hidden><span></span></div></form><script>' . @file_get_contents(__DIR__ . '/vshrink.js') . '</script></div>'
     . '<div class="card vlist' . ($allOn ? '' : ' alloff') . '" data-t="1"><div class="igh"><h2>Your videos <small class="muted">' . $n . '</small> <b class="vok" aria-live="polite"></b></h2>'
     . '<form method="post" class="spages vall">' . csrf_field() . '<input type="hidden" name="act" value="all"><div class="pgs"><label class="pg"><span>' . ($allOn ? 'On website' : 'Off: row hidden') . '</span><input type="checkbox" role="switch" name="on" value="1"' . ($allOn ? ' checked' : '') . ' aria-label="Show videos on the website" onchange="this.form.submit()"><i class="sw"></i></label></div></form></div>'
+    . ($toInN > 1 ? '<form method="post" class="vtoall muted small" style="margin:0 0 6px">' . csrf_field() . '<input type="hidden" name="act" value="to_in_all"><button class="lnk" onclick="this.textContent=\'Sending…\'">Send all ' . $toInN . ' to fomaxo.in</button></form>' : '')
     . ($allOn ? '' : '<p class="msg bad">The video row is hidden on the website. You can still upload, edit, move and delete videos here.</p>')
     . ($tr ?: '<p class="muted">No videos yet. The home page shows the video row once you add one.</p>')
     . '<p class="muted small shelp">Ring dot filled = on the website. Drag the dots on the left to change the order. Tap a product to remove it. No product = Shop now button. Hidden products’ videos are left out.</p></div></div>' . fx_free_pick_js() . <<<'HTML'
