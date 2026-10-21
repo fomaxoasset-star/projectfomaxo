@@ -452,8 +452,13 @@ function fomaxo_catalog_db() {
 function fomaxo_setting($pdo, $k, $v = null) {
   if ($v === null) { $s = $pdo->prepare('SELECT v FROM fx_settings WHERE k = ?'); $s->execute([$k]); $r = $s->fetchColumn(); return $r === false ? null : $r; }
   $pdo->prepare('REPLACE INTO fx_settings (k, v) VALUES (?, ?)')->execute([$k, $v]);
+  fomaxo_products_drop();
   return $v;
 }
+/* products.php keeps its answer for a minute (fomaxo-cache/products.json); this makes the next page load work it out afresh.
+   Called on every saved setting and every admin save, so a change still shows on the website straight away. */
+function fomaxo_products_cache() { return dirname(__DIR__) . '/fomaxo-cache/products.json'; }
+function fomaxo_products_drop() { @unlink(fomaxo_products_cache()); }
 
 /* "Customers bought together" (the product page box): each product's partner (keep in sync with BT_PAIR in index.html), and the extra % off
    when a product and its partner are both in the bag (admin → Products → Together extra off). Saved as fx_settings 'bt' = {"pct":N,"aed":N,"on":0|1}: N % and/or N AED off each pair. */

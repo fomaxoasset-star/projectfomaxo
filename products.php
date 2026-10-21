@@ -2,10 +2,17 @@
 /* FOMAXO — the product list for the website, as saved on fomaxo.com/admin → Products.
    {"products": null} when the database is not set up or down: the website then keeps the list built into index.html. */
 header('Content-Type: application/json');
-header('Cache-Control: no-store');   // never kept by the browser, Hostinger or a CDN: a change saved on admin shows on the website straight away
+header('Cache-Control: no-cache');   // the browser asks again on every page load (a change saved on admin shows straight away), and gets "not changed" when nothing changed
 header('X-LiteSpeed-Cache-Control: no-cache');
 require __DIR__ . '/orders-lib.php';
 require_once __DIR__ . '/media-lib.php';
+/* Every visitor gets the same answer (apart from the same-day emirate, added below), so it is worked out at most once a minute and kept in
+   fomaxo-cache/products.json: one quick file read instead of the database and up to three passes over the orders on every page load.
+   Saving anything on admin, a saved setting and a deploy (a newer products.php or index.html) start a fresh one (fomaxo_products_drop in orders-lib.php). */
+$CACHE = fomaxo_products_cache(); $built = false; $pdo = null; $json = ''; $sdAreas = [];
+if (($t = @filemtime($CACHE)) && $t > time() - 60 && $t >= (int)@filemtime(__FILE__) && $t >= (int)@filemtime(__DIR__ . '/index.html')
+    && is_array($c = @json_decode((string)@file_get_contents($CACHE), true)) && isset($c['json'])) { $json = (string)$c['json']; $sdAreas = (array)($c['areas'] ?? []); }
+if ($json === '') {
 $out = [];
 foreach (fomaxo_product_rows() ?: [] as $r) {
   if (!$r['hidden'] && strpos($r['data'], '"saleOff"') === false) { $out[] = $r['data']; continue; }
@@ -81,15 +88,23 @@ $btSet = fomaxo_bt($pdo ?: null);
 /* same-day delivery (admin → Settings → Same-day): fee, free from, order hours and the areas it reaches; null = not offered */
 $sdSet = fomaxo_sameday($pdo ?: null);
 $sdOut = $sdSet['on'] ? ['fee' => $sdSet['fee'], 'free' => $sdSet['free'], 'from' => $sdSet['from'], 'cut' => $sdSet['cut'], 'cod' => $sdSet['cod'], 'by' => $sdSet['by'], 'full' => fomaxo_sameday_full($sdSet, $pdo ?: null), 'areas' => array_map('array_keys', fomaxo_sameday_areas($sdSet))] : null;
-if ($sdOut) {   // this visitor's emirate from their internet address (approximate, nothing asked), only when it has same-day areas: the product page says so
+$sdAreas = $sdOut ? array_keys((array)$sdOut['areas']) : [];
+$json = '{"sold":' . fomaxo_json((object)$sold) . ',"bt":' . fomaxo_json(['pct' => $btSet['pct'], 'aed' => $btSet['aed'], 'on' => $btSet['on'], 'pairs' => (object)$btSet['pairs']]) . ',"together":' . fomaxo_json((object)$together) . ',"also":' . fomaxo_json($also) . ',"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"sameday":' . fomaxo_json($sdOut) . ',"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
+$built = true;
+if (is_dir(dirname($CACHE)) || @mkdir(dirname($CACHE), 0700, true)) { $tmp = $CACHE . '.' . getmypid(); if (@file_put_contents($tmp, json_encode(['json' => $json, 'areas' => $sdAreas])) === false || !@rename($tmp, $CACHE)) @unlink($tmp); }
+}
+if ($sdAreas) {   // this visitor's emirate from their internet address (approximate, nothing asked), only when it has same-day areas: the product page says so
   require_once __DIR__ . '/geo-lib.php';
   [$geoCc, $geoEm] = fomaxo_geo(fomaxo_geo_ip());
-  if ($geoEm !== null && isset($sdOut['areas'][$geoEm])) $sdOut['here'] = $geoEm;
+  if ($geoEm !== null && in_array($geoEm, $sdAreas, true)) $json = preg_replace('/"sameday":\{/', '"sameday":{"here":' . json_encode($geoEm) . ',', $json, 1);
 }
-echo '{"sold":' . fomaxo_json((object)$sold) . ',"bt":' . fomaxo_json(['pct' => $btSet['pct'], 'aed' => $btSet['aed'], 'on' => $btSet['on'], 'pairs' => (object)$btSet['pairs']]) . ',"together":' . fomaxo_json((object)$together) . ',"also":' . fomaxo_json($also) . ',"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"sameday":' . fomaxo_json($sdOut) . ',"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
+$tag = substr(md5($json), 0, 16); header('ETag: "' . $tag . '"');
+if (strpos((string)($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''), $tag) !== false) { http_response_code(304); exit; }
+echo $json;
 
-/* Automatic Instagram reels (admin → Products → Videos): at most once an hour, after the visitor already has the answer above */
-if ($pdo && is_file(dirname(__DIR__) . '/fomaxo-instagram.php') && time() - (int)fomaxo_setting($pdo, 'ig_sync_at') >= 3600) {
+/* Automatic Instagram reels (admin → Products → Videos): at most once an hour, after the visitor already has the answer above
+   (checked only when the answer was worked out afresh, so a cached answer never opens the database) */
+if ($built && $pdo && is_file(dirname(__DIR__) . '/fomaxo-instagram.php') && time() - (int)fomaxo_setting($pdo, 'ig_sync_at') >= 3600) {
   if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request(); else return;
   ignore_user_abort(true);
   require_once __DIR__ . '/instagram-lib.php';

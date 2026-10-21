@@ -9,6 +9,16 @@
      secret.key     random key made on first use; signs the hide/show links emailed to FOMAXO */
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) { http_response_code(404); exit; }
 
+/* A public copy of a customer photo in media/r, so the web server sends it itself instead of one PHP process per photo (they ran out on fomaxo.in, 2026-10-21).
+   A copy, not a link (link() is switched off on Hostinger); a GitHub update removes it and the next visit through reviews.php?photo= puts it back. */
+function rv_pub_photo($name, $from) {
+  if (!preg_match('/^[a-f0-9]{16}-\d\.jpg$/', $name)) return;
+  $d = __DIR__ . '/media/r'; $to = "$d/$name";
+  if (is_file($to) || (!is_dir($d) && !@mkdir($d, 0755, true))) return;
+  $tmp = "$to.part" . getmypid();
+  if (@copy($from, $tmp) && filesize($tmp) === filesize($from) && @rename($tmp, $to)) { @chmod($to, 0644); return; }
+  @unlink($tmp);
+}
 function rv_dir($sub = '') {
   $d = dirname(__DIR__) . '/fomaxo-reviews' . ($sub !== '' ? "/$sub" : '');
   if (!is_dir($d)) @mkdir($d, 0700, true);

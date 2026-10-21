@@ -19,6 +19,10 @@ RewriteRule ^assets/img/link-preview\.jpg$ assets/img/link-preview-square.jpg [L
 # removes files that are not on GitHub; their addresses stay the same and media.php sends them
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^assets/(vid/[a-z0-9-]+\.(?:mp4|mov|webm)|img/up/[a-z0-9-]+\.webp)$ media.php?f=$1 [L]
+# customer review photos: the web server sends its own copy in media/r; one with no copy yet (new, or removed by a GitHub update)
+# goes to reviews.php once, which makes it. Before, every review photo held a PHP process while it downloaded.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^media/r/([a-f0-9]{16}-\d\.jpg)$ reviews.php?photo=$1 [L]
 
 # the home page as an Arabic link (fomaxo.com/?lang=ar): same page, Arabic words in the WhatsApp / Instagram preview
 RewriteCond %{QUERY_STRING} (^|&)lang=ar(&|$)

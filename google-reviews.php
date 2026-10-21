@@ -29,7 +29,7 @@ foreach (rv_all() as $r) {
      . '  <review_timestamp>' . date('c', $t) . "</review_timestamp>\n"
      . '  <content>' . $x($text) . "</content>\n"
      . '  <review_url type="group">' . $x($url) . "</review_url>\n";
-  if (!empty($r['photos'])) { echo "  <reviewer_images>\n"; foreach ((array)$r['photos'] as $ph) echo '    <reviewer_image><url>' . $x(FOMAXO_SITE . '/reviews.php?photo=' . rawurlencode($ph)) . "</url></reviewer_image>\n"; echo "  </reviewer_images>\n"; }
+  if (!empty($r['photos'])) { echo "  <reviewer_images>\n"; foreach ((array)$r['photos'] as $ph) echo '    <reviewer_image><url>' . $x(FOMAXO_SITE . '/media/r/' . rawurlencode($ph)) . "</url></reviewer_image>\n"; echo "  </reviewer_images>\n"; }
   echo '  <ratings><overall min="1" max="5">' . (int)$r['rating'] . "</overall></ratings>\n"
      . "  <products><product>\n    <product_ids>" . ($skus ? '<skus>' . implode('', $skus) . '</skus>' : '') . "<brands><brand>FOMAXO</brand></brands></product_ids>\n"
      . '    <product_name>' . $x('FOMAXO ' . ($p['name'] ?? $p['id'])) . "</product_name>\n    <product_url>" . $x($url) . "</product_url>\n  </product></products>\n"
