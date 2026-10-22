@@ -394,3 +394,8 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
 .rframe-wrap { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--panel-2); }
 .rframe { display: block; width: 100%; height: 900px; border: 0; background: transparent; }
 @media (max-width: 900px) { .rframe { height: 1300px; } }
+
+s.was { color: var(--muted); font-size: .82em; margin-right: 6px; text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.tile .price s.was { display: inline; font-weight: 500; }
+.price-line { margin-top: 3px; color: var(--gold-2); font-weight: 600; }
+input[readonly].input { opacity: .6; }

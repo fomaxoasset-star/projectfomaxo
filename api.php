@@ -31,6 +31,15 @@ function need_post()
     }
 }
 
+function web_skus()
+{
+    static $list = null;
+    if ($list === null) {
+        $list = json_decode((string) meta_get('web_skus', '[]'), true) ?: [];
+    }
+    return $list;
+}
+
 function stock_map()
 {
     $map = [];
@@ -52,6 +61,10 @@ function product_out($p, $map = null, $storeId = 0)
         'sku' => $p['sku'],
         'category' => $p['category'],
         'price' => (int) $p['price'],
+        'compare_at' => (int) ($p['compare_at'] ?? 0),
+        'family' => (string) ($p['family'] ?? ''),
+        'price_lock' => (int) ($p['price_lock'] ?? 0),
+        'from_site' => in_array($p['sku'], web_skus(), true),
         'stock' => $storeId ? ($mine[$storeId] ?? 0) : (int) $p['stock'],
         'stocks' => (object) $mine,
         'low_at' => (int) $p['low_at'],
@@ -165,12 +178,19 @@ switch ($action) {
         if ($price < 0) {
             fail('Price cannot be negative.');
         }
+        $compare = to_fils($b['compare_at'] ?? 0);
+        if ($compare && $compare <= $price) {
+            fail('The original price must be higher than the exclusive price (or leave it empty).');
+        }
         $data = [
             'name' => $name,
             'variant' => trim(mb_substr((string) ($b['variant'] ?? ''), 0, 60)),
             'sku' => trim(mb_substr((string) ($b['sku'] ?? ''), 0, 64)),
             'category' => trim(mb_substr((string) ($b['category'] ?? ''), 0, 60)),
             'price' => $price,
+            'compare_at' => max(0, $compare),
+            'family' => trim(mb_substr((string) ($b['family'] ?? ''), 0, 80)),
+            'price_lock' => empty($b['price_lock']) ? 0 : 1,
             'low_at' => max(0, (int) ($b['low_at'] ?? cfg('default_low_stock', 5))),
             'active' => empty($b['active']) ? 0 : 1,
             'updated_at' => now(),

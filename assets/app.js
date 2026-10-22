@@ -225,6 +225,7 @@
     });
   }
   function productById(id) { for (var i = 0; i < S.products.length; i++) if (S.products[i].id === id) return S.products[i]; return null; }
+  function wasHtml(p) { return p.compare_at > p.price ? '<s class="was num">' + money(p.compare_at) + '</s>' : ''; }
   function stockState(p) { return !p.active ? 'off' : p.stock <= 0 ? 'out' : p.stock <= p.low_at ? 'low' : 'ok'; }
   function stockBadge(p) {
     var s = stockState(p);
@@ -427,7 +428,7 @@
         (inCart ? '<span class="in-cart">' + inCart + '</span>' : '') +
         '<div class="t-name">' + esc(p.name) + '</div>' +
         (p.variant ? '<div class="t-var">' + esc(p.variant) + '</div>' : '') +
-        '<div class="t-foot"><span class="price">' + money(p.price) + '</span>' + stockBadge(p) + '</div></button>';
+        '<div class="t-foot"><span class="price">' + wasHtml(p) + money(p.price) + '</span>' + stockBadge(p) + '</div></button>';
     }).join('');
   }
   function addToCart(id) {
@@ -463,7 +464,7 @@
       '<button class="btn icon-btn ghost show-sm" data-act="cart-close" aria-label="Close">' + ICON.close + '</button></div></div>' +
       '<div class="cart-lines">' + (empty ? '<div class="empty"><div class="big">Cart is empty</div>Tap a product to add it.</div>' :
         lines.map(function (l) {
-          return '<div class="line"><div><div class="l-name">' + esc(l.name) + '</div><div class="l-sub">' + esc(l.variant ? l.variant + ' · ' : '') + money(l.price) + ' each</div></div>' +
+          return '<div class="line"><div><div class="l-name">' + esc(l.name) + '</div><div class="l-sub">' + esc(l.variant ? l.variant + ' · ' : '') + (productById(l.product_id) ? wasHtml(productById(l.product_id)) : '') + money(l.price) + ' each</div></div>' +
             '<div class="l-total num">' + money(l.price * l.qty) + '</div>' +
             '<div><div class="qty"><button data-act="qty" data-id="' + l.product_id + '" data-d="-1" aria-label="Less">−</button><span>' + l.qty + '</span><button data-act="qty" data-id="' + l.product_id + '" data-d="1" aria-label="More">+</button></div></div>' +
             '<div class="l-actions"><button class="link-btn" data-act="qty" data-id="' + l.product_id + '" data-d="' + (-l.qty) + '">Remove</button></div></div>';
@@ -786,9 +787,10 @@
     };
     var head = allMode ?
       '<tr><th>Product</th>' + stores.map(function (x) { return '<th class="r">' + esc(x.name) + '</th>'; }).join('') + '<th class="r">Total</th><th class="r"></th></tr>' :
-      '<tr><th>Product</th><th class="hide-sm">Category</th><th class="r hide-sm">Price</th><th>Stock</th><th class="r"></th></tr>';
+      '<tr><th>Product</th><th class="hide-sm">Category</th><th class="r hide-sm">Exclusive price</th><th>Stock</th><th class="r"></th></tr>';
     var rows = list.map(function (p) {
-      var name = '<td><div class="p-name">' + esc(p.name) + '</div><div class="small muted">' + esc([p.variant, p.sku].filter(Boolean).join(' · ')) + '</div></td>';
+      var name = '<td><div class="p-name">' + esc(p.name) + '</div><div class="small muted">' + esc([p.variant, p.sku].filter(Boolean).join(' · ')) + '</div>' +
+        '<div class="small show-sm price-line">' + wasHtml(p) + '<span class="num">' + money(p.price) + '</span></div></td>';
       var acts = '<td class="act-cell"><div class="actions">' + (mgr && !allMode ? '<button class="btn sm gold" data-act="p-adjust" data-id="' + p.id + '">Adjust</button>' : '') +
         (canMove ? '<button class="btn sm" data-act="p-move" data-id="' + p.id + '">Move</button>' : '') +
         (mgr ? '<button class="btn sm" data-act="p-edit" data-id="' + p.id + '">Edit</button>' : '') +
@@ -797,7 +799,7 @@
         return '<tr>' + name + stores.map(function (x) { return '<td class="r">' + cell(p, (p.stocks || {})[x.id] || 0) + '</td>'; }).join('') +
           '<td class="r"><div class="stock-num num">' + p.stock + '</div>' + stockBadge(p) + '</td>' + acts + '</tr>';
       }
-      return '<tr>' + name + '<td class="hide-sm muted">' + esc(p.category) + '</td><td class="r hide-sm num">' + money(p.price) + '</td>' +
+      return '<tr>' + name + '<td class="hide-sm muted">' + esc(p.category) + '</td><td class="r hide-sm"><div class="num">' + money(p.price) + '</div>' + (p.compare_at > p.price ? '<div class="small">' + wasHtml(p) + '</div>' : '') + (p.from_site ? '<div class="small muted">' + (p.price_lock ? 'Store price' : 'From fomaxo.com') + '</div>' : '') + '</td>' +
         '<td><div class="stock-num num">' + p.stock + '</div>' + stockBadge(p) + '</td>' + acts + '</tr>';
     }).join('');
     var cols = allMode ? stores.length + 3 : 5;
@@ -836,17 +838,28 @@
       '<label class="field"><span>Product name</span><input class="input" name="name" required value="' + esc(p.name) + '" autofocus></label>' +
       '<div class="grid2"><label class="field"><span>Size / variant</span><input class="input" name="variant" placeholder="e.g. 100ml" value="' + esc(p.variant) + '"></label>' +
       '<label class="field"><span>Category</span><input class="input" name="category" list="cat-list" placeholder="e.g. Fragrance" value="' + esc(p.category) + '"><datalist id="cat-list">' + cats.map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist></label></div>' +
-      '<div class="grid2"><label class="field"><span>Price AED' + (S.settings.prices_include_vat ? ' (incl. VAT)' : '') + '</span><input class="input" name="price" type="number" inputmode="decimal" step="0.01" min="0" required value="' + (p.price ? (p.price / 100).toFixed(2) : '') + '"></label>' +
+      (p.from_site ? '<label class="check"><input type="checkbox" name="follow" ' + (p.price_lock ? '' : 'checked') + '> Use fomaxo.com prices (update automatically)</label>' : '') +
+      '<div class="grid2"><label class="field"><span>Exclusive price AED (customer pays)' + (S.settings.prices_include_vat ? ', incl. VAT' : '') + '</span><input class="input" name="price" type="number" inputmode="decimal" step="0.01" min="0" required value="' + (p.price ? (p.price / 100).toFixed(2) : '') + '"></label>' +
+      '<label class="field"><span>Original price AED (crossed out on receipt)</span><input class="input" name="compare_at" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Optional" value="' + (p.compare_at ? (p.compare_at / 100).toFixed(2) : '') + '"></label></div>' +
+      '<p class="small muted price-note hidden" style="margin:-4px 0 12px">These prices come from fomaxo.com. Untick above to set your own store prices.</p>' +
+      '<div class="grid2"><label class="field"><span>Fragrance family (on receipt)</span><input class="input" name="family" placeholder="e.g. Eau de Parfum · Unisex" value="' + esc(p.family || '') + '"></label>' +
       '<label class="field"><span>Warn "running low" at</span><input class="input" name="low_at" type="number" min="0" value="' + p.low_at + '"></label></div>' +
       '<div class="grid2"><label class="field"><span>SKU / barcode (optional)</span><input class="input" name="sku" value="' + esc(p.sku) + '"></label>' +
       (isNew ? '<label class="field"><span>Opening stock' + (multiStore() ? ' at ' + esc(curStore().name) : '') + '</span><input class="input" name="stock" type="number" value="0"></label>' : '<div></div>') + '</div>' +
       '<label class="check"><input type="checkbox" name="active" ' + (p.active ? 'checked' : '') + '> On sale (shows on the Sell screen)</label>' +
       '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>');
+    var syncLock = function () {
+      var f = $('#p-form'), follow = f.follow && f.follow.checked;
+      f.price.readOnly = !!follow; f.compare_at.readOnly = !!follow;
+      $('.price-note', f).classList.toggle('hidden', !follow);
+    };
+    if ($('#p-form').follow) $('#p-form').follow.addEventListener('change', syncLock);
+    syncLock();
     $('#p-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var f = e.target, b = $('[type=submit]', f);
       b.disabled = true;
-      api('product_save', { body: { id: isNew ? 0 : p.id, name: f.name.value, variant: f.variant.value, category: f.category.value, price: f.price.value, low_at: f.low_at.value, sku: f.sku.value, stock: f.stock ? f.stock.value : 0, store_id: curStoreId(), active: f.active.checked ? 1 : 0 } })
+      api('product_save', { body: { id: isNew ? 0 : p.id, name: f.name.value, variant: f.variant.value, category: f.category.value, price: f.price.value, compare_at: f.compare_at.value, family: f.family.value, price_lock: f.follow ? (f.follow.checked ? 0 : 1) : 0, low_at: f.low_at.value, sku: f.sku.value, stock: f.stock ? f.stock.value : 0, store_id: curStoreId(), active: f.active.checked ? 1 : 0 } })
         .then(function () { closeModal(); toast('Saved.'); refreshProducts(); })
         .catch(function (er) { b.disabled = false; modalErr(er.offline ? 'Needs internet to save.' : er.message); });
     });

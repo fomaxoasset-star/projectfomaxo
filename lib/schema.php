@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 function schema_version()
 {
@@ -142,6 +142,11 @@ function migrate()
         }
         if (schema_version() < 3) {
             migrate_v3();
+        }
+        if (schema_version() < 4) {
+            try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '4')");
         }
         // First time: bring in the real product list from fomaxo.com (only if nothing was set up by hand).
         // The Sync button on Stock (and the 10-minute auto sync) do it any time later.

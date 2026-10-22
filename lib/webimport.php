@@ -60,8 +60,12 @@ function import_web_products($products = null)
             $variant = $isSet ? $size . ' vials' : $size . 'ml';
             $sku = $id . '-' . $size;
             $seen[] = $sku;
-            $row = q1('SELECT id FROM products WHERE sku = ?', [$sku]);
-            if ($row) {
+            $row = q1('SELECT id, price_lock FROM products WHERE sku = ?', [$sku]);
+            if ($row && (int) $row['price_lock'] === 1) {
+                // Prices set by hand in the store: keep them, only refresh the name and family.
+                q('UPDATE products SET name = ?, variant = ?, family = ?, updated_at = ? WHERE id = ?', [$fullName, $variant, $family, now(), $row['id']]);
+                $updated++;
+            } elseif ($row) {
                 q('UPDATE products SET name = ?, variant = ?, category = ?, price = ?, compare_at = ?, family = ?, updated_at = ? WHERE id = ?',
                     [$fullName, $variant, $category, $price, $was, $family, now(), $row['id']]);
                 $updated++;
