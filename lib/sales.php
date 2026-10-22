@@ -62,7 +62,7 @@ function find_or_create_customer($phone, $name, $email = '')
     $email = clean_email($email);
     $name = trim(preg_replace('/\s+/', ' ', mb_substr((string) $name, 0, 100)));
     if ($name !== '' && preg_match('/^[\p{Latin}\s\'\-.]+$/u', $name)) {
-        $name = mb_convert_case(mb_strtolower($name), MB_CASE_TITLE, 'UTF-8'); // aisha khan -> Aisha Khan
+        $name = mb_strtoupper($name, 'UTF-8'); // aisha khan -> AISHA KHAN
     }
     if (strlen(preg_replace('/\D/', '', $phone)) < 7) {
         if ($email === '') {

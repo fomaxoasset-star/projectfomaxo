@@ -497,7 +497,7 @@ details.ref { margin: 4px 0 6px; } details.ref summary { color: var(--muted); fo
 .fbtn span { font-size: 20px; flex: none; }
 .fbtn.on { border-style: solid; border-color: rgba(201,162,75,.6); color: var(--gold-2); background: var(--gold-dim); }
 
-.input.cap { text-transform: capitalize; }
+.input.cap { text-transform: uppercase; }
 
 .found { padding: 10px 12px; border-radius: 12px; background: var(--ok-bg); color: var(--ok); margin-bottom: 8px; }
 .found b { font-size: 16px; } .found .small { color: var(--text); margin-top: 4px; line-height: 1.6; }
