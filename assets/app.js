@@ -341,7 +341,7 @@
     if (!S.token || !S.user || !S.settings) { renderLogin(); return; }
     $('#root').innerHTML =
       '<div class="app"><header class="topbar">' +
-      '<div class="h-brand">' + WORDMARK + '</div>' +
+      '<div class="brand-col"><div class="h-brand">' + WORDMARK + '</div><div class="clock" id="clock"></div></div>' +
       '<nav class="nav" id="nav">' + navButtons() + '</nav>' +
       '<div class="spacer"></div>' +
       '<button class="store-btn hidden" id="store-btn" data-act="store-menu"></button>' +
@@ -350,8 +350,17 @@
       '<button class="user-btn" data-act="user-menu"><span class="avatar">' + esc(initials(S.user.name)) + '</span><span class="u-name">' + esc(S.user.name) + '</span></button>' +
       '</header><main class="view" id="view"></main>' +
       '<nav class="bnav" id="bnav">' + navButtons() + '</nav></div>';
-    updateNet(); updateNavCounts(); applyTheme(); updateStoreBtn(); renderView();
+    updateNet(); updateNavCounts(); applyTheme(); updateStoreBtn(); updateClock(); renderView();
   }
+  // Date and time under the logo, e.g. "Thu 22 Oct · 6:51 PM" (Dubai time on the phone)
+  var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MONS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function updateClock() {
+    var el = $('#clock'); if (!el) return;
+    var d = new Date(), h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    el.innerHTML = '<span class="ck-day">' + DAYS[d.getDay()] + ' </span>' + d.getDate() + ' ' + MONS[d.getMonth()] + ' · ' + h + ':' + pad(m) + ' ' + ap;
+  }
+  setInterval(updateClock, 10000);
   function updateStoreBtn() {
     var b = $('#store-btn'); if (!b) return;
     var show = multiStore() || (S.stores.length === 1 && isManager());

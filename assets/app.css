@@ -650,3 +650,9 @@ html, body { overscroll-behavior-y: none; }
   html.ios-gap .cart-fab { bottom: calc(var(--nav-h) + 10px); }
   html.ios-gap .added-pop { bottom: calc(var(--nav-h) + 76px); }
 }
+
+/* Date and time under the logo */
+.brand-col { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; flex: none; }
+.clock { font-size: 11px; line-height: 1; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+@media (max-width: 900px) { .clock { font-size: 10.5px; } }
+@media (max-width: 360px) { .clock .ck-day { display: none; } .clock { font-size: 10px; } }
