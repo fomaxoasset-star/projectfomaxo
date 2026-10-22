@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 function schema_version()
 {
@@ -142,6 +142,13 @@ function migrate()
         }
         if (schema_version() < 3) {
             migrate_v3();
+        }
+        if (schema_version() < 5) {
+            try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');
+            try_exec("ALTER TABLE products ADD COLUMN image VARCHAR(160) NOT NULL DEFAULT ''");
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '5')");
+            q("DELETE FROM meta WHERE k = 'web_sync_at'"); // pick up product photos on the next sync
         }
         if (schema_version() < 4) {
             try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');

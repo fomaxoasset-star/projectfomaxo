@@ -63,6 +63,7 @@ function product_out($p, $map = null, $storeId = 0)
         'price' => (int) $p['price'],
         'compare_at' => (int) ($p['compare_at'] ?? 0),
         'family' => (string) ($p['family'] ?? ''),
+        'image' => (string) ($p['image'] ?? '') !== '' ? 'https://fomaxo.com/assets/img/' . $p['image'] . '.webp' : '',
         'price_lock' => (int) ($p['price_lock'] ?? 0),
         'from_site' => in_array($p['sku'], web_skus(), true),
         'stock' => $storeId ? ($mine[$storeId] ?? 0) : (int) $p['stock'],

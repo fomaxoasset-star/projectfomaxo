@@ -57,22 +57,31 @@ function import_web_products($products = null)
             $was = isset($wp['compareAt'][(string) $size]) ? to_fils($wp['compareAt'][(string) $size]) : 0;
             $was = $was > $price ? $was : 0;
             $family = mb_substr(trim((string) ($wp['family'] ?? '')), 0, 80);
+            $imgs = is_array($wp['images'] ?? null) ? $wp['images'] : [];
+            $image = '';
+            foreach ([$id . '-' . $size . '-main', $id . '-' . $size . '-v2', $id . '-' . $size . '-v3'] as $try) {
+                if (in_array($try, $imgs, true)) { $image = $try; break; }
+            }
+            if ($image === '' && $imgs) {
+                $image = (string) $imgs[0];
+            }
+            $image = preg_match('#^[a-z0-9/_-]{1,150}$#i', $image) ? $image : '';
             $variant = $isSet ? $size . ' vials' : $size . 'ml';
             $sku = $id . '-' . $size;
             $seen[] = $sku;
             $row = q1('SELECT id, price_lock FROM products WHERE sku = ?', [$sku]);
             if ($row && (int) $row['price_lock'] === 1) {
                 // Prices set by hand in the store: keep them, only refresh the name and family.
-                q('UPDATE products SET name = ?, variant = ?, family = ?, updated_at = ? WHERE id = ?', [$fullName, $variant, $family, now(), $row['id']]);
+                q('UPDATE products SET name = ?, variant = ?, family = ?, image = ?, updated_at = ? WHERE id = ?', [$fullName, $variant, $family, $image, now(), $row['id']]);
                 $updated++;
             } elseif ($row) {
-                q('UPDATE products SET name = ?, variant = ?, category = ?, price = ?, compare_at = ?, family = ?, updated_at = ? WHERE id = ?',
-                    [$fullName, $variant, $category, $price, $was, $family, now(), $row['id']]);
+                q('UPDATE products SET name = ?, variant = ?, category = ?, price = ?, compare_at = ?, family = ?, image = ?, updated_at = ? WHERE id = ?',
+                    [$fullName, $variant, $category, $price, $was, $family, $image, now(), $row['id']]);
                 $updated++;
             } else {
                 insert('products', [
                     'name' => $fullName, 'variant' => $variant, 'sku' => $sku, 'category' => $category,
-                    'price' => $price, 'compare_at' => $was, 'family' => $family, 'stock' => 0, 'low_at' => $low, 'active' => 1,
+                    'price' => $price, 'compare_at' => $was, 'family' => $family, 'image' => $image, 'stock' => 0, 'low_at' => $low, 'active' => 1,
                     'created_at' => now(), 'updated_at' => now(),
                 ]);
                 $added++;

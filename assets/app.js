@@ -386,9 +386,9 @@
       '<div class="catalog-tools"><label class="search">' + ICON.search +
       '<input class="input" id="q" type="search" placeholder="Search product, size or SKU" value="' + esc(S.search) + '" autocomplete="off"></label>' +
       '<div class="chips" id="chips"></div></div>' +
-      '<div class="tiles" id="tiles"></div></section>' +
+      '<div class="ptiles" id="tiles"></div></section>' +
       '<aside class="cart' + (S.cartOpen ? ' open' : '') + '" id="cart"></aside></div>' +
-      '<button class="cart-fab" id="cart-fab" data-act="cart-open"></button>';
+      '<button class="cart-fab hidden" id="cart-fab" data-act="cart-open"></button>';
     $('#q').addEventListener('input', function (e) { S.search = e.target.value; renderTiles(); });
     renderChips(); renderTiles(); renderCart();
   }
@@ -405,42 +405,90 @@
       return '<button class="chip' + (c === S.category ? ' active' : '') + '" data-act="cat" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
     }).join('') : '';
   }
+  // Products are shown as one photo tile per fragrance; tapping it asks for the size.
+  function groupKey(p) { return p.from_site && /-\d+$/.test(p.sku) ? p.sku.replace(/-\d+$/, '') : 'p' + p.id; }
+  function shortName(n) { return String(n || '').replace(/^fomaxo\s+/i, ''); }
+  function sizeNum(v) { var m = /(\d+)/.exec(v || ''); return m ? parseInt(m[1], 10) : 0; }
+  function productGroups() {
+    var q = S.search.trim().toLowerCase(), map = {}, order = [];
+    S.products.forEach(function (p) {
+      if (!p.active) return;
+      if (S.category !== 'All' && p.category !== S.category) return;
+      if (q && (p.name + ' ' + p.variant + ' ' + p.sku + ' ' + p.family).toLowerCase().indexOf(q) < 0) return;
+      var k = groupKey(p);
+      if (!map[k]) { map[k] = { key: k, name: shortName(p.name), family: p.family, image: '', sizes: [] }; order.push(k); }
+      map[k].sizes.push(p);
+      if (!map[k].image && p.image) map[k].image = p.image;
+    });
+    return order.map(function (k) {
+      var g = map[k];
+      g.sizes.sort(function (a, b) { return sizeNum(a.variant) - sizeNum(b.variant); });
+      return g;
+    }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+  }
+  function tileImg(g) {
+    return g.image ? '<img src="' + esc(g.image) + '" alt="" loading="lazy" onerror="this.remove()">' : '';
+  }
   function renderTiles() {
     var el = $('#tiles'); if (!el) return;
-    var q = S.search.trim().toLowerCase();
-    var list = S.products.filter(function (p) {
-      if (!p.active) return false;
-      if (S.category !== 'All' && p.category !== S.category) return false;
-      if (q && (p.name + ' ' + p.variant + ' ' + p.sku + ' ' + p.category).toLowerCase().indexOf(q) < 0) return false;
-      return true;
-    }).sort(function (a, b) { return (a.name + a.variant).localeCompare(b.name + b.variant); });
-    if (!list.length) {
-      el.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="big">' +
-        (S.products.some(function (p) { return p.active; }) ? 'No products match' : 'No products for sale yet') + '</div>' +
-        (S.products.some(function (p) { return p.active; }) ? 'Try a different search.' :
-          isManager() ? 'Go to <b>Stock</b> to add products, set prices and switch them on.' : 'Ask a manager to add products in Stock.') + '</div>';
+    var groups = productGroups();
+    if (!groups.length) {
+      var any = S.products.some(function (p) { return p.active; });
+      el.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="big">' + (any ? 'No products match' : 'No products for sale yet') + '</div>' +
+        (any ? 'Try a different search.' : isManager() ? 'Go to <b>Stock</b> to add products.' : 'Ask a manager to add products.') + '</div>';
       return;
     }
-    el.innerHTML = list.map(function (p) {
-      var inCart = 0; S.cart.forEach(function (c) { if (c.product_id === p.id) inCart = c.qty; });
-      var s = stockState(p);
-      return '<button class="tile' + (s === 'out' ? ' is-out' : '') + '" data-act="add" data-id="' + p.id + '">' +
-        (inCart ? '<span class="in-cart">' + inCart + '</span>' : '') +
-        '<div class="t-name">' + esc(p.name) + '</div>' +
-        (p.variant ? '<div class="t-var">' + esc(p.variant) + '</div>' : '') +
-        '<div class="t-foot"><span class="price">' + wasHtml(p) + money(p.price) + '</span>' + stockBadge(p) + '</div></button>';
+    el.innerHTML = groups.map(function (g) {
+      var inCart = 0, from = Infinity, anyStock = false;
+      g.sizes.forEach(function (p) {
+        S.cart.forEach(function (c) { if (c.product_id === p.id) inCart += c.qty; });
+        if (p.price < from) from = p.price;
+        if (p.stock > 0) anyStock = true;
+      });
+      var sizes = g.sizes.map(function (p) { return esc(p.variant); }).filter(Boolean).join(' · ');
+      return '<button class="ptile' + (anyStock ? '' : ' is-out') + '" data-act="pick" data-g="' + esc(g.key) + '">' +
+        '<span class="ph">' + tileImg(g) + '<span class="ph-letter">' + esc(g.name.charAt(0)) + '</span>' +
+        (inCart ? '<span class="in-cart">' + inCart + '</span>' : '') + (anyStock ? '' : '<span class="sold">SOLD OUT</span>') + '</span>' +
+        '<span class="pt-name">' + esc(g.name) + '</span>' +
+        '<span class="pt-sub">' + sizes + '</span>' +
+        '<span class="pt-price">' + (g.sizes.length > 1 ? '<small>from</small> ' : '') + money(from) + '</span></button>';
     }).join('');
   }
+  function pickGroup(key) {
+    var g = productGroups().filter(function (x) { return x.key === key; })[0];
+    if (!g) return;
+    if (g.sizes.length === 1) { addToCart(g.sizes[0].id); return; }
+    openModal(g.name, '<div class="pick-head">' + (g.image ? '<img src="' + esc(g.image) + '" alt="" onerror="this.remove()">' : '') +
+      '<div class="muted">' + esc(g.family || '') + '<br><b class="pick-q">Which size?</b></div></div>' +
+      '<div class="sizes">' + g.sizes.map(function (p) {
+        var st = stockState(p), inCart = 0;
+        S.cart.forEach(function (c) { if (c.product_id === p.id) inCart = c.qty; });
+        return '<button class="size-btn' + (st === 'out' ? ' is-out' : '') + '" data-act="add-size" data-id="' + p.id + '">' +
+          '<span class="sz">' + esc(p.variant) + '</span><span class="sp">' + wasHtml(p) + money(p.price) + '</span>' +
+          '<span class="ss ' + st + '">' + (st === 'out' ? 'SOLD OUT' : st === 'low' ? 'Only ' + p.stock + ' left' : p.stock + ' in stock') + '</span>' +
+          (inCart ? '<span class="in-cart">' + inCart + '</span>' : '') + '</button>';
+      }).join('') + '</div>');
+  }
   function addToCart(id) {
-    var p = productById(id); if (!p) return;
+    var p = productById(id); if (!p) return false;
     var line = null; S.cart.forEach(function (c) { if (c.product_id === id) line = c; });
     var want = (line ? line.qty : 0) + 1;
     if (want > p.stock) {
-      if (S.online) { toast(p.stock <= 0 ? pName(p) + ' is out of stock.' : 'Only ' + p.stock + ' of ' + pName(p) + ' in stock.', true); return; }
+      if (S.online) { toast(p.stock <= 0 ? shortName(p.name) + ' ' + p.variant + ' is SOLD OUT.' : 'Only ' + p.stock + ' left of ' + shortName(p.name) + ' ' + p.variant + '.', true); return false; }
       toast('Stock shows ' + Math.max(0, p.stock) + ' — added anyway because you are offline.', true);
     }
     if (line) line.qty = want; else S.cart.push({ product_id: id, qty: 1 });
     renderTiles(); renderCart();
+    flashAdded(shortName(p.name) + ' ' + p.variant);
+    return true;
+  }
+  var addedTimer;
+  function flashAdded(label) {
+    var old = $('.added-pop'); if (old) old.remove();
+    var t = document.createElement('div');
+    t.className = 'added-pop'; t.innerHTML = '<span class="tick">✓</span> Added: ' + esc(label);
+    document.body.appendChild(t);
+    clearTimeout(addedTimer); addedTimer = setTimeout(function () { t.remove(); }, 1400);
   }
   function changeQty(id, d) {
     S.cart.forEach(function (c) {
@@ -456,38 +504,49 @@
     var el = $('#cart'); if (!el) return;
     var lines = cartLines(), t = calcTotals(lines, S.discount), count = 0;
     lines.forEach(function (l) { count += l.qty; });
-    var empty = !lines.length, st = S.settings;
-    var c = S.customer, d = S.discount;
+    var empty = !lines.length, st = S.settings, c = S.customer, d = S.discount;
+    var extras = [];
+    if (c) extras.push('Customer: ' + esc(c.name || c.phone) + (c.tier ? ' · ' + esc(c.tier) : ''));
+    if (d) extras.push('Discount: ' + (d.type === 'percent' ? d.value + '%' : aed(toFils(d.value))));
     el.innerHTML =
-      '<div class="cart-head"><h2>Current sale</h2><div class="row">' +
-      (empty ? '' : '<button class="link-btn" data-act="cart-clear">Clear</button>') +
+      '<div class="cart-head"><h2>Customer’s bag</h2><div class="row">' +
+      (empty ? '' : '<button class="link-btn" data-act="cart-clear">Empty</button>') +
       '<button class="btn icon-btn ghost show-sm" data-act="cart-close" aria-label="Close">' + ICON.close + '</button></div></div>' +
-      '<div class="cart-lines">' + (empty ? '<div class="empty"><div class="big">Cart is empty</div>Tap a product to add it.</div>' :
+      '<div class="cart-lines">' + (empty ? '<div class="empty"><div class="big">Bag is empty</div>Tap a perfume to add it.</div>' :
         lines.map(function (l) {
-          return '<div class="line"><div><div class="l-name">' + esc(l.name) + '</div><div class="l-sub">' + esc(l.variant ? l.variant + ' · ' : '') + (productById(l.product_id) ? wasHtml(productById(l.product_id)) : '') + money(l.price) + ' each</div></div>' +
-            '<div class="l-total num">' + money(l.price * l.qty) + '</div>' +
-            '<div><div class="qty"><button data-act="qty" data-id="' + l.product_id + '" data-d="-1" aria-label="Less">−</button><span>' + l.qty + '</span><button data-act="qty" data-id="' + l.product_id + '" data-d="1" aria-label="More">+</button></div></div>' +
-            '<div class="l-actions"><button class="link-btn" data-act="qty" data-id="' + l.product_id + '" data-d="' + (-l.qty) + '">Remove</button></div></div>';
+          var p = productById(l.product_id) || {};
+          return '<div class="cline">' + (p.image ? '<img src="' + esc(p.image) + '" alt="" onerror="this.remove()">' : '<span class="cl-ph">' + esc(shortName(l.name).charAt(0)) + '</span>') +
+            '<div class="cl-mid"><b>' + esc(shortName(l.name)) + '</b><span>' + esc(l.variant) + ' · ' + money(l.price) + '</span></div>' +
+            '<div class="qty big"><button data-act="qty" data-id="' + l.product_id + '" data-d="-1" aria-label="One less">−</button><span>' + l.qty + '</span>' +
+            '<button data-act="qty" data-id="' + l.product_id + '" data-d="1" aria-label="One more">+</button></div></div>';
         }).join('')) + '</div>' +
-      '<div class="cart-extra">' +
-      '<button class="extra-btn" data-act="customer"><span>Customer</span><span class="val">' + (c ? esc(c.name || c.phone) + (c.tier ? ' · ' + esc(c.tier) : '') : 'Add (optional)') + '</span></button>' +
-      '<button class="extra-btn" data-act="discount"' + (empty ? ' disabled' : '') + '><span>Discount</span><span class="val">' + (d ? (d.type === 'percent' ? d.value + '%' : aed(toFils(d.value))) + ' off' : 'None') + '</span></button></div>' +
-      '<div class="cart-totals">' +
-      '<div class="t-row"><span>Subtotal (' + count + ' item' + (count === 1 ? '' : 's') + ')</span><span class="num">' + money(t.subtotal) + '</span></div>' +
+      '<div class="cart-foot">' +
+      (empty ? '' : '<button class="more-link" data-act="more">' + (extras.length ? extras.join(' · ') + ' — change' : '+ Add customer or discount') + '</button>') +
       (t.discount ? '<div class="t-row"><span>Discount</span><span class="num">−' + money(t.discount) + '</span></div>' : '') +
-      (st.vat_rate > 0 ? '<div class="t-row"><span>VAT ' + st.vat_rate + '%' + (st.prices_include_vat ? ' (included)' : '') + '</span><span class="num">' + money(t.vat) + '</span></div>' : '') +
-      '<div class="t-row t-grand"><span>Total</span><span class="num">' + aed(t.total) + '</span></div></div>' +
-      '<div class="pay-grid">' +
-      '<button class="pay-btn primary" data-act="pay" data-m="cash"' + (empty ? ' disabled' : '') + '><b>Cash</b><small>Works offline</small></button>' +
-      '<button class="pay-btn" data-act="pay" data-m="tap"' + (empty ? ' disabled' : '') + '><b>Tap to Pay</b><small>Card / Apple / Google Pay in Ziina app</small></button>' +
-      '<button class="pay-btn" data-act="pay" data-m="ziina"' + (empty || !st.ziina || !S.online ? ' disabled' : '') + '><b>Ziina QR</b><small>' + (!st.ziina ? 'Not set up' : S.online ? 'Customer scans & pays' : 'Needs internet') + '</small></button>' +
-      '<button class="pay-btn" data-act="pay" data-m="card"' + (empty ? ' disabled' : '') + '><b>Card machine</b><small>Other bank terminal</small></button>' +
+      (st.vat_rate > 0 && !empty ? '<div class="t-row"><span>VAT ' + st.vat_rate + '%' + (st.prices_include_vat ? ' (included)' : '') + '</span><span class="num">' + money(t.vat) + '</span></div>' : '') +
+      '<button class="pay-big" data-act="pay-open"' + (empty ? ' disabled' : '') + '><span>PAY</span><b class="num">' + aed(t.total) + '</b></button>' +
       '</div>';
     var fab = $('#cart-fab');
     if (fab) {
-      fab.innerHTML = '<span>' + (count ? count + ' item' + (count === 1 ? '' : 's') : 'Cart') + '</span><span>' + (count ? 'Charge ' + aed(t.total) : 'View') + '</span>';
-      fab.classList.toggle('hidden', S.cartOpen);
+      fab.innerHTML = '<span>🛍 ' + (count ? count + ' item' + (count === 1 ? '' : 's') : 'Bag') + '</span><span>' + (count ? 'PAY ' + aed(t.total) : 'Open') + '</span>';
+      fab.classList.toggle('hidden', S.cartOpen || !count);
     }
+  }
+  function payChooser() {
+    var t = calcTotals(cartLines(), S.discount), st = S.settings;
+    var qrOk = st.ziina && S.online;
+    openModal('How is the customer paying?', '<div class="amount-big"><div class="lbl">Total</div><div class="val num">' + aed(t.total) + '</div></div>' +
+      '<div class="pay-choices">' +
+      '<button class="pchoice cash" data-act="pay" data-m="cash"><span class="pi">💵</span><b>Cash</b><small>Notes and coins</small></button>' +
+      '<button class="pchoice" data-act="pay" data-m="tap"><span class="pi">💳</span><b>Card / Tap</b><small>Card, Apple Pay, Google Pay on the Ziina phone</small></button>' +
+      '<button class="pchoice" data-act="pay" data-m="ziina"' + (qrOk ? '' : ' disabled') + '><span class="pi">📱</span><b>QR code</b><small>' + (!st.ziina ? 'Not set up yet' : S.online ? 'Customer scans with their phone' : 'Needs internet') + '</small></button>' +
+      '</div><button class="link-btn other-card" data-act="pay" data-m="card">Other card machine</button>');
+  }
+  function moreModal() {
+    openModal('Customer & discount', '<div class="more-choices">' +
+      '<button class="pchoice" data-act="customer"><span class="pi">👤</span><b>Customer</b><small>' + (S.customer ? esc(S.customer.name || S.customer.phone) : 'Add phone number (optional)') + '</small></button>' +
+      '<button class="pchoice" data-act="discount"><span class="pi">🏷</span><b>Discount</b><small>' + (S.discount ? (S.discount.type === 'percent' ? S.discount.value + '% off' : aed(toFils(S.discount.value)) + ' off') : 'None') + '</small></button>' +
+      '</div>');
   }
   function setCartOpen(v) { S.cartOpen = v; var c = $('#cart'); if (c) c.classList.toggle('open', v); var f = $('#cart-fab'); if (f) f.classList.toggle('hidden', v); }
 
@@ -551,20 +610,22 @@
     var t = calcTotals(cartLines(), S.discount);
     var amount = '<div class="amount-big"><div class="lbl">Amount to collect</div><div class="val num">' + aed(t.total) + '</div></div>';
     if (method === 'cash') {
-      var quick = [t.total / 100, 50, 100, 200, 500, 1000].filter(function (v, i, a) { return i === 0 || (v * 100 >= t.total && a.indexOf(v) === i); }).slice(0, 6);
-      openModal('Cash payment', '<div class="err m-err hidden"></div>' + amount +
-        '<label class="field"><span>Cash received (AED)</span><input class="input" id="cash-in" type="number" inputmode="decimal" step="0.01" min="0" placeholder="' + money(t.total) + '" autofocus></label>' +
-        '<div class="quick">' + quick.map(function (v, i) { return '<button class="btn sm" data-act="cash-quick" data-v="' + v + '">' + (i === 0 ? 'Exact' : v) + '</button>'; }).join('') + '</div>' +
-        '<div class="change-box" id="change-box"><span>Change to give</span><span class="num">AED 0.00</span></div>' +
-        '<div class="modal-foot"><button class="btn gold big" data-act="confirm-pay" data-m="cash">Complete sale</button></div>', { sticky: true });
-      $('#cash-in').addEventListener('input', updateChange);
+      var notes = [50, 100, 200, 500, 1000].filter(function (v) { return v * 100 > t.total; }).slice(0, 4);
+      openModal('Cash', '<div class="err m-err hidden"></div>' + amount +
+        '<div class="cash-q">Customer gave:</div>' +
+        '<div class="notes"><button class="note-btn exact" data-act="cash-quick" data-v="' + (t.total / 100) + '">Exact<br><small>' + money(t.total) + '</small></button>' +
+        notes.map(function (v) { return '<button class="note-btn" data-act="cash-quick" data-v="' + v + '">' + v + '</button>'; }).join('') + '</div>' +
+        '<label class="field"><span>Other amount</span><input class="input" id="cash-in" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Type amount"></label>' +
+        '<div class="change-box big" id="change-box"><span>Give change</span><span class="num">AED 0.00</span></div>' +
+        '<div class="modal-foot"><button class="btn gold big" data-act="confirm-pay" data-m="cash">✓ Done — cash received</button></div>', { sticky: true });
+      $('#cash-in').addEventListener('input', function () { $$('.note-btn').forEach(function (b) { b.classList.remove('active'); }); updateChange(); });
     } else if (method === 'tap') {
-      openModal('Tap to Pay', '<div class="err m-err hidden"></div>' + amount +
-        '<ol class="steps"><li><span>Open the <b>Ziina app</b> on the store phone and choose <b>Tap to Pay</b>.</span></li>' +
-        '<li><span>Enter exactly <b class="num">' + money(t.total) + '</b> <button class="btn sm" data-act="copy-amount" data-v="' + (t.total / 100).toFixed(2) + '">Copy amount</button> and let the customer tap their card, phone or watch.</span></li>' +
-        '<li><span>When Ziina shows the payment as approved, press <b>Payment received</b> below.</span></li></ol>' +
-        '<label class="field"><span>Reference (optional) — last 4 digits or Ziina transaction ID</span><input class="input" id="pay-ref" maxlength="64"></label>' +
-        '<div class="modal-foot"><button class="btn ghost" data-act="modal-close">Back</button><button class="btn gold big" data-act="confirm-pay" data-m="tap">Payment received</button></div>', { sticky: true });
+      openModal('Card / Tap', '<div class="err m-err hidden"></div>' + amount +
+        '<ol class="steps big"><li><span>On the store phone open <b>Ziina</b> → <b>Tap to Pay</b>.</span></li>' +
+        '<li><span>Type <b class="num">' + money(t.total) + '</b> <button class="btn sm" data-act="copy-amount" data-v="' + (t.total / 100).toFixed(2) + '">Copy</button></span></li>' +
+        '<li><span>Customer taps card or phone. Wait for <b>Approved</b>.</span></li></ol>' +
+        '<details class="ref"><summary>Add reference (optional)</summary><input class="input" id="pay-ref" maxlength="64" placeholder="Last 4 digits or Ziina ID"></details>' +
+        '<div class="modal-foot"><button class="btn ghost" data-act="pay-open">Back</button><button class="btn gold big" data-act="confirm-pay" data-m="tap">✓ Approved</button></div>', { sticky: true });
     } else if (method === 'card') {
       openModal('Card machine', '<div class="err m-err hidden"></div>' + amount +
         '<p class="muted">Charge this amount on the card terminal. When it prints <b>approved</b>, press Payment received.</p>' +
@@ -579,7 +640,7 @@
     var v = $('#cash-in').value, given = v === '' ? t.total : toFils(v), ch = given - t.total;
     var box = $('#change-box');
     box.classList.toggle('short', ch < 0);
-    box.innerHTML = ch < 0 ? '<span>Still to pay</span><span class="num">' + aed(-ch) + '</span>' : '<span>Change to give</span><span class="num">' + aed(ch) + '</span>';
+    box.innerHTML = ch < 0 ? '<span>Still to pay</span><span class="num">' + aed(-ch) + '</span>' : '<span>Give change</span><span class="num">' + aed(ch) + '</span>';
   }
   function confirmPay(method, btn) {
     var extra = {};
@@ -626,7 +687,7 @@
     setCartOpen(false);
     if (S.view === 'sell') { renderTiles(); renderCart(); }
     if (!sale.queued) refreshProducts();
-    showReceipt(sale, true);
+    doneScreen(sale);
   }
 
   var ziinaPoll = null;
@@ -705,6 +766,19 @@
     } catch (e) { return ''; }
   }
   var currentReceipt = null;
+  function doneScreen(s) {
+    currentReceipt = s;
+    var change = s.method === 'cash' && s.change_due ? s.change_due : 0;
+    openModal('', '<div class="done"><div class="done-tick">✓</div><div class="done-paid">PAID</div>' +
+      '<div class="done-amt num">' + aed(s.total) + '</div>' +
+      (change ? '<div class="done-change">Give change: <b class="num">' + aed(change) + '</b></div>' : '') +
+      (s.queued ? '<p class="small muted">Saved on this phone (no internet). It uploads by itself later.</p>' : '') + '</div>' +
+      '<div class="done-actions">' +
+      '<button class="pchoice slim" data-act="r-wa"><span class="pi">📲</span><b>Send receipt</b><small>WhatsApp</small></button>' +
+      '<button class="pchoice slim" data-act="r-print"><span class="pi">🖨</span><b>Print</b><small>Receipt printer</small></button>' +
+      '<button class="pchoice slim" data-act="r-show"><span class="pi">🧾</span><b>Show receipt</b><small>QR, PDF, email</small></button>' +
+      '</div><button class="btn gold big block next-btn" data-act="modal-close">Next customer →</button>', { noClose: true });
+  }
   function showReceipt(s, fresh) {
     currentReceipt = s;
     var statusNote = '';
@@ -1289,6 +1363,11 @@
       // sell
       case 'cat': S.category = el.getAttribute('data-cat'); renderChips(); renderTiles(); break;
       case 'add': addToCart(id); break;
+      case 'pick': pickGroup(el.getAttribute('data-g')); break;
+      case 'add-size': if (addToCart(id)) closeModal(); break;
+      case 'pay-open': if (S.cart.length) payChooser(); break;
+      case 'more': moreModal(); break;
+      case 'r-show': showReceipt(currentReceipt, false); break;
       case 'qty': changeQty(id, parseInt(el.getAttribute('data-d'), 10)); break;
       case 'cart-clear': S.cart = []; S.discount = null; S.customer = null; renderTiles(); renderCart(); break;
       case 'cart-open': setCartOpen(true); break;
@@ -1328,7 +1407,10 @@
         (navigator.clipboard ? navigator.clipboard.writeText(amt) : Promise.reject()).then(function () { toast('Amount ' + amt + ' copied — paste it in Ziina.'); }, function () { toast('Amount: ' + amt); });
         break;
       }
-      case 'cash-quick': $('#cash-in').value = el.getAttribute('data-v'); updateChange(); break;
+      case 'cash-quick':
+        $('#cash-in').value = el.getAttribute('data-v');
+        $$('.note-btn').forEach(function (b) { b.classList.toggle('active', b === el); });
+        updateChange(); break;
       case 'confirm-pay': confirmPay(el.getAttribute('data-m'), el); break;
       case 'z-cancel':
         el.disabled = true; stopPoll();
