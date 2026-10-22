@@ -501,3 +501,74 @@ details.ref { margin: 4px 0 6px; } details.ref summary { color: var(--muted); fo
 
 .found { padding: 10px 12px; border-radius: 12px; background: var(--ok-bg); color: var(--ok); margin-bottom: 8px; }
 .found b { font-size: 16px; } .found .small { color: var(--text); margin-top: 4px; line-height: 1.6; }
+
+/* ================= Phone fit pass (all phones incl. iPhone SE / mini / Pro Max) ================= */
+.date-range { flex-wrap: nowrap; }
+.date-range .input { width: auto; min-width: 0; }
+@media (max-width: 900px) {
+  /* "Added" note sits at the bottom, above the bag button, instead of over the list */
+  .added-pop { top: auto; bottom: calc(var(--nav-h) + 76px + env(safe-area-inset-bottom)); }
+  .cart.open ~ .added-pop, body:has(.cart.open) .added-pop { bottom: calc(var(--nav-h) + 160px + env(safe-area-inset-bottom)); }
+  /* amounts never cut off: smaller and allowed to wrap */
+  .kpi .k-val { white-space: normal; overflow: visible; text-overflow: clip; font-size: 19px; line-height: 1.2; word-break: break-word; }
+  .kpi .k-label { font-size: 12px; }
+  /* date ranges and filters use the full width */
+  .page-head > .seg, .page-head > select.input, .page-head > .date-range { width: 100%; }
+  .date-range { width: 100%; }
+  .date-range .input { flex: 1; }
+  .page-head select.input { width: 100% !important; }
+  /* Sales list becomes cards: receipt + time on the left, total + status on the right */
+  .tbl-sales thead { display: none; }
+  .tbl-sales tr { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "time rec total" "time rec status"; align-items: center; column-gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .tbl-sales td { border: 0 !important; padding: 0 !important; }
+  .tbl-sales td:nth-child(1) { grid-area: time; color: var(--muted); font-size: 13px; }
+  .tbl-sales td:nth-child(2) { grid-area: rec; min-width: 0; }
+  .tbl-sales td.r.num { grid-area: total; font-weight: 800; }
+  .tbl-sales td.r:last-child { grid-area: status; }
+  .tbl-sales td.hide-sm { display: none; }
+  .tbl-sales td:nth-child(2) .small { white-space: normal; }
+  /* Team tabs: 2 x 2 instead of a cut-off row */
+  .team-tabs { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .modal-head h2 { font-size: 18px; }
+}
+@media (max-width: 400px) {
+  .fbtn { font-size: 13px; padding: 8px 10px; gap: 6px; }
+  .fbtn span { font-size: 18px; }
+  .pay-big { min-height: 60px; padding: 0 16px; font-size: 19px; }
+  .pay-big b { font-size: 20px; }
+  .change-box.big { flex-direction: column; align-items: flex-start; gap: 2px; font-size: 17px; }
+  .change-box.big .num { font-size: 26px; }
+  .notes { grid-template-columns: repeat(2, 1fr); }
+  .amount-big .val { font-size: 28px; }
+  .size-btn { padding: 12px 14px; min-height: 64px; }
+  .size-btn .sz { font-size: 19px; } .size-btn .sp { font-size: 17px; }
+  .pchoice { grid-template-columns: 44px 1fr; padding: 12px; min-height: 66px; }
+  .pchoice .pi { font-size: 30px; }
+  .pchoice b { font-size: 18px; }
+  .done-tick { width: 76px; height: 76px; font-size: 44px; }
+  .done-amt { font-size: 30px; }
+  .modal { padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); }
+  .cline { grid-template-columns: 42px 1fr auto; gap: 10px; }
+  .cline img, .cline .cl-ph { width: 42px; height: 42px; }
+  .qty.big button { width: 40px; height: 42px; }
+  .qty.big span { min-width: 30px; }
+  .kpi .k-val { font-size: 17px; }
+  .page { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+}
+@media (max-width: 340px) {
+  .ptiles { gap: 8px; }
+  .pt-name { font-size: 14px; }
+  .nav button { font-size: 10px; }
+  .store-btn { max-width: 110px; }
+  .topbar .h-brand .wm { height: 10px; }
+}
+/* iPhone: use the real visible screen height (Safari's bars come and go) */
+@supports (height: 100dvh) {
+  .modal { max-height: calc(100dvh - 24px); }
+  @media (max-width: 900px) { .modal { max-height: 94dvh; } }
+}
+@media (max-width: 340px) {
+  .date-range { flex-wrap: wrap; }
+  .date-range .input { flex: 1 1 100%; }
+  .date-range > span { display: none; }
+}

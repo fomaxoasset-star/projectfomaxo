@@ -554,7 +554,7 @@
         }).join('') + freeLineHtml()) + '</div>' +
       '<div class="cart-foot">' +
       (empty ? '' : '<div class="foot-btns"><button class="fbtn' + (c ? ' on' : '') + '" data-act="customer"><span>👤</span>' + (c ? esc(c.name || c.phone || c.email) : 'Customer') + '</button>' +
-        '<button class="fbtn' + (S.coupon || d ? ' on' : '') + '" data-act="more2"><span>🎟</span>' + (S.coupon ? esc(S.coupon.code) : d ? 'Discount' : 'Coupon / discount') + '</button></div>') +
+        '<button class="fbtn' + (S.coupon || d ? ' on' : '') + '" data-act="more2"><span>🎟</span>' + (S.coupon ? esc(S.coupon.code) : d ? 'Discount' : 'Coupon') + '</button></div>') +
       (t.discount ? '<div class="t-row"><span>Discount</span><span class="num">−' + money(t.discount) + '</span></div>' : '') +
       (S.coupon && !empty ? '<div class="t-row coupon-row"><span>🎟 ' + esc(S.coupon.code) + (S.coupon.kind === 'free' ? ' — free gift added' : '') + '</span><span class="num">' +
         (!t.couponOk ? 'needs AED ' + money(Math.round(S.coupon.min * 100)) : t.coupon ? '−' + money(t.coupon) : 'FREE') + '</span></div>' : '') +
@@ -1089,7 +1089,7 @@
       paid.forEach(function (s) { total += s.total; });
       el.innerHTML = '<div class="kpis"><div class="kpi gold"><div class="k-label">' + (isManager() ? 'Store total' : 'Your sales') + '</div><div class="k-val num">' + aed(total) + '</div></div>' +
         '<div class="kpi"><div class="k-label">Paid sales</div><div class="k-val">' + paid.length + '</div></div></div>' +
-        (d.sales.length ? '<div class="table-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Receipt</th>' + (isManager() ? '<th class="hide-sm">Staff</th>' : '') + '<th class="hide-sm">Paid by</th><th class="r">Total</th><th class="r">Status</th></tr></thead><tbody>' +
+        (d.sales.length ? '<div class="table-wrap"><table class="tbl tbl-sales"><thead><tr><th>Time</th><th>Receipt</th>' + (isManager() ? '<th class="hide-sm">Staff</th>' : '') + '<th class="hide-sm">Paid by</th><th class="r">Total</th><th class="r">Status</th></tr></thead><tbody>' +
           d.sales.map(function (s) {
             return '<tr class="click" data-act="s-open" data-id="' + s.id + '"><td class="num">' + niceTime(s.created_at) + '</td><td><b>' + esc(s.receipt_no) + '</b><div class="small muted">' + s.items + ' item' + (s.items === 1 ? '' : 's') + (s.customer_name ? ' · ' + esc(s.customer_name) : '') + (s.offline ? ' · offline' : '') + (multiStore() && s.store_name ? ' · ' + esc(s.store_name) : '') + '</div></td>' +
               (isManager() ? '<td class="hide-sm">' + esc(s.staff_name) + '</td>' : '') + '<td class="hide-sm">' + esc(METHOD[s.method] || s.method) + '</td><td class="r num">' + money(s.total) + '</td><td class="r">' + (STATUS_BADGE[s.status] || esc(s.status)) + '</td></tr>';
@@ -1114,7 +1114,7 @@
       '<div class="seg" style="min-width:300px">' + [['today', 'Today'], ['yesterday', 'Yesterday'], ['week', '7 days'], ['month', 'This month']].map(function (p) {
         return '<button data-act="r-preset" data-p="' + p[0] + '" class="' + (r.preset === p[0] ? 'active' : '') + '">' + p[1] + '</button>';
       }).join('') + '</div>' +
-      '<div class="row"><input class="input" type="date" id="rf" value="' + r.from + '" style="width:auto"><span class="muted">to</span><input class="input" type="date" id="rt" value="' + r.to + '" style="width:auto"></div>' + storeSelect('rstore', S.reportStore, true) + '</div>' +
+      '<div class="row date-range"><input class="input" type="date" id="rf" value="' + r.from + '"><span class="muted">to</span><input class="input" type="date" id="rt" value="' + r.to + '"></div>' + storeSelect('rstore', S.reportStore, true) + '</div>' +
       '<div id="report-body"><div class="status-line"><span class="spinner"></span> Loading…</div></div></div>';
     var onDate = function () { S.report = { preset: 'custom', from: $('#rf').value, to: $('#rt').value }; loadReport(); $$('[data-act=r-preset]').forEach(function (b) { b.classList.remove('active'); }); };
     $('#rf').addEventListener('change', onDate); $('#rt').addEventListener('change', onDate);
@@ -1185,7 +1185,7 @@
       '<div class="seg team-tabs">' + tabs.map(function (x) { return '<button data-act="team-tab" data-t="' + x[0] + '" class="' + (S.teamTab === x[0] ? 'active' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>' +
       (dated ? '<div class="page-head" style="margin-top:-4px"><div class="seg">' + [['today', 'Today'], ['yesterday', 'Yesterday'], ['week', '7 days'], ['month', 'This month']].map(function (p) {
         return '<button data-act="t-preset" data-p="' + p[0] + '" class="' + (t.preset === p[0] ? 'active' : '') + '">' + p[1] + '</button>';
-      }).join('') + '</div><input class="input" type="date" id="tf" value="' + t.from + '" style="width:auto"><span class="muted">to</span><input class="input" type="date" id="tt" value="' + t.to + '" style="width:auto">' +
+      }).join('') + '</div><div class="row date-range"><input class="input" type="date" id="tf" value="' + t.from + '"><span class="muted">to</span><input class="input" type="date" id="tt" value="' + t.to + '"></div>' +
         storeSelect('tstore', S.reportStore, true) + (S.teamTab === 'activity' ? '<select class="input" id="tuser" style="width:auto"><option value="">Everyone</option></select>' : '') + '</div>' : '') +
       '<div id="team-body"><div class="status-line"><span class="spinner"></span> Loading…</div></div></div>';
     if (dated) {
