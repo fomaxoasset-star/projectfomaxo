@@ -401,3 +401,5 @@ s.was { color: var(--muted); font-size: .82em; margin-right: 6px; text-decoratio
 input[readonly].input { opacity: .6; }
 #sales-list .tbl b { white-space: nowrap; }
 @media (max-width: 480px) { #sales-list .tbl td, #sales-list .tbl th { padding: 9px 8px; } }
+
+.set-h { font-family: var(--head); font-size: 15px; letter-spacing: .08em; color: var(--gold-2); margin: 4px 0 10px; }

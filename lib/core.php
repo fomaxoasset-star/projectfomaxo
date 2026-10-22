@@ -46,7 +46,30 @@ function cfg($key = null, $default = null)
     if ($key === null) {
         return $config;
     }
+    // A few settings can be changed by a manager inside the app (Settings); those win over the file.
+    if (in_array($key, ['ziina_token', 'ziina_mode', 'store_trn'], true)) {
+        $ov = app_settings();
+        if (array_key_exists($key, $ov)) {
+            return $ov[$key];
+        }
+    }
     return array_key_exists($key, $config) ? $config[$key] : $default;
+}
+
+function app_settings($reload = false)
+{
+    static $ov = null;
+    if ($ov === null || $reload) {
+        $ov = [];
+        try {
+            foreach (q("SELECT k, v FROM meta WHERE k IN ('set_ziina_token', 'set_ziina_mode', 'set_store_trn')")->fetchAll() as $r) {
+                $ov[substr($r['k'], 4)] = $r['v'];
+            }
+        } catch (Throwable $e) {
+            // database not ready yet - use the settings file
+        }
+    }
+    return $ov;
 }
 
 function db()

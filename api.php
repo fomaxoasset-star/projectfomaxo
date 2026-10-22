@@ -619,6 +619,54 @@ switch ($action) {
         log_activity(current_user(), 'store', 'Saved store: ' . $data['name'] . ($data['active'] ? '' : ' (closed)'));
         json_out(['ok' => true, 'id' => $id, 'stores' => stores_list()]);
 
+    // ---------------- Settings (managers) ----------------
+    case 'settings_get':
+        require_manager();
+        $tok = trim((string) cfg('ziina_token', ''));
+        json_out([
+            'ziina_mode' => ziina_mode(),
+            'ziina_key_saved' => $tok !== '',
+            'ziina_key_end' => $tok !== '' ? substr($tok, -4) : '',
+            'store_trn' => (string) cfg('store_trn', ''),
+        ]);
+
+    case 'settings_save':
+        need_post();
+        $u = require_manager();
+        $changes = [];
+        if (isset($b['ziina_token']) && trim((string) $b['ziina_token']) !== '') {
+            $tok = preg_replace('/\s+/', '', (string) $b['ziina_token']);
+            if (strlen($tok) < 20 || strlen($tok) > 4000) {
+                fail('That does not look like a Ziina API key. Copy the whole key from Ziina.');
+            }
+            meta_set('set_ziina_token', $tok);
+            $changes[] = 'Ziina key saved';
+        }
+        if (!empty($b['remove_ziina_token'])) {
+            q("DELETE FROM meta WHERE k = 'set_ziina_token'");
+            $changes[] = 'Ziina key removed';
+        }
+        if (isset($b['ziina_mode'])) {
+            $m = in_array($b['ziina_mode'], ['demo', 'test', 'live'], true) ? $b['ziina_mode'] : 'demo';
+            app_settings(true);
+            if ($m !== 'demo' && trim((string) cfg('ziina_token', '')) === '') {
+                fail('Add your Ziina API key first, then choose Test or Live.');
+            }
+            meta_set('set_ziina_mode', $m);
+            $changes[] = 'Ziina mode: ' . $m;
+        }
+        if (array_key_exists('store_trn', $b)) {
+            $trn = preg_replace('/\s+/', '', (string) $b['store_trn']);
+            if ($trn !== '' && !preg_match('/^\d{15}$/', $trn)) {
+                fail('A UAE TRN has 15 digits.');
+            }
+            meta_set('set_store_trn', $trn);
+            $changes[] = $trn === '' ? 'TRN cleared (no VAT)' : 'TRN set (VAT on)';
+        }
+        app_settings(true);
+        log_activity($u, 'settings', 'Settings: ' . implode(', ', $changes ?: ['no change']));
+        json_out(['ok' => true]);
+
     // ---------------- Owner: team performance & activity ----------------
     case 'team':
         require_manager();

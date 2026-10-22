@@ -998,7 +998,7 @@
   var ACT = {
     login: ['Logged in', 'plain'], logout: ['Logged out', 'plain'], sale: ['Sale', 'ok'], ziina: ['Ziina QR', 'plain'],
     cancel: ['Cancelled payment', 'low'], void: ['Voided sale', 'out'], stock: ['Stock change', 'low'], transfer: ['Moved stock', 'low'],
-    product: ['Product edit', 'plain'], staff: ['Staff change', 'plain'], store: ['Store change', 'plain'], password: ['Password', 'plain']
+    product: ['Product edit', 'plain'], settings: ['Settings', 'low'], staff: ['Staff change', 'plain'], store: ['Store change', 'plain'], password: ['Password', 'plain']
   };
   function storeSelect(id, val, withAll) {
     if (!multiStore()) return '';
@@ -1153,8 +1153,40 @@
       '<div class="m-label">Appearance</div><div class="seg">' + [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(function (o) {
         return '<button data-act="theme-set" data-t="' + o[0] + '" class="' + (themeChoice() === o[0] ? 'active' : '') + '">' + o[1] + '</button>';
       }).join('') + '</div>' +
-      '<button data-act="pw">Change password</button><button data-act="reload">Refresh app</button><button data-act="logout">Log out</button>';
+      (isManager() ? '<button data-act="settings">Settings · payments &amp; VAT</button>' : '') + '<button data-act="pw">Change password</button><button data-act="reload">Refresh app</button><button data-act="logout">Log out</button>';
     document.body.appendChild(m);
+  }
+  function settingsModal() {
+    openModal('Settings', '<div class="status-line"><span class="spinner"></span> Loading…</div>');
+    api('settings_get').then(function (d) {
+      setModalBody('<div class="err m-err hidden"></div><form id="set-form" autocomplete="off">' +
+        '<h3 class="set-h">Ziina payments</h3>' +
+        '<label class="field"><span>Ziina API key' + (d.ziina_key_saved ? ' — saved (ends in …' + esc(d.ziina_key_end) + ')' : '') + '</span>' +
+        '<input class="input" name="ziina_token" type="password" autocomplete="new-password" spellcheck="false" placeholder="' + (d.ziina_key_saved ? 'Paste a new key to replace it' : 'Paste your Ziina API key here') + '"></label>' +
+        '<label class="field"><span>Payments mode</span><select class="input" name="ziina_mode">' +
+        [['demo', 'Practice — no Ziina account used'], ['test', 'Test — Ziina test payments, no real money'], ['live', 'Live — real payments']].map(function (o) {
+          return '<option value="' + o[0] + '"' + (d.ziina_mode === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+        }).join('') + '</select></label>' +
+        '<p class="small muted" style="margin:-4px 0 14px">Start with <b>Test</b>: make a Ziina QR sale and pay it with a Ziina test card. When it confirms by itself, switch to <b>Live</b>.</p>' +
+        (d.ziina_key_saved ? '<label class="check"><input type="checkbox" name="remove_ziina_token"> Remove the saved key</label>' : '') +
+        '<h3 class="set-h">VAT</h3>' +
+        '<label class="field"><span>TRN (VAT registration number, 15 digits)</span><input class="input" name="store_trn" inputmode="numeric" value="' + esc(d.store_trn) + '" placeholder="Leave empty while not registered"></label>' +
+        '<p class="small muted" style="margin:-4px 0 6px">Empty: no VAT on sales or receipts. With a TRN: VAT ' + 5 + '% (included) shows and receipts become Tax invoices.</p>' +
+        '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>');
+      $('#set-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var f = e.target, b = $('[type=submit]', f); b.disabled = true;
+        var body = { ziina_mode: f.ziina_mode.value, store_trn: f.store_trn.value };
+        if (f.ziina_token.value.trim()) body.ziina_token = f.ziina_token.value.trim();
+        if (f.remove_ziina_token && f.remove_ziina_token.checked) { body.remove_ziina_token = 1; body.ziina_mode = 'demo'; }
+        api('settings_save', { body: body }).then(function () {
+          f.ziina_token.value = '';
+          return refreshMe();
+        }).then(function () {
+          closeModal(); toast('Settings saved.'); if (S.view === 'sell') renderCart();
+        }).catch(function (er) { b.disabled = false; modalErr(er.offline ? 'Needs internet.' : er.message); });
+      });
+    }).catch(function (e) { setModalBody('<div class="err">' + esc(e.offline ? 'Needs internet.' : e.message) + '</div>'); });
   }
   function passwordModal() {
     openModal('Change password', '<div class="err m-err hidden"></div><form id="pw-form">' +
@@ -1249,6 +1281,7 @@
         $$('.menu [data-act=theme-set]').forEach(function (b) { b.classList.toggle('active', b === el); });
         break;
       case 'pw': closeMenu(); passwordModal(); break;
+      case 'settings': closeMenu(); settingsModal(); break;
       case 'reload': location.reload(); break;
       case 'logout': logout(false); break;
       case 'logout-force': logout(true); break;
