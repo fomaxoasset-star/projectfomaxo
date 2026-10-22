@@ -1311,7 +1311,7 @@
     var r = btn.getBoundingClientRect();
     var m = document.createElement('div');
     m.className = 'menu';
-    m.style.top = (r.bottom + 6) + 'px'; m.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+    m.style.top = Math.max(r.bottom + 6, 8) + 'px'; m.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
     m.innerHTML = '<div class="m-head"><b>' + esc(S.user.name) + '</b><div class="small muted">' + (isManager() ? 'Manager' : 'Staff') + ' · ' + esc(S.user.username) + '</div></div>' +
       '<div class="m-label">Appearance</div><div class="seg">' + [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(function (o) {
         return '<button data-act="theme-set" data-t="' + o[0] + '" class="' + (themeChoice() === o[0] ? 'active' : '') + '">' + o[1] + '</button>';

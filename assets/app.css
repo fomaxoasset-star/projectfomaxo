@@ -572,3 +572,31 @@ details.ref { margin: 4px 0 6px; } details.ref summary { color: var(--muted); fo
   .date-range .input { flex: 1 1 100%; }
   .date-range > span { display: none; }
 }
+
+/* ================= iPhone installed app: notch (top) and home bar (bottom) ================= */
+html { background: var(--bg-2); }
+@supports (height: 100dvh) { html, body, #root { height: 100dvh; } }
+@media (max-width: 900px) {
+  /* Bottom menu: sits right above the home bar, no lifted gap; anything below is the same colour */
+  .nav {
+    padding: 2px 4px calc(2px + env(safe-area-inset-bottom) * .55);
+    height: calc(var(--nav-h) + env(safe-area-inset-bottom) * .55);
+    box-shadow: 0 40px 0 0 var(--bg-2);
+  }
+  .view { padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) * .55); }
+  .cart { inset: 0 0 calc(var(--nav-h) + env(safe-area-inset-bottom) * .55) 0; }
+  .cart-fab { bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom) * .55); }
+  .added-pop { bottom: calc(var(--nav-h) + 76px + env(safe-area-inset-bottom) * .55); }
+  /* Cart sheet header clears the notch too */
+  .cart-head { padding-top: max(14px, calc(env(safe-area-inset-top) + 6px)); }
+  /* Pop-ups never reach up into the status bar / notch area */
+  .modal-back { padding-top: calc(env(safe-area-inset-top) + 12px); }
+  .modal { max-height: calc(100vh - env(safe-area-inset-top) - 16px); }
+}
+@supports (height: 100dvh) {
+  @media (max-width: 900px) { .modal { max-height: calc(100dvh - env(safe-area-inset-top) - 16px); } }
+}
+@media (max-width: 900px) {
+  /* top bar content always below the notch / status bar */
+  .topbar { padding-top: env(safe-area-inset-top); padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); height: calc(54px + env(safe-area-inset-top)); }
+}
