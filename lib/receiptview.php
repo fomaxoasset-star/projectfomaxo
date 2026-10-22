@@ -53,12 +53,12 @@ function receipt_page($sale, $ar = false, $theme = '', $embed = false)
             . '<td class="c-sz">' . $e($size) . '</td><td class="c-un">' . ($was ? '<s>' . rc_money($was) . '</s>' : '') . rc_money((int) $it['price']) . '</td>'
             . '<td class="c-q">' . (int) $it['qty'] . '</td><td class="c-am">' . rc_money((int) $it['line_total']) . '</td></tr>';
     }
-    $rate = cfg('vat_rate', 5);
+    $rate = $sale['subtotal'] - $sale['discount'] > 0 && (int) $sale['vat'] > 0 ? cfg('vat_rate', 5) : 0;
     $sum = '<div class="tr"><span>' . $e($w['sub']) . '</span>' . rc_money((int) $sale['subtotal']) . '</div>';
     if ((int) $sale['discount'] > 0) {
         $sum .= '<div class="tr dc"><span>' . $e($w['disc']) . '</span><span class="m">−&nbsp;<small>AED</small>' . number_format($sale['discount'] / 100, 2) . '</span></div>';
     }
-    $sum .= '<div class="tr vt"><span>' . $e($w['vat']) . ' ' . $e($rate) . '%' . (cfg('prices_include_vat', true) ? ' (' . $e($w['incl']) . ')' : '') . '</span>' . rc_money((int) $sale['vat']) . '</div>';
+    if ((int) $sale['vat'] > 0) $sum .= '<div class="tr vt"><span>' . $e($w['vat']) . ' ' . $e($rate) . '%' . (cfg('prices_include_vat', true) ? ' (' . $e($w['incl']) . ')' : '') . '</span>' . rc_money((int) $sale['vat']) . '</div>';
     $paid = $sale['status'] === 'paid';
     $sum .= '<div class="tt"><span>' . $e($paid ? $w['paid_total'] : $w['total']) . '</span>' . rc_money((int) $sale['total']) . '</div>';
     if ($sale['method'] === 'cash' && $sale['cash_given'] !== null && $paid) {

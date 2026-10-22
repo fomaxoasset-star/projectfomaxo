@@ -475,7 +475,7 @@
       '<div class="cart-totals">' +
       '<div class="t-row"><span>Subtotal (' + count + ' item' + (count === 1 ? '' : 's') + ')</span><span class="num">' + money(t.subtotal) + '</span></div>' +
       (t.discount ? '<div class="t-row"><span>Discount</span><span class="num">−' + money(t.discount) + '</span></div>' : '') +
-      '<div class="t-row"><span>VAT ' + st.vat_rate + '%' + (st.prices_include_vat ? ' (included)' : '') + '</span><span class="num">' + money(t.vat) + '</span></div>' +
+      (st.vat_rate > 0 ? '<div class="t-row"><span>VAT ' + st.vat_rate + '%' + (st.prices_include_vat ? ' (included)' : '') + '</span><span class="num">' + money(t.vat) + '</span></div>' : '') +
       '<div class="t-row t-grand"><span>Total</span><span class="num">' + aed(t.total) + '</span></div></div>' +
       '<div class="pay-grid">' +
       '<button class="pay-btn primary" data-act="pay" data-m="cash"' + (empty ? ' disabled' : '') + '><b>Cash</b><small>Works offline</small></button>' +
@@ -690,7 +690,7 @@
       }).join('') + '<hr>' +
       '<div class="p-tot"><span>Subtotal</span><span class="num">' + money(s.subtotal) + '</span></div>' +
       (s.discount ? '<div class="p-tot"><span>Discount</span><span class="num">-' + money(s.discount) + '</span></div>' : '') +
-      '<div class="p-tot"><span>VAT ' + st.vat_rate + '%' + (st.prices_include_vat ? ' (incl.)' : '') + '</span><span class="num">' + money(s.vat) + '</span></div>' +
+      (s.vat > 0 ? '<div class="p-tot"><span>VAT ' + st.vat_rate + '%' + (st.prices_include_vat ? ' (incl.)' : '') + '</span><span class="num">' + money(s.vat) + '</span></div>' : '') +
       '<div class="p-grand"><span>TOTAL ' + esc(st.currency) + '</span><span class="num">' + money(s.total) + '</span></div>' +
       '<div class="p-tot"><span>Paid by</span><span>' + esc(METHOD[s.method] || s.method) + (s.payment_ref ? ' (' + esc(s.payment_ref) + ')' : '') + '</span></div>' +
       (s.method === 'cash' && s.cash_given != null ? '<div class="p-tot"><span>Cash given</span><span class="num">' + money(s.cash_given) + '</span></div><div class="p-tot"><span>Change</span><span class="num">' + money(s.change_due) + '</span></div>' : '') +
@@ -974,7 +974,7 @@
         '<div class="kpi gold"><div class="k-label">Sales total</div><div class="k-val num">' + aed(s.total) + '</div></div>' +
         '<div class="kpi"><div class="k-label">Number of sales</div><div class="k-val">' + s.sales + '</div></div>' +
         '<div class="kpi"><div class="k-label">Average sale</div><div class="k-val num">' + aed(avg) + '</div></div>' +
-        '<div class="kpi"><div class="k-label">VAT collected</div><div class="k-val num">' + aed(s.vat) + '</div></div>' +
+        (S.settings.vat_rate > 0 || s.vat > 0 ? '<div class="kpi"><div class="k-label">VAT collected</div><div class="k-val num">' + aed(s.vat) + '</div></div>' : '') +
         '<div class="kpi"><div class="k-label">Discounts given</div><div class="k-val num">' + aed(s.discount) + '</div></div></div>' +
         '<div class="cards2">' +
         (multiStore() && d.by_store.length > 1 ? '<div class="card"><h3>Sales by store</h3>' + bars(d.by_store, function (x) { return x.name; }, function (x) { return x.total; }, function (x) { return money(x.total) + ' <span class="muted small">(' + x.sales + ')</span>'; }) + '</div>' : '') +

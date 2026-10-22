@@ -128,7 +128,7 @@ switch ($action) {
                 'store_trn' => cfg('store_trn'),
                 'receipt_footer' => cfg('receipt_footer'),
                 'currency' => cfg('currency', 'AED'),
-                'vat_rate' => (float) cfg('vat_rate', 5),
+                'vat_rate' => vat_rate(),
                 'prices_include_vat' => (bool) cfg('prices_include_vat', true),
                 'default_low_stock' => (int) cfg('default_low_stock', 5),
                 'staff_max_discount' => (float) cfg('staff_max_discount', 10),
