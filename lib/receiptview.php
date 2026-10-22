@@ -112,7 +112,7 @@ function receipt_page($sale, $ar = false, $theme = '', $embed = false)
         . (!empty($sale['customer_tier']) ? '<dt>' . $e($w['member']) . '</dt><dd>FOMAXO ' . $e($sale['customer_tier']) . '</dd>' : '') . '</dl></div>'
         . '<div class="rn"><h2>' . $e($w['no']) . '</h2><p class="no" dir="ltr">#' . $e($sale['receipt_no']) . '</p><p class="dt"><span>' . $e($w['date']) . '</span> <bdi>' . $e($date) . '</bdi></p></div></section>'
         . '<table class="it"><thead><tr><th class="c-it">' . $e($w['item']) . '</th><th class="c-sz">' . $e($w['size']) . '</th><th class="c-un">' . $e($w['unit']) . '</th><th class="c-q">' . $e($w['qty']) . '</th><th class="c-am">' . $e($w['amount']) . '</th></tr></thead><tbody>' . $rows . '</tbody></table>'
-        . '<section class="bt"><div class="lf"><h2>' . $e($w['store']) . '</h2><p class="ad">' . implode('<br>', array_map($e, $storeLines)) . '</p>'
+        . '<section class="bt"><div class="lf"><h2>' . $e($w['store']) . '</h2><p class="ad">' . implode('<br>', array_map(function ($x) use ($e) { return '<bdi>' . $e($x) . '</bdi>'; }, $storeLines)) . '</p>'
         . '<div class="py"><span>' . $e($w['payment']) . '</span><b>' . $e($method) . ($ref !== '' ? ' <span dir="ltr">· ' . $e($ref) . '</span>' : '') . '</b><i class="st st-' . $st . '">' . $e($w[$st]) . '</i></div></div>'
         . '<div class="sm">' . $sum . '</div></section>'
         . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si">' . $e(cfg('receipt_footer_line', $w['foot'])) . '</p>'
