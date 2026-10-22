@@ -683,3 +683,10 @@ html, body { overscroll-behavior-y: none; }
 .view-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .view-pick .pchoice .pi { font-size: 26px; }
 .modal .set-h { margin: 0 0 8px; }
+
+/* ---------- Accidental taps ---------- */
+button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap zoom */
+.added-pop { display: flex; align-items: center; gap: 8px; pointer-events: auto; }
+.added-pop.removed { background: var(--panel-2); color: var(--text); border: 1px solid var(--line-2); }
+.undo-btn { margin-left: 6px; padding: 6px 12px; border-radius: 999px; border: 0; background: rgba(0,0,0,.25); color: #fff; font-weight: 900; letter-spacing: .08em; font-size: 13px; }
+.added-pop.removed .undo-btn { background: var(--gold); color: #111; }

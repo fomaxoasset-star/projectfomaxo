@@ -526,9 +526,8 @@
   function pickGroup(key) {
     var g = productGroups().filter(function (x) { return x.key === key; })[0];
     if (!g) return;
-    if (g.sizes.length === 1) { addToCart(g.sizes[0].id); return; }
-    openModal(g.name, '<div class="pick-head">' + (g.image ? '<img src="' + esc(thumb(g.image, 360)) + '" alt="" onerror="this.remove()">' : '') +
-      '<div class="muted">' + esc(g.family || '') + '<br><b class="pick-q">Which size?</b></div></div>' +
+ openModal(g.name, '<div class="pick-head">' + (g.image ? '<img src="' + esc(thumb(g.image, 360)) + '" alt="" onerror="this.remove()">' : '') +
+      '<div class="muted">' + esc(g.family || '') + '<br><b class="pick-q">' + (g.sizes.length > 1 ? 'Which size?' : 'Tap to add to the bag') + '</b></div></div>' +
       '<div class="sizes">' + g.sizes.map(function (p) {
         var st = stockState(p), inCart = 0;
         S.cart.forEach(function (c) { if (c.product_id === p.id) inCart = c.qty; });
@@ -546,20 +545,31 @@
       if (S.online) { toast(p.stock <= 0 ? shortName(p.name) + ' ' + p.variant + ' is SOLD OUT.' : 'Only ' + p.stock + ' left of ' + shortName(p.name) + ' ' + p.variant + '.', true); return false; }
       toast('Stock shows ' + Math.max(0, p.stock) + ' — added anyway because you are offline.', true);
     }
+    var before = snapshotBag();
     if (line) line.qty = want; else S.cart.push({ product_id: id, qty: 1 });
     renderTiles(); renderCart();
-    flashAdded(shortName(p.name) + ' ' + p.variant);
+    flashAdded(shortName(p.name) + ' ' + p.variant, function () { restoreBag(before); });
     return true;
   }
   var addedTimer;
-  function flashAdded(label) {
+  var undoFn = null;
+  function flashAdded(label, undo, removed) {
     var old = $('.added-pop'); if (old) old.remove();
     var t = document.createElement('div');
-    t.className = 'added-pop'; t.innerHTML = '<span class="tick">✓</span> Added: ' + esc(label);
+    t.className = 'added-pop' + (removed ? ' removed' : '');
+    t.innerHTML = '<span class="tick">' + (removed ? '−' : '✓') + '</span> ' + (removed ? 'Removed: ' : 'Added: ') + esc(label) +
+      (undo ? '<button class="undo-btn" data-act="undo">UNDO</button>' : '');
     document.body.appendChild(t);
-    clearTimeout(addedTimer); addedTimer = setTimeout(function () { t.remove(); }, 1400);
+    undoFn = undo || null;
+    clearTimeout(addedTimer); addedTimer = setTimeout(function () { t.remove(); undoFn = null; }, undo ? 4000 : 1400);
   }
+  function snapshotBag() { return JSON.stringify({ cart: S.cart, coupon: S.coupon, discount: S.discount, customer: S.customer }); }
+  function restoreBag(snap) { var o = JSON.parse(snap); S.cart = o.cart; S.coupon = o.coupon; S.discount = o.discount; S.customer = o.customer; renderTiles(); renderCart(); }
   function changeQty(id, d) {
+    var before = snapshotBag(), removedName = '';
+    S.cart.forEach(function (c) {
+      if (c.product_id === id && c.qty + d <= 0) { var rp = productById(id); removedName = rp ? shortName(rp.name) + ' ' + rp.variant : 'item'; }
+    });
     S.cart.forEach(function (c) {
       if (c.product_id !== id) return;
       var p = productById(id);
@@ -568,6 +578,7 @@
     });
     S.cart = S.cart.filter(function (c) { return c.qty > 0; });
     renderTiles(); renderCart();
+    if (removedName) flashAdded(removedName, function () { restoreBag(before); }, true);
   }
   function renderCart() {
     var el = $('#cart'); if (!el) return;
@@ -1467,11 +1478,25 @@
   }
 
   // ---------------------------------------------------------------- clicks
+  // Accidental taps on Sell: ignore a tap that ends a scroll, and a second tap within 400 ms.
+  var lastScroll = 0, touchMoved = false, touchY = 0, lastPick = 0;
+  document.addEventListener('scroll', function () { lastScroll = Date.now(); }, true);
+  document.addEventListener('touchstart', function (e) { touchMoved = false; touchY = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchmove', function (e) { if (Math.abs(e.touches[0].clientY - touchY) > 8) touchMoved = true; }, { passive: true });
+  function guardedTap(act) {
+    if (act !== 'pick' && act !== 'add-size') return false;
+    var now = Date.now();
+    if (touchMoved || now - lastScroll < 350) return true;   // that tap stopped or ended a scroll
+    if (now - lastPick < 400) return true;                    // double tap
+    lastPick = now;
+    return false;
+  }
   document.addEventListener('click', function (e) {
     var el = e.target.closest('[data-act]');
     if (!e.target.closest('.menu') && !(el && el.getAttribute('data-act') === 'user-menu')) closeMenu();
     if (!el || el.disabled) return;
     var act = el.getAttribute('data-act'), id = parseInt(el.getAttribute('data-id'), 10);
+    if (guardedTap(act)) return;
     switch (act) {
       case 'nav': closeMenu(); if (el.getAttribute('data-tab')) S.teamTab = el.getAttribute('data-tab'); S.view = el.getAttribute('data-view'); S.cartOpen = false; renderView(); if (S.view === 'sell' || S.view === 'stock') refreshProducts(); break;
       case 'net':
@@ -1563,7 +1588,17 @@
       case 'more2': couponDiscountModal(); break;
       case 'r-show': showReceipt(currentReceipt, false); break;
       case 'qty': changeQty(id, parseInt(el.getAttribute('data-d'), 10)); break;
-      case 'cart-clear': S.cart = []; S.discount = null; S.customer = null; S.coupon = null; renderTiles(); renderCart(); break;
+      case 'cart-clear':
+        openModal('Empty the bag?', '<p style="margin-top:0">Remove all items' + (S.customer || S.coupon || S.discount ? ', the customer, coupon and discount' : '') + ' from the bag?</p>' +
+          '<div class="modal-foot"><button class="btn big" data-act="modal-close">No, keep</button><button class="btn danger big" data-act="cart-clear-yes">Yes, empty</button></div>');
+        break;
+      case 'cart-clear-yes': {
+        var snapAll = snapshotBag();
+        S.cart = []; S.discount = null; S.customer = null; S.coupon = null; closeModal(); renderTiles(); renderCart();
+        flashAdded('everything', function () { restoreBag(snapAll); }, true);
+        break;
+      }
+      case 'undo': if (undoFn) { var u = undoFn; undoFn = null; u(); var pop = $('.added-pop'); if (pop) pop.remove(); toast('Undone.'); } break;
       case 'coupon': couponModal(); break;
       case 'cp-remove': S.coupon = null; closeModal(); renderCart(); toast('Coupon removed.'); break;
       case 'cp-apply': {
