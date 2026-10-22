@@ -409,7 +409,7 @@
     $('#view').innerHTML =
       '<div class="sell"><section class="catalog">' +
       '<div class="catalog-tools"><label class="search">' + ICON.search +
-      '<input class="input" id="q" type="search" placeholder="Search perfume" value="' + esc(S.search) + '" autocomplete="off"></label>' +
+      '<input class="input" id="q" type="search" placeholder="Search product, size or SKU" value="' + esc(S.search) + '" autocomplete="off"></label>' +
       '<button class="sort-btn' + (S.sellView !== 'grid' || S.sellSort !== 'az' ? ' on' : '') + '" data-act="sort-open" aria-label="View and sort" title="View and sort">' + ICON.sliders + '<span id="sort-lbl" class="sort-lbl">' + esc(viewLabel()) + '</span></button>' +
       '<div class="chips" id="chips"></div></div>' +
       '<div class="ptiles' + (S.sellView === 'list' ? ' list' : '') + '" id="tiles"></div></section>' +
