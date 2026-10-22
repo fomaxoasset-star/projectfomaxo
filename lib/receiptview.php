@@ -6,24 +6,24 @@ const FX_SYMBOLS = '<symbol id="emblem" viewBox="0 0 2507 2506"><path fill="curr
 
 function rc_words($ar)
 {
-    $en = ['tag' => 'Perfume & Personal Care', 'title' => 'Receipt', 'tax' => 'Tax invoice', 'to' => 'Issued to', 'no' => 'Receipt no', 'date' => 'Date', 'name' => 'Name', 'mobile' => 'Mobile',
+    $en = ['tag' => 'Perfume & Personal Care', 'title' => 'Receipt', 'tax' => 'Tax invoice', 'to' => 'Issued to', 'no' => 'Receipt no', 'date' => 'Date', 'name' => 'Name', 'mobile' => 'Mobile', 'email' => 'Email',
         'item' => 'Item', 'size' => 'Size', 'unit' => 'Unit price', 'qty' => 'Qty', 'amount' => 'Amount', 'sub' => 'Subtotal', 'disc' => 'Discount', 'vat' => 'VAT', 'incl' => 'included',
         'paid_total' => 'Total paid', 'total' => 'Total', 'saved' => 'You saved', 'saved2' => 'on this order', 'store' => 'Store', 'served' => 'Served by', 'trn' => 'TRN',
         'payment' => 'Payment', 'cash' => 'Cash', 'tap' => 'Tap to Pay', 'ziina' => 'Ziina', 'card' => 'Card', 'given' => 'Cash given', 'change' => 'Change',
         'paid' => 'Paid', 'pending' => 'Waiting', 'cancelled' => 'Cancelled', 'failed' => 'Failed', 'void' => 'Voided', 'walkin' => 'Walk-in customer',
         'thanks' => 'Thank you for your purchase', 'country' => 'United Arab Emirates', 'site' => 'fomaxo.com', 'pdf' => 'Download PDF', 'sets' => 'Set of', 'vials' => 'vials',
         'scan' => 'Scan to open this receipt', 'n_pending' => 'Waiting for the payment to be confirmed. Refresh this page in a moment.',
-        'n_bad' => 'This payment was not completed. No money was taken.', 'n_void' => 'This sale was cancelled by the store.', 'member' => 'Member'];
+        'n_bad' => 'This payment was not completed. No money was taken.', 'n_void' => 'This sale was cancelled by the store.', 'member' => 'Member', 'coupon' => 'Coupon', 'free' => 'Free', 'cgift' => 'Free with coupon'];
     if (!$ar) {
         return $en;
     }
-    return ['tag' => 'العطور والعناية الشخصية', 'title' => 'إيصال', 'tax' => 'فاتورة ضريبية', 'to' => 'صادر إلى', 'no' => 'رقم الإيصال', 'date' => 'التاريخ', 'name' => 'الاسم', 'mobile' => 'الجوال',
+    return ['tag' => 'العطور والعناية الشخصية', 'title' => 'إيصال', 'tax' => 'فاتورة ضريبية', 'to' => 'صادر إلى', 'no' => 'رقم الإيصال', 'date' => 'التاريخ', 'name' => 'الاسم', 'mobile' => 'الجوال', 'email' => 'البريد',
         'item' => 'المنتج', 'size' => 'الحجم', 'unit' => 'سعر الوحدة', 'qty' => 'الكمية', 'amount' => 'المبلغ', 'sub' => 'المجموع الفرعي', 'disc' => 'خصم', 'vat' => 'ضريبة القيمة المضافة', 'incl' => 'مشمولة',
         'paid_total' => 'المبلغ المدفوع', 'total' => 'الإجمالي', 'saved' => 'وفّرت', 'saved2' => 'في هذا الطلب', 'store' => 'المتجر', 'served' => 'خدمك', 'trn' => 'الرقم الضريبي',
         'payment' => 'الدفع', 'cash' => 'نقداً', 'tap' => 'الدفع باللمس', 'ziina' => 'Ziina', 'card' => 'بطاقة', 'given' => 'المبلغ المستلم', 'change' => 'الباقي',
         'paid' => 'مدفوع', 'pending' => 'بانتظار الدفع', 'cancelled' => 'ملغي', 'failed' => 'لم يكتمل', 'void' => 'ملغى', 'walkin' => 'عميل',
         'thanks' => 'شكراً لشرائك من FOMAXO', 'country' => 'الإمارات العربية المتحدة', 'site' => 'fomaxo.com', 'pdf' => 'تحميل PDF', 'sets' => 'مجموعة من', 'vials' => 'عينات',
-        'scan' => 'امسح لفتح هذا الإيصال', 'n_pending' => 'بانتظار تأكيد الدفع. حدّث الصفحة بعد قليل.', 'n_bad' => 'لم يكتمل الدفع. لم يتم خصم أي مبلغ.', 'n_void' => 'ألغى المتجر هذه العملية.', 'member' => 'عضو'];
+        'scan' => 'امسح لفتح هذا الإيصال', 'n_pending' => 'بانتظار تأكيد الدفع. حدّث الصفحة بعد قليل.', 'n_bad' => 'لم يكتمل الدفع. لم يتم خصم أي مبلغ.', 'n_void' => 'ألغى المتجر هذه العملية.', 'member' => 'عضو', 'coupon' => 'كوبون', 'free' => 'مجاناً', 'cgift' => 'مجاناً مع الكوبون'];
 }
 
 function rc_money($fils)
@@ -48,6 +48,13 @@ function receipt_page($sale, $ar = false, $theme = '', $embed = false)
         if ($was) {
             $save += ($was - (int) $it['price']) * (int) $it['qty'];
         }
+        if (!empty($it['free'])) {
+            $fam = trim((string) ($it['family'] ?? ''));
+            $rows .= '<tr><td class="c-it"><b class="pn">' . $e($name) . '</b><span class="gift">' . $e($w['cgift']) . '</span>' . ($fam !== '' ? '<span class="pf">' . $e($fam) . '</span>' : '') . '</td>'
+                . '<td class="c-sz">' . $e($size) . '</td><td class="c-un">' . ($was ? '<s>' . rc_money($was) . '</s>' : '') . '</td>'
+                . '<td class="c-q">' . (int) $it['qty'] . '</td><td class="c-am"><b class="fr">' . $e($w['free']) . '</b></td></tr>';
+            continue;
+        }
         $fam = trim((string) ($it['family'] ?? ''));
         $rows .= '<tr><td class="c-it"><b class="pn">' . $e($name) . '</b>' . ($fam !== '' ? '<span class="pf">' . $e($fam) . '</span>' : '') . '</td>'
             . '<td class="c-sz">' . $e($size) . '</td><td class="c-un">' . ($was ? '<s>' . rc_money($was) . '</s>' : '') . rc_money((int) $it['price']) . '</td>'
@@ -55,8 +62,14 @@ function receipt_page($sale, $ar = false, $theme = '', $embed = false)
     }
     $rate = $sale['subtotal'] - $sale['discount'] > 0 && (int) $sale['vat'] > 0 ? cfg('vat_rate', 5) : 0;
     $sum = '<div class="tr"><span>' . $e($w['sub']) . '</span>' . rc_money((int) $sale['subtotal']) . '</div>';
-    if ((int) $sale['discount'] > 0) {
-        $sum .= '<div class="tr dc"><span>' . $e($w['disc']) . '</span><span class="m">−&nbsp;<small>AED</small>' . number_format($sale['discount'] / 100, 2) . '</span></div>';
+    $cdisc = (int) ($sale['coupon_disc'] ?? 0);
+    $mdisc = (int) $sale['discount'] - $cdisc;
+    if ($mdisc > 0) {
+        $sum .= '<div class="tr dc"><span>' . $e($w['disc']) . '</span><span class="m">−&nbsp;<small>AED</small>' . number_format($mdisc / 100, 2) . '</span></div>';
+    }
+    if (!empty($sale['coupon'])) {
+        $cl = $e($w['coupon']) . ' ' . $e($sale['coupon']) . ($sale['coupon_label'] ? ' (' . $e($sale['coupon_label']) . ')' : '');
+        $sum .= '<div class="tr dc"><span>' . $cl . '</span>' . ($cdisc > 0 ? '<span class="m">−&nbsp;<small>AED</small>' . number_format($cdisc / 100, 2) . '</span>' : '<b class="fr">' . $e($w['free']) . '</b>') . '</div>';
     }
     if ((int) $sale['vat'] > 0) $sum .= '<div class="tr vt"><span>' . $e($w['vat']) . ' ' . $e($rate) . '%' . (cfg('prices_include_vat', true) ? ' (' . $e($w['incl']) . ')' : '') . '</span>' . rc_money((int) $sale['vat']) . '</div>';
     $paid = $sale['status'] === 'paid';
@@ -109,6 +122,7 @@ function receipt_page($sale, $ar = false, $theme = '', $embed = false)
         . '<p class="tg">' . $e($w['tag']) . '</p><h1><span>' . $e($title) . '</span></h1></header>'
         . '<section class="meta"><div><h2>' . $e($w['to']) . '</h2><dl><dt>' . $e($w['name']) . '</dt><dd>' . $e($cust !== '' ? $cust : $w['walkin']) . '</dd>'
         . ($phone !== '' ? '<dt>' . $e($w['mobile']) . '</dt><dd dir="ltr">' . $e($phone) . '</dd>' : '')
+        . (!empty($sale['customer_email']) ? '<dt>' . $e($w['email']) . '</dt><dd>' . $e($sale['customer_email']) . '</dd>' : '')
         . (!empty($sale['customer_tier']) ? '<dt>' . $e($w['member']) . '</dt><dd>FOMAXO ' . $e($sale['customer_tier']) . '</dd>' : '') . '</dl></div>'
         . '<div class="rn"><h2>' . $e($w['no']) . '</h2><p class="no" dir="ltr">#' . $e($sale['receipt_no']) . '</p><p class="dt"><span>' . $e($w['date']) . '</span> <bdi>' . $e($date) . '</bdi></p></div></section>'
         . '<table class="it"><thead><tr><th class="c-it">' . $e($w['item']) . '</th><th class="c-sz">' . $e($w['size']) . '</th><th class="c-un">' . $e($w['unit']) . '</th><th class="c-q">' . $e($w['qty']) . '</th><th class="c-am">' . $e($w['amount']) . '</th></tr></thead><tbody>' . $rows . '</tbody></table>'

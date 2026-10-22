@@ -170,7 +170,7 @@ function vat_rate()
     return trim((string) cfg('store_trn', '')) === '' ? 0.0 : (float) cfg('vat_rate', 5);
 }
 
-function calc_totals($lines, $discount = null)
+function calc_totals($lines, $discount = null, $couponFils = 0)
 {
     $subtotal = 0;
     foreach ($lines as $l) {
@@ -185,7 +185,8 @@ function calc_totals($lines, $discount = null)
             $disc = min($subtotal, to_fils($discount['value']));
         }
     }
-    $afterDisc = $subtotal - $disc;
+    $couponFils = max(0, min((int) $couponFils, $subtotal - $disc));
+    $afterDisc = $subtotal - $disc - $couponFils;
     $rate = vat_rate();
     if (cfg('prices_include_vat', true)) {
         $vat = (int) round($afterDisc * $rate / (100 + $rate));
@@ -194,7 +195,7 @@ function calc_totals($lines, $discount = null)
         $vat = (int) round($afterDisc * $rate / 100);
         $total = $afterDisc + $vat;
     }
-    return ['subtotal' => $subtotal, 'discount' => $disc, 'vat' => $vat, 'total' => $total];
+    return ['subtotal' => $subtotal, 'discount' => $disc, 'coupon' => $couponFils, 'vat' => $vat, 'total' => $total];
 }
 
 function tier_for($spendFils)

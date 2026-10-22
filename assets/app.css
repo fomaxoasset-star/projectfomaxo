@@ -486,3 +486,13 @@ details.ref { margin: 4px 0 6px; } details.ref summary { color: var(--muted); fo
   .pt-price { padding: 4px 10px 0; font-size: 17px; }
   .done-amt { font-size: 34px; }
 }
+
+.coupon-in { text-transform: uppercase; letter-spacing: .12em; font-weight: 800; font-size: 20px !important; text-align: center; }
+.coupon-row span:first-child { color: var(--gold-2); font-weight: 700; }
+.cline.free { background: var(--gold-dim); border-radius: 12px; padding: 10px; margin-top: 8px; border-bottom: 0; }
+.free-tag { color: var(--gold-2); letter-spacing: .12em; font-size: 15px; }
+
+.foot-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fbtn { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 12px; border-radius: 12px; border: 1px dashed var(--line-2); background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.fbtn span { font-size: 20px; flex: none; }
+.fbtn.on { border-style: solid; border-color: rgba(201,162,75,.6); color: var(--gold-2); background: var(--gold-dim); }

@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 7;
 
 function schema_version()
 {
@@ -142,6 +142,44 @@ function migrate()
         }
         if (schema_version() < 3) {
             migrate_v3();
+        }
+        if (schema_version() < 7) {
+            try_exec("ALTER TABLE customers ADD COLUMN email VARCHAR(120) NOT NULL DEFAULT ''");
+        }
+        if (schema_version() < 6) {
+            try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');
+            try_exec("ALTER TABLE products ADD COLUMN image VARCHAR(160) NOT NULL DEFAULT ''");
+            try_exec("ALTER TABLE sales ADD COLUMN coupon VARCHAR(30) NOT NULL DEFAULT ''");
+            try_exec("ALTER TABLE sales ADD COLUMN coupon_label VARCHAR(80) NOT NULL DEFAULT ''");
+            try_exec('ALTER TABLE sales ADD COLUMN coupon_disc INT NOT NULL DEFAULT 0');
+            try_exec('ALTER TABLE sale_items ADD COLUMN free TINYINT NOT NULL DEFAULT 0');
+            $mysql6 = is_mysql();
+            $id6 = $mysql6 ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+            $end6 = $mysql6 ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : '';
+            $dt6 = $mysql6 ? 'DATETIME' : 'TEXT';
+            db()->exec("CREATE TABLE IF NOT EXISTS coupons (
+                id $id6,
+                code VARCHAR(30) NOT NULL UNIQUE,
+                kind VARCHAR(5) NOT NULL DEFAULT 'pct',
+                amount INT NOT NULL DEFAULT 0,
+                min_order INT NOT NULL DEFAULT 0,
+                free_product_id INT NULL,
+                ends $dt6 NULL,
+                max_uses INT NULL,
+                store_id INT NULL,
+                active TINYINT NOT NULL DEFAULT 1,
+                note VARCHAR(120) NOT NULL DEFAULT '',
+                created_at $dt6 NOT NULL
+            )$end6");
+            if (schema_version() < 5) {
+                q("DELETE FROM meta WHERE k = 'web_sync_at'");
+            }
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '6')");
+        }
+        if (schema_version() < 7) {
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '7')");
         }
         if (schema_version() < 5) {
             try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');

@@ -5,6 +5,7 @@ require __DIR__ . '/lib/ziina.php';
 require __DIR__ . '/lib/sales.php';
 require __DIR__ . '/lib/schema.php';
 require __DIR__ . '/lib/webimport.php';
+require __DIR__ . '/lib/coupons.php';
 
 set_exception_handler(function ($e) {
     if ($e instanceof ApiError) {
@@ -344,15 +345,20 @@ switch ($action) {
     case 'customer':
         require_user();
         $phone = normalize_phone($_GET['phone'] ?? '');
-        $c = $phone ? q1('SELECT * FROM customers WHERE phone = ?', [$phone]) : null;
+        $email = clean_email($_GET['email'] ?? '');
+        $c = strlen(preg_replace('/\D/', '', $phone)) >= 7 ? q1('SELECT * FROM customers WHERE phone = ?', [$phone]) : null;
+        if (!$c && $email !== '') {
+            $c = q1('SELECT * FROM customers WHERE email = ? ORDER BY id LIMIT 1', [$email]);
+        }
         if (!$c) {
             json_out(['customer' => null, 'phone' => $phone]);
         }
         $spend = customer_year_spend($c['id']);
         json_out(['customer' => [
             'id' => (int) $c['id'],
-            'phone' => $c['phone'],
+            'phone' => strpos($c['phone'], 'e:') === 0 ? '' : $c['phone'],
             'name' => $c['name'],
+            'email' => (string) ($c['email'] ?? ''),
             'year_spend' => $spend,
             'tier' => tier_for($spend),
             'next_tier' => next_tier($spend),
@@ -370,6 +376,74 @@ switch ($action) {
         }
         $id = create_sale($u, $b, $m);
         json_out(['sale' => load_sale('id', $id)]);
+
+    case 'coupon_check':
+        // Is this code valid at fomaxo.com right now? (The sale checks it again when paid.)
+        need_post();
+        require_user();
+        $u = current_user();
+        $c = coupon_lookup($b['code'] ?? '', normalize_phone($b['phone'] ?? ''), resolve_store($u, $b['store_id'] ?? 0));
+        if ($c['kind'] === 'free' && !$c['free']['product_id']) {
+            fail('This coupon gives a free product that is not in the store system yet.');
+        }
+        json_out(['coupon' => $c]);
+
+    case 'coupons':
+        require_manager();
+        $rows = q('SELECT c.*, p.name AS free_name, p.variant AS free_variant, st.name AS store_name FROM coupons c
+                   LEFT JOIN products p ON p.id = c.free_product_id LEFT JOIN stores st ON st.id = c.store_id ORDER BY c.active DESC, c.created_at DESC')->fetchAll();
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = ['id' => (int) $r['id'], 'code' => $r['code'], 'kind' => $r['kind'], 'amount' => (int) $r['amount'], 'min_order' => (int) $r['min_order'],
+                'free_product_id' => $r['free_product_id'] === null ? null : (int) $r['free_product_id'], 'ends' => $r['ends'] ? substr($r['ends'], 0, 10) : '',
+                'max_uses' => $r['max_uses'] === null ? null : (int) $r['max_uses'], 'store_id' => $r['store_id'] === null ? null : (int) $r['store_id'],
+                'store_name' => $r['store_name'], 'active' => (int) $r['active'], 'note' => $r['note'], 'label' => store_coupon_label($r), 'uses' => coupon_uses($r['code'])];
+        }
+        json_out(['coupons' => $out, 'web' => (bool) meta_get('set_web_coupons')]);
+
+    case 'coupon_save':
+        need_post();
+        $u = require_manager();
+        $id = (int) ($b['id'] ?? 0);
+        $code = coupon_norm($b['code'] ?? '');
+        if (strlen($code) < 3) {
+            fail('Code needs at least 3 letters or numbers (no spaces).');
+        }
+        if (q1('SELECT id FROM coupons WHERE code = ? AND id <> ?', [$code, $id])) {
+            fail('That code already exists.');
+        }
+        $kind = in_array($b['kind'] ?? '', ['pct', 'aed', 'free'], true) ? $b['kind'] : 'pct';
+        $amount = $kind === 'pct' ? (int) round(((float) ($b['amount'] ?? 0)) * 100) : to_fils($b['amount'] ?? 0);
+        if ($kind === 'pct' && ($amount <= 0 || $amount > 10000)) {
+            fail('Percent must be between 1 and 100.');
+        }
+        if ($kind === 'aed' && $amount <= 0) {
+            fail('Enter the AED amount off.');
+        }
+        $freeId = $kind === 'free' ? (int) ($b['free_product_id'] ?? 0) : null;
+        if ($kind === 'free' && !q1('SELECT id FROM products WHERE id = ?', [$freeId])) {
+            fail('Choose the free product.');
+        }
+        $ends = trim((string) ($b['ends'] ?? ''));
+        if ($ends !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ends)) {
+            fail('Wrong end date.');
+        }
+        $data = [
+            'code' => $code, 'kind' => $kind, 'amount' => $kind === 'free' ? 0 : $amount, 'min_order' => max(0, to_fils($b['min_order'] ?? 0)),
+            'free_product_id' => $freeId, 'ends' => $ends !== '' ? $ends . ' 23:59:59' : null,
+            'max_uses' => isset($b['max_uses']) && $b['max_uses'] !== '' ? max(1, (int) $b['max_uses']) : null,
+            'store_id' => !empty($b['store_id']) ? (int) $b['store_id'] : null, 'active' => empty($b['active']) ? 0 : 1,
+            'note' => mb_substr(trim((string) ($b['note'] ?? '')), 0, 120),
+        ];
+        if ($id) {
+            $sets = implode(', ', array_map(function ($k) { return "$k = ?"; }, array_keys($data)));
+            q("UPDATE coupons SET $sets WHERE id = ?", array_merge(array_values($data), [$id]));
+        } else {
+            $data['created_at'] = now();
+            $id = insert('coupons', $data);
+        }
+        log_activity($u, 'coupon', ($b['id'] ?? 0 ? 'Updated' : 'Created') . ' coupon ' . $code . ' (' . store_coupon_label($data) . ')' . ($data['active'] ? '' : ', switched off'));
+        json_out(['ok' => true, 'id' => $id]);
 
     case 'ziina_start':
         need_post();
@@ -629,6 +703,7 @@ switch ($action) {
             'ziina_key_saved' => $tok !== '',
             'ziina_key_end' => $tok !== '' ? substr($tok, -4) : '',
             'store_trn' => (string) cfg('store_trn', ''),
+            'web_coupons' => (bool) meta_get('set_web_coupons'),
         ]);
 
     case 'settings_save':
@@ -663,6 +738,10 @@ switch ($action) {
             }
             meta_set('set_store_trn', $trn);
             $changes[] = $trn === '' ? 'TRN cleared (no VAT)' : 'TRN set (VAT on)';
+        }
+        if (array_key_exists('web_coupons', $b)) {
+            meta_set('set_web_coupons', empty($b['web_coupons']) ? '' : '1');
+            $changes[] = empty($b['web_coupons']) ? 'website coupons off' : 'website coupons on';
         }
         app_settings(true);
         log_activity($u, 'settings', 'Settings: ' . implode(', ', $changes ?: ['no change']));

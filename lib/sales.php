@@ -49,21 +49,38 @@ function normalize_phone($p)
     return $p;
 }
 
-function find_or_create_customer($phone, $name)
+function clean_email($e)
+{
+    $e = strtolower(trim((string) $e));
+    return filter_var($e, FILTER_VALIDATE_EMAIL) ? mb_substr($e, 0, 120) : '';
+}
+
+/** A customer is found by mobile, or by email when there is no mobile. Name and email are updated when given. */
+function find_or_create_customer($phone, $name, $email = '')
 {
     $phone = normalize_phone($phone);
-    if (strlen(preg_replace('/\D/', '', $phone)) < 7) {
-        return null;
-    }
+    $email = clean_email($email);
     $name = trim(mb_substr((string) $name, 0, 100));
+    if (strlen(preg_replace('/\D/', '', $phone)) < 7) {
+        if ($email === '') {
+            return null;
+        }
+        $phone = 'e:' . $email; // email-only customer
+    }
     $c = q1('SELECT * FROM customers WHERE phone = ?', [$phone]);
+    if (!$c && $email !== '' && strpos($phone, 'e:') === 0) {
+        $c = q1('SELECT * FROM customers WHERE email = ? ORDER BY id LIMIT 1', [$email]);
+    }
     if ($c) {
         if ($name !== '' && $name !== $c['name']) {
             q('UPDATE customers SET name = ? WHERE id = ?', [$name, $c['id']]);
         }
+        if ($email !== '' && $email !== ($c['email'] ?? '')) {
+            q('UPDATE customers SET email = ? WHERE id = ?', [$email, $c['id']]);
+        }
         return (int) $c['id'];
     }
-    return insert('customers', ['phone' => $phone, 'name' => $name, 'created_at' => now()]);
+    return insert('customers', ['phone' => $phone, 'name' => $name, 'email' => $email, 'created_at' => now()]);
 }
 
 function valid_uuid($u)
@@ -134,8 +151,43 @@ function create_sale($user, $b, $method)
         $lines[] = ['product_id' => $pid, 'name' => $p['name'], 'variant' => $p['variant'], 'price' => $price, 'qty' => $qty, 'was' => $was > $price ? $was : null];
     }
 
+    // Coupon code (same codes as fomaxo.com). Checked again here; offline sales keep what the till showed.
+    $coupon = null;
+    $code = trim((string) ($b['coupon'] ?? ''));
+    if ($code !== '') {
+        require_once __DIR__ . '/coupons.php';
+        if ($offline && is_array($b['coupon_info'] ?? null)) {
+            $ci = $b['coupon_info'];
+            $coupon = ['code' => mb_substr(strtoupper($code), 0, 30), 'kind' => in_array($ci['kind'] ?? '', ['pct', 'aed', 'free'], true) ? $ci['kind'] : 'aed',
+                'amount' => (float) ($ci['amount'] ?? 0), 'min' => 0, 'label' => mb_substr((string) ($ci['label'] ?? ''), 0, 80), 'free' => null];
+        } else {
+            $cphone = is_array($b['customer'] ?? null) ? normalize_phone($b['customer']['phone'] ?? '') : '';
+            $coupon = coupon_lookup($code, $cphone, $storeId);
+        }
+        if ($coupon['kind'] === 'free') {
+            $fid = (int) ($coupon['free']['product_id'] ?? 0);
+            if (!$fid && $offline) {
+                $fid = (int) ($b['coupon_info']['free_product_id'] ?? 0);
+            }
+            $fp = $fid ? q1('SELECT * FROM products WHERE id = ?', [$fid]) : null;
+            if (!$fp) {
+                fail('The free gift for coupon ' . $coupon['code'] . ' is not in this store system.');
+            }
+            if (!$offline) {
+                $need = 1 + ($qtyById[$fid] ?? 0);
+                if (store_stock($fid, $storeId) < $need) {
+                    fail('The free gift (' . trim($fp['name'] . ' ' . $fp['variant']) . ') is out of stock here.');
+                }
+            }
+            $worth = (int) ($coupon['free']['worth'] ?? 0) ?: (int) $fp['price'];
+            $lines[] = ['product_id' => $fid, 'name' => $fp['name'], 'variant' => $fp['variant'], 'price' => 0, 'qty' => 1, 'was' => $worth, 'free' => 1];
+        }
+    }
+
     $discount = $b['discount'] ?? null;
-    $t = calc_totals($lines, $discount);
+    $t0 = calc_totals($lines, $discount);
+    $couponFils = $coupon ? coupon_discount($coupon, $t0['subtotal'] - $t0['discount']) : 0;
+    $t = calc_totals($lines, $discount, $couponFils);
     if ($user['role'] !== 'manager' && $t['discount'] > 0 && $t['subtotal'] > 0) {
         $pct = $t['discount'] * 100 / $t['subtotal'];
         if ($pct > (float) cfg('staff_max_discount', 10) + 0.001) {
@@ -176,8 +228,8 @@ function create_sale($user, $b, $method)
     try {
         $customerId = null;
         $cust = $b['customer'] ?? null;
-        if (is_array($cust) && !empty($cust['phone'])) {
-            $customerId = find_or_create_customer($cust['phone'], $cust['name'] ?? '');
+        if (is_array($cust) && (!empty($cust['phone']) || !empty($cust['email']))) {
+            $customerId = find_or_create_customer($cust['phone'] ?? '', $cust['name'] ?? '', $cust['email'] ?? '');
         }
         $saleId = insert('sales', [
             'uuid' => $uuid,
@@ -187,7 +239,10 @@ function create_sale($user, $b, $method)
             'store_id' => $storeId,
             'customer_id' => $customerId,
             'subtotal' => $t['subtotal'],
-            'discount' => $t['discount'],
+            'discount' => $t['discount'] + $t['coupon'],
+            'coupon' => $coupon ? $coupon['code'] : '',
+            'coupon_label' => $coupon ? $coupon['label'] : '',
+            'coupon_disc' => $t['coupon'],
             'vat' => $t['vat'],
             'total' => $t['total'],
             'method' => $method,
@@ -209,6 +264,7 @@ function create_sale($user, $b, $method)
                 'qty' => $l['qty'],
                 'line_total' => $l['price'] * $l['qty'],
                 'was' => $l['was'],
+                'free' => empty($l['free']) ? 0 : 1,
             ]);
         }
         if ($method !== 'ziina') {
@@ -299,7 +355,7 @@ function refresh_ziina_sale($sale, $userId)
 function load_sale($where, $param)
 {
     $s = q1(
-        "SELECT s.*, u.name AS staff_name, c.phone AS customer_phone, c.name AS customer_name,
+        "SELECT s.*, u.name AS staff_name, c.phone AS customer_phone, c.name AS customer_name, c.email AS customer_email,
                 st.name AS store_name, st.address AS store_address, st.phone AS store_phone
          FROM sales s JOIN users u ON u.id = s.user_id LEFT JOIN customers c ON c.id = s.customer_id
          LEFT JOIN stores st ON st.id = s.store_id
@@ -309,8 +365,9 @@ function load_sale($where, $param)
     if (!$s) {
         return null;
     }
-    $s['items'] = q('SELECT i.product_id, i.name, i.variant, i.price, i.qty, i.line_total, i.was, p.family
+    $s['items'] = q('SELECT i.product_id, i.name, i.variant, i.price, i.qty, i.line_total, i.was, i.free, p.family
                      FROM sale_items i LEFT JOIN products p ON p.id = i.product_id WHERE i.sale_id = ? ORDER BY i.id', [$s['id']])->fetchAll();
+    $s['coupon_disc'] = (int) ($s['coupon_disc'] ?? 0);
     foreach (['id', 'user_id', 'store_id', 'customer_id', 'subtotal', 'discount', 'vat', 'total', 'cash_given', 'change_due', 'offline'] as $k) {
         if ($s[$k] !== null) {
             $s[$k] = (int) $s[$k];
@@ -321,9 +378,13 @@ function load_sale($where, $param)
             $it[$k] = (int) $it[$k];
         }
         $it['was'] = $it['was'] === null ? null : (int) $it['was'];
+        $it['free'] = (int) ($it['free'] ?? 0);
         $it['family'] = (string) ($it['family'] ?? '');
     }
     unset($s['ziina_id']);
+    if (strpos((string) $s['customer_phone'], 'e:') === 0) {
+        $s['customer_phone'] = '';
+    }
     $s['receipt_url'] = cfg('base_url') . '/receipt.php?t=' . $s['receipt_token'];
     if ($s['customer_id']) {
         $spend = customer_year_spend($s['customer_id']);

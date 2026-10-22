@@ -84,7 +84,7 @@
     queue: LS.get('fx_queue', []),
     online: navigator.onLine,
     view: 'sell',
-    cart: [], discount: null, customer: null,
+    cart: [], discount: null, customer: null, coupon: null,
     category: 'All', search: '',
     stockFilter: 'all', stockSearch: '',
     salesDate: ymd(),
@@ -204,7 +204,20 @@
   }
 
   // ---------------------------------------------------------------- money maths (same as server)
-  function calcTotals(lines, discount) {
+  function couponFils(sub) {
+    var c = S.coupon; if (!c || c.kind === 'free') return 0;
+    if (c.kind === 'pct') return Math.round(sub * Math.min(100, Math.max(0, c.amount)) / 100);
+    return Math.min(sub, Math.round(c.amount * 100));
+  }
+  function couponMinOk(sub) { return !S.coupon || !S.coupon.min || sub >= Math.round(S.coupon.min * 100); }
+  function cartTotals() {
+    var lines = cartLines(), t0 = calcTotals(lines, S.discount);
+    var cf = couponMinOk(t0.subtotal - t0.discount) ? couponFils(t0.subtotal - t0.discount) : 0;
+    var t = calcTotals(lines, S.discount, cf);
+    t.couponOk = couponMinOk(t0.subtotal - t0.discount);
+    return t;
+  }
+  function calcTotals(lines, discount, coupon) {
     var st = S.settings || { vat_rate: 5, prices_include_vat: true };
     var subtotal = 0;
     lines.forEach(function (l) { subtotal += l.price * l.qty; });
@@ -213,10 +226,11 @@
       if (discount.type === 'percent') disc = Math.round(subtotal * Math.min(100, Math.max(0, Number(discount.value))) / 100);
       else disc = Math.min(subtotal, toFils(discount.value));
     }
-    var after = subtotal - disc, rate = Number(st.vat_rate), vat, total;
+    coupon = Math.max(0, Math.min(coupon || 0, subtotal - disc));
+    var after = subtotal - disc - coupon, rate = Number(st.vat_rate), vat, total;
     if (st.prices_include_vat) { vat = Math.round(after * rate / (100 + rate)); total = after; }
     else { vat = Math.round(after * rate / 100); total = after + vat; }
-    return { subtotal: subtotal, discount: disc, vat: vat, total: total };
+    return { subtotal: subtotal, discount: disc, coupon: coupon, vat: vat, total: total };
   }
   function cartLines() {
     return S.cart.map(function (c) {
@@ -502,11 +516,12 @@
   }
   function renderCart() {
     var el = $('#cart'); if (!el) return;
-    var lines = cartLines(), t = calcTotals(lines, S.discount), count = 0;
+    var lines = cartLines(), t = cartTotals(), count = 0;
     lines.forEach(function (l) { count += l.qty; });
     var empty = !lines.length, st = S.settings, c = S.customer, d = S.discount;
     var extras = [];
     if (c) extras.push('Customer: ' + esc(c.name || c.phone) + (c.tier ? ' · ' + esc(c.tier) : ''));
+    if (S.coupon) extras.push('Coupon: ' + esc(S.coupon.code));
     if (d) extras.push('Discount: ' + (d.type === 'percent' ? d.value + '%' : aed(toFils(d.value))));
     el.innerHTML =
       '<div class="cart-head"><h2>Customer’s bag</h2><div class="row">' +
@@ -519,10 +534,13 @@
             '<div class="cl-mid"><b>' + esc(shortName(l.name)) + '</b><span>' + esc(l.variant) + ' · ' + money(l.price) + '</span></div>' +
             '<div class="qty big"><button data-act="qty" data-id="' + l.product_id + '" data-d="-1" aria-label="One less">−</button><span>' + l.qty + '</span>' +
             '<button data-act="qty" data-id="' + l.product_id + '" data-d="1" aria-label="One more">+</button></div></div>';
-        }).join('')) + '</div>' +
+        }).join('') + freeLineHtml()) + '</div>' +
       '<div class="cart-foot">' +
-      (empty ? '' : '<button class="more-link" data-act="more">' + (extras.length ? extras.join(' · ') + ' — change' : '+ Add customer or discount') + '</button>') +
+      (empty ? '' : '<div class="foot-btns"><button class="fbtn' + (c ? ' on' : '') + '" data-act="customer"><span>👤</span>' + (c ? esc(c.name || c.phone || c.email) : 'Customer') + '</button>' +
+        '<button class="fbtn' + (S.coupon || d ? ' on' : '') + '" data-act="more2"><span>🎟</span>' + (S.coupon ? esc(S.coupon.code) : d ? 'Discount' : 'Coupon / discount') + '</button></div>') +
       (t.discount ? '<div class="t-row"><span>Discount</span><span class="num">−' + money(t.discount) + '</span></div>' : '') +
+      (S.coupon && !empty ? '<div class="t-row coupon-row"><span>🎟 ' + esc(S.coupon.code) + (S.coupon.kind === 'free' ? ' — free gift added' : '') + '</span><span class="num">' +
+        (!t.couponOk ? 'needs AED ' + money(Math.round(S.coupon.min * 100)) : t.coupon ? '−' + money(t.coupon) : 'FREE') + '</span></div>' : '') +
       (st.vat_rate > 0 && !empty ? '<div class="t-row"><span>VAT ' + st.vat_rate + '%' + (st.prices_include_vat ? ' (included)' : '') + '</span><span class="num">' + money(t.vat) + '</span></div>' : '') +
       '<button class="pay-big" data-act="pay-open"' + (empty ? ' disabled' : '') + '><span>PAY</span><b class="num">' + aed(t.total) + '</b></button>' +
       '</div>';
@@ -532,8 +550,23 @@
       fab.classList.toggle('hidden', S.cartOpen || !count);
     }
   }
+  function freeLineHtml() {
+    var c = S.coupon; if (!c || c.kind !== 'free' || !c.free) return '';
+    var p = productById(c.free.product_id) || { name: c.free.name, variant: '' };
+    return '<div class="cline free">' + (p.image ? '<img src="' + esc(p.image) + '" alt="">' : '<span class="cl-ph">🎁</span>') +
+      '<div class="cl-mid"><b>' + esc(shortName(p.name)) + '</b><span>' + esc(p.variant) + ' · Free with coupon</span></div><b class="free-tag">FREE</b></div>';
+  }
+  function couponModal() {
+    var c = S.coupon;
+    openModal('Coupon code', '<div class="err m-err hidden"></div>' +
+      (c ? '<div class="note" style="margin-bottom:12px">🎟 <b>' + esc(c.code) + '</b> — ' + esc(c.label || '') + (c.min ? ' (min AED ' + money(Math.round(c.min * 100)) + ')' : '') + '</div>' : '') +
+      '<label class="field"><span>Type the code from the customer</span><input class="input coupon-in" id="cp-code" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="e.g. WELCOME20" value="' + esc(c ? c.code : '') + '" autofocus></label>' +
+      (S.online ? '' : '<p class="small" style="color:var(--low)">Coupons need internet to check.</p>') +
+      '<p class="small muted">Expired, used-up or wrong codes are refused automatically.</p>' +
+      '<div class="modal-foot">' + (c ? '<button class="btn danger" data-act="cp-remove">Remove</button>' : '') + '<button class="btn gold big" data-act="cp-apply"' + (S.online ? '' : ' disabled') + '>Apply</button></div>');
+  }
   function payChooser() {
-    var t = calcTotals(cartLines(), S.discount), st = S.settings;
+    var t = cartTotals(), st = S.settings;
     var qrOk = st.ziina && S.online;
     openModal('How is the customer paying?', '<div class="amount-big"><div class="lbl">Total</div><div class="val num">' + aed(t.total) + '</div></div>' +
       '<div class="pay-choices">' +
@@ -542,9 +575,16 @@
       '<button class="pchoice" data-act="pay" data-m="ziina"' + (qrOk ? '' : ' disabled') + '><span class="pi">📱</span><b>QR code</b><small>' + (!st.ziina ? 'Not set up yet' : S.online ? 'Customer scans with their phone' : 'Needs internet') + '</small></button>' +
       '</div><button class="link-btn other-card" data-act="pay" data-m="card">Other card machine</button>');
   }
+  function couponDiscountModal() {
+    openModal('Coupon or discount', '<div class="more-choices">' +
+      '<button class="pchoice" data-act="coupon"><span class="pi">🎟</span><b>Coupon code</b><small>' + (S.coupon ? esc(S.coupon.code) + ' — ' + esc(S.coupon.label || '') : 'Customer has a code') + '</small></button>' +
+      '<button class="pchoice" data-act="discount"><span class="pi">🏷</span><b>Discount</b><small>' + (S.discount ? (S.discount.type === 'percent' ? S.discount.value + '% off' : aed(toFils(S.discount.value)) + ' off') : 'None') + '</small></button>' +
+      '</div>');
+  }
   function moreModal() {
-    openModal('Customer & discount', '<div class="more-choices">' +
+    openModal('Customer, coupon & discount', '<div class="more-choices">' +
       '<button class="pchoice" data-act="customer"><span class="pi">👤</span><b>Customer</b><small>' + (S.customer ? esc(S.customer.name || S.customer.phone) : 'Add phone number (optional)') + '</small></button>' +
+      '<button class="pchoice" data-act="coupon"><span class="pi">🎟</span><b>Coupon code</b><small>' + (S.coupon ? esc(S.coupon.code) + ' — ' + esc(S.coupon.label || '') : 'Customer has a code') + '</small></button>' +
       '<button class="pchoice" data-act="discount"><span class="pi">🏷</span><b>Discount</b><small>' + (S.discount ? (S.discount.type === 'percent' ? S.discount.value + '% off' : aed(toFils(S.discount.value)) + ' off') : 'None') + '</small></button>' +
       '</div>');
   }
@@ -553,13 +593,14 @@
   function customerModal() {
     var c = S.customer || {};
     openModal('Customer', '<div class="err m-err hidden"></div>' +
-      '<label class="field"><span>Mobile number</span><div class="row"><input class="input grow" id="c-phone" type="tel" inputmode="tel" placeholder="05x xxx xxxx" value="' + esc(c.phone || '') + '" autofocus>' +
+      '<label class="field"><span>Name</span><input class="input" id="c-name" value="' + esc(c.name || '') + '" placeholder="Customer name" autocomplete="off" autofocus></label>' +
+      '<label class="field"><span>Mobile</span><div class="row"><input class="input grow" id="c-phone" type="tel" inputmode="tel" placeholder="05x xxx xxxx" value="' + esc(c.phone || '') + '" autocomplete="off">' +
       '<button class="btn" data-act="c-find">Find</button></div></label>' +
+      '<label class="field"><span>Email (optional)</span><input class="input" id="c-email" type="email" inputmode="email" autocapitalize="none" placeholder="name@example.com" value="' + esc(c.email || '') + '" autocomplete="off"></label>' +
       '<div id="c-info"></div>' +
-      '<label class="field"><span>Name</span><input class="input" id="c-name" value="' + esc(c.name || '') + '" placeholder="Customer name"></label>' +
-      '<p class="small muted">Saving the number tracks yearly spend for FOMAXO Elite tiers and lets you send the receipt on WhatsApp.</p>' +
+      '<p class="small muted">Mobile or email is enough. Their name prints on the receipt, and you can send the receipt to their WhatsApp or email.</p>' +
       '<div class="modal-foot">' + (S.customer ? '<button class="btn danger" data-act="c-remove">Remove</button>' : '') +
-      '<button class="btn gold" data-act="c-save">Save</button></div>');
+      '<button class="btn gold big" data-act="c-save">Save customer</button></div>');
     if (c.phone) findCustomer();
   }
   function tierInfo(cu) {
@@ -571,13 +612,16 @@
     return parts.join('');
   }
   function findCustomer() {
-    var phone = $('#c-phone').value.trim(); if (!phone) return;
+    var phone = $('#c-phone').value.trim(), email = ($('#c-email') ? $('#c-email').value.trim() : '');
+    if (!phone && !email) return;
     if (!S.online) { $('#c-info').innerHTML = '<p class="small muted">Offline — the number will still be saved with the sale.</p>'; return; }
-    api('customer', { query: '&phone=' + encodeURIComponent(phone) }).then(function (d) {
+    api('customer', { query: '&phone=' + encodeURIComponent(phone) + '&email=' + encodeURIComponent(email) }).then(function (d) {
       if (!$('#c-info')) return;
       if (d.customer) {
         $('#c-info').innerHTML = tierInfo(d.customer);
         if (!$('#c-name').value) $('#c-name').value = d.customer.name;
+        if ($('#c-email') && !$('#c-email').value) $('#c-email').value = d.customer.email || '';
+        if (!$('#c-phone').value) $('#c-phone').value = d.customer.phone || '';
         S._found = d.customer;
       } else { $('#c-info').innerHTML = '<p class="small muted">New customer — they will be added with this sale.</p>'; S._found = null; }
     }).catch(function (e) { modalErr(e.message); });
@@ -600,14 +644,16 @@
     var p = {
       uuid: id, receipt_token: randHex(16), method: method, store_id: curStoreId(),
       items: cartLines().map(function (l) { return { product_id: l.product_id, qty: l.qty, price: l.price }; }),
-      discount: S.discount, customer: S.customer ? { phone: S.customer.phone, name: S.customer.name } : null,
+      discount: S.discount, customer: S.customer ? { phone: S.customer.phone, name: S.customer.name, email: S.customer.email || '' } : null,
+      coupon: S.coupon ? S.coupon.code : '',
+      coupon_info: S.coupon ? { kind: S.coupon.kind, amount: S.coupon.amount, label: S.coupon.label, free_product_id: S.coupon.free ? S.coupon.free.product_id : 0 } : null,
       created_at: stamp()
     };
     for (var k in extra) p[k] = extra[k];
     return p;
   }
   function payModal(method) {
-    var t = calcTotals(cartLines(), S.discount);
+    var t = cartTotals();
     var amount = '<div class="amount-big"><div class="lbl">Amount to collect</div><div class="val num">' + aed(t.total) + '</div></div>';
     if (method === 'cash') {
       var notes = [50, 100, 200, 500, 1000].filter(function (v) { return v * 100 > t.total; }).slice(0, 4);
@@ -636,7 +682,7 @@
     }
   }
   function updateChange() {
-    var t = calcTotals(cartLines(), S.discount);
+    var t = cartTotals();
     var v = $('#cash-in').value, given = v === '' ? t.total : toFils(v), ch = given - t.total;
     var box = $('#change-box');
     box.classList.toggle('short', ch < 0);
@@ -644,7 +690,7 @@
   }
   function confirmPay(method, btn) {
     var extra = {};
-    var t = calcTotals(cartLines(), S.discount);
+    var t = cartTotals();
     if (method === 'cash') {
       var v = $('#cash-in').value;
       if (v !== '' && toFils(v) < t.total) { modalErr('Cash received is less than the total.'); return; }
@@ -662,15 +708,16 @@
   }
   function queueSale(payload) {
     payload.offline = 1;
-    var lines = cartLines(), t = calcTotals(lines, S.discount);
+    var lines = cartLines(), t = cartTotals();
     var local = {
       queued: true, uuid: payload.uuid, receipt_no: 'FMX-' + payload.uuid.replace(/-/g, '').slice(0, 8).toUpperCase(),
       receipt_token: payload.receipt_token, created_at: payload.created_at, staff_name: S.user.name,
       store_name: curStore().name, store_address: curStore().address, store_phone: curStore().phone,
-      customer_name: S.customer ? S.customer.name : '', customer_phone: S.customer ? S.customer.phone : '',
+      customer_name: S.customer ? S.customer.name : '', customer_phone: S.customer ? S.customer.phone : '', customer_email: S.customer ? S.customer.email || '' : '',
       customer_tier: S.customer ? S.customer.tier : null,
       items: lines.map(function (l) { return { name: l.name, variant: l.variant, price: l.price, qty: l.qty, line_total: l.price * l.qty }; }),
-      subtotal: t.subtotal, discount: t.discount, vat: t.vat, total: t.total, method: payload.method, status: 'paid',
+      subtotal: t.subtotal, discount: t.discount + (t.coupon || 0), coupon: S.coupon ? S.coupon.code : '', coupon_label: S.coupon ? S.coupon.label : '', coupon_disc: t.coupon || 0,
+      vat: t.vat, total: t.total, method: payload.method, status: 'paid',
       cash_given: payload.cash_given != null ? toFils(payload.cash_given) : null,
       change_due: payload.cash_given != null ? Math.max(0, toFils(payload.cash_given) - t.total) : null,
       receipt_url: (S.settings.base_url || location.origin) + '/receipt.php?t=' + payload.receipt_token
@@ -683,7 +730,7 @@
     afterSale(local);
   }
   function afterSale(sale) {
-    S.cart = []; S.discount = null; S.customer = null;
+    S.cart = []; S.discount = null; S.customer = null; S.coupon = null;
     setCartOpen(false);
     if (S.view === 'sell') { renderTiles(); renderCart(); }
     if (!sale.queued) refreshProducts();
@@ -693,7 +740,7 @@
   var ziinaPoll = null;
   function stopPoll() { if (ziinaPoll) { clearInterval(ziinaPoll); ziinaPoll = null; } }
   function ziinaFlow() {
-    var t = calcTotals(cartLines(), S.discount);
+    var t = cartTotals();
     if (t.total < 200) { toast('Ziina needs at least AED 2.00. Take cash for this sale.', true); return; }
     var payload = buildPayload('ziina', {});
     var cust = S.customer;
@@ -750,7 +797,8 @@
           '<div class="s">' + it.qty + ' x ' + money(it.price) + '</div></div><div class="num">' + money(it.line_total) + '</div></div>';
       }).join('') + '<hr>' +
       '<div class="p-tot"><span>Subtotal</span><span class="num">' + money(s.subtotal) + '</span></div>' +
-      (s.discount ? '<div class="p-tot"><span>Discount</span><span class="num">-' + money(s.discount) + '</span></div>' : '') +
+      (s.discount - (s.coupon_disc || 0) > 0 ? '<div class="p-tot"><span>Discount</span><span class="num">-' + money(s.discount - (s.coupon_disc || 0)) + '</span></div>' : '') +
+      (s.coupon ? '<div class="p-tot"><span>Coupon ' + esc(s.coupon) + '</span><span class="num">' + (s.coupon_disc ? '-' + money(s.coupon_disc) : 'FREE') + '</span></div>' : '') +
       (s.vat > 0 ? '<div class="p-tot"><span>VAT ' + st.vat_rate + '%' + (st.prices_include_vat ? ' (incl.)' : '') + '</span><span class="num">' + money(s.vat) + '</span></div>' : '') +
       '<div class="p-grand"><span>TOTAL ' + esc(st.currency) + '</span><span class="num">' + money(s.total) + '</span></div>' +
       '<div class="p-tot"><span>Paid by</span><span>' + esc(METHOD[s.method] || s.method) + (s.payment_ref ? ' (' + esc(s.payment_ref) + ')' : '') + '</span></div>' +
@@ -1072,7 +1120,7 @@
   var ACT = {
     login: ['Logged in', 'plain'], logout: ['Logged out', 'plain'], sale: ['Sale', 'ok'], ziina: ['Ziina QR', 'plain'],
     cancel: ['Cancelled payment', 'low'], void: ['Voided sale', 'out'], stock: ['Stock change', 'low'], transfer: ['Moved stock', 'low'],
-    product: ['Product edit', 'plain'], settings: ['Settings', 'low'], staff: ['Staff change', 'plain'], store: ['Store change', 'plain'], password: ['Password', 'plain']
+    product: ['Product edit', 'plain'], coupon: ['Coupon', 'plain'], settings: ['Settings', 'low'], staff: ['Staff change', 'plain'], store: ['Store change', 'plain'], password: ['Password', 'plain']
   };
   function storeSelect(id, val, withAll) {
     if (!multiStore()) return '';
@@ -1227,7 +1275,7 @@
       '<div class="m-label">Appearance</div><div class="seg">' + [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']].map(function (o) {
         return '<button data-act="theme-set" data-t="' + o[0] + '" class="' + (themeChoice() === o[0] ? 'active' : '') + '">' + o[1] + '</button>';
       }).join('') + '</div>' +
-      (isManager() ? '<button data-act="settings">Settings · payments &amp; VAT</button>' : '') + '<button data-act="pw">Change password</button><button data-act="reload">Refresh app</button><button data-act="logout">Log out</button>';
+      (isManager() ? '<button data-act="coupons">Coupons</button><button data-act="settings">Settings · payments &amp; VAT</button>' : '') + '<button data-act="pw">Change password</button><button data-act="reload">Refresh app</button><button data-act="logout">Log out</button>';
     document.body.appendChild(m);
   }
   function settingsModal() {
@@ -1243,6 +1291,9 @@
         }).join('') + '</select></label>' +
         '<p class="small muted" style="margin:-4px 0 14px">Start with <b>Test</b>: make a Ziina QR sale and pay it with a Ziina test card. When it confirms by itself, switch to <b>Live</b>.</p>' +
         (d.ziina_key_saved ? '<label class="check"><input type="checkbox" name="remove_ziina_token"> Remove the saved key</label>' : '') +
+        '<h3 class="set-h">Coupons</h3>' +
+        '<label class="check"><input type="checkbox" name="web_coupons" ' + (d.web_coupons ? 'checked' : '') + '> Also accept fomaxo.com coupon codes in the store</label>' +
+        '<p class="small muted" style="margin:-6px 0 14px">Your store codes (menu → Coupons) always work. Tick this to also accept the website\u2019s codes.</p>' +
         '<h3 class="set-h">VAT</h3>' +
         '<label class="field"><span>TRN (VAT registration number, 15 digits)</span><input class="input" name="store_trn" inputmode="numeric" value="' + esc(d.store_trn) + '" placeholder="Leave empty while not registered"></label>' +
         '<p class="small muted" style="margin:-4px 0 6px">Empty: no VAT on sales or receipts. With a TRN: VAT ' + 5 + '% (included) shows and receipts become Tax invoices.</p>' +
@@ -1250,7 +1301,7 @@
       $('#set-form').addEventListener('submit', function (e) {
         e.preventDefault();
         var f = e.target, b = $('[type=submit]', f); b.disabled = true;
-        var body = { ziina_mode: f.ziina_mode.value, store_trn: f.store_trn.value };
+        var body = { ziina_mode: f.ziina_mode.value, store_trn: f.store_trn.value, web_coupons: f.web_coupons.checked ? 1 : 0 };
         if (f.ziina_token.value.trim()) body.ziina_token = f.ziina_token.value.trim();
         if (f.remove_ziina_token && f.remove_ziina_token.checked) { body.remove_ziina_token = 1; body.ziina_mode = 'demo'; }
         api('settings_save', { body: body }).then(function () {
@@ -1261,6 +1312,55 @@
         }).catch(function (er) { b.disabled = false; modalErr(er.offline ? 'Needs internet.' : er.message); });
       });
     }).catch(function (e) { setModalBody('<div class="err">' + esc(e.offline ? 'Needs internet.' : e.message) + '</div>'); });
+  }
+  function couponsModal() {
+    openModal('Coupons', '<div class="status-line"><span class="spinner"></span> Loading…</div>', { wide: true });
+    api('coupons').then(function (d) {
+      S._coupons = d.coupons;
+      setModalBody('<div class="row" style="margin-bottom:12px"><p class="small muted grow" style="margin:0">Codes your staff type in the bag. ' +
+        (d.web ? 'fomaxo.com codes are also accepted (Settings).' : 'Website codes are not accepted (switch in Settings).') + '</p>' +
+        '<button class="btn gold" data-act="cpn-new">+ New coupon</button></div>' +
+        (d.coupons.length ? '<div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Gives</th><th class="hide-sm">Rules</th><th class="r">Used</th><th class="r"></th></tr></thead><tbody>' +
+          d.coupons.map(function (c) {
+            var rules = [c.min_order ? 'min AED ' + money(c.min_order) : '', c.ends ? 'until ' + c.ends : '', c.max_uses ? 'max ' + c.max_uses + ' uses' : '', c.store_name ? c.store_name + ' only' : ''].filter(Boolean).join(' · ') || 'Any time, any store';
+            return '<tr><td><b class="num">' + esc(c.code) + '</b>' + (c.active ? '' : ' <span class="badge off">Off</span>') + (c.note ? '<div class="small muted">' + esc(c.note) + '</div>' : '') + '</td>' +
+              '<td>' + esc(c.label) + '</td><td class="hide-sm small muted">' + esc(rules) + '</td><td class="r num">' + c.uses + '</td>' +
+              '<td class="r"><button class="btn sm" data-act="cpn-edit" data-id="' + c.id + '">Edit</button></td></tr>';
+          }).join('') + '</tbody></table></div>' : '<div class="empty"><div class="big">No coupons yet</div>Press <b>+ New coupon</b>, e.g. WELCOME10 for 10% off.</div>'));
+    }).catch(function (e) { setModalBody('<div class="err">' + esc(e.offline ? 'Needs internet.' : e.message) + '</div>'); });
+  }
+  function couponEdit(c) {
+    var isNew = !c; c = c || { code: '', kind: 'pct', amount: 0, min_order: 0, free_product_id: null, ends: '', max_uses: null, store_id: null, active: 1, note: '' };
+    var prods = S.products.filter(function (p) { return p.active || p.id === c.free_product_id; });
+    openModal(isNew ? 'New coupon' : 'Edit coupon ' + c.code, '<div class="err m-err hidden"></div><form id="cpn-form" autocomplete="off">' +
+      '<label class="field"><span>Code (what the customer says)</span><input class="input coupon-in" name="code" required value="' + esc(c.code) + '" placeholder="e.g. WELCOME10" autofocus></label>' +
+      '<label class="field"><span>Gives</span><select class="input" name="kind"><option value="pct"' + (c.kind === 'pct' ? ' selected' : '') + '>% off the bag</option><option value="aed"' + (c.kind === 'aed' ? ' selected' : '') + '>AED off the bag</option><option value="free"' + (c.kind === 'free' ? ' selected' : '') + '>A free product (gift)</option></select></label>' +
+      '<div class="grid2"><label class="field k-amt"><span class="k-amt-l">Amount</span><input class="input" name="amount" type="number" step="0.01" min="0" value="' + (c.kind === 'free' || !c.amount ? '' : (c.amount / 100)) + '"></label>' +
+      '<label class="field"><span>Minimum bag AED (optional)</span><input class="input" name="min_order" type="number" step="0.01" min="0" value="' + (c.min_order ? c.min_order / 100 : '') + '"></label></div>' +
+      '<label class="field k-free"><span>Free product</span><select class="input" name="free_product_id">' + prods.map(function (p) {
+        return '<option value="' + p.id + '"' + (p.id === c.free_product_id ? ' selected' : '') + '>' + esc(shortName(p.name) + ' ' + p.variant) + '</option>'; }).join('') + '</select></label>' +
+      '<div class="grid2"><label class="field"><span>Last day (optional)</span><input class="input" name="ends" type="date" value="' + esc(c.ends || '') + '"></label>' +
+      '<label class="field"><span>Max uses (optional)</span><input class="input" name="max_uses" type="number" min="1" value="' + (c.max_uses || '') + '"></label></div>' +
+      (multiStore() ? '<label class="field"><span>Where</span><select class="input" name="store_id"><option value="">All stores</option>' + S.stores.map(function (x) { return '<option value="' + x.id + '"' + (x.id === c.store_id ? ' selected' : '') + '>' + esc(x.name) + ' only</option>'; }).join('') + '</select></label>' : '') +
+      '<label class="field"><span>Note (optional, only you see it)</span><input class="input" name="note" value="' + esc(c.note || '') + '" placeholder="e.g. Instagram promo"></label>' +
+      '<label class="check"><input type="checkbox" name="active" ' + (c.active ? 'checked' : '') + '> Active (can be used)</label>' +
+      '<div class="modal-foot"><button class="btn" type="button" data-act="coupons">Back</button><button class="btn gold" type="submit">Save</button></div></form>', { wide: true });
+    var f = $('#cpn-form');
+    var sync = function () {
+      var k = f.kind.value;
+      $('.k-free', f).classList.toggle('hidden', k !== 'free');
+      $('.k-amt', f).classList.toggle('hidden', k === 'free');
+      $('.k-amt-l', f).textContent = k === 'pct' ? 'Percent off (%)' : 'AED off';
+    };
+    f.kind.addEventListener('change', sync); sync();
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var b = $('[type=submit]', f); b.disabled = true;
+      api('coupon_save', { body: { id: isNew ? 0 : c.id, code: f.code.value, kind: f.kind.value, amount: f.amount.value, min_order: f.min_order.value,
+        free_product_id: f.free_product_id.value, ends: f.ends.value, max_uses: f.max_uses.value, store_id: f.store_id ? f.store_id.value : '', note: f.note.value, active: f.active.checked ? 1 : 0 } })
+        .then(function () { toast('Coupon saved.'); couponsModal(); })
+        .catch(function (er) { b.disabled = false; modalErr(er.message); });
+    });
   }
   function passwordModal() {
     openModal('Change password', '<div class="err m-err hidden"></div><form id="pw-form">' +
@@ -1356,6 +1456,9 @@
         break;
       case 'pw': closeMenu(); passwordModal(); break;
       case 'settings': closeMenu(); settingsModal(); break;
+      case 'coupons': closeMenu(); couponsModal(); break;
+      case 'cpn-new': couponEdit(null); break;
+      case 'cpn-edit': couponEdit((S._coupons || []).filter(function (x) { return x.id === id; })[0]); break;
       case 'reload': location.reload(); break;
       case 'logout': logout(false); break;
       case 'logout-force': logout(true); break;
@@ -1365,22 +1468,46 @@
       case 'add': addToCart(id); break;
       case 'pick': pickGroup(el.getAttribute('data-g')); break;
       case 'add-size': if (addToCart(id)) closeModal(); break;
-      case 'pay-open': if (S.cart.length) payChooser(); break;
+      case 'pay-open':
+        if (!S.cart.length) break;
+        if (S.coupon && !cartTotals().couponOk) { toast('Coupon ' + S.coupon.code + ' needs a bag of at least AED ' + money(Math.round(S.coupon.min * 100)) + '. Add more or remove the coupon.', true); break; }
+        payChooser(); break;
       case 'more': moreModal(); break;
+      case 'more2': couponDiscountModal(); break;
       case 'r-show': showReceipt(currentReceipt, false); break;
       case 'qty': changeQty(id, parseInt(el.getAttribute('data-d'), 10)); break;
-      case 'cart-clear': S.cart = []; S.discount = null; S.customer = null; renderTiles(); renderCart(); break;
+      case 'cart-clear': S.cart = []; S.discount = null; S.customer = null; S.coupon = null; renderTiles(); renderCart(); break;
+      case 'coupon': couponModal(); break;
+      case 'cp-remove': S.coupon = null; closeModal(); renderCart(); toast('Coupon removed.'); break;
+      case 'cp-apply': {
+        var code = ($('#cp-code').value || '').trim().toUpperCase();
+        if (!code) { modalErr('Type the coupon code.'); break; }
+        el.disabled = true;
+        api('coupon_check', { body: { code: code, phone: S.customer ? S.customer.phone : '', store_id: curStoreId() } }).then(function (d) {
+          var c = d.coupon;
+          if (c.kind === 'free') {
+            var fp = productById(c.free.product_id);
+            if (!fp || fp.stock <= 0) { el.disabled = false; modalErr('The free gift for this coupon is out of stock at this store.'); return; }
+          }
+          S.coupon = c; closeModal(); renderCart();
+          var t = cartTotals();
+          toast(t.couponOk ? '🎟 Coupon ' + c.code + ' applied' + (c.kind === 'free' ? ' — free gift added.' : '.') : 'Coupon added, but the bag must be at least AED ' + money(Math.round(c.min * 100)) + '.', !t.couponOk);
+        }).catch(function (er) { el.disabled = false; modalErr(er.offline ? 'Coupons need internet to check.' : er.message); });
+        break;
+      }
       case 'cart-open': setCartOpen(true); break;
       case 'cart-close': setCartOpen(false); break;
       case 'customer': customerModal(); break;
       case 'discount': discountModal(); break;
       case 'c-find': findCustomer(); break;
       case 'c-save': {
-        var ph = $('#c-phone').value.trim();
-        if (!ph) { S.customer = null; closeModal(); renderCart(); break; }
-        if (ph.replace(/\D/g, '').length < 7) { modalErr('Enter a full mobile number.'); break; }
+        var ph = $('#c-phone').value.trim(), em = $('#c-email').value.trim(), nm = $('#c-name').value.trim();
+        if (!ph && !em && !nm) { S.customer = null; closeModal(); renderCart(); break; }
+        if (ph && ph.replace(/\D/g, '').length < 7) { modalErr('Enter the full mobile number.'); break; }
+        if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { modalErr('That email does not look right.'); break; }
+        if (!ph && !em) { modalErr('Add a mobile number or an email for the customer.'); break; }
         var f = S._found;
-        S.customer = { phone: ph, name: $('#c-name').value.trim(), tier: f ? f.tier : null };
+        S.customer = { phone: ph, name: nm, email: em, tier: f ? f.tier : null };
         closeModal(); renderCart(); break;
       }
       case 'c-remove': S.customer = null; closeModal(); renderCart(); break;
@@ -1432,7 +1559,7 @@
         (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { toast('Receipt link copied.'); }, function () { prompt('Copy this link:', url); });
         break;
       }
-      case 'r-email': location.href = 'mailto:?subject=' + encodeURIComponent(S.settings.store_name + ' receipt ' + currentReceipt.receipt_no) + '&body=' + encodeURIComponent(receiptText(currentReceipt)); break;
+      case 'r-email': location.href = 'mailto:' + encodeURIComponent(currentReceipt.customer_email || '') + '?subject=' + encodeURIComponent(S.settings.store_name + ' receipt ' + currentReceipt.receipt_no) + '&body=' + encodeURIComponent(receiptText(currentReceipt)); break;
       case 'r-void': voidModal(currentReceipt); break;
       case 'v-save': {
         var reason = $('#v-reason').value.trim();
