@@ -1301,7 +1301,7 @@
           '<div class="table-wrap"><table class="tbl"><thead><tr><th>Name</th><th>Username</th><th>Role</th>' + (multiStore() ? '<th class="hide-sm">Store</th>' : '') + '<th class="r"></th></tr></thead><tbody>' +
           d.users.map(function (u) {
             var st = u.store_id ? storeById(u.store_id) : null;
-            return '<tr><td><b>' + esc(u.name) + '</b>' + (u.active ? '' : ' <span class="badge off">Switched off</span>') + '</td><td class="muted">' + esc(u.username) + '</td><td>' + (u.role === 'manager' ? '<span class="tier-tag">Manager</span>' : 'Staff') + '</td>' +
+            return '<tr><td><b>' + esc(u.name) + '</b>' + (u.active ? '' : ' <span class="badge off">Switched off</span>') + (multiStore() ? '<div class="small muted show-sm">' + (st ? esc(st.name) : 'Any store') + '</div>' : '') + '</td><td class="muted">' + esc(u.username) + '</td><td>' + (u.role === 'manager' ? '<span class="tier-tag">Manager</span>' : 'Staff') + '</td>' +
               (multiStore() ? '<td class="hide-sm">' + (st ? esc(st.name) : '<span class="muted">Any store</span>') + '</td>' : '') +
               '<td class="r"><button class="btn sm" data-act="u-edit" data-id="' + u.id + '">Edit</button></td></tr>';
           }).join('') + '</tbody></table></div>';
@@ -1326,12 +1326,26 @@
       '<label class="field"><span>Address (printed on receipts)</span><input class="input" name="address" value="' + esc(x.address) + '"></label>' +
       '<label class="field"><span>Phone (printed on receipts)</span><input class="input" name="phone" value="' + esc(x.phone) + '"></label>' +
       '<label class="check"><input type="checkbox" name="active" ' + (x.active ? 'checked' : '') + '> Open (can sell and hold stock)</label>' +
+      '<div class="field"><span>Staff working here</span><div id="st-staff" class="st-staff"><span class="small muted">Loading…</span></div></div>' +
       '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>');
+    var staffReady = false;
+    (S._users ? Promise.resolve() : api('users').then(function (d) { S._users = d.users; })).then(function () {
+      var box = $('#st-staff'); if (!box) return;
+      var list = S._users.filter(function (u) { return u.active; });
+      box.innerHTML = list.length ? list.map(function (u) {
+        var other = u.store_id && u.store_id !== x.id ? storeById(u.store_id) : null;
+        return '<label class="check"><input type="checkbox" name="staff" value="' + u.id + '"' + (!isNew && u.store_id === x.id ? ' checked' : '') + '> <span><b>' + esc(u.name) + '</b> <span class="small muted">' +
+          (u.role === 'manager' ? 'Manager' : 'Staff') + ' · ' + (u.store_id === x.id && !isNew ? 'here' : other ? 'now at ' + esc(other.name) : 'any store') + '</span></span></label>';
+      }).join('') + '<p class="small muted" style="margin:6px 0 0">Ticking someone moves them to this store. Unticking lets them choose any store.</p>' : '<span class="small muted">No staff yet.</span>';
+      staffReady = true;
+    }).catch(function () { var box = $('#st-staff'); if (box) box.innerHTML = '<span class="small muted">Staff list needs internet.</span>'; });
     $('#st-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var f = e.target, b = $('[type=submit]', f); b.disabled = true;
-      api('store_save', { body: { id: isNew ? 0 : x.id, name: f.name.value, code: f.code.value, address: f.address.value, phone: f.phone.value, active: f.active.checked ? 1 : 0 } })
-        .then(function (d) { S.stores = d.stores; LS.set('fx_stores', S.stores); closeModal(); toast('Store saved.'); updateStoreBtn(); refreshProducts(); loadTeam(); })
+      var body = { id: isNew ? 0 : x.id, name: f.name.value, code: f.code.value, address: f.address.value, phone: f.phone.value, active: f.active.checked ? 1 : 0 };
+      if (staffReady) body.staff = $$('input[name=staff]:checked', f).map(function (c) { return parseInt(c.value, 10); });
+      api('store_save', { body: body })
+        .then(function (d) { S.stores = d.stores; S._users = null; LS.set('fx_stores', S.stores); closeModal(); toast('Store saved.'); updateStoreBtn(); refreshProducts(); loadTeam(); })
         .catch(function (er) { b.disabled = false; modalErr(er.message); });
     });
   }

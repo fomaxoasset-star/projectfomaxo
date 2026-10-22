@@ -739,6 +739,25 @@ switch ($action) {
             $data['created_at'] = now();
             $id = insert('stores', $data);
         }
+        if (isset($b['staff']) && is_array($b['staff'])) {
+            // Ticked staff work at this store; unticked staff who were here can use any store.
+            $want = array_map('intval', $b['staff']);
+            $moved = [];
+            foreach (q('SELECT id, name, store_id FROM users WHERE removed = 0')->fetchAll() as $su) {
+                $sid = (int) $su['id'];
+                $here = (int) $su['store_id'] === $id;
+                if (in_array($sid, $want, true) && !$here) {
+                    q('UPDATE users SET store_id = ? WHERE id = ?', [$id, $sid]);
+                    $moved[] = $su['name'] . ' moved here';
+                } elseif (!in_array($sid, $want, true) && $here) {
+                    q('UPDATE users SET store_id = NULL WHERE id = ?', [$sid]);
+                    $moved[] = $su['name'] . ' moved out';
+                }
+            }
+            if ($moved) {
+                log_activity(current_user(), 'staff', $data['name'] . ': ' . implode(', ', $moved));
+            }
+        }
         log_activity(current_user(), 'store', 'Saved store: ' . $data['name'] . ($data['active'] ? '' : ' (closed)'));
         json_out(['ok' => true, 'id' => $id, 'stores' => stores_list()]);
 

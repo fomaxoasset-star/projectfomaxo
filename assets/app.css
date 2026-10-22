@@ -694,3 +694,6 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
 .input.capw { text-transform: uppercase; }
 
 .login input[name=username] { text-transform: uppercase; }
+
+.st-staff { display: grid; gap: 2px; padding: 8px 12px; border: 1px solid var(--line, rgba(127,127,127,.25)); border-radius: 12px; max-height: 260px; overflow-y: auto; }
+.st-staff .check { margin: 6px 0; align-items: flex-start; }
