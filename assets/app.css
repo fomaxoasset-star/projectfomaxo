@@ -650,3 +650,24 @@ html, body { overscroll-behavior-y: none; }
   html.ios-gap .cart-fab { bottom: calc(var(--nav-h) + 10px); }
   html.ios-gap .added-pop { bottom: calc(var(--nav-h) + 76px); }
 }
+
+/* ---------- Sell: Grid / List and Sort ---------- */
+.sell-tools { display: flex; gap: 8px; align-items: center; margin: 0 0 12px; }
+.view-seg { flex: none; }
+.view-seg button { padding: 8px 14px; min-height: 40px; white-space: nowrap; }
+.sort-btn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 14px; border-radius: 11px; border: 1px solid var(--line-2); background: var(--panel-2); color: var(--text); font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: left; }
+.sort-btn #sort-lbl { overflow: hidden; text-overflow: ellipsis; }
+.vi { font-size: 16px; line-height: 1; }
+.pchoice.picked { border-color: var(--gold); background: var(--gold-dim); }
+/* List view: small photo, name and sizes, price on the right */
+.ptiles.list { grid-template-columns: 1fr !important; gap: 8px; }
+.ptiles.list .ptile { display: grid; grid-template-columns: 64px 1fr auto; grid-template-areas: "ph name price" "ph sub price"; align-items: center; column-gap: 12px; padding: 8px 12px 8px 8px; border-radius: 14px; }
+.ptiles.list .ph { grid-area: ph; width: 64px; height: 64px; aspect-ratio: auto; border-radius: 10px; }
+.ptiles.list .ph-letter { font-size: 26px; }
+.ptiles.list .in-cart { top: 4px; right: 4px; min-width: 22px; height: 22px; font-size: 12px; }
+.ptiles.list .sold { font-size: 9px; padding: 3px 0; letter-spacing: .08em; }
+.ptiles.list .pt-name { grid-area: name; padding: 0; font-size: 16px; align-self: end; }
+.ptiles.list .pt-sub { grid-area: sub; padding: 0; align-self: start; }
+.ptiles.list .pt-price { grid-area: price; padding: 0; text-align: right; font-size: 17px; }
+@media (min-width: 901px) { .ptiles.list { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+@media (max-width: 380px) { .view-seg button { padding: 8px 10px; } .sort-btn { padding: 8px 10px; font-size: 14px; } }

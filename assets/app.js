@@ -83,6 +83,7 @@
     stores: LS.get('fx_stores', []),
     store: LS.get('fx_store', null),
     stockScope: 'store', salesStore: 'all', reportStore: 'all',
+    sellView: LS.get('fx_sell_view', 'grid'), sellSort: LS.get('fx_sell_sort', 'az'),
     teamTab: 'performance', team: { preset: 'today', from: null, to: null, user: '' },
     products: LS.get('fx_products', []),
     queue: LS.get('fx_queue', []),
@@ -409,7 +410,11 @@
       '<div class="catalog-tools"><label class="search">' + ICON.search +
       '<input class="input" id="q" type="search" placeholder="Search product, size or SKU" value="' + esc(S.search) + '" autocomplete="off"></label>' +
       '<div class="chips" id="chips"></div></div>' +
-      '<div class="ptiles" id="tiles"></div></section>' +
+      '<div class="sell-tools"><div class="seg view-seg">' +
+      '<button data-act="sv" data-v="grid" class="' + (S.sellView === 'grid' ? 'active' : '') + '"><span class="vi">▦</span> Grid</button>' +
+      '<button data-act="sv" data-v="list" class="' + (S.sellView === 'list' ? 'active' : '') + '"><span class="vi">☰</span> List</button></div>' +
+      '<button class="sort-btn" data-act="sort-open"><span class="vi">⇅</span> <span id="sort-lbl">' + esc(SORTS[S.sellSort] || SORTS.az) + '</span></button></div>' +
+      '<div class="ptiles' + (S.sellView === 'list' ? ' list' : '') + '" id="tiles"></div></section>' +
       '<aside class="cart' + (S.cartOpen ? ' open' : '') + '" id="cart"></aside></div>' +
       '<button class="cart-fab hidden" id="cart-fab" data-act="cart-open"></button>';
     $('#q').addEventListener('input', function (e) { S.search = e.target.value; renderTiles(); });
@@ -447,7 +452,29 @@
       var g = map[k];
       g.sizes.sort(function (a, b) { return sizeNum(a.variant) - sizeNum(b.variant); });
       return g;
-    }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+    }).map(function (g) {
+      g.from = Infinity; g.sold = 0; g.stock = 0;
+      g.sizes.forEach(function (p) { if (p.price < g.from) g.from = p.price; g.sold += p.sold30 || 0; g.stock += Math.max(0, p.stock); });
+      return g;
+    }).sort(sortGroups);
+  }
+  var SORTS = { az: 'A–Z', best: 'Best sellers', low: 'Price: low → high', high: 'Price: high → low', stock: 'In stock first' };
+  function sortGroups(a, b) {
+    var byName = a.name.localeCompare(b.name);
+    switch (S.sellSort) {
+      case 'best': return (b.sold - a.sold) || byName;
+      case 'low': return (a.from - b.from) || byName;
+      case 'high': return (b.from - a.from) || byName;
+      case 'stock': return ((b.stock > 0) - (a.stock > 0)) || (b.stock - a.stock) || byName;
+      default: return byName;
+    }
+  }
+  function sortModal() {
+    var icons = { az: '🔤', best: '⭐', low: '⬆', high: '⬇', stock: '✅' };
+    var sub = { az: 'By name', best: 'Most sold in the last 30 days', low: 'Cheapest first', high: 'Most expensive first', stock: 'Available perfumes on top' };
+    openModal('Sort products', '<div class="more-choices">' + Object.keys(SORTS).map(function (k) {
+      return '<button class="pchoice' + (S.sellSort === k ? ' picked' : '') + '" data-act="sort-set" data-k="' + k + '"><span class="pi">' + icons[k] + '</span><b>' + esc(SORTS[k]) + (S.sellSort === k ? ' ✓' : '') + '</b><small>' + sub[k] + '</small></button>';
+    }).join('') + '</div>');
   }
   function thumb(url, w) { return url ? url + (url.indexOf('?') >= 0 ? '&' : '?') + 'w=' + w : ''; }
   function tileImg(g) {
@@ -1512,6 +1539,15 @@
       case 'cat': S.category = el.getAttribute('data-cat'); renderChips(); renderTiles(); break;
       case 'add': addToCart(id); break;
       case 'pick': pickGroup(el.getAttribute('data-g')); break;
+      case 'sv':
+        S.sellView = el.getAttribute('data-v'); LS.set('fx_sell_view', S.sellView);
+        $$('[data-act=sv]').forEach(function (b) { b.classList.toggle('active', b === el); });
+        $('#tiles').classList.toggle('list', S.sellView === 'list'); renderTiles(); break;
+      case 'sort-open': sortModal(); break;
+      case 'sort-set':
+        S.sellSort = el.getAttribute('data-k'); LS.set('fx_sell_sort', S.sellSort);
+        closeModal(); if ($('#sort-lbl')) $('#sort-lbl').textContent = SORTS[S.sellSort]; renderTiles();
+        toast('Sorted: ' + SORTS[S.sellSort]); break;
       case 'add-size': if (addToCart(id)) closeModal(); break;
       case 'pay-open':
         if (!S.cart.length) break;

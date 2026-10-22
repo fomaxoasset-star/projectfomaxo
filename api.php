@@ -165,8 +165,16 @@ switch ($action) {
         $storeId = ($scope === 'all' && $u['role'] === 'manager') ? 0 : resolve_store($u, $scope);
         $map = stock_map();
         $rows = q('SELECT * FROM products ORDER BY category, name, variant')->fetchAll();
-        json_out(['products' => array_map(function ($p) use ($map, $storeId) {
-            return product_out($p, $map, $storeId);
+        // Units sold in the last 30 days (for "Best sellers" sorting on Sell)
+        $sold = [];
+        foreach (q("SELECT i.product_id, SUM(i.qty) AS n FROM sale_items i JOIN sales s ON s.id = i.sale_id
+                    WHERE s.status = 'paid' AND s.created_at >= ? GROUP BY i.product_id", [date('Y-m-d H:i:s', time() - 30 * 86400)])->fetchAll() as $r) {
+            $sold[(int) $r['product_id']] = (int) $r['n'];
+        }
+        json_out(['products' => array_map(function ($p) use ($map, $storeId, $sold) {
+            $o = product_out($p, $map, $storeId);
+            $o['sold30'] = $sold[(int) $p['id']] ?? 0;
+            return $o;
         }, $rows), 'store_id' => $storeId, 'time' => now()]);
 
     case 'product_save':
