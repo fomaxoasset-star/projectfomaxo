@@ -9,7 +9,7 @@ $done = false;
 function page($title, $body)
 {
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
-    echo '<title>' . h($title) . '</title><link rel="stylesheet" href="assets/page.css"></head><body><main class="card">';
+    echo '<title>' . h($title) . '</title><link rel="stylesheet" href="assets/page.css"><link rel="icon" href="assets/favicon-32.png"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png"></head><body><main class="card">';
     echo '<div class="brand">FOMAXO</div><h1>' . h($title) . '</h1>' . $body . '</main></body></html>';
     exit;
 }

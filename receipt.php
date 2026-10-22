@@ -33,7 +33,7 @@ $methods = ['cash' => 'Cash', 'tap' => 'Tap to Pay', 'card' => 'Card', 'ziina' =
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <title><?= $sale ? h(cfg('store_name') . ' receipt ' . $sale['receipt_no']) : 'Receipt' ?></title>
-<link rel="stylesheet" href="assets/page.css">
+<link rel="stylesheet" href="assets/page.css"><link rel="icon" href="assets/favicon-32.png"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 </head>
 <body class="receipt-page">
 <?php if (!$sale): ?>
