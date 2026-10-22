@@ -129,7 +129,7 @@ $form = ($error ? '<p class="err">' . h($error) . '</p>' : '') . '
 <p>Step 2 of 2. Create the first <b>manager</b> login. You can add staff inside the app afterwards.</p>
 <form method="post">
   <label>Your name<input name="name" required value="' . h($_POST['name'] ?? '') . '"></label>
-  <label>Username<input name="username" required autocapitalize="words" value="' . h($_POST['username'] ?? '') . '"></label>
+  <label>Username<input name="username" required autocapitalize="characters" style="text-transform:uppercase" value="' . h($_POST['username'] ?? '') . '"></label>
   <label>Password (8+ characters)<input name="password" type="password" required minlength="8"></label>
   <label>Password again<input name="password2" type="password" required minlength="8"></label>
   <label class="check"><input type="checkbox" name="starter" value="1" checked> Bring in all products, sizes and prices from fomaxo.com</label>

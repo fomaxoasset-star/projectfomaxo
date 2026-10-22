@@ -303,7 +303,7 @@
       '<form id="login-form" autocomplete="on">' +
       (msg ? '<div class="note" style="margin-bottom:12px">' + esc(msg) + '</div>' : '') +
       '<div class="err m-err hidden"></div>' +
-      '<label class="field"><span>Username</span><input class="input" name="username" autocapitalize="words" autocorrect="off" spellcheck="false" autocomplete="username" required autofocus value="' + esc(S.user ? S.user.username : '') + '"></label>' +
+      '<label class="field"><span>Username</span><input class="input" name="username" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="username" required autofocus value="' + esc(S.user ? S.user.username : '') + '"></label>' +
       '<label class="field"><span>Password</span><input class="input" name="password" type="password" autocomplete="current-password" required></label>' +
       '<button class="btn gold block big" type="submit">Log in</button>' +
       '<p class="small muted" style="margin:12px 0 0;text-align:center">Logging in needs internet. After that, sales keep working offline.</p>' +
@@ -1337,8 +1337,8 @@
   function userModal(u) {
     var isNew = !u; u = u || { name: '', username: '', role: 'staff', active: 1 };
     openModal(isNew ? 'Add staff' : 'Edit ' + u.name, '<div class="err m-err hidden"></div><form id="u-form">' +
-      '<label class="field"><span>Full name</span><input class="input capw" name="name" required autocapitalize="words" value="' + esc(u.name) + '" autofocus></label>' +
-      '<label class="field"><span>Username (for login — capitals don\u2019t matter)</span><input class="input capw" name="username" required autocapitalize="words" autocorrect="off" spellcheck="false" value="' + esc(u.username) + '"></label>' +
+      '<label class="field"><span>Full name</span><input class="input capw" name="name" required autocapitalize="characters" value="' + esc(u.name) + '" autofocus></label>' +
+      '<label class="field"><span>Username (for login — capitals don\u2019t matter)</span><input class="input capw" name="username" required autocapitalize="characters" autocorrect="off" spellcheck="false" value="' + esc(u.username) + '"></label>' +
       '<label class="field"><span>' + (isNew ? 'Password (8+ characters)' : 'New password (leave empty to keep)') + '</span><input class="input" name="password" type="text" autocomplete="new-password" ' + (isNew ? 'required minlength="8"' : '') + '></label>' +
       '<label class="field"><span>Role</span><select class="input" name="role"><option value="staff"' + (u.role === 'staff' ? ' selected' : '') + '>Staff</option><option value="manager"' + (u.role === 'manager' ? ' selected' : '') + '>Manager</option></select></label>' +
       (multiStore() ? '<label class="field"><span>Works at</span><select class="input" name="store_id"><option value="">Any store (chooses on the device)</option>' +
