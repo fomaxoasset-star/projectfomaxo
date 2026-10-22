@@ -638,3 +638,9 @@ html, body { overscroll-behavior-y: none; }
   .modal-back { position: absolute; }
 }
 @media (max-width: 340px) { .bnav button { font-size: 10px; } }
+
+/* iPhone home-screen app bug fix (class set by the check in index.html):
+   the app box is fixed to the top of the screen and made taller by the missing strip. */
+html.ios-gap, html.ios-gap body { height: 100%; overflow: hidden; }
+html.ios-gap #root { position: fixed; top: 0; left: 0; right: 0; height: calc(100% + var(--ios-gap, 0px)); }
+html.ios-gap .app { height: 100%; }

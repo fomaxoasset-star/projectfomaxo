@@ -14,8 +14,38 @@
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
-<link rel="stylesheet" href="assets/app.css?v=26">
+<link rel="stylesheet" href="assets/app.css?v=27">
 <script>
+  // iPhone home-screen app: iOS can report the screen shorter than it is (by the status bar height),
+  // leaving an empty strip at the bottom. Measure it and stretch the app to the real bottom edge.
+  (function () {
+    var d = document.documentElement;
+    function fix() {
+      var standalone = window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+      if (!standalone || !document.body) return;
+      var probe = document.createElement('div');
+      probe.style.cssText = 'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);height:0';
+      document.body.appendChild(probe);
+      var top = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+      probe.remove();
+      var portrait = innerHeight >= innerWidth;
+      var screenH = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      var gap = screenH - innerHeight;
+      // Only when the missing part matches the status bar: that is the iOS bug, not a normal browser bar.
+      if (top > 0 && gap > 4 && Math.abs(gap - top) <= 6) {
+        d.style.setProperty('--ios-gap', gap + 'px');
+        d.classList.add('ios-gap');
+      } else {
+        d.classList.remove('ios-gap');
+        d.style.removeProperty('--ios-gap');
+      }
+    }
+    window.__fxFixHeight = fix;
+    document.addEventListener('DOMContentLoaded', fix);
+    window.addEventListener('load', fix);
+    window.addEventListener('resize', function () { setTimeout(fix, 60); });
+    window.addEventListener('orientationchange', function () { setTimeout(fix, 300); });
+  })();
   // Apply the saved Light/Dark choice before the page draws (no flash).
   try { var t = JSON.parse(localStorage.getItem('fx_theme')); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
@@ -23,7 +53,7 @@
 <body>
 <div id="root"></div>
 <div id="print-area"></div>
-<script src="assets/qrcode.js?v=26"></script>
-<script src="assets/app.js?v=26"></script>
+<script src="assets/qrcode.js?v=27"></script>
+<script src="assets/app.js?v=27"></script>
 </body>
 </html>
