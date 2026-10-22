@@ -623,7 +623,35 @@ switch ($action) {
             $r['store_id'] = $r['store_id'] === null ? null : (int) $r['store_id'];
             $r['active'] = (int) $r['active'];
         }
-        json_out(['users' => $rows]);
+        $gone = q('SELECT id, name, username, role FROM users WHERE removed = 1 ORDER BY name')->fetchAll();
+        foreach ($gone as &$g) {
+            $g['id'] = (int) $g['id'];
+            $g['username'] = preg_replace('/~\d+$/', '', $g['username']);
+        }
+        json_out(['users' => $rows, 'removed' => $gone]);
+
+    case 'user_restore':
+        // Bring a removed staff member back. They log in with their old password.
+        need_post();
+        $me = require_manager();
+        $id = (int) ($b['id'] ?? 0);
+        $x = q1('SELECT * FROM users WHERE id = ? AND removed = 1', [$id]);
+        if (!$x) {
+            fail('Staff member not found.');
+        }
+        $username = strtolower(trim((string) ($b['username'] ?? '')));
+        if ($username === '') {
+            $username = strtolower(preg_replace('/~\d+$/', '', $x['username']));
+        }
+        if (!preg_match('/^[a-z0-9._-]{3,50}$/', $username)) {
+            fail('Username needs 3+ letters or numbers, no spaces.');
+        }
+        if (q1('SELECT id FROM users WHERE LOWER(username) = ? AND id <> ?', [$username, $id])) {
+            json_out(['error' => 'The username ' . username_case($username) . ' is now used by someone else. Choose a new one.', 'username_taken' => true], 400);
+        }
+        q('UPDATE users SET removed = 0, active = 1, username = ? WHERE id = ?', [username_case($username), $id]);
+        log_activity($me, 'staff', 'Reactivated staff: ' . $x['name'] . ' (' . username_case($username) . ')');
+        json_out(['ok' => true]);
 
     case 'user_save':
         need_post();
@@ -848,8 +876,8 @@ switch ($action) {
         foreach ($users as $x) {
             $id = (int) $x['id'];
             $pd = $paid[$id] ?? null;
-            if ((int) $x['removed'] && !$pd && !isset($voids[$id])) {
-                continue; // removed staff only show when they have sales in this period
+            if ((int) $x['removed']) {
+                continue; // removed staff are hidden from performance (their sales still count in Reports)
             }
             $x['username'] = preg_replace('/~\d+$/', '', $x['username']);
             $out[] = [

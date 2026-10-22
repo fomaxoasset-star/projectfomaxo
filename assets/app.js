@@ -1304,7 +1304,13 @@
             return '<tr><td><b>' + esc(u.name) + '</b>' + (u.active ? '' : ' <span class="badge off">Switched off</span>') + (multiStore() ? '<div class="small muted show-sm">' + (st ? esc(st.name) : 'Any store') + '</div>' : '') + '</td><td class="muted">' + esc(u.username) + '</td><td>' + (u.role === 'manager' ? '<span class="tier-tag">Manager</span>' : 'Staff') + '</td>' +
               (multiStore() ? '<td class="hide-sm">' + (st ? esc(st.name) : '<span class="muted">Any store</span>') + '</td>' : '') +
               '<td class="r"><button class="btn sm" data-act="u-edit" data-id="' + u.id + '">Edit</button></td></tr>';
-          }).join('') + '</tbody></table></div>';
+          }).join('') + '</tbody></table></div>' +
+          (d.removed && d.removed.length ? '<details class="removed-staff"><summary>Removed staff (' + d.removed.length + ')</summary><div class="table-wrap"><table class="tbl"><tbody>' +
+            d.removed.map(function (u) {
+              return '<tr><td><b>' + esc(u.name) + '</b><div class="small muted">' + esc(u.username) + ' · ' + (u.role === 'manager' ? 'Manager' : 'Staff') + '</div></td>' +
+                '<td class="r"><button class="btn sm gold" data-act="u-restore" data-id="' + u.id + '">Reactivate</button></td></tr>';
+            }).join('') + '</tbody></table></div></details>' : '');
+        S._removed = d.removed || [];
       }).catch(fail);
     } else {
       api('stores').then(function (d) {
@@ -1370,6 +1376,23 @@
     });
   }
 
+  function restoreUser(u) {
+    if (!u) return;
+    openModal('Reactivate ' + u.name + '?', '<div class="err m-err hidden"></div><form id="ur-form">' +
+      '<p style="margin-top:0"><b>' + esc(u.name) + '</b> goes back on the staff list and can log in again with their old password.</p>' +
+      '<label class="field hidden" id="ur-name"><span>New username</span><input class="input capw" name="username" autocapitalize="characters" autocorrect="off" spellcheck="false" value="' + esc(u.username) + '"></label>' +
+      '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Reactivate</button></div></form>');
+    $('#ur-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var f = e.target, b = $('[type=submit]', f), box = $('#ur-name'); b.disabled = true;
+      api('user_restore', { body: { id: u.id, username: box.classList.contains('hidden') ? '' : f.username.value } })
+        .then(function () { closeModal(); toast(u.name + ' is back.'); S._users = null; loadTeam(); })
+        .catch(function (er) {
+          b.disabled = false; modalErr(er.message);
+          if (/used by someone else/.test(er.message)) { box.classList.remove('hidden'); f.username.focus(); f.username.select(); }
+        });
+    });
+  }
   function removeUser(u) {
     if (!u) return;
     openModal('Remove ' + u.name + '?', '<div class="err m-err hidden"></div>' +
@@ -1757,6 +1780,7 @@
       // staff
       case 'u-new': userModal(null); break;
       case 'u-edit': userModal((S._users || []).filter(function (u) { return u.id === id; })[0]); break;
+      case 'u-restore': restoreUser((S._removed || []).filter(function (u) { return u.id === id; })[0]); break;
       case 'u-remove': removeUser((S._users || []).filter(function (u) { return u.id === id; })[0]); break;
       case 'u-remove-yes':
         el.disabled = true;
