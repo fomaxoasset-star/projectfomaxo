@@ -645,7 +645,7 @@
       '<button class="pchoice cash" data-act="pay" data-m="cash"><span class="pi">💵</span><b>Cash</b><small>Notes and coins</small></button>' +
       '<button class="pchoice" data-act="pay" data-m="tap"><span class="pi">💳</span><b>Card / Tap</b><small>Card, Apple Pay, Google Pay on the Ziina phone</small></button>' +
       '<button class="pchoice" data-act="pay" data-m="ziina"' + (qrOk ? '' : ' disabled') + '><span class="pi">📱</span><b>QR code</b><small>' + (!st.ziina ? 'Not set up yet' : S.online ? 'Customer scans with their phone' : 'Needs internet') + '</small></button>' +
-      '</div>');
+      '</div><button class="link-btn other-card" data-act="pay" data-m="card">Other card machine</button>');
   }
   function couponDiscountModal() {
     openModal('Coupon or discount', '<div class="more-choices">' +
@@ -937,6 +937,7 @@
       '<button class="pchoice" data-act="pa-m" data-m="cash"><span class="pi">💵</span><b>Cash</b><small>Notes and coins</small></button>' +
       '<button class="pchoice" data-act="pa-m" data-m="tap"><span class="pi">💳</span><b>Card / Tap</b><small>On the Ziina phone</small></button>' +
       '<button class="pchoice" data-act="pa-m" data-m="ziina"' + (qrOk ? '' : ' disabled') + '><span class="pi">📱</span><b>QR code</b><small>' + (!st.ziina ? 'Not set up yet' : !S.online ? 'Needs internet' : s.total < 200 ? 'Needs AED 2.00 or more' : 'Customer scans with their phone') + '</small></button>' +
+      '<button class="pchoice" data-act="pa-m" data-m="card"><span class="pi">🏧</span><b>Card machine</b><small>Separate terminal</small></button>' +
       '</div><div class="modal-foot"><button class="btn danger block" data-act="z-cancel" data-id="' + s.id + '">Cancel sale</button></div>');
   }
   function payAgainMethod(m) {
@@ -974,7 +975,7 @@
   /** "Pay by" row on every payment screen, to switch method without going back. ctx 'new' = the bag, 'again' = a saved sale. */
   function switchRow(cur, ctx, total) {
     var st = S.settings, qrOk = st.ziina && S.online && total >= 200;
-    var opts = [['cash', '💵', 'Cash'], ['tap', '💳', 'Card / Tap'], ['ziina', '📱', 'QR']];
+    var opts = [['cash', '💵', 'Cash'], ['tap', '💳', 'Card / Tap'], ['ziina', '📱', 'QR'], ['card', '🏧', 'Machine']];
     return '<div class="pay-switch"><span class="small muted">Pay by</span><div class="seg">' + opts.map(function (o) {
       var off = o[0] === 'ziina' && !qrOk && cur !== 'ziina';
       return '<button type="button" data-act="sw-m" data-m="' + o[0] + '" data-ctx="' + ctx + '" class="' + (o[0] === cur ? 'active' : '') + '"' + (off ? ' disabled' : '') + '><span>' + o[1] + '</span> ' + o[2] + '</button>';
