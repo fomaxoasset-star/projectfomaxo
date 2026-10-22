@@ -685,3 +685,10 @@ html, body { overscroll-behavior-y: none; }
 .sort-lbl { font-size: 13px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 900px) { .sort-lbl { display: none; } .catalog-tools .sort-btn { width: 44px; padding: 0; } }
 @media (max-width: 340px) { .catalog-tools .view-seg button { width: 34px; } .catalog-tools .sort-btn { width: 40px; } }
+
+/* One View & sort button next to search */
+.catalog-tools .sort-btn { gap: 8px; }
+.catalog-tools .sort-btn .ic { flex: none; }
+.view-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.view-pick .pchoice .pi { font-size: 26px; }
+.modal .set-h { margin: 0 0 8px; }
