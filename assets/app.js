@@ -780,7 +780,7 @@
     var amount = '<div class="amount-big"><div class="lbl">Amount to collect</div><div class="val num">' + aed(t.total) + '</div></div>';
     if (method === 'cash') {
       var notes = [50, 100, 200, 500, 1000].filter(function (v) { return v * 100 > t.total; }).slice(0, 4);
-      openModal('Cash', '<div class="err m-err hidden"></div>' + amount +
+      openModal('Cash', '<div class="err m-err hidden"></div>' + switchRow('cash', 'new', t.total) + amount +
         '<div class="cash-q">Customer gave:</div>' +
         '<div class="notes"><button class="note-btn exact" data-act="cash-quick" data-v="' + (t.total / 100) + '">Exact<br><small>' + money(t.total) + '</small></button>' +
         notes.map(function (v) { return '<button class="note-btn" data-act="cash-quick" data-v="' + v + '">' + v + '</button>'; }).join('') + '</div>' +
@@ -790,7 +790,7 @@
         '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel" data-m="cash">Cancel sale</button></div>', { sticky: true });
       $('#cash-in').addEventListener('input', function () { $$('.note-btn').forEach(function (b) { b.classList.remove('active'); }); updateChange(); });
     } else if (method === 'tap') {
-      openModal('Card / Tap', '<div class="err m-err hidden"></div>' + amount +
+      openModal('Card / Tap', '<div class="err m-err hidden"></div>' + switchRow('tap', 'new', t.total) + amount +
         '<ol class="steps big"><li><span>On the store phone open <b>Ziina</b> → <b>Tap to Pay</b>.</span></li>' +
         '<li><span>Type <b class="num">' + money(t.total) + '</b> <button class="btn sm" data-act="copy-amount" data-v="' + (t.total / 100).toFixed(2) + '">Copy</button></span></li>' +
         '<li><span>Customer taps card or phone. Wait for <b>Approved</b>.</span></li></ol>' +
@@ -798,7 +798,7 @@
         '<div class="modal-foot"><button class="btn ghost" data-act="pay-open">Back</button><button class="btn gold big" data-act="confirm-pay" data-m="tap">✓ Approved</button></div>' +
         '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel" data-m="tap">Cancel sale</button></div>', { sticky: true });
     } else if (method === 'card') {
-      openModal('Card machine', '<div class="err m-err hidden"></div>' + amount +
+      openModal('Card machine', '<div class="err m-err hidden"></div>' + switchRow('card', 'new', t.total) + amount +
         '<p class="muted">Charge this amount on the card terminal. When it prints <b>approved</b>, press Payment received.</p>' +
         '<label class="field"><span>Approval code (optional)</span><input class="input" id="pay-ref" maxlength="64"></label>' +
         '<div class="modal-foot"><button class="btn ghost" data-act="modal-close">Back</button><button class="btn gold big" data-act="confirm-pay" data-m="card">Payment received</button></div>' +
@@ -856,6 +856,7 @@
     afterSale(local);
   }
   function afterSale(sale) {
+    cartSaleId = 0;
     S.cart = []; S.discount = null; S.customer = null; S.coupon = null;
     setCartOpen(false);
     if (S.view === 'sell') { renderTiles(); renderCart(); }
@@ -871,7 +872,7 @@
     var payload = buildPayload('ziina', {});
     var cust = S.customer;
     openModal('Ziina payment', '<div class="status-line"><span class="spinner"></span> Creating payment…</div>', { sticky: true, onClose: stopPoll });
-    api('ziina_start', { body: payload, timeout: 30000 }).then(function (d) { showZiinaQr(d, cust); }).catch(ziinaErr);
+    api('ziina_start', { body: payload, timeout: 30000 }).then(function (d) { showZiinaQr(d, cust, true); }).catch(ziinaErr);
   }
   function ziinaRetry(id) {
     openModal('Ziina payment', '<div class="status-line"><span class="spinner"></span> Creating payment…</div>', { sticky: true, onClose: stopPoll });
@@ -914,14 +915,17 @@
         if (r.status === 'paid' && !fromQr) { closeModal(); doneScreen(r.sale); toast('The customer had already paid — sale completed.'); if (S.view === 'sales') renderSales(); }
         else if (r.status === 'paid') { closeModal(); afterSale(r.sale); toast('The customer had already paid — sale completed.'); }
         else if (r.status === 'void') { closeModal(); toast('This sale was voided.'); }
-        else { closeModal(); toast('Sale cancelled. You can pay again from Sales.'); if (S.view === 'sales') renderSales(); }
+        else {
+          if (paSale && paSale.id === id && paSale.fromCart) { S.cart = []; S.discount = null; S.customer = null; S.coupon = null; setCartOpen(false); if (S.view === 'sell') { renderTiles(); renderCart(); } }
+          closeModal(); toast('Sale cancelled. You can pay again from Sales.'); if (S.view === 'sales') renderSales();
+        }
       }).catch(function (er) { b.disabled = false; modalErr(er.message); });
     });
   }
   // ---- Pay again (from Sales): choose QR, Cash, Card / Tap or Card machine
   var paSale = null;
   function payAgainModal(s) {
-    paSale = s; var st = S.settings, qrOk = st.ziina && S.online && s.total >= 200;
+    paSale = s; s.fromCart = s.id === cartSaleId; var st = S.settings, qrOk = st.ziina && S.online && s.total >= 200;
     openModal('Pay again', '<div class="err m-err hidden"></div><div class="amount-big"><div class="lbl">Amount to collect</div><div class="val num">' + aed(s.total) + '</div></div>' +
       '<div class="pay-choices">' +
       '<button class="pchoice" data-act="pa-m" data-m="cash"><span class="pi">💵</span><b>Cash</b><small>Notes and coins</small></button>' +
@@ -941,7 +945,7 @@
       body = (m === 'tap' ? '<p class="muted">Open <b>Ziina</b> → <b>Tap to Pay</b>, type <b class="num">' + money(s.total) + '</b> and wait for <b>Approved</b>.</p>' : '<p class="muted">Charge <b class="num">' + money(s.total) + '</b> on the card terminal and wait for <b>approved</b>.</p>') +
         '<label class="field"><span>Reference (optional)</span><input class="input" id="pa-ref" maxlength="64"></label>';
     }
-    openModal({ cash: 'Cash', tap: 'Card / Tap', card: 'Card machine' }[m], '<div class="err m-err hidden"></div>' + amount + body +
+    openModal({ cash: 'Cash', tap: 'Card / Tap', card: 'Card machine' }[m], '<div class="err m-err hidden"></div>' + switchRow(m, 'again', s.total) + amount + body +
       '<div class="modal-foot"><button class="btn ghost" data-act="pa-open" data-id="' + s.id + '">Back</button><button class="btn gold big" data-act="pa-confirm" data-m="' + m + '">' + (m === 'cash' ? '✓ Done — cash received' : '✓ Payment received') + '</button></div>' +
       '<div class="modal-foot"><button class="btn danger block" data-act="z-cancel" data-id="' + s.id + '">Cancel sale</button></div>', { sticky: true });
     var ci = $('#pa-cash');
@@ -957,16 +961,35 @@
     else body.payment_ref = ($('#pa-ref') || {}).value || '';
     btn.disabled = true;
     api('sale_pay', { body: body }).then(function (d) {
-      closeModal(); refreshProducts(); if (S.view === 'sales') renderSales();
-      if (d.already) toast('This sale was already paid.'); doneScreen(d.sale);
+      closeModal(); if (S.view === 'sales') renderSales();
+      if (d.already) toast('This sale was already paid.');
+      if (s.fromCart) afterSale(d.sale); else { refreshProducts(); doneScreen(d.sale); }
     }).catch(function (er) { btn.disabled = false; modalErr(er.offline ? 'Needs internet.' : er.message); });
   }
-  function showZiinaQr(d, cust) {
+  /** "Pay by" row on every payment screen, to switch method without going back. ctx 'new' = the bag, 'again' = a saved sale. */
+  function switchRow(cur, ctx, total) {
+    var st = S.settings, qrOk = st.ziina && S.online && total >= 200;
+    var opts = [['cash', '💵', 'Cash'], ['tap', '💳', 'Card / Tap'], ['ziina', '📱', 'QR'], ['card', '🏧', 'Machine']];
+    return '<div class="pay-switch"><span class="small muted">Pay by</span><div class="seg">' + opts.map(function (o) {
+      var off = o[0] === 'ziina' && !qrOk && cur !== 'ziina';
+      return '<button type="button" data-act="sw-m" data-m="' + o[0] + '" data-ctx="' + ctx + '" class="' + (o[0] === cur ? 'active' : '') + '"' + (off ? ' disabled' : '') + '><span>' + o[1] + '</span> ' + o[2] + '</button>';
+    }).join('') + '</div></div>';
+  }
+  function switchMethod(m, ctx) {
+    if (ctx === 'new') { stopPoll(); payModal(m); return; }
+    if (!paSale) return;
+    if (m === 'ziina') { if (paSale.method === 'ziina' && $('.qr-box')) return; stopPoll(); ziinaRetry(paSale.id); return; }
+    stopPoll(); payAgainMethod(m);
+  }
+  var cartSaleId = 0; // the Ziina sale made from the current bag (paying it, or cancelling it, empties the bag)
+  function showZiinaQr(d, cust, fromCart) {
+      if (fromCart) cartSaleId = d.sale.id;
       lastQr = { d: d, cust: cust };
+      paSale = d.sale; paSale.fromCart = d.sale.id === cartSaleId;
       if (d.sale.status === 'paid') { closeModal(); afterSale(d.sale); return; }
       var qr = qrcode(0, 'M'); qr.addData(d.pay_url); qr.make();
       var wa = cust && cust.phone ? 'https://wa.me/' + cust.phone.replace(/\D/g, '') + '?text=' + encodeURIComponent('FOMAXO payment of ' + aed(d.sale.total) + ': ' + d.pay_url) : null;
-      setModalBody(
+      setModalBody(switchRow('ziina', 'again', d.sale.total) +
         (S.settings.ziina_mode !== 'live' ? '<div class="note" style="margin-bottom:12px;text-align:center">' + (S.settings.ziina_mode === 'demo' ? 'PRACTICE MODE — no real money' : 'ZIINA TEST MODE — no real money') + '</div>' : '') +
         '<div class="amount-big"><div class="lbl">Customer pays</div><div class="val num">' + aed(d.sale.total) + '</div></div>' +
         '<div class="qr-box">' + qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true }) + '</div>' +
@@ -1889,6 +1912,7 @@
       case 'pay-back': payModal(el.getAttribute('data-m')); break;
       case 'pa-open': api('sale_get', { query: '&id=' + id }).then(function (d) { payAgainModal(d.sale); }).catch(function (er) { toast(er.message, true); }); break;
       case 'pa-m': payAgainMethod(el.getAttribute('data-m')); break;
+      case 'sw-m': if (!el.classList.contains('active')) switchMethod(el.getAttribute('data-m'), el.getAttribute('data-ctx')); break;
       case 'pa-confirm': payAgainConfirm(el.getAttribute('data-m'), el); break;
       case 'z-back':
         if (el.getAttribute('data-qr') === '1' && lastQr && lastQr.d.sale.id === id) { stopPoll(); showZiinaQr(lastQr.d, lastQr.cust); }
