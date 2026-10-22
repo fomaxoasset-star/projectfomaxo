@@ -474,7 +474,7 @@ switch ($action) {
         try {
             $z = ziina_create(
                 (int) $sale['total'],
-                cfg('store_name', 'FOMAXO') . ' ' . $sale['receipt_no'],
+                cfg('store_name', 'FOMAXO') . ' order',
                 cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'],
                 cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'] . '&cancelled=1'
             );

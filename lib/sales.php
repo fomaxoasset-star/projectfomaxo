@@ -236,7 +236,7 @@ function create_sale($user, $b, $method)
         }
         $saleId = insert('sales', [
             'uuid' => $uuid,
-            'receipt_no' => next_order_no($storeId),
+            'receipt_no' => 'NOT PAID', // the order number is given only when the payment goes through (mark_paid), so there are no gaps
             'receipt_token' => $token,
             'user_id' => $user['id'],
             'store_id' => $storeId,
@@ -297,6 +297,10 @@ function mark_paid($saleId, $userId, $paidAt = null)
     }
     $sale = q1('SELECT store_id, receipt_no, total, method, offline, user_id FROM sales WHERE id = ?', [$saleId]);
     $storeId = (int) $sale['store_id'];
+    if (strpos($sale['receipt_no'], 'FMX-') !== 0) {
+        $sale['receipt_no'] = next_order_no($storeId);
+        q('UPDATE sales SET receipt_no = ? WHERE id = ?', [$sale['receipt_no'], $saleId]);
+    }
     $mname = ['cash' => 'Cash', 'tap' => 'Tap to Pay', 'card' => 'Card machine', 'ziina' => 'Ziina QR'][$sale['method']] ?? $sale['method'];
     log_activity((int) $sale['user_id'], 'sale', 'Sold AED ' . money((int) $sale['total']) . ' by ' . $mname . ($sale['offline'] ? ' (made offline)' : ''), $sale['receipt_no'], $storeId);
     $items = q('SELECT product_id, qty FROM sale_items WHERE sale_id = ?', [$saleId])->fetchAll();
