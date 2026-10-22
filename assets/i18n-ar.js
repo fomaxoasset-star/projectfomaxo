@@ -1019,6 +1019,8 @@
 "Next reviews": "التقييمات التالية",
 "No money was taken. Your order is saved, so you can try again or choose another way to pay.": "لم يتم خصم أي مبلغ. طلبك محفوظ، لذا يمكنك المحاولة مرة أخرى أو اختيار طريقة دفع أخرى.",
 "No thanks": "لا، شكراً",
+"Send your AED 20 coupon on WhatsApp?": "هل نرسل لك كوبون خصم AED 20 على واتساب؟",
+"Send my coupon": "أرسل الكوبون",
 "Not found": "غير موجودة",
 "Once your order arrives, please share your honest rating. Reviews from your order link show": "بعد وصول طلبك، يرجى مشاركة تقييمك الصادق. التقييمات من رابط طلبك تظهر بعلامة",
 "Open customer photo": "فتح صورة العميل",
