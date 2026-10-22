@@ -3,23 +3,41 @@
 
 date_default_timezone_set('Asia/Dubai');
 
+/** Places the private settings file can live, safest first (all outside the website folder except the last). */
+function config_paths()
+{
+    $app = dirname(__DIR__);
+    $paths = [];
+    if (getenv('FOMAXO_POS_CONFIG')) {
+        $paths[] = getenv('FOMAXO_POS_CONFIG');
+    }
+    $paths[] = dirname($app) . '/fomaxo-pos-config.php';
+    $home = getenv('HOME') ?: '';
+    if (!$home && function_exists('posix_getpwuid') && function_exists('posix_geteuid')) {
+        $pw = @posix_getpwuid(posix_geteuid());
+        $home = $pw['dir'] ?? '';
+    }
+    if (!$home && preg_match('#^(/home/[^/]+)/#', $app, $m)) {
+        $home = $m[1];
+    }
+    if ($home) {
+        $paths[] = rtrim($home, '/') . '/.fomaxo-pos-config.php';
+        $paths[] = rtrim($home, '/') . '/fomaxo-private/fomaxo-pos-config.php';
+    }
+    $paths[] = $app . '/config.php'; // last resort: inside the app folder (an update can remove it)
+    return array_values(array_unique($paths));
+}
+
 function cfg($key = null, $default = null)
 {
     static $config = null;
     if ($config === null) {
-        $candidates = [
-            getenv('FOMAXO_POS_CONFIG') ?: null,
-            dirname(__DIR__, 2) . '/fomaxo-pos-config.php',
-            dirname(__DIR__) . '/config.php',
-        ];
-        foreach ($candidates as $file) {
-            if ($file && is_file($file)) {
+        $config = false;
+        foreach (config_paths() as $file) {
+            if ($file && @is_file($file)) {
                 $config = require $file;
                 break;
             }
-        }
-        if ($config === null) {
-            $config = false;
         }
     }
     if ($config === false) {

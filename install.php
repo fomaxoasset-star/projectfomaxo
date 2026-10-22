@@ -17,7 +17,6 @@ function page($title, $body)
 // ---- Step 1: settings file. Saved one folder ABOVE the website folder, so GitHub
 // deploys never remove it and no visitor can ever open it.
 if (cfg() === false) {
-    $target = dirname(__DIR__) . '/fomaxo-pos-config.php';
     $err1 = '';
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'config') {
         $c = require __DIR__ . '/config.sample.php';
@@ -31,13 +30,21 @@ if (cfg() === false) {
         try {
             new PDO('mysql:host=localhost;dbname=' . $c['db_name'] . ';charset=utf8mb4', $c['db_user'], $c['db_pass'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
             $php = "<?php\n// FOMAXO Store System settings. Keep private.\nreturn " . var_export($c, true) . ";\n";
-            if (@file_put_contents($target, $php, LOCK_EX) === false) {
-                $target = __DIR__ . '/config.php';
-                if (@file_put_contents($target, $php, LOCK_EX) === false) {
-                    throw new RuntimeException('Could not save the settings file. Check folder permissions in File Manager.');
+            $saved = null;
+            foreach (config_paths() as $target) {
+                $dir = dirname($target);
+                if (!is_dir($dir)) {
+                    @mkdir($dir, 0700, true);
+                }
+                if (@file_put_contents($target, $php, LOCK_EX) !== false) {
+                    @chmod($target, 0600);
+                    $saved = $target;
+                    break;
                 }
             }
-            @chmod($target, 0600);
+            if (!$saved) {
+                throw new RuntimeException('Could not save the settings file. Check folder permissions in File Manager.');
+            }
             header('Location: install.php');
             exit;
         } catch (PDOException $e) {
@@ -65,6 +72,10 @@ try {
     page('Cannot reach the database', '<p>Check the database details in the settings file (fomaxo-pos-config.php, one folder above the website folder).</p><p class="err">' . h($e->getMessage()) . '</p>');
 }
 
+$inApp = !getenv('FOMAXO_POS_CONFIG') && is_file(__DIR__ . '/config.php') && count(array_filter(array_slice(config_paths(), 0, -1), function ($f) { return @is_file($f); })) === 0;
+if (is_installed() && $inApp) {
+    page('One more step', '<p class="err">The settings could only be saved inside the app folder, where the next update would remove them.</p><p>In Hostinger <b>File Manager</b>, move <b>config.php</b> from the pos.fomaxo.com folder up one level (next to public_html) and rename it <b>fomaxo-pos-config.php</b>. Then open the app.</p>');
+}
 if (is_installed()) {
     page('Already set up', '<p>The store system is installed. <a href="./">Open the app</a>.</p><p class="muted">This setup page is now locked and cannot be run again.</p>');
 }
