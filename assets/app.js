@@ -1261,7 +1261,7 @@
             var avg = m.sales ? Math.round(m.total / m.sales) : 0, pm = m.methods || {};
             return '<button class="person' + (m.active ? '' : ' off') + '" data-act="t-person" data-id="' + m.id + '">' +
               '<div class="row"><span class="avatar lg">' + esc(initials(m.name)) + '</span><div class="grow"><b>' + esc(m.name) + '</b>' +
-              '<div class="small muted">' + (m.role === 'manager' ? 'Manager' : 'Staff') + (m.store_name ? ' · ' + esc(m.store_name) : multiStore() ? ' · any store' : '') + (m.active ? '' : ' · switched off') + '</div></div>' +
+              '<div class="small muted">' + (m.role === 'manager' ? 'Manager' : 'Staff') + (m.store_name ? ' · ' + esc(m.store_name) : multiStore() ? ' · any store' : '') + (m.removed ? ' · removed' : m.active ? '' : ' · switched off') + '</div></div>' +
               '<span class="dot-status ' + (m.online ? 'on' : '') + '">' + (m.online ? 'Active now' : esc(ago(m.last_seen))) + '</span></div>' +
               '<div class="p-total num">' + aed(m.total) + '</div><div class="bar" style="margin:6px 0 10px"><i style="width:' + (best ? Math.max(2, m.total / best * 100) : 0) + '%"></i></div>' +
               '<div class="p-stats"><span><b>' + m.sales + '</b> sales</span><span><b class="num">' + money(avg) + '</b> avg</span><span><b>' + m.items + '</b> items</span>' +
@@ -1344,7 +1344,8 @@
       (multiStore() ? '<label class="field"><span>Works at</span><select class="input" name="store_id"><option value="">Any store (chooses on the device)</option>' +
         S.stores.map(function (x) { return '<option value="' + x.id + '"' + (u.store_id === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></label>' : '') +
       '<label class="check"><input type="checkbox" name="active" ' + (u.active ? 'checked' : '') + '> Can log in</label>' +
-      '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>');
+      '<div class="modal-foot">' + (!isNew && u.id !== S.user.id ? '<button class="btn danger" type="button" data-act="u-remove" data-id="' + u.id + '">Remove staff</button>' : '') +
+      '<button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>');
     $('#u-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var f = e.target, b = $('[type=submit]', f); b.disabled = true;
@@ -1352,6 +1353,14 @@
         .then(function () { closeModal(); toast('Saved.'); S._users = null; loadTeam(); })
         .catch(function (er) { b.disabled = false; modalErr(er.message); });
     });
+  }
+
+  function removeUser(u) {
+    if (!u) return;
+    openModal('Remove ' + u.name + '?', '<div class="err m-err hidden"></div>' +
+      '<p style="margin-top:0"><b>' + esc(u.name) + '</b> will no longer be able to log in and is taken off the staff list.</p>' +
+      '<p class="muted small">Their past sales and receipts stay in Reports. To only pause their login, use <b>Edit</b> and untick “Can log in” instead.</p>' +
+      '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Keep</button><button class="btn danger" type="button" data-act="u-remove-yes" data-id="' + u.id + '">Remove</button></div>');
   }
 
   // ---------------------------------------------------------------- user menu
@@ -1733,6 +1742,13 @@
       // staff
       case 'u-new': userModal(null); break;
       case 'u-edit': userModal((S._users || []).filter(function (u) { return u.id === id; })[0]); break;
+      case 'u-remove': removeUser((S._users || []).filter(function (u) { return u.id === id; })[0]); break;
+      case 'u-remove-yes':
+        el.disabled = true;
+        api('user_remove', { body: { id: id } })
+          .then(function () { closeModal(); toast('Staff removed.'); S._users = null; loadTeam(); })
+          .catch(function (er) { el.disabled = false; modalErr(er.message); });
+        break;
     }
   });
   document.addEventListener('keydown', function (e) {

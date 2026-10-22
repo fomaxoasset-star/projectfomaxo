@@ -96,7 +96,7 @@ switch ($action) {
         if ($tries >= 10) {
             fail('Too many wrong passwords. Wait 15 minutes and try again.', 429);
         }
-        $u = q1('SELECT * FROM users WHERE LOWER(username) = ?', [strtolower(trim($b['username'] ?? ''))]);
+        $u = q1('SELECT * FROM users WHERE removed = 0 AND LOWER(username) = ?', [strtolower(trim($b['username'] ?? ''))]);
         if (!$u || !$u['active'] || !password_verify((string) ($b['password'] ?? ''), $u['pass_hash'])) {
             insert('login_attempts', ['ip' => $ip, 'created_at' => now()]);
             fail('Wrong username or password.', 401);
@@ -617,7 +617,7 @@ switch ($action) {
     // ---------------- Staff accounts ----------------
     case 'users':
         require_manager();
-        $rows = q('SELECT id, name, username, role, active, store_id, created_at FROM users ORDER BY active DESC, name')->fetchAll();
+        $rows = q('SELECT id, name, username, role, active, store_id, created_at FROM users WHERE removed = 0 ORDER BY active DESC, name')->fetchAll();
         foreach ($rows as &$r) {
             $r['id'] = (int) $r['id'];
             $r['store_id'] = $r['store_id'] === null ? null : (int) $r['store_id'];
@@ -647,6 +647,9 @@ switch ($action) {
         if ($id === $me['id'] && (!$active || $role !== 'manager')) {
             fail('You cannot remove your own manager access.');
         }
+        if ($id && !q1('SELECT id FROM users WHERE id = ? AND removed = 0', [$id])) {
+            fail('This staff member was removed.');
+        }
         if ($id) {
             q('UPDATE users SET name = ?, username = ?, role = ?, active = ?, store_id = ? WHERE id = ?', [$name, username_case($username), $role, $active, $userStore, $id]);
             if ($pass !== '') {
@@ -675,6 +678,26 @@ switch ($action) {
         }
         log_activity($me, 'staff', ($b['id'] ?? 0 ? 'Updated' : 'Added') . ' staff account: ' . $name . ' (' . $role . ($active ? '' : ', switched off') . ')' . ($pass !== '' && ($b['id'] ?? 0) ? ', new password' : ''));
         json_out(['ok' => true, 'id' => $id]);
+
+    case 'user_remove':
+        // Removed staff can no longer log in and leave the staff list. Their past sales,
+        // receipts and activity stay in the reports under their name.
+        need_post();
+        $me = require_manager();
+        $id = (int) ($b['id'] ?? 0);
+        $x = q1('SELECT * FROM users WHERE id = ? AND removed = 0', [$id]);
+        if (!$x) {
+            fail('Staff member not found.');
+        }
+        if ($id === (int) $me['id']) {
+            fail('You cannot remove yourself.');
+        }
+        // Free the username so it can be given to someone new later.
+        $freed = substr($x['username'], 0, 40) . '~' . $id;
+        q('UPDATE users SET removed = 1, active = 0, username = ? WHERE id = ?', [$freed, $id]);
+        q('DELETE FROM tokens WHERE user_id = ?', [$id]);
+        log_activity($me, 'staff', 'Removed staff: ' . $x['name'] . ' (' . $x['username'] . ')');
+        json_out(['ok' => true]);
 
     // ---------------- Stores ----------------
     case 'stores':
@@ -768,7 +791,7 @@ switch ($action) {
         [$from, $to] = date_range();
         $p = [$from, $to];
         $sf = (!empty($_GET['store']) && $_GET['store'] !== 'all') ? ' AND s.store_id = ' . (int) $_GET['store'] : '';
-        $users = q('SELECT u.id, u.name, u.username, u.role, u.active, u.store_id, st.name AS store_name,
+        $users = q('SELECT u.id, u.name, u.username, u.role, u.active, u.removed, u.store_id, st.name AS store_name,
                            (SELECT MAX(last_used) FROM tokens t WHERE t.user_id = u.id) AS last_seen
                     FROM users u LEFT JOIN stores st ON st.id = u.store_id ORDER BY u.active DESC, u.name')->fetchAll();
         $paid = [];
@@ -796,9 +819,13 @@ switch ($action) {
         foreach ($users as $x) {
             $id = (int) $x['id'];
             $pd = $paid[$id] ?? null;
+            if ((int) $x['removed'] && !$pd && !isset($voids[$id])) {
+                continue; // removed staff only show when they have sales in this period
+            }
+            $x['username'] = preg_replace('/~\d+$/', '', $x['username']);
             $out[] = [
                 'id' => $id, 'name' => $x['name'], 'username' => $x['username'], 'role' => $x['role'],
-                'active' => (int) $x['active'], 'store_name' => $x['store_name'],
+                'active' => (int) $x['active'], 'removed' => (int) $x['removed'], 'store_name' => $x['store_name'],
                 'last_seen' => $x['last_seen'],
                 'online' => $x['last_seen'] && strtotime($x['last_seen']) > time() - 300,
                 'sales' => $pd ? (int) $pd['sales'] : 0,

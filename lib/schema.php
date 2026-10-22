@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 9;
+const SCHEMA_VERSION = 10;
 
 function schema_version()
 {
@@ -194,6 +194,11 @@ function migrate()
             }
             q("DELETE FROM meta WHERE k = 'schema'");
             q("INSERT INTO meta (k, v) VALUES ('schema', '9')");
+        }
+        if (schema_version() < 10) {
+            try_exec('ALTER TABLE users ADD COLUMN removed TINYINT NOT NULL DEFAULT 0');
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '10')");
         }
         if (schema_version() < 5) {
             try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');
