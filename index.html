@@ -1468,9 +1468,9 @@ html[data-mode="light"] .dr-foot .bag-wa-ok{color:#1e7a47}
 .pm-wa{margin:14px 0 4px;padding:12px;border:1px solid var(--gold)}
 .pm-wa-t{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 6px;margin:0 0 10px;font-size:13px;line-height:1.35;color:var(--ivory)}
 .pm-wa-t b{color:var(--gold);font-weight:600}
-.pm-wa-row{display:flex;gap:8px}
-.pm-wa-row input{flex:1;min-width:0;text-align:center;padding:9px 12px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font:inherit;font-size:16px}
-.promo .pm-wa-row .btn{flex:none;display:inline-flex;align-items:center;gap:6px;width:auto;min-height:42px;margin:0;padding:0 16px;background:#25D366;border-color:#25D366;color:#fff}
+.pm-wa-row{display:flex;flex-wrap:wrap;gap:8px}
+.pm-wa-row input{flex:1 1 100%;min-width:0;text-align:center;padding:9px 12px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font:inherit;font-size:16px}
+.promo .pm-wa-row .btn{flex:1 1 100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;min-height:42px;margin:0;padding:0 16px;background:#25D366;border-color:#25D366;color:#fff}
 .pm-wa-row .btn svg{width:16px;height:16px}
 .pm-wa .pwel-ok{margin:0}
 .dr-foot .qd-nudge{display:flex;align-items:center;gap:14px;margin:0 0 4px;padding:14px 18px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:14px;line-height:1.45;letter-spacing:.01em;color:var(--ivory)}
@@ -2982,18 +2982,26 @@ function saleTick(){ const l = saleLeft(); const ms = SALE_END - Date.now(), pm 
 setInterval(saleTick, 1000);
 /* popup sizes saved on admin → Offer → Preview, as CSS variables on the popup box (--l-* laptop, --p-* phone; missing = the standard in the CSS) */
 const promoSize = (sz, vars, n) => { let o = n ? `--n:${n};` : ''; if (sz) ['L', 'P'].forEach(d => Object.keys(vars).forEach(k => { const v = sz[d] && +sz[d][k]; if (v > 0 && v < 1000) o += `--${d.toLowerCase()}-${vars[k]}:${Math.round(v)};`; })); return o ? ` style="${o}"` : ''; };
-/* offer popup: a few seconds after someone arrives, once per visit, only while the countdown runs (not on checkout) */
-let promoT = 0;
+/* offer popup: as soon as someone arrives, once per visit, only while the countdown runs (not on checkout).
+   Someone who never bought and gave no number gets this popup (with its WhatsApp box) instead of the welcome box whenever it is on (AJAY, 2026-10-22) */
+let promoT = 0, prodLoaded = false;
+const saleOff = (p, z) => onSale(p, z) ? Math.round((p.compareAt[z] - p.prices[z]) / p.compareAt[z] * 100) : 0;
+const salePicked = () => SALE_ITEMS.map(id => P[id]).filter(p => p && !p.hidden && p.sizes.some(z => onSale(p, z)));
+function saleReady(){
+  if (!SALE_POPUP || (!saleLeft() && !SALE_ALWAYS)) return false;
+  const picked = salePicked(); let pct = 0; (picked.length ? picked : S.products).forEach(p => p.sizes.forEach(z => { pct = Math.max(pct, saleOff(p, z)); }));
+  return pct > 0;
+}
 function promoMaybe(){
   clearTimeout(promoT);
   try { if (sessionStorage.getItem('fomaxo_promo')) return; } catch(e) {}
-  if (welDue()) return;
+  const fresh = welDue(); if (fresh && !saleReady()) return;   // a new visitor without a sale popup on: the welcome box instead
   promoT = setTimeout(() => {
     if (/^#\/checkout/.test(location.hash) || document.querySelector('.promo')) return;
     /* the new product popup first, once per visitor and product; the sale popup then shows on their next visit */
     const np = NEW_POP, npKey = np ? (np.label || np.status) + '|' + np.name : '';
     let npSeen = ''; try { npSeen = localStorage.getItem('fomaxo_np_seen') || ''; } catch(e) {}
-    if (np && npSeen !== npKey) {
+    if (np && npSeen !== npKey && !fresh) {
       try { sessionStorage.setItem('fomaxo_promo', '1'); localStorage.setItem('fomaxo_np_seen', npKey); } catch(e) {}
       const p = np.product && P[np.product], arr = !!(p && !p.hidden), pic = p && p.images && p.images[0], lab = np.label || (np.status === 'arrived' ? 'Just arrived' : 'Coming soon');
       return promoOpen(`<div class="promo pnew" role="dialog" aria-modal="true" aria-label="${esc(lab)}"><div class="promo-box"${promoSize(np.fs, {title: 't', img: 'nimg', name: 'nm', line: 'ln', btn: 'bt'})}><button type="button" class="promo-x" aria-label="Close">×</button>
@@ -3001,8 +3009,7 @@ function promoMaybe(){
         <a class="btn" href="${arr ? '#/product/' + p.id : '#/fragrances'}" data-pm-close>${arr ? 'Shop now' : 'Explore FOMAXO'}</a><button type="button" class="pm-no" data-pm-close>Close</button></div></div>`);
     }
     const al = !saleLeft() && SALE_ALWAYS; if (!SALE_POPUP || (!saleLeft() && !al)) return;
-    const off = (p, z) => onSale(p, z) ? Math.round((p.compareAt[z] - p.prices[z]) / p.compareAt[z] * 100) : 0;
-    const picked = SALE_ITEMS.map(id => P[id]).filter(p => p && !p.hidden && p.sizes.some(z => onSale(p, z)));
+    const off = saleOff, picked = salePicked();
     let pct = 0; (picked.length ? picked : S.products).forEach(p => p.sizes.forEach(z => { pct = Math.max(pct, off(p, z)); }));
     if (!pct) return;
     if (SALE_PCT > 0 && SALE_PCT < pct) pct = SALE_PCT;
@@ -3015,17 +3022,20 @@ function promoMaybe(){
       ${al ? '' : `<div class="pm-cd">${u}</div>`}<p class="pm-hurry">HURRY UP!!!</p>
       ${pmWaHTML()}<a class="btn" href="#/fragrances" data-pm-close>${esc(SALE_WORDS.btn || 'Shop the offer')}</a><button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
     pmWaWire();
-  }, 2500);
+  }, 300);
 }
-/* welcome box: once per visitor, after 5 seconds or half a page, never with the offer popup, never on checkout or after an order;
+/* welcome box: once per visitor, as soon as the site opens, never with the offer popup, never on checkout or after an order;
    the number goes to Admin → Analytics → Left at checkout like the bag box (same AED 20 coupon, sent from there on WhatsApp) */
 let welT = 0, welOn = false;
-/* a new visitor: no welcome box yet, no number known, no order; they see only the welcome box (the offer popups wait for a later visit) */
+/* a new visitor: no welcome box yet, no number known, no order; they see only the welcome box, or the limited time offer popup when it is on */
 function welDue(){ try { return !(localStorage.getItem('fomaxo_wel') || bagWaKnown() || localStorage.getItem('fomaxo_last')); } catch(e) { return false; } }
 function welcomeMaybe(){
   if (!welDue()) return;
   if (welOn) return; welOn = true;
-  const go = () => { clearTimeout(welT); removeEventListener('scroll', half);
+  let waited = 0;
+  const go = () => { clearTimeout(welT);
+    if (!prodLoaded && waited < 4000) { waited += 150; welT = setTimeout(go, 150); return; }   // the offer settings first (products.php)
+    if (saleReady()) { welOn = false; promoMaybe(); return; }   // the limited time offer popup shows instead
     if (/^#\/(checkout|thank-you|order-confirmed|review)/.test(location.hash) || document.querySelector('.promo') || document.querySelector('.drawer.open,#cart.open')) { welOn = false; welT = setTimeout(welcomeMaybe, 20000); return; }
     try { if (sessionStorage.getItem('fomaxo_promo')) return; localStorage.setItem('fomaxo_wel', '1'); sessionStorage.setItem('fomaxo_promo', '1'); } catch(e) { return; }
     promoOpen(`<div class="promo pwel" role="dialog" aria-modal="true" aria-label="Welcome offer"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
@@ -3042,8 +3052,7 @@ function welcomeMaybe(){
       FXT.lead('details', {name: nm, phone: v}, cart, subtotal(cart) || 0, true); renderCart();
       f.outerHTML = '<p class="pwel-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; const n = $('.pwel .pm-no'); if (n) n.textContent = 'Continue shopping'; };
   };
-  const half = () => { const h = document.documentElement.scrollHeight - innerHeight; if (h > 400 && scrollY / h >= .5) go(); };
-  welT = setTimeout(go, 5000); addEventListener('scroll', half, {passive: true});
+  welT = setTimeout(go, 300);   // opens as the site opens (AJAY, 2026-10-22)
 }
 function promoOpen(html){
     document.body.insertAdjacentHTML('beforeend', html);
@@ -3283,14 +3292,15 @@ function bagWaWire(t){
 function pmWaHTML(){
   try { if (localStorage.getItem('fomaxo_last')) return ''; } catch(e) {}
   if (bagWaKnown()) return '';
-  return `<div class="pm-wa"><p class="pm-wa-t"><b>New here? GET AED 20</b><span>· Coupon on WhatsApp</span></p><form class="pm-wa-row" id="pmWa" novalidate><input id="pmWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WhatsApp Number" aria-label="Your WhatsApp number"><button class="btn" type="submit">${CO_ICON.whatsapp}<span>Send</span></button></form></div>`;
+  return `<div class="pm-wa"><p class="pm-wa-t"><b>New here? GET AED 20</b><span>· Coupon on WhatsApp</span></p><form class="pm-wa-row" id="pmWa" novalidate><input id="pmWaName" class="pm-wa-nm" type="text" autocomplete="name" maxlength="60" placeholder="Name" aria-label="Your name"><input id="pmWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WhatsApp Number" aria-label="Your WhatsApp number"><button class="btn" type="submit">${CO_ICON.whatsapp}<span>Send</span></button></form></div>`;
 }
 function pmWaWire(){
   const f = $('#pmWa'); if (!f) return;
-  f.onsubmit = e => { e.preventDefault(); const v = $('#pmWaIn').value.trim();
+  f.onsubmit = e => { e.preventDefault(); const v = $('#pmWaIn').value.trim(), nm = $('#pmWaName').value.trim();
+    if (!nm) { toast('Please enter your name'); return; }
     if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
     try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
-    FXT.lead('details', {phone: v}, cart, subtotal(cart) || 0, true); renderCart();
+    FXT.lead('details', {name: nm, phone: v}, cart, subtotal(cart) || 0, true); renderCart();
     f.closest('.pm-wa').innerHTML = '<p class="pwel-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; };
 }
 function renderCart(){
@@ -6003,6 +6013,7 @@ footShop();
 /* the live product list (fomaxo.com/admin → Products); the page is only redrawn when it differs from what is showing */
 async function loadProducts(){
   let d = null; try { const r = await fetch('products.php', {cache: 'no-store'}); if (r.ok) d = await r.json(); } catch(e) {}
+  prodLoaded = true;
   if (d && 'saleEnds' in d) { SALE_END = (+d.saleEnds || 0) * 1000; SALE_ALWAYS = d.saleAlways === true; SALE_POPUP = d.salePopup !== false; SALE_LINE = d.saleLine !== false; SALE_PCT = +d.salePct || 0; NEW_POP = d.newPop && d.newPop.name ? d.newPop : null; SALE_ITEMS = Array.isArray(d.saleItems) ? d.saleItems : []; SALE_WORDS = d.saleWords || {}; SALE_LINES = Array.isArray(d.saleLines) || d.saleLines === 'all' ? d.saleLines : null; SALE_SIZE = d.saleSize || null; try { localStorage.setItem('fomaxo_sale', JSON.stringify({e: SALE_END, a: SALE_ALWAYS, p: SALE_POPUP, l: SALE_LINE, pc: SALE_PCT, np: NEW_POP, it: SALE_ITEMS, w: SALE_WORDS, ln: SALE_LINES, sz: SALE_SIZE})); } catch(e) {} saleTick(); promoMaybe(); }
   if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, aed: +d.bt.aed || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
