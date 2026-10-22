@@ -894,14 +894,15 @@ switch ($action) {
             $methods[(int) $r['user_id']][$r['method']] = (int) $r['total'];
         }
         $out = [];
+        $gonePerf = [];
         foreach ($users as $x) {
             $id = (int) $x['id'];
             $pd = $paid[$id] ?? null;
-            if ((int) $x['removed']) {
-                continue; // removed staff are hidden from performance (their sales still count in Reports)
+            if ((int) $x['removed'] === 2) {
+                continue; // removed forever
             }
             $x['username'] = preg_replace('/~\d+$/', '', $x['username']);
-            $out[] = [
+            $row = [
                 'id' => $id, 'name' => $x['name'], 'username' => $x['username'], 'role' => $x['role'],
                 'active' => (int) $x['active'], 'removed' => (int) $x['removed'], 'store_name' => $x['store_name'],
                 'last_seen' => $x['last_seen'],
@@ -915,16 +916,17 @@ switch ($action) {
                 'void_total' => isset($voids[$id]) ? (int) $voids[$id]['total'] : 0,
                 'methods' => (object) ($methods[$id] ?? []),
             ];
+            if ((int) $x['removed']) {
+                $gonePerf[] = $row; // removed staff: hidden from performance, shown in the Staff box
+            } else {
+                $out[] = $row;
+            }
         }
         usort($out, function ($a, $b) {
             return $b['total'] <=> $a['total'] ?: strcmp($a['name'], $b['name']);
         });
-        $gone = q('SELECT id, name, username, role FROM users WHERE removed = 1 ORDER BY name')->fetchAll();
-        foreach ($gone as &$g) {
-            $g['id'] = (int) $g['id'];
-            $g['username'] = preg_replace('/~\d+$/', '', $g['username']);
-        }
-        json_out(['team' => $out, 'removed' => $gone]);
+        usort($gonePerf, function ($a, $b) { return strcmp($a['name'], $b['name']); });
+        json_out(['team' => $out, 'removed' => $gonePerf]);
 
     case 'activity':
         require_manager();

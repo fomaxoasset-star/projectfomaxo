@@ -705,3 +705,14 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
 .rm-btns { display: flex; flex-direction: column; gap: 6px; }
 .rm-row .grow { flex: 1; min-width: 0; }
 .rm-btns .btn { white-space: nowrap; }
+
+.rm-item { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.rm-item .rm-row { border: 0; border-radius: 0; }
+.rm-name { background: none; border: 0; padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.rm-sum { margin-top: 4px; }
+.rm-arrow { color: var(--gold, #a8862f); font-weight: 600; margin-left: 4px; white-space: nowrap; }
+.rm-name.open .rm-arrow { opacity: .7; }
+.rm-perf { padding: 0 10px 10px; }
+.rm-perf .person { width: 100%; cursor: default; }
+.rm-perf .person, .rm-perf .person.off { opacity: 1; filter: none; }
+.rm-perf .dot-status { display: none; }
