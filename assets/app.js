@@ -911,7 +911,9 @@
         return;
       }
       api('ziina_cancel', { body: { id: id, reason: reason } }).then(function (r) {
-        if (r.status === 'paid') { closeModal(); afterSale(r.sale); toast('The customer had already paid — sale completed.'); }
+        if (r.status === 'paid' && !fromQr) { closeModal(); doneScreen(r.sale); toast('The customer had already paid — sale completed.'); if (S.view === 'sales') renderSales(); }
+        else if (r.status === 'paid') { closeModal(); afterSale(r.sale); toast('The customer had already paid — sale completed.'); }
+        else if (r.status === 'void') { closeModal(); toast('This sale was voided.'); }
         else { closeModal(); toast('Sale cancelled. You can pay again from Sales.'); if (S.view === 'sales') renderSales(); }
       }).catch(function (er) { b.disabled = false; modalErr(er.message); });
     });
@@ -926,7 +928,7 @@
       '<button class="pchoice" data-act="pa-m" data-m="tap"><span class="pi">💳</span><b>Card / Tap</b><small>On the Ziina phone</small></button>' +
       '<button class="pchoice" data-act="pa-m" data-m="ziina"' + (qrOk ? '' : ' disabled') + '><span class="pi">📱</span><b>QR code</b><small>' + (!st.ziina ? 'Not set up yet' : !S.online ? 'Needs internet' : s.total < 200 ? 'Needs AED 2.00 or more' : 'Customer scans with their phone') + '</small></button>' +
       '<button class="pchoice" data-act="pa-m" data-m="card"><span class="pi">🏧</span><b>Card machine</b><small>Separate terminal</small></button>' +
-      '</div>');
+      '</div><div class="modal-foot"><button class="btn danger block" data-act="z-cancel" data-id="' + s.id + '">Cancel sale</button></div>');
   }
   function payAgainMethod(m) {
     var s = paSale; if (!s) return;
@@ -940,7 +942,8 @@
         '<label class="field"><span>Reference (optional)</span><input class="input" id="pa-ref" maxlength="64"></label>';
     }
     openModal({ cash: 'Cash', tap: 'Card / Tap', card: 'Card machine' }[m], '<div class="err m-err hidden"></div>' + amount + body +
-      '<div class="modal-foot"><button class="btn ghost" data-act="pa-open" data-id="' + s.id + '">Back</button><button class="btn gold big" data-act="pa-confirm" data-m="' + m + '">' + (m === 'cash' ? '✓ Done — cash received' : '✓ Payment received') + '</button></div>', { sticky: true });
+      '<div class="modal-foot"><button class="btn ghost" data-act="pa-open" data-id="' + s.id + '">Back</button><button class="btn gold big" data-act="pa-confirm" data-m="' + m + '">' + (m === 'cash' ? '✓ Done — cash received' : '✓ Payment received') + '</button></div>' +
+      '<div class="modal-foot"><button class="btn danger block" data-act="z-cancel" data-id="' + s.id + '">Cancel sale</button></div>', { sticky: true });
     var ci = $('#pa-cash');
     if (ci) ci.addEventListener('input', function () {
       var given = ci.value === '' ? s.total : toFils(ci.value), ch = given - s.total, box = $('#pa-change');
@@ -1055,7 +1058,7 @@
         '<button class="btn" data-act="r-email">Email</button>' : '') +
       (!fresh && paid && isManager() && !s.queued ? '<button class="btn danger" data-act="r-void">Void sale</button>' : '') +
       (!paid && !s.queued && (s.status === 'pending' || s.status === 'cancelled' || s.status === 'failed') ? '<button class="btn gold big wide" data-act="pa-open" data-id="' + s.id + '">Pay again</button>' : '') +
-      (!paid && !s.queued && s.method === 'ziina' && s.status === 'pending' ? '<button class="btn danger wide" data-act="z-cancel" data-id="' + s.id + '">Cancel payment</button>' : '') +
+      (!paid && !s.queued && (s.status === 'pending' || s.status === 'cancelled' || s.status === 'failed') ? '<button class="btn danger wide" data-act="z-cancel" data-id="' + s.id + '">' + (s.status === 'cancelled' ? 'Cancel again (change reason)' : 'Cancel sale') + '</button>' : '') +
       (fresh ? '<button class="btn gold big wide" data-act="modal-close">New sale</button>' : '') +
       '</div>', { wide: true });
     var fr = $('#rframe');

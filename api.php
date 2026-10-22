@@ -567,9 +567,14 @@ switch ($action) {
         if ($status === 'paid') {
             json_out(['status' => 'paid', 'sale' => load_sale('id', $sale['id'])]);
         }
+        // Any unpaid sale (waiting, cancelled or failed) can be cancelled (again) with a reason.
+        if (!in_array($sale['status'], ['pending', 'cancelled', 'failed'], true)) {
+            json_out(['status' => $sale['status'], 'sale' => load_sale('id', $sale['id'])]);
+        }
         $reason = trim(mb_substr(preg_replace('/\s+/', ' ', (string) ($b['reason'] ?? '')), 0, 200));
-        q("UPDATE sales SET status = 'cancelled', note = ? WHERE id = ? AND status = 'pending'", [$reason !== '' ? 'Cancelled: ' . $reason : '', $sale['id']]);
-        log_activity($u, 'cancel', 'Cancelled Ziina payment of AED ' . money((int) $sale['total']) . ($reason !== '' ? ': ' . $reason : ''), '', (int) $sale['store_id']);
+        q("UPDATE sales SET status = 'cancelled', note = ? WHERE id = ? AND status IN ('pending', 'cancelled', 'failed')", [$reason !== '' ? 'Cancelled: ' . $reason : '', $sale['id']]);
+        $mn = ['cash' => 'Cash', 'tap' => 'Card / Tap', 'card' => 'Card machine', 'ziina' => 'Ziina'][$sale['method']] ?? $sale['method'];
+        log_activity($u, 'cancel', ($sale['status'] === 'pending' ? 'Cancelled ' : 'Cancelled again: ') . $mn . ' sale of AED ' . money((int) $sale['total']) . ($reason !== '' ? ': ' . $reason : ''), '', (int) $sale['store_id']);
         json_out(['status' => 'cancelled']);
 
     case 'ziina_retry':
