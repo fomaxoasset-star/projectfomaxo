@@ -1120,6 +1120,13 @@ function fx_left_msg($l, $ar = null) {
     if ($ar) return [($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،') . $n2 . 'شكراً لدعوة صديقك إلى FOMAXO. لقد قام صديقك بطلب للتو.', $n2 . 'FOMAXO', true];
     return ['Hi' . ($first !== '' ? ' ' . $first : '') . ',' . $n2 . 'Thank you for inviting your friend to FOMAXO. They just placed an order.', $n2 . 'FOMAXO', false];
   }
+  if (($l['stage'] ?? '') === 'coupon') {   // gave their WhatsApp in the welcome box, offer popup or bag box: the coupon they asked for (the box adds it, AED 20 off first)
+    $site = 'https://fomaxo.com/?' . ($ar ? 'lang=ar&' : '') . 'utm_source=whatsapp&utm_campaign=welcome-coupon' . ($bag !== '' ? '#/checkout?bag=' . $bag : '');
+    if ($ar) return [($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،') . $n2 . 'أهلاً بك في FOMAXO، وشكراً لانضمامك إلينا على واتساب.',
+      $n2 . "تسوّق من هنا:\n" . $site . $n2 . 'توصيل مجاني داخل الإمارات خلال 1–3 أيام.' . $n2 . 'FOMAXO', true];
+    return ['Hi' . ($first !== '' ? ' ' . $first : '') . ',' . $n2 . 'Welcome to FOMAXO, and thank you for joining us on WhatsApp.',
+      $n2 . "Shop here:\n" . $site . $n2 . 'Free delivery across the UAE in 1–3 days.' . $n2 . 'FOMAXO', false];
+  }
   if (in_array($l['stage'] ?? '', ['visit', 'buyer'], true)) {   // opened our WhatsApp link, or a past buyer back, but never reached checkout: a short hello, no bag
     $again = ($l['stage'] ?? '') === 'buyer';
     $site = 'https://fomaxo.com/' . ($ar ? '?lang=ar' : '');

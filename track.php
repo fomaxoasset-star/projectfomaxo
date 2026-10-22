@@ -63,7 +63,7 @@ try {
     exit;
   }
   if ($ev === 'lead') {   // checkout details, kept only once the customer typed a name or mobile
-    $stages = ['details' => 1, 'payment' => 2, 'card' => 3];
+    $stages = ['coupon' => 0, 'details' => 1, 'payment' => 2, 'card' => 3];   // coupon: a WhatsApp number from the welcome box, offer popup or bag box (wants the coupon)
     $stage = isset($stages[$d['st'] ?? '']) ? $d['st'] : 'details';
     $name = $t('name', 80); $phone = $t('phone', 25);
     if ($name === '' && $phone === '') exit;
@@ -72,7 +72,7 @@ try {
                    VALUES (?, ?, NOW(), NOW(), ?, ?, ?, ?, ?, ?, ?$b)
                    ON DUPLICATE KEY UPDATE updated_at = NOW(), name = VALUES(name), phone = VALUES(phone), email = VALUES(email), emirate = VALUES(emirate),
                      items = VALUES(items), total = VALUES(total)$c,
-                     stage = IF(FIELD(VALUES(stage), 'details', 'payment', 'card') > FIELD(stage, 'details', 'payment', 'card'), VALUES(stage), stage)";
+                     stage = IF(FIELD(VALUES(stage), 'coupon', 'details', 'payment', 'card') > FIELD(stage, 'coupon', 'details', 'payment', 'card'), VALUES(stage), stage)";
     $bag = preg_match('/^[a-z0-9_.-]{0,300}$/i', $b = $t('bag', 300)) ? $b : '';   // id.size.qty[.picks]_… for the "finish your order" link
     try { $pdo->prepare($sql(', address, bag', ', ?, ?', ', address = VALUES(address), bag = VALUES(bag)'))->execute(array_merge($args, [$t('addr', 300), $bag])); }
     catch (Throwable $e) {
