@@ -41,6 +41,8 @@ function normalize_phone($p)
     // UAE: 05x xxx xxxx -> +9715x xxx xxxx
     if (preg_match('/^05\d{8}$/', $p)) {
         $p = '+971' . substr($p, 1);
+    } elseif (preg_match('/^5\d{8}$/', $p)) {
+        $p = '+971' . $p; // 50 123 4567 typed without the 0
     } elseif (preg_match('/^9715\d{8}$/', $p)) {
         $p = '+' . $p;
     } elseif (strpos($p, '00') === 0) {

@@ -659,7 +659,9 @@
   function customerModal() {
     var c = S.customer || {};
     openModal('Customer', '<div class="err m-err hidden"></div>' +
-      '<label class="field"><span>Mobile — type it and the customer is looked up</span><input class="input" id="c-phone" type="tel" inputmode="tel" placeholder="05x xxx xxxx" value="' + esc(c.phone || '') + '" autocomplete="off" autofocus></label>' +
+      '<div class="field"><span>Mobile — type it and the customer is looked up</span><div class="phone-row">' +
+        '<label class="cc-wrap" title="Country"><span class="cc-label" id="c-cc-label"></span><select id="c-cc" aria-label="Country code">' + countryOptions() + '</select></label>' +
+        '<input class="input" id="c-phone" type="tel" inputmode="tel" autocomplete="off" autofocus></div></div>' +
       '<div id="c-info"></div>' +
       '<label class="field"><span>Name</span><input class="input cap" id="c-name" value="' + esc(c.name || '') + '" placeholder="CUSTOMER NAME" autocomplete="off" autocapitalize="characters"></label>' +
       '<label class="field"><span>Email (optional)</span><input class="input" id="c-email" type="email" inputmode="email" autocapitalize="none" placeholder="name@example.com" value="' + esc(c.email || '') + '" autocomplete="off"></label>' +
@@ -667,9 +669,39 @@
       '<div class="modal-foot">' + (S.customer ? '<button class="btn danger" data-act="c-remove">Remove</button>' : '') +
       '<button class="btn gold big" data-act="c-save">Save customer</button></div>');
     lastLookup = '';
-    $('#c-phone').addEventListener('input', autoFind);
+    setPhone(c.phone || '');
+    $('#c-cc').addEventListener('change', function () { updateCc(); lastLookup = ''; autoFind(); $('#c-phone').focus(); });
+    $('#c-phone').addEventListener('input', function () {
+      var v = this.value.trim();
+      if (/^(\+|00)/.test(v) && v.replace(/\D/g, '').length >= 6) { var sp = FX_COUNTRIES.split(v); if (sp) { $('#c-cc').value = sp.iso; this.value = sp.national; updateCc(); } }
+      autoFind();
+    });
     $('#c-email').addEventListener('change', autoFind);
     if (c.phone || c.email) findCustomer();
+  }
+  // ---- phone with country code (UAE first)
+  function countryOptions() {
+    var C = FX_COUNTRIES, o = function (c) { return '<option value="' + c.iso + '">' + C.flag(c.iso) + ' ' + esc(c.name) + ' +' + c.dial + '</option>'; };
+    return '<optgroup label="Most used">' + C.top.map(o).join('') + '</optgroup><optgroup label="All countries">' + C.all.map(o).join('') + '</optgroup>';
+  }
+  function updateCc() {
+    var sel = $('#c-cc'); if (!sel) return;
+    var c = FX_COUNTRIES.by[sel.value] || FX_COUNTRIES.by.AE;
+    $('#c-cc-label').textContent = FX_COUNTRIES.flag(c.iso) + ' +' + c.dial;
+    $('#c-phone').placeholder = c.iso === 'AE' ? '50 123 4567' : 'Mobile number';
+  }
+  function setPhone(full) {
+    var sp = full ? FX_COUNTRIES.split(full) : null, inp = $('#c-phone');
+    $('#c-cc').value = sp ? sp.iso : 'AE';
+    inp.value = sp ? sp.national : String(full || '').replace(/^0+(?=5)/, '').replace(/[^\d ]/g, '');
+    updateCc();
+  }
+  /** Full international number, e.g. +971501234567. Empty if nothing typed. */
+  function phoneNational() { return ($('#c-phone') ? $('#c-phone').value : '').replace(/\D/g, '').replace(/^0+/, ''); }
+  function fullPhone() {
+    var n = phoneNational(); if (!n) return '';
+    var c = FX_COUNTRIES.by[$('#c-cc').value] || FX_COUNTRIES.by.AE;
+    return '+' + c.dial + n;
   }
   function tierInfo(cu) {
     var parts = ['<div class="note" style="margin-bottom:12px">'];
@@ -683,17 +715,18 @@
   function autoFind() {
     clearTimeout(lookupTimer);
     lookupTimer = setTimeout(function () {
-      var ph = ($('#c-phone') ? $('#c-phone').value : '').replace(/\D/g, '');
+      var nat = phoneNational(), ph = fullPhone();
       var em = $('#c-email') ? $('#c-email').value.trim() : '';
       var emOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
-      var key = (ph.length >= 9 ? ph : '') + '|' + (emOk ? em : '');
+      var enough = $('#c-cc') && $('#c-cc').value === 'AE' ? nat.length >= 9 : nat.length >= 7;
+      var key = (enough ? ph : '') + '|' + (emOk ? em : '');
       if (key === '|' || key === lastLookup) return;
       lastLookup = key; findCustomer();
     }, 450);
   }
   function fillIfEmpty(sel, v) { var el = $(sel); if (el && !el.value.trim() && v) el.value = v; }
   function findCustomer() {
-    var phone = $('#c-phone').value.trim(), email = ($('#c-email') ? $('#c-email').value.trim() : '');
+    var phone = fullPhone(), email = ($('#c-email') ? $('#c-email').value.trim() : '');
     if (!phone && !email) return;
     if (!S.online) { $('#c-info').innerHTML = '<p class="small muted">Offline — the details will still be saved with the sale.</p>'; return; }
     $('#c-info').innerHTML = '<div class="status-line" style="justify-content:flex-start"><span class="spinner"></span> Looking up customer…</div>';
@@ -704,7 +737,7 @@
         var name = (c && c.name) || (w && w.name) || '';
         fillIfEmpty('#c-name', titleCase(name));
         fillIfEmpty('#c-email', (c && c.email) || (w && w.email) || '');
-        fillIfEmpty('#c-phone', (c && c.phone) || (w && w.phone) || '');
+        if (!phoneNational() && ((c && c.phone) || (w && w.phone))) setPhone((c && c.phone) || (w && w.phone));
         var where = [];
         if (c) where.push('🏬 ' + (c.visits || 0) + ' store purchase' + (c.visits === 1 ? '' : 's'));
         if (w) where.push('🌐 ' + w.orders + ' fomaxo.com order' + (w.orders === 1 ? '' : 's') + ' (last ' + esc(w.last_order) + ')');
@@ -1729,9 +1762,10 @@
       case 'discount': discountModal(); break;
       case 'c-find': findCustomer(); break;
       case 'c-save': {
-        var ph = $('#c-phone').value.trim(), em = $('#c-email').value.trim().toLowerCase(), nm = titleCase($('#c-name').value);
+        var ph = fullPhone(), nat = phoneNational(), em = $('#c-email').value.trim().toLowerCase(), nm = titleCase($('#c-name').value);
         if (!ph && !em && !nm) { S.customer = null; closeModal(); renderCart(); break; }
-        if (ph && ph.replace(/\D/g, '').length < 7) { modalErr('Enter the full mobile number.'); break; }
+        if (ph && $('#c-cc').value === 'AE' && !/^5\d{8}$/.test(nat)) { modalErr('UAE mobile numbers are 9 digits after +971 and start with 5, e.g. 50 123 4567.'); break; }
+        if (ph && (nat.length < 6 || nat.length > 14)) { modalErr('Enter the full mobile number, without the country code.'); break; }
         if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { modalErr('That email does not look right.'); break; }
         if (!ph && !em) { modalErr('Add a mobile number or an email for the customer.'); break; }
         var f = S._found;
