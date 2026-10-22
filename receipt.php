@@ -3,12 +3,14 @@
 require __DIR__ . '/lib/core.php';
 require __DIR__ . '/lib/ziina.php';
 require __DIR__ . '/lib/sales.php';
+require __DIR__ . '/lib/schema.php';
 
 header('X-Robots-Tag: noindex');
 $token = $_GET['t'] ?? '';
 $sale = null;
 if (preg_match('/^[0-9a-f]{32}$/', $token) && cfg() !== false) {
     try {
+        migrate();
         $raw = q1('SELECT * FROM sales WHERE receipt_token = ?', [$token]);
         if ($raw && $raw['status'] === 'pending' && $raw['method'] === 'ziina') {
             try {
@@ -53,7 +55,8 @@ $methods = ['cash' => 'Cash', 'tap' => 'Tap to Pay', 'card' => 'Card', 'ziina' =
   <header>
     <div class="brand"><?= h(cfg('store_name')) ?></div>
     <?php if (cfg('store_tagline')): ?><div class="tag"><?= h(cfg('store_tagline')) ?></div><?php endif; ?>
-    <div class="small"><?= implode('<br>', array_map('h', array_filter([cfg('store_address'), cfg('store_phone')]))) ?></div>
+    <?php if (!empty($sale['store_name']) && $sale['store_name'] !== 'Main store'): ?><div class="small"><b><?= h($sale['store_name']) ?></b></div><?php endif; ?>
+    <div class="small"><?= implode('<br>', array_map('h', array_filter([$sale['store_address'] ?: cfg('store_address'), $sale['store_phone'] ?: cfg('store_phone')]))) ?></div>
     <?php if (cfg('store_trn')): ?><div class="small">TRN <?= h(cfg('store_trn')) ?></div><?php endif; ?>
     <div class="title"><?= cfg('store_trn') ? 'TAX INVOICE' : 'RECEIPT' ?></div>
   </header>

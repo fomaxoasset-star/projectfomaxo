@@ -245,7 +245,7 @@ function current_user()
         return null;
     }
     $row = q1(
-        'SELECT u.id, u.name, u.username, u.role, u.active, t.id AS token_id, t.expires_at
+        'SELECT u.id, u.name, u.username, u.role, u.active, u.store_id, t.id AS token_id, t.expires_at
          FROM tokens t JOIN users u ON u.id = t.user_id WHERE t.token_hash = ?',
         [hash('sha256', $token)]
     );
@@ -253,7 +253,8 @@ function current_user()
         return null;
     }
     q('UPDATE tokens SET last_used = ? WHERE id = ?', [now(), $row['token_id']]);
-    $user = ['id' => (int) $row['id'], 'name' => $row['name'], 'username' => $row['username'], 'role' => $row['role']];
+    $user = ['id' => (int) $row['id'], 'name' => $row['name'], 'username' => $row['username'], 'role' => $row['role'],
+        'store_id' => $row['store_id'] === null ? null : (int) $row['store_id']];
     return $user;
 }
 
@@ -295,4 +296,37 @@ function is_installed()
     } catch (Throwable $e) {
         return false;
     }
+}
+
+/** Records what staff do, for the owner's Team > Activity screen. Never stops the real work. */
+function log_activity($user, $action, $detail = '', $ref = '', $storeId = null)
+{
+    try {
+        insert('activity', [
+            'user_id' => is_array($user) ? $user['id'] : (int) $user,
+            'store_id' => $storeId,
+            'action' => $action,
+            'detail' => mb_substr((string) $detail, 0, 255),
+            'ref' => mb_substr((string) $ref, 0, 40),
+            'created_at' => now(),
+        ]);
+    } catch (Throwable $e) {
+        error_log('FOMAXO POS activity: ' . $e->getMessage());
+    }
+}
+
+function meta_get($k, $default = null)
+{
+    try {
+        $r = q1('SELECT v FROM meta WHERE k = ?', [$k]);
+        return $r ? $r['v'] : $default;
+    } catch (Throwable $e) {
+        return $default;
+    }
+}
+
+function meta_set($k, $v)
+{
+    q('DELETE FROM meta WHERE k = ?', [$k]);
+    q('INSERT INTO meta (k, v) VALUES (?, ?)', [$k, (string) $v]);
 }

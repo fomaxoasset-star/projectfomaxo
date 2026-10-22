@@ -43,6 +43,10 @@ return [
     // 'live' = real payments
     'ziina_mode'  => 'demo',
 
+    // ---- Products come from the website and stay in sync (every 10 minutes) ----
+    'website_products_url' => 'https://fomaxo.com/products.php',
+    'website_auto_sync'    => true,
+
     // ---- FOMAXO Elite tiers: yearly spend in AED ----
     'tiers' => [
         ['name' => 'Imperial', 'min' => 30000],

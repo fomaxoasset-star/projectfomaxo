@@ -1,6 +1,37 @@
 <?php
 // Sales: creating, paying, voiding and loading sales. Stock moves only when a sale is paid.
 
+function stores_list($activeOnly = false)
+{
+    $rows = q('SELECT * FROM stores' . ($activeOnly ? ' WHERE active = 1' : '') . ' ORDER BY id')->fetchAll();
+    return array_map(function ($r) {
+        return ['id' => (int) $r['id'], 'name' => $r['name'], 'address' => $r['address'], 'phone' => $r['phone'], 'active' => (int) $r['active']];
+    }, $rows);
+}
+
+/** Which store a request works on. Staff tied to a store always use their own store. */
+function resolve_store($user, $requested)
+{
+    if ($user['role'] !== 'manager' && !empty($user['store_id'])) {
+        return (int) $user['store_id'];
+    }
+    $id = (int) $requested;
+    if ($id > 0 && q1('SELECT id FROM stores WHERE id = ? AND active = 1', [$id])) {
+        return $id;
+    }
+    $first = q1('SELECT id FROM stores WHERE active = 1 ORDER BY id LIMIT 1');
+    if (!$first) {
+        fail('No store is set up. A manager can add one under Staff > Stores.');
+    }
+    return (int) $first['id'];
+}
+
+function store_stock($productId, $storeId)
+{
+    $r = q1('SELECT stock FROM product_stock WHERE product_id = ? AND store_id = ?', [$productId, $storeId]);
+    return $r ? (int) $r['stock'] : 0;
+}
+
 function normalize_phone($p)
 {
     $p = preg_replace('/[^0-9+]/', '', (string) $p);
@@ -73,6 +104,7 @@ function create_sale($user, $b, $method)
             $priceById[$pid] = (int) $it['price'];
         }
     }
+    $storeId = resolve_store($user, $b['store_id'] ?? 0);
     $ids = array_keys($qtyById);
     $rows = q('SELECT * FROM products WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids)->fetchAll();
     $products = [];
@@ -90,8 +122,9 @@ function create_sale($user, $b, $method)
             if (!$p['active']) {
                 fail($p['name'] . ' is switched off for sale.');
             }
-            if ((int) $p['stock'] < $qty) {
-                $left = max(0, (int) $p['stock']);
+            $have = store_stock($pid, $storeId);
+            if ($have < $qty) {
+                $left = max(0, $have);
                 fail('Not enough stock: only ' . $left . ' left of ' . trim($p['name'] . ' ' . $p['variant']) . '.');
             }
         }
@@ -150,6 +183,7 @@ function create_sale($user, $b, $method)
             'receipt_no' => receipt_no_from_uuid($uuid),
             'receipt_token' => $token,
             'user_id' => $user['id'],
+            'store_id' => $storeId,
             'customer_id' => $customerId,
             'subtotal' => $t['subtotal'],
             'discount' => $t['discount'],
@@ -200,19 +234,29 @@ function mark_paid($saleId, $userId, $paidAt = null)
     if ($st->rowCount() !== 1) {
         return false;
     }
+    $sale = q1('SELECT store_id, receipt_no, total, method, offline, user_id FROM sales WHERE id = ?', [$saleId]);
+    $storeId = (int) $sale['store_id'];
+    $mname = ['cash' => 'Cash', 'tap' => 'Tap to Pay', 'card' => 'Card machine', 'ziina' => 'Ziina QR'][$sale['method']] ?? $sale['method'];
+    log_activity((int) $sale['user_id'], 'sale', 'Sold AED ' . money((int) $sale['total']) . ' by ' . $mname . ($sale['offline'] ? ' (made offline)' : ''), $sale['receipt_no'], $storeId);
     $items = q('SELECT product_id, qty FROM sale_items WHERE sale_id = ?', [$saleId])->fetchAll();
     foreach ($items as $it) {
-        move_stock((int) $it['product_id'], $userId, -(int) $it['qty'], 'sale', '', $saleId);
+        move_stock((int) $it['product_id'], $storeId, $userId, -(int) $it['qty'], 'sale', '', $saleId);
     }
     return true;
 }
 
-function move_stock($productId, $userId, $change, $reason, $note = '', $saleId = null)
+function move_stock($productId, $storeId, $userId, $change, $reason, $note = '', $saleId = null)
 {
+    $st = q('UPDATE product_stock SET stock = stock + ? WHERE product_id = ? AND store_id = ?', [$change, $productId, $storeId]);
+    if ($st->rowCount() === 0) {
+        insert('product_stock', ['product_id' => $productId, 'store_id' => $storeId, 'stock' => $change]);
+    }
+    // products.stock keeps the total across all stores
     q('UPDATE products SET stock = stock + ?, updated_at = ? WHERE id = ?', [$change, now(), $productId]);
-    $after = (int) (q1('SELECT stock FROM products WHERE id = ?', [$productId])['stock'] ?? 0);
+    $after = store_stock($productId, $storeId);
     insert('stock_moves', [
         'product_id' => $productId,
+        'store_id' => $storeId,
         'user_id' => $userId,
         'qty_change' => $change,
         'stock_after' => $after,
@@ -253,8 +297,10 @@ function refresh_ziina_sale($sale, $userId)
 function load_sale($where, $param)
 {
     $s = q1(
-        "SELECT s.*, u.name AS staff_name, c.phone AS customer_phone, c.name AS customer_name
+        "SELECT s.*, u.name AS staff_name, c.phone AS customer_phone, c.name AS customer_name,
+                st.name AS store_name, st.address AS store_address, st.phone AS store_phone
          FROM sales s JOIN users u ON u.id = s.user_id LEFT JOIN customers c ON c.id = s.customer_id
+         LEFT JOIN stores st ON st.id = s.store_id
          WHERE s.$where = ?",
         [$param]
     );
@@ -262,7 +308,7 @@ function load_sale($where, $param)
         return null;
     }
     $s['items'] = q('SELECT product_id, name, variant, price, qty, line_total FROM sale_items WHERE sale_id = ? ORDER BY id', [$s['id']])->fetchAll();
-    foreach (['id', 'user_id', 'customer_id', 'subtotal', 'discount', 'vat', 'total', 'cash_given', 'change_due', 'offline'] as $k) {
+    foreach (['id', 'user_id', 'store_id', 'customer_id', 'subtotal', 'discount', 'vat', 'total', 'cash_given', 'change_due', 'offline'] as $k) {
         if ($s[$k] !== null) {
             $s[$k] = (int) $s[$k];
         }

@@ -101,9 +101,124 @@ function schema_sql($mysql)
         )$end",
 
         "CREATE INDEX idx_sales_created ON sales (created_at)",
+        // (multi-store tables are added by migrate() below)
         "CREATE INDEX idx_sales_status ON sales (status)",
         "CREATE INDEX idx_items_sale ON sale_items (sale_id)",
         "CREATE INDEX idx_moves_product ON stock_moves (product_id)",
         "CREATE INDEX idx_attempts_ip ON login_attempts (ip)",
     ];
+}
+
+const SCHEMA_VERSION = 2;
+
+function schema_version()
+{
+    try {
+        $r = q1("SELECT v FROM meta WHERE k = 'schema'");
+        return $r ? (int) $r['v'] : 1;
+    } catch (Throwable $e) {
+        return 1;
+    }
+}
+
+/** Upgrades an existing database to the newest layout. Safe to call on every request. */
+function migrate()
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    if (schema_version() >= SCHEMA_VERSION || !is_installed()) {
+        return;
+    }
+    $mysql = is_mysql();
+    if ($mysql) {
+        q("SELECT GET_LOCK('fomaxo_pos_migrate', 20)");
+    }
+    try {
+        if (schema_version() < 2) {
+            migrate_v2($mysql);
+        }
+    } finally {
+        if ($mysql) {
+            q("SELECT RELEASE_LOCK('fomaxo_pos_migrate')");
+        }
+    }
+}
+
+function try_exec($sql)
+{
+    try {
+        db()->exec($sql);
+    } catch (PDOException $e) {
+        // already there (column / index / table) - fine
+    }
+}
+
+// Version 2: several stores, each with its own stock.
+function migrate_v2($mysql)
+{
+    $id = $mysql ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+    $end = $mysql ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : '';
+    $dt = $mysql ? 'DATETIME' : 'TEXT';
+    db()->exec("CREATE TABLE IF NOT EXISTS meta (k VARCHAR(40) NOT NULL PRIMARY KEY, v VARCHAR(255) NOT NULL)$end");
+    db()->exec("CREATE TABLE IF NOT EXISTS stores (
+        id $id,
+        name VARCHAR(80) NOT NULL,
+        address VARCHAR(255) NOT NULL DEFAULT '',
+        phone VARCHAR(40) NOT NULL DEFAULT '',
+        active TINYINT NOT NULL DEFAULT 1,
+        created_at $dt NOT NULL
+    )$end");
+    db()->exec("CREATE TABLE IF NOT EXISTS product_stock (
+        id $id,
+        product_id INT NOT NULL,
+        store_id INT NOT NULL,
+        stock INT NOT NULL DEFAULT 0,
+        UNIQUE (product_id, store_id)
+    )$end");
+    db()->exec("CREATE TABLE IF NOT EXISTS activity (
+        id $id,
+        user_id INT NOT NULL,
+        store_id INT NULL,
+        action VARCHAR(30) NOT NULL,
+        detail VARCHAR(255) NOT NULL DEFAULT '',
+        ref VARCHAR(40) NOT NULL DEFAULT '',
+        created_at $dt NOT NULL
+    )$end");
+    try_exec('CREATE INDEX idx_activity_created ON activity (created_at)');
+    try_exec('CREATE INDEX idx_activity_user ON activity (user_id)');
+    try_exec('ALTER TABLE sales ADD COLUMN store_id INT NULL');
+    try_exec('ALTER TABLE stock_moves ADD COLUMN store_id INT NULL');
+    try_exec('ALTER TABLE users ADD COLUMN store_id INT NULL');
+    try_exec('CREATE INDEX idx_sales_store ON sales (store_id)');
+
+    $main = q1('SELECT id FROM stores ORDER BY id LIMIT 1');
+    $mainId = $main ? (int) $main['id'] : insert('stores', [
+        'name' => 'Main store',
+        'address' => (string) cfg('store_address', ''),
+        'phone' => (string) cfg('store_phone', ''),
+        'active' => 1,
+        'created_at' => now(),
+    ]);
+    // Everything recorded so far belongs to the main store.
+    q('INSERT INTO product_stock (product_id, store_id, stock)
+       SELECT p.id, ?, p.stock FROM products p
+       WHERE NOT EXISTS (SELECT 1 FROM product_stock s WHERE s.product_id = p.id AND s.store_id = ?)', [$mainId, $mainId]);
+    q('UPDATE sales SET store_id = ? WHERE store_id IS NULL', [$mainId]);
+    q('UPDATE stock_moves SET store_id = ? WHERE store_id IS NULL', [$mainId]);
+    q("DELETE FROM meta WHERE k = 'schema'");
+    q("INSERT INTO meta (k, v) VALUES ('schema', '2')");
+
+    // First time on the multi-store version: bring in the real product list from fomaxo.com
+    // (only if nothing has been set up by hand yet). The Sync button on Stock does it any time later.
+    if (!q1("SELECT id FROM products WHERE sku <> '' LIMIT 1")) {
+        require_once __DIR__ . '/webimport.php';
+        try {
+            import_web_products();
+        } catch (Throwable $e) {
+            error_log('FOMAXO POS: first product import skipped: ' . $e->getMessage());
+        }
+    }
 }

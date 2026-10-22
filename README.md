@@ -7,7 +7,10 @@ A store app for FOMAXO staff. It runs on your Hostinger plan and opens in any ph
 - **Stock:** in stock / running low / out of stock, stock goes down with every sale, restock and stock-count tools, full history per product
 - **Receipts:** print (80mm receipt printer or A4/PDF), WhatsApp, email or link; shows TRN and VAT when set
 - **FOMAXO Elite:** yearly spend per customer phone number, tier printed on the receipt
-- **Staff:** separate logins; managers also get Reports, Staff and stock editing
+- **Several stores:** each store has its own stock, address and phone (on its receipts); move stock between stores; reports per store or all
+- **Products from fomaxo.com:** every product and size comes in from the website with its price, and stays in sync every 10 minutes (stock counts are never changed by this)
+- **Team (owner):** each person's sales, average sale, items, discounts and voids; who is using the app right now; and an activity log of what everyone did
+- **Staff:** separate logins and passwords, each tied to a store or free to choose; managers also get Reports, Team and stock editing
 - **Offline:** cash, Tap to Pay and card-machine sales keep working without internet and upload automatically later
 
 ---

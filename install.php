@@ -99,15 +99,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'created_at' => now(),
         ]);
         if (!empty($_POST['starter'])) {
-            $low = (int) cfg('default_low_stock', 5);
-            foreach (['FOMAXO Gold', 'FOMAXO Dollar', 'FOMAXO King', 'FOMAXO Old Money', 'FOMAXO Royal Candy', 'FOMAXO Matcha Coco', 'FOMAXO Passion Sin'] as $p) {
-                insert('products', [
-                    'name' => $p, 'variant' => '', 'sku' => '', 'category' => 'Fragrance',
-                    'price' => 0, 'stock' => 0, 'low_at' => $low, 'active' => 0,
-                    'created_at' => now(), 'updated_at' => now(),
-                ]);
-            }
+            // Products, sizes and prices from the fomaxo.com website (happens during migrate below).
+        } else {
+            q("INSERT INTO products (name, variant, sku, category, price, stock, low_at, active, created_at, updated_at)
+               VALUES ('Example product', '', 'manual', 'Fragrance', 0, 0, 5, 0, ?, ?)", [now(), now()]);
+            q("DELETE FROM products WHERE sku = 'manual'");
         }
+        migrate();
         $done = true;
     }
 }
@@ -123,7 +121,7 @@ $form = ($error ? '<p class="err">' . h($error) . '</p>' : '') . '
   <label>Username<input name="username" required autocapitalize="none" value="' . h($_POST['username'] ?? '') . '"></label>
   <label>Password (8+ characters)<input name="password" type="password" required minlength="8"></label>
   <label>Password again<input name="password2" type="password" required minlength="8"></label>
-  <label class="check"><input type="checkbox" name="starter" value="1" checked> Add the FOMAXO fragrance line as starter products (switched off until you set prices)</label>
+  <label class="check"><input type="checkbox" name="starter" value="1" checked> Bring in all products, sizes and prices from fomaxo.com</label>
   <button class="btn" type="submit">Set up store system</button>
 </form>';
 page('Set up FOMAXO Store', $form);

@@ -75,6 +75,10 @@
     token: LS.get('fx_token', null),
     user: LS.get('fx_user', null),
     settings: LS.get('fx_settings', null),
+    stores: LS.get('fx_stores', []),
+    store: LS.get('fx_store', null),
+    stockScope: 'store', salesStore: 'all', reportStore: 'all',
+    teamTab: 'performance', team: { preset: 'today', from: null, to: null, user: '' },
     products: LS.get('fx_products', []),
     queue: LS.get('fx_queue', []),
     online: navigator.onLine,
@@ -87,6 +91,18 @@
     syncing: false, cartOpen: false
   };
   function isManager() { return S.user && S.user.role === 'manager'; }
+  function activeStores() { return S.stores.filter(function (x) { return x.active; }); }
+  function storeLocked() { return !isManager() && S.user && S.user.store_id; }
+  // The store this device is selling from.
+  function curStoreId() {
+    if (storeLocked()) return S.user.store_id;
+    var act = activeStores();
+    for (var i = 0; i < act.length; i++) if (act[i].id === S.store) return S.store;
+    return act.length ? act[0].id : null;
+  }
+  function storeById(id) { for (var i = 0; i < S.stores.length; i++) if (S.stores[i].id === id) return S.stores[i]; return null; }
+  function curStore() { return storeById(curStoreId()) || { id: null, name: '', address: '', phone: '' }; }
+  function multiStore() { return S.stores.length > 1; }
   function saveQueue() { LS.set('fx_queue', S.queue); }
 
   // ---------------------------------------------------------------- server
@@ -138,19 +154,21 @@
 
   function refreshProducts() {
     if (!S.token) return Promise.resolve();
-    return api('products').then(function (d) {
+    return api('products', { query: '&store=' + (curStoreId() || '') }).then(function (d) {
       S.products = d.products;
       LS.set('fx_products', S.products);
       if (S.view === 'sell' && $('#tiles')) { renderChips(); renderTiles(); renderCart(); }
       if (S.view === 'stock' && $('#stock-body')) renderStockBody();
+      updateStoreBtn();
       updateNavCounts();
     }).catch(function () { /* keep cached list */ });
   }
 
   function refreshMe() {
     return api('me').then(function (d) {
-      S.user = d.user; S.settings = d.settings;
-      LS.set('fx_user', S.user); LS.set('fx_settings', S.settings);
+      S.user = d.user; S.settings = d.settings; S.stores = d.stores || [];
+      LS.set('fx_user', S.user); LS.set('fx_settings', S.settings); LS.set('fx_stores', S.stores);
+      updateStoreBtn();
     }).catch(function () { /* offline: use cached */ });
   }
 
@@ -290,7 +308,7 @@
   // ---------------------------------------------------------------- app shell
   function navItems() {
     var items = [['sell', 'Sell'], ['stock', 'Stock'], ['sales', 'Sales']];
-    if (isManager()) items.push(['reports', 'Reports'], ['staff', 'Staff']);
+    if (isManager()) items.push(['reports', 'Reports'], ['staff', 'Team']);
     return items;
   }
   function renderApp() {
@@ -302,11 +320,40 @@
         return '<button data-act="nav" data-view="' + n[0] + '" class="' + (S.view === n[0] ? 'active' : '') + '">' + ICON[n[0]] + '<span>' + n[1] + '</span><span class="count hidden" data-count="' + n[0] + '"></span></button>';
       }).join('') + '</nav>' +
       '<div class="spacer"></div>' +
+      '<button class="store-btn hidden" id="store-btn" data-act="store-menu"></button>' +
       '<button class="net" id="net" data-act="net"></button>' +
       '<button class="btn icon-btn ghost theme-btn" id="theme-btn" data-act="theme-toggle"></button>' +
       '<button class="user-btn" data-act="user-menu"><span class="avatar">' + esc(initials(S.user.name)) + '</span><span class="u-name">' + esc(S.user.name) + '</span></button>' +
       '</header><main class="view" id="view"></main></div>';
-    updateNet(); updateNavCounts(); applyTheme(); renderView();
+    updateNet(); updateNavCounts(); applyTheme(); updateStoreBtn(); renderView();
+  }
+  function updateStoreBtn() {
+    var b = $('#store-btn'); if (!b) return;
+    var show = multiStore() || (S.stores.length === 1 && isManager());
+    b.classList.toggle('hidden', !show || !curStoreId());
+    b.innerHTML = '<span class="pin"></span><span class="s-name">' + esc(curStore().name) + '</span>' + (storeLocked() ? '' : '<span class="caret">▾</span>');
+    b.disabled = !!storeLocked();
+  }
+  function storeMenu(btn) {
+    closeMenu();
+    if (storeLocked()) return;
+    var r = btn.getBoundingClientRect();
+    var m = document.createElement('div');
+    m.className = 'menu';
+    m.style.top = (r.bottom + 6) + 'px'; m.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 240)) + 'px';
+    m.innerHTML = '<div class="m-head"><b>Selling from</b><div class="small muted">Sales and stock on this device use this store</div></div>' +
+      activeStores().map(function (x) {
+        return '<button data-act="store-pick" data-id="' + x.id + '">' + (x.id === curStoreId() ? '✓ ' : '') + esc(x.name) + '</button>';
+      }).join('') + (isManager() ? '<button data-act="nav" data-view="staff" data-tab="stores" class="muted">Manage stores…</button>' : '');
+    document.body.appendChild(m);
+  }
+  function pickStore(id) {
+    if (S.cart.length && !confirm('Switch store? The current cart will be cleared.')) return;
+    S.store = id; LS.set('fx_store', id);
+    S.cart = []; S.discount = null; S.customer = null;
+    closeMenu(); updateStoreBtn();
+    refreshProducts().then(function () { renderView(); });
+    toast('Now selling from ' + curStore().name + '.');
   }
   function updateNet() {
     var el = $('#net'); if (!el) return;
@@ -490,7 +537,7 @@
   function buildPayload(method, extra) {
     var id = uuid();
     var p = {
-      uuid: id, receipt_token: randHex(16), method: method,
+      uuid: id, receipt_token: randHex(16), method: method, store_id: curStoreId(),
       items: cartLines().map(function (l) { return { product_id: l.product_id, qty: l.qty, price: l.price }; }),
       discount: S.discount, customer: S.customer ? { phone: S.customer.phone, name: S.customer.name } : null,
       created_at: stamp()
@@ -556,6 +603,7 @@
     var local = {
       queued: true, uuid: payload.uuid, receipt_no: 'FMX-' + payload.uuid.replace(/-/g, '').slice(0, 8).toUpperCase(),
       receipt_token: payload.receipt_token, created_at: payload.created_at, staff_name: S.user.name,
+      store_name: curStore().name, store_address: curStore().address, store_phone: curStore().phone,
       customer_name: S.customer ? S.customer.name : '', customer_phone: S.customer ? S.customer.phone : '',
       customer_tier: S.customer ? S.customer.tier : null,
       items: lines.map(function (l) { return { name: l.name, variant: l.variant, price: l.price, qty: l.qty, line_total: l.price * l.qty }; }),
@@ -627,7 +675,7 @@
     return '<div class="paper">' +
       '<div class="p-brand">' + esc(st.store_name) + '</div>' +
       (st.store_tagline ? '<div class="p-tag">' + esc(st.store_tagline) + '</div>' : '') +
-      '<div class="p-small">' + [st.store_address, st.store_phone, st.store_trn ? 'TRN ' + st.store_trn : ''].filter(Boolean).map(esc).join('<br>') + '</div>' +
+      '<div class="p-small">' + [multiStore() && s.store_name ? s.store_name : '', s.store_address || st.store_address, s.store_phone || st.store_phone, st.store_trn ? 'TRN ' + st.store_trn : ''].filter(Boolean).map(esc).join('<br>') + '</div>' +
       '<div class="p-title">' + (st.store_trn ? 'TAX INVOICE' : 'RECEIPT') + '</div>' +
       '<div class="p-meta"><div><span>Receipt</span><b>' + esc(s.receipt_no) + '</b></div>' +
       '<div><span>Date</span><span>' + niceDate(s.created_at) + '</span></div>' +
@@ -671,19 +719,28 @@
   // ---------------------------------------------------------------- STOCK
   function renderStock() {
     var mgr = isManager();
-    $('#view').innerHTML = '<div class="page"><div class="page-head"><h1>Stock</h1><div class="spacer"></div>' +
-      (mgr ? '<button class="btn gold" data-act="p-new">+ Add product</button>' : '') + '</div>' +
+    var showAll = mgr && multiStore();
+    if (!showAll) S.stockScope = 'store';
+    $('#view').innerHTML = '<div class="page"><div class="page-head"><h1>Stock</h1>' +
+      (multiStore() ? '<span class="muted">' + (S.stockScope === 'all' ? 'All stores' : esc(curStore().name)) + '</span>' : '') + '<div class="spacer"></div>' +
+      (showAll ? '<div class="seg"><button data-act="scope" data-s="store" class="' + (S.stockScope === 'store' ? 'active' : '') + '">' + esc(curStore().name) + '</button><button data-act="scope" data-s="all" class="' + (S.stockScope === 'all' ? 'active' : '') + '">All stores</button></div>' : '') +
+      (mgr ? '<button class="btn" data-act="web-sync" title="Products and prices update from fomaxo.com automatically every 10 minutes">Sync with website</button><button class="btn gold" data-act="p-new">+ Add product</button>' : '') + '</div>' +
       '<div class="kpis" id="stock-kpis"></div>' +
       '<div class="catalog-tools" style="position:static;margin:0 0 12px;padding:0"><label class="search">' + ICON.search +
       '<input class="input" id="sq" type="search" placeholder="Search stock" value="' + esc(S.stockSearch) + '"></label>' +
       '<div class="chips" id="stock-chips"></div></div>' +
-      '<div class="table-wrap"><table class="tbl"><thead><tr><th>Product</th><th class="hide-sm">Category</th><th class="r hide-sm">Price</th><th>Stock</th><th class="r"></th></tr></thead><tbody id="stock-body"></tbody></table></div>' +
+      '<div class="table-wrap" id="stock-table"></div>' +
       (!S.online ? '<p class="small muted">Offline — showing the last saved stock list.</p>' : '') + '</div>';
     $('#sq').addEventListener('input', function (e) { S.stockSearch = e.target.value; renderStockBody(); });
     renderStockBody();
   }
+  function totalStock(p) { var t = 0, m = p.stocks || {}; for (var k in m) t += m[k]; return t; }
+  function scoped(p) {
+    if (S.stockScope !== 'all') return p;
+    var c = {}; for (var k in p) c[k] = p[k]; c.stock = totalStock(p); return c;
+  }
   function renderStockBody() {
-    var all = S.products;
+    var all = S.products.map(scoped), allMode = S.stockScope === 'all';
     var counts = { all: 0, low: 0, out: 0, off: 0 }, value = 0;
     all.forEach(function (p) {
       var s = stockState(p);
@@ -705,15 +762,42 @@
       if (S.stockFilter !== 'all' && s !== S.stockFilter) return false;
       return !q || (p.name + ' ' + p.variant + ' ' + p.sku + ' ' + p.category).toLowerCase().indexOf(q) >= 0;
     }).sort(function (a, b) { return rank[stockState(a)] - rank[stockState(b)] || (a.name + a.variant).localeCompare(b.name + b.variant); });
-    var mgr = isManager();
-    $('#stock-body').innerHTML = list.length ? list.map(function (p) {
-      return '<tr><td><div class="p-name">' + esc(p.name) + '</div><div class="small muted">' + esc([p.variant, p.sku].filter(Boolean).join(' · ')) + '</div></td>' +
-        '<td class="hide-sm muted">' + esc(p.category) + '</td><td class="r hide-sm num">' + money(p.price) + '</td>' +
-        '<td><div class="stock-num num">' + p.stock + '</div>' + stockBadge(p) + '</td>' +
-        '<td><div class="actions">' + (mgr ? '<button class="btn sm gold" data-act="p-adjust" data-id="' + p.id + '">Adjust</button><button class="btn sm" data-act="p-edit" data-id="' + p.id + '">Edit</button>' : '') +
-        '<button class="btn sm ghost" data-act="p-history" data-id="' + p.id + '">History</button></div></td></tr>';
-    }).join('') : '<tr><td colspan="5"><div class="empty">' + (all.length ? 'Nothing here.' : 'No products yet.' + (mgr ? ' Press <b>+ Add product</b>.' : '')) + '</div></td></tr>';
+    var mgr = isManager(), stores = activeStores(), canMove = mgr && stores.length > 1;
+    var cell = function (p, n) {
+      var st = !p.active ? 'off' : n <= 0 ? 'out' : n <= p.low_at ? 'low' : 'ok';
+      return '<span class="stock-cell ' + st + ' num">' + n + '</span>';
+    };
+    var head = allMode ?
+      '<tr><th>Product</th>' + stores.map(function (x) { return '<th class="r">' + esc(x.name) + '</th>'; }).join('') + '<th class="r">Total</th><th class="r"></th></tr>' :
+      '<tr><th>Product</th><th class="hide-sm">Category</th><th class="r hide-sm">Price</th><th>Stock</th><th class="r"></th></tr>';
+    var rows = list.map(function (p) {
+      var name = '<td><div class="p-name">' + esc(p.name) + '</div><div class="small muted">' + esc([p.variant, p.sku].filter(Boolean).join(' · ')) + '</div></td>';
+      var acts = '<td><div class="actions">' + (mgr && !allMode ? '<button class="btn sm gold" data-act="p-adjust" data-id="' + p.id + '">Adjust</button>' : '') +
+        (canMove ? '<button class="btn sm" data-act="p-move" data-id="' + p.id + '">Move</button>' : '') +
+        (mgr ? '<button class="btn sm" data-act="p-edit" data-id="' + p.id + '">Edit</button>' : '') +
+        '<button class="btn sm ghost" data-act="p-history" data-id="' + p.id + '">History</button></div></td>';
+      if (allMode) {
+        return '<tr>' + name + stores.map(function (x) { return '<td class="r">' + cell(p, (p.stocks || {})[x.id] || 0) + '</td>'; }).join('') +
+          '<td class="r"><div class="stock-num num">' + p.stock + '</div>' + stockBadge(p) + '</td>' + acts + '</tr>';
+      }
+      return '<tr>' + name + '<td class="hide-sm muted">' + esc(p.category) + '</td><td class="r hide-sm num">' + money(p.price) + '</td>' +
+        '<td><div class="stock-num num">' + p.stock + '</div>' + stockBadge(p) + '</td>' + acts + '</tr>';
+    }).join('');
+    var cols = allMode ? stores.length + 3 : 5;
+    $('#stock-table').innerHTML = '<table class="tbl"><thead>' + head + '</thead><tbody id="stock-body">' + (rows ||
+      '<tr><td colspan="' + cols + '"><div class="empty">' + (all.length ? 'Nothing here.' : 'No products yet.' + (mgr ? ' Press <b>+ Add product</b>.' : '')) + '</div></td></tr>') + '</tbody></table>';
     updateNavCounts();
+  }
+  function transferModal(p) {
+    var stores = activeStores(), from = curStoreId(), to = (stores.filter(function (x) { return x.id !== from; })[0] || {}).id;
+    var opts = function (sel) { return stores.map(function (x) { return '<option value="' + x.id + '"' + (x.id === sel ? ' selected' : '') + '>' + esc(x.name) + ' (' + ((p.stocks || {})[x.id] || 0) + ')</option>'; }).join(''); };
+    openModal('Move stock', '<div class="err m-err hidden"></div>' +
+      '<p style="margin-top:0"><b>' + esc(pName(p)) + '</b></p>' +
+      '<div class="grid2"><label class="field"><span>From</span><select class="input" id="t-from">' + opts(from) + '</select></label>' +
+      '<label class="field"><span>To</span><select class="input" id="t-to">' + opts(to) + '</select></label></div>' +
+      '<label class="field"><span>How many?</span><input class="input" id="t-qty" type="number" inputmode="numeric" min="1" autofocus></label>' +
+      '<label class="field"><span>Note (optional)</span><input class="input" id="t-note" placeholder="e.g. sent with driver"></label>' +
+      '<div class="modal-foot"><button class="btn" data-act="modal-close">Cancel</button><button class="btn gold" data-act="t-save" data-id="' + p.id + '">Move stock</button></div>');
   }
   function productModal(p) {
     var isNew = !p; p = p || { name: '', variant: '', sku: '', category: '', price: 0, low_at: S.settings.default_low_stock, active: 1 };
@@ -725,14 +809,14 @@
       '<div class="grid2"><label class="field"><span>Price AED' + (S.settings.prices_include_vat ? ' (incl. VAT)' : '') + '</span><input class="input" name="price" type="number" inputmode="decimal" step="0.01" min="0" required value="' + (p.price ? (p.price / 100).toFixed(2) : '') + '"></label>' +
       '<label class="field"><span>Warn "running low" at</span><input class="input" name="low_at" type="number" min="0" value="' + p.low_at + '"></label></div>' +
       '<div class="grid2"><label class="field"><span>SKU / barcode (optional)</span><input class="input" name="sku" value="' + esc(p.sku) + '"></label>' +
-      (isNew ? '<label class="field"><span>Opening stock</span><input class="input" name="stock" type="number" value="0"></label>' : '<div></div>') + '</div>' +
+      (isNew ? '<label class="field"><span>Opening stock' + (multiStore() ? ' at ' + esc(curStore().name) : '') + '</span><input class="input" name="stock" type="number" value="0"></label>' : '<div></div>') + '</div>' +
       '<label class="check"><input type="checkbox" name="active" ' + (p.active ? 'checked' : '') + '> On sale (shows on the Sell screen)</label>' +
       '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>');
     $('#p-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var f = e.target, b = $('[type=submit]', f);
       b.disabled = true;
-      api('product_save', { body: { id: isNew ? 0 : p.id, name: f.name.value, variant: f.variant.value, category: f.category.value, price: f.price.value, low_at: f.low_at.value, sku: f.sku.value, stock: f.stock ? f.stock.value : 0, active: f.active.checked ? 1 : 0 } })
+      api('product_save', { body: { id: isNew ? 0 : p.id, name: f.name.value, variant: f.variant.value, category: f.category.value, price: f.price.value, low_at: f.low_at.value, sku: f.sku.value, stock: f.stock ? f.stock.value : 0, store_id: curStoreId(), active: f.active.checked ? 1 : 0 } })
         .then(function () { closeModal(); toast('Saved.'); refreshProducts(); })
         .catch(function (er) { b.disabled = false; modalErr(er.offline ? 'Needs internet to save.' : er.message); });
     });
@@ -741,10 +825,10 @@
     ['restock', 'Received new stock', 1], ['count', 'Stock count — set exact number', 0], ['damaged', 'Damaged / broken', -1],
     ['tester', 'Opened as tester', -1], ['return', 'Customer return (back on shelf)', 1], ['other', 'Other correction (+ or −)', 2]
   ];
-  var REASON_LABEL = { sale: 'Sold', opening: 'Opening stock', restock: 'Received stock', count: 'Stock count', damaged: 'Damaged', tester: 'Tester', 'return': 'Customer return', other: 'Correction', void: 'Sale voided' };
+  var REASON_LABEL = { transfer: 'Moved between stores', sale: 'Sold', opening: 'Opening stock', restock: 'Received stock', count: 'Stock count', damaged: 'Damaged', tester: 'Tester', 'return': 'Customer return', other: 'Correction', void: 'Sale voided' };
   function adjustModal(p) {
     openModal('Adjust stock', '<div class="err m-err hidden"></div>' +
-      '<p style="margin-top:0"><b>' + esc(pName(p)) + '</b><br><span class="muted">Now in stock: <b class="num">' + p.stock + '</b></span></p>' +
+      '<p style="margin-top:0"><b>' + esc(pName(p)) + '</b><br><span class="muted">' + (multiStore() ? 'At ' + esc(curStore().name) + ': ' : 'Now in stock: ') + '<b class="num">' + p.stock + '</b></span></p>' +
       '<label class="field"><span>What happened?</span><select class="input" id="a-reason">' + REASONS.map(function (r) { return '<option value="' + r[0] + '">' + r[1] + '</option>'; }).join('') + '</select></label>' +
       '<label class="field"><span id="a-label">How many?</span><input class="input" id="a-num" type="number" inputmode="numeric" autofocus></label>' +
       '<div class="note" id="a-preview">New stock: ' + p.stock + '</div>' +
@@ -761,11 +845,11 @@
   function historyModal(p) {
     openModal('History · ' + pName(p), '<div class="status-line"><span class="spinner"></span> Loading…</div>', { wide: true });
     api('stock_moves', { query: '&product_id=' + p.id }).then(function (d) {
-      setModalBody(d.moves.length ? '<div class="table-wrap"><table class="tbl"><thead><tr><th>When</th><th>What</th><th class="r">Change</th><th class="r">After</th><th class="hide-sm">By</th></tr></thead><tbody>' +
+      setModalBody(d.moves.length ? '<div class="table-wrap"><table class="tbl"><thead><tr><th>When</th><th>What</th><th class="r">Change</th><th class="r">After</th>' + (multiStore() ? '<th class="hide-sm">Store</th>' : '') + '<th class="hide-sm">By</th></tr></thead><tbody>' +
         d.moves.map(function (m) {
           var ch = parseInt(m.qty_change, 10);
           return '<tr><td class="small">' + niceDate(m.created_at) + '</td><td>' + esc(REASON_LABEL[m.reason] || m.reason) + (m.receipt_no ? ' <span class="small muted">' + esc(m.receipt_no) + '</span>' : '') + (m.note ? '<div class="small muted">' + esc(m.note) + '</div>' : '') + '</td>' +
-            '<td class="r num" style="color:' + (ch < 0 ? 'var(--out)' : 'var(--ok)') + '">' + (ch > 0 ? '+' : '') + ch + '</td><td class="r num">' + esc(m.stock_after) + '</td><td class="hide-sm small">' + esc(m.staff) + '</td></tr>';
+            '<td class="r num" style="color:' + (ch < 0 ? 'var(--out)' : 'var(--ok)') + '">' + (ch > 0 ? '+' : '') + ch + '</td><td class="r num">' + esc(m.stock_after) + '</td>' + (multiStore() ? '<td class="hide-sm small">' + esc(m.store_name || '') + '</td>' : '') + '<td class="hide-sm small">' + esc(m.staff) + '</td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">No stock changes yet.</div>');
     }).catch(function (e) { setModalBody('<div class="err">' + esc(e.offline ? 'History needs internet.' : e.message) + '</div>'); });
   }
@@ -774,6 +858,7 @@
   function renderSales() {
     var q = S.queue;
     var html = '<div class="page"><div class="page-head"><h1>Sales</h1><div class="spacer"></div>' +
+      (isManager() ? storeSelect('sst', S.salesStore, true) : '') +
       '<input class="input" id="sd" type="date" style="width:auto" value="' + S.salesDate + '" max="' + ymd() + '"></div>';
     if (q.length) {
       html += '<div class="card" style="margin-bottom:14px"><div class="row" style="margin-bottom:8px"><h3 class="grow" style="margin:0">Waiting to upload (' + q.length + ')</h3><button class="btn sm gold" data-act="sync-now"' + (S.online ? '' : ' disabled') + '>Upload now</button></div>' +
@@ -787,11 +872,12 @@
     html += '<div id="sales-list"><div class="status-line"><span class="spinner"></span> Loading…</div></div></div>';
     $('#view').innerHTML = html;
     $('#sd').addEventListener('change', function (e) { S.salesDate = e.target.value || ymd(); loadSales(); });
+    if ($('#sst')) $('#sst').addEventListener('change', function (e) { S.salesStore = e.target.value; loadSales(); });
     loadSales();
   }
   var STATUS_BADGE = { paid: '<span class="badge ok">Paid</span>', pending: '<span class="badge low">Waiting</span>', cancelled: '<span class="badge off">Cancelled</span>', failed: '<span class="badge out">Failed</span>', void: '<span class="badge out">Voided</span>' };
   function loadSales() {
-    api('sales', { query: '&from=' + S.salesDate + '&to=' + S.salesDate }).then(function (d) {
+    api('sales', { query: '&from=' + S.salesDate + '&to=' + S.salesDate + '&store=' + S.salesStore }).then(function (d) {
       var el = $('#sales-list'); if (!el) return;
       var paid = d.sales.filter(function (s) { return s.status === 'paid'; }), total = 0;
       paid.forEach(function (s) { total += s.total; });
@@ -799,7 +885,7 @@
         '<div class="kpi"><div class="k-label">Paid sales</div><div class="k-val">' + paid.length + '</div></div></div>' +
         (d.sales.length ? '<div class="table-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Receipt</th>' + (isManager() ? '<th class="hide-sm">Staff</th>' : '') + '<th class="hide-sm">Paid by</th><th class="r">Total</th><th class="r">Status</th></tr></thead><tbody>' +
           d.sales.map(function (s) {
-            return '<tr class="click" data-act="s-open" data-id="' + s.id + '"><td class="num">' + niceTime(s.created_at) + '</td><td><b>' + esc(s.receipt_no) + '</b><div class="small muted">' + s.items + ' item' + (s.items === 1 ? '' : 's') + (s.customer_name ? ' · ' + esc(s.customer_name) : '') + (s.offline ? ' · offline' : '') + '</div></td>' +
+            return '<tr class="click" data-act="s-open" data-id="' + s.id + '"><td class="num">' + niceTime(s.created_at) + '</td><td><b>' + esc(s.receipt_no) + '</b><div class="small muted">' + s.items + ' item' + (s.items === 1 ? '' : 's') + (s.customer_name ? ' · ' + esc(s.customer_name) : '') + (s.offline ? ' · offline' : '') + (multiStore() && s.store_name ? ' · ' + esc(s.store_name) : '') + '</div></td>' +
               (isManager() ? '<td class="hide-sm">' + esc(s.staff_name) + '</td>' : '') + '<td class="hide-sm">' + esc(METHOD[s.method] || s.method) + '</td><td class="r num">' + money(s.total) + '</td><td class="r">' + (STATUS_BADGE[s.status] || esc(s.status)) + '</td></tr>';
           }).join('') + '</tbody></table></div>' : '<div class="empty"><div class="big">No sales on this day</div></div>');
     }).catch(function (e) {
@@ -822,10 +908,11 @@
       '<div class="seg" style="min-width:300px">' + [['today', 'Today'], ['yesterday', 'Yesterday'], ['week', '7 days'], ['month', 'This month']].map(function (p) {
         return '<button data-act="r-preset" data-p="' + p[0] + '" class="' + (r.preset === p[0] ? 'active' : '') + '">' + p[1] + '</button>';
       }).join('') + '</div>' +
-      '<div class="row"><input class="input" type="date" id="rf" value="' + r.from + '" style="width:auto"><span class="muted">to</span><input class="input" type="date" id="rt" value="' + r.to + '" style="width:auto"></div></div>' +
+      '<div class="row"><input class="input" type="date" id="rf" value="' + r.from + '" style="width:auto"><span class="muted">to</span><input class="input" type="date" id="rt" value="' + r.to + '" style="width:auto"></div>' + storeSelect('rstore', S.reportStore, true) + '</div>' +
       '<div id="report-body"><div class="status-line"><span class="spinner"></span> Loading…</div></div></div>';
     var onDate = function () { S.report = { preset: 'custom', from: $('#rf').value, to: $('#rt').value }; loadReport(); $$('[data-act=r-preset]').forEach(function (b) { b.classList.remove('active'); }); };
     $('#rf').addEventListener('change', onDate); $('#rt').addEventListener('change', onDate);
+    if ($('#rstore')) $('#rstore').addEventListener('change', function (e) { S.reportStore = e.target.value; loadReport(); });
     loadReport();
   }
   function bars(rows, label, val, fmt) {
@@ -836,7 +923,7 @@
   }
   function loadReport() {
     var r = S.report;
-    api('report', { query: '&from=' + r.from + '&to=' + r.to }).then(function (d) {
+    api('report', { query: '&from=' + r.from + '&to=' + r.to + '&store=' + (multiStore() ? S.reportStore : 'all') }).then(function (d) {
       var el = $('#report-body'); if (!el) return;
       var s = d.summary, avg = s.sales ? Math.round(s.total / s.sales) : 0;
       var lowList = S.products.filter(function (p) { var st = stockState(p); return st === 'low' || st === 'out'; });
@@ -847,6 +934,7 @@
         '<div class="kpi"><div class="k-label">VAT collected</div><div class="k-val num">' + aed(s.vat) + '</div></div>' +
         '<div class="kpi"><div class="k-label">Discounts given</div><div class="k-val num">' + aed(s.discount) + '</div></div></div>' +
         '<div class="cards2">' +
+        (multiStore() && d.by_store.length > 1 ? '<div class="card"><h3>Sales by store</h3>' + bars(d.by_store, function (x) { return x.name; }, function (x) { return x.total; }, function (x) { return money(x.total) + ' <span class="muted small">(' + x.sales + ')</span>'; }) + '</div>' : '') +
         '<div class="card"><h3>How customers paid</h3>' + (d.by_method.length ? bars(d.by_method, function (x) { return METHOD[x.method] || x.method; }, function (x) { return x.total; }, function (x) { return money(x.total) + ' <span class="muted small">(' + x.sales + ')</span>'; }) : '<p class="muted">No sales.</p>') + '</div>' +
         '<div class="card"><h3>Sales by staff</h3>' + (d.by_staff.length ? bars(d.by_staff, function (x) { return x.name; }, function (x) { return x.total; }, function (x) { return money(x.total) + ' <span class="muted small">(' + x.sales + ')</span>'; }) : '<p class="muted">No sales.</p>') + '</div>' +
         '<div class="card"><h3>Best sellers</h3>' + (d.top.length ? d.top.map(function (x, i) { return '<div class="list-row"><span>' + (i + 1) + '. ' + esc(x.name + (x.variant ? ' · ' + x.variant : '')) + '</span><span class="num">' + x.qty + ' sold · ' + money(x.total) + '</span></div>'; }).join('') : '<p class="muted">No sales.</p>') + '</div>' +
@@ -863,19 +951,133 @@
     return { from: t.slice(0, 8) + '01', to: t };
   }
 
-  // ---------------------------------------------------------------- STAFF
+  // ---------------------------------------------------------------- TEAM (owner / manager)
+  var ACT = {
+    login: ['Logged in', 'plain'], logout: ['Logged out', 'plain'], sale: ['Sale', 'ok'], ziina: ['Ziina QR', 'plain'],
+    cancel: ['Cancelled payment', 'low'], void: ['Voided sale', 'out'], stock: ['Stock change', 'low'], transfer: ['Moved stock', 'low'],
+    product: ['Product edit', 'plain'], staff: ['Staff change', 'plain'], store: ['Store change', 'plain'], password: ['Password', 'plain']
+  };
+  function storeSelect(id, val, withAll) {
+    if (!multiStore()) return '';
+    return '<select class="input" id="' + id + '" style="width:auto">' + (withAll ? '<option value="all">All stores</option>' : '') +
+      S.stores.map(function (x) { return '<option value="' + x.id + '"' + (String(val) === String(x.id) ? ' selected' : '') + '>' + esc(x.name) + (x.active ? '' : ' (closed)') + '</option>'; }).join('') + '</select>';
+  }
+  function ago(ts) {
+    if (!ts) return 'never';
+    var d = (Date.now() - new Date(String(ts).replace(' ', 'T')).getTime()) / 1000;
+    if (d < 60) return 'just now';
+    if (d < 3600) return Math.floor(d / 60) + ' min ago';
+    if (d < 86400) return Math.floor(d / 3600) + ' h ago';
+    return niceDate(ts);
+  }
   function renderStaff() {
-    $('#view').innerHTML = '<div class="page"><div class="page-head"><h1>Staff</h1><div class="spacer"></div><button class="btn gold" data-act="u-new">+ Add staff</button></div>' +
-      '<div id="staff-list"><div class="status-line"><span class="spinner"></span> Loading…</div></div>' +
-      '<p class="small muted">Staff can sell, see stock and their own sales. Managers can also edit products and stock, void sales, see reports and manage staff.</p></div>';
-    api('users').then(function (d) {
-      S._users = d.users;
-      $('#staff-list').innerHTML = '<div class="table-wrap"><table class="tbl"><thead><tr><th>Name</th><th>Username</th><th>Role</th><th class="r"></th></tr></thead><tbody>' +
-        d.users.map(function (u) {
-          return '<tr><td><b>' + esc(u.name) + '</b>' + (u.active ? '' : ' <span class="badge off">Disabled</span>') + '</td><td class="muted">' + esc(u.username) + '</td><td>' + (u.role === 'manager' ? '<span class="tier-tag">Manager</span>' : 'Staff') + '</td>' +
-            '<td class="r"><button class="btn sm" data-act="u-edit" data-id="' + u.id + '">Edit</button></td></tr>';
-        }).join('') + '</tbody></table></div>';
-    }).catch(function (e) { $('#staff-list').innerHTML = '<div class="empty">' + esc(e.offline ? 'Needs internet.' : e.message) + '</div>'; });
+    var t = S.team;
+    if (!t.from) { var r0 = presetRange(t.preset); t.from = r0.from; t.to = r0.to; }
+    var tabs = [['performance', 'Performance'], ['activity', 'Activity'], ['staff', 'Staff logins'], ['stores', 'Stores']];
+    var dated = S.teamTab === 'performance' || S.teamTab === 'activity';
+    $('#view').innerHTML = '<div class="page"><div class="page-head"><h1>Team</h1><div class="spacer"></div>' +
+      '<div class="seg team-tabs">' + tabs.map(function (x) { return '<button data-act="team-tab" data-t="' + x[0] + '" class="' + (S.teamTab === x[0] ? 'active' : '') + '">' + x[1] + '</button>'; }).join('') + '</div></div>' +
+      (dated ? '<div class="page-head" style="margin-top:-4px"><div class="seg">' + [['today', 'Today'], ['yesterday', 'Yesterday'], ['week', '7 days'], ['month', 'This month']].map(function (p) {
+        return '<button data-act="t-preset" data-p="' + p[0] + '" class="' + (t.preset === p[0] ? 'active' : '') + '">' + p[1] + '</button>';
+      }).join('') + '</div><input class="input" type="date" id="tf" value="' + t.from + '" style="width:auto"><span class="muted">to</span><input class="input" type="date" id="tt" value="' + t.to + '" style="width:auto">' +
+        storeSelect('tstore', S.reportStore, true) + (S.teamTab === 'activity' ? '<select class="input" id="tuser" style="width:auto"><option value="">Everyone</option></select>' : '') + '</div>' : '') +
+      '<div id="team-body"><div class="status-line"><span class="spinner"></span> Loading…</div></div></div>';
+    if (dated) {
+      var onDate = function () { t.preset = 'custom'; t.from = $('#tf').value; t.to = $('#tt').value; $$('[data-act=t-preset]').forEach(function (b) { b.classList.remove('active'); }); loadTeam(); };
+      $('#tf').addEventListener('change', onDate); $('#tt').addEventListener('change', onDate);
+      if ($('#tstore')) $('#tstore').addEventListener('change', function (e) { S.reportStore = e.target.value; loadTeam(); });
+    }
+    loadTeam();
+  }
+  function teamQuery() { var t = S.team; return '&from=' + t.from + '&to=' + t.to + '&store=' + (multiStore() ? S.reportStore : 'all'); }
+  function loadTeam() {
+    var el = function () { return $('#team-body'); };
+    var fail = function (e) { if (el()) el().innerHTML = '<div class="empty">' + esc(e.offline ? 'Needs internet.' : e.message) + '</div>'; };
+    if (S.teamTab === 'performance') {
+      api('team', { query: teamQuery() }).then(function (d) {
+        if (!el()) return;
+        var team = d.team, best = 0, sum = 0, cnt = 0, online = 0;
+        team.forEach(function (m) { best = Math.max(best, m.total); sum += m.total; cnt += m.sales; if (m.online) online++; });
+        el().innerHTML = '<div class="kpis">' +
+          '<div class="kpi gold"><div class="k-label">Team sales</div><div class="k-val num">' + aed(sum) + '</div></div>' +
+          '<div class="kpi"><div class="k-label">Number of sales</div><div class="k-val">' + cnt + '</div></div>' +
+          '<div class="kpi"><div class="k-label">Using the app now</div><div class="k-val">' + online + ' <span class="small muted">of ' + team.filter(function (m) { return m.active; }).length + '</span></div></div></div>' +
+          '<div class="people">' + team.map(function (m) {
+            var avg = m.sales ? Math.round(m.total / m.sales) : 0, pm = m.methods || {};
+            return '<button class="person' + (m.active ? '' : ' off') + '" data-act="t-person" data-id="' + m.id + '">' +
+              '<div class="row"><span class="avatar lg">' + esc(initials(m.name)) + '</span><div class="grow"><b>' + esc(m.name) + '</b>' +
+              '<div class="small muted">' + (m.role === 'manager' ? 'Manager' : 'Staff') + (m.store_name ? ' · ' + esc(m.store_name) : multiStore() ? ' · any store' : '') + (m.active ? '' : ' · switched off') + '</div></div>' +
+              '<span class="dot-status ' + (m.online ? 'on' : '') + '">' + (m.online ? 'Active now' : esc(ago(m.last_seen))) + '</span></div>' +
+              '<div class="p-total num">' + aed(m.total) + '</div><div class="bar" style="margin:6px 0 10px"><i style="width:' + (best ? Math.max(2, m.total / best * 100) : 0) + '%"></i></div>' +
+              '<div class="p-stats"><span><b>' + m.sales + '</b> sales</span><span><b class="num">' + money(avg) + '</b> avg</span><span><b>' + m.items + '</b> items</span>' +
+              '<span' + (m.discount ? ' class="warn"' : '') + '><b class="num">' + money(m.discount) + '</b> discounts</span>' +
+              '<span' + (m.voids ? ' class="bad"' : '') + '><b>' + m.voids + '</b> voided</span></div>' +
+              (m.total ? '<div class="small muted" style="margin-top:8px">' + Object.keys(pm).map(function (k) { return (METHOD[k] || k) + ' ' + money(pm[k]); }).join(' · ') + '</div>' : '') +
+              (m.last_sale ? '<div class="small muted">Last sale ' + esc(ago(m.last_sale)) + '</div>' : '') + '</button>';
+          }).join('') + '</div><p class="small muted">Tap a person to see everything they did.</p>';
+      }).catch(fail);
+    } else if (S.teamTab === 'activity') {
+      var withUsers = S._users ? Promise.resolve() : api('users').then(function (d) { S._users = d.users; });
+      withUsers.then(function () {
+        var sel = $('#tuser');
+        if (sel && sel.options.length < 2) {
+          sel.innerHTML = '<option value="">Everyone</option>' + S._users.map(function (u) { return '<option value="' + u.id + '"' + (String(S.team.user) === String(u.id) ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('');
+          sel.addEventListener('change', function (e) { S.team.user = e.target.value; loadTeam(); });
+        }
+        return api('activity', { query: teamQuery() + '&user=' + (S.team.user || '') });
+      }).then(function (d) {
+        if (!el()) return;
+        var last = '';
+        el().innerHTML = d.activity.length ? '<div class="card feed">' + d.activity.map(function (a) {
+          var day = a.created_at.slice(0, 10), head = '';
+          if (day !== last) { last = day; head = '<div class="feed-day">' + esc(niceDate(day + ' 00:00:00').split(',')[0]) + '</div>'; }
+          var k = ACT[a.action] || [a.action, 'plain'];
+          return head + '<div class="feed-row"><span class="num feed-time">' + niceTime(a.created_at) + '</span>' +
+            '<div class="grow"><b>' + esc(a.user_name) + '</b> <span class="badge ' + k[1] + ' plain">' + esc(k[0]) + '</span>' +
+            '<div class="small">' + esc(a.detail) + (a.ref ? ' <span class="muted">' + esc(a.ref) + '</span>' : '') + '</div>' +
+            (a.store_name && multiStore() ? '<div class="small muted">' + esc(a.store_name) + '</div>' : '') + '</div></div>';
+        }).join('') + '</div>' : '<div class="empty"><div class="big">Nothing recorded</div>No activity for these dates.</div>';
+      }).catch(fail);
+    } else if (S.teamTab === 'staff') {
+      api('users').then(function (d) {
+        S._users = d.users;
+        if (!el()) return;
+        el().innerHTML = '<div class="page-head"><p class="muted grow" style="margin:0">Each person gets their own login. Staff sell and see stock; managers also edit products and stock, void sales and see Reports and Team.</p><button class="btn gold" data-act="u-new">+ Add staff</button></div>' +
+          '<div class="table-wrap"><table class="tbl"><thead><tr><th>Name</th><th>Username</th><th>Role</th>' + (multiStore() ? '<th class="hide-sm">Store</th>' : '') + '<th class="r"></th></tr></thead><tbody>' +
+          d.users.map(function (u) {
+            var st = u.store_id ? storeById(u.store_id) : null;
+            return '<tr><td><b>' + esc(u.name) + '</b>' + (u.active ? '' : ' <span class="badge off">Switched off</span>') + '</td><td class="muted">' + esc(u.username) + '</td><td>' + (u.role === 'manager' ? '<span class="tier-tag">Manager</span>' : 'Staff') + '</td>' +
+              (multiStore() ? '<td class="hide-sm">' + (st ? esc(st.name) : '<span class="muted">Any store</span>') + '</td>' : '') +
+              '<td class="r"><button class="btn sm" data-act="u-edit" data-id="' + u.id + '">Edit</button></td></tr>';
+          }).join('') + '</tbody></table></div>';
+      }).catch(fail);
+    } else {
+      api('stores').then(function (d) {
+        S.stores = d.stores; LS.set('fx_stores', S.stores); updateStoreBtn();
+        if (!el()) return;
+        el().innerHTML = '<div class="page-head"><p class="muted grow" style="margin:0">Each store has its own stock, and its address and phone print on its receipts.</p><button class="btn gold" data-act="st-new">+ Add store</button></div>' +
+          '<div class="people">' + d.stores.map(function (x) {
+            return '<button class="person' + (x.active ? '' : ' off') + '" data-act="st-edit" data-id="' + x.id + '"><b>' + esc(x.name) + '</b>' + (x.active ? '' : ' <span class="badge off">Closed</span>') +
+              '<div class="small muted" style="margin-top:6px">' + (esc(x.address) || 'No address yet') + '<br>' + (esc(x.phone) || 'No phone yet') + '</div></button>';
+          }).join('') + '</div>';
+      }).catch(fail);
+    }
+  }
+  function storeModal(x) {
+    var isNew = !x; x = x || { name: '', address: '', phone: '', active: 1 };
+    openModal(isNew ? 'Add store' : 'Edit store', '<div class="err m-err hidden"></div><form id="st-form">' +
+      '<label class="field"><span>Store name</span><input class="input" name="name" required value="' + esc(x.name) + '" placeholder="e.g. City Centre Sharjah" autofocus></label>' +
+      '<label class="field"><span>Address (printed on receipts)</span><input class="input" name="address" value="' + esc(x.address) + '"></label>' +
+      '<label class="field"><span>Phone (printed on receipts)</span><input class="input" name="phone" value="' + esc(x.phone) + '"></label>' +
+      '<label class="check"><input type="checkbox" name="active" ' + (x.active ? 'checked' : '') + '> Open (can sell and hold stock)</label>' +
+      '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>');
+    $('#st-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var f = e.target, b = $('[type=submit]', f); b.disabled = true;
+      api('store_save', { body: { id: isNew ? 0 : x.id, name: f.name.value, address: f.address.value, phone: f.phone.value, active: f.active.checked ? 1 : 0 } })
+        .then(function (d) { S.stores = d.stores; LS.set('fx_stores', S.stores); closeModal(); toast('Store saved.'); updateStoreBtn(); refreshProducts(); loadTeam(); })
+        .catch(function (er) { b.disabled = false; modalErr(er.message); });
+    });
   }
   function userModal(u) {
     var isNew = !u; u = u || { name: '', username: '', role: 'staff', active: 1 };
@@ -884,13 +1086,15 @@
       '<label class="field"><span>Username (for login)</span><input class="input" name="username" required autocapitalize="none" value="' + esc(u.username) + '"></label>' +
       '<label class="field"><span>' + (isNew ? 'Password (8+ characters)' : 'New password (leave empty to keep)') + '</span><input class="input" name="password" type="text" autocomplete="new-password" ' + (isNew ? 'required minlength="8"' : '') + '></label>' +
       '<label class="field"><span>Role</span><select class="input" name="role"><option value="staff"' + (u.role === 'staff' ? ' selected' : '') + '>Staff</option><option value="manager"' + (u.role === 'manager' ? ' selected' : '') + '>Manager</option></select></label>' +
+      (multiStore() ? '<label class="field"><span>Works at</span><select class="input" name="store_id"><option value="">Any store (chooses on the device)</option>' +
+        S.stores.map(function (x) { return '<option value="' + x.id + '"' + (u.store_id === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></label>' : '') +
       '<label class="check"><input type="checkbox" name="active" ' + (u.active ? 'checked' : '') + '> Can log in</label>' +
       '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>');
     $('#u-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var f = e.target, b = $('[type=submit]', f); b.disabled = true;
-      api('user_save', { body: { id: isNew ? 0 : u.id, name: f.name.value, username: f.username.value, password: f.password.value, role: f.role.value, active: f.active.checked ? 1 : 0 } })
-        .then(function () { closeModal(); toast('Saved.'); renderStaff(); })
+      api('user_save', { body: { id: isNew ? 0 : u.id, name: f.name.value, username: f.username.value, password: f.password.value, role: f.role.value, store_id: f.store_id ? f.store_id.value : '', active: f.active.checked ? 1 : 0 } })
+        .then(function () { closeModal(); toast('Saved.'); S._users = null; loadTeam(); })
         .catch(function (er) { b.disabled = false; modalErr(er.message); });
     });
   }
@@ -941,12 +1145,42 @@
     if (!el || el.disabled) return;
     var act = el.getAttribute('data-act'), id = parseInt(el.getAttribute('data-id'), 10);
     switch (act) {
-      case 'nav': S.view = el.getAttribute('data-view'); S.cartOpen = false; renderView(); if (S.view === 'sell' || S.view === 'stock') refreshProducts(); break;
+      case 'nav': closeMenu(); if (el.getAttribute('data-tab')) S.teamTab = el.getAttribute('data-tab'); S.view = el.getAttribute('data-view'); S.cartOpen = false; renderView(); if (S.view === 'sell' || S.view === 'stock') refreshProducts(); break;
       case 'net':
         if (S.online && S.queue.length) syncQueue();
         toast(S.online ? (S.queue.length ? 'Uploading waiting sales…' : 'Connected. Everything is up to date.') : 'Offline. Cash, Tap to Pay and card-machine sales are saved on this device and upload when internet is back.');
         break;
       case 'user-menu': if ($('.menu')) closeMenu(); else userMenu(el); break;
+      case 'store-menu': if ($('.menu')) closeMenu(); else storeMenu(el); break;
+      case 'store-pick': pickStore(id); break;
+      case 'web-sync':
+        el.disabled = true; el.textContent = 'Syncing…';
+        api('import_web', { body: {}, timeout: 30000 }).then(function (r) {
+          toast(r.added ? r.added + ' new product size' + (r.added > 1 ? 's' : '') + ' added from fomaxo.com.' : 'Up to date with fomaxo.com — prices checked.');
+          return refreshProducts();
+        }).catch(function (er) { toast(er.offline ? 'Needs internet.' : er.message, true); })
+          .then(function () { if (S.view === 'stock') renderStock(); });
+        break;
+      case 'scope': S.stockScope = el.getAttribute('data-s'); renderStock(); break;
+      case 'p-move': transferModal(productById(id)); break;
+      case 't-save': {
+        var tq = parseInt($('#t-qty').value, 10);
+        if (!(tq > 0)) { modalErr('Enter how many to move.'); break; }
+        el.disabled = true;
+        api('stock_transfer', { body: { product_id: id, from: parseInt($('#t-from').value, 10), to: parseInt($('#t-to').value, 10), qty: tq, note: $('#t-note').value } })
+          .then(function () { closeModal(); toast('Stock moved.'); refreshProducts(); })
+          .catch(function (er) { el.disabled = false; modalErr(er.offline ? 'Needs internet.' : er.message); });
+        break;
+      }
+      case 'team-tab': S.teamTab = el.getAttribute('data-t'); renderStaff(); break;
+      case 't-preset': {
+        var tr = presetRange(el.getAttribute('data-p'));
+        S.team.preset = el.getAttribute('data-p'); S.team.from = tr.from; S.team.to = tr.to;
+        renderStaff(); break;
+      }
+      case 't-person': S.team.user = String(id); S.teamTab = 'activity'; renderStaff(); break;
+      case 'st-new': storeModal(null); break;
+      case 'st-edit': storeModal(storeById(id)); break;
       case 'theme-toggle': setTheme(isDark() ? 'light' : 'dark'); break;
       case 'theme-set':
         setTheme(el.getAttribute('data-t'));
@@ -1041,7 +1275,7 @@
         var r = $('#a-reason').value, n = parseInt($('#a-num').value, 10);
         if (isNaN(n)) { modalErr('Enter a number.'); break; }
         var sign = REASONS.filter(function (x) { return x[0] === r; })[0][2];
-        var body = { product_id: id, reason: r, note: $('#a-note').value };
+        var body = { product_id: id, reason: r, note: $('#a-note').value, store_id: curStoreId() };
         if (r === 'count') { if (n < 0) { modalErr('Count cannot be negative.'); break; } body.counted = n; }
         else body.change = sign === 2 ? n : sign * Math.abs(n);
         el.disabled = true;
