@@ -748,7 +748,6 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
   .pay-switch { margin-top: 10px; gap: 4px; }
   .pay-switch .seg button { padding: 6px 2px; }
   .qr-box { width: min(240px, 31vh); padding: 8px; margin-bottom: 8px; }
-  .steps.big li { padding: 6px 0; }
 }
 @media (max-height: 700px) {
   .qr-hint { display: none; }

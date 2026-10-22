@@ -948,11 +948,13 @@
       body = '<label class="field"><span>Customer gave (leave empty if exact)</span><input class="input" id="pa-cash" type="number" inputmode="decimal" step="0.01" min="0" placeholder="' + money(s.total) + '"></label>' +
         '<div class="change-box big" id="pa-change"><span>Give change</span><span class="num">AED 0.00</span></div>';
     } else {
-      body = (m === 'tap' ? '<p class="muted">Open <b>Ziina</b> → <b>Tap to Pay</b>, type <b class="num">' + money(s.total) + '</b> <button class="btn sm" type="button" data-act="copy-amount" data-v="' + (s.total / 100).toFixed(2) + '">Copy</button> and wait for <b>Approved</b>.</p>' : '<p class="muted">Charge <b class="num">' + money(s.total) + '</b> on the card terminal and wait for <b>approved</b>.</p>') +
-        '<label class="field"><span>Reference (optional)</span><input class="input" id="pa-ref" maxlength="64"></label>';
+      body = (m === 'tap' ? '<ol class="steps big"><li><span>On the store phone open <b>Ziina</b> → <b>Tap to Pay</b>.</span></li>' +
+        '<li><span>Type <b class="num">' + money(s.total) + '</b> <button class="btn sm" type="button" data-act="copy-amount" data-v="' + (s.total / 100).toFixed(2) + '">Copy</button></span></li>' +
+        '<li><span>Customer taps card or phone. Wait for <b>Approved</b>.</span></li></ol>' : '<p class="muted">Charge <b class="num">' + money(s.total) + '</b> on the card terminal and wait for <b>approved</b>.</p>') +
+        (m === 'tap' ? '<details class="ref"><summary>Add reference (optional)</summary><input class="input" id="pa-ref" maxlength="64" placeholder="Last 4 digits or Ziina ID"></details>' : '<label class="field"><span>Approval code (optional)</span><input class="input" id="pa-ref" maxlength="64"></label>');
     }
     openModal({ cash: 'Cash', tap: 'Card / Tap', card: 'Card machine' }[m], '<div class="err m-err hidden"></div>' + switchRow(m, 'again', s.total) + amount + body +
-      '<div class="modal-foot"><button class="btn ghost" data-act="pa-open" data-id="' + s.id + '">Back</button><button class="btn gold big" data-act="pa-confirm" data-m="' + m + '">' + (m === 'cash' ? '✓ Done — cash received' : '✓ Payment received') + '</button></div>' +
+      '<div class="modal-foot"><button class="btn ghost" data-act="pa-open" data-id="' + s.id + '">Back</button><button class="btn gold big" data-act="pa-confirm" data-m="' + m + '">' + (m === 'cash' ? '✓ Done — cash received' : m === 'tap' ? '✓ Approved' : 'Payment received') + '</button></div>' +
       '<div class="modal-foot"><button class="btn danger block" data-act="z-cancel" data-id="' + s.id + '">Cancel sale</button></div>', { sticky: true });
     var ci = $('#pa-cash');
     if (ci) ci.addEventListener('input', function () {
