@@ -11,7 +11,7 @@ function rc_words($ar)
         'paid_total' => 'Total paid', 'total' => 'Total', 'saved' => 'You saved', 'saved2' => 'on this order', 'store' => 'Store', 'served' => 'Served by', 'trn' => 'TRN',
         'payment' => 'Payment', 'cash' => 'Cash', 'tap' => 'Tap to Pay', 'ziina' => 'Ziina', 'card' => 'Card', 'given' => 'Cash given', 'change' => 'Change',
         'paid' => 'Paid', 'pending' => 'Waiting', 'cancelled' => 'Cancelled', 'failed' => 'Failed', 'void' => 'Voided', 'walkin' => 'Walk-in customer',
-        'thanks' => 'Thank you for your purchase', 'foot' => 'fomaxo.com · United Arab Emirates', 'pdf' => 'Download PDF', 'sets' => 'Set of', 'vials' => 'vials',
+        'thanks' => 'Thank you for your purchase', 'country' => 'United Arab Emirates', 'site' => 'fomaxo.com', 'pdf' => 'Download PDF', 'sets' => 'Set of', 'vials' => 'vials',
         'scan' => 'Scan to open this receipt', 'n_pending' => 'Waiting for the payment to be confirmed. Refresh this page in a moment.',
         'n_bad' => 'This payment was not completed. No money was taken.', 'n_void' => 'This sale was cancelled by the store.', 'member' => 'Member'];
     if (!$ar) {
@@ -22,7 +22,7 @@ function rc_words($ar)
         'paid_total' => 'المبلغ المدفوع', 'total' => 'الإجمالي', 'saved' => 'وفّرت', 'saved2' => 'في هذا الطلب', 'store' => 'المتجر', 'served' => 'خدمك', 'trn' => 'الرقم الضريبي',
         'payment' => 'الدفع', 'cash' => 'نقداً', 'tap' => 'الدفع باللمس', 'ziina' => 'Ziina', 'card' => 'بطاقة', 'given' => 'المبلغ المستلم', 'change' => 'الباقي',
         'paid' => 'مدفوع', 'pending' => 'بانتظار الدفع', 'cancelled' => 'ملغي', 'failed' => 'لم يكتمل', 'void' => 'ملغى', 'walkin' => 'عميل',
-        'thanks' => 'شكراً لشرائك من FOMAXO', 'foot' => 'fomaxo.com · الإمارات العربية المتحدة', 'pdf' => 'تحميل PDF', 'sets' => 'مجموعة من', 'vials' => 'عينات',
+        'thanks' => 'شكراً لشرائك من FOMAXO', 'country' => 'الإمارات العربية المتحدة', 'site' => 'fomaxo.com', 'pdf' => 'تحميل PDF', 'sets' => 'مجموعة من', 'vials' => 'عينات',
         'scan' => 'امسح لفتح هذا الإيصال', 'n_pending' => 'بانتظار تأكيد الدفع. حدّث الصفحة بعد قليل.', 'n_bad' => 'لم يكتمل الدفع. لم يتم خصم أي مبلغ.', 'n_void' => 'ألغى المتجر هذه العملية.', 'member' => 'عضو'];
 }
 
@@ -115,7 +115,7 @@ function receipt_page($sale, $ar = false, $theme = '', $embed = false)
         . '<section class="bt"><div class="lf"><h2>' . $e($w['store']) . '</h2><p class="ad">' . implode('<br>', array_map(function ($x) use ($e) { return '<bdi>' . $e($x) . '</bdi>'; }, $storeLines)) . '</p>'
         . '<div class="py"><span>' . $e($w['payment']) . '</span><b>' . $e($method) . ($ref !== '' ? ' <span dir="ltr">· ' . $e($ref) . '</span>' : '') . '</b><i class="st st-' . $st . '">' . $e($w[$st]) . '</i></div></div>'
         . '<div class="sm">' . $sum . '</div></section>'
-        . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si">' . $e(cfg('receipt_footer_line', $w['foot'])) . '</p>'
+        . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si">' . $e($w['country']) . '</p><p class="si site" dir="ltr">' . $e($w['site']) . '</p>'
         . ($qr ? '<div class="qr">' . $qr . '<span>' . $e($w['scan']) . '</span></div>' : '') . '</footer>'
         . '</main><div class="wmk" aria-hidden="true"><svg viewBox="0 0 2507 2506"><use href="#emblem"/></svg></div>'
         . '<svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_SYMBOLS . '</svg>'
@@ -247,7 +247,8 @@ s::after{content:"";position:absolute;left:-1px;right:-1px;top:52%;height:1.2px;
 .st-void,.st-failed{border:1px solid var(--red);color:var(--red)}
 .note{max-width:794px;margin:0 auto 12px;padding:10px 14px;border:1px solid var(--gold2);color:var(--gold);background:var(--paper);text-align:center;font-size:13px}
 .note.bad{border-color:var(--red);color:var(--red)}
-.qr{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:16px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.si.site{margin-top:4px}
+.qr{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin:18px auto 0;text-align:center;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .qr svg{width:84px;height:84px;background:#fff;padding:5px;border-radius:4px}
 [dir=rtl] .qr{letter-spacing:0}
 .tr.vt span{color:var(--muted)!important;font-size:12.5px}
