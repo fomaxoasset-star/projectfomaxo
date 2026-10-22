@@ -5698,7 +5698,7 @@ function vStrip(){
 let vsIO = null;
 function vsBind(){
   vsIO && vsIO.disconnect(); vsIO = null;
-  const cs = $$('#vStrip .vs-c').filter(c => $('video', c)); if (!cs.length || (navigator.connection && navigator.connection.saveData)) return;
+  const nc = navigator.connection, cs = $$('#vStrip .vs-c').filter(c => $('video', c)); if (!cs.length || (nc && (nc.saveData || /2g|3g/.test(nc.effectiveType || '')))) return;   // data saver or a slow connection: covers only
   let held = false; const wait = new Set();
   const busy = () => cs.filter(c => { const v = $('video', c); return v.getAttribute('src') && v.readyState < 3 && !v.error; }).length;
   const pump = () => wait.forEach(c => { if (busy() < 2) { wait.delete(c); run(c, true); } });
@@ -5708,7 +5708,8 @@ function vsBind(){
     if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(c); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true})); }
     v.play().then(() => c.classList.add('playing')).catch(e => { if (e.name === 'NotAllowedError') { held = true; wait.clear(); } }); };
   const go = () => { if (!document.contains(cs[0])) return; vsIO = new IntersectionObserver(es => es.forEach(e => run(e.target, e.isIntersecting))); cs.forEach(c => vsIO.observe(c)); };
-  document.readyState === 'complete' ? go() : addEventListener('load', go, {once: true});
+  const later = () => setTimeout(go, 3000);   // 3 seconds after the page has loaded: the photo, prices and Add to bag get the connection first
+  document.readyState === 'complete' ? later() : addEventListener('load', later, {once: true});
 }
 let reelMuted = false;   // the player opens with sound on, quietly (the row stays muted)
 const REEL_VOL = .3; let reelAC = null;
