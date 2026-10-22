@@ -272,7 +272,11 @@ function create_sale($user, $b, $method)
                 'free' => empty($l['free']) ? 0 : 1,
             ]);
         }
-        if ($method !== 'ziina') {
+        $cancelReason = trim(mb_substr(preg_replace('/\s+/', ' ', (string) ($b['cancel_reason'] ?? '')), 0, 200));
+        if ($cancelReason !== '') {
+            // Sale cancelled at the payment screen: kept in Sales with the reason, no stock moved, no number used.
+            q("UPDATE sales SET status = 'cancelled', note = ? WHERE id = ?", ['Cancelled: ' . $cancelReason, $saleId]);
+        } elseif ($method !== 'ziina') {
             mark_paid($saleId, $user['id'], $offline ? $createdAt : null);
         }
         $pdo->commit();

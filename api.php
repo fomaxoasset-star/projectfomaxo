@@ -391,6 +391,67 @@ switch ($action) {
         $id = create_sale($u, $b, $m);
         json_out(['sale' => load_sale('id', $id)]);
 
+    case 'sale_cancel':
+        // Cancel at the Cash / Card / Tap payment screen, with a reason. Kept in Sales so it can be paid later.
+        need_post();
+        $u = require_user();
+        $m = $b['method'] ?? 'cash';
+        if (!in_array($m, ['cash', 'tap', 'card'], true)) {
+            fail('Unknown payment method.');
+        }
+        $reason = trim((string) ($b['cancel_reason'] ?? ''));
+        if ($reason === '') {
+            fail('Pick a reason.');
+        }
+        unset($b['cash_given']);
+        $id = create_sale($u, $b, $m);
+        $s = q1('SELECT total, store_id FROM sales WHERE id = ?', [$id]);
+        $mn = ['cash' => 'Cash', 'tap' => 'Card / Tap', 'card' => 'Card machine'][$m];
+        log_activity($u, 'cancel', 'Cancelled ' . $mn . ' sale of AED ' . money((int) $s['total']) . ': ' . mb_substr($reason, 0, 200), '', (int) $s['store_id']);
+        json_out(['ok' => true, 'id' => $id]);
+
+    case 'sale_pay':
+        // Pay again by Cash / Card / Tap for a sale that was cancelled, failed or is still waiting.
+        need_post();
+        $u = require_user();
+        $m = $b['method'] ?? 'cash';
+        if (!in_array($m, ['cash', 'tap', 'card'], true)) {
+            fail('Unknown payment method.');
+        }
+        $sale = q1('SELECT * FROM sales WHERE id = ?', [(int) ($b['id'] ?? 0)]);
+        if (!$sale) {
+            fail('Sale not found.', 404);
+        }
+        if ($sale['status'] === 'pending' && $sale['method'] === 'ziina' && refresh_ziina_sale($sale, $u['id']) === 'paid') {
+            json_out(['sale' => load_sale('id', $sale['id']), 'already' => true]);
+        }
+        if (!in_array($sale['status'], ['pending', 'cancelled', 'failed'], true)) {
+            json_out(['sale' => load_sale('id', $sale['id']), 'already' => true]);
+        }
+        $total = (int) $sale['total'];
+        $given = null;
+        $change = null;
+        if ($m === 'cash') {
+            $given = isset($b['cash_given']) && $b['cash_given'] !== '' ? to_fils($b['cash_given']) : $total;
+            if ($given < $total) {
+                fail('Cash received is less than the total.');
+            }
+            $change = $given - $total;
+        }
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            q("UPDATE sales SET method = ?, cash_given = ?, change_due = ?, payment_ref = ?, status = 'pending',
+                 note = CASE WHEN note LIKE 'Cancelled:%' THEN '' ELSE note END WHERE id = ?",
+              [$m, $given, $change, mb_substr(trim((string) ($b['payment_ref'] ?? '')), 0, 64), $sale['id']]);
+            mark_paid((int) $sale['id'], $u['id']);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+        json_out(['sale' => load_sale('id', $sale['id'])]);
+
     case 'coupon_check':
         // Is this code valid at fomaxo.com right now? (The sale checks it again when paid.)
         need_post();
@@ -506,8 +567,9 @@ switch ($action) {
         if ($status === 'paid') {
             json_out(['status' => 'paid', 'sale' => load_sale('id', $sale['id'])]);
         }
-        q("UPDATE sales SET status = 'cancelled' WHERE id = ? AND status = 'pending'", [$sale['id']]);
-        log_activity($u, 'cancel', 'Cancelled Ziina payment', $sale['receipt_no'], (int) $sale['store_id']);
+        $reason = trim(mb_substr(preg_replace('/\s+/', ' ', (string) ($b['reason'] ?? '')), 0, 200));
+        q("UPDATE sales SET status = 'cancelled', note = ? WHERE id = ? AND status = 'pending'", [$reason !== '' ? 'Cancelled: ' . $reason : '', $sale['id']]);
+        log_activity($u, 'cancel', 'Cancelled Ziina payment of AED ' . money((int) $sale['total']) . ($reason !== '' ? ': ' . $reason : ''), '', (int) $sale['store_id']);
         json_out(['status' => 'cancelled']);
 
     case 'ziina_retry':
@@ -518,14 +580,14 @@ switch ($action) {
             fail('Ziina is not set up yet. Add your Ziina key in Settings.');
         }
         $sale = q1('SELECT * FROM sales WHERE id = ?', [(int) ($b['id'] ?? 0)]);
-        if (!$sale || $sale['method'] !== 'ziina') {
+        if (!$sale) {
             fail('Sale not found.', 404);
         }
         if ($u['role'] !== 'manager' && (int) $sale['user_id'] !== (int) $u['id'] && !q1('SELECT id FROM users WHERE id = ? AND (store_id IS NULL OR store_id = ?)', [$u['id'], $sale['store_id']])) {
             fail('This sale belongs to another store.', 403);
         }
         // The customer may have paid the old QR after all.
-        if ($sale['status'] === 'pending' || $sale['status'] === 'cancelled') {
+        if ($sale['method'] === 'ziina' && ($sale['status'] === 'pending' || $sale['status'] === 'cancelled')) {
             $was = $sale['status'];
             if ($was === 'cancelled' && $sale['ziina_id']) {
                 $zs = ziina_status($sale['ziina_id']);
@@ -550,7 +612,7 @@ switch ($action) {
             cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'],
             cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'] . '&cancelled=1'
         );
-        q("UPDATE sales SET status = 'pending', ziina_id = ? WHERE id = ?", [$z['id'], $sale['id']]);
+        q("UPDATE sales SET method = 'ziina', status = 'pending', ziina_id = ?, note = CASE WHEN note LIKE 'Cancelled:%' THEN '' ELSE note END WHERE id = ?", [$z['id'], $sale['id']]);
         log_activity($u, 'ziina', 'Showed Ziina QR again', '', (int) $sale['store_id']);
         json_out(['sale' => load_sale('id', $sale['id']), 'pay_url' => $z['redirect_url']]);
 
