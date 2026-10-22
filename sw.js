@@ -1,8 +1,8 @@
 /* FOMAXO Store System - offline support. Keeps the app itself on the device so it opens without internet.
    Data requests (api.php) always go to the server; the app handles offline sales itself. */
-var VERSION = 'fomaxo-pos-v12';
+var VERSION = 'fomaxo-pos-v13';
 var SHELL = [
-  './', 'index.html', 'assets/app.css?v=12', 'assets/app.js?v=12', 'assets/qrcode.js?v=12',
+  './', 'index.html', 'assets/app.css?v=13', 'assets/app.js?v=12', 'assets/qrcode.js?v=12',
   'manifest.webmanifest', 'assets/icon-192.png', 'assets/icon-512.png', 'assets/apple-touch-icon.png', 'assets/favicon-32.png'
 ];
 

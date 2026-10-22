@@ -399,3 +399,5 @@ s.was { color: var(--muted); font-size: .82em; margin-right: 6px; text-decoratio
 .tile .price s.was { display: inline; font-weight: 500; }
 .price-line { margin-top: 3px; color: var(--gold-2); font-weight: 600; }
 input[readonly].input { opacity: .6; }
+#sales-list .tbl b { white-space: nowrap; }
+@media (max-width: 480px) { #sales-list .tbl td, #sales-list .tbl th { padding: 9px 8px; } }
