@@ -510,6 +510,50 @@ switch ($action) {
         log_activity($u, 'cancel', 'Cancelled Ziina payment', $sale['receipt_no'], (int) $sale['store_id']);
         json_out(['status' => 'cancelled']);
 
+    case 'ziina_retry':
+        // Pay again: a fresh Ziina QR for a sale that is still waiting, or was cancelled or failed.
+        need_post();
+        $u = require_user();
+        if (!ziina_enabled()) {
+            fail('Ziina is not set up yet. Add your Ziina key in Settings.');
+        }
+        $sale = q1('SELECT * FROM sales WHERE id = ?', [(int) ($b['id'] ?? 0)]);
+        if (!$sale || $sale['method'] !== 'ziina') {
+            fail('Sale not found.', 404);
+        }
+        if ($u['role'] !== 'manager' && (int) $sale['user_id'] !== (int) $u['id'] && !q1('SELECT id FROM users WHERE id = ? AND (store_id IS NULL OR store_id = ?)', [$u['id'], $sale['store_id']])) {
+            fail('This sale belongs to another store.', 403);
+        }
+        // The customer may have paid the old QR after all.
+        if ($sale['status'] === 'pending' || $sale['status'] === 'cancelled') {
+            $was = $sale['status'];
+            if ($was === 'cancelled' && $sale['ziina_id']) {
+                $zs = ziina_status($sale['ziina_id']);
+                if ($zs === 'completed') {
+                    q("UPDATE sales SET status = 'pending' WHERE id = ?", [$sale['id']]);
+                    $sale['status'] = 'pending';
+                }
+            }
+            if ($sale['status'] === 'pending' && refresh_ziina_sale($sale, $u['id']) === 'paid') {
+                json_out(['sale' => load_sale('id', $sale['id'])]);
+            }
+        }
+        if ($sale['status'] === 'paid' || $sale['status'] === 'void') {
+            json_out(['sale' => load_sale('id', $sale['id'])]);
+        }
+        if ((int) $sale['total'] < 200) {
+            fail('Ziina needs at least AED 2.00.');
+        }
+        $z = ziina_create(
+            (int) $sale['total'],
+            cfg('store_name', 'FOMAXO') . ' order',
+            cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'],
+            cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'] . '&cancelled=1'
+        );
+        q("UPDATE sales SET status = 'pending', ziina_id = ? WHERE id = ?", [$z['id'], $sale['id']]);
+        log_activity($u, 'ziina', 'Showed Ziina QR again', '', (int) $sale['store_id']);
+        json_out(['sale' => load_sale('id', $sale['id']), 'pay_url' => $z['redirect_url']]);
+
     // ---------------- Sales history ----------------
     case 'sales':
         $u = require_user();

@@ -835,7 +835,20 @@
     var payload = buildPayload('ziina', {});
     var cust = S.customer;
     openModal('Ziina payment', '<div class="status-line"><span class="spinner"></span> Creating payment…</div>', { sticky: true, onClose: stopPoll });
-    api('ziina_start', { body: payload, timeout: 30000 }).then(function (d) {
+    api('ziina_start', { body: payload, timeout: 30000 }).then(function (d) { showZiinaQr(d, cust); }).catch(ziinaErr);
+  }
+  function ziinaRetry(id) {
+    openModal('Ziina payment', '<div class="status-line"><span class="spinner"></span> Creating payment…</div>', { sticky: true, onClose: stopPoll });
+    api('ziina_retry', { body: { id: id }, timeout: 30000 }).then(function (d) {
+      if (d.sale.status === 'paid' || d.sale.status === 'void') { closeModal(); toast(d.sale.status === 'paid' ? 'Already paid — sale complete.' : 'This sale was voided.'); if (S.view === 'sales') renderSales(); if (d.sale.status === 'paid') afterSale(d.sale); return; }
+      showZiinaQr(d, d.sale.customer_phone ? { phone: d.sale.customer_phone } : null);
+    }).catch(ziinaErr);
+  }
+  function ziinaErr(e) {
+    setModalBody('<div class="err" style="margin-bottom:12px">' + esc(e.offline ? 'No internet — Ziina QR needs a connection. Use Cash or Tap to Pay.' : e.message) + '</div>' +
+      '<div class="modal-foot"><button class="btn" data-act="modal-close">Close</button></div>');
+  }
+  function showZiinaQr(d, cust) {
       if (d.sale.status === 'paid') { closeModal(); afterSale(d.sale); return; }
       var qr = qrcode(0, 'M'); qr.addData(d.pay_url); qr.make();
       var wa = cust && cust.phone ? 'https://wa.me/' + cust.phone.replace(/\D/g, '') + '?text=' + encodeURIComponent('FOMAXO payment of ' + aed(d.sale.total) + ': ' + d.pay_url) : null;
@@ -858,14 +871,10 @@
           else if (r.status === 'failed' || r.status === 'cancelled') {
             stopPoll();
             setModalBody('<div class="err" style="margin-bottom:12px">The payment was ' + r.status + '. No money was taken.</div>' +
-              '<div class="modal-foot"><button class="btn" data-act="modal-close">Close</button><button class="btn gold" data-act="pay" data-m="ziina">Try again</button></div>');
+              '<div class="modal-foot"><button class="btn" data-act="modal-close">Close</button><button class="btn gold" data-act="z-retry" data-id="' + d.sale.id + '">Pay again</button></div>');
           }
         }, function () { busy = false; var s = $('#z-status'); if (s) s.innerHTML = '<span class="spinner"></span> Checking… (connection slow)'; });
       }, 3000);
-    }).catch(function (e) {
-      setModalBody('<div class="err" style="margin-bottom:12px">' + esc(e.offline ? 'No internet — Ziina QR needs a connection. Use Cash or Tap to Pay.' : e.message) + '</div>' +
-        '<div class="modal-foot"><button class="btn" data-act="modal-close">Close</button></div>');
-    });
   }
 
   // ---------------------------------------------------------------- RECEIPT
@@ -922,7 +931,7 @@
     var statusNote = '';
     if (s.queued) statusNote = '<div class="note" style="margin-bottom:12px">Saved on this device (offline). It uploads automatically when internet is back. The WhatsApp link works after upload.</div>';
     else if (s.status === 'void') statusNote = '<div class="err" style="margin-bottom:12px">This sale was voided. ' + esc(s.note || '') + '</div>';
-    else if (s.status !== 'paid') statusNote = '<div class="err" style="margin-bottom:12px">Status: ' + esc(s.status) + ' — not paid.</div>';
+    else if (s.status !== 'paid') statusNote = '<div class="err" style="margin-bottom:12px">' + ({ pending: 'Waiting for payment', cancelled: 'Payment cancelled', failed: 'Payment failed' }[s.status] || esc(s.status)) + ' — not paid yet.' + (s.method === 'ziina' ? ' Tap <b>Pay again</b> to show a new QR code.' : '') + '</div>';
     var paid = s.status === 'paid';
     var styled = !s.queued && s.receipt_token && S.online;
     var src = styled ? 'receipt.php?t=' + encodeURIComponent(s.receipt_token) + '&embed=1&theme=' + (isDark() ? 'dark' : 'light') : '';
@@ -934,6 +943,8 @@
         '<button class="btn" data-act="r-wa">WhatsApp</button><button class="btn" data-act="r-copy">Copy link</button>' +
         '<button class="btn" data-act="r-email">Email</button>' : '') +
       (!fresh && paid && isManager() && !s.queued ? '<button class="btn danger" data-act="r-void">Void sale</button>' : '') +
+      (!paid && !s.queued && s.method === 'ziina' && (s.status === 'pending' || s.status === 'cancelled' || s.status === 'failed') ? '<button class="btn gold big wide" data-act="z-retry" data-id="' + s.id + '">Pay again (Ziina QR)</button>' : '') +
+      (!paid && !s.queued && s.method === 'ziina' && s.status === 'pending' ? '<button class="btn danger wide" data-act="z-cancel" data-id="' + s.id + '">Cancel payment</button>' : '') +
       (fresh ? '<button class="btn gold big wide" data-act="modal-close">New sale</button>' : '') +
       '</div>', { wide: true });
     var fr = $('#rframe');
@@ -1730,11 +1741,12 @@
         $$('.note-btn').forEach(function (b) { b.classList.toggle('active', b === el); });
         updateChange(); break;
       case 'confirm-pay': confirmPay(el.getAttribute('data-m'), el); break;
+      case 'z-retry': stopPoll(); ziinaRetry(id); break;
       case 'z-cancel':
         el.disabled = true; stopPoll();
         api('ziina_cancel', { body: { id: id } }).then(function (r) {
           if (r.status === 'paid') { closeModal(); afterSale(r.sale); toast('The customer had already paid — sale completed.'); }
-          else { closeModal(); toast('Ziina payment cancelled.'); }
+          else { closeModal(); toast('Ziina payment cancelled. You can pay again from Sales.'); if (S.view === 'sales') renderSales(); }
         }).catch(function (er) { el.disabled = false; modalErr(er.message); });
         break;
       // receipt
