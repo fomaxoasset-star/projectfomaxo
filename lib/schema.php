@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 11;
+const SCHEMA_VERSION = 12;
 
 function schema_version()
 {
@@ -215,6 +215,18 @@ function migrate()
             }
             q("DELETE FROM meta WHERE k = 'schema'");
             q("INSERT INTO meta (k, v) VALUES ('schema', '11')");
+        }
+        if (schema_version() < 12) {
+            // One-time fresh start (owner's request, 22 Oct 2026): remove all orders made so far, plus
+            // customers, activity and stock history. Stock levels stay as they are. Order numbers restart at 10000.
+            q('DELETE FROM sale_items');
+            q('DELETE FROM sales');
+            q('DELETE FROM stock_moves');
+            q('DELETE FROM activity');
+            q('DELETE FROM customers');
+            q('UPDATE stores SET next_no = 10000');
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '12')");
         }
         if (schema_version() < 5) {
             try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');
