@@ -713,9 +713,19 @@ switch ($action) {
             'address' => trim(mb_substr((string) ($b['address'] ?? ''), 0, 255)),
             'phone' => trim(mb_substr((string) ($b['phone'] ?? ''), 0, 40)),
             'active' => empty($b['active']) ? 0 : 1,
+            'code' => clean_store_code($b['code'] ?? ''),
         ];
         if ($data['name'] === '') {
             fail('Store name is needed.');
+        }
+        if ($data['code'] === '') {
+            $data['code'] = store_code_from_name($data['name']);
+        }
+        if (strlen($data['code']) < 2) {
+            fail('Store code needs 2 to 6 letters or numbers.');
+        }
+        if (q1('SELECT id FROM stores WHERE code = ? AND id <> ?', [$data['code'], $id])) {
+            fail('Another store already uses the code ' . $data['code'] . '.');
         }
         if ($id) {
             if (!q1('SELECT id FROM stores WHERE id = ?', [$id])) {
@@ -724,7 +734,7 @@ switch ($action) {
             if (!$data['active'] && !q1('SELECT id FROM stores WHERE active = 1 AND id <> ?', [$id])) {
                 fail('At least one store has to stay open.');
             }
-            q('UPDATE stores SET name = ?, address = ?, phone = ?, active = ? WHERE id = ?', [$data['name'], $data['address'], $data['phone'], $data['active'], $id]);
+            q('UPDATE stores SET name = ?, address = ?, phone = ?, active = ?, code = ? WHERE id = ?', [$data['name'], $data['address'], $data['phone'], $data['active'], $data['code'], $id]);
         } else {
             $data['created_at'] = now();
             $id = insert('stores', $data);

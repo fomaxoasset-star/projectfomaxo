@@ -144,6 +144,33 @@ function receipt_no_from_uuid($uuid)
     return 'FMX-' . strtoupper(substr(str_replace('-', '', $uuid), 0, 8));
 }
 
+/** Store code for order numbers: "City Centre Sharjah" -> "CCS", "Dubai" -> "DUB". */
+function store_code_from_name($name)
+{
+    $words = preg_split('/[^A-Za-z0-9]+/', strtoupper((string) $name), -1, PREG_SPLIT_NO_EMPTY);
+    if (count($words) >= 2) {
+        $c = '';
+        foreach ($words as $w) {
+            $c .= $w[0];
+        }
+        return substr($c, 0, 4);
+    }
+    return $words ? substr($words[0], 0, 3) : 'ST';
+}
+
+function clean_store_code($c)
+{
+    return substr(preg_replace('/[^A-Z0-9]/', '', strtoupper((string) $c)), 0, 6);
+}
+
+/** Next order number for a store: FMX-<code>-10000, 10001, ... Call inside the sale transaction. */
+function next_order_no($storeId)
+{
+    q('UPDATE stores SET next_no = next_no + 1 WHERE id = ?', [$storeId]);
+    $s = q1('SELECT code, next_no FROM stores WHERE id = ?', [$storeId]);
+    return 'FMX-' . ($s['code'] !== '' ? $s['code'] : 'ST') . '-' . ((int) $s['next_no'] - 1);
+}
+
 function h($s)
 {
     return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');

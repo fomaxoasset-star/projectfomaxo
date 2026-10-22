@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 10;
+const SCHEMA_VERSION = 11;
 
 function schema_version()
 {
@@ -199,6 +199,22 @@ function migrate()
             try_exec('ALTER TABLE users ADD COLUMN removed TINYINT NOT NULL DEFAULT 0');
             q("DELETE FROM meta WHERE k = 'schema'");
             q("INSERT INTO meta (k, v) VALUES ('schema', '10')");
+        }
+        if (schema_version() < 11) {
+            try_exec("ALTER TABLE stores ADD COLUMN code VARCHAR(8) NOT NULL DEFAULT ''");
+            try_exec('ALTER TABLE stores ADD COLUMN next_no INT NOT NULL DEFAULT 10000');
+            $used = [];
+            foreach (q('SELECT id, name FROM stores ORDER BY id')->fetchAll() as $st) {
+                $base = store_code_from_name($st['name']);
+                $code = $base;
+                for ($n = 2; isset($used[$code]); $n++) {
+                    $code = substr($base, 0, 4) . $n;
+                }
+                $used[$code] = 1;
+                q('UPDATE stores SET code = ? WHERE id = ?', [$code, $st['id']]);
+            }
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '11')");
         }
         if (schema_version() < 5) {
             try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');

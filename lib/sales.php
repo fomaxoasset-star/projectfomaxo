@@ -5,7 +5,7 @@ function stores_list($activeOnly = false)
 {
     $rows = q('SELECT * FROM stores' . ($activeOnly ? ' WHERE active = 1' : '') . ' ORDER BY id')->fetchAll();
     return array_map(function ($r) {
-        return ['id' => (int) $r['id'], 'name' => $r['name'], 'address' => $r['address'], 'phone' => $r['phone'], 'active' => (int) $r['active']];
+        return ['id' => (int) $r['id'], 'name' => $r['name'], 'address' => $r['address'], 'phone' => $r['phone'], 'active' => (int) $r['active'], 'code' => (string) ($r['code'] ?? '')];
     }, $rows);
 }
 
@@ -236,7 +236,7 @@ function create_sale($user, $b, $method)
         }
         $saleId = insert('sales', [
             'uuid' => $uuid,
-            'receipt_no' => receipt_no_from_uuid($uuid),
+            'receipt_no' => next_order_no($storeId),
             'receipt_token' => $token,
             'user_id' => $user['id'],
             'store_id' => $storeId,

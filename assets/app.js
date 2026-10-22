@@ -800,7 +800,7 @@
     payload.offline = 1;
     var lines = cartLines(), t = cartTotals();
     var local = {
-      queued: true, uuid: payload.uuid, receipt_no: 'FMX-' + payload.uuid.replace(/-/g, '').slice(0, 8).toUpperCase(),
+      queued: true, uuid: payload.uuid, receipt_no: 'FMX-' + (curStore().code || 'ST') + '-OFFLINE',
       receipt_token: payload.receipt_token, created_at: payload.created_at, staff_name: S.user.name,
       store_name: curStore().name, store_address: curStore().address, store_phone: curStore().phone,
       customer_name: S.customer ? S.customer.name : '', customer_phone: S.customer ? S.customer.phone : '', customer_email: S.customer ? S.customer.email || '' : '',
@@ -1312,16 +1312,17 @@
         if (!el()) return;
         el().innerHTML = '<div class="page-head"><p class="muted grow" style="margin:0">Each store has its own stock, and its address and phone print on its receipts.</p><button class="btn gold" data-act="st-new">+ Add store</button></div>' +
           '<div class="people">' + d.stores.map(function (x) {
-            return '<button class="person' + (x.active ? '' : ' off') + '" data-act="st-edit" data-id="' + x.id + '"><b>' + esc(x.name) + '</b>' + (x.active ? '' : ' <span class="badge off">Closed</span>') +
+            return '<button class="person' + (x.active ? '' : ' off') + '" data-act="st-edit" data-id="' + x.id + '"><b>' + esc(x.name) + '</b> <span class="small muted">' + esc(x.code || '') + '</span>' + (x.active ? '' : ' <span class="badge off">Closed</span>') +
               '<div class="small muted" style="margin-top:6px">' + (esc(x.address) || 'No address yet') + '<br>' + (esc(x.phone) || 'No phone yet') + '</div></button>';
           }).join('') + '</div>';
       }).catch(fail);
     }
   }
   function storeModal(x) {
-    var isNew = !x; x = x || { name: '', address: '', phone: '', active: 1 };
+    var isNew = !x; x = x || { name: '', address: '', phone: '', active: 1, code: '' };
     openModal(isNew ? 'Add store' : 'Edit store', '<div class="err m-err hidden"></div><form id="st-form">' +
       '<label class="field"><span>Store name</span><input class="input" name="name" required value="' + esc(x.name) + '" placeholder="e.g. City Centre Sharjah" autofocus></label>' +
+      '<label class="field"><span>Store code (in order numbers: FMX-<b>CODE</b>-10000)</span><input class="input" name="code" maxlength="6" autocapitalize="characters" autocorrect="off" spellcheck="false" style="text-transform:uppercase" value="' + esc(x.code || '') + '" placeholder="' + (isNew ? 'Made from the name if left empty' : '') + '"></label>' +
       '<label class="field"><span>Address (printed on receipts)</span><input class="input" name="address" value="' + esc(x.address) + '"></label>' +
       '<label class="field"><span>Phone (printed on receipts)</span><input class="input" name="phone" value="' + esc(x.phone) + '"></label>' +
       '<label class="check"><input type="checkbox" name="active" ' + (x.active ? 'checked' : '') + '> Open (can sell and hold stock)</label>' +
@@ -1329,7 +1330,7 @@
     $('#st-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var f = e.target, b = $('[type=submit]', f); b.disabled = true;
-      api('store_save', { body: { id: isNew ? 0 : x.id, name: f.name.value, address: f.address.value, phone: f.phone.value, active: f.active.checked ? 1 : 0 } })
+      api('store_save', { body: { id: isNew ? 0 : x.id, name: f.name.value, code: f.code.value, address: f.address.value, phone: f.phone.value, active: f.active.checked ? 1 : 0 } })
         .then(function (d) { S.stores = d.stores; LS.set('fx_stores', S.stores); closeModal(); toast('Store saved.'); updateStoreBtn(); refreshProducts(); loadTeam(); })
         .catch(function (er) { b.disabled = false; modalErr(er.message); });
     });
