@@ -1,6 +1,7 @@
 /* FOMAXO Store System - offline support. Keeps the app itself on the device so it opens without internet.
    Data requests (api.php) always go to the server; the app handles offline sales itself. */
-var VERSION = 'fomaxo-pos-v19';
+var VERSION = 'fomaxo-pos-v20';
+var PHOTOS = 'fomaxo-pos-photos';  // kept across app updates
 var SHELL = [
   './', 'index.html', 'assets/app.css?v=19', 'assets/app.js?v=12', 'assets/qrcode.js?v=12',
   'manifest.webmanifest', 'assets/icon-192.png', 'assets/icon-512.png', 'assets/apple-touch-icon.png', 'assets/favicon-32.png'
@@ -12,7 +13,7 @@ self.addEventListener('install', function (e) {
 
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== VERSION; }).map(function (k) { return caches.delete(k); }));
+    return Promise.all(keys.filter(function (k) { return k !== VERSION && k !== PHOTOS; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 
@@ -22,6 +23,16 @@ self.addEventListener('fetch', function (e) {
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;
   var path = url.pathname;
+  // Product photos: from the phone's saved copy instantly, refreshed in the background.
+  if (/\/image\.php$/.test(path)) {
+    e.respondWith(caches.open(PHOTOS).then(function (c) {
+      return c.match(req).then(function (hit) {
+        var net = fetch(req).then(function (res) { if (res.ok) c.put(req, res.clone()); return res; }).catch(function () { return hit; });
+        return hit || net;
+      });
+    }));
+    return;
+  }
   // Live data and server pages: never cached.
   if (/\.php$/.test(path) || path.indexOf('/data/') >= 0) return;
 

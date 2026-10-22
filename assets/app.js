@@ -161,6 +161,7 @@
     return api('products', { query: '&store=' + (curStoreId() || '') }).then(function (d) {
       S.products = d.products;
       LS.set('fx_products', S.products);
+      preloadPhotos();
       if (S.view === 'sell' && $('#tiles')) { renderChips(); renderTiles(); renderCart(); }
       if (S.view === 'stock' && $('#stock-body')) renderStockBody();
       updateStoreBtn();
@@ -443,8 +444,20 @@
       return g;
     }).sort(function (a, b) { return a.name.localeCompare(b.name); });
   }
+  function thumb(url, w) { return url ? url + (url.indexOf('?') >= 0 ? '&' : '?') + 'w=' + w : ''; }
   function tileImg(g) {
-    return g.image ? '<img src="' + esc(g.image) + '" alt="" loading="lazy" onerror="this.remove()">' : '';
+    return g.image ? '<img src="' + esc(thumb(g.image, 360)) + '" alt="" decoding="async" onerror="this.remove()">' : '';
+  }
+  var preloaded = {};
+  function preloadPhotos() {
+    S.products.forEach(function (p) {
+      if (!p.image || !p.active) return;
+      [360, 120].forEach(function (w) {
+        var u = thumb(p.image, w);
+        if (preloaded[u]) return;
+        preloaded[u] = 1; var im = new Image(); im.decoding = 'async'; im.src = u;
+      });
+    });
   }
   function renderTiles() {
     var el = $('#tiles'); if (!el) return;
@@ -475,7 +488,7 @@
     var g = productGroups().filter(function (x) { return x.key === key; })[0];
     if (!g) return;
     if (g.sizes.length === 1) { addToCart(g.sizes[0].id); return; }
-    openModal(g.name, '<div class="pick-head">' + (g.image ? '<img src="' + esc(g.image) + '" alt="" onerror="this.remove()">' : '') +
+    openModal(g.name, '<div class="pick-head">' + (g.image ? '<img src="' + esc(thumb(g.image, 360)) + '" alt="" onerror="this.remove()">' : '') +
       '<div class="muted">' + esc(g.family || '') + '<br><b class="pick-q">Which size?</b></div></div>' +
       '<div class="sizes">' + g.sizes.map(function (p) {
         var st = stockState(p), inCart = 0;
@@ -533,7 +546,7 @@
       '<div class="cart-lines">' + (empty ? '<div class="empty"><div class="big">Bag is empty</div>Tap a perfume to add it.</div>' :
         lines.map(function (l) {
           var p = productById(l.product_id) || {};
-          return '<div class="cline">' + (p.image ? '<img src="' + esc(p.image) + '" alt="" onerror="this.remove()">' : '<span class="cl-ph">' + esc(shortName(l.name).charAt(0)) + '</span>') +
+          return '<div class="cline">' + (p.image ? '<img src="' + esc(thumb(p.image, 120)) + '" alt="" onerror="this.remove()">' : '<span class="cl-ph">' + esc(shortName(l.name).charAt(0)) + '</span>') +
             '<div class="cl-mid"><b>' + esc(shortName(l.name)) + '</b><span>' + esc(l.variant) + ' · ' + money(l.price) + '</span></div>' +
             '<div class="qty big"><button data-act="qty" data-id="' + l.product_id + '" data-d="-1" aria-label="One less">−</button><span>' + l.qty + '</span>' +
             '<button data-act="qty" data-id="' + l.product_id + '" data-d="1" aria-label="One more">+</button></div></div>';
@@ -556,7 +569,7 @@
   function freeLineHtml() {
     var c = S.coupon; if (!c || c.kind !== 'free' || !c.free) return '';
     var p = productById(c.free.product_id) || { name: c.free.name, variant: '' };
-    return '<div class="cline free">' + (p.image ? '<img src="' + esc(p.image) + '" alt="">' : '<span class="cl-ph">🎁</span>') +
+    return '<div class="cline free">' + (p.image ? '<img src="' + esc(thumb(p.image, 120)) + '" alt="">' : '<span class="cl-ph">🎁</span>') +
       '<div class="cl-mid"><b>' + esc(shortName(p.name)) + '</b><span>' + esc(p.variant) + ' · Free with coupon</span></div><b class="free-tag">FREE</b></div>';
   }
   function couponModal() {
