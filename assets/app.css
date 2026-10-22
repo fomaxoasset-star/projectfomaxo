@@ -601,18 +601,9 @@ html { background: var(--bg-2); }
   .topbar { padding-top: env(safe-area-inset-top); padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); height: calc(54px + env(safe-area-inset-top)); }
 }
 
-/* ---------- Pull down to refresh (same on every phone; the browser's own one is switched off) ---------- */
+/* No pull-to-refresh: pulling down only scrolls (the browser's own pull-to-reload is off too) */
 html, body { overscroll-behavior-y: none; }
 .view, .catalog, .cart-lines { overscroll-behavior-y: contain; }
-.ptr { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 48px); z-index: 45; transform: translate(-50%, 0); display: flex; align-items: center; gap: 8px;
-  padding: 8px 14px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line-2); box-shadow: var(--shadow); font-size: 13px; font-weight: 700; color: var(--muted);
-  opacity: 0; pointer-events: none; transition: opacity .15s; }
-.ptr.show { opacity: 1; }
-.ptr.ready { color: var(--gold-2); border-color: rgba(201,162,75,.6); }
-.ptr-icon { display: inline-block; font-size: 16px; transition: transform .2s; }
-.ptr.ready .ptr-icon { transform: rotate(180deg); }
-.ptr.busy .ptr-icon { width: 14px; height: 14px; font-size: 0; border-radius: 50%; border: 2px solid var(--line-2); border-top-color: var(--gold); animation: spin .8s linear infinite; transform: none; }
-.ptr { transition: opacity .15s, transform .2s; }
 
 /* ================= Bottom menu attached to the bottom of the screen (no gap on any phone) ================= */
 .bnav { display: none; }

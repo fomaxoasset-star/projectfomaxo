@@ -1708,64 +1708,6 @@
   window.addEventListener('online', function () { setOnline(true); refreshProducts(); });
   window.addEventListener('offline', function () { setOnline(false); });
 
-  // ---------------------------------------------------------------- pull down to refresh (all phones)
-  // Updates stock, prices, sales and settings without reloading the page, so the bag is never lost.
-  function refreshAll() {
-    var jobs = [refreshMe(), refreshProducts(), syncQueue()];
-    return Promise.all(jobs).then(function () {
-      if (S.view !== 'sell') renderView();
-      updateStoreBtn();
-    });
-  }
-  (function pullToRefresh() {
-    var startY = 0, pulling = false, dist = 0, box = null, el = null, busy = false, LIMIT = 72;
-    function indicator() {
-      if (!el) {
-        el = document.createElement('div');
-        el.className = 'ptr';
-        el.innerHTML = '<span class="ptr-icon">↓</span><span class="ptr-text">Pull to refresh</span>';
-        document.body.appendChild(el);
-      }
-      return el;
-    }
-    function scroller(t) { return t && t.closest ? t.closest('.cart-lines, .catalog, .view') : null; }
-    function atTop(t) { for (var n = t; n && n !== document.documentElement; n = n.parentElement) { if (n.scrollTop > 0) return false; } return (document.scrollingElement || document.documentElement).scrollTop <= 0; }
-    document.addEventListener('touchstart', function (e) {
-      if (busy || modalState || $('.menu') || !S.token || e.touches.length !== 1) return;
-      box = scroller(e.target);
-      if (!box || !atTop(e.target)) { box = null; return; }
-      startY = e.touches[0].clientY; pulling = true; dist = 0;
-    }, { passive: true });
-    document.addEventListener('touchmove', function (e) {
-      if (!pulling || !box) return;
-      dist = e.touches[0].clientY - startY;
-      if (dist <= 0 || !atTop(box)) { dist = 0; indicator().classList.remove('show'); return; }
-      var i = indicator(), d = Math.min(dist * 0.5, LIMIT + 20);
-      i.classList.add('show');
-      i.style.transform = 'translate(-50%, ' + d + 'px)';
-      i.classList.toggle('ready', dist * 0.5 >= LIMIT);
-      $('.ptr-text', i).textContent = dist * 0.5 >= LIMIT ? 'Release to refresh' : 'Pull to refresh';
-      if (e.cancelable) e.preventDefault();
-    }, { passive: false });
-    document.addEventListener('touchend', function () {
-      if (!pulling) return;
-      pulling = false;
-      var i = indicator();
-      if (dist * 0.5 >= LIMIT) {
-        busy = true;
-        i.classList.add('busy'); i.style.transform = 'translate(-50%, ' + LIMIT + 'px)';
-        $('.ptr-text', i).textContent = 'Refreshing…';
-        refreshAll().catch(function () {}).then(function () {
-          busy = false; i.classList.remove('busy', 'ready', 'show'); i.style.transform = '';
-          toast(S.online ? '✓ Up to date' : 'No internet — showing saved data', !S.online);
-        });
-      } else {
-        i.classList.remove('show', 'ready'); i.style.transform = '';
-      }
-      dist = 0;
-    });
-  })();
-
   // ---------------------------------------------------------------- start
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
