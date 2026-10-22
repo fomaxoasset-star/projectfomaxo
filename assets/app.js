@@ -39,6 +39,9 @@
     h = h.join('');
     return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
   }
+  function titleCase(n) {
+    return String(n || '').trim().replace(/\s+/g, ' ').toLowerCase().replace(/(^|[\s\-'])(\S)/g, function (m, a, b) { return a + b.toUpperCase(); });
+  }
   function initials(n) { return String(n || '?').trim().split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase(); }
   function pName(p) { return p.name + (p.variant ? ' · ' + p.variant : ''); }
 
@@ -593,7 +596,7 @@
   function customerModal() {
     var c = S.customer || {};
     openModal('Customer', '<div class="err m-err hidden"></div>' +
-      '<label class="field"><span>Name</span><input class="input" id="c-name" value="' + esc(c.name || '') + '" placeholder="Customer name" autocomplete="off" autofocus></label>' +
+      '<label class="field"><span>Name</span><input class="input cap" id="c-name" value="' + esc(c.name || '') + '" placeholder="Customer name" autocomplete="off" autocapitalize="words" autofocus></label>' +
       '<label class="field"><span>Mobile</span><div class="row"><input class="input grow" id="c-phone" type="tel" inputmode="tel" placeholder="05x xxx xxxx" value="' + esc(c.phone || '') + '" autocomplete="off">' +
       '<button class="btn" data-act="c-find">Find</button></div></label>' +
       '<label class="field"><span>Email (optional)</span><input class="input" id="c-email" type="email" inputmode="email" autocapitalize="none" placeholder="name@example.com" value="' + esc(c.email || '') + '" autocomplete="off"></label>' +
@@ -1501,7 +1504,7 @@
       case 'discount': discountModal(); break;
       case 'c-find': findCustomer(); break;
       case 'c-save': {
-        var ph = $('#c-phone').value.trim(), em = $('#c-email').value.trim(), nm = $('#c-name').value.trim();
+        var ph = $('#c-phone').value.trim(), em = $('#c-email').value.trim().toLowerCase(), nm = titleCase($('#c-name').value);
         if (!ph && !em && !nm) { S.customer = null; closeModal(); renderCart(); break; }
         if (ph && ph.replace(/\D/g, '').length < 7) { modalErr('Enter the full mobile number.'); break; }
         if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { modalErr('That email does not look right.'); break; }
