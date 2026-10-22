@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Practice payment</title><link rel="stylesheet" href="assets/page.css"><link rel="icon" href="assets/favicon-32.png"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png"></head>
 <body><main class="card">
   <div class="banner wait">PRACTICE MODE - no real money</div>
-  <div class="brand">FOMAXO</div>
+  <div class="brand"><?= wordmark() ?></div>
   <h1>Pay AED <?= money($sale['total']) ?></h1>
   <p class="muted"><?= h($sale['receipt_no']) ?> - on the live system this page is Ziina's checkout, with card, Apple Pay and Google Pay.</p>
   <form method="post">

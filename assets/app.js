@@ -42,6 +42,7 @@
   function initials(n) { return String(n || '?').trim().split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase(); }
   function pName(p) { return p.name + (p.variant ? ' · ' + p.variant : ''); }
 
+  var WORDMARK = '<svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><path fill="currentColor" fill-rule="evenodd" d="M1068 147 1068 480 1135 480 1135 214ZM1778 123 1581 480 1672 479 1815 221 1823 204ZM0 480 68 480 69 257 377 257 377 189 69 189 68 105 0 105ZM2934 1 2911 4 2871 15 2837 31 2801 56 2768 90 2743 128 2726 168 2720 191 2716 218 2716 263 2723 303 2739 346 2750 366 2766 389 2776 401 2802 426 2837 450 2864 463 2890 472 2926 479 2973 480 3003 476 3023 471 3048 462 3069 452 3108 426 3141 393 3166 356 3185 311 3194 267 3194 215 3186 174 3178 151 3165 124 3154 106 3138 85 3110 57 3089 41 3069 29 3027 11 2998 4 2976 1ZM2933 70 2966 69 3005 76 3038 90 3064 108 3087 131 3105 157 3120 192 3126 222 3126 259 3120 289 3107 321 3092 344 3064 373 3039 390 3013 402 2976 411 2934 411 2902 404 2869 389 2847 374 2822 349 2803 321 2789 287 2784 262 2783 229 2790 191 2805 157 2823 131 2847 107 2872 90 2901 77ZM2623 1 2538 1 2431 145 2421 161 2463 217ZM2198 1 2366 233 2184 480 2269 480 2411 293 2417 299 2550 480 2635 480 2276 1ZM722 1 677 9 654 17 625 31 590 55 555 91 533 124 520 151 513 171 504 216 504 265 513 311 531 354 557 393 591 427 623 449 647 461 671 470 714 479 760 480 785 477 811 471 855 453 897 425 928 394 948 366 958 348 974 307 982 265 982 217 973 171 954 126 939 102 925 84 893 53 869 36 851 26 815 11 786 4 763 1ZM721 70 754 69 793 76 829 92 848 105 873 129 894 159 908 193 914 224 914 258 907 292 893 324 876 349 854 371 825 391 792 405 764 411 721 411 693 405 660 391 635 374 609 348 592 323 580 297 572 264 571 227 577 194 583 177 594 155 610 132 636 106 658 91 689 77ZM0 1 0 69 423 69 423 1ZM1847 0 1802 82 2022 480 2113 480ZM1068 0 1068 97 1282 311 1425 169 1426 170 1426 480 1494 480 1494 4 1282 215Z"/></svg>';
   var ICON = {
     sell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>',
     stock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>',
@@ -276,7 +277,7 @@
     closeMenu();
     $('#root').innerHTML =
       '<div class="login-wrap"><div class="login">' +
-      '<div class="h-brand">FOMAXO</div><div class="tag">Store system</div>' +
+      '<div class="h-brand">' + WORDMARK + '</div><div class="tag">Store system</div>' +
       '<form id="login-form" autocomplete="on">' +
       (msg ? '<div class="note" style="margin-bottom:12px">' + esc(msg) + '</div>' : '') +
       '<div class="err m-err hidden"></div>' +
@@ -315,7 +316,7 @@
     if (!S.token || !S.user || !S.settings) { renderLogin(); return; }
     $('#root').innerHTML =
       '<div class="app"><header class="topbar">' +
-      '<div class="h-brand">FOMAXO</div>' +
+      '<div class="h-brand">' + WORDMARK + '</div>' +
       '<nav class="nav" id="nav">' + navItems().map(function (n) {
         return '<button data-act="nav" data-view="' + n[0] + '" class="' + (S.view === n[0] ? 'active' : '') + '">' + ICON[n[0]] + '<span>' + n[1] + '</span><span class="count hidden" data-count="' + n[0] + '"></span></button>';
       }).join('') + '</nav>' +
@@ -724,7 +725,7 @@
     $('#view').innerHTML = '<div class="page"><div class="page-head"><h1>Stock</h1>' +
       (multiStore() ? '<span class="muted">' + (S.stockScope === 'all' ? 'All stores' : esc(curStore().name)) + '</span>' : '') + '<div class="spacer"></div>' +
       (showAll ? '<div class="seg"><button data-act="scope" data-s="store" class="' + (S.stockScope === 'store' ? 'active' : '') + '">' + esc(curStore().name) + '</button><button data-act="scope" data-s="all" class="' + (S.stockScope === 'all' ? 'active' : '') + '">All stores</button></div>' : '') +
-      (mgr ? '<button class="btn" data-act="web-sync" title="Products and prices update from fomaxo.com automatically every 10 minutes">Sync with website</button><button class="btn" data-act="bulk-open">Count all</button><button class="btn gold" data-act="p-new">+ Add product</button>' : '') + '</div>' +
+      (mgr ? '<button class="btn" data-act="web-sync" title="Products and prices update from fomaxo.com automatically every 10 minutes">Sync<span class="hide-xs"> with website</span></button><button class="btn" data-act="bulk-open">Count all</button><button class="btn gold" data-act="p-new">+ Add product</button>' : '') + '</div>' +
       '<div class="kpis" id="stock-kpis"></div>' +
       '<div class="catalog-tools" style="position:static;margin:0 0 12px;padding:0"><label class="search">' + ICON.search +
       '<input class="input" id="sq" type="search" placeholder="Search stock" value="' + esc(S.stockSearch) + '"></label>' +
@@ -772,7 +773,7 @@
       '<tr><th>Product</th><th class="hide-sm">Category</th><th class="r hide-sm">Price</th><th>Stock</th><th class="r"></th></tr>';
     var rows = list.map(function (p) {
       var name = '<td><div class="p-name">' + esc(p.name) + '</div><div class="small muted">' + esc([p.variant, p.sku].filter(Boolean).join(' · ')) + '</div></td>';
-      var acts = '<td><div class="actions">' + (mgr && !allMode ? '<button class="btn sm gold" data-act="p-adjust" data-id="' + p.id + '">Adjust</button>' : '') +
+      var acts = '<td class="act-cell"><div class="actions">' + (mgr && !allMode ? '<button class="btn sm gold" data-act="p-adjust" data-id="' + p.id + '">Adjust</button>' : '') +
         (canMove ? '<button class="btn sm" data-act="p-move" data-id="' + p.id + '">Move</button>' : '') +
         (mgr ? '<button class="btn sm" data-act="p-edit" data-id="' + p.id + '">Edit</button>' : '') +
         '<button class="btn sm ghost" data-act="p-history" data-id="' + p.id + '">History</button></div></td>';
@@ -784,7 +785,7 @@
         '<td><div class="stock-num num">' + p.stock + '</div>' + stockBadge(p) + '</td>' + acts + '</tr>';
     }).join('');
     var cols = allMode ? stores.length + 3 : 5;
-    $('#stock-table').innerHTML = '<table class="tbl"><thead>' + head + '</thead><tbody id="stock-body">' + (rows ||
+    $('#stock-table').innerHTML = '<table class="tbl ' + (allMode ? 'tbl-all' : 'tbl-stock') + '"><thead>' + head + '</thead><tbody id="stock-body">' + (rows ||
       '<tr><td colspan="' + cols + '"><div class="empty">' + (all.length ? 'Nothing here.' : 'No products yet.' + (mgr ? ' Press <b>+ Add product</b>.' : '')) + '</div></td></tr>') + '</tbody></table>';
     updateNavCounts();
   }

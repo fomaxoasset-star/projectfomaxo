@@ -55,3 +55,5 @@ a { color: var(--gold-2); }
   .err { color: #a3261f; }
   .banner.ok { color: #23804a; } .banner.bad { color: #a3261f; }
 }
+.brand .wm, .receipt .brand .wm { display: block; height: 22px; width: auto; aspect-ratio: 3196 / 481; margin: 0 auto 6px; fill: currentColor; }
+.receipt .brand .wm { height: 24px; }
