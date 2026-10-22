@@ -948,7 +948,7 @@
       body = '<label class="field"><span>Customer gave (leave empty if exact)</span><input class="input" id="pa-cash" type="number" inputmode="decimal" step="0.01" min="0" placeholder="' + money(s.total) + '"></label>' +
         '<div class="change-box big" id="pa-change"><span>Give change</span><span class="num">AED 0.00</span></div>';
     } else {
-      body = (m === 'tap' ? '<p class="muted">Open <b>Ziina</b> → <b>Tap to Pay</b>, type <b class="num">' + money(s.total) + '</b> and wait for <b>Approved</b>.</p>' : '<p class="muted">Charge <b class="num">' + money(s.total) + '</b> on the card terminal and wait for <b>approved</b>.</p>') +
+      body = (m === 'tap' ? '<p class="muted">Open <b>Ziina</b> → <b>Tap to Pay</b>, type <b class="num">' + money(s.total) + '</b> <button class="btn sm" type="button" data-act="copy-amount" data-v="' + (s.total / 100).toFixed(2) + '">Copy</button> and wait for <b>Approved</b>.</p>' : '<p class="muted">Charge <b class="num">' + money(s.total) + '</b> on the card terminal and wait for <b>approved</b>.</p>') +
         '<label class="field"><span>Reference (optional)</span><input class="input" id="pa-ref" maxlength="64"></label>';
     }
     openModal({ cash: 'Cash', tap: 'Card / Tap', card: 'Card machine' }[m], '<div class="err m-err hidden"></div>' + switchRow(m, 'again', s.total) + amount + body +
@@ -999,11 +999,12 @@
         (S.settings.ziina_mode !== 'live' ? '<div class="note" style="margin-bottom:12px;text-align:center">' + (S.settings.ziina_mode === 'demo' ? 'PRACTICE MODE — no real money' : 'ZIINA TEST MODE — no real money') + '</div>' : '') +
         '<div class="amount-big"><div class="lbl">Customer pays</div><div class="val num">' + aed(d.sale.total) + '</div></div>' +
         '<div class="qr-box">' + qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true }) + '</div>' +
-        '<p class="small muted" style="text-align:center;margin:0 0 6px">Customer scans with their phone camera and pays by card, Apple Pay or Google Pay.</p>' +
+        '<p class="small muted qr-hint" style="text-align:center;margin:0 0 6px">Customer scans with their phone camera and pays by card, Apple Pay or Google Pay.</p>' +
         '<div class="status-line" id="z-status"><span class="spinner"></span> Waiting for payment…</div>' +
         '<div class="err m-err hidden"></div>' +
-        '<div class="modal-foot">' + (wa ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(wa) + '">Send link on WhatsApp</a>' : '') +
-        '<a class="btn" target="_blank" rel="noopener" href="' + esc(d.pay_url) + '">Open on this device</a></div>' +
+        '<div class="modal-foot qr-links"><button class="btn" type="button" data-act="copy-link" data-v="' + esc(d.pay_url) + '">Copy link</button>' +
+        (wa ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(wa) + '">WhatsApp</a>' : '') +
+        '<a class="btn" target="_blank" rel="noopener" href="' + esc(d.pay_url) + '">Open</a></div>' +
         '<div class="modal-foot"><button class="btn danger block" data-act="z-cancel" data-id="' + d.sale.id + '">Cancel payment</button></div>');
       var busy = false;
       ziinaPoll = setInterval(function () {
@@ -1901,6 +1902,11 @@
       }
       case 'd-remove': S.discount = null; closeModal(); renderCart(); break;
       case 'pay': if (S.cart.length) payModal(el.getAttribute('data-m')); break;
+      case 'copy-link': {
+        var lnk = el.getAttribute('data-v');
+        (navigator.clipboard ? navigator.clipboard.writeText(lnk) : Promise.reject()).then(function () { toast('Payment link copied — paste it to the customer.'); }, function () { window.prompt('Copy this payment link:', lnk); });
+        break;
+      }
       case 'copy-amount': {
         var amt = el.getAttribute('data-v');
         (navigator.clipboard ? navigator.clipboard.writeText(amt) : Promise.reject()).then(function () { toast('Amount ' + amt + ' copied — paste it in Ziina.'); }, function () { toast('Amount: ' + amt); });

@@ -730,3 +730,28 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
 .pay-switch .seg button { padding: 8px 4px; font-size: 13px; white-space: nowrap; }
 .pay-switch .seg button span { font-size: 15px; }
 .pay-switch .seg button:disabled { opacity: .4; }
+
+.qr-links .btn { padding-left: 8px; padding-right: 8px; }
+/* Payment screens fit on one phone screen without scrolling */
+@media (max-height: 820px) {
+  .modal-head { margin-bottom: 8px; }
+  .amount-big { padding: 8px 10px; margin-bottom: 10px; }
+  .amount-big .val { font-size: 26px; }
+  .cash-q { font-size: 15px; margin-bottom: 6px; }
+  .notes { gap: 6px; margin-bottom: 8px; }
+  .note-btn { min-height: 46px; font-size: 19px; }
+  .note-btn.exact { font-size: 14px; }
+  .change-box.big { flex-direction: row; align-items: center; padding: 8px 14px; font-size: 16px; }
+  .change-box.big .num { font-size: 22px; }
+  .field { margin-bottom: 8px; }
+  .modal-foot { margin-top: 10px; }
+  .pay-switch { margin-top: 10px; gap: 4px; }
+  .pay-switch .seg button { padding: 6px 2px; }
+  .qr-box { width: min(240px, 31vh); padding: 8px; margin-bottom: 8px; }
+  .steps.big li { padding: 6px 0; }
+}
+@media (max-height: 700px) {
+  .qr-hint { display: none; }
+  .amount-big .lbl { display: none; }
+  .qr-box { width: min(220px, 28vh); }
+}
