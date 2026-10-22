@@ -1,8 +1,8 @@
 /* FOMAXO Store System - offline support. Keeps the app itself on the device so it opens without internet.
    Data requests (api.php) always go to the server; the app handles offline sales itself. */
-var VERSION = 'fomaxo-pos-v7';
+var VERSION = 'fomaxo-pos-v8';
 var SHELL = [
-  './', 'index.html', 'assets/app.css', 'assets/app.js', 'assets/qrcode.js',
+  './', 'index.html', 'assets/app.css?v=8', 'assets/app.js?v=8', 'assets/qrcode.js?v=8',
   'manifest.webmanifest', 'assets/icon-192.png', 'assets/icon-512.png', 'assets/apple-touch-icon.png', 'assets/favicon-32.png'
 ];
 
@@ -27,7 +27,7 @@ self.addEventListener('fetch', function (e) {
 
   if (req.mode === 'navigate') {
     // Newest app when online, saved copy when offline.
-    e.respondWith(fetch(req).then(function (res) {
+    e.respondWith(fetch(req, { cache: 'no-cache' }).then(function (res) {
       var copy = res.clone();
       caches.open(VERSION).then(function (c) { c.put('index.html', copy); });
       return res;
@@ -35,12 +35,11 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // App files: answer from the saved copy instantly, refresh it in the background.
-  e.respondWith(caches.match(req).then(function (cached) {
-    var net = fetch(req).then(function (res) {
-      if (res.ok) { var copy = res.clone(); caches.open(VERSION).then(function (c) { c.put(req, copy); }); }
-      return res;
-    }).catch(function () { return cached; });
-    return cached || net;
+  // App files: always try the newest copy first (so updates show at once), saved copy when offline.
+  e.respondWith(fetch(req, { cache: 'no-cache' }).then(function (res) {
+    if (res.ok) { var copy = res.clone(); caches.open(VERSION).then(function (c) { c.put(req, copy); }); }
+    return res;
+  }).catch(function () {
+    return caches.match(req, { ignoreSearch: true });
   }));
 });

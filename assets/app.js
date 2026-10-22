@@ -1351,7 +1351,20 @@
 
   // ---------------------------------------------------------------- start
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('sw.js').catch(function () { /* app still works online */ });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (reg) {
+      // Check for a new version when the app is opened again or comes back to the screen.
+      document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') reg.update().catch(function () {}); });
+    }).catch(function () { /* app still works online */ });
+    // A new version took over: reload once, but never in the middle of a sale.
+    var hadController = !!navigator.serviceWorker.controller, reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController || reloading) { hadController = true; return; }
+      var reloadWhenFree = function () {
+        if (S.cart.length || modalState) { setTimeout(reloadWhenFree, 5000); return; }
+        reloading = true; location.reload();
+      };
+      reloadWhenFree();
+    });
   }
   setInterval(function () {
     if (!S.token) return;
