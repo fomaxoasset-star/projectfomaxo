@@ -80,6 +80,8 @@ em,i{font-style:normal}
 a{color:var(--gold)}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
 .brand{font-family:Cinzel,Georgia,serif;font-weight:600;font-size:20px;letter-spacing:.2em;color:var(--gold);text-decoration:none}
+/* FOMAXO wordmark = same logo as the website header (AJAY 22/10/2026) */
+.brand{display:inline-flex;align-items:center}.brand .wm{height:17px;width:auto;aspect-ratio:3196/481;display:block}
 .brand small{font-family:Manrope,sans-serif;font-size:11px;letter-spacing:.3em;color:var(--muted);margin-left:8px}
 .wrap{max-width:1180px;margin:0 auto;padding:14px 16px 16px}
 .narrow{max-width:420px}
@@ -338,7 +340,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
   .g3{grid-template-columns:1fr 1fr}.g3>div:last-child{grid-column:1/-1}
   .rstats{grid-template-columns:1fr 1fr}.rstats .stat{min-width:0}.rstats .stat b{font-size:16px;white-space:nowrap}.rstats .stat span{font-size:10px}
   .settings{grid-template-columns:1fr}
-  .top{padding:7px 12px}.brand{font-size:18px}
+  .top{padding:7px 12px}.brand{font-size:18px}.brand .wm{height:15px}
   .filters input,.filters select{padding:6px 9px}.filters .acts .btn{padding:8px 12px;font-size:11.5px}
   .stat b{white-space:nowrap;font-size:13px}
   .olist tr.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"no tot" "date st" "cust pay" "items items";gap:1px 10px;padding:8px 12px;margin-bottom:8px}
@@ -471,7 +473,7 @@ function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the 
      . '<title>' . h($title) . ' — FOMAXO Admin</title>'
      . '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&family=Cinzel:wght@500;600&family=Jost:wght@300;400;500&family=Tajawal:wght@400;500;700&family=Manrope:wght@400;500;600;700&display=swap">'
      . '<link rel="stylesheet" href="./?css=' . substr(md5($css), 0, 10) . '"></head><body>'
-     . '<header class="top"><a class="brand" href="./">FOMAXO<small>ADMIN</small></a>'
+     . '<header class="top"><a class="brand" href="./"><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><path fill="currentColor" fill-rule="evenodd" d="M1068 147 1068 480 1135 480 1135 214ZM1778 123 1581 480 1672 479 1815 221 1823 204ZM0 480 68 480 69 257 377 257 377 189 69 189 68 105 0 105ZM2934 1 2911 4 2871 15 2837 31 2801 56 2768 90 2743 128 2726 168 2720 191 2716 218 2716 263 2723 303 2739 346 2750 366 2766 389 2776 401 2802 426 2837 450 2864 463 2890 472 2926 479 2973 480 3003 476 3023 471 3048 462 3069 452 3108 426 3141 393 3166 356 3185 311 3194 267 3194 215 3186 174 3178 151 3165 124 3154 106 3138 85 3110 57 3089 41 3069 29 3027 11 2998 4 2976 1ZM2933 70 2966 69 3005 76 3038 90 3064 108 3087 131 3105 157 3120 192 3126 222 3126 259 3120 289 3107 321 3092 344 3064 373 3039 390 3013 402 2976 411 2934 411 2902 404 2869 389 2847 374 2822 349 2803 321 2789 287 2784 262 2783 229 2790 191 2805 157 2823 131 2847 107 2872 90 2901 77ZM2623 1 2538 1 2431 145 2421 161 2463 217ZM2198 1 2366 233 2184 480 2269 480 2411 293 2417 299 2550 480 2635 480 2276 1ZM722 1 677 9 654 17 625 31 590 55 555 91 533 124 520 151 513 171 504 216 504 265 513 311 531 354 557 393 591 427 623 449 647 461 671 470 714 479 760 480 785 477 811 471 855 453 897 425 928 394 948 366 958 348 974 307 982 265 982 217 973 171 954 126 939 102 925 84 893 53 869 36 851 26 815 11 786 4 763 1ZM721 70 754 69 793 76 829 92 848 105 873 129 894 159 908 193 914 224 914 258 907 292 893 324 876 349 854 371 825 391 792 405 764 411 721 411 693 405 660 391 635 374 609 348 592 323 580 297 572 264 571 227 577 194 583 177 594 155 610 132 636 106 658 91 689 77ZM0 1 0 69 423 69 423 1ZM1847 0 1802 82 2022 480 2113 480ZM1068 0 1068 97 1282 311 1425 169 1426 170 1426 480 1494 480 1494 4 1282 215Z"/></svg><small>ADMIN</small></a>'
      . (!empty($_SESSION['admin']) ? '<div class="hacts"><a class="btn line sm" href="../" target="_blank" rel="noopener"><span class="vw">View </span>website ↗</a><form method="post" action="./?logout=1" style="margin:0"><input type="hidden" name="csrf" value="' . h($_SESSION['csrf']) . '"><button class="btn line sm">Sign out</button></form></div>' : '')
      . '</header>'
      . (!empty($_SESSION['admin']) ? '<div class="tabsw"><a class="tnav" data-d="-1" aria-label="Previous page" hidden>‹</a><nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
