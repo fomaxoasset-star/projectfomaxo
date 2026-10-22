@@ -726,7 +726,7 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
 .cc-wrap select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
 
 .pay-switch { display: flex; flex-direction: column; gap: 6px; margin: 14px 0 0; }
-.pay-switch .seg { display: grid; grid-template-columns: repeat(4, 1fr); }
-.pay-switch .seg button { padding: 8px 4px; font-size: 13px; white-space: nowrap; }
+.pay-switch .seg { display: grid; grid-template-columns: repeat(3, 1fr); }
+.pay-switch .seg button { padding: 10px 4px; font-size: 15px; white-space: nowrap; }
 .pay-switch .seg button span { font-size: 15px; }
 .pay-switch .seg button:disabled { opacity: .4; }
