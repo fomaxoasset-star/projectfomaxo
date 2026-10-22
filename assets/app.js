@@ -1089,6 +1089,7 @@
         '<button class="btn" data-act="r-wa">WhatsApp</button><button class="btn" data-act="r-copy">Copy link</button>' +
         '<button class="btn" data-act="r-email">Email</button>' : '') +
       (!fresh && paid && isManager() && !s.queued ? '<button class="btn danger" data-act="r-void">Void sale</button>' : '') +
+      (!fresh && isManager() && !s.queued && s.id ? '<button class="btn danger" data-act="r-delete" data-id="' + s.id + '">Delete order</button>' : '') +
       (!paid && !s.queued && (s.status === 'pending' || s.status === 'cancelled' || s.status === 'failed') ? '<button class="btn gold big wide" data-act="pa-open" data-id="' + s.id + '">Pay again</button>' : '') +
       (!paid && !s.queued && (s.status === 'pending' || s.status === 'cancelled' || s.status === 'failed') ? '<button class="btn danger wide" data-act="z-cancel" data-id="' + s.id + '">' + (s.status === 'cancelled' ? 'Cancel again (change reason)' : 'Cancel sale') + '</button>' : '') +
       (fresh ? '<button class="btn gold big wide" data-act="modal-close">New sale</button>' : '') +
@@ -1947,6 +1948,22 @@
       }
       case 'r-email': location.href = 'mailto:' + encodeURIComponent(currentReceipt.customer_email || '') + '?subject=' + encodeURIComponent(S.settings.store_name + ' receipt ' + currentReceipt.receipt_no) + '&body=' + encodeURIComponent(receiptText(currentReceipt)); break;
       case 'r-void': voidModal(currentReceipt); break;
+      case 'r-delete': {
+        var ds = currentReceipt; if (!ds || ds.id !== id) break;
+        var isPaid = ds.status === 'paid', num = /^FMX-/.test(ds.receipt_no) ? ds.receipt_no : 'this unpaid order';
+        openModal('Delete ' + (isPaid || ds.status === 'void' ? ds.receipt_no : 'order') + '?', '<div class="err m-err hidden"></div>' +
+          '<p style="margin-top:0"><b>' + esc(num) + '</b> (' + aed(ds.total) + ') will be removed from Sales, Reports and Performance. <b>This cannot be undone.</b></p>' +
+          (isPaid ? '<p class="muted small">Its items go back into stock. If it is the newest order, the next sale reuses its number.</p>' : '') +
+          '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Keep</button><button class="btn danger" type="button" data-act="r-delete-yes" data-id="' + ds.id + '">Delete order</button></div>');
+        break;
+      }
+      case 'r-delete-yes':
+        el.disabled = true;
+        api('sale_delete', { body: { id: id } }).then(function (d) {
+          closeModal(); toast('Order deleted.' + (d.stock_back ? ' ' + d.stock_back + ' item' + (d.stock_back === 1 ? '' : 's') + ' back in stock.' : ''));
+          refreshProducts(); if (S.view === 'sales') renderSales();
+        }).catch(function (er) { el.disabled = false; modalErr(er.offline ? 'Needs internet.' : er.message); });
+        break;
       case 'v-save': {
         var reason = $('#v-reason').value.trim();
         if (!reason) { modalErr('Please give a reason.'); break; }

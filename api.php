@@ -687,6 +687,45 @@ switch ($action) {
         log_activity($u, 'void', 'Voided sale of AED ' . money((int) $s['total']) . ': ' . $reason, $s['receipt_no'], (int) $s['store_id']);
         json_out(['sale' => load_sale('id', $s['id'])]);
 
+    case 'sale_delete':
+        // Managers only: remove one order completely. Any stock it still holds goes back on the shelf.
+        // If it was the store's newest numbered order, its number is reused so the count has no gap.
+        need_post();
+        $u = require_manager();
+        $s = q1('SELECT * FROM sales WHERE id = ?', [(int) ($b['id'] ?? 0)]);
+        if (!$s) {
+            fail('Order not found.', 404);
+        }
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            $back = 0;
+            foreach (q('SELECT product_id, store_id, SUM(qty_change) AS chg FROM stock_moves WHERE sale_id = ? GROUP BY product_id, store_id', [$s['id']])->fetchAll() as $mv) {
+                $taken = -(int) $mv['chg'];
+                if ($taken > 0) {
+                    move_stock((int) $mv['product_id'], (int) ($mv['store_id'] ?: $s['store_id']), $u['id'], $taken, 'count', 'Deleted order ' . $s['receipt_no']);
+                    $back += $taken;
+                }
+            }
+            q('UPDATE stock_moves SET sale_id = NULL WHERE sale_id = ?', [$s['id']]);
+            q('DELETE FROM sale_items WHERE sale_id = ?', [$s['id']]);
+            q('DELETE FROM sales WHERE id = ?', [$s['id']]);
+            $reused = false;
+            if (preg_match('/^FMX-[A-Z0-9]+-(\d+)$/', $s['receipt_no'], $mm) && $s['store_id']) {
+                $st = q1('SELECT next_no FROM stores WHERE id = ?', [$s['store_id']]);
+                if ($st && (int) $st['next_no'] - 1 === (int) $mm[1]) {
+                    q('UPDATE stores SET next_no = next_no - 1 WHERE id = ?', [$s['store_id']]);
+                    $reused = true;
+                }
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+        log_activity($u, 'void', 'Deleted order ' . $s['receipt_no'] . ' (' . $s['status'] . ', AED ' . money((int) $s['total']) . ')' . ($back ? ', ' . $back . ' item' . ($back === 1 ? '' : 's') . ' back in stock' : '') . ($reused ? ', number will be reused' : ''), '', (int) $s['store_id']);
+        json_out(['ok' => true, 'stock_back' => $back, 'reused' => $reused]);
+
     // ---------------- Reports ----------------
     case 'report':
         require_manager();
