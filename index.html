@@ -3035,7 +3035,7 @@ function promoMaybe(){
    the number goes to Admin → Analytics → Left at checkout like the bag box (same AED 20 coupon, sent from there on WhatsApp) */
 let welT = 0, welOn = false;
 /* a new visitor: no welcome box yet, no number known, no order; they see only the welcome box, or the limited time offer popup when it is on */
-function welDue(){ try { return !(localStorage.getItem('fomaxo_wel') || bagWaKnown() || localStorage.getItem('fomaxo_last')); } catch(e) { return false; } }
+function welDue(){ try { return !(localStorage.getItem('fomaxo_wel') || bagWaKnown()); } catch(e) { return false; } }
 function welcomeMaybe(){
   if (!welDue()) return;
   if (welOn) return; welOn = true;
@@ -3280,8 +3280,11 @@ function bagRecs(){
       <a href="#/product/${p.id}?size=${sz}" data-close><img src="${SM(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></a>
       <button type="button" class="rec-add" data-recadd="${p.id}" data-recsz="${sz}" aria-label="Add ${esc(p.name)} ${sz}ml to your bag">+</button></div>`).join('')}</div></div>`;
 }
-/* bag: the customer can type their own WhatsApp number to get an AED 20 off coupon; they show in admin Left at checkout, where the WhatsApp + 10% code button sends it. Hidden once we already have their number. */
-const bagWaKnown = () => { try { return localStorage.getItem('fomaxo_bagwa') || String(JSON.parse(localStorage.getItem('fomaxo_details') || '{}').phone || ''); } catch(e) { return ''; } };
+/* bag: the customer can type their own WhatsApp number to get an AED 20 off coupon; they show in admin Left at checkout, where the WhatsApp + 10% code button sends it.
+   "New here?" is hidden for anyone this device already knows (AJAY, 2026-10-22): number given, checkout details saved, ordered here,
+   opened one of our WhatsApp links (?w=), or signed in to admin on this device */
+const bagWaKnown = () => { try { return !!(localStorage.getItem('fomaxo_bagwa') || String(JSON.parse(localStorage.getItem('fomaxo_details') || '{}').phone || '') || localStorage.getItem('fomaxo_last') || localStorage.getItem('fomaxo_who') || localStorage.getItem('fomaxo_notrack') === '1'); } catch(e) { return false; } };
+const bagWaBought = () => { try { return !!(localStorage.getItem('fomaxo_last') || localStorage.getItem('fomaxo_notrack') === '1'); } catch(e) { return false; } };
 /* country code picker in front of the WhatsApp boxes (welcome box, offer popup, bag box): numbers from any country (AJAY, 2026-10-22).
    UAE first; the list shows each country's name in the site language; a number typed with + or 00 keeps its own code */
 const CC_LIST = 'AE971 SA966 QA974 KW965 BH973 OM968 IN91 PK92 BD880 LK94 NP977 PH63 EG20 JO962 LB961 SY963 IQ964 YE967 PS970 SD249 MA212 DZ213 TN216 LY218 TR90 IR98 AF93 GB44 US1 CA1 AU61 NZ64 IE353 FR33 DE49 IT39 ES34 PT351 NL31 BE32 CH41 AT43 SE46 NO47 DK45 FI358 PL48 CZ420 SK421 HU36 RO40 BG359 GR30 CY357 MT356 HR385 SI386 RS381 BA387 ME382 MK389 AL355 XK383 UA380 BY375 MD373 RU7 KZ7 UZ998 TM993 TJ992 KG996 AZ994 AM374 GE995 LT370 LV371 EE372 IS354 LU352 MC377 LI423 AD376 SM378 IL972 CN86 HK852 MO853 TW886 JP81 KR82 MN976 VN84 TH66 MY60 SG65 ID62 BN673 KH855 LA856 MM95 TL670 MV960 BT975 ZA27 NG234 KE254 ET251 TZ255 UG256 RW250 GH233 CI225 SN221 CM237 SO252 DJ253 ER291 SS211 ZW263 ZM260 MW265 MZ258 AO244 NA264 BW267 LS266 SZ268 MG261 MU230 SC248 KM269 CD243 CG242 GA241 GQ240 TD235 CF236 NE227 ML223 BF226 BJ229 TG228 GN224 GW245 SL232 LR231 GM220 MR222 CV238 ST239 BI257 BR55 AR54 CL56 CO57 PE51 VE58 EC593 BO591 PY595 UY598 GY592 SR597 MX52 GT502 HN504 SV503 NI505 CR506 PA507 CU53 DO1 HT509 JM1 TT1 BS1 BB1 PR1 FJ679 PG675 SB677 VU678 WS685 TO676 KI686 NR674 TV688 FM691 MH692 PW680 NC687 PF689 RE262 GP590 MQ596 GF594 GL299 FO298 GI350'.split(' ').map(x => [x.slice(0, 2), x.slice(2)]);
@@ -3311,6 +3314,7 @@ function waKeep(phSel, nmSel, t){
   [ph, nm].forEach(el => { if (el) { el.addEventListener('change', keep); el.addEventListener('blur', keep); } });
 }
 function bagWaHTML(){
+  if (bagWaBought()) return '';   // ordered since: no coupon line at all
   try { if (localStorage.getItem('fomaxo_bagwa')) return '<p class="bag-wa-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; } catch(e) {}
   if (bagWaKnown()) return '';
   return `<form class="bag-wa" id="bagWa" novalidate><label for="bagWaIn">New here? AED 20 off orders · Coupon on WhatsApp</label><div class="bag-wa-row">${ccPick()}<input id="bagWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="Your WhatsApp number" aria-label="Your WhatsApp number"><button class="btn sm" type="submit">Send</button></div></form>`;
@@ -3327,7 +3331,6 @@ function bagWaWire(t){
    Real offer: the coupon is sent from admin Left at checkout (AED 20 off, min AED 80, ends in 2 days).
    Shown until they give their WhatsApp number or order once. */
 function pmWaHTML(){
-  try { if (localStorage.getItem('fomaxo_last')) return ''; } catch(e) {}
   if (bagWaKnown()) return '';
   return `<div class="pm-wa"><p class="pm-wa-t"><b>New here? GET AED 20</b><span>· Coupon on WhatsApp</span></p><form class="pm-wa-row" id="pmWa" novalidate><input id="pmWaName" class="pm-wa-nm" type="text" autocomplete="name" maxlength="60" placeholder="Name" aria-label="Your name"><span class="cc-row">${ccPick()}<input id="pmWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WhatsApp Number" aria-label="Your WhatsApp number"></span><button class="btn" type="submit">${CO_ICON.whatsapp}<span>Send</span></button></form></div>`;
 }
