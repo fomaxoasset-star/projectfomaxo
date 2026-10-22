@@ -698,6 +698,10 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
 .st-staff { display: grid; gap: 2px; padding: 8px 12px; border: 1px solid var(--line, rgba(127,127,127,.25)); border-radius: 12px; max-height: 260px; overflow-y: auto; }
 .st-staff .check { margin: 6px 0; align-items: flex-start; }
 
-.removed-staff { margin-top: 18px; }
-.removed-staff summary { cursor: pointer; padding: 10px 2px; color: var(--muted, #8a8273); font-weight: 600; }
-.removed-staff .table-wrap { margin-top: 6px; }
+.kpi-btn { text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.kpi-btn .k-warn { color: var(--danger, #b3261e); font-weight: 600; margin-top: 2px; }
+.rm-list { display: grid; gap: 10px; }
+.rm-row { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line, rgba(127,127,127,.25)); border-radius: 12px; }
+.rm-btns { display: flex; flex-direction: column; gap: 6px; }
+.rm-row .grow { flex: 1; min-width: 0; }
+.rm-btns .btn { white-space: nowrap; }

@@ -1252,11 +1252,14 @@
       api('team', { query: teamQuery() }).then(function (d) {
         if (!el()) return;
         var team = d.team, best = 0, sum = 0, cnt = 0, online = 0;
+        S._removed = d.removed || [];
         team.forEach(function (m) { best = Math.max(best, m.total); sum += m.total; cnt += m.sales; if (m.online) online++; });
         el().innerHTML = '<div class="kpis">' +
           '<div class="kpi gold"><div class="k-label">Team sales</div><div class="k-val num">' + aed(sum) + '</div></div>' +
           '<div class="kpi"><div class="k-label">Number of sales</div><div class="k-val">' + cnt + '</div></div>' +
-          '<div class="kpi"><div class="k-label">Using the app now</div><div class="k-val">' + online + ' <span class="small muted">of ' + team.filter(function (m) { return m.active; }).length + '</span></div></div></div>' +
+          '<div class="kpi"><div class="k-label">Using the app now</div><div class="k-val">' + online + ' <span class="small muted">of ' + team.filter(function (m) { return m.active; }).length + '</span></div></div>' +
+          '<button class="kpi kpi-btn" data-act="t-staffbox"><div class="k-label">Staff</div><div class="k-val">' + team.filter(function (m) { return m.active; }).length + ' <span class="small muted">active</span></div>' +
+            '<div class="small ' + (S._removed.length ? 'k-warn' : 'muted') + '">' + (S._removed.length ? S._removed.length + ' removed · tap to manage' : 'No removed staff') + '</div></button></div>' +
           '<div class="people">' + team.map(function (m) {
             var avg = m.sales ? Math.round(m.total / m.sales) : 0, pm = m.methods || {};
             return '<button class="person' + (m.active ? '' : ' off') + '" data-act="t-person" data-id="' + m.id + '">' +
@@ -1304,13 +1307,7 @@
             return '<tr><td><b>' + esc(u.name) + '</b>' + (u.active ? '' : ' <span class="badge off">Switched off</span>') + (multiStore() ? '<div class="small muted show-sm">' + (st ? esc(st.name) : 'Any store') + '</div>' : '') + '</td><td class="muted">' + esc(u.username) + '</td><td>' + (u.role === 'manager' ? '<span class="tier-tag">Manager</span>' : 'Staff') + '</td>' +
               (multiStore() ? '<td class="hide-sm">' + (st ? esc(st.name) : '<span class="muted">Any store</span>') + '</td>' : '') +
               '<td class="r"><button class="btn sm" data-act="u-edit" data-id="' + u.id + '">Edit</button></td></tr>';
-          }).join('') + '</tbody></table></div>' +
-          (d.removed && d.removed.length ? '<details class="removed-staff"><summary>Removed staff (' + d.removed.length + ')</summary><div class="table-wrap"><table class="tbl"><tbody>' +
-            d.removed.map(function (u) {
-              return '<tr><td><b>' + esc(u.name) + '</b><div class="small muted">' + esc(u.username) + ' · ' + (u.role === 'manager' ? 'Manager' : 'Staff') + '</div></td>' +
-                '<td class="r"><button class="btn sm gold" data-act="u-restore" data-id="' + u.id + '">Reactivate</button></td></tr>';
-            }).join('') + '</tbody></table></div></details>' : '');
-        S._removed = d.removed || [];
+          }).join('') + '</tbody></table></div>';
       }).catch(fail);
     } else {
       api('stores').then(function (d) {
@@ -1376,6 +1373,24 @@
     });
   }
 
+  function staffBox() {
+    var list = S._removed || [];
+    openModal('Removed staff', '<div class="err m-err hidden"></div>' +
+      (list.length ? '<p class="muted small" style="margin-top:0">Removed staff can\u2019t log in and are hidden from Performance. Their past sales stay in Reports.</p>' +
+        '<div class="rm-list">' + list.map(function (u) {
+          return '<div class="rm-row"><div class="grow"><b>' + esc(u.name) + '</b><div class="small muted">' + esc(u.username) + ' · ' + (u.role === 'manager' ? 'Manager' : 'Staff') + '</div></div>' +
+            '<div class="rm-btns"><button class="btn sm gold" data-act="u-restore" data-id="' + u.id + '">Reactivate</button><button class="btn sm danger" data-act="u-forget" data-id="' + u.id + '">Remove forever</button></div></div>';
+        }).join('') + '</div>'
+      : '<p style="margin-top:0">No removed staff. To remove someone, go to <b>Staff logins</b>, tap <b>Edit</b>, then <b>Remove staff</b>.</p>') +
+      '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Close</button></div>');
+  }
+  function forgetUser(u) {
+    if (!u) return;
+    openModal('Remove ' + u.name + ' forever?', '<div class="err m-err hidden"></div>' +
+      '<p style="margin-top:0"><b>' + esc(u.name) + '</b> will be gone for good and <b>cannot be reactivated</b>.</p>' +
+      '<p class="muted small">Their name stays on old receipts and in Reports so your sales totals don\u2019t change.</p>' +
+      '<div class="modal-foot"><button class="btn" type="button" data-act="t-staffbox">Back</button><button class="btn danger" type="button" data-act="u-forget-yes" data-id="' + u.id + '">Remove forever</button></div>');
+  }
   function restoreUser(u) {
     if (!u) return;
     openModal('Reactivate ' + u.name + '?', '<div class="err m-err hidden"></div><form id="ur-form">' +
@@ -1780,6 +1795,14 @@
       // staff
       case 'u-new': userModal(null); break;
       case 'u-edit': userModal((S._users || []).filter(function (u) { return u.id === id; })[0]); break;
+      case 't-staffbox': staffBox(); break;
+      case 'u-forget': forgetUser((S._removed || []).filter(function (u) { return u.id === id; })[0]); break;
+      case 'u-forget-yes':
+        el.disabled = true;
+        api('user_forget', { body: { id: id } })
+          .then(function () { closeModal(); toast('Removed forever.'); S._users = null; loadTeam(); })
+          .catch(function (er) { el.disabled = false; modalErr(er.message); });
+        break;
       case 'u-restore': restoreUser((S._removed || []).filter(function (u) { return u.id === id; })[0]); break;
       case 'u-remove': removeUser((S._users || []).filter(function (u) { return u.id === id; })[0]); break;
       case 'u-remove-yes':

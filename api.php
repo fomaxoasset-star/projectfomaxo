@@ -630,6 +630,27 @@ switch ($action) {
         }
         json_out(['users' => $rows, 'removed' => $gone]);
 
+    case 'user_forget':
+        // Remove forever: cannot be reactivated. If they ever sold or changed stock, their name
+        // stays on those old records (receipts, reports); otherwise the account is deleted completely.
+        need_post();
+        $me = require_manager();
+        $id = (int) ($b['id'] ?? 0);
+        $x = q1('SELECT * FROM users WHERE id = ? AND removed = 1', [$id]);
+        if (!$x) {
+            fail('Staff member not found.');
+        }
+        $used = q1('SELECT id FROM sales WHERE user_id = ? LIMIT 1', [$id]) || q1('SELECT id FROM stock_moves WHERE user_id = ? LIMIT 1', [$id])
+            || q1('SELECT id FROM activity WHERE user_id = ? LIMIT 1', [$id]);
+        if ($used) {
+            q('UPDATE users SET removed = 2, active = 0 WHERE id = ?', [$id]);
+        } else {
+            q('DELETE FROM tokens WHERE user_id = ?', [$id]);
+            q('DELETE FROM users WHERE id = ?', [$id]);
+        }
+        log_activity($me, 'staff', 'Removed forever: ' . $x['name']);
+        json_out(['ok' => true]);
+
     case 'user_restore':
         // Bring a removed staff member back. They log in with their old password.
         need_post();
@@ -898,7 +919,12 @@ switch ($action) {
         usort($out, function ($a, $b) {
             return $b['total'] <=> $a['total'] ?: strcmp($a['name'], $b['name']);
         });
-        json_out(['team' => $out]);
+        $gone = q('SELECT id, name, username, role FROM users WHERE removed = 1 ORDER BY name')->fetchAll();
+        foreach ($gone as &$g) {
+            $g['id'] = (int) $g['id'];
+            $g['username'] = preg_replace('/~\d+$/', '', $g['username']);
+        }
+        json_out(['team' => $out, 'removed' => $gone]);
 
     case 'activity':
         require_manager();
