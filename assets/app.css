@@ -384,3 +384,8 @@ html, body { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
 .login .h-brand .wm { height: 30px; margin: 0 auto 10px; }
 @media (max-width: 900px) { .h-brand .wm { height: 13px; } }
 @media (max-width: 380px) { .h-brand .wm { height: 11px; } }
+
+.paper .p-qr { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #bbb; font-size: 11.5px; color: #555; }
+.paper .p-qr svg { width: 108px; height: 108px; display: block; }
+.paper .p-qr svg path, .paper .p-qr svg rect[fill="black"] { fill: #111; }
+@media print { #print-area .paper .p-qr svg { width: 30mm; height: 30mm; } }

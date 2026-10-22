@@ -694,7 +694,14 @@
       '<div class="p-tot"><span>Paid by</span><span>' + esc(METHOD[s.method] || s.method) + (s.payment_ref ? ' (' + esc(s.payment_ref) + ')' : '') + '</span></div>' +
       (s.method === 'cash' && s.cash_given != null ? '<div class="p-tot"><span>Cash given</span><span class="num">' + money(s.cash_given) + '</span></div><div class="p-tot"><span>Change</span><span class="num">' + money(s.change_due) + '</span></div>' : '') +
       (s.customer_tier ? '<div class="p-tier">FOMAXO ' + esc(s.customer_tier) + ' MEMBER</div>' : '') +
-      '<div class="p-foot">' + esc(st.receipt_footer) + '</div></div>';
+      '<div class="p-foot">' + esc(st.receipt_footer) + '</div>' + receiptQr(s) + '</div>';
+  }
+  function receiptQr(s) {
+    if (!s.receipt_url || typeof qrcode !== 'function') return '';
+    try {
+      var qr = qrcode(0, 'M'); qr.addData(s.receipt_url); qr.make();
+      return '<div class="p-qr">' + qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true }) + '<div>Scan for your digital receipt</div></div>';
+    } catch (e) { return ''; }
   }
   var currentReceipt = null;
   function showReceipt(s, fresh) {
