@@ -1473,6 +1473,13 @@ html[data-mode="light"] .dr-foot .bag-wa-ok{color:#1e7a47}
 .promo .pm-wa-row .btn{flex:1 1 100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;width:auto;min-height:42px;margin:0;padding:0 16px;background:#25D366;border-color:#25D366;color:#fff}
 .pm-wa-row .btn svg{width:16px;height:16px}
 .pm-wa .pwel-ok{margin:0}
+/* country code picker before the WhatsApp number: flag + code shown, the phone's own country list opens on tap */
+.cc-row{display:flex;gap:8px;width:100%}
+.cc-row input{flex:1 1 auto!important;min-width:0}
+.cc{position:relative;flex:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:84px;padding:0 22px 0 10px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font-size:14px;white-space:nowrap;cursor:pointer}
+.cc::after{content:'';position:absolute;right:9px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:translateY(-70%) rotate(45deg)}
+.cc select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;cursor:pointer}
+html[dir=rtl] .cc-row,html[dir=rtl] .bag-wa-row{direction:ltr}
 .dr-foot .qd-nudge{display:flex;align-items:center;gap:14px;margin:0 0 4px;padding:14px 18px;border:1px solid var(--gold);background:rgba(215,170,105,.06);font-size:14px;line-height:1.45;letter-spacing:.01em;color:var(--ivory)}
 .dr-foot .qd-nudge svg{flex:none;width:22px;height:22px;color:var(--gold)}
 .dr-foot .qd-nudge b,.qd-empty b{color:var(--gold);font-weight:600}
@@ -3041,11 +3048,11 @@ function welcomeMaybe(){
     promoOpen(`<div class="promo pwel" role="dialog" aria-modal="true" aria-label="Welcome offer"><div class="promo-box"><button type="button" class="promo-x" aria-label="Close">×</button>
       <span class="pm-eye">New here?</span><b class="pm-big">GET AED 20</b><p class="pm-sub">your first order</p>
       <p class="pm-line">Get your coupon on WhatsApp</p>
-      <form class="pwel-row" id="welWa" novalidate><input id="welName" type="text" autocomplete="name" maxlength="60" placeholder="NAME" aria-label="Your name"><input id="welWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WHATSAPP" aria-label="Your WhatsApp number"><button class="btn" type="submit">Send</button></form>
+      <form class="pwel-row" id="welWa" novalidate><input id="welName" type="text" autocomplete="name" maxlength="60" placeholder="NAME" aria-label="Your name"><span class="cc-row">${ccPick()}<input id="welWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WHATSAPP" aria-label="Your WhatsApp number"></span><button class="btn" type="submit">Send</button></form>
       <button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
     const f = $('#welWa'); if (!f) return;
     waKeep('#welWaIn', '#welName');
-    f.onsubmit = e => { e.preventDefault(); const v = $('#welWaIn').value.trim();
+    f.onsubmit = e => { e.preventDefault(); const v = ccVal($('#welWaIn'));
       const nm = $('#welName').value.trim();
       if (!nm) { toast('Please enter your name'); return; }
       if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
@@ -3275,22 +3282,43 @@ function bagRecs(){
 }
 /* bag: the customer can type their own WhatsApp number to get an AED 20 off coupon; they show in admin Left at checkout, where the WhatsApp + 10% code button sends it. Hidden once we already have their number. */
 const bagWaKnown = () => { try { return localStorage.getItem('fomaxo_bagwa') || String(JSON.parse(localStorage.getItem('fomaxo_details') || '{}').phone || ''); } catch(e) { return ''; } };
+/* country code picker in front of the WhatsApp boxes (welcome box, offer popup, bag box): numbers from any country (AJAY, 2026-10-22).
+   UAE first; the list shows each country's name in the site language; a number typed with + or 00 keeps its own code */
+const CC_LIST = 'AE971 SA966 QA974 KW965 BH973 OM968 IN91 PK92 BD880 LK94 NP977 PH63 EG20 JO962 LB961 SY963 IQ964 YE967 PS970 SD249 MA212 DZ213 TN216 LY218 TR90 IR98 AF93 GB44 US1 CA1 AU61 NZ64 IE353 FR33 DE49 IT39 ES34 PT351 NL31 BE32 CH41 AT43 SE46 NO47 DK45 FI358 PL48 CZ420 SK421 HU36 RO40 BG359 GR30 CY357 MT356 HR385 SI386 RS381 BA387 ME382 MK389 AL355 XK383 UA380 BY375 MD373 RU7 KZ7 UZ998 TM993 TJ992 KG996 AZ994 AM374 GE995 LT370 LV371 EE372 IS354 LU352 MC377 LI423 AD376 SM378 IL972 CN86 HK852 MO853 TW886 JP81 KR82 MN976 VN84 TH66 MY60 SG65 ID62 BN673 KH855 LA856 MM95 TL670 MV960 BT975 ZA27 NG234 KE254 ET251 TZ255 UG256 RW250 GH233 CI225 SN221 CM237 SO252 DJ253 ER291 SS211 ZW263 ZM260 MW265 MZ258 AO244 NA264 BW267 LS266 SZ268 MG261 MU230 SC248 KM269 CD243 CG242 GA241 GQ240 TD235 CF236 NE227 ML223 BF226 BJ229 TG228 GN224 GW245 SL232 LR231 GM220 MR222 CV238 ST239 BI257 BR55 AR54 CL56 CO57 PE51 VE58 EC593 BO591 PY595 UY598 GY592 SR597 MX52 GT502 HN504 SV503 NI505 CR506 PA507 CU53 DO1 HT509 JM1 TT1 BS1 BB1 PR1 FJ679 PG675 SB677 VU678 WS685 TO676 KI686 NR674 TV688 FM691 MH692 PW680 NC687 PF689 RE262 GP590 MQ596 GF594 GL299 FO298 GI350'.split(' ').map(x => [x.slice(0, 2), x.slice(2)]);
+let CC_ON = '971'; try { CC_ON = localStorage.getItem('fomaxo_cc') || '971'; } catch(e) {}
+const ccFlag = iso => String.fromCodePoint(...[...iso].map(c => 127397 + c.charCodeAt(0)));
+function ccPick(){
+  let names = null; try { names = new Intl.DisplayNames([document.documentElement.lang === 'ar' ? 'ar' : 'en'], {type: 'region'}); } catch(e) {}
+  const on = CC_LIST.find(c => c[1] === CC_ON) || CC_LIST[0];
+  return `<label class="cc" title="Country code"><span class="cc-v" dir="ltr">${ccFlag(on[0])} +${on[1]}</span><select aria-label="Country code">${CC_LIST.map(([iso, d]) =>
+    `<option value="${iso}-${d}"${iso === on[0] ? ' selected' : ''}>${ccFlag(iso)} ${esc(names ? names.of(iso) : iso)} +${d}</option>`).join('')}</select></label>`;
+}
+document.addEventListener('change', e => { const sel = e.target.closest('.cc select'); if (!sel) return;
+  const [iso, d] = sel.value.split('-'); sel.previousElementSibling.textContent = `${ccFlag(iso)} +${d}`; CC_ON = d; try { localStorage.setItem('fomaxo_cc', d); } catch(x) {}
+  const inp = sel.closest('.cc').nextElementSibling; if (inp && inp.value) inp.dispatchEvent(new Event('change')); });
+/* the number in the box with its country code: "+971 501234567", or as typed when it starts with + or 00 */
+function ccVal(inp){
+  const v = enDigits(inp.value).trim(), sel = inp.previousElementSibling && inp.previousElementSibling.querySelector('select');
+  if (!sel || !v || /^(\+|00)/.test(v)) return v;
+  const d = sel.value.split('-')[1], n = v.replace(/\D/g, '').replace(/^0+/, '');
+  return n ? '+' + d + ' ' + (n.startsWith(d) && n.length >= 11 ? n.slice(d.length) : n) : '';   // typed with the code but no +: not added twice
+}
 /* a valid WhatsApp number typed in the welcome box, offer popup or bag box goes to Left at checkout as soon as they leave the box,
    also when they close the popup or the bag without pressing Send (AJAY saw typed numbers in Clarity that never arrived, 2026-10-22) */
 function waKeep(phSel, nmSel, t){
   const ph = $(phSel), nm = nmSel ? $(nmSel) : null; if (!ph) return;
-  const keep = () => { const v = ph.value.trim(); if (phoneOk(v)) FXT.lead('coupon', {name: nm ? nm.value.trim() : '', phone: v}, cart, t ?? (subtotal(cart) || 0), true); };
+  const keep = () => { const v = ccVal(ph); if (phoneOk(v)) FXT.lead('coupon', {name: nm ? nm.value.trim() : '', phone: v}, cart, t ?? (subtotal(cart) || 0), true); };
   [ph, nm].forEach(el => { if (el) { el.addEventListener('change', keep); el.addEventListener('blur', keep); } });
 }
 function bagWaHTML(){
   try { if (localStorage.getItem('fomaxo_bagwa')) return '<p class="bag-wa-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; } catch(e) {}
   if (bagWaKnown()) return '';
-  return `<form class="bag-wa" id="bagWa" novalidate><label for="bagWaIn">New here? AED 20 off orders · Coupon on WhatsApp</label><div class="bag-wa-row"><input id="bagWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="Your WhatsApp number" aria-label="Your WhatsApp number"><button class="btn sm" type="submit">Send</button></div></form>`;
+  return `<form class="bag-wa" id="bagWa" novalidate><label for="bagWaIn">New here? AED 20 off orders · Coupon on WhatsApp</label><div class="bag-wa-row">${ccPick()}<input id="bagWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="Your WhatsApp number" aria-label="Your WhatsApp number"><button class="btn sm" type="submit">Send</button></div></form>`;
 }
 function bagWaWire(t){
   const f = $('#bagWa'); if (!f) return;
   waKeep('#bagWaIn', null, t);
-  f.onsubmit = e => { e.preventDefault(); const v = $('#bagWaIn').value.trim();
+  f.onsubmit = e => { e.preventDefault(); const v = ccVal($('#bagWaIn'));
     if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
     try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
     FXT.lead('coupon', {phone: v}, cart, t, true); renderCart(); };
@@ -3301,12 +3329,12 @@ function bagWaWire(t){
 function pmWaHTML(){
   try { if (localStorage.getItem('fomaxo_last')) return ''; } catch(e) {}
   if (bagWaKnown()) return '';
-  return `<div class="pm-wa"><p class="pm-wa-t"><b>New here? GET AED 20</b><span>· Coupon on WhatsApp</span></p><form class="pm-wa-row" id="pmWa" novalidate><input id="pmWaName" class="pm-wa-nm" type="text" autocomplete="name" maxlength="60" placeholder="Name" aria-label="Your name"><input id="pmWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WhatsApp Number" aria-label="Your WhatsApp number"><button class="btn" type="submit">${CO_ICON.whatsapp}<span>Send</span></button></form></div>`;
+  return `<div class="pm-wa"><p class="pm-wa-t"><b>New here? GET AED 20</b><span>· Coupon on WhatsApp</span></p><form class="pm-wa-row" id="pmWa" novalidate><input id="pmWaName" class="pm-wa-nm" type="text" autocomplete="name" maxlength="60" placeholder="Name" aria-label="Your name"><span class="cc-row">${ccPick()}<input id="pmWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WhatsApp Number" aria-label="Your WhatsApp number"></span><button class="btn" type="submit">${CO_ICON.whatsapp}<span>Send</span></button></form></div>`;
 }
 function pmWaWire(){
   const f = $('#pmWa'); if (!f) return;
   waKeep('#pmWaIn', '#pmWaName');
-  f.onsubmit = e => { e.preventDefault(); const v = $('#pmWaIn').value.trim(), nm = $('#pmWaName').value.trim();
+  f.onsubmit = e => { e.preventDefault(); const v = ccVal($('#pmWaIn')), nm = $('#pmWaName').value.trim();
     if (!nm) { toast('Please enter your name'); return; }
     if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
     try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
