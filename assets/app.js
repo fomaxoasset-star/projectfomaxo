@@ -408,12 +408,12 @@
     $('#view').innerHTML =
       '<div class="sell"><section class="catalog">' +
       '<div class="catalog-tools"><label class="search">' + ICON.search +
-      '<input class="input" id="q" type="search" placeholder="Search product, size or SKU" value="' + esc(S.search) + '" autocomplete="off"></label>' +
+      '<input class="input" id="q" type="search" placeholder="Search perfume" value="' + esc(S.search) + '" autocomplete="off"></label>' +
+      '<div class="seg view-seg" role="group" aria-label="View">' +
+      '<button data-act="sv" data-v="grid" class="' + (S.sellView === 'grid' ? 'active' : '') + '" aria-label="Grid view" title="Grid view"><span class="vi">▦</span></button>' +
+      '<button data-act="sv" data-v="list" class="' + (S.sellView === 'list' ? 'active' : '') + '" aria-label="List view" title="List view"><span class="vi">☰</span></button></div>' +
+      '<button class="sort-btn' + (S.sellSort !== 'az' ? ' on' : '') + '" data-act="sort-open" aria-label="Sort" title="Sort: ' + esc(SORTS[S.sellSort] || SORTS.az) + '"><span class="vi">⇅</span><span id="sort-lbl" class="sort-lbl">' + esc(SORTS[S.sellSort] || SORTS.az) + '</span></button>' +
       '<div class="chips" id="chips"></div></div>' +
-      '<div class="sell-tools"><div class="seg view-seg">' +
-      '<button data-act="sv" data-v="grid" class="' + (S.sellView === 'grid' ? 'active' : '') + '"><span class="vi">▦</span> Grid</button>' +
-      '<button data-act="sv" data-v="list" class="' + (S.sellView === 'list' ? 'active' : '') + '"><span class="vi">☰</span> List</button></div>' +
-      '<button class="sort-btn" data-act="sort-open"><span class="vi">⇅</span> <span id="sort-lbl">' + esc(SORTS[S.sellSort] || SORTS.az) + '</span></button></div>' +
       '<div class="ptiles' + (S.sellView === 'list' ? ' list' : '') + '" id="tiles"></div></section>' +
       '<aside class="cart' + (S.cartOpen ? ' open' : '') + '" id="cart"></aside></div>' +
       '<button class="cart-fab hidden" id="cart-fab" data-act="cart-open"></button>';
@@ -1546,7 +1546,9 @@
       case 'sort-open': sortModal(); break;
       case 'sort-set':
         S.sellSort = el.getAttribute('data-k'); LS.set('fx_sell_sort', S.sellSort);
-        closeModal(); if ($('#sort-lbl')) $('#sort-lbl').textContent = SORTS[S.sellSort]; renderTiles();
+        closeModal();
+        if ($('#sort-lbl')) { $('#sort-lbl').textContent = SORTS[S.sellSort]; $('.sort-btn').classList.toggle('on', S.sellSort !== 'az'); $('.sort-btn').title = 'Sort: ' + SORTS[S.sellSort]; }
+        renderTiles();
         toast('Sorted: ' + SORTS[S.sellSort]); break;
       case 'add-size': if (addToCart(id)) closeModal(); break;
       case 'pay-open':
