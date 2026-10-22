@@ -1,0 +1,57 @@
+/* Pages outside the app: setup, customer receipt, practice payment. Black and gold, no italics. */
+@font-face { font-family: "FOMAXO REAL"; src: url("fomaxo-real.woff2") format("woff2"), url("fomaxo-real.ttf") format("truetype"); font-display: swap; }
+:root { color-scheme: dark; --bg: #0b0b0c; --panel: #151517; --line: #2a2a2e; --gold: #c9a24b; --gold-2: #e6c77a; --text: #f3efe6; --muted: #9a958b; --ok: #3fae6a; --bad: #d9534f; --wait: #d9a441; }
+* { box-sizing: border-box; font-style: normal !important; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 24px 16px; }
+.brand { font-family: "FOMAXO REAL", Georgia, "Times New Roman", serif; letter-spacing: .35em; color: var(--gold); font-size: 22px; text-align: center; }
+h1 { font-family: "FOMAXO REAL", Georgia, serif; font-weight: 400; font-size: 22px; text-align: center; margin: 8px 0 20px; }
+.card { max-width: 440px; margin: 0 auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 28px 22px; }
+label { display: block; margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+input { display: block; width: 100%; margin-top: 6px; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: #0f0f11; color: var(--text); font-size: 16px; }
+label.check { display: flex; gap: 10px; align-items: flex-start; }
+label.check input { width: auto; margin-top: 4px; }
+.btn { display: inline-block; width: 100%; padding: 14px; margin-top: 6px; border: 0; border-radius: 10px; background: linear-gradient(180deg, var(--gold-2), var(--gold)); color: #111; font-weight: 700; font-size: 16px; text-align: center; text-decoration: none; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+.err { color: #ffb4b0; background: rgba(217,83,79,.12); border: 1px solid rgba(217,83,79,.4); padding: 10px 12px; border-radius: 10px; }
+.muted { color: var(--muted); font-size: 14px; }
+a { color: var(--gold-2); }
+.banner { text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 18px; font-weight: 600; }
+.banner.ok { background: rgba(63,174,106,.15); color: #8fe0ad; }
+.banner.bad { background: rgba(217,83,79,.15); color: #ffb4b0; }
+.banner.wait { background: rgba(217,164,65,.15); color: var(--gold-2); }
+
+/* Receipt */
+.receipt { max-width: 420px; margin: 0 auto; background: #fbf8f1; color: #161616; border-radius: 12px; padding: 24px 20px; }
+.receipt .brand { color: #111; font-size: 26px; }
+.receipt header { text-align: center; border-bottom: 1px dashed #bbb; padding-bottom: 14px; }
+.receipt .tag { font-size: 11px; letter-spacing: .08em; color: #8a6d2b; margin: 4px 0 8px; }
+.receipt .small { font-size: 12px; color: #555; }
+.receipt .title { margin-top: 10px; font-weight: 700; letter-spacing: .2em; font-size: 13px; }
+.receipt .meta { margin: 14px 0; font-size: 13px; }
+.receipt .meta div { display: flex; justify-content: space-between; }
+.receipt dt { color: #666; } .receipt dd { margin: 0; font-weight: 600; }
+.receipt table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.receipt .lines td { padding: 8px 0; border-top: 1px dashed #ddd; vertical-align: top; }
+.receipt .pname { font-weight: 600; }
+.receipt .num { text-align: right; white-space: nowrap; }
+.receipt .totals { margin-top: 8px; border-top: 1px dashed #bbb; }
+.receipt .totals td { padding: 4px 0; }
+.receipt .grand td { font-size: 18px; font-weight: 800; padding: 8px 0; border-top: 2px solid #111; border-bottom: 2px solid #111; }
+.receipt .tier { text-align: center; color: #8a6d2b; font-weight: 700; letter-spacing: .1em; margin: 16px 0 0; }
+.receipt .foot { text-align: center; font-size: 13px; color: #444; margin-top: 14px; }
+.receipt-page .banner { max-width: 420px; margin: 0 auto 14px; }
+@media print {
+  body { background: #fff; padding: 0; }
+  .receipt { max-width: 80mm; padding: 0; border-radius: 0; }
+  .noprint, .banner { display: none; }
+}
+
+/* Light mode follows the device */
+@media (prefers-color-scheme: light) {
+  :root { color-scheme: light; --bg: #f5f2eb; --panel: #ffffff; --line: #e6dfd1; --gold: #b48a2f; --gold-2: #8a6719; --text: #1b1915; --muted: #6d675c; }
+  input { background: #fbf9f4; }
+  .btn { background: linear-gradient(180deg, #dcbc6e, #c09a45); }
+  .receipt { border: 1px solid #e6dfd1; }
+  .err { color: #a3261f; }
+  .banner.ok { color: #23804a; } .banner.bad { color: #a3261f; }
+}
