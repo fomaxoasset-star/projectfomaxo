@@ -130,7 +130,8 @@ function create_sale($user, $b, $method)
         }
         // Offline sales keep the price the customer was actually charged.
         $price = ($offline && isset($priceById[$pid]) && $priceById[$pid] >= 0) ? $priceById[$pid] : (int) $p['price'];
-        $lines[] = ['product_id' => $pid, 'name' => $p['name'], 'variant' => $p['variant'], 'price' => $price, 'qty' => $qty];
+        $was = (int) ($p['compare_at'] ?? 0);
+        $lines[] = ['product_id' => $pid, 'name' => $p['name'], 'variant' => $p['variant'], 'price' => $price, 'qty' => $qty, 'was' => $was > $price ? $was : null];
     }
 
     $discount = $b['discount'] ?? null;
@@ -207,6 +208,7 @@ function create_sale($user, $b, $method)
                 'price' => $l['price'],
                 'qty' => $l['qty'],
                 'line_total' => $l['price'] * $l['qty'],
+                'was' => $l['was'],
             ]);
         }
         if ($method !== 'ziina') {
@@ -307,7 +309,8 @@ function load_sale($where, $param)
     if (!$s) {
         return null;
     }
-    $s['items'] = q('SELECT product_id, name, variant, price, qty, line_total FROM sale_items WHERE sale_id = ? ORDER BY id', [$s['id']])->fetchAll();
+    $s['items'] = q('SELECT i.product_id, i.name, i.variant, i.price, i.qty, i.line_total, i.was, p.family
+                     FROM sale_items i LEFT JOIN products p ON p.id = i.product_id WHERE i.sale_id = ? ORDER BY i.id', [$s['id']])->fetchAll();
     foreach (['id', 'user_id', 'store_id', 'customer_id', 'subtotal', 'discount', 'vat', 'total', 'cash_given', 'change_due', 'offline'] as $k) {
         if ($s[$k] !== null) {
             $s[$k] = (int) $s[$k];
@@ -317,6 +320,8 @@ function load_sale($where, $param)
         foreach (['product_id', 'price', 'qty', 'line_total'] as $k) {
             $it[$k] = (int) $it[$k];
         }
+        $it['was'] = $it['was'] === null ? null : (int) $it['was'];
+        $it['family'] = (string) ($it['family'] ?? '');
     }
     unset($s['ziina_id']);
     $s['receipt_url'] = cfg('base_url') . '/receipt.php?t=' . $s['receipt_token'];

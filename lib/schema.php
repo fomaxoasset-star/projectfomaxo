@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 function schema_version()
 {
@@ -139,6 +139,19 @@ function migrate()
     try {
         if (schema_version() < 2) {
             migrate_v2($mysql);
+        }
+        if (schema_version() < 3) {
+            migrate_v3();
+        }
+        // First time: bring in the real product list from fomaxo.com (only if nothing was set up by hand).
+        // The Sync button on Stock (and the 10-minute auto sync) do it any time later.
+        if (!q1("SELECT id FROM products WHERE sku <> '' LIMIT 1")) {
+            require_once __DIR__ . '/webimport.php';
+            try {
+                import_web_products();
+            } catch (Throwable $e) {
+                error_log('FOMAXO POS: first product import skipped: ' . $e->getMessage());
+            }
         }
     } finally {
         if ($mysql) {
@@ -210,15 +223,15 @@ function migrate_v2($mysql)
     q('UPDATE stock_moves SET store_id = ? WHERE store_id IS NULL', [$mainId]);
     q("DELETE FROM meta WHERE k = 'schema'");
     q("INSERT INTO meta (k, v) VALUES ('schema', '2')");
+}
 
-    // First time on the multi-store version: bring in the real product list from fomaxo.com
-    // (only if nothing has been set up by hand yet). The Sync button on Stock does it any time later.
-    if (!q1("SELECT id FROM products WHERE sku <> '' LIMIT 1")) {
-        require_once __DIR__ . '/webimport.php';
-        try {
-            import_web_products();
-        } catch (Throwable $e) {
-            error_log('FOMAXO POS: first product import skipped: ' . $e->getMessage());
-        }
-    }
+// Version 3: details for the website-style receipt (fragrance family, crossed-out price).
+function migrate_v3()
+{
+    try_exec("ALTER TABLE products ADD COLUMN family VARCHAR(80) NOT NULL DEFAULT ''");
+    try_exec('ALTER TABLE products ADD COLUMN compare_at INT NOT NULL DEFAULT 0');
+    try_exec('ALTER TABLE sale_items ADD COLUMN was INT NULL');
+    q("DELETE FROM meta WHERE k = 'schema'");
+    q("INSERT INTO meta (k, v) VALUES ('schema', '3')");
+    q("DELETE FROM meta WHERE k = 'web_sync_at'"); // fetch the family and original prices on the next sync
 }

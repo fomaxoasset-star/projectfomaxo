@@ -54,18 +54,21 @@ function import_web_products($products = null)
                 continue;
             }
             $price = to_fils($wp['prices'][(string) $size]);
+            $was = isset($wp['compareAt'][(string) $size]) ? to_fils($wp['compareAt'][(string) $size]) : 0;
+            $was = $was > $price ? $was : 0;
+            $family = mb_substr(trim((string) ($wp['family'] ?? '')), 0, 80);
             $variant = $isSet ? $size . ' vials' : $size . 'ml';
             $sku = $id . '-' . $size;
             $seen[] = $sku;
             $row = q1('SELECT id FROM products WHERE sku = ?', [$sku]);
             if ($row) {
-                q('UPDATE products SET name = ?, variant = ?, category = ?, price = ?, updated_at = ? WHERE id = ?',
-                    [$fullName, $variant, $category, $price, now(), $row['id']]);
+                q('UPDATE products SET name = ?, variant = ?, category = ?, price = ?, compare_at = ?, family = ?, updated_at = ? WHERE id = ?',
+                    [$fullName, $variant, $category, $price, $was, $family, now(), $row['id']]);
                 $updated++;
             } else {
                 insert('products', [
                     'name' => $fullName, 'variant' => $variant, 'sku' => $sku, 'category' => $category,
-                    'price' => $price, 'stock' => 0, 'low_at' => $low, 'active' => 1,
+                    'price' => $price, 'compare_at' => $was, 'family' => $family, 'stock' => 0, 'low_at' => $low, 'active' => 1,
                     'created_at' => now(), 'updated_at' => now(),
                 ]);
                 $added++;

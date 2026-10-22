@@ -711,14 +711,23 @@
     else if (s.status === 'void') statusNote = '<div class="err" style="margin-bottom:12px">This sale was voided. ' + esc(s.note || '') + '</div>';
     else if (s.status !== 'paid') statusNote = '<div class="err" style="margin-bottom:12px">Status: ' + esc(s.status) + ' — not paid.</div>';
     var paid = s.status === 'paid';
-    openModal(fresh ? 'Sale complete' : 'Receipt ' + s.receipt_no, statusNote + paperHtml(s) +
+    var styled = !s.queued && s.receipt_token && S.online;
+    var src = styled ? 'receipt.php?t=' + encodeURIComponent(s.receipt_token) + '&embed=1&theme=' + (isDark() ? 'dark' : 'light') : '';
+    openModal(fresh ? 'Sale complete' : 'Receipt ' + s.receipt_no, statusNote +
+      (styled ? '<div class="rframe-wrap"><iframe class="rframe" id="rframe" src="' + esc(src) + '" title="Receipt"></iframe></div>' : paperHtml(s)) +
       '<div class="err m-err hidden" style="margin-top:12px"></div>' +
       '<div class="receipt-actions">' +
-      (paid ? '<button class="btn" data-act="r-print">Print</button><button class="btn" data-act="r-wa">WhatsApp</button>' +
-        '<button class="btn" data-act="r-copy">Copy link</button><button class="btn" data-act="r-email">Email</button>' : '') +
-      (!fresh && paid && isManager() && !s.queued ? '<button class="btn danger wide" data-act="r-void">Void sale</button>' : '') +
+      (paid ? (styled ? '<button class="btn" data-act="r-pdf">Download PDF</button>' : '') + '<button class="btn" data-act="r-print">Print (receipt printer)</button>' +
+        '<button class="btn" data-act="r-wa">WhatsApp</button><button class="btn" data-act="r-copy">Copy link</button>' +
+        '<button class="btn" data-act="r-email">Email</button>' : '') +
+      (!fresh && paid && isManager() && !s.queued ? '<button class="btn danger" data-act="r-void">Void sale</button>' : '') +
       (fresh ? '<button class="btn gold big wide" data-act="modal-close">New sale</button>' : '') +
-      '</div>');
+      '</div>', { wide: true });
+    var fr = $('#rframe');
+    if (fr) {
+      var fit = function () { try { var d = fr.contentDocument; if (d && d.documentElement) fr.style.height = (d.documentElement.scrollHeight + 4) + 'px'; } catch (e) { /* ignore */ } };
+      fr.addEventListener('load', function () { fit(); setTimeout(fit, 400); setTimeout(fit, 1200); });
+    }
   }
   function receiptText(s) {
     return 'Thank you for shopping at ' + S.settings.store_name + '!\nReceipt ' + s.receipt_no + ' · ' + aed(s.total) + '\n' + s.receipt_url;
@@ -1284,6 +1293,7 @@
         break;
       // receipt
       case 'r-print': $('#print-area').innerHTML = paperHtml(currentReceipt); window.print(); break;
+      case 'r-pdf': { var rf = $('#rframe'); try { rf.contentWindow.focus(); rf.contentWindow.print(); } catch (e) { window.open(currentReceipt.receipt_url, '_blank', 'noopener'); } break; }
       case 'r-wa': {
         var s = currentReceipt, digits = (s.customer_phone || '').replace(/\D/g, '');
         window.open('https://wa.me/' + digits + '?text=' + encodeURIComponent(receiptText(s)), '_blank', 'noopener');
