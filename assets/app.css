@@ -613,3 +613,28 @@ html, body { overscroll-behavior-y: none; }
 .ptr.ready .ptr-icon { transform: rotate(180deg); }
 .ptr.busy .ptr-icon { width: 14px; height: 14px; font-size: 0; border-radius: 50%; border: 2px solid var(--line-2); border-top-color: var(--gold); animation: spin .8s linear infinite; transform: none; }
 .ptr { transition: opacity .15s, transform .2s; }
+
+/* ================= Bottom menu attached to the bottom of the screen (no gap on any phone) ================= */
+.bnav { display: none; }
+@media (max-width: 900px) {
+  html, body, #root { height: 100%; }
+  @supports (height: 100dvh) { html, body, #root { height: 100dvh; } }
+  body { position: relative; overflow: hidden; }
+  .app { position: relative; height: 100%; }
+  .topbar .nav { display: none; }
+  .view { position: static; padding-bottom: 0 !important; }
+  .bnav { display: flex; flex: none; justify-content: space-around; gap: 2px; background: var(--bg-2); border-top: 1px solid var(--line);
+    padding: 4px 4px env(safe-area-inset-bottom); min-height: calc(var(--nav-h) + env(safe-area-inset-bottom)); }
+  .bnav button { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 4px; min-height: 52px;
+    background: none; border: 0; border-radius: 10px; color: var(--muted); font-size: 11px; font-weight: 600; }
+  .bnav button svg { width: 22px; height: 22px; }
+  .bnav button.active { color: var(--text); box-shadow: inset 0 2px 0 var(--gold); border-radius: 0; }
+  .bnav .count { position: absolute; top: 2px; left: 50%; transform: translateX(6px); background: var(--out); color: #fff; font-size: 11px; border-radius: 999px; padding: 0 6px; line-height: 17px; }
+  /* bag sheet and the PAY bar sit on the app, right above the bottom menu */
+  .cart { position: absolute; inset: 0 0 calc(var(--nav-h) + env(safe-area-inset-bottom)) 0; }
+  .cart-fab { position: absolute; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 10px); }
+  .added-pop { position: absolute; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 76px); }
+  /* pop-ups cover the whole screen down to the very bottom */
+  .modal-back { position: absolute; }
+}
+@media (max-width: 340px) { .bnav button { font-size: 10px; } }

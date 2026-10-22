@@ -332,20 +332,24 @@
     if (isManager()) items.push(['reports', 'Reports'], ['staff', 'Team']);
     return items;
   }
+  function navButtons() {
+    return navItems().map(function (n) {
+      return '<button data-act="nav" data-view="' + n[0] + '" class="' + (S.view === n[0] ? 'active' : '') + '">' + ICON[n[0]] + '<span>' + n[1] + '</span><span class="count hidden" data-count="' + n[0] + '"></span></button>';
+    }).join('');
+  }
   function renderApp() {
     if (!S.token || !S.user || !S.settings) { renderLogin(); return; }
     $('#root').innerHTML =
       '<div class="app"><header class="topbar">' +
       '<div class="h-brand">' + WORDMARK + '</div>' +
-      '<nav class="nav" id="nav">' + navItems().map(function (n) {
-        return '<button data-act="nav" data-view="' + n[0] + '" class="' + (S.view === n[0] ? 'active' : '') + '">' + ICON[n[0]] + '<span>' + n[1] + '</span><span class="count hidden" data-count="' + n[0] + '"></span></button>';
-      }).join('') + '</nav>' +
+      '<nav class="nav" id="nav">' + navButtons() + '</nav>' +
       '<div class="spacer"></div>' +
       '<button class="store-btn hidden" id="store-btn" data-act="store-menu"></button>' +
       '<button class="net" id="net" data-act="net"></button>' +
       '<button class="btn icon-btn ghost theme-btn" id="theme-btn" data-act="theme-toggle"></button>' +
       '<button class="user-btn" data-act="user-menu"><span class="avatar">' + esc(initials(S.user.name)) + '</span><span class="u-name">' + esc(S.user.name) + '</span></button>' +
-      '</header><main class="view" id="view"></main></div>';
+      '</header><main class="view" id="view"></main>' +
+      '<nav class="bnav" id="bnav">' + navButtons() + '</nav></div>';
     updateNet(); updateNavCounts(); applyTheme(); updateStoreBtn(); renderView();
   }
   function updateStoreBtn() {
@@ -385,11 +389,11 @@
   }
   function updateNavCounts() {
     var low = S.products.filter(function (p) { var s = stockState(p); return s === 'low' || s === 'out'; }).length;
-    var c1 = $('[data-count="stock"]'); if (c1) { c1.textContent = low; c1.classList.toggle('hidden', !low); }
-    var c2 = $('[data-count="sales"]'); if (c2) { c2.textContent = S.queue.length; c2.classList.toggle('hidden', !S.queue.length); }
+    $$('[data-count="stock"]').forEach(function (c1) { c1.textContent = low; c1.classList.toggle('hidden', !low); });
+    $$('[data-count="sales"]').forEach(function (c2) { c2.textContent = S.queue.length; c2.classList.toggle('hidden', !S.queue.length); });
   }
   function renderView() {
-    $$('#nav button').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-view') === S.view); });
+    $$('#nav button, #bnav button').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-view') === S.view); });
     var v = $('#view'); v.scrollTop = 0;
     if (S.view === 'sell') renderSell();
     else if (S.view === 'stock') renderStock();
