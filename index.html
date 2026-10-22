@@ -1474,8 +1474,8 @@ html[data-mode="light"] .dr-foot .bag-wa-ok{color:#1e7a47}
 .pm-wa-row .btn svg{width:16px;height:16px}
 .pm-wa .pwel-ok{margin:0}
 /* country code picker before the WhatsApp number: flag + code shown, the phone's own country list opens on tap */
-.cc-row{display:flex;gap:8px;width:100%}
-.cc-row input{flex:1 1 auto!important;min-width:0}
+.cc-row{display:flex;gap:8px;width:100%;min-width:0;box-sizing:border-box}
+.cc-row input{flex:1 1 0!important;width:auto!important;min-width:0}
 .cc{position:relative;flex:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:84px;padding:0 22px 0 10px;border:1px solid var(--line-2);background:var(--black);color:var(--ivory);font-size:14px;white-space:nowrap;cursor:pointer}
 .cc::after{content:'';position:absolute;right:9px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:translateY(-70%) rotate(45deg)}
 .cc select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;cursor:pointer}
@@ -3290,12 +3290,12 @@ const ccFlag = iso => String.fromCodePoint(...[...iso].map(c => 127397 + c.charC
 function ccPick(){
   let names = null; try { names = new Intl.DisplayNames([document.documentElement.lang === 'ar' ? 'ar' : 'en'], {type: 'region'}); } catch(e) {}
   const on = CC_LIST.find(c => c[1] === CC_ON) || CC_LIST[0];
-  return `<label class="cc" title="Country code"><span class="cc-v" dir="ltr">${ccFlag(on[0])} +${on[1]}</span><select aria-label="Country code">${CC_LIST.map(([iso, d]) =>
-    `<option value="${iso}-${d}"${iso === on[0] ? ' selected' : ''}>${ccFlag(iso)} ${esc(names ? names.of(iso) : iso)} +${d}</option>`).join('')}</select></label>`;
+  return `<span class="cc" title="Country code"><span class="cc-v" dir="ltr">${ccFlag(on[0])} +${on[1]}</span><select aria-label="Country code">${CC_LIST.map(([iso, d]) =>
+    `<option value="${iso}-${d}"${iso === on[0] ? ' selected' : ''}>${ccFlag(iso)} ${esc(names ? names.of(iso) : iso)} +${d}</option>`).join('')}</select></span>`;
 }
 document.addEventListener('change', e => { const sel = e.target.closest('.cc select'); if (!sel) return;
   const [iso, d] = sel.value.split('-'); sel.previousElementSibling.textContent = `${ccFlag(iso)} +${d}`; CC_ON = d; try { localStorage.setItem('fomaxo_cc', d); } catch(x) {}
-  const inp = sel.closest('.cc').nextElementSibling; if (inp && inp.value) inp.dispatchEvent(new Event('change')); });
+  const inp = sel.closest('.cc').nextElementSibling; if (inp && inp.value) { inp.dispatchEvent(new Event('input', {bubbles: true})); inp.dispatchEvent(new Event('change', {bubbles: true})); } });
 /* the number in the box with its country code: "+971 501234567", or as typed when it starts with + or 00 */
 function ccVal(inp){
   const v = enDigits(inp.value).trim(), sel = inp.previousElementSibling && inp.previousElementSibling.querySelector('select');
@@ -4767,7 +4767,7 @@ function checkoutPage(q){
           <h2 id="coStep1"><span>1</span>Delivery details</h2>
           <p class="co-err" id="coErr1" role="alert" hidden></p>
           <div class="co-r3"><label>Full name<input name="name" autocomplete="name" maxlength="80" required></label>
-          <div class="row2"><label>Mobile<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+971 50 123 4567" maxlength="20" required></label>
+          <div class="row2"><label>Mobile<span class="cc-row">${ccPick()}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="50 123 4567" maxlength="20" required></span></label>
             <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></label></div></div>
           <div class="co-r3 co-r3b"><label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
           <div class="co-ar co-ar1">
@@ -4812,7 +4812,7 @@ function bindCheckout(q){
     const el = form.elements.phone; if (j.phone && el && !el.value) { el.value = j.phone; el.dispatchEvent(new Event('input', {bubbles: true})); }
     if (!j.phone) try { localStorage.removeItem('fomaxo_who'); } catch(e) {} }).catch(() => {});
   if (form.elements.wa) form.elements.wa.checked = d0.wa === '1';   // WhatsApp offers: unticked until the customer ticks it
-  const details = () => Object.assign(Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()])), {wa: form.elements.wa && form.elements.wa.checked ? '1' : ''});
+  const details = () => Object.assign(Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()])), {phone: ccVal(form.elements.phone), wa: form.elements.wa && form.elements.wa.checked ? '1' : ''});   // mobile with the country code picked next to it
   const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad');
     const t = e.target; if (t.name === 'phone') { const v = enDigits(t.value); if (v !== t.value) { const a = t.selectionStart; t.value = v; try { t.setSelectionRange(a, a); } catch(x) {} } }
     if (CO_CAPS.includes(t.name)) { const v = capWords(t.value); if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} } } const key = JSON.stringify(details()); try { localStorage.setItem('fomaxo_details', key); } catch(x) {} if (!busy && key !== drawnKey) { drawnKey = key; draw(); } };
