@@ -228,11 +228,18 @@ function next_tier($spendFils)
     return null;
 }
 
+/** This year's spend for FOMAXO Elite tiers: store purchases plus fomaxo.com orders (same mobile). */
 function customer_year_spend($customerId)
 {
     $start = date('Y') . '-01-01 00:00:00';
     $row = q1("SELECT COALESCE(SUM(total),0) AS s FROM sales WHERE customer_id = ? AND status = 'paid' AND created_at >= ?", [$customerId, $start]);
-    return (int) $row['s'];
+    $spend = (int) $row['s'];
+    $c = q1('SELECT phone FROM customers WHERE id = ?', [$customerId]);
+    if ($c && strpos((string) $c['phone'], 'e:') !== 0 && cfg('website_customers', true)) {
+        require_once __DIR__ . '/website.php';
+        $spend += web_year_spend($c['phone']);
+    }
+    return $spend;
 }
 
 // ---------- JSON API helpers ----------

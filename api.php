@@ -350,11 +350,17 @@ switch ($action) {
         if (!$c && $email !== '') {
             $c = q1('SELECT * FROM customers WHERE email = ? ORDER BY id LIMIT 1', [$email]);
         }
+        require_once __DIR__ . '/lib/website.php';
+        $web = cfg('website_customers', true) ? web_customer($phone, $email) : null;
         if (!$c) {
-            json_out(['customer' => null, 'phone' => $phone]);
+            $ws = $web ? (int) $web['year_spend'] : 0;
+            json_out(['customer' => null, 'phone' => $phone, 'web' => $web,
+                'tier' => $web ? tier_for($ws) : null, 'next_tier' => $web ? next_tier($ws) : null, 'year_spend' => $ws]);
         }
         $spend = customer_year_spend($c['id']);
-        json_out(['customer' => [
+        $storeVisits = (int) q1("SELECT COUNT(*) AS n FROM sales WHERE customer_id = ? AND status = 'paid'", [$c['id']])['n'];
+        json_out(['web' => $web, 'customer' => [
+            'visits' => $storeVisits,
             'id' => (int) $c['id'],
             'phone' => strpos($c['phone'], 'e:') === 0 ? '' : $c['phone'],
             'name' => $c['name'],

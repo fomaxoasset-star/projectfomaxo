@@ -596,37 +596,61 @@
   function customerModal() {
     var c = S.customer || {};
     openModal('Customer', '<div class="err m-err hidden"></div>' +
-      '<label class="field"><span>Name</span><input class="input cap" id="c-name" value="' + esc(c.name || '') + '" placeholder="Customer name" autocomplete="off" autocapitalize="words" autofocus></label>' +
-      '<label class="field"><span>Mobile</span><div class="row"><input class="input grow" id="c-phone" type="tel" inputmode="tel" placeholder="05x xxx xxxx" value="' + esc(c.phone || '') + '" autocomplete="off">' +
-      '<button class="btn" data-act="c-find">Find</button></div></label>' +
-      '<label class="field"><span>Email (optional)</span><input class="input" id="c-email" type="email" inputmode="email" autocapitalize="none" placeholder="name@example.com" value="' + esc(c.email || '') + '" autocomplete="off"></label>' +
+      '<label class="field"><span>Mobile — type it and the customer is looked up</span><input class="input" id="c-phone" type="tel" inputmode="tel" placeholder="05x xxx xxxx" value="' + esc(c.phone || '') + '" autocomplete="off" autofocus></label>' +
       '<div id="c-info"></div>' +
-      '<p class="small muted">Mobile or email is enough. Their name prints on the receipt, and you can send the receipt to their WhatsApp or email.</p>' +
+      '<label class="field"><span>Name</span><input class="input cap" id="c-name" value="' + esc(c.name || '') + '" placeholder="Customer name" autocomplete="off" autocapitalize="words"></label>' +
+      '<label class="field"><span>Email (optional)</span><input class="input" id="c-email" type="email" inputmode="email" autocapitalize="none" placeholder="name@example.com" value="' + esc(c.email || '') + '" autocomplete="off"></label>' +
+      '<p class="small muted">Mobile or email is enough. Saved store customers and fomaxo.com customers are found automatically.</p>' +
       '<div class="modal-foot">' + (S.customer ? '<button class="btn danger" data-act="c-remove">Remove</button>' : '') +
       '<button class="btn gold big" data-act="c-save">Save customer</button></div>');
-    if (c.phone) findCustomer();
+    lastLookup = '';
+    $('#c-phone').addEventListener('input', autoFind);
+    $('#c-email').addEventListener('change', autoFind);
+    if (c.phone || c.email) findCustomer();
   }
   function tierInfo(cu) {
     var parts = ['<div class="note" style="margin-bottom:12px">'];
     parts.push(cu.tier ? '<span class="tier-tag">FOMAXO ' + esc(cu.tier) + '</span> ' : 'Not a member tier yet. ');
-    parts.push('Spent ' + aed(cu.year_spend) + ' this year.');
+    parts.push('Spent ' + aed(cu.year_spend || 0) + ' this year.');
     if (cu.next_tier) parts.push(' ' + aed(cu.next_tier.needed) + ' more to reach ' + esc(cu.next_tier.name) + '.');
     parts.push('</div>');
     return parts.join('');
   }
+  var lookupTimer = null, lastLookup = '';
+  function autoFind() {
+    clearTimeout(lookupTimer);
+    lookupTimer = setTimeout(function () {
+      var ph = ($('#c-phone') ? $('#c-phone').value : '').replace(/\D/g, '');
+      var em = $('#c-email') ? $('#c-email').value.trim() : '';
+      var emOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+      var key = (ph.length >= 9 ? ph : '') + '|' + (emOk ? em : '');
+      if (key === '|' || key === lastLookup) return;
+      lastLookup = key; findCustomer();
+    }, 450);
+  }
+  function fillIfEmpty(sel, v) { var el = $(sel); if (el && !el.value.trim() && v) el.value = v; }
   function findCustomer() {
     var phone = $('#c-phone').value.trim(), email = ($('#c-email') ? $('#c-email').value.trim() : '');
     if (!phone && !email) return;
-    if (!S.online) { $('#c-info').innerHTML = '<p class="small muted">Offline — the number will still be saved with the sale.</p>'; return; }
+    if (!S.online) { $('#c-info').innerHTML = '<p class="small muted">Offline — the details will still be saved with the sale.</p>'; return; }
+    $('#c-info').innerHTML = '<div class="status-line" style="justify-content:flex-start"><span class="spinner"></span> Looking up customer…</div>';
     api('customer', { query: '&phone=' + encodeURIComponent(phone) + '&email=' + encodeURIComponent(email) }).then(function (d) {
       if (!$('#c-info')) return;
-      if (d.customer) {
-        $('#c-info').innerHTML = tierInfo(d.customer);
-        if (!$('#c-name').value) $('#c-name').value = d.customer.name;
-        if ($('#c-email') && !$('#c-email').value) $('#c-email').value = d.customer.email || '';
-        if (!$('#c-phone').value) $('#c-phone').value = d.customer.phone || '';
-        S._found = d.customer;
-      } else { $('#c-info').innerHTML = '<p class="small muted">New customer — they will be added with this sale.</p>'; S._found = null; }
+      var w = d.web, c = d.customer;
+      if (c || w) {
+        var name = (c && c.name) || (w && w.name) || '';
+        fillIfEmpty('#c-name', titleCase(name));
+        fillIfEmpty('#c-email', (c && c.email) || (w && w.email) || '');
+        fillIfEmpty('#c-phone', (c && c.phone) || (w && w.phone) || '');
+        var where = [];
+        if (c) where.push('🏬 ' + (c.visits || 0) + ' store purchase' + (c.visits === 1 ? '' : 's'));
+        if (w) where.push('🌐 ' + w.orders + ' fomaxo.com order' + (w.orders === 1 ? '' : 's') + ' (last ' + esc(w.last_order) + ')');
+        $('#c-info').innerHTML = '<div class="found"><b>✓ Found: ' + esc(titleCase(name) || 'customer') + '</b><div class="small">' + where.join('<br>') + '</div></div>' +
+          tierInfo(c || { tier: d.tier, year_spend: d.year_spend, next_tier: d.next_tier });
+        S._found = c || { tier: d.tier };
+      } else {
+        $('#c-info').innerHTML = '<p class="small muted">New customer — they will be saved with this sale.</p>'; S._found = null;
+      }
     }).catch(function (e) { modalErr(e.message); });
   }
 
