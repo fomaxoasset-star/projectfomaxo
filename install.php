@@ -14,18 +14,59 @@ function page($title, $body)
     exit;
 }
 
+// ---- Step 1: settings file. Saved one folder ABOVE the website folder, so GitHub
+// deploys never remove it and no visitor can ever open it.
 if (cfg() === false) {
-    page('Setup needed', '<p>The settings file is missing.</p><ol><li>Open the app folder in Hostinger File Manager.</li><li>Copy <b>config.sample.php</b> and name the copy <b>config.php</b>.</li><li>Fill in your database details, then open this page again.</li></ol>');
+    $target = dirname(__DIR__) . '/fomaxo-pos-config.php';
+    $err1 = '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['step'] ?? '') === 'config') {
+        $c = require __DIR__ . '/config.sample.php';
+        $c['db_name'] = trim($_POST['db_name'] ?? '');
+        $c['db_user'] = trim($_POST['db_user'] ?? '');
+        $c['db_pass'] = (string) ($_POST['db_pass'] ?? '');
+        $c['store_address'] = trim($_POST['store_address'] ?? '');
+        $c['store_phone'] = trim($_POST['store_phone'] ?? '');
+        $c['store_trn'] = trim($_POST['store_trn'] ?? '');
+        $c['base_url'] = 'https://' . preg_replace('/[^a-z0-9.:-]/i', '', $_SERVER['HTTP_HOST'] ?? '') . rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+        try {
+            new PDO('mysql:host=localhost;dbname=' . $c['db_name'] . ';charset=utf8mb4', $c['db_user'], $c['db_pass'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+            $php = "<?php\n// FOMAXO Store System settings. Keep private.\nreturn " . var_export($c, true) . ";\n";
+            if (@file_put_contents($target, $php, LOCK_EX) === false) {
+                $target = __DIR__ . '/config.php';
+                if (@file_put_contents($target, $php, LOCK_EX) === false) {
+                    throw new RuntimeException('Could not save the settings file. Check folder permissions in File Manager.');
+                }
+            }
+            @chmod($target, 0600);
+            header('Location: install.php');
+            exit;
+        } catch (PDOException $e) {
+            $err1 = 'Could not connect to the database with those details. Check the name, user and password.';
+        } catch (Throwable $e) {
+            $err1 = $e->getMessage();
+        }
+    }
+    page('Connect the database', ($err1 ? '<p class="err">' . h($err1) . '</p>' : '') . '
+<p>Step 1 of 2. These are saved privately on the server, outside the website folder.</p>
+<form method="post" autocomplete="off"><input type="hidden" name="step" value="config">
+  <label>Database name<input name="db_name" required value="' . h($_POST['db_name'] ?? '') . '"></label>
+  <label>Database user<input name="db_user" required value="' . h($_POST['db_user'] ?? '') . '"></label>
+  <label>Database password<input name="db_pass" type="password" required></label>
+  <label>Store address (printed on receipts)<input name="store_address" value="' . h($_POST['store_address'] ?? '') . '"></label>
+  <label>Store phone<input name="store_phone" value="' . h($_POST['store_phone'] ?? '') . '"></label>
+  <label>VAT TRN (optional)<input name="store_trn" value="' . h($_POST['store_trn'] ?? '') . '"></label>
+  <button class="btn" type="submit">Save and continue</button>
+</form>');
 }
 
 try {
     db();
 } catch (Throwable $e) {
-    page('Cannot reach the database', '<p>Check the database name, user and password in config.php.</p><p class="err">' . h($e->getMessage()) . '</p>');
+    page('Cannot reach the database', '<p>Check the database details in the settings file (fomaxo-pos-config.php, one folder above the website folder).</p><p class="err">' . h($e->getMessage()) . '</p>');
 }
 
 if (is_installed()) {
-    page('Already set up', '<p>The store system is installed. <a href="./">Open the app</a>.</p><p class="muted">For safety you can delete install.php from the server now.</p>');
+    page('Already set up', '<p>The store system is installed. <a href="./">Open the app</a>.</p><p class="muted">This setup page is now locked and cannot be run again.</p>');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -72,11 +113,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($done) {
-    page('All set', '<p>Your manager login is ready.</p><p><a class="btn" href="./">Open the store app</a></p><p class="muted">Delete install.php from the server now, so nobody can run setup again.</p>');
+    page('All set', '<p>Your manager login is ready.</p><p><a class="btn" href="./">Open the store app</a></p><p class="muted">This setup page is now locked and cannot be run again.</p>');
 }
 
 $form = ($error ? '<p class="err">' . h($error) . '</p>' : '') . '
-<p>Create the first <b>manager</b> login. You can add staff inside the app afterwards.</p>
+<p>Step 2 of 2. Create the first <b>manager</b> login. You can add staff inside the app afterwards.</p>
 <form method="post">
   <label>Your name<input name="name" required value="' . h($_POST['name'] ?? '') . '"></label>
   <label>Username<input name="username" required autocapitalize="none" value="' . h($_POST['username'] ?? '') . '"></label>
