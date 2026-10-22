@@ -3044,6 +3044,7 @@ function welcomeMaybe(){
       <form class="pwel-row" id="welWa" novalidate><input id="welName" type="text" autocomplete="name" maxlength="60" placeholder="NAME" aria-label="Your name"><input id="welWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WHATSAPP" aria-label="Your WhatsApp number"><button class="btn" type="submit">Send</button></form>
       <button type="button" class="pm-no" data-pm-close>No thanks</button></div></div>`);
     const f = $('#welWa'); if (!f) return;
+    waKeep('#welWaIn', '#welName');
     f.onsubmit = e => { e.preventDefault(); const v = $('#welWaIn').value.trim();
       const nm = $('#welName').value.trim();
       if (!nm) { toast('Please enter your name'); return; }
@@ -3274,6 +3275,13 @@ function bagRecs(){
 }
 /* bag: the customer can type their own WhatsApp number to get an AED 20 off coupon; they show in admin Left at checkout, where the WhatsApp + 10% code button sends it. Hidden once we already have their number. */
 const bagWaKnown = () => { try { return localStorage.getItem('fomaxo_bagwa') || String(JSON.parse(localStorage.getItem('fomaxo_details') || '{}').phone || ''); } catch(e) { return ''; } };
+/* a valid WhatsApp number typed in the welcome box, offer popup or bag box goes to Left at checkout as soon as they leave the box,
+   also when they close the popup or the bag without pressing Send (AJAY saw typed numbers in Clarity that never arrived, 2026-10-22) */
+function waKeep(phSel, nmSel, t){
+  const ph = $(phSel), nm = nmSel ? $(nmSel) : null; if (!ph) return;
+  const keep = () => { const v = ph.value.trim(); if (phoneOk(v)) FXT.lead('coupon', {name: nm ? nm.value.trim() : '', phone: v}, cart, t ?? (subtotal(cart) || 0), true); };
+  [ph, nm].forEach(el => { if (el) { el.addEventListener('change', keep); el.addEventListener('blur', keep); } });
+}
 function bagWaHTML(){
   try { if (localStorage.getItem('fomaxo_bagwa')) return '<p class="bag-wa-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; } catch(e) {}
   if (bagWaKnown()) return '';
@@ -3281,6 +3289,7 @@ function bagWaHTML(){
 }
 function bagWaWire(t){
   const f = $('#bagWa'); if (!f) return;
+  waKeep('#bagWaIn', null, t);
   f.onsubmit = e => { e.preventDefault(); const v = $('#bagWaIn').value.trim();
     if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
     try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
@@ -3296,6 +3305,7 @@ function pmWaHTML(){
 }
 function pmWaWire(){
   const f = $('#pmWa'); if (!f) return;
+  waKeep('#pmWaIn', '#pmWaName');
   f.onsubmit = e => { e.preventDefault(); const v = $('#pmWaIn').value.trim(), nm = $('#pmWaName').value.trim();
     if (!nm) { toast('Please enter your name'); return; }
     if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
