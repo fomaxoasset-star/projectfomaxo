@@ -255,7 +255,7 @@ function create_sale($user, $b, $method)
             'cash_given' => $cashGiven,
             'change_due' => $change,
             'note' => mb_substr((string) ($b['note'] ?? ''), 0, 255),
-            'payment_ref' => mb_substr(trim((string) ($b['payment_ref'] ?? '')), 0, 64),
+            'payment_ref' => text_in($b['payment_ref'] ?? '', 64),
             'offline' => $offline ? 1 : 0,
             'created_at' => $createdAt,
         ]);
@@ -272,7 +272,7 @@ function create_sale($user, $b, $method)
                 'free' => empty($l['free']) ? 0 : 1,
             ]);
         }
-        $cancelReason = trim(mb_substr(preg_replace('/\s+/', ' ', (string) ($b['cancel_reason'] ?? '')), 0, 200));
+        $cancelReason = text_in($b['cancel_reason'] ?? '', 200);
         if ($cancelReason !== '') {
             // Sale cancelled at the payment screen: kept in Sales with the reason, no stock moved, no number used.
             q("UPDATE sales SET status = 'cancelled', note = ? WHERE id = ?", ['Cancelled: ' . $cancelReason, $saleId]);
@@ -307,8 +307,7 @@ function mark_paid($saleId, $userId, $paidAt = null)
         $sale['receipt_no'] = next_order_no($storeId);
         q('UPDATE sales SET receipt_no = ? WHERE id = ?', [$sale['receipt_no'], $saleId]);
     }
-    $mname = ['cash' => 'Cash', 'tap' => 'Tap to Pay', 'card' => 'Card machine', 'ziina' => 'Ziina QR'][$sale['method']] ?? $sale['method'];
-    log_activity((int) $sale['user_id'], 'sale', 'Sold AED ' . money((int) $sale['total']) . ' by ' . $mname . ($sale['offline'] ? ' (made offline)' : ''), $sale['receipt_no'], $storeId);
+    log_activity((int) $sale['user_id'], 'sale', 'Sold AED ' . money((int) $sale['total']) . ' by ' . method_name($sale['method']) . ($sale['offline'] ? ' (made offline)' : ''), $sale['receipt_no'], $storeId);
     $items = q('SELECT product_id, qty FROM sale_items WHERE sale_id = ?', [$saleId])->fetchAll();
     foreach ($items as $it) {
         move_stock((int) $it['product_id'], $storeId, $userId, -(int) $it['qty'], 'sale', '', $saleId);

@@ -139,11 +139,6 @@ function uuid4()
     return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($b), 4));
 }
 
-function receipt_no_from_uuid($uuid)
-{
-    return 'FMX-' . strtoupper(substr(str_replace('-', '', $uuid), 0, 8));
-}
-
 /** Store code for order numbers: "City Centre Sharjah" -> "CCS", "Dubai" -> "DUB". */
 function store_code_from_name($name)
 {
@@ -429,4 +424,42 @@ function meta_set($k, $v)
 function wordmark()
 {
     return '<svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><path fill="currentColor" fill-rule="evenodd" d="M1068 147 1068 480 1135 480 1135 214ZM1778 123 1581 480 1672 479 1815 221 1823 204ZM0 480 68 480 69 257 377 257 377 189 69 189 68 105 0 105ZM2934 1 2911 4 2871 15 2837 31 2801 56 2768 90 2743 128 2726 168 2720 191 2716 218 2716 263 2723 303 2739 346 2750 366 2766 389 2776 401 2802 426 2837 450 2864 463 2890 472 2926 479 2973 480 3003 476 3023 471 3048 462 3069 452 3108 426 3141 393 3166 356 3185 311 3194 267 3194 215 3186 174 3178 151 3165 124 3154 106 3138 85 3110 57 3089 41 3069 29 3027 11 2998 4 2976 1ZM2933 70 2966 69 3005 76 3038 90 3064 108 3087 131 3105 157 3120 192 3126 222 3126 259 3120 289 3107 321 3092 344 3064 373 3039 390 3013 402 2976 411 2934 411 2902 404 2869 389 2847 374 2822 349 2803 321 2789 287 2784 262 2783 229 2790 191 2805 157 2823 131 2847 107 2872 90 2901 77ZM2623 1 2538 1 2431 145 2421 161 2463 217ZM2198 1 2366 233 2184 480 2269 480 2411 293 2417 299 2550 480 2635 480 2276 1ZM722 1 677 9 654 17 625 31 590 55 555 91 533 124 520 151 513 171 504 216 504 265 513 311 531 354 557 393 591 427 623 449 647 461 671 470 714 479 760 480 785 477 811 471 855 453 897 425 928 394 948 366 958 348 974 307 982 265 982 217 973 171 954 126 939 102 925 84 893 53 869 36 851 26 815 11 786 4 763 1ZM721 70 754 69 793 76 829 92 848 105 873 129 894 159 908 193 914 224 914 258 907 292 893 324 876 349 854 371 825 391 792 405 764 411 721 411 693 405 660 391 635 374 609 348 592 323 580 297 572 264 571 227 577 194 583 177 594 155 610 132 636 106 658 91 689 77ZM0 1 0 69 423 69 423 1ZM1847 0 1802 82 2022 480 2113 480ZM1068 0 1068 97 1282 311 1425 169 1426 170 1426 480 1494 480 1494 4 1282 215Z"/></svg>';
+}
+
+/** Who is logged in, the shop settings and the stores: what the app needs to start. */
+function me_payload($u)
+{
+    return [
+        'user' => $u,
+        'settings' => [
+            'store_name' => cfg('store_name'),
+            'store_tagline' => cfg('store_tagline'),
+            'store_address' => cfg('store_address'),
+            'store_phone' => cfg('store_phone'),
+            'store_trn' => cfg('store_trn'),
+            'receipt_footer' => cfg('receipt_footer'),
+            'currency' => cfg('currency', 'AED'),
+            'vat_rate' => vat_rate(),
+            'prices_include_vat' => (bool) cfg('prices_include_vat', true),
+            'default_low_stock' => (int) cfg('default_low_stock', 5),
+            'staff_max_discount' => (float) cfg('staff_max_discount', 10),
+            'ziina' => ziina_enabled(),
+            'ziina_mode' => ziina_mode(),
+            'tiers' => cfg('tiers', []),
+            'base_url' => cfg('base_url'),
+        ],
+        'stores' => stores_list($u['role'] !== 'manager'),
+    ];
+}
+
+/** One line of text from the app: spaces tidied, cut to $max characters. */
+function text_in($v, $max)
+{
+    return trim(mb_substr(preg_replace('/\s+/', ' ', (string) $v), 0, $max));
+}
+
+/** How a sale was paid, in words for activity and messages. */
+function method_name($m)
+{
+    return ['cash' => 'Cash', 'tap' => 'Card / Tap', 'card' => 'Card machine', 'ziina' => 'Ziina QR'][$m] ?? (string) $m;
 }

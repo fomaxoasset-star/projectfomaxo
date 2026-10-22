@@ -104,10 +104,10 @@ switch ($action) {
         q('DELETE FROM login_attempts WHERE ip = ?', [$ip]);
         log_activity((int) $u['id'], 'login', 'Logged in', '', $u['store_id'] ?? null);
         q('DELETE FROM tokens WHERE expires_at < ?', [now()]);
-        json_out([
-            'token' => issue_token((int) $u['id']),
-            'user' => ['id' => (int) $u['id'], 'name' => $u['name'], 'username' => $u['username'], 'role' => $u['role']],
-        ]);
+        $me = ['id' => (int) $u['id'], 'name' => $u['name'], 'username' => $u['username'], 'role' => $u['role'],
+               'active' => (int) $u['active'], 'store_id' => $u['store_id'] === null ? null : (int) $u['store_id']];
+        // Everything the app needs to start, in one reply (saves a second request after logging in).
+        json_out(['token' => issue_token((int) $u['id'])] + me_payload($me));
 
     case 'logout':
         need_post();
@@ -119,28 +119,7 @@ switch ($action) {
         json_out(['ok' => true]);
 
     case 'me':
-        $u = require_user();
-        json_out([
-            'user' => $u,
-            'settings' => [
-                'store_name' => cfg('store_name'),
-                'store_tagline' => cfg('store_tagline'),
-                'store_address' => cfg('store_address'),
-                'store_phone' => cfg('store_phone'),
-                'store_trn' => cfg('store_trn'),
-                'receipt_footer' => cfg('receipt_footer'),
-                'currency' => cfg('currency', 'AED'),
-                'vat_rate' => vat_rate(),
-                'prices_include_vat' => (bool) cfg('prices_include_vat', true),
-                'default_low_stock' => (int) cfg('default_low_stock', 5),
-                'staff_max_discount' => (float) cfg('staff_max_discount', 10),
-                'ziina' => ziina_enabled(),
-                'ziina_mode' => ziina_mode(),
-                'tiers' => cfg('tiers', []),
-                'base_url' => cfg('base_url'),
-            ],
-            'stores' => stores_list($u['role'] !== 'manager'),
-        ]);
+        json_out(me_payload(require_user()));
 
     case 'change_password':
         need_post();
@@ -171,16 +150,22 @@ switch ($action) {
                     WHERE s.status = 'paid' AND s.created_at >= ? GROUP BY i.product_id", [date('Y-m-d H:i:s', time() - 30 * 86400)])->fetchAll() as $r) {
             $sold[(int) $r['product_id']] = (int) $r['n'];
         }
-        json_out(['products' => array_map(function ($p) use ($map, $storeId, $sold) {
+        $list = array_map(function ($p) use ($map, $storeId, $sold) {
             $o = product_out($p, $map, $storeId);
             $o['sold30'] = $sold[(int) $p['id']] ?? 0;
             return $o;
-        }, $rows), 'store_id' => $storeId, 'time' => now()]);
+        }, $rows);
+        // The app checks every 30 seconds: when nothing changed, send a tiny "same" reply instead of the whole list.
+        $hash = md5(json_encode($list) . '|' . $storeId);
+        if (($_GET['h'] ?? '') === $hash) {
+            json_out(['same' => true, 'hash' => $hash]);
+        }
+        json_out(['products' => $list, 'store_id' => $storeId, 'hash' => $hash, 'time' => now()]);
 
     case 'product_save':
         need_post();
         $u = require_manager();
-        $name = trim(mb_substr((string) ($b['name'] ?? ''), 0, 120));
+        $name = text_in($b['name'] ?? '', 120);
         if ($name === '') {
             fail('Product name is needed.');
         }
@@ -194,12 +179,12 @@ switch ($action) {
         }
         $data = [
             'name' => $name,
-            'variant' => trim(mb_substr((string) ($b['variant'] ?? ''), 0, 60)),
-            'sku' => trim(mb_substr((string) ($b['sku'] ?? ''), 0, 64)),
-            'category' => trim(mb_substr((string) ($b['category'] ?? ''), 0, 60)),
+            'variant' => text_in($b['variant'] ?? '', 60),
+            'sku' => text_in($b['sku'] ?? '', 64),
+            'category' => text_in($b['category'] ?? '', 60),
             'price' => $price,
             'compare_at' => max(0, $compare),
-            'family' => trim(mb_substr((string) ($b['family'] ?? ''), 0, 80)),
+            'family' => text_in($b['family'] ?? '', 80),
             'price_lock' => empty($b['price_lock']) ? 0 : 1,
             'low_at' => max(0, (int) ($b['low_at'] ?? cfg('default_low_stock', 5))),
             'active' => empty($b['active']) ? 0 : 1,
@@ -406,8 +391,7 @@ switch ($action) {
         unset($b['cash_given']);
         $id = create_sale($u, $b, $m);
         $s = q1('SELECT total, store_id FROM sales WHERE id = ?', [$id]);
-        $mn = ['cash' => 'Cash', 'tap' => 'Card / Tap', 'card' => 'Card machine'][$m];
-        log_activity($u, 'cancel', 'Cancelled ' . $mn . ' sale of AED ' . money((int) $s['total']) . ': ' . mb_substr($reason, 0, 200), '', (int) $s['store_id']);
+        log_activity($u, 'cancel', 'Cancelled ' . method_name($m) . ' sale of AED ' . money((int) $s['total']) . ': ' . mb_substr($reason, 0, 200), '', (int) $s['store_id']);
         json_out(['ok' => true, 'id' => $id]);
 
     case 'sale_pay':
@@ -443,7 +427,7 @@ switch ($action) {
         try {
             q("UPDATE sales SET method = ?, cash_given = ?, change_due = ?, payment_ref = ?, status = 'pending',
                  note = CASE WHEN note LIKE 'Cancelled:%' THEN '' ELSE note END WHERE id = ?",
-              [$m, $given, $change, mb_substr(trim((string) ($b['payment_ref'] ?? '')), 0, 64), $sale['id']]);
+              [$m, $given, $change, text_in($b['payment_ref'] ?? '', 64), $sale['id']]);
             mark_paid((int) $sale['id'], $u['id']);
             $pdo->commit();
         } catch (Throwable $e) {
@@ -508,7 +492,7 @@ switch ($action) {
             'free_product_id' => $freeId, 'ends' => $ends !== '' ? $ends . ' 23:59:59' : null,
             'max_uses' => isset($b['max_uses']) && $b['max_uses'] !== '' ? max(1, (int) $b['max_uses']) : null,
             'store_id' => !empty($b['store_id']) ? (int) $b['store_id'] : null, 'active' => empty($b['active']) ? 0 : 1,
-            'note' => mb_substr(trim((string) ($b['note'] ?? '')), 0, 120),
+            'note' => text_in($b['note'] ?? '', 120),
         ];
         if ($id) {
             $sets = implode(', ', array_map(function ($k) { return "$k = ?"; }, array_keys($data)));
@@ -533,12 +517,7 @@ switch ($action) {
             json_out(['sale' => load_sale('id', $id)]);
         }
         try {
-            $z = ziina_create(
-                (int) $sale['total'],
-                cfg('store_name', 'FOMAXO') . ' order',
-                cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'],
-                cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'] . '&cancelled=1'
-            );
+            $z = ziina_intent_for($sale);
         } catch (Throwable $e) {
             q("UPDATE sales SET status = 'failed' WHERE id = ?", [$id]);
             throw $e;
@@ -571,10 +550,9 @@ switch ($action) {
         if (!in_array($sale['status'], ['pending', 'cancelled', 'failed'], true)) {
             json_out(['status' => $sale['status'], 'sale' => load_sale('id', $sale['id'])]);
         }
-        $reason = trim(mb_substr(preg_replace('/\s+/', ' ', (string) ($b['reason'] ?? '')), 0, 200));
+        $reason = text_in($b['reason'] ?? '', 200);
         q("UPDATE sales SET status = 'cancelled', note = ? WHERE id = ? AND status IN ('pending', 'cancelled', 'failed')", [$reason !== '' ? 'Cancelled: ' . $reason : '', $sale['id']]);
-        $mn = ['cash' => 'Cash', 'tap' => 'Card / Tap', 'card' => 'Card machine', 'ziina' => 'Ziina'][$sale['method']] ?? $sale['method'];
-        log_activity($u, 'cancel', ($sale['status'] === 'pending' ? 'Cancelled ' : 'Cancelled again: ') . $mn . ' sale of AED ' . money((int) $sale['total']) . ($reason !== '' ? ': ' . $reason : ''), '', (int) $sale['store_id']);
+        log_activity($u, 'cancel', ($sale['status'] === 'pending' ? 'Cancelled ' : 'Cancelled again: ') . method_name($sale['method']) . ' sale of AED ' . money((int) $sale['total']) . ($reason !== '' ? ': ' . $reason : ''), '', (int) $sale['store_id']);
         json_out(['status' => 'cancelled']);
 
     case 'ziina_retry':
@@ -611,12 +589,7 @@ switch ($action) {
         if ((int) $sale['total'] < 200) {
             fail('Ziina needs at least AED 2.00.');
         }
-        $z = ziina_create(
-            (int) $sale['total'],
-            cfg('store_name', 'FOMAXO') . ' order',
-            cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'],
-            cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'] . '&cancelled=1'
-        );
+        $z = ziina_intent_for($sale);
         q("UPDATE sales SET method = 'ziina', status = 'pending', ziina_id = ?, note = CASE WHEN note LIKE 'Cancelled:%' THEN '' ELSE note END WHERE id = ?", [$z['id'], $sale['id']]);
         log_activity($u, 'ziina', 'Showed Ziina QR again', '', (int) $sale['store_id']);
         json_out(['sale' => load_sale('id', $sale['id']), 'pay_url' => $z['redirect_url']]);
@@ -666,7 +639,7 @@ switch ($action) {
         if (!$s || $s['status'] !== 'paid') {
             fail('Only paid sales can be voided.');
         }
-        $reason = trim(mb_substr((string) ($b['reason'] ?? ''), 0, 200));
+        $reason = text_in($b['reason'] ?? '', 200);
         if ($reason === '') {
             fail('Please give a reason.');
         }
@@ -828,7 +801,7 @@ switch ($action) {
         need_post();
         $me = require_manager();
         $id = (int) ($b['id'] ?? 0);
-        $name = trim(mb_substr((string) ($b['name'] ?? ''), 0, 100));
+        $name = text_in($b['name'] ?? '', 100);
         $username = strtolower(trim((string) ($b['username'] ?? '')));
         $role = ($b['role'] ?? 'staff') === 'manager' ? 'manager' : 'staff';
         $active = empty($b['active']) ? 0 : 1;
@@ -908,9 +881,9 @@ switch ($action) {
         require_manager();
         $id = (int) ($b['id'] ?? 0);
         $data = [
-            'name' => trim(mb_substr((string) ($b['name'] ?? ''), 0, 80)),
-            'address' => trim(mb_substr((string) ($b['address'] ?? ''), 0, 255)),
-            'phone' => trim(mb_substr((string) ($b['phone'] ?? ''), 0, 40)),
+            'name' => text_in($b['name'] ?? '', 80),
+            'address' => text_in($b['address'] ?? '', 255),
+            'phone' => text_in($b['phone'] ?? '', 40),
             'active' => empty($b['active']) ? 0 : 1,
             'code' => clean_store_code($b['code'] ?? ''),
         ];

@@ -21,6 +21,23 @@ RewriteRule ^(lib|data)(/|$) - [F,L]
 </FilesMatch>
 </IfModule>
 
+# Speed: compress text files, and let phones keep files that never change.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript text/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
+<IfModule mod_headers.c>
+<FilesMatch "^(app\.js|app\.css|qrcode\.js|countries\.js)$">
+    # always loaded with ?v=NN, so a new version is a new address
+    Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+<FilesMatch "\.(woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+<FilesMatch "\.(png|svg)$">
+    Header set Cache-Control "public, max-age=604800"
+</FilesMatch>
+</IfModule>
+
 AddType application/manifest+json .webmanifest
 AddType font/woff2 .woff2
 

@@ -94,3 +94,10 @@ function demo_store($id, $setStatus = null)
     }
     return $all[$id] ?? null;
 }
+
+/** A Ziina payment link for a saved sale. */
+function ziina_intent_for($sale)
+{
+    $r = cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'];
+    return ziina_create((int) $sale['total'], cfg('store_name', 'FOMAXO') . ' order', $r, $r . '&cancelled=1');
+}

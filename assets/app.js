@@ -1,6 +1,7 @@
 /* FOMAXO Store System - staff app (works offline for cash, Tap to Pay and card-machine sales). */
 (function () {
   'use strict';
+  var APP_V = ((document.querySelector('script[src*="app.js?v="]') || {}).src || '').split('v=')[1] || '1';
 
   // ---------------------------------------------------------------- helpers
   var $ = function (s, el) { return (el || document).querySelector(s); };
@@ -161,8 +162,11 @@
 
   function refreshProducts() {
     if (!S.token) return Promise.resolve();
-    return api('products', { query: '&store=' + (curStoreId() || '') }).then(function (d) {
-      S.products = d.products;
+    var store = curStoreId() || '';
+    var h = S.productsHash && S.productsStore === store ? S.productsHash : '';
+    return api('products', { query: '&store=' + store + (h ? '&h=' + h : '') }).then(function (d) {
+      if (d.same) return; // nothing changed: no download, no redraw
+      S.products = d.products; S.productsHash = d.hash; S.productsStore = store;
       LS.set('fx_products', S.products);
       preloadPhotos();
       if (S.view === 'sell' && $('#tiles')) { renderChips(); renderTiles(); renderCart(); }
@@ -172,12 +176,13 @@
     }).catch(function () { /* keep cached list */ });
   }
 
+  function applyMe(d) {
+    S.user = d.user; S.settings = d.settings; S.stores = d.stores || [];
+    LS.set('fx_user', S.user); LS.set('fx_settings', S.settings); LS.set('fx_stores', S.stores);
+    updateStoreBtn();
+  }
   function refreshMe() {
-    return api('me').then(function (d) {
-      S.user = d.user; S.settings = d.settings; S.stores = d.stores || [];
-      LS.set('fx_user', S.user); LS.set('fx_settings', S.settings); LS.set('fx_stores', S.stores);
-      updateStoreBtn();
-    }).catch(function () { /* offline: use cached */ });
+    return api('me').then(applyMe).catch(function () { /* offline: use cached */ });
   }
 
   // ---------------------------------------------------------------- offline queue
@@ -257,6 +262,10 @@
 
   // ---------------------------------------------------------------- toast, modal, menu
   var toastTimer;
+  /** Copy text; if the phone blocks copying, show it so it can be copied by hand. */
+  function copyText(text, okMsg) {
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { toast(okMsg); }, function () { window.prompt('Copy this:', text); });
+  }
   function toast(msg, bad) {
     var old = $('.toast'); if (old) old.remove();
     var t = document.createElement('div');
@@ -318,14 +327,10 @@
       e.preventDefault();
       var f = e.target, btn = $('button', f), err = $('.m-err', f);
       btn.disabled = true; err.classList.add('hidden');
-      var prevUser = S.user;
       api('login', { body: { username: f.username.value, password: f.password.value } }).then(function (d) {
-        if (prevUser && prevUser.id !== d.user.id && S.queue.length) {
-          // Waiting sales stay with the device; they upload under the new login.
-        }
-        S.token = d.token; S.user = d.user;
-        LS.set('fx_token', S.token); LS.set('fx_user', S.user);
-        return refreshMe().then(refreshProducts).then(function () { S.view = 'sell'; renderApp(); syncQueue(); });
+        S.token = d.token; LS.set('fx_token', S.token);
+        applyMe(d); S.productsHash = null; // waiting offline sales stay on the device and upload under this login
+        return refreshProducts().then(function () { S.view = 'sell'; renderApp(); syncQueue(); });
       }).catch(function (e2) {
         btn.disabled = false;
         err.textContent = e2.offline ? 'No internet. Connect to Wi-Fi or mobile data to log in.' : e2.message;
@@ -383,7 +388,7 @@
   function pickStore(id) {
     if (S.cart.length && !confirm('Switch store? The current cart will be cleared.')) return;
     S.store = id; LS.set('fx_store', id);
-    S.cart = []; S.discount = null; S.customer = null;
+    clearBag();
     closeMenu(); updateStoreBtn();
     refreshProducts().then(function () { renderView(); });
     toast('Now selling from ' + curStore().name + '.');
@@ -497,11 +502,9 @@
   function preloadPhotos() {
     S.products.forEach(function (p) {
       if (!p.image || !p.active) return;
-      [360, 120].forEach(function (w) {
-        var u = thumb(p.image, w);
-        if (preloaded[u]) return;
-        preloaded[u] = 1; var im = new Image(); im.decoding = 'async'; im.src = u;
-      });
+      var u = thumb(p.image, 360); // one size everywhere (tiles, size picker, bag), so each photo downloads once
+      if (preloaded[u]) return;
+      preloaded[u] = 1; var im = new Image(); im.decoding = 'async'; im.src = u;
     });
   }
   function renderTiles() {
@@ -602,7 +605,7 @@
       '<div class="cart-lines">' + (empty ? '<div class="empty"><div class="big">Bag is empty</div>Tap a perfume to add it.</div>' :
         lines.map(function (l) {
           var p = productById(l.product_id) || {};
-          return '<div class="cline">' + (p.image ? '<img src="' + esc(thumb(p.image, 120)) + '" alt="" onerror="this.remove()">' : '<span class="cl-ph">' + esc(shortName(l.name).charAt(0)) + '</span>') +
+          return '<div class="cline">' + (p.image ? '<img src="' + esc(thumb(p.image, 360)) + '" alt="" onerror="this.remove()">' : '<span class="cl-ph">' + esc(shortName(l.name).charAt(0)) + '</span>') +
             '<div class="cl-mid"><b>' + esc(shortName(l.name)) + '</b><span>' + esc(l.variant) + ' · ' + money(l.price) + '</span></div>' +
             '<div class="qty big"><button data-act="qty" data-id="' + l.product_id + '" data-d="-1" aria-label="One less">−</button><span>' + l.qty + '</span>' +
             '<button data-act="qty" data-id="' + l.product_id + '" data-d="1" aria-label="One more">+</button></div></div>';
@@ -625,7 +628,7 @@
   function freeLineHtml() {
     var c = S.coupon; if (!c || c.kind !== 'free' || !c.free) return '';
     var p = productById(c.free.product_id) || { name: c.free.name, variant: '' };
-    return '<div class="cline free">' + (p.image ? '<img src="' + esc(thumb(p.image, 120)) + '" alt="">' : '<span class="cl-ph">🎁</span>') +
+    return '<div class="cline free">' + (p.image ? '<img src="' + esc(thumb(p.image, 360)) + '" alt="">' : '<span class="cl-ph">🎁</span>') +
       '<div class="cl-mid"><b>' + esc(shortName(p.name)) + '</b><span>' + esc(p.variant) + ' · Free with coupon</span></div><b class="free-tag">FREE</b></div>';
   }
   function couponModal() {
@@ -637,25 +640,8 @@
       '<p class="small muted">Expired, used-up or wrong codes are refused automatically.</p>' +
       '<div class="modal-foot">' + (c ? '<button class="btn danger" data-act="cp-remove">Remove</button>' : '') + '<button class="btn gold big" data-act="cp-apply"' + (S.online ? '' : ' disabled') + '>Apply</button></div>');
   }
-  function payChooser() {
-    var t = cartTotals(), st = S.settings;
-    var qrOk = st.ziina && S.online;
-    openModal('How is the customer paying?', '<div class="amount-big"><div class="lbl">Total</div><div class="val num">' + aed(t.total) + '</div></div>' +
-      '<div class="pay-choices">' +
-      '<button class="pchoice cash" data-act="pay" data-m="cash"><span class="pi">💵</span><b>Cash</b><small>Notes and coins</small></button>' +
-      '<button class="pchoice" data-act="pay" data-m="tap"><span class="pi">💳</span><b>Card / Tap</b><small>Card, Apple Pay, Google Pay on the Ziina phone</small></button>' +
-      '<button class="pchoice" data-act="pay" data-m="ziina"' + (qrOk ? '' : ' disabled') + '><span class="pi">📱</span><b>QR code</b><small>' + (!st.ziina ? 'Not set up yet' : S.online ? 'Customer scans with their phone' : 'Needs internet') + '</small></button>' +
-      '</div><button class="link-btn other-card" data-act="pay" data-m="card">Other card machine</button>');
-  }
   function couponDiscountModal() {
     openModal('Coupon or discount', '<div class="more-choices">' +
-      '<button class="pchoice" data-act="coupon"><span class="pi">🎟</span><b>Coupon code</b><small>' + (S.coupon ? esc(S.coupon.code) + ' — ' + esc(S.coupon.label || '') : 'Customer has a code') + '</small></button>' +
-      '<button class="pchoice" data-act="discount"><span class="pi">🏷</span><b>Discount</b><small>' + (S.discount ? (S.discount.type === 'percent' ? S.discount.value + '% off' : aed(toFils(S.discount.value)) + ' off') : 'None') + '</small></button>' +
-      '</div>');
-  }
-  function moreModal() {
-    openModal('Customer, coupon & discount', '<div class="more-choices">' +
-      '<button class="pchoice" data-act="customer"><span class="pi">👤</span><b>Customer</b><small>' + (S.customer ? esc(S.customer.name || S.customer.phone) : 'Add phone number (optional)') + '</small></button>' +
       '<button class="pchoice" data-act="coupon"><span class="pi">🎟</span><b>Coupon code</b><small>' + (S.coupon ? esc(S.coupon.code) + ' — ' + esc(S.coupon.label || '') : 'Customer has a code') + '</small></button>' +
       '<button class="pchoice" data-act="discount"><span class="pi">🏷</span><b>Discount</b><small>' + (S.discount ? (S.discount.type === 'percent' ? S.discount.value + '% off' : aed(toFils(S.discount.value)) + ' off') : 'None') + '</small></button>' +
       '</div>');
@@ -768,10 +754,16 @@
   }
 
   // ---------------------------------------------------------------- PAYMENT
+  // One set of payment screens for a new sale (the bag) and for a saved unpaid sale (Pay again).
+  var PAY = null;            // { sale: saved sale or null, total: fils, method: screen shown }
+  var cartSaleId = 0;        // the Ziina sale made from the current bag: paying or cancelling it empties the bag
+  var ziinaPoll = null, lastQr = null, cancelBack = null;
+  var PAY_TITLE = { cash: 'Cash', tap: 'Card / Tap', card: 'Card machine' };
+  var CANCEL_REASONS = ['Customer changed their mind', 'Payment not going through', 'Customer will pay later', 'Wrong items or price'];
+
   function buildPayload(method, extra) {
-    var id = uuid();
     var p = {
-      uuid: id, receipt_token: randHex(16), method: method, store_id: curStoreId(),
+      uuid: uuid(), receipt_token: randHex(16), method: method, store_id: curStoreId(),
       items: cartLines().map(function (l) { return { product_id: l.product_id, qty: l.qty, price: l.price }; }),
       discount: S.discount, customer: S.customer ? { phone: S.customer.phone, name: S.customer.name, email: S.customer.email || '' } : null,
       coupon: S.coupon ? S.coupon.code : '',
@@ -781,57 +773,86 @@
     for (var k in extra) p[k] = extra[k];
     return p;
   }
-  function payModal(method) {
-    var t = cartTotals();
-    var amount = '<div class="amount-big"><div class="lbl">Amount to collect</div><div class="val num">' + aed(t.total) + '</div></div>';
-    if (method === 'cash') {
-      var notes = [50, 100, 200, 500, 1000].filter(function (v) { return v * 100 > t.total; }).slice(0, 4);
-      openModal('Cash', '<div class="err m-err hidden"></div>' + switchRow('cash', 'new', t.total) + amount +
-        '<div class="cash-q">Customer gave:</div>' +
-        '<div class="notes"><button class="note-btn exact" data-act="cash-quick" data-v="' + (t.total / 100) + '">Exact<br><small>' + money(t.total) + '</small></button>' +
+  function clearBag(keepOpen) {
+    cartSaleId = 0;
+    S.cart = []; S.discount = null; S.customer = null; S.coupon = null;
+    if (!keepOpen) setCartOpen(false);
+    if (S.view === 'sell') { renderTiles(); renderCart(); }
+  }
+  function payFromBag() { PAY = { sale: null, total: cartTotals().total }; }
+  function payFromSale(s) { PAY = { sale: s, total: s.total }; }
+  function payIsBag() { return PAY && (!PAY.sale || PAY.sale.id === cartSaleId); }
+  function qrProblem(total) { var st = S.settings; return !st.ziina ? 'Not set up yet' : !S.online ? 'Needs internet' : total < 200 ? 'Needs AED 2.00 or more' : ''; }
+  function amountBox(label, total) { return '<div class="amount-big"><div class="lbl">' + label + '</div><div class="val num">' + aed(total) + '</div></div>'; }
+
+  function payChooser() {
+    var s = PAY.sale, qrNo = qrProblem(PAY.total);
+    openModal(s ? 'Pay again' : 'How is the customer paying?', (s ? '<div class="err m-err hidden"></div>' : '') + amountBox(s ? 'Amount to collect' : 'Total', PAY.total) +
+      '<div class="pay-choices">' +
+      '<button class="pchoice cash" data-act="pay" data-m="cash"><span class="pi">💵</span><b>Cash</b><small>Notes and coins</small></button>' +
+      '<button class="pchoice" data-act="pay" data-m="tap"><span class="pi">💳</span><b>Card / Tap</b><small>Card, Apple Pay, Google Pay on the Ziina phone</small></button>' +
+      '<button class="pchoice" data-act="pay" data-m="ziina"' + (qrNo ? ' disabled' : '') + '><span class="pi">📱</span><b>QR code</b><small>' + (qrNo || 'Customer scans with their phone') + '</small></button>' +
+      '</div><button class="link-btn other-card" data-act="pay" data-m="card">Other card machine</button>' +
+      (s ? '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel">Cancel sale</button></div>' : ''));
+  }
+  /** "Pay by" row (placed above the Done button) to switch method without going back. */
+  function switchRow(cur) {
+    var qrNo = qrProblem(PAY.total);
+    var opts = [['cash', '💵', 'Cash'], ['tap', '💳', 'Card / Tap'], ['ziina', '📱', 'QR'], ['card', '🏧', 'Machine']];
+    return '<div class="pay-switch"><span class="small muted">Pay by</span><div class="seg">' + opts.map(function (o) {
+      return '<button type="button" data-act="sw-m" data-m="' + o[0] + '" class="' + (o[0] === cur ? 'active' : '') + '"' + (o[0] === 'ziina' && qrNo && cur !== 'ziina' ? ' disabled' : '') + '><span>' + o[1] + '</span> ' + o[2] + '</button>';
+    }).join('') + '</div></div>';
+  }
+  function payScreen(m) {
+    stopPoll();
+    if (m === 'ziina') { startZiina(); return; }
+    PAY.method = m;
+    var t = PAY.total, body;
+    if (m === 'cash') {
+      var notes = [50, 100, 200, 500, 1000].filter(function (v) { return v * 100 > t; }).slice(0, 4);
+      body = '<div class="cash-q">Customer gave:</div>' +
+        '<div class="notes"><button class="note-btn exact" data-act="cash-quick" data-v="' + (t / 100) + '">Exact<br><small>' + money(t) + '</small></button>' +
         notes.map(function (v) { return '<button class="note-btn" data-act="cash-quick" data-v="' + v + '">' + v + '</button>'; }).join('') + '</div>' +
         '<label class="field"><span>Other amount</span><input class="input" id="cash-in" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Type amount"></label>' +
-        '<div class="change-box big" id="change-box"><span>Give change</span><span class="num">AED 0.00</span></div>' +
-        '<div class="modal-foot"><button class="btn gold big" data-act="confirm-pay" data-m="cash">✓ Done — cash received</button></div>' +
-        '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel" data-m="cash">Cancel sale</button></div>', { sticky: true });
-      $('#cash-in').addEventListener('input', function () { $$('.note-btn').forEach(function (b) { b.classList.remove('active'); }); updateChange(); });
-    } else if (method === 'tap') {
-      openModal('Card / Tap', '<div class="err m-err hidden"></div>' + switchRow('tap', 'new', t.total) + amount +
-        '<ol class="steps big"><li><span>On the store phone open <b>Ziina</b> → <b>Tap to Pay</b>.</span></li>' +
-        '<li><span>Type <b class="num">' + money(t.total) + '</b> <button class="btn sm" data-act="copy-amount" data-v="' + (t.total / 100).toFixed(2) + '">Copy</button></span></li>' +
+        '<div class="change-box big" id="change-box"><span>Give change</span><span class="num">AED 0.00</span></div>';
+    } else if (m === 'tap') {
+      body = '<ol class="steps big"><li><span>On the store phone open <b>Ziina</b> → <b>Tap to Pay</b>.</span></li>' +
+        '<li><span>Type <b class="num">' + money(t) + '</b> <button class="btn sm" data-act="copy-amount" data-v="' + (t / 100).toFixed(2) + '">Copy</button></span></li>' +
         '<li><span>Customer taps card or phone. Wait for <b>Approved</b>.</span></li></ol>' +
-        '<details class="ref"><summary>Add reference (optional)</summary><input class="input" id="pay-ref" maxlength="64" placeholder="Last 4 digits or Ziina ID"></details>' +
-        '<div class="modal-foot"><button class="btn ghost" data-act="pay-open">Back</button><button class="btn gold big" data-act="confirm-pay" data-m="tap">✓ Approved</button></div>' +
-        '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel" data-m="tap">Cancel sale</button></div>', { sticky: true });
-    } else if (method === 'card') {
-      openModal('Card machine', '<div class="err m-err hidden"></div>' + switchRow('card', 'new', t.total) + amount +
-        '<p class="muted">Charge this amount on the card terminal. When it prints <b>approved</b>, press Payment received.</p>' +
-        '<label class="field"><span>Approval code (optional)</span><input class="input" id="pay-ref" maxlength="64"></label>' +
-        '<div class="modal-foot"><button class="btn ghost" data-act="modal-close">Back</button><button class="btn gold big" data-act="confirm-pay" data-m="card">Payment received</button></div>' +
-        '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel" data-m="card">Cancel sale</button></div>', { sticky: true });
-    } else if (method === 'ziina') {
-      ziinaFlow();
+        '<details class="ref"><summary>Add reference (optional)</summary><input class="input" id="pay-ref" maxlength="64" placeholder="Last 4 digits or Ziina ID"></details>';
+    } else {
+      body = '<p class="muted">Charge this amount on the card terminal. When it prints <b>approved</b>, press Payment received.</p>' +
+        '<label class="field"><span>Approval code (optional)</span><input class="input" id="pay-ref" maxlength="64"></label>';
     }
+    var done = { cash: '✓ Done — cash received', tap: '✓ Approved', card: 'Payment received' }[m];
+    openModal(PAY_TITLE[m], '<div class="err m-err hidden"></div>' + switchRow(m) + amountBox('Amount to collect', t) + body +
+      '<div class="modal-foot">' + (m === 'cash' ? '' : '<button class="btn ghost" data-act="pay-back">Back</button>') + '<button class="btn gold big" data-act="confirm-pay" data-m="' + m + '">' + done + '</button></div>' +
+      '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel">Cancel sale</button></div>', { sticky: true });
+    if (m === 'cash') $('#cash-in').addEventListener('input', function () { $$('.note-btn').forEach(function (b) { b.classList.remove('active'); }); updateChange(); });
   }
   function updateChange() {
-    var t = cartTotals();
-    var v = $('#cash-in').value, given = v === '' ? t.total : toFils(v), ch = given - t.total;
-    var box = $('#change-box');
+    var v = $('#cash-in').value, ch = (v === '' ? PAY.total : toFils(v)) - PAY.total, box = $('#change-box');
     box.classList.toggle('short', ch < 0);
     box.innerHTML = ch < 0 ? '<span>Still to pay</span><span class="num">' + aed(-ch) + '</span>' : '<span>Give change</span><span class="num">' + aed(ch) + '</span>';
   }
-  function confirmPay(method, btn) {
-    var extra = {};
-    var t = cartTotals();
-    if (method === 'cash') {
+  function confirmPay(m, btn) {
+    var t = PAY.total, extra = {};
+    if (m === 'cash') {
       var v = $('#cash-in').value;
-      if (v !== '' && toFils(v) < t.total) { modalErr('Cash received is less than the total.'); return; }
-      extra.cash_given = v === '' ? (t.total / 100).toFixed(2) : v;
+      if (v !== '' && toFils(v) < t) { modalErr('Cash received is less than the total.'); return; }
+      extra.cash_given = v === '' ? (t / 100).toFixed(2) : v;
     } else {
       var ref = $('#pay-ref'); extra.payment_ref = ref ? ref.value.trim() : '';
     }
     btn.disabled = true;
-    var payload = buildPayload(method, extra);
+    if (PAY.sale) {
+      api('sale_pay', { body: { id: PAY.sale.id, method: m, cash_given: extra.cash_given, payment_ref: extra.payment_ref } }).then(function (d) {
+        if (d.already) toast('This sale was already paid.');
+        finishPaid(d.sale);
+      }).catch(function (er) { btn.disabled = false; modalErr(er.offline ? 'Needs internet.' : er.message); });
+      return;
+    }
+    var payload = buildPayload(m, extra);
     if (!S.online) { queueSale(payload); return; }
     api('sale', { body: payload }).then(function (d) { afterSale(d.sale); }).catch(function (e) {
       if (e.offline) { queueSale(payload); return; }
@@ -840,13 +861,12 @@
   }
   function queueSale(payload) {
     payload.offline = 1;
-    var lines = cartLines(), t = cartTotals();
+    var lines = cartLines(), t = cartTotals(), st = curStore(), c = S.customer;
     var local = {
-      queued: true, uuid: payload.uuid, receipt_no: 'FMX-' + (curStore().code || 'ST') + '-OFFLINE',
+      queued: true, uuid: payload.uuid, receipt_no: 'FMX-' + (st.code || 'ST') + '-OFFLINE',
       receipt_token: payload.receipt_token, created_at: payload.created_at, staff_name: S.user.name,
-      store_name: curStore().name, store_address: curStore().address, store_phone: curStore().phone,
-      customer_name: S.customer ? S.customer.name : '', customer_phone: S.customer ? S.customer.phone : '', customer_email: S.customer ? S.customer.email || '' : '',
-      customer_tier: S.customer ? S.customer.tier : null,
+      store_name: st.name, store_address: st.address, store_phone: st.phone,
+      customer_name: c ? c.name : '', customer_phone: c ? c.phone : '', customer_email: c ? c.email || '' : '', customer_tier: c ? c.tier : null,
       items: lines.map(function (l) { return { name: l.name, variant: l.variant, price: l.price, qty: l.qty, line_total: l.price * l.qty }; }),
       subtotal: t.subtotal, discount: t.discount + (t.coupon || 0), coupon: S.coupon ? S.coupon.code : '', coupon_label: S.coupon ? S.coupon.label : '', coupon_disc: t.coupon || 0,
       vat: t.vat, total: t.total, method: payload.method, status: 'paid',
@@ -861,47 +881,91 @@
     updateNet();
     afterSale(local);
   }
+  /** The bag's sale is paid: empty the bag and show the receipt. */
   function afterSale(sale) {
-    cartSaleId = 0;
-    S.cart = []; S.discount = null; S.customer = null; S.coupon = null;
-    setCartOpen(false);
-    if (S.view === 'sell') { renderTiles(); renderCart(); }
+    clearBag();
     if (!sale.queued) refreshProducts();
+    if (S.view === 'sales') renderSales();
+    doneScreen(sale);
+  }
+  /** A payment went through: the bag's sale empties the bag; a sale paid again from Sales leaves the bag alone. */
+  function finishPaid(sale) {
+    stopPoll(); closeModal();
+    if (payIsBag()) { afterSale(sale); return; }
+    refreshProducts();
+    if (S.view === 'sales') renderSales();
     doneScreen(sale);
   }
 
-  var ziinaPoll = null;
+  // ---- Ziina QR
+  /** The QR code maker loads in the background after start-up (it is only needed for QR payments and printed receipts). */
+  var qrLoading = null;
+  function loadQr() {
+    if (typeof qrcode === 'function') return Promise.resolve();
+    if (!qrLoading) qrLoading = new Promise(function (ok, bad) {
+      var sc = document.createElement('script'); sc.src = 'assets/qrcode.js?v=' + APP_V; sc.onload = ok;
+      sc.onerror = function () { qrLoading = null; bad(new Error('Could not load the QR code. Check the internet and try again.')); };
+      document.head.appendChild(sc);
+    });
+    return qrLoading;
+  }
   function stopPoll() { if (ziinaPoll) { clearInterval(ziinaPoll); ziinaPoll = null; } }
-  function ziinaFlow() {
-    var t = cartTotals();
-    if (t.total < 200) { toast('Ziina needs at least AED 2.00. Take cash for this sale.', true); return; }
-    var payload = buildPayload('ziina', {});
-    var cust = S.customer;
+  function startZiina() {
+    if (PAY.total < 200) { toast('Ziina needs at least AED 2.00. Take cash for this sale.', true); return; }
+    var s = PAY.sale, cust = s ? (s.customer_phone ? { phone: s.customer_phone } : null) : S.customer;
     openModal('Ziina payment', '<div class="status-line"><span class="spinner"></span> Creating payment…</div>', { sticky: true, onClose: stopPoll });
-    api('ziina_start', { body: payload, timeout: 30000 }).then(function (d) { showZiinaQr(d, cust, true); }).catch(ziinaErr);
+    (s ? api('ziina_retry', { body: { id: s.id }, timeout: 30000 }) : api('ziina_start', { body: buildPayload('ziina', {}), timeout: 30000 })).then(function (d) {
+      if (!s) cartSaleId = d.sale.id;
+      if (d.sale.status === 'paid') { finishPaid(d.sale); return; }
+      if (d.sale.status === 'void') { closeModal(); toast('This sale was voided.'); return; }
+      PAY.sale = d.sale; PAY.method = 'ziina';
+      return loadQr().then(function () { showZiinaQr(d, cust); });
+    }).catch(function (e) {
+      setModalBody('<div class="err" style="margin-bottom:12px">' + esc(e.offline ? 'No internet — Ziina QR needs a connection. Use Cash or Tap to Pay.' : e.message) + '</div>' +
+        '<div class="modal-foot"><button class="btn" data-act="modal-close">Close</button></div>');
+    });
   }
-  function ziinaRetry(id) {
-    openModal('Ziina payment', '<div class="status-line"><span class="spinner"></span> Creating payment…</div>', { sticky: true, onClose: stopPoll });
-    api('ziina_retry', { body: { id: id }, timeout: 30000 }).then(function (d) {
-      if (d.sale.status === 'paid' || d.sale.status === 'void') { closeModal(); toast(d.sale.status === 'paid' ? 'Already paid — sale complete.' : 'This sale was voided.'); if (S.view === 'sales') renderSales(); if (d.sale.status === 'paid') afterSale(d.sale); return; }
-      showZiinaQr(d, d.sale.customer_phone ? { phone: d.sale.customer_phone } : null);
-    }).catch(ziinaErr);
+  function showZiinaQr(d, cust) {
+    lastQr = { d: d, cust: cust };
+    var qr = qrcode(0, 'M'); qr.addData(d.pay_url); qr.make();
+    var wa = cust && cust.phone ? 'https://wa.me/' + cust.phone.replace(/\D/g, '') + '?text=' + encodeURIComponent('FOMAXO payment of ' + aed(d.sale.total) + ': ' + d.pay_url) : null;
+    setModalBody(switchRow('ziina') +
+      (S.settings.ziina_mode !== 'live' ? '<div class="note" style="margin-bottom:12px;text-align:center">' + (S.settings.ziina_mode === 'demo' ? 'PRACTICE MODE — no real money' : 'ZIINA TEST MODE — no real money') + '</div>' : '') +
+      amountBox('Customer pays', d.sale.total) +
+      '<div class="qr-box">' + qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true }) + '</div>' +
+      '<p class="small muted qr-hint" style="text-align:center;margin:0 0 6px">Customer scans with their phone camera and pays by card, Apple Pay or Google Pay.</p>' +
+      '<div class="status-line" id="z-status"><span class="spinner"></span> Waiting for payment…</div>' +
+      '<div class="err m-err hidden"></div>' +
+      '<div class="modal-foot qr-links"><button class="btn" type="button" data-act="copy-link" data-v="' + esc(d.pay_url) + '">Copy link</button>' +
+      (wa ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(wa) + '">WhatsApp</a>' : '') +
+      '<a class="btn" target="_blank" rel="noopener" href="' + esc(d.pay_url) + '">Open</a></div>' +
+      '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel">Cancel payment</button></div>');
+    var busy = false;
+    stopPoll();
+    ziinaPoll = setInterval(function () {
+      if (busy) return; busy = true;
+      api('ziina_check', { query: '&id=' + d.sale.id }).then(function (r) {
+        busy = false;
+        if (r.status === 'paid') finishPaid(r.sale);
+        else if (r.status === 'failed' || r.status === 'cancelled') {
+          stopPoll();
+          setModalBody('<div class="err" style="margin-bottom:12px">The payment was ' + r.status + '. No money was taken.</div>' +
+            '<div class="modal-foot"><button class="btn" data-act="modal-close">Close</button><button class="btn gold" data-act="pay" data-m="ziina">Pay again</button></div>');
+        }
+      }, function () { busy = false; var s = $('#z-status'); if (s) s.innerHTML = '<span class="spinner"></span> Checking… (connection slow)'; });
+    }, 3000);
   }
-  function ziinaErr(e) {
-    setModalBody('<div class="err" style="margin-bottom:12px">' + esc(e.offline ? 'No internet — Ziina QR needs a connection. Use Cash or Tap to Pay.' : e.message) + '</div>' +
-      '<div class="modal-foot"><button class="btn" data-act="modal-close">Close</button></div>');
-  }
-  var lastQr = null;
-  var CANCEL_REASONS = ['Customer changed their mind', 'Payment not going through', 'Customer will pay later', 'Wrong items or price'];
-  /** Ask why a sale is cancelled. id = existing Ziina sale; method = cancelling the bag at a Cash/Card/Tap screen. */
-  function cancelReasonForm(id, fromQr, method) {
-    if (method) { var mt = $('.modal-title, .modal h2'); if (mt) mt.textContent = 'Cancel sale'; }
+
+  // ---- Cancel a sale (with a reason) from any payment screen, Pay again, or a receipt in Sales
+  function cancelForm(back) {
+    cancelBack = back;
+    var mt = $('.modal h2'); if (mt) mt.textContent = 'Cancel sale';
     setModalBody('<p class="muted" style="margin-top:0">Why is this sale cancelled? No money is taken and no receipt number is used.</p>' +
       '<div class="err m-err hidden"></div><form id="cr-form">' +
       CANCEL_REASONS.map(function (r, i) { return '<label class="check"><input type="radio" name="cr" value="' + esc(r) + '"' + (i === 0 ? ' checked' : '') + '> ' + esc(r) + '</label>'; }).join('') +
       '<label class="check"><input type="radio" name="cr" value="other"> Other</label>' +
       '<input class="input" id="cr-other" placeholder="Type the reason" maxlength="200" style="margin-top:6px">' +
-      '<div class="modal-foot"><button class="btn" type="button" data-act="' + (method ? 'pay-back' : 'z-back') + '" data-m="' + (method || '') + '" data-id="' + (id || 0) + '" data-qr="' + (fromQr ? 1 : 0) + '">Back</button><button class="btn danger" type="submit">Cancel sale</button></div></form>');
+      '<div class="modal-foot"><button class="btn" type="button" data-act="cancel-back">Back</button><button class="btn danger" type="submit">Cancel sale</button></div></form>');
     var f = $('#cr-form'), other = $('#cr-other');
     other.addEventListener('focus', function () { $('input[value=other]', f).checked = true; });
     f.addEventListener('submit', function (e) {
@@ -909,118 +973,36 @@
       var pick = $('input[name=cr]:checked', f).value, reason = pick === 'other' ? other.value.trim() : pick;
       if (!reason) { modalErr('Type the reason, or pick one above.'); other.focus(); return; }
       var b = $('[type=submit]', f); b.disabled = true; stopPoll();
-      if (method) {
-        var clearBag = function (msg) { S.cart = []; S.discount = null; S.customer = null; S.coupon = null; setCartOpen(false); if (S.view === 'sell') { renderTiles(); renderCart(); } closeModal(); toast(msg); };
-        if (!S.online) { clearBag('Sale cancelled.'); return; }
-        api('sale_cancel', { body: buildPayload(method, { cancel_reason: reason }) })
-          .then(function () { clearBag('Sale cancelled. It is in Sales if the customer pays later.'); })
-          .catch(function (er) { if (er.offline) { clearBag('Sale cancelled.'); return; } b.disabled = false; modalErr(er.message); });
+      var bagDone = function (msg) { clearBag(); closeModal(); toast(msg); };
+      if (!PAY.sale) {
+        // The bag was never saved as a sale: keep it in Sales (Cancelled) so it can be paid later.
+        if (!S.online) { bagDone('Sale cancelled.'); return; }
+        api('sale_cancel', { body: buildPayload(PAY.method || 'cash', { cancel_reason: reason }) })
+          .then(function () { bagDone('Sale cancelled. It is in Sales if the customer pays later.'); })
+          .catch(function (er) { if (er.offline) { bagDone('Sale cancelled.'); return; } b.disabled = false; modalErr(er.message); });
         return;
       }
-      api('ziina_cancel', { body: { id: id, reason: reason } }).then(function (r) {
-        if (r.status === 'paid' && !fromQr) { closeModal(); doneScreen(r.sale); toast('The customer had already paid — sale completed.'); if (S.view === 'sales') renderSales(); }
-        else if (r.status === 'paid') { closeModal(); afterSale(r.sale); toast('The customer had already paid — sale completed.'); }
-        else if (r.status === 'void') { closeModal(); toast('This sale was voided.'); }
-        else {
-          if (paSale && paSale.id === id && paSale.fromCart) { S.cart = []; S.discount = null; S.customer = null; S.coupon = null; setCartOpen(false); if (S.view === 'sell') { renderTiles(); renderCart(); } }
-          closeModal(); toast('Sale cancelled. You can pay again from Sales.'); if (S.view === 'sales') renderSales();
-        }
+      api('ziina_cancel', { body: { id: PAY.sale.id, reason: reason } }).then(function (r) {
+        if (r.status === 'paid') { finishPaid(r.sale); toast('The customer had already paid — sale completed.'); return; }
+        if (r.status === 'void') { closeModal(); toast('This sale was voided.'); return; }
+        if (payIsBag()) clearBag();
+        closeModal(); toast('Sale cancelled. You can pay again from Sales.');
+        if (S.view === 'sales') renderSales();
       }).catch(function (er) { b.disabled = false; modalErr(er.message); });
     });
   }
-  // ---- Pay again (from Sales): choose QR, Cash, Card / Tap or Card machine
-  var paSale = null;
-  function payAgainModal(s) {
-    paSale = s; s.fromCart = s.id === cartSaleId; var st = S.settings, qrOk = st.ziina && S.online && s.total >= 200;
-    openModal('Pay again', '<div class="err m-err hidden"></div><div class="amount-big"><div class="lbl">Amount to collect</div><div class="val num">' + aed(s.total) + '</div></div>' +
-      '<div class="pay-choices">' +
-      '<button class="pchoice" data-act="pa-m" data-m="cash"><span class="pi">💵</span><b>Cash</b><small>Notes and coins</small></button>' +
-      '<button class="pchoice" data-act="pa-m" data-m="tap"><span class="pi">💳</span><b>Card / Tap</b><small>On the Ziina phone</small></button>' +
-      '<button class="pchoice" data-act="pa-m" data-m="ziina"' + (qrOk ? '' : ' disabled') + '><span class="pi">📱</span><b>QR code</b><small>' + (!st.ziina ? 'Not set up yet' : !S.online ? 'Needs internet' : s.total < 200 ? 'Needs AED 2.00 or more' : 'Customer scans with their phone') + '</small></button>' +
-      '<button class="pchoice" data-act="pa-m" data-m="card"><span class="pi">🏧</span><b>Card machine</b><small>Separate terminal</small></button>' +
-      '</div><div class="modal-foot"><button class="btn danger block" data-act="z-cancel" data-id="' + s.id + '">Cancel sale</button></div>');
-  }
-  function payAgainMethod(m) {
-    var s = paSale; if (!s) return;
-    if (m === 'ziina') { ziinaRetry(s.id); return; }
-    var amount = '<div class="amount-big"><div class="lbl">Amount to collect</div><div class="val num">' + aed(s.total) + '</div></div>', body;
-    if (m === 'cash') {
-      body = '<label class="field"><span>Customer gave (leave empty if exact)</span><input class="input" id="pa-cash" type="number" inputmode="decimal" step="0.01" min="0" placeholder="' + money(s.total) + '"></label>' +
-        '<div class="change-box big" id="pa-change"><span>Give change</span><span class="num">AED 0.00</span></div>';
+  function openCancel(el) {
+    if (el.getAttribute('data-id')) {
+      // From a receipt in Sales: Back returns to that receipt.
+      var rec = currentReceipt; payFromSale(rec);
+      cancelForm(function () { showReceipt(rec, false); });
+    } else if ($('.qr-box') && lastQr) {
+      var q = lastQr; cancelForm(function () { showZiinaQr(q.d, q.cust); });
+    } else if ($('.modal-back [data-act=confirm-pay]')) {
+      var m = PAY.method; cancelForm(function () { payScreen(m); });
     } else {
-      body = (m === 'tap' ? '<ol class="steps big"><li><span>On the store phone open <b>Ziina</b> → <b>Tap to Pay</b>.</span></li>' +
-        '<li><span>Type <b class="num">' + money(s.total) + '</b> <button class="btn sm" type="button" data-act="copy-amount" data-v="' + (s.total / 100).toFixed(2) + '">Copy</button></span></li>' +
-        '<li><span>Customer taps card or phone. Wait for <b>Approved</b>.</span></li></ol>' : '<p class="muted">Charge <b class="num">' + money(s.total) + '</b> on the card terminal and wait for <b>approved</b>.</p>') +
-        (m === 'tap' ? '<details class="ref"><summary>Add reference (optional)</summary><input class="input" id="pa-ref" maxlength="64" placeholder="Last 4 digits or Ziina ID"></details>' : '<label class="field"><span>Approval code (optional)</span><input class="input" id="pa-ref" maxlength="64"></label>');
+      cancelForm(payChooser);
     }
-    openModal({ cash: 'Cash', tap: 'Card / Tap', card: 'Card machine' }[m], '<div class="err m-err hidden"></div>' + switchRow(m, 'again', s.total) + amount + body +
-      '<div class="modal-foot"><button class="btn ghost" data-act="pa-open" data-id="' + s.id + '">Back</button><button class="btn gold big" data-act="pa-confirm" data-m="' + m + '">' + (m === 'cash' ? '✓ Done — cash received' : m === 'tap' ? '✓ Approved' : 'Payment received') + '</button></div>' +
-      '<div class="modal-foot"><button class="btn danger block" data-act="z-cancel" data-id="' + s.id + '">Cancel sale</button></div>', { sticky: true });
-    var ci = $('#pa-cash');
-    if (ci) ci.addEventListener('input', function () {
-      var given = ci.value === '' ? s.total : toFils(ci.value), ch = given - s.total, box = $('#pa-change');
-      box.classList.toggle('short', ch < 0);
-      box.innerHTML = ch < 0 ? '<span>Still to pay</span><span class="num">' + aed(-ch) + '</span>' : '<span>Give change</span><span class="num">' + aed(ch) + '</span>';
-    });
-  }
-  function payAgainConfirm(m, btn) {
-    var s = paSale, body = { id: s.id, method: m };
-    if (m === 'cash') { var v = $('#pa-cash').value; if (v !== '' && toFils(v) < s.total) { modalErr('Cash received is less than the total.'); return; } body.cash_given = v; }
-    else body.payment_ref = ($('#pa-ref') || {}).value || '';
-    btn.disabled = true;
-    api('sale_pay', { body: body }).then(function (d) {
-      closeModal(); if (S.view === 'sales') renderSales();
-      if (d.already) toast('This sale was already paid.');
-      if (s.fromCart) afterSale(d.sale); else { refreshProducts(); doneScreen(d.sale); }
-    }).catch(function (er) { btn.disabled = false; modalErr(er.offline ? 'Needs internet.' : er.message); });
-  }
-  /** "Pay by" row on every payment screen, to switch method without going back. ctx 'new' = the bag, 'again' = a saved sale. */
-  function switchRow(cur, ctx, total) {
-    var st = S.settings, qrOk = st.ziina && S.online && total >= 200;
-    var opts = [['cash', '💵', 'Cash'], ['tap', '💳', 'Card / Tap'], ['ziina', '📱', 'QR'], ['card', '🏧', 'Machine']];
-    return '<div class="pay-switch"><span class="small muted">Pay by</span><div class="seg">' + opts.map(function (o) {
-      var off = o[0] === 'ziina' && !qrOk && cur !== 'ziina';
-      return '<button type="button" data-act="sw-m" data-m="' + o[0] + '" data-ctx="' + ctx + '" class="' + (o[0] === cur ? 'active' : '') + '"' + (off ? ' disabled' : '') + '><span>' + o[1] + '</span> ' + o[2] + '</button>';
-    }).join('') + '</div></div>';
-  }
-  function switchMethod(m, ctx) {
-    if (ctx === 'new') { stopPoll(); payModal(m); return; }
-    if (!paSale) return;
-    if (m === 'ziina') { if (paSale.method === 'ziina' && $('.qr-box')) return; stopPoll(); ziinaRetry(paSale.id); return; }
-    stopPoll(); payAgainMethod(m);
-  }
-  var cartSaleId = 0; // the Ziina sale made from the current bag (paying it, or cancelling it, empties the bag)
-  function showZiinaQr(d, cust, fromCart) {
-      if (fromCart) cartSaleId = d.sale.id;
-      lastQr = { d: d, cust: cust };
-      paSale = d.sale; paSale.fromCart = d.sale.id === cartSaleId;
-      if (d.sale.status === 'paid') { closeModal(); afterSale(d.sale); return; }
-      var qr = qrcode(0, 'M'); qr.addData(d.pay_url); qr.make();
-      var wa = cust && cust.phone ? 'https://wa.me/' + cust.phone.replace(/\D/g, '') + '?text=' + encodeURIComponent('FOMAXO payment of ' + aed(d.sale.total) + ': ' + d.pay_url) : null;
-      setModalBody(switchRow('ziina', 'again', d.sale.total) +
-        (S.settings.ziina_mode !== 'live' ? '<div class="note" style="margin-bottom:12px;text-align:center">' + (S.settings.ziina_mode === 'demo' ? 'PRACTICE MODE — no real money' : 'ZIINA TEST MODE — no real money') + '</div>' : '') +
-        '<div class="amount-big"><div class="lbl">Customer pays</div><div class="val num">' + aed(d.sale.total) + '</div></div>' +
-        '<div class="qr-box">' + qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true }) + '</div>' +
-        '<p class="small muted qr-hint" style="text-align:center;margin:0 0 6px">Customer scans with their phone camera and pays by card, Apple Pay or Google Pay.</p>' +
-        '<div class="status-line" id="z-status"><span class="spinner"></span> Waiting for payment…</div>' +
-        '<div class="err m-err hidden"></div>' +
-        '<div class="modal-foot qr-links"><button class="btn" type="button" data-act="copy-link" data-v="' + esc(d.pay_url) + '">Copy link</button>' +
-        (wa ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(wa) + '">WhatsApp</a>' : '') +
-        '<a class="btn" target="_blank" rel="noopener" href="' + esc(d.pay_url) + '">Open</a></div>' +
-        '<div class="modal-foot"><button class="btn danger block" data-act="z-cancel" data-id="' + d.sale.id + '">Cancel payment</button></div>');
-      var busy = false;
-      ziinaPoll = setInterval(function () {
-        if (busy) return; busy = true;
-        api('ziina_check', { query: '&id=' + d.sale.id }).then(function (r) {
-          busy = false;
-          if (r.status === 'paid') { stopPoll(); closeModal(); afterSale(r.sale); }
-          else if (r.status === 'failed' || r.status === 'cancelled') {
-            stopPoll();
-            setModalBody('<div class="err" style="margin-bottom:12px">The payment was ' + r.status + '. No money was taken.</div>' +
-              '<div class="modal-foot"><button class="btn" data-act="modal-close">Close</button><button class="btn gold" data-act="z-retry" data-id="' + d.sale.id + '">Pay again</button></div>');
-          }
-        }, function () { busy = false; var s = $('#z-status'); if (s) s.innerHTML = '<span class="spinner"></span> Checking… (connection slow)'; });
-      }, 3000);
   }
 
   // ---------------------------------------------------------------- RECEIPT
@@ -1091,7 +1073,7 @@
       (!fresh && paid && isManager() && !s.queued ? '<button class="btn danger" data-act="r-void">Void sale</button>' : '') +
       (!fresh && isManager() && !s.queued && s.id ? '<button class="btn danger" data-act="r-delete" data-id="' + s.id + '">Delete order</button>' : '') +
       (!paid && !s.queued && (s.status === 'pending' || s.status === 'cancelled' || s.status === 'failed') ? '<button class="btn gold big wide" data-act="pa-open" data-id="' + s.id + '">Pay again</button>' : '') +
-      (!paid && !s.queued && (s.status === 'pending' || s.status === 'cancelled' || s.status === 'failed') ? '<button class="btn danger wide" data-act="z-cancel" data-id="' + s.id + '">' + (s.status === 'cancelled' ? 'Cancel again (change reason)' : 'Cancel sale') + '</button>' : '') +
+      (!paid && !s.queued && (s.status === 'pending' || s.status === 'cancelled' || s.status === 'failed') ? '<button class="btn danger wide" data-act="pay-cancel" data-id="' + s.id + '">' + (s.status === 'cancelled' ? 'Cancel again (change reason)' : 'Cancel sale') + '</button>' : '') +
       (fresh ? '<button class="btn gold big wide" data-act="modal-close">New sale</button>' : '') +
       '</div>', { wide: true });
     var fr = $('#rframe');
@@ -1726,7 +1708,7 @@
     closeModal();
     api('logout', { body: {} }).catch(function () { /* fine offline */ });
     S.token = null; LS.del('fx_token');
-    S.cart = []; S.discount = null; S.customer = null;
+    clearBag();
     renderLogin();
   }
 
@@ -1822,7 +1804,6 @@
       case 'modal-close': closeModal(); break;
       // sell
       case 'cat': S.category = el.getAttribute('data-cat'); renderChips(); renderTiles(); break;
-      case 'add': addToCart(id); break;
       case 'pick': pickGroup(el.getAttribute('data-g')); break;
       case 'sv':
         S.sellView = el.getAttribute('data-v'); LS.set('fx_sell_view', S.sellView);
@@ -1836,8 +1817,7 @@
       case 'pay-open':
         if (!S.cart.length) break;
         if (S.coupon && !cartTotals().couponOk) { toast('Coupon ' + S.coupon.code + ' needs a bag of at least AED ' + money(Math.round(S.coupon.min * 100)) + '. Add more or remove the coupon.', true); break; }
-        payChooser(); break;
-      case 'more': moreModal(); break;
+        payFromBag(); payChooser(); break;
       case 'more2': couponDiscountModal(); break;
       case 'r-show': showReceipt(currentReceipt, false); break;
       case 'qty': changeQty(id, parseInt(el.getAttribute('data-d'), 10)); break;
@@ -1847,7 +1827,7 @@
         break;
       case 'cart-clear-yes': {
         var snapAll = snapshotBag();
-        S.cart = []; S.discount = null; S.customer = null; S.coupon = null; closeModal(); renderTiles(); renderCart();
+        clearBag(true); closeModal();
         flashAdded('everything', function () { restoreBag(snapAll); }, true);
         break;
       }
@@ -1874,7 +1854,6 @@
       case 'cart-close': setCartOpen(false); break;
       case 'customer': customerModal(); break;
       case 'discount': discountModal(); break;
-      case 'c-find': findCustomer(); break;
       case 'c-save': {
         var ph = fullPhone(), nat = phoneNational(), em = $('#c-email').value.trim().toLowerCase(), nm = titleCase($('#c-name').value);
         if (!ph && !em && !nm) { S.customer = null; closeModal(); renderCart(); break; }
@@ -1904,35 +1883,20 @@
         S.discount = { type: type, value: val }; closeModal(); renderCart(); break;
       }
       case 'd-remove': S.discount = null; closeModal(); renderCart(); break;
-      case 'pay': if (S.cart.length) payModal(el.getAttribute('data-m')); break;
-      case 'copy-link': {
-        var lnk = el.getAttribute('data-v');
-        (navigator.clipboard ? navigator.clipboard.writeText(lnk) : Promise.reject()).then(function () { toast('Payment link copied — paste it to the customer.'); }, function () { window.prompt('Copy this payment link:', lnk); });
-        break;
-      }
-      case 'copy-amount': {
-        var amt = el.getAttribute('data-v');
-        (navigator.clipboard ? navigator.clipboard.writeText(amt) : Promise.reject()).then(function () { toast('Amount ' + amt + ' copied — paste it in Ziina.'); }, function () { toast('Amount: ' + amt); });
-        break;
-      }
+      case 'pay': if (PAY) payScreen(el.getAttribute('data-m')); break;
+      case 'sw-m': if (PAY && !el.classList.contains('active')) payScreen(el.getAttribute('data-m')); break;
+      case 'pay-back': payChooser(); break;
+      case 'pay-cancel': if (PAY || el.getAttribute('data-id')) openCancel(el); break;
+      case 'cancel-back': if (cancelBack) cancelBack(); break;
+      case 'pa-open': api('sale_get', { query: '&id=' + id }).then(function (d) { payFromSale(d.sale); payChooser(); }).catch(function (er) { toast(er.message, true); }); break;
+      case 'copy-link': copyText(el.getAttribute('data-v'), 'Payment link copied — paste it to the customer.'); break;
+      case 'copy-amount': copyText(el.getAttribute('data-v'), 'Amount ' + el.getAttribute('data-v') + ' copied — paste it in Ziina.'); break;
       case 'cash-quick':
         $('#cash-in').value = el.getAttribute('data-v');
         $$('.note-btn').forEach(function (b) { b.classList.toggle('active', b === el); });
         updateChange(); break;
       case 'confirm-pay': confirmPay(el.getAttribute('data-m'), el); break;
       case 'reset-open': resetModal(); break;
-      case 'z-retry': stopPoll(); ziinaRetry(id); break;
-      case 'z-cancel': cancelReasonForm(id, !!$('.qr-box')); break;
-      case 'pay-cancel': cancelReasonForm(0, false, el.getAttribute('data-m')); break;
-      case 'pay-back': payModal(el.getAttribute('data-m')); break;
-      case 'pa-open': api('sale_get', { query: '&id=' + id }).then(function (d) { payAgainModal(d.sale); }).catch(function (er) { toast(er.message, true); }); break;
-      case 'pa-m': payAgainMethod(el.getAttribute('data-m')); break;
-      case 'sw-m': if (!el.classList.contains('active')) switchMethod(el.getAttribute('data-m'), el.getAttribute('data-ctx')); break;
-      case 'pa-confirm': payAgainConfirm(el.getAttribute('data-m'), el); break;
-      case 'z-back':
-        if (el.getAttribute('data-qr') === '1' && lastQr && lastQr.d.sale.id === id) { stopPoll(); showZiinaQr(lastQr.d, lastQr.cust); }
-        else { api('sale_get', { query: '&id=' + id }).then(function (d) { showReceipt(d.sale, false); }).catch(function () { closeModal(); }); }
-        break;
       // receipt
       case 'r-print': $('#print-area').innerHTML = paperHtml(currentReceipt); window.print(); break;
       case 'r-pdf': { var rf = $('#rframe'); try { rf.contentWindow.focus(); rf.contentWindow.print(); } catch (e) { window.open(currentReceipt.receipt_url, '_blank', 'noopener'); } break; }
@@ -1941,11 +1905,7 @@
         window.open('https://wa.me/' + digits + '?text=' + encodeURIComponent(receiptText(s)), '_blank', 'noopener');
         break;
       }
-      case 'r-copy': {
-        var url = currentReceipt.receipt_url;
-        (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { toast('Receipt link copied.'); }, function () { prompt('Copy this link:', url); });
-        break;
-      }
+      case 'r-copy': copyText(currentReceipt.receipt_url, 'Receipt link copied.'); break;
       case 'r-email': location.href = 'mailto:' + encodeURIComponent(currentReceipt.customer_email || '') + '?subject=' + encodeURIComponent(S.settings.store_name + ' receipt ' + currentReceipt.receipt_no) + '&body=' + encodeURIComponent(receiptText(currentReceipt)); break;
       case 'r-void': voidModal(currentReceipt); break;
       case 'r-delete': {
@@ -2039,7 +1999,7 @@
     if (e.key === 'Enter' && e.target.id === 'c-phone') { e.preventDefault(); findCustomer(); }
     if (e.key === 'Enter' && e.target.id === 'cash-in') { e.preventDefault(); var b = $('[data-act=confirm-pay]'); if (b) b.click(); }
   });
-  window.addEventListener('online', function () { setOnline(true); refreshProducts(); });
+  window.addEventListener('online', function () { setOnline(true); });
   window.addEventListener('offline', function () { setOnline(false); });
 
   // ---------------------------------------------------------------- start
@@ -2060,12 +2020,14 @@
     });
   }
   setInterval(function () {
-    if (!S.token) return;
+    if (!S.token || document.hidden) return;
     if (S.view === 'sell' || S.view === 'stock') refreshProducts();
     syncQueue();
   }, 30000);
 
   applyTheme();
+  setTimeout(function () { loadQr().catch(function () {}); }, 1500);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && S.token && (S.view === 'sell' || S.view === 'stock')) refreshProducts(); });
   if (S.token && S.user && S.settings) {
     renderApp();
     refreshMe().then(function () { if (S.token) { updateNet(); } });
