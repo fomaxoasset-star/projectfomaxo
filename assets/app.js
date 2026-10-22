@@ -1467,7 +1467,10 @@
         '<h3 class="set-h">VAT</h3>' +
         '<label class="field"><span>TRN (VAT registration number, 15 digits)</span><input class="input" name="store_trn" inputmode="numeric" value="' + esc(d.store_trn) + '" placeholder="Leave empty while not registered"></label>' +
         '<p class="small muted" style="margin:-4px 0 6px">Empty: no VAT on sales or receipts. With a TRN: VAT ' + 5 + '% (included) shows and receipts become Tax invoices.</p>' +
-        '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>');
+        '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold" type="submit">Save</button></div></form>' +
+        '<h3 class="set-h danger-h">Start fresh</h3>' +
+        '<p class="small muted" style="margin:0 0 10px">Deletes every store sale and restarts order numbers at 10000. A backup is saved on the server first. fomaxo.com website orders are not touched.</p>' +
+        '<button class="btn danger block" type="button" data-act="reset-open">Delete all sales and start again…</button>');
       $('#set-form').addEventListener('submit', function (e) {
         e.preventDefault();
         var f = e.target, b = $('[type=submit]', f); b.disabled = true;
@@ -1482,6 +1485,29 @@
         }).catch(function (er) { b.disabled = false; modalErr(er.offline ? 'Needs internet.' : er.message); });
       });
     }).catch(function (e) { setModalBody('<div class="err">' + esc(e.offline ? 'Needs internet.' : e.message) + '</div>'); });
+  }
+  function resetModal() {
+    openModal('Start fresh', '<div class="err m-err hidden"></div><form id="reset-form" autocomplete="off">' +
+      '<div class="err" style="margin-bottom:12px"><b>All store sales will be deleted.</b> Sales, Reports and Performance start empty and order numbers restart at 10000. This cannot be undone in the app (a backup is saved on the server).</div>' +
+      '<div class="field"><span>Stock</span>' +
+        '<label class="check"><input type="radio" name="stock" value="keep" checked> Leave stock as it is</label>' +
+        '<label class="check"><input type="radio" name="stock" value="restore"> Put back what the deleted sales took</label>' +
+        '<label class="check"><input type="radio" name="stock" value="five"> Set every product to 5 in each store</label></div>' +
+      '<div class="field"><span>Also clear</span>' +
+        '<label class="check"><input type="checkbox" name="activity" checked> Activity log</label>' +
+        '<label class="check"><input type="checkbox" name="history" checked> Stock history</label>' +
+        '<label class="check"><input type="checkbox" name="customers" checked> Customers</label></div>' +
+      '<label class="field"><span>Type <b>DELETE</b> to confirm</span><input class="input" name="confirm" autocapitalize="characters" autocorrect="off" spellcheck="false" style="text-transform:uppercase" placeholder="DELETE"></label>' +
+      '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn danger" type="submit" disabled>Delete all sales</button></div></form>');
+    var f = $('#reset-form'), btn = $('[type=submit]', f);
+    f.confirm.addEventListener('input', function () { btn.disabled = f.confirm.value.trim().toUpperCase() !== 'DELETE'; });
+    f.addEventListener('submit', function (e) {
+      e.preventDefault(); btn.disabled = true; btn.textContent = 'Deleting…';
+      api('reset_all', { body: { confirm: f.confirm.value.trim().toUpperCase(), stock: $('input[name=stock]:checked', f).value,
+        activity: f.activity.checked ? 1 : 0, history: f.history.checked ? 1 : 0, customers: f.customers.checked ? 1 : 0 }, timeout: 60000 })
+        .then(function (d) { closeModal(); toast('Done — ' + d.deleted + ' sale' + (d.deleted === 1 ? '' : 's') + ' deleted. Next order is 10000.'); S._users = null; refreshProducts(); renderView(); })
+        .catch(function (er) { btn.disabled = false; btn.textContent = 'Delete all sales'; modalErr(er.offline ? 'Needs internet.' : er.message); });
+    });
   }
   function couponsModal() {
     openModal('Coupons', '<div class="status-line"><span class="spinner"></span> Loading…</div>', { wide: true });
@@ -1741,6 +1767,7 @@
         $$('.note-btn').forEach(function (b) { b.classList.toggle('active', b === el); });
         updateChange(); break;
       case 'confirm-pay': confirmPay(el.getAttribute('data-m'), el); break;
+      case 'reset-open': resetModal(); break;
       case 'z-retry': stopPoll(); ziinaRetry(id); break;
       case 'z-cancel':
         el.disabled = true; stopPoll();

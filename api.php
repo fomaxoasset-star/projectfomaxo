@@ -866,6 +866,85 @@ switch ($action) {
             'web_coupons' => (bool) meta_get('set_web_coupons'),
         ]);
 
+    case 'reset_all':
+        // Start fresh: delete all store orders (fomaxo.com website orders are never touched).
+        // A full backup is written on the server first. Order numbers restart at 10000.
+        need_post();
+        $u = require_manager();
+        if (trim((string) ($b['confirm'] ?? '')) !== 'DELETE') {
+            fail('Type DELETE to confirm.');
+        }
+        $stockMode = in_array($b['stock'] ?? 'keep', ['keep', 'restore', 'five'], true) ? $b['stock'] : 'keep';
+        $clrActivity = !empty($b['activity']);
+        $clrHistory = !empty($b['history']);
+        $clrCustomers = !empty($b['customers']);
+
+        // 1. Backup, saved outside the website folder when possible.
+        $backup = ['made_at' => now(), 'by' => $u['name'], 'options' => compact('stockMode', 'clrActivity', 'clrHistory', 'clrCustomers')];
+        foreach (['sales', 'sale_items', 'stock_moves', 'activity', 'customers', 'product_stock', 'stores'] as $tbl) {
+            $backup[$tbl] = q("SELECT * FROM $tbl")->fetchAll();
+        }
+        $json = json_encode($backup, JSON_UNESCAPED_UNICODE);
+        $name = 'pos-backup-' . date('Y-m-d-His') . '.json.gz';
+        $saved = null;
+        foreach ([dirname(dirname(__DIR__)) . '/fomaxo-pos-backups', __DIR__ . '/data/backups'] as $dir) {
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0700, true);
+            }
+            if (is_dir($dir) && @file_put_contents($dir . '/' . $name, gzencode($json, 6), LOCK_EX) !== false) {
+                @chmod($dir . '/' . $name, 0600);
+                $saved = $dir . '/' . $name;
+                break;
+            }
+        }
+        if (!$saved) {
+            fail('Could not save a backup first, so nothing was deleted.');
+        }
+
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            // 2. Stock
+            if ($stockMode === 'restore') {
+                foreach (q("SELECT i.product_id, s.store_id, SUM(i.qty) AS qty FROM sale_items i JOIN sales s ON s.id = i.sale_id
+                            WHERE s.status = 'paid' GROUP BY i.product_id, s.store_id")->fetchAll() as $r) {
+                    if ((int) $r['qty'] > 0 && $r['store_id']) {
+                        move_stock((int) $r['product_id'], (int) $r['store_id'], $u['id'], (int) $r['qty'], 'count', 'Start fresh: stock from deleted sales put back');
+                    }
+                }
+            } elseif ($stockMode === 'five') {
+                foreach (q('SELECT id FROM stores WHERE active = 1')->fetchAll() as $st) {
+                    foreach (q('SELECT id FROM products WHERE active = 1')->fetchAll() as $p) {
+                        $chg = 5 - store_stock((int) $p['id'], (int) $st['id']);
+                        if ($chg) {
+                            move_stock((int) $p['id'], (int) $st['id'], $u['id'], $chg, 'count', 'Start fresh: set to 5');
+                        }
+                    }
+                }
+            }
+            // 3. Orders
+            $n = (int) q1('SELECT COUNT(*) AS n FROM sales')['n'];
+            q('UPDATE stock_moves SET sale_id = NULL WHERE sale_id IS NOT NULL');
+            q('DELETE FROM sale_items');
+            q('DELETE FROM sales');
+            q('UPDATE stores SET next_no = 10000');
+            if ($clrHistory) {
+                q('DELETE FROM stock_moves');
+            }
+            if ($clrActivity) {
+                q('DELETE FROM activity');
+            }
+            if ($clrCustomers) {
+                q('DELETE FROM customers');
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+        log_activity($u, 'settings', 'Started fresh: deleted ' . $n . ' sale' . ($n === 1 ? '' : 's') . ', backup ' . $name);
+        json_out(['ok' => true, 'deleted' => $n, 'backup' => $name]);
+
     case 'settings_save':
         need_post();
         $u = require_manager();

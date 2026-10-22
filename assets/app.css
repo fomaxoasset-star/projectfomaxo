@@ -716,3 +716,5 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
 .rm-perf .person { width: 100%; cursor: default; }
 .rm-perf .person, .rm-perf .person.off { opacity: 1; filter: none; }
 .rm-perf .dot-status { display: none; }
+
+.set-h.danger-h { color: var(--danger); margin-top: 22px; }
