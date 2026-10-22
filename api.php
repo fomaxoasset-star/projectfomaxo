@@ -234,6 +234,42 @@ switch ($action) {
         log_activity($u, 'product', 'Synced products with the website: ' . $r['added'] . ' added, ' . $r['updated'] . ' prices checked');
         json_out($r);
 
+    case 'stock_bulk':
+        // Enter many stock numbers at once for one store.
+        // mode 'set' = the number on the shelf, mode 'add' = how many arrived.
+        need_post();
+        $u = require_manager();
+        $storeId = resolve_store($u, $b['store_id'] ?? 0);
+        $mode = ($b['mode'] ?? 'set') === 'add' ? 'add' : 'set';
+        $items = is_array($b['items'] ?? null) ? $b['items'] : [];
+        $changed = 0;
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            foreach ($items as $it) {
+                $pid = (int) ($it['product_id'] ?? 0);
+                if ($pid <= 0 || !isset($it['qty']) || $it['qty'] === '' || !q1('SELECT id FROM products WHERE id = ?', [$pid])) {
+                    continue;
+                }
+                $n = (int) $it['qty'];
+                if ($mode === 'set' && $n < 0) {
+                    continue;
+                }
+                $change = $mode === 'set' ? $n - store_stock($pid, $storeId) : $n;
+                if ($change !== 0) {
+                    move_stock($pid, $storeId, $u['id'], $change, $mode === 'set' ? 'count' : 'restock', $b['note'] ?? '');
+                    $changed++;
+                }
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+        $sn = q1('SELECT name FROM stores WHERE id = ?', [$storeId])['name'] ?? '';
+        log_activity($u, 'stock', ($mode === 'set' ? 'Stock count' : 'Received stock') . ' for ' . $changed . ' products at ' . $sn, '', $storeId);
+        json_out(['changed' => $changed]);
+
     case 'stock_transfer':
         // Move stock from one store to another.
         need_post();

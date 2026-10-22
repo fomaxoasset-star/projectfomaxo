@@ -313,3 +313,8 @@ table.tbl { width: 100%; border-collapse: collapse; }
   .theme-btn { display: none; }
   .page-head .seg { width: 100%; }
 }
+
+.bulk-list { max-height: 52vh; overflow: auto; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; }
+.bulk-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.bulk-row:last-child { border-bottom: 0; }
+.bulk-row .input { width: 90px; text-align: center; font-weight: 700; }

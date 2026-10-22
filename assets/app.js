@@ -724,7 +724,7 @@
     $('#view').innerHTML = '<div class="page"><div class="page-head"><h1>Stock</h1>' +
       (multiStore() ? '<span class="muted">' + (S.stockScope === 'all' ? 'All stores' : esc(curStore().name)) + '</span>' : '') + '<div class="spacer"></div>' +
       (showAll ? '<div class="seg"><button data-act="scope" data-s="store" class="' + (S.stockScope === 'store' ? 'active' : '') + '">' + esc(curStore().name) + '</button><button data-act="scope" data-s="all" class="' + (S.stockScope === 'all' ? 'active' : '') + '">All stores</button></div>' : '') +
-      (mgr ? '<button class="btn" data-act="web-sync" title="Products and prices update from fomaxo.com automatically every 10 minutes">Sync with website</button><button class="btn gold" data-act="p-new">+ Add product</button>' : '') + '</div>' +
+      (mgr ? '<button class="btn" data-act="web-sync" title="Products and prices update from fomaxo.com automatically every 10 minutes">Sync with website</button><button class="btn" data-act="bulk-open">Count all</button><button class="btn gold" data-act="p-new">+ Add product</button>' : '') + '</div>' +
       '<div class="kpis" id="stock-kpis"></div>' +
       '<div class="catalog-tools" style="position:static;margin:0 0 12px;padding:0"><label class="search">' + ICON.search +
       '<input class="input" id="sq" type="search" placeholder="Search stock" value="' + esc(S.stockSearch) + '"></label>' +
@@ -787,6 +787,19 @@
     $('#stock-table').innerHTML = '<table class="tbl"><thead>' + head + '</thead><tbody id="stock-body">' + (rows ||
       '<tr><td colspan="' + cols + '"><div class="empty">' + (all.length ? 'Nothing here.' : 'No products yet.' + (mgr ? ' Press <b>+ Add product</b>.' : '')) + '</div></td></tr>') + '</tbody></table>';
     updateNavCounts();
+  }
+  function bulkModal() {
+    var list = S.products.filter(function (p) { return p.active; }).sort(function (a, b) { return (a.name + a.variant).localeCompare(b.name + b.variant); });
+    openModal('Count all' + (multiStore() ? ' · ' + curStore().name : ''), '<div class="err m-err hidden"></div>' +
+      '<div class="seg" style="margin-bottom:10px"><button data-act="bulk-mode" data-m="set" class="active">Set exact count</button><button data-act="bulk-mode" data-m="add">Add delivery</button></div>' +
+      '<p class="small muted" id="bulk-help" style="margin:0 0 10px">Type the number on the shelf for each product. Empty boxes are left as they are.</p>' +
+      '<div class="row" style="margin-bottom:12px"><span class="small">Fill every box with</span><input class="input" id="bulk-all" type="number" inputmode="numeric" min="0" value="5" style="width:80px"><button class="btn sm gold" data-act="bulk-fill">Fill all</button><button class="btn sm ghost" data-act="bulk-clear">Clear</button></div>' +
+      '<div class="bulk-list">' + list.map(function (p) {
+        return '<label class="bulk-row"><span class="grow"><b>' + esc(p.name) + '</b> <span class="muted">' + esc(p.variant) + '</span><br><span class="small muted">Now: <span class="num">' + p.stock + '</span></span></span>' +
+          '<input class="input bulk-in" type="number" inputmode="numeric" min="0" data-id="' + p.id + '" data-now="' + p.stock + '" placeholder="–"></label>';
+      }).join('') + '</div>' +
+      '<div class="modal-foot"><button class="btn" data-act="modal-close">Cancel</button><button class="btn gold" data-act="bulk-save">Save all</button></div>', { wide: true, sticky: true });
+    $('.modal').setAttribute('data-mode', 'set');
   }
   function transferModal(p) {
     var stores = activeStores(), from = curStoreId(), to = (stores.filter(function (x) { return x.id !== from; })[0] || {}).id;
@@ -1163,6 +1176,25 @@
         break;
       case 'scope': S.stockScope = el.getAttribute('data-s'); renderStock(); break;
       case 'p-move': transferModal(productById(id)); break;
+      case 'bulk-open': bulkModal(); break;
+      case 'bulk-mode': {
+        var bm = el.getAttribute('data-m');
+        $('.modal').setAttribute('data-mode', bm);
+        $$('[data-act=bulk-mode]').forEach(function (b) { b.classList.toggle('active', b === el); });
+        $('#bulk-help').textContent = bm === 'set' ? 'Type the number on the shelf for each product. Empty boxes are left as they are.' : 'Type how many of each product arrived. They are added to what is already there.';
+        break;
+      }
+      case 'bulk-fill': $$('.bulk-in').forEach(function (i) { i.value = $('#bulk-all').value; }); break;
+      case 'bulk-clear': $$('.bulk-in').forEach(function (i) { i.value = ''; }); break;
+      case 'bulk-save': {
+        var items = $$('.bulk-in').filter(function (i) { return i.value !== ''; }).map(function (i) { return { product_id: parseInt(i.getAttribute('data-id'), 10), qty: parseInt(i.value, 10) }; });
+        if (!items.length) { modalErr('Type at least one number.'); break; }
+        el.disabled = true;
+        api('stock_bulk', { body: { store_id: curStoreId(), mode: $('.modal').getAttribute('data-mode'), items: items } })
+          .then(function (r) { closeModal(); toast(r.changed + ' product' + (r.changed === 1 ? '' : 's') + ' updated.'); refreshProducts(); })
+          .catch(function (er) { el.disabled = false; modalErr(er.offline ? 'Needs internet to save stock.' : er.message); });
+        break;
+      }
       case 't-save': {
         var tq = parseInt($('#t-qty').value, 10);
         if (!(tq > 0)) { modalErr('Enter how many to move.'); break; }
