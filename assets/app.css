@@ -639,8 +639,14 @@ html, body { overscroll-behavior-y: none; }
 }
 @media (max-width: 340px) { .bnav button { font-size: 10px; } }
 
-/* iPhone home-screen app bug fix (class set by the check in index.html):
-   the app box is fixed to the top of the screen and made taller by the missing strip. */
-html.ios-gap, html.ios-gap body { height: 100%; overflow: hidden; }
-html.ios-gap #root { position: fixed; top: 0; left: 0; right: 0; height: calc(100% + var(--ios-gap, 0px)); }
-html.ios-gap .app { height: 100%; }
+/* iPhone home-screen app (class set by the check in index.html): iOS will not draw the page in a strip
+   at the bottom. Keep the menu fully visible above it, drop the menu's own home-bar padding (the strip
+   already gives that space) and paint the page background in the menu colour so strip + menu look like one bar. */
+@media (max-width: 900px) {
+  html, body { background: var(--bg-2); }
+  .view { background: var(--bg); }
+  html.ios-gap .bnav { padding-bottom: 2px; min-height: var(--nav-h); }
+  html.ios-gap .cart { inset: 0 0 var(--nav-h) 0; }
+  html.ios-gap .cart-fab { bottom: calc(var(--nav-h) + 10px); }
+  html.ios-gap .added-pop { bottom: calc(var(--nav-h) + 76px); }
+}
