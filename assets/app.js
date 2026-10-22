@@ -277,6 +277,7 @@
     if (!opts.sticky) back.addEventListener('mousedown', function (e) { if (e.target === back) closeModal(); });
     document.body.appendChild(back);
     modalState = { el: back, onClose: opts.onClose };
+    placeSwitch(back);
     var first = $('[autofocus]', back); if (first) setTimeout(function () { first.focus(); }, 50);
     return back;
   }
@@ -286,7 +287,12 @@
     m.el.remove();
     if (m.onClose) m.onClose();
   }
-  function setModalBody(html) { if (modalState) $('.modal-body', modalState.el).innerHTML = html; }
+  function setModalBody(html) { if (modalState) { $('.modal-body', modalState.el).innerHTML = html; placeSwitch(modalState.el); } }
+  /** The "Pay by" row sits at the bottom, just above the Done / Approved button. */
+  function placeSwitch(root) {
+    var sw = $('.pay-switch', root), foot = $('.modal-foot', root);
+    if (sw && foot) foot.parentNode.insertBefore(sw, foot);
+  }
   function modalErr(msg) {
     if (!modalState) { toast(msg, true); return; }
     var box = $('.m-err', modalState.el);
