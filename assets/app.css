@@ -690,3 +690,5 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
 .added-pop.removed { background: var(--panel-2); color: var(--text); border: 1px solid var(--line-2); }
 .undo-btn { margin-left: 6px; padding: 6px 12px; border-radius: 999px; border: 0; background: rgba(0,0,0,.25); color: #fff; font-weight: 900; letter-spacing: .08em; font-size: 13px; }
 .added-pop.removed .undo-btn { background: var(--gold); color: #111; }
+
+.input.capw { text-transform: capitalize; }

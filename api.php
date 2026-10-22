@@ -96,7 +96,7 @@ switch ($action) {
         if ($tries >= 10) {
             fail('Too many wrong passwords. Wait 15 minutes and try again.', 429);
         }
-        $u = q1('SELECT * FROM users WHERE username = ?', [strtolower(trim($b['username'] ?? ''))]);
+        $u = q1('SELECT * FROM users WHERE LOWER(username) = ?', [strtolower(trim($b['username'] ?? ''))]);
         if (!$u || !$u['active'] || !password_verify((string) ($b['password'] ?? ''), $u['pass_hash'])) {
             insert('login_attempts', ['ip' => $ip, 'created_at' => now()]);
             fail('Wrong username or password.', 401);
@@ -639,7 +639,8 @@ switch ($action) {
         if ($name === '' || !preg_match('/^[a-z0-9._-]{3,50}$/', $username)) {
             fail('Enter a name and a username (3+ letters/numbers, no spaces).');
         }
-        $clash = q1('SELECT id FROM users WHERE username = ? AND id <> ?', [$username, $id]);
+        $clash = q1('SELECT id FROM users WHERE LOWER(username) = ? AND id <> ?', [$username, $id]);
+        $name = name_case($name);
         if ($clash) {
             fail('That username is already taken.');
         }
@@ -647,7 +648,7 @@ switch ($action) {
             fail('You cannot remove your own manager access.');
         }
         if ($id) {
-            q('UPDATE users SET name = ?, username = ?, role = ?, active = ?, store_id = ? WHERE id = ?', [$name, $username, $role, $active, $userStore, $id]);
+            q('UPDATE users SET name = ?, username = ?, role = ?, active = ?, store_id = ? WHERE id = ?', [$name, username_case($username), $role, $active, $userStore, $id]);
             if ($pass !== '') {
                 if (strlen($pass) < 8) {
                     fail('Password needs at least 8 characters.');
@@ -664,7 +665,7 @@ switch ($action) {
             }
             $id = insert('users', [
                 'name' => $name,
-                'username' => $username,
+                'username' => username_case($username),
                 'pass_hash' => password_hash($pass, PASSWORD_DEFAULT),
                 'role' => $role,
                 'active' => $active,

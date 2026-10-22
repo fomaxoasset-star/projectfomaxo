@@ -344,6 +344,19 @@ function issue_token($userId)
     return $token;
 }
 
+/** Staff names: "sara ahmed" -> "Sara Ahmed". Usernames: "sara" -> "Sara" (login ignores capitals). */
+function name_case($n)
+{
+    $n = trim(preg_replace('/\s+/', ' ', (string) $n));
+    return $n === '' ? '' : mb_convert_case(mb_strtolower($n, 'UTF-8'), MB_CASE_TITLE, 'UTF-8');
+}
+
+function username_case($u)
+{
+    $u = strtolower(trim((string) $u));
+    return $u === '' ? '' : ucfirst($u);
+}
+
 function is_installed()
 {
     try {

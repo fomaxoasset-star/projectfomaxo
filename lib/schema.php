@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 
 function schema_version()
 {
@@ -180,6 +180,13 @@ function migrate()
         if (schema_version() < 7) {
             q("DELETE FROM meta WHERE k = 'schema'");
             q("INSERT INTO meta (k, v) VALUES ('schema', '7')");
+        }
+        if (schema_version() < 8) {
+            foreach (q('SELECT id, name, username FROM users')->fetchAll() as $u8) {
+                q('UPDATE users SET name = ?, username = ? WHERE id = ?', [name_case($u8['name']), username_case($u8['username']), $u8['id']]);
+            }
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '8')");
         }
         if (schema_version() < 5) {
             try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');
