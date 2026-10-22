@@ -3049,7 +3049,7 @@ function welcomeMaybe(){
       if (!nm) { toast('Please enter your name'); return; }
       if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
       try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
-      FXT.lead('details', {name: nm, phone: v}, cart, subtotal(cart) || 0, true); renderCart();
+      FXT.lead('coupon', {name: nm, phone: v}, cart, subtotal(cart) || 0, true); renderCart();
       f.outerHTML = '<p class="pwel-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; const n = $('.pwel .pm-no'); if (n) n.textContent = 'Continue shopping'; };
   };
   welT = setTimeout(go, 300);   // opens as the site opens (AJAY, 2026-10-22)
@@ -3284,7 +3284,7 @@ function bagWaWire(t){
   f.onsubmit = e => { e.preventDefault(); const v = $('#bagWaIn').value.trim();
     if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
     try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
-    FXT.lead('details', {phone: v}, cart, t, true); renderCart(); };
+    FXT.lead('coupon', {phone: v}, cart, t, true); renderCart(); };
 }
 /* limited time offer popup: the same AED 20 WhatsApp coupon as the bag box and welcome box (AJAY, 2026-10-18).
    Real offer: the coupon is sent from admin Left at checkout (AED 20 off, min AED 80, ends in 2 days).
@@ -3300,7 +3300,7 @@ function pmWaWire(){
     if (!nm) { toast('Please enter your name'); return; }
     if (!phoneOk(v)) { toast('Please enter a valid WhatsApp number'); return; }
     try { localStorage.setItem('fomaxo_bagwa', v); } catch(x) {}
-    FXT.lead('details', {name: nm, phone: v}, cart, subtotal(cart) || 0, true); renderCart();
+    FXT.lead('coupon', {name: nm, phone: v}, cart, subtotal(cart) || 0, true); renderCart();
     f.closest('.pm-wa').innerHTML = '<p class="pwel-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; };
 }
 function renderCart(){
