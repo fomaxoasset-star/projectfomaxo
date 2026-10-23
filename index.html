@@ -5377,11 +5377,14 @@ async function rwLoad(p, msg){
     L.innerHTML = all.slice(page * PER, page * PER + PER).map(rwItem).join('');
     const pg = $('#rwPager', box); pg.hidden = pages < 2; $('.rw-pg', pg).textContent = `${page + 1} / ${pages}`;
     $('[data-rwp="-1"]', pg).disabled = page === 0; $('[data-rwp="1"]', pg).disabled = page === pages - 1; };
-  const turn = n => { const L = $('#rwList', box), before = page; page += n; draw(); if (page !== before && L.getBoundingClientRect().top < 80) L.scrollIntoView({behavior: 'smooth', block: 'start'}); };
+  const turn = (n, btn) => { const L = $('#rwList', box), before = page, y0 = btn && btn.getBoundingClientRect().top; page += n; draw();
+    if (page === before) return;
+    if (btn) scrollBy({top: btn.getBoundingClientRect().top - y0, behavior: 'instant'});   // ‹ › stay in the same spot on screen whatever the height of the new page, so they can be clicked again without moving the mouse
+    else if (L.getBoundingClientRect().top < 80) L.scrollIntoView({behavior: 'smooth', block: 'start'}); };
   draw();
   if (!msg && /[?&]reviews=1/.test(location.hash)) box.scrollIntoView({behavior: 'smooth', block: 'start'});
   if ($('#rwSort', box)) $('#rwSort', box).onchange = e => { sort = e.target.value; page = 0; draw(); };
-  $$('[data-rwp]', box).forEach(b => b.onclick = () => turn(+b.dataset.rwp));
+  $$('[data-rwp]', box).forEach(b => b.onclick = () => turn(+b.dataset.rwp, b));
   const L0 = $('#rwList', box); let sx = null, sy = 0;
   if (L0) { L0.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive: true});
     L0.addEventListener('touchend', e => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) turn(dx < 0 ? 1 : -1); }); }
