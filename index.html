@@ -1773,7 +1773,7 @@ html[data-mode="light"] .co-done b{color:var(--gold)}
 .rw-head:hover{color:var(--gold-hi)}
 .rw-head .rw-none{opacity:.45}
 .pd-smell{margin:-4px 0 0;font-size:13px;letter-spacing:.08em;font-weight:500;color:var(--fg,inherit)}.pd-smell span{color:var(--gold);text-transform:uppercase;font-size:11px;letter-spacing:.18em;margin-right:8px}
-.pd-quote{margin:0;padding:12px 16px;border-left:2px solid var(--gold);background:rgba(201,162,92,.07);font-size:14px;line-height:1.55;font-weight:500}.pd-quote[hidden]{display:none}.pd-quote .rw-stars{display:flex;margin-bottom:6px}.pd-quote small{display:block;margin-top:6px;font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}.pd-quote .rw-loc{display:inline;margin-left:.35em;font-size:inherit;letter-spacing:inherit;color:inherit}.pd-quote .rw-flag{margin-left:.35em;font-size:1.25em;vertical-align:-1px}
+.pd-quote{margin:0;padding:12px 16px;border-left:2px solid var(--gold);background:rgba(201,162,92,.07);font-size:14px;line-height:1.55;font-weight:500}.pd-quote[hidden]{display:none}.pd-quote .pq-t{display:block}.pd-quote .rw-stars{display:flex;margin-bottom:6px}.pd-quote small{display:block;margin-top:6px;font-weight:400;font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}.pd-quote .rw-loc{display:inline;margin-left:.35em;font-size:inherit;letter-spacing:inherit;color:inherit}.pd-quote .rw-flag{margin-left:.35em;font-size:1.25em;vertical-align:-1px}
 @media (min-width:961px){.pd-quote{padding:8px 14px;font-size:13px;line-height:1.45}.pd-quote .rw-stars{margin-bottom:2px}.pd-quote small{margin-top:3px;font-size:10px}}
 .pd-try{align-self:flex-start;background:none;border:0;padding:0;font:inherit;font-size:13.5px;letter-spacing:.04em;color:var(--fg,inherit);cursor:pointer;text-align:start}.pd-try b{color:var(--gold);font-weight:600;text-decoration:underline;text-underline-offset:4px}.pd-try[hidden]{display:none}
 .pd-sold{display:flex;align-items:center;gap:8px;margin:0;font-size:12.5px;letter-spacing:.06em;font-weight:700;font-style:normal;color:var(--fg,inherit)}.pd-sold:empty{display:none}.pd-sold svg{width:15px;height:15px;color:var(--gold);flex:none}   /* people bought this week: real orders only */
@@ -5123,7 +5123,7 @@ function quoteFill(d){
   const r = (d && d.reviews || []).filter(x => x.rating === 5 && !x.hidden && String(x.text || '').trim().length >= 15).sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0) || (b.helpful || 0) - (a.helpful || 0) || String(b.date).localeCompare(String(a.date)))[0];
   if (!r) { q.hidden = true; return; }
   const t = String(RW_AR && r.text_ar ? r.text_ar : r.text).trim(), cut = t.length > 160 ? t.slice(0, 157).replace(/\s+\S*$/, '') + '…' : t;
-  q.innerHTML = `${rwStars(5, 'sm')}“${esc(cut)}”<small>${esc(capWords(r.name || ''))}${rwPlace(r)}${r.verified ? ' · <span>Verified Purchaser</span>' : ''}</small>`; q.hidden = false; fitPdp();   // the quote arrives after the page is drawn: shrink the laptop buy side again so it still fits one screen
+  q.innerHTML = `${rwStars(5, 'sm')}<span class="pq-t" dir="auto">“${esc(cut)}”</span><small>${esc(capWords(r.name || ''))}${rwPlace(r)}${r.verified ? ' · <span>Verified Purchaser</span>' : ''}</small>`; q.hidden = false; fitPdp();   // the quote arrives after the page is drawn: shrink the laptop buy side again so it still fits one screen
 }
 const rwHeadHTML = d => d && d.count ? `${rwStars(d.avg)}<span>${(+d.avg).toFixed(1)} · ${d.count} review${d.count > 1 ? 's' : ''}</span>` : `<span class="rw-none">${rwStars(0)}</span><span>No reviews yet</span>`;
 const rwStars = (v, cls = '') => `<span class="rw-stars ${cls}" role="img" aria-label="${v} out of 5 stars"><span class="rw-s-bg" aria-hidden="true">★★★★★</span><span class="rw-s-fg" aria-hidden="true" style="width:${Math.max(0, Math.min(5, v)) * 20}%">★★★★★</span></span>`;
@@ -5173,13 +5173,13 @@ const rwHelpLabel = n => `${RW_HEART}<span>Helpful${n ? ` · ${n}` : ''}</span>`
 
 /* Arabic site: an English review (and FOMAXO's reply) shows in Arabic, with a small button to see what the customer wrote */
 const RW_AR = document.documentElement.lang === 'ar';
-const rwText = r => RW_AR && r.text_ar ? `<p class="rw-text" lang="ar" data-rwo="${esc(r.id)}">“${esc(r.text_ar)}”<button type="button" class="rw-orig" data-rwo-b>ترجمة آلية · عرض الأصل</button></p>` : `<p class="rw-text">“${esc(r.text)}”</p>`;
-const rwReply = r => r.reply ? `<div class="rw-reply"><b>Reply from FOMAXO</b><p${RW_AR && r.reply_ar ? ' lang="ar"' : ''}>${esc(RW_AR && r.reply_ar ? r.reply_ar : r.reply)}</p></div>` : '';
+const rwText = r => RW_AR && r.text_ar ? `<p class="rw-text" lang="ar" data-rwo="${esc(r.id)}">“${esc(r.text_ar)}”<button type="button" class="rw-orig" data-rwo-b>ترجمة آلية · عرض الأصل</button></p>` : `<p class="rw-text" dir="auto">“${esc(r.text)}”</p>`;
+const rwReply = r => r.reply ? `<div class="rw-reply"><b>Reply from FOMAXO</b><p dir="auto"${RW_AR && r.reply_ar ? ' lang="ar"' : ''}>${esc(RW_AR && r.reply_ar ? r.reply_ar : r.reply)}</p></div>` : '';
 function rwOrig(btn, list){   // switch one review between the Arabic and the original English
   const p = btn.closest('[data-rwo]'), r = p && list.find(x => x.id === p.dataset.rwo); if (!r) return;
   const en = p.lang === 'ar', rp = p.closest('.rw-item, .rw-bx-body'), q = rp && $('.rw-reply p', rp);
-  p.lang = en ? 'en' : 'ar'; p.dir = en ? 'ltr' : 'rtl'; p.firstChild.nodeValue = `“${en ? r.text : r.text_ar}”`; btn.textContent = en ? 'عرض الترجمة' : 'ترجمة آلية · عرض الأصل';
-  if (q && r.reply_ar) { q.textContent = en ? r.reply : r.reply_ar; q.dir = en ? 'ltr' : 'rtl'; }
+  p.lang = en ? 'en' : 'ar'; p.dir = en ? 'auto' : 'rtl'; p.firstChild.nodeValue = `“${en ? r.text : r.text_ar}”`; btn.textContent = en ? 'عرض الترجمة' : 'ترجمة آلية · عرض الأصل';
+  if (q && r.reply_ar) { q.textContent = en ? r.reply : r.reply_ar; q.dir = en ? 'auto' : 'rtl'; }
 }
 function rwItem(r){
   const voted = (rwGet('fomaxo_helpful') || []).includes(r.id);
