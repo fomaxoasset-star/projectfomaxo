@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 13;
+const SCHEMA_VERSION = 14;
 
 function schema_version()
 {
@@ -247,6 +247,20 @@ function migrate()
             }
             q("DELETE FROM meta WHERE k = 'schema'");
             q("INSERT INTO meta (k, v) VALUES ('schema', '13')");
+        }
+        if (schema_version() < 14) {
+            // Photos moved to photos/ (plain files with a version in the name); the old copies are not used any more.
+            foreach ((array) glob(dirname(__DIR__) . '/data/thumbs/*.webp') as $old) {
+                @unlink($old);
+            }
+            // indexes for searches that grow with the number of sales
+            try_exec('CREATE INDEX idx_sales_customer ON sales (customer_id)');
+            try_exec('CREATE INDEX idx_sales_user ON sales (user_id)');
+            try_exec('CREATE INDEX idx_customers_email ON customers (email)');
+            try_exec('CREATE INDEX idx_moves_sale ON stock_moves (sale_id)');
+            try_exec('CREATE INDEX idx_tokens_user ON tokens (user_id)');
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '14')");
         }
         if (schema_version() < 5) {
             try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');

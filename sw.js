@@ -1,6 +1,6 @@
 /* FOMAXO Store System - offline support. Keeps the app itself on the device so it opens without internet.
    Data requests (api.php) always go to the server; the app handles offline sales itself. */
-var VERSION = 'fomaxo-pos-v71';
+var VERSION = 'fomaxo-pos-v72';
 var PHOTOS = 'fomaxo-pos-photos';  // kept across app updates
 var SHELL = [
   './', 'index.html', 'assets/app.css', 'assets/app.js', 'assets/qrcode.js', 'assets/countries.js',
@@ -26,7 +26,27 @@ self.addEventListener('fetch', function (e) {
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;
   var path = url.pathname;
-  // Product photos: from the phone's saved copy instantly, refreshed in the background.
+  // Product photos (photos/name-version-size.webp): a name never changes its picture, so the phone's copy is used
+  // straight away and kept; when a new version arrives, the old copies of that photo are removed.
+  var pm = /\/photos\/(.+)-(\d+)-(\d+)\.webp$/.exec(path);
+  if (pm) {
+    e.respondWith(caches.open(PHOTOS).then(function (c) {
+      return c.match(req).then(function (hit) {
+        return hit || fetch(req).then(function (res) {
+          if (res.ok) {
+            c.put(req, res.clone());
+            c.keys().then(function (ks) { ks.forEach(function (k) {
+              var o = /\/photos\/(.+)-(\d+)-(\d+)\.webp$/.exec(new URL(k.url).pathname);
+              if (o && o[1] === pm[1] && o[3] === pm[3] && o[2] !== pm[2]) c.delete(k);
+            }); });
+          }
+          return res;
+        });
+      });
+    }));
+    return;
+  }
+  // Older photo address: saved copy instantly, refreshed in the background.
   if (/\/image\.php$/.test(path)) {
     e.respondWith(caches.open(PHOTOS).then(function (c) {
       return c.match(req).then(function (hit) {

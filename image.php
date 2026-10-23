@@ -1,10 +1,12 @@
 <?php
-// Small product photos for the Sell screen. Makes a light copy of the fomaxo.com photo once,
-// keeps it on the server, and lets phones keep it too - so tiles show instantly.
-// image.php?k=gold-main2&w=360
+// Product photos for the app. Each fomaxo.com photo is shrunk ONCE into photos/<name>-<version>-<size>.webp.
+// After that the web server sends that plain file straight away (see .htaccess), and phones keep it for good.
+// <version> is the date of the website photo, so when a photo changes on fomaxo.com it gets a new name and shows at once.
+//   photos/gold-main2-1729500000-360.webp   (normal address; this script only runs the first time)
+//   image.php?k=gold-main2&w=360            (older address, still works)
 require __DIR__ . '/lib/core.php';
 
-$key = (string) ($_GET['k'] ?? '');
+$key = str_replace('__', '/', (string) ($_GET['k'] ?? ''));
 $w = (int) ($_GET['w'] ?? 360);
 $w = in_array($w, [120, 360, 600], true) ? $w : 360;
 if (!preg_match('#^[a-z0-9_-]+(/[a-z0-9_-]+)?$#i', $key)) {
@@ -12,26 +14,26 @@ if (!preg_match('#^[a-z0-9_-]+(/[a-z0-9_-]+)?$#i', $key)) {
     exit;
 }
 
-$cacheDir = __DIR__ . '/data/thumbs';
-$cacheFile = $cacheDir . '/' . str_replace('/', '__', $key) . '-' . $w . '.webp';
-
-function send_image($file, $type = 'image/webp')
+function send_image($file, $immutable)
 {
-    header('Content-Type: ' . $type);
-    header('Cache-Control: public, max-age=604800');
+    header('Content-Type: image/webp');
+    header('Cache-Control: public, ' . ($immutable ? 'max-age=31536000, immutable' : 'max-age=86400'));
     header('Content-Length: ' . filesize($file));
     readfile($file);
     exit;
 }
 
-if (is_file($cacheFile) && filemtime($cacheFile) > time() - 7 * 86400) {
-    send_image($cacheFile);
+$ver = photo_version($key);
+$asked = (string) ($_GET['v'] ?? '');
+$file = photo_file($key, $ver, $w);
+if (is_file($file)) {
+    send_image($file, $asked === $ver);
 }
 
-// The original: read straight from the website folder on the same hosting account, else download it.
+// The original: straight from the website folder on the same hosting account, else download it.
 $data = false;
-$local = dirname(__DIR__, 2) . '/fomaxo.com/public_html/assets/img/' . $key . '.webp';
-if (@is_readable($local)) {
+$local = photo_original($key);
+if ($local) {
     $data = @file_get_contents($local);
 }
 if ($data === false) {
@@ -51,9 +53,9 @@ if ($data === false || $data === '') {
 
 $src = function_exists('imagecreatefromstring') ? @imagecreatefromstring($data) : false;
 if (!$src || !function_exists('imagewebp')) {
-    // No resizing available: pass the original through.
+    // No resizing available on this server: pass the original through.
     header('Content-Type: image/webp');
-    header('Cache-Control: public, max-age=604800');
+    header('Cache-Control: public, max-age=86400');
     echo $data;
     exit;
 }
@@ -62,14 +64,22 @@ $sh = imagesy($src);
 $side = min($sw, $sh);                         // square crop from the centre, like the tiles
 $dst = imagecreatetruecolor($w, $w);
 imagecopyresampled($dst, $src, 0, 0, (int) (($sw - $side) / 2), (int) (($sh - $side) / 2), $w, $w, $side, $side);
-if (!is_dir($cacheDir)) {
-    @mkdir($cacheDir, 0755, true);
+
+$dir = dirname($file);
+if (!is_dir($dir)) {
+    @mkdir($dir, 0755, true);
 }
-$tmp = $cacheFile . '.' . getmypid() . '.tmp';
-if (@imagewebp($dst, $tmp, 78) && @rename($tmp, $cacheFile)) {
-    send_image($cacheFile);
+$tmp = $file . '.' . getmypid() . '.tmp';
+if (@imagewebp($dst, $tmp, 78) && @rename($tmp, $file)) {
+    // older copies of this photo (a previous version) are not needed any more
+    foreach ((array) glob($dir . '/' . photo_slug($key) . '-*-' . $w . '.webp') as $old) {
+        if ($old !== $file) {
+            @unlink($old);
+        }
+    }
+    send_image($file, $asked === $ver);
 }
 @unlink($tmp);
 header('Content-Type: image/webp');
-header('Cache-Control: public, max-age=604800');
+header('Cache-Control: public, max-age=86400');
 imagewebp($dst, null, 78);

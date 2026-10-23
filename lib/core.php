@@ -322,14 +322,16 @@ function current_user()
         return null;
     }
     $row = q1(
-        'SELECT u.id, u.name, u.username, u.role, u.active, u.store_id, t.id AS token_id, t.expires_at
+        'SELECT u.id, u.name, u.username, u.role, u.active, u.store_id, t.id AS token_id, t.expires_at, t.last_used
          FROM tokens t JOIN users u ON u.id = t.user_id WHERE t.token_hash = ?',
         [hash('sha256', $token)]
     );
     if (!$row || !$row['active'] || $row['expires_at'] < now()) {
         return null;
     }
-    q('UPDATE tokens SET last_used = ? WHERE id = ?', [now(), $row['token_id']]);
+    if (!$row['last_used'] || strtotime($row['last_used']) < time() - 60) {
+        q('UPDATE tokens SET last_used = ? WHERE id = ?', [now(), $row['token_id']]); // once a minute is enough for "Active now"
+    }
     $user = ['id' => (int) $row['id'], 'name' => $row['name'], 'username' => $row['username'], 'role' => $row['role'],
         'store_id' => $row['store_id'] === null ? null : (int) $row['store_id']];
     return $user;
@@ -463,4 +465,39 @@ function text_in($v, $max)
 function method_name($m)
 {
     return ['cash' => 'Cash', 'tap' => 'Card / Tap', 'card' => 'Card machine', 'ziina' => 'Ziina QR'][$m] ?? (string) $m;
+}
+
+// ---------------- product photos (see image.php) ----------------
+function photo_slug($key)
+{
+    return str_replace('/', '__', (string) $key);
+}
+
+/** The original photo in the fomaxo.com folder on the same hosting account ('' if not there). */
+function photo_original($key)
+{
+    $f = cfg('website_img_dir', dirname(dirname(__DIR__), 2) . '/fomaxo.com/public_html/assets/img') . '/' . $key . '.webp';
+    return @is_readable($f) ? $f : '';
+}
+
+/** Version of a photo = the date the website photo was saved; a new photo on fomaxo.com gets a new number. */
+function photo_version($key)
+{
+    static $seen = [];
+    if (!isset($seen[$key])) {
+        $f = photo_original($key);
+        $seen[$key] = $f ? (string) @filemtime($f) : '0';
+    }
+    return $seen[$key];
+}
+
+function photo_file($key, $ver, $w)
+{
+    return dirname(__DIR__) . '/photos/' . photo_slug($key) . '-' . $ver . '-' . (int) $w . '.webp';
+}
+
+/** Address the app uses; it adds -360.webp. The web server sends the file directly once it exists. */
+function photo_url($key)
+{
+    return $key === '' ? '' : 'photos/' . photo_slug($key) . '-' . photo_version($key);
 }

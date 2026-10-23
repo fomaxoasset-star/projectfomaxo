@@ -497,7 +497,7 @@
     b.classList.toggle('on', S.sellView !== 'grid' || S.sellSort !== 'az');
     if ($('#sort-lbl')) $('#sort-lbl').textContent = viewLabel();
   }
-  function thumb(url, w) { return url ? url + (url.indexOf('?') >= 0 ? '&' : '?') + 'w=' + w : ''; }
+  function thumb(url, w) { return !url ? '' : url.indexOf('photos/') === 0 ? url + '-' + w + '.webp' : url + (url.indexOf('?') >= 0 ? '&' : '?') + 'w=' + w; }
   function tileImg(g) {
     return g.image ? '<img src="' + esc(thumb(g.image, 360)) + '" alt="" decoding="async" onerror="this.remove()">' : '';
   }

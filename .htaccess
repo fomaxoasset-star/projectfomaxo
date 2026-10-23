@@ -8,6 +8,10 @@ RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# Product photos: a finished photo is a plain file the server sends at once; only a new one goes to image.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^photos/([a-z0-9_-]+?)-([0-9]+)-(120|360|600)\.webp$ image.php?k=$1&v=$2&w=$3 [L,NC]
+
 # Keep settings, code library and data private
 RewriteRule ^(lib|data)(/|$) - [F,L]
 <FilesMatch "^(config\.php|config\.sample\.php|README\.md|.*\.sqlite.*)$">
@@ -30,7 +34,7 @@ RewriteRule ^(lib|data)(/|$) - [F,L]
     # always loaded with ?v=NN, so a new version is a new address
     Header set Cache-Control "public, max-age=31536000, immutable"
 </FilesMatch>
-<FilesMatch "\.(woff2)$">
+<FilesMatch "\.(woff2|webp)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
 </FilesMatch>
 <FilesMatch "\.(png|svg)$">
