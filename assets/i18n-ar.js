@@ -338,6 +338,8 @@
 "Custom engraving": "نقش حسب الطلب",
 "Made for luxury everyday": "صُنع للفخامة اليومية",
 "Ready-to-gift luxury packaging": "تغليف فاخر جاهز للإهداء",
+"· Same-day delivery": "· توصيل في نفس اليوم",
+"· Made for luxury everyday · Ready-to-gift luxury packaging": "· صُنع للفخامة اليومية · تغليف فاخر جاهز للإهداء",
 "Fragrances": "العطور",
 "Personal Care": "العناية الشخصية",
 "PC": "منتجات العناية",
