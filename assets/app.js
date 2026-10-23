@@ -945,7 +945,7 @@
   function stopPoll() { if (ziinaPoll) { clearInterval(ziinaPoll); ziinaPoll = null; } }
   function startZiina() {
     if (PAY.total < 200) { toast('Ziina needs at least AED 2.00. Take cash for this sale.', true); return; }
-    var s = PAY.sale, cust = s ? (s.customer_phone ? { phone: s.customer_phone } : null) : S.customer;
+    var s = PAY.sale, cust = s ? { phone: s.customer_phone || '', email: s.customer_email || '' } : S.customer;
     openModal('Ziina payment', '<div class="status-line"><span class="spinner"></span> Creating payment…</div>', { sticky: true, onClose: stopPoll });
     (s ? api('ziina_retry', { body: { id: s.id }, timeout: 30000 }) : api('ziina_start', { body: buildPayload('ziina', {}), timeout: 30000 })).then(function (d) {
       if (!s) cartSaleId = d.sale.id;
@@ -961,7 +961,9 @@
   function showZiinaQr(d, cust) {
     lastQr = { d: d, cust: cust };
     var qr = qrcode(0, 'M'); qr.addData(d.pay_url); qr.make();
-    var wa = cust && cust.phone ? 'https://wa.me/' + cust.phone.replace(/\D/g, '') + '?text=' + encodeURIComponent('FOMAXO payment of ' + aed(d.sale.total) + ': ' + d.pay_url) : null;
+    var msg = 'FOMAXO payment of ' + aed(d.sale.total) + ': ' + d.pay_url;
+    var wa = cust && cust.phone ? 'https://wa.me/' + cust.phone.replace(/\D/g, '') + '?text=' + encodeURIComponent(msg) : null;
+    var mail = cust && cust.email ? 'mailto:' + encodeURIComponent(cust.email) + '?subject=' + encodeURIComponent('FOMAXO payment link') + '&body=' + encodeURIComponent(msg) : null;
     setModalBody(switchRow('ziina') +
       (S.settings.ziina_mode !== 'live' ? '<div class="note" style="margin-bottom:12px;text-align:center">' + (S.settings.ziina_mode === 'demo' ? 'PRACTICE MODE — no real money' : 'ZIINA TEST MODE — no real money') + '</div>' : '') +
       amountBox('Customer pays', d.sale.total) +
@@ -969,9 +971,9 @@
       '<p class="small muted qr-hint" style="text-align:center;margin:0 0 6px">Customer scans with their phone camera and pays by card, Apple Pay or Google Pay.</p>' +
       '<div class="status-line" id="z-status"><span class="spinner"></span> Waiting for payment…</div>' +
       '<div class="err m-err hidden"></div>' +
-      '<div class="modal-foot qr-links"><button class="btn" type="button" data-act="copy-link" data-v="' + esc(d.pay_url) + '">Copy link</button>' +
-      (wa ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(wa) + '">WhatsApp</a>' : '') +
-      '<a class="btn" target="_blank" rel="noopener" href="' + esc(d.pay_url) + '">Open</a></div>' +
+      // The customer scans the code; send the link only when they are not at the counter.
+      (wa || mail ? '<div class="modal-foot qr-links">' + (wa ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(wa) + '">Send on WhatsApp</a>' : '') +
+        (mail ? '<a class="btn" href="' + esc(mail) + '">Send by email</a>' : '') + '</div>' : '') +
       '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel">Cancel payment</button></div>');
     var busy = false;
     stopPoll();
@@ -1926,7 +1928,6 @@
       case 'pay-cancel': if (PAY || el.getAttribute('data-id')) openCancel(el); break;
       case 'cancel-back': if (cancelBack) cancelBack(); break;
       case 'pa-open': api('sale_get', { query: '&id=' + id }).then(function (d) { payFromSale(d.sale); payChooser(); }).catch(function (er) { toast(er.message, true); }); break;
-      case 'copy-link': copyText(el.getAttribute('data-v'), 'Payment link copied — paste it to the customer.'); break;
       case 'copy-amount': copyText(el.getAttribute('data-v'), 'Amount ' + el.getAttribute('data-v') + ' copied — paste it in Ziina.'); break;
       case 'cash-quick':
         $('#cash-in').value = el.getAttribute('data-v');
