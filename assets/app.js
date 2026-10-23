@@ -287,6 +287,7 @@
     document.body.appendChild(back);
     modalState = { el: back, onClose: opts.onClose };
     placeSwitch(back);
+    if (document.body.scrollTop) document.body.scrollTop = 0; // keep the sheet on the bottom edge
     var first = $('[autofocus]', back); if (first) setTimeout(function () { first.focus(); }, 50);
     return back;
   }
@@ -837,9 +838,9 @@
         '<label class="field"><span>Other amount</span><input class="input" id="cash-in" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Type amount"></label>' +
         '<div class="change-box big" id="change-box"><span>Give change</span><span class="num">AED 0.00</span></div>';
     } else if (m === 'tap') {
-      body = '<ol class="steps big"><li><span>On the store phone open <b>Ziina</b> → <b>Tap to Pay</b>.</span></li>' +
-        '<li><span>Type <b class="num">' + money(t) + '</b> <button class="btn sm" data-act="copy-amount" data-v="' + (t / 100).toFixed(2) + '">Copy</button></span></li>' +
-        '<li><span>Customer taps card or phone. Wait for <b>Approved</b>.</span></li></ol>' +
+      body = '<ol class="steps big"><li><span>Open <b>Ziina</b> → <b>Tap to Pay</b> <a class="btn sm" href="' + esc(ziinaAppLink()) + '">Open</a></span></li>' +
+        '<li><span>Type or copy <b class="num">' + money(t) + '</b> <button class="btn sm" data-act="copy-amount" data-v="' + (t / 100).toFixed(2) + '">Copy</button></span></li>' +
+        '<li><span>After payment, tap <b>Approved</b> for the receipt.</span></li></ol>' +
         '<details class="ref"><summary>Add reference (optional)</summary><input class="input" id="pay-ref" maxlength="64" placeholder="Last 4 digits or Ziina ID"></details>';
     } else {
       body = '<p class="muted">Charge this amount on the card terminal. When it prints <b>approved</b>, press Payment received.</p>' +
@@ -847,9 +848,18 @@
     }
     var done = { cash: '✓ Done — cash received', tap: '✓ Approved', card: 'Payment received' }[m];
     openModal(PAY_TITLE[m], '<div class="err m-err hidden"></div>' + switchRow(m) + amountBox('Amount to collect', t) + body +
-      '<div class="modal-foot">' + (m === 'cash' ? '' : '<button class="btn ghost" data-act="pay-back">Back</button>') + '<button class="btn gold big" data-act="confirm-pay" data-m="' + m + '">' + done + '</button></div>' +
+      '<div class="modal-foot">' + (m === 'card' ? '<button class="btn ghost" data-act="pay-back">Back</button>' : '') +
+        '<button class="btn gold big" data-act="confirm-pay" data-m="' + m + '">' + done + '</button>' +
+        (m === 'tap' ? '<a class="btn big" href="' + esc(ziinaAppLink()) + '">Open Ziina</a>' : '') + '</div>' +
       '<div class="modal-foot"><button class="btn danger block" data-act="pay-cancel">Cancel sale</button></div>', { sticky: true });
     if (m === 'cash') $('#cash-in').addEventListener('input', function () { $$('.note-btn').forEach(function (b) { b.classList.remove('active'); }); updateChange(); });
+  }
+  /** Opens the Ziina app: straight into the app on Android; on iPhone via its App Store page (tap Open there). */
+  function ziinaAppLink() {
+    var ua = navigator.userAgent || '';
+    if (/Android/i.test(ua)) return 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.ziina.app;S.browser_fallback_url=' + encodeURIComponent('https://play.google.com/store/apps/details?id=com.ziina.app') + ';end';
+    if (/iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'https://apps.apple.com/app/id1507246381';
+    return 'https://ziina.com/business';
   }
   function updateChange() {
     var v = $('#cash-in').value, ch = (v === '' ? PAY.total : toFils(v)) - PAY.total, box = $('#change-box');

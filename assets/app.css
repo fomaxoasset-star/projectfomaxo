@@ -603,6 +603,10 @@ html, body { overscroll-behavior-y: none; }
   .added-pop { position: absolute; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 76px); }
   /* pop-ups cover the whole screen down to the very bottom */
   .modal-back { position: absolute; }
+  /* The page itself never scrolls (each screen scrolls inside the app). Without this the hidden bag sheet
+     below the screen made the page twice as tall, and a tap or the keyboard could slide pop-ups up. */
+  html, body { overflow: hidden; }
+  @supports (overflow: clip) { html, body { overflow: clip; } }
 }
 @media (max-width: 340px) { .bnav button { font-size: 10px; } }
 
@@ -729,3 +733,5 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
 }
 
 .c-full { min-height: 16px; margin-top: 4px; }
+
+a.btn { text-decoration: none; }
