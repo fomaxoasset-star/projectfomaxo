@@ -5759,7 +5759,7 @@ function vidSecHTML(){
   const l = rowVids(); if (!l.length) return '';
   return `<div class="wrap">${(vidPage() ? secHead('Watch &amp; shop', 'Review <em class="metal">videos</em>', '', false) : secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
     <div class="vrow${vidPage() ? ' pp' : ''}" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = v.sn && !vidPage() ? null : P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
-      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `${v.pv ? `<video autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : v.v)}"></video>` : ''}${vidPoster(v) ? `<img class="vt-pic" src="${vidPoster(v)}" alt="" loading="lazy">` : ''}`}
+      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `${v.pv ? `<video autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) + '?r=3' : v.v)}"></video>` : ''}${vidPoster(v) ? `<img class="vt-pic" src="${vidPoster(v)}" alt="" loading="lazy">` : ''}`}
       ${v.n && vidPage() ? `<span class="vt-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}<span class="vt-play" aria-hidden="true">${VI.play}</span>
       ${p ? `<span class="vt-p${v.w ? ' has-w' : ''}">${v.w ? `<i class="vt-w">${esc(v.w)}</i>` : ''}<img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now${ps.length ? ` · + ${ps.length} more` : ''}</i></span></span>`}</button>`; }).join('')}</div></div>`;
 }
@@ -5772,20 +5772,21 @@ function bindVids(){
   const onScreen = t => { const r = t.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0; };
   let kicks = 0; const kick = setInterval(() => {   // for the first 12 seconds: any video on screen that is still paused is started again (some Safari versions drop the first start)
     if (++kicks > 6 || !document.contains(tiles[0])) return clearInterval(kick);
-    tiles.forEach(t => { const v = $('video', t); if (v && v.paused && v.getAttribute('src') && !held && onScreen(t)) { v.muted = true; v.play().then(() => { v.dataset.kick = 'ok'; t.classList.add('playing'); }).catch(e => { v.dataset.kick = e.name; }); } });
+    tiles.forEach(t => { const v = $('video', t); if (v && v.paused && v.getAttribute('src') && !held && !slow && onScreen(t)) { v.muted = true; v.play().then(() => { v.dataset.kick = 'ok'; t.classList.add('playing'); }).catch(e => { v.dataset.kick = e.name; }); } });
   }, 2000);   // the videos start by themselves as the page opens (autoplay, muted, looping)
   const row = $('#vrow'), nav = $('.vr-nav');   // laptop: arrows when the videos are wider than the page
   if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => row.scrollBy({left: +b.dataset.vscroll * (row.clientWidth + 14), behavior: 'smooth'})); }
-  if (navigator.connection && navigator.connection.saveData) return;   // data saver: posters only until tapped
+  const nc = navigator.connection; if (nc && (nc.saveData || /2g|3g/.test(nc.effectiveType || ''))) return;   // data saver or a slow connection: covers only until tapped
   /* light on the page: a tile loads its small preview only when it is on screen and the page has finished loading, at most 2 at a time;
      a tile without a preview keeps its photo (the full video loads only in the player); a browser that holds back autoplay downloads nothing until the first tap or click */
-  let held = false, ready = document.readyState === 'complete'; const wait = new Set();
+  let held = false, slow = false, ready = document.readyState === 'complete'; const wait = new Set();
   const busy = () => tiles.filter(t => { const v = $('video', t); return v && v.getAttribute('src') && v.readyState < 3 && !v.error; }).length;
   const pump = () => wait.forEach(t => { if (busy() < 2) { wait.delete(t); if (onScreen(t)) run(t, true); } });
   const stop = v => { v.pause(); v.removeAttribute('src'); v.load(); };
   const run = (t, on) => { const v = $('video', t); if (!v) return;
-    if (on) { if (held || !ready) return;
-      if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(t); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true})); }
+    if (on) { if (held || slow || !ready) return;
+      if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(t); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true}));
+        const tm = setTimeout(() => { if (v.readyState < 3 && v.getAttribute('src')) { slow = true; wait.clear(); tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 3 && w.getAttribute('src')) stop(w); }); } }, 5000); v.addEventListener('canplay', () => clearTimeout(tm), {once: true}); }   // slow Wi-Fi (no speed info, e.g. Safari): a preview not ready within 5 seconds = covers only on this visit
       v.play().then(() => t.classList.add('playing')).catch(e => { v.dataset.pe = e.name; if (e.name === 'NotAllowedError') { held = true; tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 2 && w.getAttribute('src')) stop(w); }); wait.clear(); } });
     } else { wait.delete(t); if (!v.paused) { v.pause(); v.dataset.pz = (+v.dataset.pz || 0) + 1; t.classList.remove('playing'); } if (v.readyState < 2 && v.getAttribute('src')) { stop(v); pump(); } } };
   if (!ready) addEventListener('load', () => { ready = true; tiles.forEach(t => onScreen(t) && run(t, true)); }, {once: true});
@@ -5810,7 +5811,7 @@ function vStrip(){
   sec && sec.classList.toggle('vs-dup', !!l.length);   // phone: the cards replace the Review videos row lower down (same videos, AJAY 2026-10-21)
   el.hidden = !l.length; if (!l.length) { el.innerHTML = ''; return; }
   el.innerHTML = `<div class="vs-h"><span>Review videos</span><button type="button" class="vs-all" aria-label="Play review videos">${l.length} ›</button></div>
-    <div class="vs-row">${l.map((v, i) => `<button type="button" class="vs-c" data-vi="${i}" aria-label="${v.n ? esc(v.n) + ' ' : ''}video">${vidPoster(v) ? `<img src="${vidPoster(v)}" alt="" loading="lazy" decoding="async" fetchpriority="low">` : ''}${v.pv && !v.e ? `<video muted playsinline loop preload="none" data-src="${esc(v.pv.startsWith('vid/') ? 'assets/' + v.pv : v.pv)}"></video>` : ''}<span class="vs-p" aria-hidden="true">${VI.play}</span>${v.n ? `<bdi class="vs-n">${esc(v.n)}</bdi>` : ''}</button>`).join('')}</div>`;
+    <div class="vs-row">${l.map((v, i) => `<button type="button" class="vs-c" data-vi="${i}" aria-label="${v.n ? esc(v.n) + ' ' : ''}video">${vidPoster(v) ? `<img src="${vidPoster(v)}" alt="" loading="lazy" decoding="async" fetchpriority="low">` : ''}${v.pv && !v.e ? `<video muted playsinline loop preload="none" data-src="${esc(v.pv.startsWith('vid/') ? 'assets/' + v.pv + '?r=3' : v.pv)}"></video>` : ''}<span class="vs-p" aria-hidden="true">${VI.play}</span>${v.n ? `<bdi class="vs-n">${esc(v.n)}</bdi>` : ''}</button>`).join('')}</div>`;
   $$('.vs-c', el).forEach(b => b.onclick = () => openReel(+b.dataset.vi));
   $('.vs-all', el).onclick = () => openReel(0);
   vsBind();
@@ -5873,7 +5874,7 @@ function openReel(i){
   try { history.pushState({reel: 1}, ''); } catch(e) {}
   const track = $('.rl-track', el), slides = $$('.rl-s', el);
   const lent = [];   // the row's videos are already loaded: the player borrows them, so the tapped video plays at once (given back on close); a row tile playing its small preview (silent, first seconds) is not borrowed, the player loads the full video
-  $$('#vrow .vt').forEach(t => { const rv = $('video', t), sv = slides[+t.dataset.vi] && $('video', slides[+t.dataset.vi]); if (!rv || !rv.src || rv.readyState < 2 || !sv || rv.dataset.src !== sv.dataset.src) return; const ph = document.createComment(''); rv.before(ph); sv.replaceWith(rv); lent.push([ph, rv]); });
+  $$('#vrow .vt').forEach(t => { const rv = $('video', t), sv = slides[+t.dataset.vi] && $('video', slides[+t.dataset.vi]); if (!rv || !rv.src || rv.readyState < 2 || !sv || rv.dataset.src.split('?')[0] !== sv.dataset.src) return; const ph = document.createComment(''); rv.before(ph); sv.replaceWith(rv); lent.push([ph, rv]); });
   let cur = -1;
   const go = k => { k = Math.max(0, Math.min(slides.length - 1, k)); track.scrollTo({left: k * track.clientWidth, behavior: 'smooth'}); };
   const act = k => { if (k === cur) return; cur = k;
