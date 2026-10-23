@@ -300,8 +300,10 @@
   function setModalBody(html) { if (modalState) { $('.modal-body', modalState.el).innerHTML = html; placeSwitch(modalState.el); } }
   /** The "Pay by" row sits at the bottom, just above the Done / Approved button. */
   function placeSwitch(root) {
-    var sw = $('.pay-switch', root), foot = $('.modal-foot', root);
+    var sw = $('.pay-switch', root), foot = $('.modal-foot', root), m = $('.modal', root);
     if (sw && foot) foot.parentNode.insertBefore(sw, foot);
+    // payment screens have their words centred
+    if (m) m.classList.toggle('pay-sheet', !!(sw || $('.pay-choices', root)));
   }
   function modalErr(msg) {
     if (!modalState) { toast(msg, true); return; }
@@ -840,7 +842,7 @@
     } else if (m === 'tap') {
       body = '<ol class="steps big"><li><span>Open <b>Ziina</b> → <b>Tap to Pay</b> <a class="btn sm" href="' + esc(ziinaAppLink()) + '">Open</a></span></li>' +
         '<li><span>Type or copy <b class="num">' + money(t) + '</b> <button class="btn sm" data-act="copy-amount" data-v="' + (t / 100).toFixed(2) + '">Copy</button></span></li>' +
-        '<li><span>After payment, tap <b>Approved</b> for the receipt.</span></li></ol>' +
+        '<li><span>Paid? Tap <b>Approved</b> for receipt</span></li></ol>' +
         '<details class="ref"><summary>Add reference (optional)</summary><input class="input" id="pay-ref" maxlength="64" placeholder="Last 4 digits or Ziina ID"></details>';
     } else {
       body = '<p class="muted">Charge this amount on the card terminal. When it prints <b>approved</b>, press Payment received.</p>' +

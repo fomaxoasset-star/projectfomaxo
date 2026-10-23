@@ -735,3 +735,15 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
 .c-full { min-height: 16px; margin-top: 4px; }
 
 a.btn { text-decoration: none; }
+
+/* Payment screens: words centred */
+.pay-sheet .modal-head h2 { flex: 1; text-align: center; padding-left: 44px; }
+.pay-sheet .cash-q, .pay-sheet .field > span, .pay-sheet p, .pay-sheet .pay-switch > span, .pay-sheet .status-line, .pay-sheet details.ref summary { text-align: center; justify-content: center; }
+.pay-sheet .pay-switch { align-items: center; }
+.pay-sheet .pay-switch .seg { width: 100%; }
+.pay-sheet .input { text-align: center; }
+.pay-sheet .steps li { justify-content: center; align-items: center; text-align: center; }
+.pay-sheet .change-box, .pay-sheet .change-box.big { justify-content: center; gap: 12px; }
+.pay-sheet .pchoice { text-align: center; }
+.pay-sheet .link-btn.other-card { display: block; margin-left: auto; margin-right: auto; text-align: center; }
+.pay-sheet .change-box.big { align-items: center; text-align: center; }
