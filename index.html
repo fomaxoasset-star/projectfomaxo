@@ -5783,11 +5783,14 @@ function bindVids(){
   const busy = () => tiles.filter(t => { const v = $('video', t); return v && v.getAttribute('src') && v.readyState < 3 && !v.error; }).length;
   const pump = () => wait.forEach(t => { if (busy() < 2) { wait.delete(t); if (onScreen(t)) run(t, true); } });
   const stop = v => { v.pause(); v.removeAttribute('src'); v.load(); };
+  const hold = () => { held = true; tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 2 && w.getAttribute('src')) stop(w); }); wait.clear(); };
   const run = (t, on) => { const v = $('video', t); if (!v) return;
     if (on) { if (held || slow || !ready) return;
       if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(t); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true}));
         const tm = setTimeout(() => { if (!held && !v.paused && v.readyState < 3 && v.getAttribute('src')) { slow = true; wait.clear(); tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 3 && w.getAttribute('src')) stop(w); }); } }, 5000); v.addEventListener('canplay', () => clearTimeout(tm), {once: true}); }   // slow Wi-Fi (no speed info, e.g. Safari): a playing preview not ready within 5 seconds = covers only on this visit (one held back by Safari's autoplay rule is not counted as slow)
-      v.play().then(() => t.classList.add('playing')).catch(e => { v.dataset.pe = e.name; if (e.name === 'NotAllowedError') { held = true; tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 2 && w.getAttribute('src')) stop(w); }); wait.clear(); } });
+      v.play().then(() => t.classList.add('playing')).catch(e => { v.dataset.pe = e.name; if (e.name !== 'NotAllowedError') return;
+        if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => t.classList.add('playing')).catch(() => hold()), {once: true}); return; }   // Safari can refuse to start a preview that is not loaded yet: it tries again once loaded, and only then holds back
+        hold(); });
     } else { wait.delete(t); if (!v.paused) { v.pause(); v.dataset.pz = (+v.dataset.pz || 0) + 1; t.classList.remove('playing'); } if (v.readyState < 2 && v.getAttribute('src')) { stop(v); pump(); } } };
   if (!ready) addEventListener('load', () => { ready = true; tiles.forEach(t => onScreen(t) && run(t, true)); }, {once: true});
   const again = () => { held = false; tiles.forEach(t => { const r = t.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0) run(t, true); }); };   // a phone that held back autoplay (iPhone Low Power Mode) plays them at the first touch
@@ -5829,7 +5832,7 @@ function vsBind(){
     if (!on) { wait.delete(c); v.pause(); return; }
     if (held || $('#reel')) return;
     if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(c); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true})); }
-    v.play().then(() => c.classList.add('playing')).catch(e => { if (e.name === 'NotAllowedError') { held = true; wait.clear(); } }); };
+    v.play().then(() => c.classList.add('playing')).catch(e => { if (e.name !== 'NotAllowedError') return; if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => c.classList.add('playing')).catch(() => { held = true; wait.clear(); }), {once: true}); return; } held = true; wait.clear(); }); };   // Safari: one more try once loaded
   const go = () => { if (!document.contains(cs[0])) return; vsIO = new IntersectionObserver(es => es.forEach(e => run(e.target, e.isIntersecting))); cs.forEach(c => vsIO.observe(c)); };
   const later = () => setTimeout(go, 3000);   // 3 seconds after the page has loaded: the photo, prices and Add to bag get the connection first
   document.readyState === 'complete' ? later() : addEventListener('load', later, {once: true});
