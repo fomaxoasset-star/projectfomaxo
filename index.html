@@ -1121,7 +1121,8 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
 .perks-strip svg{width:24px;height:24px;flex:none}
 .perks-strip span{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--muted);line-height:1.4}
 .perks-strip b{font-size:11.5px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ivory)}
-@media(max-width:900px){.perks-strip .wrap,.perks-strip.n5 .wrap{grid-template-columns:repeat(2,minmax(0,1fr))}.perks-strip.n5 .wrap>div:last-child{grid-column:1/-1;border-left:0;justify-content:center}.perks-strip .wrap>div:nth-child(3){border-left:0}.perks-strip .wrap>div:nth-child(n+3){border-top:1px solid var(--line)}}
+@media(max-width:900px){.perks-strip .wrap,.perks-strip.n5 .wrap{grid-template-columns:repeat(2,minmax(0,1fr))}.perks-strip .wrap>div:nth-child(3){border-left:0}.perks-strip .wrap>div:nth-child(n+3){border-top:1px solid var(--line)}}
+@media(max-width:900px){.perks-strip.n5 .wrap>div{border-left:0;border-right:0;border-top:1px solid var(--line)}.perks-strip.n5 .wrap>div.p-sd{order:-1;grid-column:1/-1;justify-content:center;border-top:0}.perks-strip.n5 .wrap>div:nth-child(3),.perks-strip.n5 .wrap>div:nth-child(5){border-inline-start:1px solid var(--line)}.perks-strip .wrap>div.p-sd span{white-space:nowrap}}   /* phone: Same-Day Delivery on its own row, one straight line (AJAY 2026-10-23) */
 @media(max-width:420px){.perks-strip .wrap>div{padding:16px 10px;gap:10px}.perks-strip b{letter-spacing:.1em;font-size:10.5px}.perks-strip span{font-size:12px}}
 /* shop section */
 .home-filters{padding:0 0 34px;margin-top:-20px}
@@ -3625,7 +3626,7 @@ const heroPrice = s => s.own ? `<span class="price"><small>from</small> ${heroFr
 const perkSD = () => { if (SAMEDAY || prodLoaded) return SAMEDAY ? Object.keys(SAMEDAY.areas || {}).join(', ') : ''; try { return localStorage.getItem('fomaxo_sd') || ''; } catch(e) { return ''; } };
 const perksHTML = () => { const sd = perkSD(); return `<div class="perks-strip${sd ? ' n5' : ''}"><div class="wrap">
     <div>${ICON.truck}<span><b>Free delivery</b>Anywhere in UAE</span></div>
-    ${sd ? `<div>${AS_ICON.fast}<span><b>Same-Day Delivery</b>${sd}</span></div>` : ''}
+    ${sd ? `<div class="p-sd">${AS_ICON.fast}<span><b>Same-Day Delivery</b>${sd}</span></div>` : ''}
     <div>${ICON.gift}<span><b>Ready to gift</b>Luxury packaging</span></div>
     <div>${ICON.spark}<span><b>Made for</b>Everyday luxury</span></div>
     <div>${ICON.drop}<span><b>Try first</b><span class="perk-line">${shown('discovery') ? `Discovery Set from ${moneyHTML(Math.min(...Object.values(P.discovery.prices)))}` : S.mini.products.length ? `Mini 10ml from ${moneyHTML(Math.min(...S.mini.products.map(id => P[id].prices[10]).filter(hasPrice)))}` : 'Ask us for a sample'}</span></span></div>
