@@ -114,16 +114,6 @@ $tag = substr(md5($json), 0, 16); header('ETag: "' . $tag . '"');
 if (strpos((string)($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''), $tag) !== false) { http_response_code(304); exit; }
 echo $json;
 
-/* after a GitHub update the web server's own copies of the shop videos, their previews and covers are gone (media-lib.php), so the first
-   visitor to play each one waited on media.php. When the list is worked out afresh (at most once a minute, and straight after an update),
-   they are put back now, after this visitor already has the answer: a video then starts from the web server itself on its first play */
-if ($built && $videos) register_shutdown_function(function () use ($videos) {
-  while (ob_get_level()) ob_end_flush();
-  if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
-  ignore_user_abort(true);
-  foreach ($videos as $v) foreach (['v', 'pv', 'c'] as $k) if (isset($v[$k])) fx_media_link($v[$k]);
-});
-
 /* Automatic Instagram reels (admin → Products → Videos): at most once an hour, after the visitor already has the answer above
    (checked only when the answer was worked out afresh, so a cached answer never opens the database) */
 if ($built && $pdo && is_file(dirname(__DIR__) . '/fomaxo-instagram.php') && time() - (int)fomaxo_setting($pdo, 'ig_sync_at') >= 3600) {
