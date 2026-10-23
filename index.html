@@ -4997,6 +4997,7 @@ function bindCheckout(q){
       rememberOrder(ls); setCoupon(null);
       if (buy) clearBuy(); else { cart = []; save(); }
       if (r.review) rwAddLink(r.review);
+      gcrOptIn(r.order, d.email, r.sd);
       location.hash = `#/order-confirmed?no=${encodeURIComponent(r.order)}&total=${encodeURIComponent(r.total)}${r.review ? '&rv=' + r.review : ''}${r.sd ? '&sd=1' : ''}`;
       return;
     }
@@ -5016,6 +5017,22 @@ function orderConfirmed(q){
   <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:30px"><a class="btn" href="#/fragrances">Continue shopping</a><a class="btn line" href="#/contact">Contact us</a></div></div></section>` + afterBuyRecs(lastOrder());
 }
 
+/* Google Customer Reviews (Merchant Center 5514145673): after a real order with an email, Google's small "rate your order" box asks the buyer
+   to opt in; Google then emails them once the order should have arrived, and those ratings become the store rating on Google.
+   Not on admin's own browser (test orders), and nothing at all without an email. */
+function gcrOptIn(order, email, sd){
+  email = String(email || '').trim();
+  if (!order || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return;
+  try { if (localStorage.getItem('fomaxo_notrack') === '1') return; } catch(e) {}
+  const day = new Date(Date.now() + (sd ? 0 : 3) * 864e5), pad = n => String(n).padStart(2, '0');
+  window.renderOptIn = () => window.gapi.load('surveyoptin', () => window.gapi.surveyoptin.render({
+    merchant_id: 5514145673, order_id: String(order), email, delivery_country: 'AE',
+    estimated_delivery_date: `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`, opt_in_style: 'BOTTOM_LEFT_DIALOG'}));
+  window.___gcfg = {lang: document.documentElement.lang === 'ar' ? 'ar' : 'en'};
+  if (window.gapi && window.gapi.load) return window.renderOptIn();
+  const g = document.createElement('script'); g.async = true; g.defer = true; g.src = 'https://apis.google.com/js/platform.js?onload=renderOptIn'; document.head.appendChild(g);
+}
+
 /* after paying on Ziina's page: ask ziina.php for the real status before showing the order as paid */
 function ziinaThanks(){
   document.title = 'Order confirmation — FOMAXO';
@@ -5033,6 +5050,7 @@ async function verifyZiina(id, buy, tries = 0){
     rememberOrder(buy ? buyLines : cart);
     if (buy) clearBuy(); else { cart = []; save(); }
     if (d.review) rwAddLink(d.review);
+    gcrOptIn(d.order, d.email, d.sd);
     document.title = 'Order confirmed — FOMAXO';
     show('Order confirmed', `Thank <em class="metal">you</em>${d.name ? ', ' + esc(d.name.split(' ')[0]) : ''}`, `Your payment was successful.${d.email ? ' A confirmation is on its way to ' + esc(d.email) + '.' : ''} We will call or WhatsApp you to arrange delivery.`,
       `<div class="co-done">${d.order ? `<div><small>Order number</small><b>${esc(d.order)}</b></div>` : ''}${d.total > 0 ? `<div><small>Amount paid</small><b class="price">${moneyHTML(d.total, true)}</b></div>` : ''}<p class="co-small">${d.sd ? `Same-day delivery: your order arrives today${sdBy() ? ' by ' + sdBy() : ''}.` : 'Delivery is free anywhere in the UAE.'}</p></div>${rwInvite(d.review)}
