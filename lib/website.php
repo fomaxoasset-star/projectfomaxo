@@ -119,3 +119,90 @@ function web_year_spend($phone)
     }
     return $cache[$p9];
 }
+
+// ---------------- fomaxo.in (India shop, same Hostinger account), read-only ----------------
+
+/** The fomaxo.in shop database: MySQL when its fomaxo-private/db-config.php exists, otherwise its shop.sqlite. */
+function web_in_db()
+{
+    static $pdo = false;
+    if ($pdo !== false) {
+        return $pdo;
+    }
+    $pdo = null;
+    $priv = cfg('website_in_private', dirname(dirname(__DIR__), 2) . '/fomaxo.in/fomaxo-private');
+    try {
+        $c = [];
+        foreach (['config.php', 'db-config.php'] as $n) {
+            if (@is_readable("$priv/$n")) {
+                $x = require "$priv/$n";
+                if (is_array($x)) {
+                    $c = $x + $c;
+                }
+            }
+        }
+        if (!empty($c['db_name']) && !empty($c['db_user'])) {
+            $pdo = new PDO('mysql:host=' . ($c['db_host'] ?? '127.0.0.1') . ';port=' . (int) ($c['db_port'] ?? 3306) . ';dbname=' . $c['db_name'] . ';charset=utf8mb4',
+                (string) $c['db_user'], (string) ($c['db_pass'] ?? ''), [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_TIMEOUT => 4]);
+        } elseif (@is_readable("$priv/shop.sqlite")) {
+            $pdo = new PDO('sqlite:' . $priv . '/shop.sqlite', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_TIMEOUT => 4]);
+        }
+    } catch (Throwable $e) {
+        error_log('FOMAXO POS: fomaxo.in database not reachable: ' . $e->getMessage());
+        $pdo = null;
+    }
+    return $pdo;
+}
+
+/** A customer's fomaxo.in orders, found by mobile (or email). Amounts there are in rupees, so they are shown but never added to AED tiers. */
+function web_in_customer($phone, $email = '')
+{
+    $pdo = web_in_db();
+    if (!$pdo) {
+        return null;
+    }
+    $p9 = phone9($phone);
+    $email = strtolower(trim((string) $email));
+    $where = [];
+    $params = [];
+    if (strlen($p9) === 9) {
+        $where[] = "REPLACE(REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', ''), '(', '') LIKE ?";
+        $params[] = '%' . $p9;
+    }
+    if ($email !== '') {
+        $where[] = 'LOWER(email) = ?';
+        $params[] = $email;
+    }
+    if (!$where) {
+        return null;
+    }
+    try {
+        $st = $pdo->prepare("SELECT name, phone, email, total, created FROM orders
+            WHERE test = 0 AND status NOT IN ('awaiting', 'cancelled', 'refunded') AND (" . implode(' OR ', $where) . ')
+            ORDER BY created DESC LIMIT 200');
+        $st->execute($params);
+        $rows = $st->fetchAll();
+    } catch (Throwable $e) {
+        error_log('FOMAXO POS: fomaxo.in customer lookup failed: ' . $e->getMessage());
+        return null;
+    }
+    if (!$rows) {
+        return null;
+    }
+    $spent = 0;
+    $em = '';
+    foreach ($rows as $r) {
+        $spent += (int) $r['total']; // paise
+        if ($em === '' && trim((string) $r['email']) !== '') {
+            $em = strtolower(trim($r['email']));
+        }
+    }
+    return [
+        'name' => trim((string) $rows[0]['name']),
+        'phone' => trim((string) $rows[0]['phone']),
+        'email' => $em,
+        'orders' => count($rows),
+        'spent_inr' => $spent,
+        'last_order' => substr((string) $rows[0]['created'], 0, 10),
+    ];
+}

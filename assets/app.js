@@ -660,7 +660,7 @@
       '<div id="c-info"></div>' +
       '<label class="field"><span>Name</span><input class="input cap" id="c-name" value="' + esc(c.name || '') + '" placeholder="CUSTOMER NAME" autocomplete="off" autocapitalize="characters"></label>' +
       '<label class="field"><span>Email (optional)</span><input class="input" id="c-email" type="email" inputmode="email" autocapitalize="none" placeholder="name@example.com" value="' + esc(c.email || '') + '" autocomplete="off"></label>' +
-      '<p class="small muted">Mobile or email is enough. Saved store customers and fomaxo.com customers are found automatically.</p>' +
+      '<p class="small muted">Mobile or email is enough. Store, fomaxo.com and fomaxo.in customers are found automatically.</p>' +
       '<div class="modal-foot">' + (S.customer ? '<button class="btn danger" data-act="c-remove">Remove</button>' : '') +
       '<button class="btn gold big" data-act="c-save">Save customer</button></div>');
     lastLookup = '';
@@ -748,15 +748,16 @@
     $('#c-info').innerHTML = '<div class="status-line" style="justify-content:flex-start"><span class="spinner"></span> Looking up customer…</div>';
     api('customer', { query: '&phone=' + encodeURIComponent(phone) + '&email=' + encodeURIComponent(email) }).then(function (d) {
       if (!$('#c-info')) return;
-      var w = d.web, c = d.customer;
-      if (c || w) {
-        var name = (c && c.name) || (w && w.name) || '';
+      var w = d.web, c = d.customer, wi = d.web_in;
+      if (c || w || wi) {
+        var name = (c && c.name) || (w && w.name) || (wi && wi.name) || '';
         fillIfEmpty('#c-name', titleCase(name));
-        fillIfEmpty('#c-email', (c && c.email) || (w && w.email) || '');
+        fillIfEmpty('#c-email', (c && c.email) || (w && w.email) || (wi && wi.email) || '');
         if (!phoneNational() && ((c && c.phone) || (w && w.phone))) setPhone((c && c.phone) || (w && w.phone));
         var where = [];
         if (c) where.push('🏬 ' + (c.visits || 0) + ' store purchase' + (c.visits === 1 ? '' : 's'));
         if (w) where.push('🌐 ' + w.orders + ' fomaxo.com order' + (w.orders === 1 ? '' : 's') + ' (last ' + esc(w.last_order) + ')');
+        if (wi) where.push('🇮🇳 ' + wi.orders + ' fomaxo.in order' + (wi.orders === 1 ? '' : 's') + ' · ₹' + Math.round(wi.spent_inr / 100).toLocaleString('en-IN') + ' (last ' + esc(wi.last_order) + ')');
         $('#c-info').innerHTML = '<div class="found"><b>✓ Found: ' + esc(titleCase(name) || 'customer') + '</b><div class="small">' + where.join('<br>') + '</div></div>' +
           tierInfo(c || { tier: d.tier, year_spend: d.year_spend, next_tier: d.next_tier });
         S._found = c || { tier: d.tier };
@@ -1625,10 +1626,13 @@
         }).join('') + '</select></label>' +
         '<p class="small muted" style="margin:-4px 0 14px">Start with <b>Test</b>: make a Ziina QR sale and pay it with a Ziina test card. When it confirms by itself, switch to <b>Live</b>.</p>' +
         (d.ziina_key_saved ? '<label class="check"><input type="checkbox" name="remove_ziina_token"> Remove the saved key</label>' : '') +
-        '<h3 class="set-h">fomaxo.com customers</h3>' +
+        '<h3 class="set-h">Website customers</h3>' +
         (d.website && d.website.ok
-          ? '<p class="small" style="margin:0 0 14px;color:var(--ok)">✓ Connected — ' + d.website.orders.toLocaleString() + ' website orders. Typing a mobile in Customer finds website buyers and fills in their name and email.</p>'
-          : '<p class="small" style="margin:0 0 14px;color:var(--out)">✗ Not connected (' + esc((d.website && d.website.why) || 'unknown') + '). Only store customers are found. Tell Claude to fix it.</p>') +
+          ? '<p class="small" style="margin:0 0 14px;color:var(--ok)">✓ fomaxo.com connected — ' + d.website.orders.toLocaleString() + ' website orders. Typing a mobile in Customer finds website buyers and fills in their name and email.</p>'
+          : '<p class="small" style="margin:0 0 14px;color:var(--out)">✗ fomaxo.com not connected (' + esc((d.website && d.website.why) || 'unknown') + ').</p>') +
+        (d.website_in && d.website_in.ok
+          ? '<p class="small" style="margin:-8px 0 14px;color:var(--ok)">✓ fomaxo.in connected — ' + d.website_in.orders.toLocaleString() + ' India orders (shown in ₹, not added to member tiers).</p>'
+          : '<p class="small" style="margin:-8px 0 14px;color:var(--out)">✗ fomaxo.in not connected (' + esc((d.website_in && d.website_in.why) || 'unknown') + ').</p>') +
         '<h3 class="set-h">Coupons</h3>' +
         '<label class="check"><input type="checkbox" name="web_coupons" ' + (d.web_coupons ? 'checked' : '') + '> Also accept fomaxo.com coupon codes in the store</label>' +
         '<p class="small muted" style="margin:-6px 0 14px">Your store codes (menu → Coupons) always work. Tick this to also accept the website\u2019s codes.</p>' +

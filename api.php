@@ -345,14 +345,15 @@ switch ($action) {
         }
         require_once __DIR__ . '/lib/website.php';
         $web = cfg('website_customers', true) ? web_customer($phone, $email) : null;
+        $webIn = cfg('website_customers', true) ? web_in_customer($phone, $email) : null;
         if (!$c) {
             $ws = $web ? (int) $web['year_spend'] : 0;
-            json_out(['customer' => null, 'phone' => $phone, 'web' => $web,
+            json_out(['customer' => null, 'phone' => $phone, 'web' => $web, 'web_in' => $webIn,
                 'tier' => $web ? tier_for($ws) : null, 'next_tier' => $web ? next_tier($ws) : null, 'year_spend' => $ws]);
         }
         $spend = customer_year_spend($c['id']);
         $storeVisits = (int) q1("SELECT COUNT(*) AS n FROM sales WHERE customer_id = ? AND status = 'paid'", [$c['id']])['n'];
-        json_out(['web' => $web, 'customer' => [
+        json_out(['web' => $web, 'web_in' => $webIn, 'customer' => [
             'visits' => $storeVisits,
             'id' => (int) $c['id'],
             'phone' => strpos($c['phone'], 'e:') === 0 ? '' : $c['phone'],
@@ -951,8 +952,19 @@ switch ($action) {
         } else {
             $web['why'] = 'website database not reachable';
         }
+        $webIn = ['ok' => false, 'orders' => 0, 'why' => ''];
+        if ($ipdo = web_in_db()) {
+            try {
+                $webIn = ['ok' => true, 'orders' => (int) $ipdo->query("SELECT COUNT(*) FROM orders WHERE test = 0 AND status NOT IN ('awaiting', 'cancelled', 'refunded')")->fetchColumn(), 'why' => ''];
+            } catch (Throwable $e) {
+                $webIn['why'] = 'orders table not readable';
+            }
+        } else {
+            $webIn['why'] = 'fomaxo.in database not reachable';
+        }
         json_out([
             'website' => $web,
+            'website_in' => $webIn,
             'ziina_mode' => ziina_mode(),
             'ziina_key_saved' => $tok !== '',
             'ziina_key_end' => $tok !== '' ? substr($tok, -4) : '',
