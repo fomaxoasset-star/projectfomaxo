@@ -5764,11 +5764,17 @@ function vidSecHTML(){
       ${p ? `<span class="vt-p${v.w ? ' has-w' : ''}">${v.w ? `<i class="vt-w">${esc(v.w)}</i>` : ''}<img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now${ps.length ? ` · + ${ps.length} more` : ''}</i></span></span>`}</button>`; }).join('')}</div></div>`;
 }
 let vrIO = null;
+/* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
+function vidLit(v, done){ if (v._lit) return; v._lit = 1; const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d', {willReadFrequently: true}); let n = 0;
+  const chk = () => { if (!v.getAttribute('src')) { v._lit = 0; return; } let ok = false; try { g.drawImage(v, 0, 0, 8, 8); const d = g.getImageData(0, 0, 8, 8).data; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 36) { ok = true; break; } } catch (e) { ok = true; }
+    if (ok) { v._lit = 0; return done(); } if (++n < 150) next(); else v._lit = 0; };   // about 5 seconds of black frames: the photo stays
+  const next = () => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(chk) : setTimeout(chk, 200);
+  next(); }
 function bindVids(){
   vrIO && vrIO.disconnect(); vrIO = null;
   const tiles = $$('#vrow .vt'); if (!tiles.length) return;
   tiles.forEach(t => t.onclick = () => openReel(+t.dataset.vi));
-  tiles.forEach(t => { const v = $('video', t); if (v) { v.addEventListener('playing', () => t.classList.add('playing')); v.addEventListener('timeupdate', () => { if (v.currentTime > .05 && v.readyState >= 2) t.classList.add('shown'); }); v.addEventListener('emptied', () => t.classList.remove('shown')); v.addEventListener('pause', () => { v.dataset.pev = (+v.dataset.pev || 0) + 1; }); } });
+  tiles.forEach(t => { const v = $('video', t); if (v) { v.addEventListener('playing', () => t.classList.add('playing')); v.addEventListener('playing', () => vidLit(v, () => t.classList.add('shown'))); v.addEventListener('emptied', () => t.classList.remove('shown')); v.addEventListener('pause', () => { v.dataset.pev = (+v.dataset.pev || 0) + 1; }); } });
   const onScreen = t => { const r = t.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0; };
   let kicks = 0; const kick = setInterval(() => {   // for the first 12 seconds: any video on screen that is still paused is started again (some Safari versions drop the first start)
     if (++kicks > 6 || !document.contains(tiles[0])) return clearInterval(kick);
@@ -5832,7 +5838,7 @@ function vsBind(){
     if (!on) { wait.delete(c); v.pause(); return; }
     if (held || $('#reel')) return;
     if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(c); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true})); }
-    v.play().then(() => c.classList.add('playing')).catch(e => { if (e.name !== 'NotAllowedError') return; if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => c.classList.add('playing')).catch(() => { held = true; wait.clear(); }), {once: true}); return; } held = true; wait.clear(); }); };   // Safari: one more try once loaded
+    v.play().then(() => vidLit(v, () => c.classList.add('playing'))).catch(e => { if (e.name !== 'NotAllowedError') return; if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => vidLit(v, () => c.classList.add('playing'))).catch(() => { held = true; wait.clear(); }), {once: true}); return; } held = true; wait.clear(); }); };   // Safari: one more try once loaded
   const go = () => { if (!document.contains(cs[0])) return; vsIO = new IntersectionObserver(es => es.forEach(e => run(e.target, e.isIntersecting))); cs.forEach(c => vsIO.observe(c)); };
   const later = () => setTimeout(go, 3000);   // 3 seconds after the page has loaded: the photo, prices and Add to bag get the connection first
   document.readyState === 'complete' ? later() : addEventListener('load', later, {once: true});
