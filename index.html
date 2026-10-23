@@ -5765,7 +5765,7 @@ function vidSecHTML(){
       ${v.n && vidPage() ? `<span class="vt-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}<span class="vt-play" aria-hidden="true">${VI.play}</span>
       ${p ? `<span class="vt-p${v.w ? ' has-w' : ''}">${v.w ? `<i class="vt-w">${esc(v.w)}</i>` : ''}<img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now${ps.length ? ` · + ${ps.length} more` : ''}</i></span></span>`}</button>`; }).join('')}</div></div>`;
 }
-let vrIO = null;
+let vrIO = null, vrNear = null;
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
 function vidLit(v, done){ if (v._lit) return; v._lit = 1; const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d', {willReadFrequently: true}); let n = 0;
   const chk = () => { if (!v.getAttribute('src')) { v._lit = 0; return; } let ok = false; try { g.drawImage(v, 0, 0, 8, 8); const d = g.getImageData(0, 0, 8, 8).data; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 36) { ok = true; break; } } catch (e) { ok = true; }
@@ -5773,7 +5773,7 @@ function vidLit(v, done){ if (v._lit) return; v._lit = 1; const c = document.cre
   const next = () => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(chk) : setTimeout(chk, 200);
   next(); }
 function bindVids(){
-  vrIO && vrIO.disconnect(); vrIO = null;
+  vrIO && vrIO.disconnect(); vrIO = null; vrNear && vrNear.disconnect(); vrNear = null;
   const tiles = $$('#vrow .vt'); if (!tiles.length) return;
   tiles.forEach(t => t.onclick = () => openReel(+t.dataset.vi));
   tiles.forEach(t => { const v = $('video', t); if (v) { v.addEventListener('playing', () => t.classList.add('playing')); v.addEventListener('playing', () => vidLit(v, () => t.classList.add('shown'))); v.addEventListener('emptied', () => t.classList.remove('shown')); v.addEventListener('pause', () => { v.dataset.pev = (+v.dataset.pev || 0) + 1; }); } });
@@ -5810,6 +5810,14 @@ function bindVids(){
   let told = false;
   vrIO = new IntersectionObserver(es => es.forEach(e => { run(e.target, e.isIntersecting); if (e.isIntersecting && !told) { told = true; setTimeout(report, 4000); } }), {rootMargin: '0px'});   // a video plays, muted, while its tile is on screen; off screen it pauses (and stops loading)
   tiles.forEach(t => vrIO.observe(t));
+  /* after the first scroll: a tile about half a screen away already loads its small preview (same 2 at a time, same address),
+     so it is ready and plays at once when it comes on screen */
+  const wq = new Set(), warm = t => { const v = $('video', t); if (!v || v.getAttribute('src') || held || slow || !ready || $('#reel')) return;
+    if (busy() >= 2) { wq.add(t); return; } wq.delete(t);
+    v.preload = 'auto'; v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, () => { pump(); wq.forEach(warm); }, {once: true})); };
+  addEventListener('scroll', () => { if (vrNear || !document.contains(tiles[0])) return;
+    vrNear = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) wq.delete(e.target); else if (!onScreen(e.target)) warm(e.target); }), {rootMargin: '50% 0px'});
+    tiles.forEach(t => vrNear.observe(t)); }, {once: true, passive: true});
 }
 function renderVids(){ const el = $('#vidSec'); if (!el) return; const h = vidSecHTML(); el.innerHTML = h; el.hidden = !h; $$('.rv-up', el).forEach(x => x.classList.add('in')); bindVids(); vStrip(); }
 /* phone product page: the same Review videos as small upright cards just above the product photo (AJAY 2026-10-21, option 1 with cards).
