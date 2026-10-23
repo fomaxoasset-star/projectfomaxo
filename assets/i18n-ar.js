@@ -1166,7 +1166,7 @@
 "FREE delivery": "توصيل مجاني",
 "Or FREE delivery": "أو توصيل مجاني",
 "Get it today": "يصلك اليوم",
-"Same-day full today": "التوصيل في نفس اليوم مكتمل اليوم",
+"Same-day busy today": "التوصيل في نفس اليوم مزدحم اليوم",
 "Same-day closed": "انتهى التوصيل في نفس اليوم",
 "Same-day": "التوصيل في نفس اليوم",
 "Secure payment": "دفع آمن",
