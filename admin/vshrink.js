@@ -315,10 +315,10 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
   var mkAll = rows.filter(function (r) { return r._mk && !r._mk.hidden; }), allBtn = null;
   if (mkAll.length > 1) {
     var box = mkAll[0], wrap = document.createElement('div'), all = allBtn = document.createElement('button');
-    wrap.style.cssText = 'margin:0 0 8px;text-align:right'; all.type = 'button'; all.className = 'vmkp vmkp-all'; all.textContent = 'Make all previews again';
+    wrap.style.cssText = 'margin:0 0 8px;text-align:right'; all.type = 'button'; all.className = 'vmkp vmkp-all'; all.textContent = 'Make All Previews Again';
     all.style.cssText = 'font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:2px 12px;cursor:pointer';
     all.onclick = function () { if (!confirm('Make the preview again for all ' + mkAll.length + ' videos? It runs one by one; keep this page open.')) return;
-      all.disabled = true; all.textContent = 'Making all previews…'; mkAll.forEach(function (r) { if (!r._mk.disabled) r._mk.click(); }); };
+      all.disabled = true; all.textContent = 'Making All Previews…'; mkAll.forEach(function (r) { if (!r._mk.disabled) r._mk.click(); }); };
     wrap.appendChild(all); box.parentNode.insertBefore(wrap, box);
   }
   /* a way that hangs (some Mac Safari videos never finish in the fast way) is given up after a while, so the next way or the next video goes on */
