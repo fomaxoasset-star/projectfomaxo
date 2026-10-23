@@ -3328,12 +3328,32 @@ function ccPick(){
 document.addEventListener('change', e => { const sel = e.target.closest('.cc select'); if (!sel) return;
   const [iso, d] = sel.value.split('-'); sel.previousElementSibling.textContent = `${ccFlag(iso)} +${d}`; CC_ON = d; try { localStorage.setItem('fomaxo_cc', d); } catch(x) {}
   const inp = sel.closest('.cc').nextElementSibling; if (inp && inp.value) { inp.dispatchEvent(new Event('input', {bubbles: true})); inp.dispatchEvent(new Event('change', {bubbles: true})); } });
+/* the 0 people dial at home is not part of the number after the code: 0543146334 under +971 is +971 543146334 (AJAY, 2026-10-23).
+   Italy and San Marino keep it (their 0 is part of the number); +1 numbers never start with 0 */
+const ccTrunk = (c, n) => c === '39' || c === '378' ? n : n.replace(/^0+/, '');
+/* a number that arrives with its country code (saved details, our WhatsApp link, browser autofill, typed or pasted with + or 00)
+   moves the code into the picker, so the box shows only "543146334" next to "+971", never "+971" twice (AJAY, 2026-10-23) */
+function ccFit(inp){
+  const sel = inp && inp.previousElementSibling && inp.previousElementSibling.querySelector('select'); if (!sel) return;
+  const raw = enDigits(inp.value).trim(), cur = sel.value.split('-')[1];
+  let n = raw.replace(/\D/g, ''), c = null;
+  if (/^(\+|00)/.test(raw)) { if (raw.startsWith('00')) n = n.slice(2);
+    c = n.startsWith(cur) ? cur : (CC_LIST.find(([, d]) => n.startsWith(d)) || [])[1];   // codes never start another code, so the first match is the one
+    if (!c || n.length <= c.length) return;
+  } else if (n.startsWith(cur) && n.length >= 11) c = cur;   // "971543146334" with no +
+  else return;
+  if (c !== cur) { const o = CC_LIST.find(([, d]) => d === c); sel.value = o[0] + '-' + c; sel.previousElementSibling.textContent = `${ccFlag(o[0])} +${c}`; CC_ON = c; try { localStorage.setItem('fomaxo_cc', c); } catch(x) {} }
+  inp.value = ccTrunk(c, n.slice(c.length));
+}
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('.cc + input[type=tel]')) ccFit(e.target); }, true);
+document.addEventListener('focusout', e => { const inp = e.target; if (!inp.matches || !inp.matches('.cc + input[type=tel]') || !/^\s*0/.test(inp.value)) return;   // "0543146334" → "543146334" once they leave the box
+  const v = ccTrunk(inp.previousElementSibling.querySelector('select').value.split('-')[1], inp.value.trim()); if (v !== inp.value) { inp.value = v; inp.dispatchEvent(new Event('input', {bubbles: true})); } });
 /* the number in the box with its country code: "+971 501234567", or as typed when it starts with + or 00 */
 function ccVal(inp){
   const v = enDigits(inp.value).trim(), sel = inp.previousElementSibling && inp.previousElementSibling.querySelector('select');
   if (!sel || !v || /^(\+|00)/.test(v)) return v;
-  const d = sel.value.split('-')[1], n = v.replace(/\D/g, '').replace(/^0+/, '');
-  return n ? '+' + d + ' ' + (n.startsWith(d) && n.length >= 11 ? n.slice(d.length) : n) : '';   // typed with the code but no +: not added twice
+  const d = sel.value.split('-')[1], n = ccTrunk(d, v.replace(/\D/g, ''));
+  return n ? '+' + d + ' ' + (n.startsWith(d) && n.length >= 11 ? ccTrunk(d, n.slice(d.length)) : n) : '';   // typed with the code but no +: not added twice
 }
 /* a valid WhatsApp number typed in the welcome box, offer popup or bag box goes to Left at checkout as soon as they leave the box,
    also when they close the popup or the bag without pressing Send (AJAY saw typed numbers in Clarity that never arrived, 2026-10-22) */
@@ -4846,6 +4866,7 @@ function bindCheckout(q){
   const err = $('#coErr'), err1 = $('#coErr1'), go = $('#coGo');
   const d0 = savedDetails();
   CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = CO_CAPS.includes(k) ? capWords(d0[k]) : k === 'phone' ? enDigits(d0[k]) : d0[k]; });
+  ccFit(form.elements.phone);   // saved as "+971 543146334": the box shows only the number
   CO_CAPS.forEach(k => form.elements[k] && form.elements[k].setAttribute('autocapitalize', 'words'));
   // opened from a link in our WhatsApp (?w=): the mobile box fills in by itself with the number we wrote to, unless the customer already has one here
   let who = ''; try { who = localStorage.getItem('fomaxo_who') || ''; } catch(e) {}

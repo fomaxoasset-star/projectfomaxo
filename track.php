@@ -65,7 +65,7 @@ try {
   if ($ev === 'lead') {   // checkout details, kept only once the customer typed a name or mobile
     $stages = ['coupon' => 0, 'details' => 1, 'payment' => 2, 'card' => 3];   // coupon: a WhatsApp number from the welcome box, offer popup or bag box (wants the coupon)
     $stage = isset($stages[$d['st'] ?? '']) ? $d['st'] : 'details';
-    $name = $t('name', 80); $phone = $t('phone', 25);
+    $name = $t('name', 80); $phone = fomaxo_phone_trunk($t('phone', 25));
     if ($name === '' && $phone === '') exit;
     $args = [$sid, $vid, $stage, $name, $phone, $t('email', 120), $t('emirate', 30), $t('items', 600), is_numeric($d['total'] ?? null) ? round((float)$d['total'], 2) : null];
     $sql = fn($a, $b, $c) => "INSERT INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone, email, emirate, items, total$a)
