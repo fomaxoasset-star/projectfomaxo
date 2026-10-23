@@ -281,13 +281,13 @@ window.fxPick = function (src, done) {
     v.onerror = function () { URL.revokeObjectURL(v.src); };
   });
 })();
-/* Small previews for the home page row: each video without one gets a 640px, silent copy of its first 8 seconds (about 0.5 MB),
+/* Small previews for the home page row: each video without one gets a 640px, silent copy of its first 5 seconds (about 0.25 MB, AJAY 23/10/2026: half the size so the row starts sooner),
    made here in the browser and kept next to it (vid/name-p.mp4). The row plays that; the full video loads only when the player opens.
    Runs by itself on this page for every video that has none yet (new uploads and older videos), one at a time. */
 setTimeout(function () {   // after the page has loaded (the list comes after this script)
   var rows = [].slice.call(document.querySelectorAll('.vrow[data-pvsrc]')), f = document.querySelector('form[data-vshrink]');   // every uploaded video: data-mkprev = no preview yet (made by itself), data-pv = has one
   if (!rows.length || !f || !window.fetch || !window.Promise) return;
-  var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 8, BR = 600000, pill = null, made = 0, conv = null, how = '', noFast = false, noWasm = false, Fok = false, fails = 0, gone = false, last = '';
+  var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 5, BR = 450000, pill = null, made = 0, conv = null, how = '', noFast = false, noWasm = false, Fok = false, fails = 0, gone = false, last = '';
   addEventListener('pagehide', function () { gone = true; });   // leaving or reloading the page: stop, don't log the cut-off ones as failed
   var KEY = 'fxPrevFail', bad = {}; try { bad = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {}
   var mark = function (nm) { bad[nm] = (bad[nm] || 0) + 1; try { localStorage.setItem(KEY, JSON.stringify(bad)); } catch (e) {} };
@@ -344,7 +344,7 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
       });
     }).catch(function (e) { how += ' fast: ' + String(e && (e.message || e.name) || e).slice(0, 50); return null; });
   }
-  /* Safari: the video plays (muted, hidden) and its first 8 seconds are recorded at 640px. Streams from the address, so only those seconds are downloaded */
+  /* Safari: the video plays (muted, hidden) and its first 5 seconds are recorded at 640px. Streams from the address, so only those seconds are downloaded */
   function recPrev(src) {
     var mt = window.MediaRecorder && MediaRecorder.isTypeSupported && HTMLCanvasElement.prototype.captureStream ? ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1', 'video/mp4'].filter(function (m) { return MediaRecorder.isTypeSupported(m); })[0] : '';
     if (!mt) return Promise.resolve(null);
@@ -397,7 +397,7 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
       if (b && b.p !== undefined) return b.p;   // Safari: already made (or not) by recording
       how = ''; if (!b) { how = 'not loaded'; return null; }
       tell('loaded ' + (b.size / 1048576).toFixed(1) + ' MB in ' + Math.round((Date.now() - t0) / 1000) + ' s');
-      /* the fast way gets 25 seconds; once it fails here, the rest go straight to FFmpeg (fast, 640px, first 8 seconds only) */
+      /* the fast way gets 25 seconds; once it fails here, the rest go straight to FFmpeg (fast, 640px, first 5 seconds only) */
       return (noFast ? Promise.resolve(null) : limit(fastPrev(b), 25000, function () { how += ' fast: too slow'; conv && conv.cancel(); })).then(function (p) { if (p) { how = 'fast'; return p; } noFast = true;
         if (noWasm) return null;
         return limit(wasmPrev(b), 180000, function () { how += ' ffmpeg: too slow (last: ' + last + ')'; try { F && F.terminate(); } catch (e) {} F = null; }).then(function (w) { if (w) how = 'ffmpeg'; return w; }); });
