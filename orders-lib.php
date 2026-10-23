@@ -301,11 +301,6 @@ function fx_orders_reset_run($pdo) {
 }
 /* coupons used on orders cleared by the reset (coupon_uses_old): {code: {n: times used, ph: [mobiles]}} */
 function fx_coupon_old($pdo) { static $c = null; return $c ??= (json_decode((string)fomaxo_setting($pdo, 'coupon_uses_old'), true) ?: []); }
-/* real orders the owner has not opened yet: not test, not an unpaid card attempt, not cancelled or refunded */
-const FX_NEW_ORDER_SQL = "seen_at IS NULL AND test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')";
-function fx_new_orders($pdo) {
-  try { return (int)$pdo->query('SELECT COUNT(*) FROM fx_orders WHERE ' . FX_NEW_ORDER_SQL)->fetchColumn(); } catch (Throwable $e) { return 0; }
-}
 function fomaxo_coupons_table($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_coupons (code VARCHAR(30) NOT NULL PRIMARY KEY, kind VARCHAR(3) NOT NULL DEFAULT 'pct', amount DECIMAL(10,2) NOT NULL,
               min_order DECIMAL(10,2) NULL, expires DATE NULL, max_uses INT NULL, active TINYINT(1) NOT NULL DEFAULT 1, created_at DATETIME NULL) DEFAULT CHARSET=utf8mb4");
