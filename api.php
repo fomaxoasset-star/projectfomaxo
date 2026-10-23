@@ -524,6 +524,7 @@ switch ($action) {
             throw $e;
         }
         q('UPDATE sales SET ziina_id = ? WHERE id = ?', [$z['id'], $id]);
+        ziina_note_host($z['redirect_url']);
         json_out(['sale' => load_sale('id', $id), 'pay_url' => $z['redirect_url']]);
 
     case 'ziina_check':
@@ -593,6 +594,7 @@ switch ($action) {
         $z = ziina_intent_for($sale);
         q("UPDATE sales SET method = 'ziina', status = 'pending', ziina_id = ?, note = CASE WHEN note LIKE 'Cancelled:%' THEN '' ELSE note END WHERE id = ?", [$z['id'], $sale['id']]);
         log_activity($u, 'ziina', 'Showed Ziina QR again', '', (int) $sale['store_id']);
+        ziina_note_host($z['redirect_url']);
         json_out(['sale' => load_sale('id', $sale['id']), 'pay_url' => $z['redirect_url']]);
 
     // ---------------- Sales history ----------------

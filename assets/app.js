@@ -858,11 +858,11 @@
     if (m === 'cash') $('#cash-in').addEventListener('input', function () { $$('.note-btn').forEach(function (b) { b.classList.remove('active'); }); updateChange(); });
   }
   /** Opens the Ziina app: straight into the app on Android; on iPhone via its App Store page (tap Open there). */
+  // Uses the same web address as Ziina's payment links (that address opens the Ziina app on both Android and iPhone).
   function ziinaAppLink() {
-    var ua = navigator.userAgent || '';
-    if (/Android/i.test(ua)) return 'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.ziina.app;S.browser_fallback_url=' + encodeURIComponent('https://play.google.com/store/apps/details?id=com.ziina.app') + ';end';
-    if (/iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'https://apps.apple.com/app/id1507246381';
-    return 'https://ziina.com/business';
+    var ua = navigator.userAgent || '', host = (S.settings && S.settings.ziina_host) || 'pay.ziina.com';
+    if (/Android/i.test(ua)) return 'intent://' + host + '/#Intent;scheme=https;package=com.ziina.app;S.browser_fallback_url=' + encodeURIComponent('https://' + host + '/') + ';end';
+    return 'https://' + host + '/';
   }
   function updateChange() {
     var v = $('#cash-in').value, ch = (v === '' ? PAY.total : toFils(v)) - PAY.total, box = $('#change-box');

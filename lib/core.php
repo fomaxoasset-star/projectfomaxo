@@ -445,6 +445,7 @@ function me_payload($u)
             'staff_max_discount' => (float) cfg('staff_max_discount', 10),
             'ziina' => ziina_enabled(),
             'ziina_mode' => ziina_mode(),
+            'ziina_host' => (string) (meta_get('ziina_pay_host') ?: 'pay.ziina.com'),
             'tiers' => cfg('tiers', []),
             'base_url' => cfg('base_url'),
         ],

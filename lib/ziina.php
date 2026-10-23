@@ -101,3 +101,12 @@ function ziina_intent_for($sale)
     $r = cfg('base_url') . '/receipt.php?t=' . $sale['receipt_token'];
     return ziina_create((int) $sale['total'], cfg('store_name', 'FOMAXO') . ' order', $r, $r . '&cancelled=1');
 }
+
+/** Remember the web address of Ziina's payment links (e.g. pay.ziina.com): the Ziina app opens those, so "Open Ziina" uses it. */
+function ziina_note_host($url)
+{
+    $h = strtolower((string) parse_url((string) $url, PHP_URL_HOST));
+    if ($h !== '' && preg_match('/(^|\.)ziina\.com$/', $h) && meta_get('ziina_pay_host') !== $h) {
+        meta_set('ziina_pay_host', $h);
+    }
+}
