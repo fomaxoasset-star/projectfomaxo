@@ -5778,7 +5778,7 @@ function bindVids(){
   const onScreen = t => { const r = t.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0; };
   let kicks = 0; const kick = setInterval(() => {   // for the first 12 seconds: any video on screen that is still paused is started again (some Safari versions drop the first start)
     if (++kicks > 6 || !document.contains(tiles[0])) return clearInterval(kick);
-    tiles.forEach(t => { const v = $('video', t); if (v && v.paused && v.getAttribute('src') && !held && !slow && onScreen(t)) { v.muted = true; v.play().then(() => { v.dataset.kick = 'ok'; t.classList.add('playing'); }).catch(e => { v.dataset.kick = e.name; }); } });
+    tiles.forEach(t => { const v = $('video', t); if (v && v.paused && v.getAttribute('src') && !held && !slow && !$('#reel') && onScreen(t)) { v.muted = true; v.play().then(() => { v.dataset.kick = 'ok'; t.classList.add('playing'); }).catch(e => { v.dataset.kick = e.name; }); } });
   }, 2000);   // the videos start by themselves as the page opens (autoplay, muted, looping)
   const row = $('#vrow'), nav = $('.vr-nav');   // laptop: arrows when the videos are wider than the page
   if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => row.scrollBy({left: +b.dataset.vscroll * (row.clientWidth + 14), behavior: 'smooth'})); }
@@ -5791,7 +5791,7 @@ function bindVids(){
   const stop = v => { v.pause(); v.removeAttribute('src'); v.load(); };
   const hold = () => { held = true; tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 2 && w.getAttribute('src')) stop(w); }); wait.clear(); };
   const run = (t, on) => { const v = $('video', t); if (!v) return;
-    if (on) { if (held || slow || !ready) return;
+    if (on) { if (held || slow || !ready || $('#reel')) return;
       if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(t); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true}));
         const tm = setTimeout(() => { if (!held && !v.paused && v.readyState < 3 && v.getAttribute('src')) { slow = true; wait.clear(); tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 3 && w.getAttribute('src')) stop(w); }); } }, 5000); v.addEventListener('canplay', () => clearTimeout(tm), {once: true}); }   // slow Wi-Fi (no speed info, e.g. Safari): a playing preview not ready within 5 seconds = covers only on this visit (one held back by Safari's autoplay rule is not counted as slow)
       v.play().then(() => t.classList.add('playing')).catch(e => { v.dataset.pe = e.name; if (e.name !== 'NotAllowedError') return;
@@ -5884,6 +5884,7 @@ function openReel(i){
   const track = $('.rl-track', el), slides = $$('.rl-s', el);
   const lent = [];   // the row's videos are already loaded: the player borrows them, so the tapped video plays at once (given back on close); a row tile playing its small preview (silent, first seconds) is not borrowed, the player loads the full video
   $$('#vrow .vt').forEach(t => { const rv = $('video', t), sv = slides[+t.dataset.vi] && $('video', slides[+t.dataset.vi]); if (!rv || !rv.src || rv.readyState < 2 || !sv || rv.dataset.src !== sv.dataset.src) return; const ph = document.createComment(''); rv.before(ph); sv.replaceWith(rv); lent.push([ph, rv]); });
+  $$('#vrow video, #vStrip video').forEach(v => { if (!lent.some(x => x[1] === v) && v.getAttribute('src')) { v.removeAttribute('src'); v.load(); } });   // the row's small previews let go while the player is open (Safari showed the full video black with them all loaded); they come back from the browser's copy on close
   let cur = -1;
   const go = k => { k = Math.max(0, Math.min(slides.length - 1, k)); track.scrollTo({left: k * track.clientWidth, behavior: 'smooth'}); };
   const act = k => { if (k === cur) return; cur = k;
