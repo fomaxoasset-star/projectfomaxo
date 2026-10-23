@@ -5007,7 +5007,7 @@ function bindCheckout(q){
       if (need > 0) coSdOn = false;
       const o = (v, title, l1, l2, on, off) => `<label class="co-opt${on ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="ship" value="${v}"${on ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small><span class="co-opt-1l">${l1}</span>${l2 ? `<span class="co-opt-2l">${l2}</span>` : ''}</small></span></label>`;
       h = `<div class="co-sd-h">Delivery</div><div class="co-sd-o" role="radiogroup" aria-label="Delivery">`
-        + o('std', 'Standard delivery', '1–3 days', 'Free', !coSdOn, false)
+        + o('std', 'Standard delivery', '1–3 days', 'FREE', !coSdOn, false)
         + o('sd', 'Same-day delivery', need > 0 ? `For orders from AED ${SAMEDAY.min}, add AED ${need} more` : open ? 'Order before ' + hr12(SAMEDAY.cut) + ', arrives today' + (sdBy() ? ' by ' + sdBy() : '') : SAMEDAY.full ? 'Same-Day Busy Today · Order Tomorrow Before ' + hr12(SAMEDAY.cut) : SAMEDAY.from ? 'Order between ' + hr12(SAMEDAY.from) + ' and ' + hr12(SAMEDAY.cut) : 'For Same-Day, Order Tomorrow Before ' + hr12(SAMEDAY.cut), fee ? aed(fee) : 'Free', coSdOn, !open) + '</div>'
         + (coSdOn ? `<label class="co-sd-a">Your area<select name="sdarea"><option value="">Choose your area</option>${areas.map(a => `<option${a === coSD ? ' selected' : ''}>${esc(a)}</option>`).join('')}</select></label><p class="co-small">Not in the list? Choose standard delivery.</p>` : '');
     }
