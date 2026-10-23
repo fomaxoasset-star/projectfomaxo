@@ -727,3 +727,5 @@ button, a, .ptile, .size-btn { touch-action: manipulation; }   /* no double-tap 
   .amount-big .lbl { display: none; }
   .qr-box { width: min(220px, 28vh); }
 }
+
+.c-full { min-height: 16px; margin-top: 4px; }

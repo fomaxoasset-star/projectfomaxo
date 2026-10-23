@@ -1,6 +1,6 @@
 /* FOMAXO Store System - offline support. Keeps the app itself on the device so it opens without internet.
    Data requests (api.php) always go to the server; the app handles offline sales itself. */
-var VERSION = 'fomaxo-pos-v63';
+var VERSION = 'fomaxo-pos-v64';
 var PHOTOS = 'fomaxo-pos-photos';  // kept across app updates
 var SHELL = [
   './', 'index.html', 'assets/app.css', 'assets/app.js', 'assets/qrcode.js', 'assets/countries.js',
@@ -49,7 +49,7 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // Versioned app files (app.js?v=63): they never change, so open them straight from the phone.
+  // Versioned app files (app.js?v=64): they never change, so open them straight from the phone.
   if (/[?&]v=/.test(url.search)) {
     e.respondWith(caches.open(VERSION).then(function (c) {
       return c.match(req).then(function (hit) {

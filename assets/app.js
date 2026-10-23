@@ -653,7 +653,7 @@
     openModal('Customer', '<div class="err m-err hidden"></div>' +
       '<div class="field"><span>Mobile — type it and the customer is looked up</span><div class="phone-row">' +
         '<label class="cc-wrap" title="Country"><span class="cc-label" id="c-cc-label"></span><select id="c-cc" aria-label="Country code">' + countryOptions() + '</select></label>' +
-        '<input class="input" id="c-phone" type="tel" inputmode="tel" autocomplete="off" autofocus></div></div>' +
+        '<input class="input" id="c-phone" type="tel" inputmode="tel" autocomplete="off" autofocus></div><div class="small muted c-full" id="c-full"></div></div>' +
       '<div id="c-info"></div>' +
       '<label class="field"><span>Name</span><input class="input cap" id="c-name" value="' + esc(c.name || '') + '" placeholder="CUSTOMER NAME" autocomplete="off" autocapitalize="characters"></label>' +
       '<label class="field"><span>Email (optional)</span><input class="input" id="c-email" type="email" inputmode="email" autocapitalize="none" placeholder="name@example.com" value="' + esc(c.email || '') + '" autocomplete="off"></label>' +
@@ -663,11 +663,8 @@
     lastLookup = '';
     setPhone(c.phone || '');
     $('#c-cc').addEventListener('change', function () { updateCc(); lastLookup = ''; autoFind(); $('#c-phone').focus(); });
-    $('#c-phone').addEventListener('input', function () {
-      var v = this.value.trim();
-      if (/^(\+|00)/.test(v) && v.replace(/\D/g, '').length >= 6) { var sp = FX_COUNTRIES.split(v); if (sp) { $('#c-cc').value = sp.iso; this.value = sp.national; updateCc(); } }
-      autoFind();
-    });
+    $('#c-phone').addEventListener('input', function () { tidyPhoneBox(); autoFind(); });
+    $('#c-phone').addEventListener('blur', tidyPhoneBox);
     $('#c-email').addEventListener('change', autoFind);
     if (c.phone || c.email) findCustomer();
   }
@@ -681,6 +678,27 @@
     var c = FX_COUNTRIES.by[sel.value] || FX_COUNTRIES.by.AE;
     $('#c-cc-label').textContent = FX_COUNTRIES.flag(c.iso) + ' +' + c.dial;
     $('#c-phone').placeholder = c.iso === 'AE' ? '50 123 4567' : 'Mobile number';
+    showFullPhone();
+  }
+  /** As the number is typed: +9710543146334 / 009710... / 0543146334 / 971543146334 all become 🇦🇪 +971 543146334. */
+  function tidyPhoneBox() {
+    var inp = $('#c-phone'); if (!inp) return;
+    var v = inp.value.trim(), digits = v.replace(/\D/g, ''), iso = $('#c-cc').value;
+    if (/^(\+|00)/.test(v) && digits.length >= 6) {
+      var sp = FX_COUNTRIES.split(v);
+      if (sp) { $('#c-cc').value = iso = sp.iso; v = sp.national; }
+    } else if (iso === 'AE' && /^0*9710?5\d{8}$/.test(digits)) {
+      v = digits.replace(/^0*971/, ''); // 971543146334 typed without the +
+    }
+    if (!/^(IT|SM|VA)$/.test(iso) && /^0+\d/.test(v.replace(/\s/g, ''))) v = v.replace(/^[\s0]+/, ''); // 054... -> 54...
+    if (v !== inp.value) inp.value = v;
+    updateCc();
+  }
+  function showFullPhone() {
+    var box = $('#c-full'); if (!box) return;
+    var n = phoneNational(), c = FX_COUNTRIES.by[$('#c-cc').value] || FX_COUNTRIES.by.AE;
+    var shown = c.iso === 'AE' && n.length === 9 ? n.slice(0, 2) + ' ' + n.slice(2, 5) + ' ' + n.slice(5) : n;
+    box.textContent = n.length >= 6 ? 'Saved as +' + c.dial + ' ' + shown : '';
   }
   function setPhone(full) {
     var sp = full ? FX_COUNTRIES.split(full) : null, inp = $('#c-phone');
@@ -689,7 +707,10 @@
     updateCc();
   }
   /** Full international number, e.g. +971501234567. Empty if nothing typed. */
-  function phoneNational() { return ($('#c-phone') ? $('#c-phone').value : '').replace(/\D/g, '').replace(/^0+/, ''); }
+  function phoneNational() {
+    var n = ($('#c-phone') ? $('#c-phone').value : '').replace(/\D/g, '');
+    return /^(IT|SM|VA)$/.test(($('#c-cc') || {}).value || '') ? n : n.replace(/^0+/, ''); // Italian numbers really start with 0
+  }
   function fullPhone() {
     var n = phoneNational(); if (!n) return '';
     var c = FX_COUNTRIES.by[$('#c-cc').value] || FX_COUNTRIES.by.AE;
