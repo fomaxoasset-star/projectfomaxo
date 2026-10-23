@@ -33,8 +33,10 @@ function fx_wa_ready() {
 
 /* UAE mobile → international digits for WhatsApp: "050 123 4567", "+971 50…", "00971 50…", "50 123 4567" → 971501234567 */
 function fx_wa_number($phone) {
+  if (function_exists('fomaxo_phone_trunk')) $phone = fomaxo_phone_trunk($phone);   // older saved "+44 07911…" too
   $d = preg_replace('/\D/', '', (string)$phone);
   if (strpos($d, '00') === 0) $d = substr($d, 2);
+  if (preg_match('/^9710+(\d{8,9})$/', $d, $m)) $d = '971' . $m[1];   // +971 0543146334: the home 0 is not dialled after the code
   if (strlen($d) === 10 && $d[0] === '0') $d = '971' . substr($d, 1);
   elseif (strlen($d) === 9 && $d[0] === '5') $d = '971' . $d;
   return strlen($d) >= 10 && strlen($d) <= 15 ? $d : null;

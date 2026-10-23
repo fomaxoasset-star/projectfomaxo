@@ -123,6 +123,7 @@ function fomaxo_customer($in) {
           'address' => $t('address', 300), 'note' => $t('note', 300), 'wa' => !empty($c['wa'])];   // wa: ticked "Send me offers and updates on WhatsApp"
   foreach (['name', 'building', 'room', 'street', 'area', 'address', 'note'] as $k) $out[$k] = $caps($out[$k]);
   if (mb_strlen($out['name']) < 2) return ['error' => 'Please enter your full name.'];
+  $out['phone'] = fomaxo_phone_trunk($out['phone']);
   if (!fomaxo_phone_ok($out['phone'])) return ['error' => 'Please enter a valid mobile number.'];
   if ($out['email'] !== '' && !filter_var($out['email'], FILTER_VALIDATE_EMAIL)) return ['error' => 'Please enter a valid email address.'];
   if (!in_array($out['emirate'], $EMIRATES, true)) return ['error' => 'Please choose your emirate.'];

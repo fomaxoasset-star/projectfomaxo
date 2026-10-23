@@ -320,6 +320,10 @@ function fomaxo_coupons_table($pdo) {
   try { if (!$pdo->query("SHOW COLUMNS FROM fx_coupons LIKE 'wa_to'")->fetch()) $pdo->exec("ALTER TABLE fx_coupons ADD COLUMN wa_to VARCHAR(25) NULL"); } catch (Throwable $e) {}
 }
 /* the same mobile written any way (+971 50…, 050…, Arabic digits) gives the same last 9 digits */
+/* "+971 0543146334" → "+971 543146334": the 0 dialled at home is dropped after the code (Italy +39 and San Marino +378 keep theirs) */
+function fomaxo_phone_trunk($p) { $p = (string)$p;
+  if (preg_match('/^\s*(\+|00)\s*9710+([1-9]\d{7,8})$/', $p, $m)) return '+971 ' . $m[2];   // UAE typed in one go: +9710543146334
+  return preg_match('/^\s*(\+|00)(\d{1,3})[\s\-]+0+([1-9][\d\s\-]*)$/', $p, $m) && !in_array($m[2], ['39', '378'], true) ? '+' . $m[2] . ' ' . $m[3] : $p; }   // "+CC 0…", as the site sends it
 function fomaxo_phone9($p) { return substr(preg_replace('/\D/', '', strtr((string)$p, FX_AR_DIGITS)), -9); }
 function fomaxo_db_tables($pdo) {
   $pdo->exec("CREATE TABLE IF NOT EXISTS fx_orders (
