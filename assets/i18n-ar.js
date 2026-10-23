@@ -1271,6 +1271,8 @@
     [/^Pay in cash when your order arrives · (AED [\d,.]+) fee$/, function(m){ return 'ادفع نقداً عند وصول طلبك · رسوم ' + m[1]; }],
     [/^in (Dubai|Sharjah|Ajman) · order before (\d+ [AP]M)(?:, get it by (\d+) PM)?$/, function(m){ return 'في ' + {Dubai: 'دبي', Sharjah: 'الشارقة', Ajman: 'عجمان'}[m[1]] + ' · اطلب قبل ' + hrAr(m[2]) + (m[3] ? '، يصلك قبل ' + m[3] + ' مساءً' : ''); }],
     [/^Order before (\d+ [AP]M), arrives today(?: by (\d+) PM)?$/, function(m){ return 'اطلب قبل ' + hrAr(m[1]) + '، يصلك اليوم' + (m[2] ? ' قبل ' + m[2] + ' مساءً' : ''); }],
+    [/^For orders from AED (\d+), add AED (\d+) more$/, function(m){ return 'للطلبات من AED ' + m[1] + '، أضف AED ' + m[2] + ' أخرى'; }],
+    [/^Same-day delivery is for orders from AED (\d+)\. Please choose standard delivery\.$/, function(m){ return 'التوصيل في نفس اليوم للطلبات من AED ' + m[1] + '. يرجى اختيار التوصيل العادي.'; }],
     [/^Closed for today, order before (\d+ [AP]M)$/, function(m){ return 'انتهى لليوم، اطلب قبل ' + hrAr(m[1]); }],
     [/^Order between (\d+ [AP]M) and (\d+ [AP]M)$/, function(m){ return 'اطلب بين ' + hrAr(m[1]) + ' و' + hrAr(m[2]); }],
     [/^Same-day delivery is for orders placed (?:before (\d+ [AP]M)|between (\d+ [AP]M) and (\d+ [AP]M))\. Please choose standard delivery\.$/, function(m){ return 'التوصيل في نفس اليوم للطلبات ' + (m[1] ? 'قبل الساعة ' + hrAr(m[1]) : 'بين ' + hrAr(m[2]) + ' و' + hrAr(m[3])) + '. يرجى اختيار التوصيل العادي.'; }],
