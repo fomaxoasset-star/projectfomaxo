@@ -821,7 +821,7 @@
   function switchRow(cur) {
     var qrNo = qrProblem(PAY.total);
     var opts = [['cash', '💵', 'Cash'], ['tap', '💳', 'Card / Tap'], ['ziina', '📱', 'QR'], ['card', '🏧', 'Machine']];
-    return '<div class="pay-switch"><span class="small muted">Pay by</span><div class="seg">' + opts.map(function (o) {
+    return '<div class="pay-switch"><span class="small muted">Pay another way</span><div class="seg">' + opts.map(function (o) {
       return '<button type="button" data-act="sw-m" data-m="' + o[0] + '" class="' + (o[0] === cur ? 'active' : '') + '"' + (o[0] === 'ziina' && qrNo && cur !== 'ziina' ? ' disabled' : '') + '><span>' + o[1] + '</span> ' + o[2] + '</button>';
     }).join('') + '</div></div>';
   }
