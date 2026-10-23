@@ -1590,6 +1590,10 @@
         }).join('') + '</select></label>' +
         '<p class="small muted" style="margin:-4px 0 14px">Start with <b>Test</b>: make a Ziina QR sale and pay it with a Ziina test card. When it confirms by itself, switch to <b>Live</b>.</p>' +
         (d.ziina_key_saved ? '<label class="check"><input type="checkbox" name="remove_ziina_token"> Remove the saved key</label>' : '') +
+        '<h3 class="set-h">fomaxo.com customers</h3>' +
+        (d.website && d.website.ok
+          ? '<p class="small" style="margin:0 0 14px;color:var(--ok)">✓ Connected — ' + d.website.orders.toLocaleString() + ' website orders. Typing a mobile in Customer finds website buyers and fills in their name and email.</p>'
+          : '<p class="small" style="margin:0 0 14px;color:var(--out)">✗ Not connected (' + esc((d.website && d.website.why) || 'unknown') + '). Only store customers are found. Tell Claude to fix it.</p>') +
         '<h3 class="set-h">Coupons</h3>' +
         '<label class="check"><input type="checkbox" name="web_coupons" ' + (d.web_coupons ? 'checked' : '') + '> Also accept fomaxo.com coupon codes in the store</label>' +
         '<p class="small muted" style="margin:-6px 0 14px">Your store codes (menu → Coupons) always work. Tick this to also accept the website\u2019s codes.</p>' +

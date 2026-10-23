@@ -937,7 +937,22 @@ switch ($action) {
     case 'settings_get':
         require_manager();
         $tok = trim((string) cfg('ziina_token', ''));
+        // Is the fomaxo.com customer lookup working? (read-only)
+        require_once __DIR__ . '/lib/website.php';
+        $web = ['ok' => false, 'orders' => 0, 'why' => ''];
+        if (!cfg('website_customers', true)) {
+            $web['why'] = 'switched off';
+        } elseif ($wpdo = web_db()) {
+            try {
+                $web = ['ok' => true, 'orders' => (int) $wpdo->query("SELECT COUNT(*) FROM fx_orders WHERE test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')")->fetchColumn(), 'why' => ''];
+            } catch (Throwable $e) {
+                $web['why'] = 'orders table not readable';
+            }
+        } else {
+            $web['why'] = 'website database not reachable';
+        }
         json_out([
+            'website' => $web,
             'ziina_mode' => ziina_mode(),
             'ziina_key_saved' => $tok !== '',
             'ziina_key_end' => $tok !== '' ? substr($tok, -4) : '',
