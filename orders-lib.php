@@ -516,7 +516,7 @@ function fomaxo_sameday($pdo = null) {
   $c = null;
   try { $pdo = $pdo ?: fomaxo_db(); $c = $pdo ? json_decode((string)fomaxo_setting($pdo, 'sameday'), true) : null; } catch (Throwable $e) {}
   $fee = is_array($c) && isset($c['fee']) && is_numeric($c['fee']) ? max(0, (int)$c['fee']) : null;
-  return ['on' => is_array($c) && !empty($c['on']) && $fee !== null, 'fee' => $fee, 'free' => is_array($c) ? max(0, (int)($c['free'] ?? 0)) : 0,
+  return ['on' => is_array($c) && !empty($c['on']) && $fee !== null, 'fee' => $fee, 'free' => is_array($c) ? max(0, (int)($c['free'] ?? 0)) : 0, 'min' => is_array($c) ? max(0, (int)($c['min'] ?? 0)) : 0,   // min: same-day only for orders from this amount (AED, after discounts; 0 = any)
           'max' => is_array($c) && isset($c['max']) ? max(0, (int)$c['max']) : 3, 'cod' => !is_array($c) || !isset($c['cod']) || !empty($c['cod']),   // cod: cash on delivery allowed for same-day (AJAY 2026-10-20: a switch, on unless turned off)
           'by' => is_array($c) ? min(23, max(0, (int)($c['by'] ?? 0))) : 0,   // by: hour it arrives by, shown to customers (21 = 9 PM; 0 = not shown)
           'km' => is_array($c) && !empty($c['km']) ? min(40, max(5, (int)$c['km'])) : 25,
@@ -551,6 +551,7 @@ function fomaxo_sameday_pick($area, $emirate, $afterFils) {
   if (!$sd['on']) return ['error' => 'Same-day delivery is not available right now. Please choose standard delivery.'];
   if (!isset(fomaxo_sameday_areas($sd)[$emirate][$area])) return ['error' => 'Same-day delivery does not reach this area. Please choose standard delivery.'];
   if (!fomaxo_sameday_open($sd)) return ['error' => 'Same-day delivery is for orders placed ' . fomaxo_sameday_when($sd) . '. Please choose standard delivery.'];
+  if ($sd['min'] > 0 && $afterFils < $sd['min'] * 100) return ['error' => 'Same-day delivery is for orders from AED ' . $sd['min'] . '. Please choose standard delivery.'];
   if (fomaxo_sameday_full($sd)) return ['error' => 'Same-day delivery is full for today. Please choose standard delivery.'];
   $fils = $sd['free'] > 0 && $afterFils >= $sd['free'] * 100 ? 0 : $sd['fee'] * 100;
   return ['fils' => $fils, 'area' => $area, 'row' => "Same-day delivery ($area, $emirate): " . ($fils ? 'AED ' . number_format($fils / 100, 2, '.', ',') : 'FREE')];
