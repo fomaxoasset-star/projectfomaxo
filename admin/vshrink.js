@@ -311,6 +311,16 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
       b.disabled = true; b.textContent = 'Making preview…'; if (queue.indexOf(r) < 0) { queue.push(r); total++; } if (!busy) next(); };
     inf.appendChild(b);
   });
+  /* one button above the list: every video's preview is made again, one after another (each gets a new name, so visitors' browsers load it once) */
+  var mkAll = rows.filter(function (r) { return r._mk && !r._mk.hidden; });
+  if (mkAll.length > 1) {
+    var box = mkAll[0], wrap = document.createElement('div'), all = document.createElement('button');
+    wrap.style.cssText = 'margin:0 0 8px;text-align:right'; all.type = 'button'; all.className = 'vmkp vmkp-all'; all.textContent = 'Make all previews again';
+    all.style.cssText = 'font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:2px 12px;cursor:pointer';
+    all.onclick = function () { if (!confirm('Make the preview again for all ' + mkAll.length + ' videos? It runs one by one; keep this page open.')) return;
+      all.disabled = true; all.textContent = 'Making all previews…'; mkAll.forEach(function (r) { if (!r._mk.disabled) r._mk.click(); }); };
+    wrap.appendChild(all); box.parentNode.insertBefore(wrap, box);
+  }
   /* a way that hangs (some Mac Safari videos never finish in the fast way) is given up after a while, so the next way or the next video goes on */
   var limit = function (p, ms, stop) { var t; return Promise.race([p, new Promise(function (ok) { t = setTimeout(function () { try { stop && stop(); } catch (e) {} ok(null); }, ms); })]).then(function (r) { clearTimeout(t); return r; }); };
   var tell = function (t) { if (f.querySelector('[name=act]')) try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['preview ' + t]})], {type: 'application/json'})); } catch (e) {} };   // fomaxo.com: written to vid-report.txt
