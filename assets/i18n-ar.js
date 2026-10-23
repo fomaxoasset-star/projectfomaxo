@@ -379,6 +379,8 @@
 "Shop all sizes": "تسوّق جميع الأحجام",
 "Free delivery": "توصيل مجاني",
 "Anywhere in UAE": "لجميع أنحاء الإمارات",
+"Same-Day Delivery": "توصيل في نفس اليوم",
+"Dubai, Sharjah, Ajman": "دبي، الشارقة، عجمان",
 "Ready to gift": "جاهز للإهداء",
 "Luxury packaging": "تغليف فاخر",
 "On request": "عند الطلب",
