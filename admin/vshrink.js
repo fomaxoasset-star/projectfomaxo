@@ -308,13 +308,13 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
     b.style.cssText = 'margin-left:8px;font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:0 9px;cursor:pointer';
     if (SAFARI && !r.hasAttribute('data-pv') && !r.hasAttribute('data-mkprev')) b.hidden = true;   // Safari: only on a tap, and only where one is needed
     b.onclick = function () { delete bad[nmOf(r)]; save(); try { localStorage.removeItem(CANT); } catch (e) {} noFast = false; noWasm = SAFARI; fails = 0;
-      b.disabled = true; b.textContent = 'Making preview…'; if (queue.indexOf(r) < 0) { queue.push(r); total++; } if (!busy) next(); };
+      b.disabled = true; b.title = ''; b.textContent = 'Making preview…'; if (queue.indexOf(r) < 0) { queue.push(r); total++; } if (!busy) next(); };
     inf.appendChild(b);
   });
   /* one button above the list: every video's preview is made again, one after another (each gets a new name, so visitors' browsers load it once) */
-  var mkAll = rows.filter(function (r) { return r._mk && !r._mk.hidden; });
+  var mkAll = rows.filter(function (r) { return r._mk && !r._mk.hidden; }), allBtn = null;
   if (mkAll.length > 1) {
-    var box = mkAll[0], wrap = document.createElement('div'), all = document.createElement('button');
+    var box = mkAll[0], wrap = document.createElement('div'), all = allBtn = document.createElement('button');
     wrap.style.cssText = 'margin:0 0 8px;text-align:right'; all.type = 'button'; all.className = 'vmkp vmkp-all'; all.textContent = 'Make all previews again';
     all.style.cssText = 'font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:2px 12px;cursor:pointer';
     all.onclick = function () { if (!confirm('Make the preview again for all ' + mkAll.length + ' videos? It runs one by one; keep this page open.')) return;
@@ -386,7 +386,11 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
     if (gone) return;
     if (fails >= 2 && noFast && noWasm) {   // neither way works in this browser: stop quietly, the buttons stay for a try in another browser
       tell('stopped: this browser cannot make previews'); try { localStorage.setItem(CANT, String(Date.now())); } catch (e) {} queue.forEach(function (r) { showBtn(r, true); }); queue = []; }
-    if (!queue.length) { busy = false; try { F && F.terminate(); } catch (e) {} F = null; if (made) { say('Quick previews ready for the home page (' + made + ').'); setTimeout(function () { say(''); }, 5000); } else say(''); return; }
+    if (!queue.length) { busy = false; try { F && F.terminate(); } catch (e) {} F = null;
+      if (allBtn && allBtn.disabled) {   // "Make all previews again" has finished: say so clearly, and stays until the page is left (AJAY 23/10/2026)
+        var bad2 = mkAll.filter(function (r) { return r._mk.title; }).length; allBtn.disabled = false;
+        allBtn.textContent = bad2 ? 'All previews done · ' + bad2 + ' failed' : 'All Previews Completed ✓'; say(bad2 ? 'All previews done. ' + bad2 + ' failed: press Try again on those rows.' : 'All Previews Completed ✓'); return; }
+      if (made) { say('Quick previews ready for the home page (' + made + ').'); setTimeout(function () { say(''); }, 5000); } else say(''); return; }
     busy = true; var row = queue.shift(); i++;
     idle().then(function () {
       say('Making quick previews for the home page: ' + i + ' of ' + total + '…'); t0 = Date.now(); tell('start ' + i + ' of ' + total);
