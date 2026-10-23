@@ -109,7 +109,7 @@ function schema_sql($mysql)
     ];
 }
 
-const SCHEMA_VERSION = 12;
+const SCHEMA_VERSION = 13;
 
 function schema_version()
 {
@@ -227,6 +227,26 @@ function migrate()
             q('UPDATE stores SET next_no = 10000');
             q("DELETE FROM meta WHERE k = 'schema'");
             q("INSERT INTO meta (k, v) VALUES ('schema', '12')");
+        }
+        if (schema_version() < 13) {
+            // Tidy phone numbers saved with an extra 0 after the country code (+9710543... -> +971543...).
+            // If the customer is already saved under the right number, join the two.
+            require_once __DIR__ . '/sales.php';
+            foreach (q("SELECT id, phone FROM customers WHERE phone LIKE '+%'")->fetchAll() as $c) {
+                $good = normalize_phone($c['phone']);
+                if ($good === $c['phone']) {
+                    continue;
+                }
+                $twin = q1('SELECT id FROM customers WHERE phone = ? AND id <> ?', [$good, $c['id']]);
+                if ($twin) {
+                    q('UPDATE sales SET customer_id = ? WHERE customer_id = ?', [$twin['id'], $c['id']]);
+                    q('DELETE FROM customers WHERE id = ?', [$c['id']]);
+                } else {
+                    q('UPDATE customers SET phone = ? WHERE id = ?', [$good, $c['id']]);
+                }
+            }
+            q("DELETE FROM meta WHERE k = 'schema'");
+            q("INSERT INTO meta (k, v) VALUES ('schema', '13')");
         }
         if (schema_version() < 5) {
             try_exec('ALTER TABLE products ADD COLUMN price_lock TINYINT NOT NULL DEFAULT 0');

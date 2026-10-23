@@ -47,6 +47,13 @@ function normalize_phone($p)
         $p = '+' . $p;
     } elseif (strpos($p, '00') === 0) {
         $p = '+' . substr($p, 2);
+    } elseif (preg_match('/^9710?5\d{8}$/', $p)) {
+        $p = '+' . $p;
+    }
+    // The extra 0 people type after the country code: +971 0 54 314 6334 -> +971 54 314 6334.
+    // (Countries whose numbers really start with 0 after the code, like Italy +39, are left alone.)
+    if (preg_match('/^\+(971|966|968|974|965|973|91|92|880|63|20|94|977|962|961|963|964|98|44|27|234|254|90|33|49|31|32|41|43|61|64|60|62|66|84|86|82|81)0(\d{6,})$/', $p, $m)) {
+        $p = '+' . $m[1] . $m[2];
     }
     return $p;
 }

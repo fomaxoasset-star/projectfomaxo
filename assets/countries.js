@@ -35,7 +35,10 @@ window.FX_COUNTRIES = (function () {
       for (var i = 0; i < byDial.length; i++) {
         var c = byDial[i];
         if (d.indexOf(c.dial) === 0) {
-          return { iso: prefer[c.dial] || c.iso, national: d.slice(c.dial.length) };
+          var iso = prefer[c.dial] || c.iso, nat = d.slice(c.dial.length);
+          // Drop the extra 0 people type after the code (+971 0 54...), except where numbers really start with 0 (Italy).
+          if (!/^(IT|SM|VA)$/.test(iso)) nat = nat.replace(/^0+/, '');
+          return { iso: iso, national: nat };
         }
       }
       return null;
