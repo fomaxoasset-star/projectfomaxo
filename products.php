@@ -96,7 +96,7 @@ if ($pdo) { try { $who = []; $year = date('Y-m-d', strtotime('-6 day')) . ' 00:0
 /* site pages hidden on admin → Settings → Site pages (their links go and their address opens Home) */
 $hidePages = [];
 if ($pdo) { try { $hidePages = array_values(array_intersect(json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: [], array_keys(FX_SITE_PAGES))); } catch (Throwable $e) {} }
-$waPop = array_keys(array_filter(fomaxo_wa_popups($pdo ?: null)));   // the WhatsApp coupon boxes switched On (admin → Settings → Pages)
+$waPop = array_keys(array_filter(fomaxo_wa_popups($pdo ?: null)));   // the WhatsApp coupon boxes switched On (admin → Offers)
 $btSet = fomaxo_bt($pdo ?: null);
 /* same-day delivery (admin → Settings → Same-day): fee, free from, order hours and the areas it reaches; null = not offered */
 $sdSet = fomaxo_sameday($pdo ?: null);

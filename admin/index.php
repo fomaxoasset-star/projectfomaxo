@@ -1844,6 +1844,7 @@ const OFFER_CSS = <<<'CSS'
 .obtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
 .otk{display:inline-flex;align-items:center;gap:7px;margin:0;text-transform:none;letter-spacing:normal;font-size:14px;color:var(--ink);cursor:pointer}.otk input{width:17px;height:17px;margin:0;accent-color:var(--gold)}.ohd{font-family:Manrope,sans-serif;font-weight:500}
 .btn.oofff{color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}
+@media (min-width:960px){.ob[data-ob=sale]{grid-row:span 2}}.owas{display:grid;gap:8px}.owa .owas label.pg{padding:8px 10px;border:1px solid var(--line);border-radius:8px}
 @media (max-width:759px){.osw{display:flex;margin:0 0 12px;border:1px solid var(--line);border-radius:8px;overflow:hidden}.osw button{flex:1;font:inherit;font-size:14px;padding:10px;border:0;background:var(--panel);color:var(--muted);cursor:pointer}.osw button+button{border-left:1px solid var(--line)}.osw button.on{background:color-mix(in srgb,var(--gold) 14%,var(--panel));color:var(--gold);font-weight:600}
 .ob:not(.on){display:none}.orow{grid-template-columns:1fr;gap:6px}.orow:has(.owords)>b,.orow:has(.opick)>b{padding-top:0}.oendin{flex-direction:column;align-items:stretch}.cpq{display:grid;grid-template-columns:repeat(4,1fr)}.cpq button{padding:9px 2px}.od{grid-template-columns:minmax(0,1fr) 110px}
 .owords{grid-template-columns:minmax(0,1fr) 92px}.owords label:nth-of-type(n+3){grid-column:1/-1}.ofits{grid-template-columns:1fr}.obtns .btn{flex:1}.obtns .oofff{flex-basis:100%}}
@@ -2092,6 +2093,12 @@ if (isset($_GET['offer'])) {
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_ok()) { flash('Please try again.'); go(['offer' => 1]); }
     $clean = fn($k, $n) => mb_substr(trim(preg_replace('/\s+/u', ' ', (string)($_POST[$k] ?? ''))), 0, $n);
+    if (isset($_POST['wa_pop_save'])) {   // the three "New here?" WhatsApp boxes on the website, each On / Off (never saved = Off)
+      $on = (array)($_POST['wa'] ?? []); $set = []; foreach (array_keys(FX_WA_POPUPS) as $k) $set[$k] = empty($on[$k]) ? 0 : 1;
+      fomaxo_setting($pdo, 'wa_popups', json_encode($set));
+      $names = array_map(fn($k) => FX_WA_POPUPS[$k][0], array_keys(array_filter($set)));
+      flash('WhatsApp popups on: ' . ($names ? implode(', ', $names) : 'none') . '. It shows on the website within a minute.', true); go(['offer' => 1]);
+    }
     if (isset($_POST['np_save'])) {   // new product popup: its type (typed or picked) + the product name
       $on = isset($_POST['np_on']); $name = $clean('np_name', 40); $pid = preg_replace('/[^a-z0-9_-]/i', '', (string)($_POST['np_product'] ?? ''));
       if ($pid !== '' && !isset($plist[$pid])) $pid = '';
@@ -2132,6 +2139,7 @@ if (isset($_GET['offer'])) {
   $pop = (string)fomaxo_setting($pdo, 'sale_popup') !== '0';
   $pct = (string)fomaxo_setting($pdo, 'sale_pct'); $best = $bestOf($items);
   $W = (json_decode((string)fomaxo_setting($pdo, 'sale_words'), true) ?: []) + ['title' => '', 'sub' => '', 'btn' => ''];
+  $waPop = fomaxo_wa_popups($pdo);
   $np = (json_decode((string)fomaxo_setting($pdo, 'np'), true) ?: []) + ['on' => false, 'status' => 'soon', 'name' => '', 'line' => '', 'product' => ''];
   $np['label'] = ($np['label'] ?? '') !== '' ? $np['label'] : ($np['status'] === 'arrived' ? 'Just arrived' : 'Coming soon');
   $what = implode(' + ', array_filter([$pop ? 'popup' : '', $lines ? 'line by prices on ' . ($linesAll ? 'all ' : '') . count($lines) . ' product' . (count($lines) > 1 ? 's' : '') : '']));
@@ -2158,7 +2166,7 @@ if (isset($_GET['offer'])) {
   $opts = '<option value="">No product (no photo)</option>' . implode('', array_map(fn($id, $p) => '<option value="' . h($id) . '" data-img="' . h($p['img']) . '"' . ($np['product'] === $id ? ' selected' : '') . '>' . h($p['name']) . ($p['hidden'] ? ' (hidden)' : '') . '</option>', array_keys($plist), $plist));
   page('Offers', '<h1>Offers</h1>' . flash()
     . '<style>' . OFFER_CSS . '</style>'
-    . '<div class="osw" role="group" aria-label="Show"><button type="button" class="on" data-ow="sale">Sale offer</button><button type="button" data-ow="new">New product</button></div>'
+    . '<div class="osw" role="group" aria-label="Show"><button type="button" class="on" data-ow="sale">Sale offer</button><button type="button" data-ow="new">New product</button><button type="button" data-ow="wa">WhatsApp</button></div>'
     . '<div class="ogrid">'
     /* box 1: the sale offer */
     . '<form class="card ob on" data-ob="sale" method="post" id="offerForm" data-best="' . $bestOf([]) . '">' . csrf_field()
@@ -2190,7 +2198,12 @@ if (isset($_GET['offer'])) {
     . '<label>Name<input name="np_name" maxlength="40" value="' . h($np['name']) . '" placeholder="e.g. Oud Royale"></label>'
     . '<label>Short line<input name="np_line" maxlength="90" value="' . h($np['line']) . '" placeholder="Optional"></label>'
     . $szIn('fs', $szNew) . '<div class="obtns"><button class="btn">Save</button><button type="button" class="btn line" data-preview="new">Preview</button></div>'
-    . '<p class="muted small" style="margin:10px 0 0">Shows once per visitor, before the sale popup.</p></form></div>'
+    . '<p class="muted small" style="margin:10px 0 0">Shows once per visitor, before the sale popup.</p></form>'
+    /* box 3: the "New here? AED 20, coupon on WhatsApp" boxes, each On / Off; saves as you tap */
+    . '<form class="card ob owa spages" data-ob="wa" method="post" onchange="this.submit()">' . csrf_field() . '<input type="hidden" name="wa_pop_save" value="1">'
+    . '<h2>WhatsApp popups</h2><p class="muted small" style="margin:0 0 10px">“New here? AED 20, coupon on WhatsApp” for new visitors. Saves as you tap.</p>'
+    . '<div class="owas">' . implode('', array_map(fn($k, $l) => '<label class="pg" title="' . h($l[1]) . '"><span>' . h($l[0]) . '</span><input type="checkbox" role="switch" name="wa[' . $k . ']" value="1"' . ($waPop[$k] ? ' checked' : '') . ' aria-label="' . h($l[0]) . '"><i class="sw"></i></label>', array_keys(FX_WA_POPUPS), FX_WA_POPUPS)) . '</div>'
+    . '<noscript><div class="obtns"><button class="btn">Save</button></div></noscript></form></div>'
     . '<script>window.FX_TR_ONLY=1</script><script src="../assets/i18n-ar.js?v=' . (int)@filemtime(__DIR__ . '/../assets/i18n-ar.js') . '"></script>'   /* the website's Arabic words, for the EN / عربي preview: the file the browser keeps (100 KB not sent again on every Offers page load) */
     . '<script>var OFFER_SZ=' . fomaxo_json(['sale' => fomaxo_popup_spec(), 'new' => fomaxo_popup_spec(true)]) . ';' . OFFER_JS . '</script>', true);
 }
@@ -2246,12 +2259,6 @@ if (isset($_GET['settings'])) {
       fomaxo_setting($pdo, 'hide_pages', json_encode($hide));
       flash(($hide ? 'Hidden: ' . implode(', ', array_map(fn($k) => FX_SITE_PAGES[$k], $hide)) . '. ' : 'All pages are shown. ') . 'It shows on the website within a minute.', true); go(['settings' => 1]);
     }
-    if (isset($_POST['wa_pop_save'])) {   // the WhatsApp coupon boxes on the website: ticked = shown
-      $on = (array)($_POST['wa'] ?? []); $set = []; foreach (array_keys(FX_WA_POPUPS) as $k) $set[$k] = empty($on[$k]) ? 0 : 1;
-      fomaxo_setting($pdo, 'wa_popups', json_encode($set));
-      $names = array_map(fn($k) => FX_WA_POPUPS[$k][0], array_keys(array_filter($set)));
-      flash('WhatsApp popups on: ' . ($names ? implode(', ', $names) : 'none') . '. It shows on the website within a minute.', true); go(['settings' => 1]);
-    }
     if (isset($_POST['cod_save'])) {   // cash on delivery minimum and maximum (AED); maximum empty or 0 = no upper limit
       $mn = trim((string)($_POST['cod_min'] ?? '')); $mx = trim((string)($_POST['cod_max'] ?? ''));
       if (!ctype_digit($mn) || (int)$mn > 1000000) { flash('Please type the cash on delivery minimum in AED (numbers only, 0 for none).'); go(['settings' => 1]); }
@@ -2289,7 +2296,7 @@ if (isset($_GET['settings'])) {
   }
   $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) ?: [];
   [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo); $sd = fomaxo_sameday($pdo); $sdRaw = json_decode((string)fomaxo_setting($pdo, 'sameday'), true) ?: [];
-  $pgOff = json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: []; $waPop = fomaxo_wa_popups($pdo);
+  $pgOff = json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: [];
   $adOn = fn($k) => ($ads[$k] ?? '') !== '' ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>';
   require_once dirname(__DIR__) . '/ads-server-lib.php';
   $adTok = fomaxo_ads_tokens(); $adSent = fomaxo_ads_last($pdo);
@@ -2312,10 +2319,6 @@ if (isset($_GET['settings'])) {
     . '<form class="card spages" method="post" data-t="6">' . csrf_field() . '<input type="hidden" name="pages_save" value="1">'
     . '<h2>Site pages <small class="muted">Off hides a page from the website</small></h2><div class="pgs" onchange="this.closest(\'form\').submit()">'
     . implode('', array_map(fn($k, $l) => '<label class="pg"><span>' . h($l) . '</span><input type="checkbox" role="switch" name="pg[' . $k . ']" value="1"' . (in_array($k, $pgOff, true) ? '' : ' checked') . ' aria-label="' . h($l) . '"><i class="sw"></i></label>', array_keys(FX_SITE_PAGES), FX_SITE_PAGES))
-    . '</div><noscript><p class="sbtn"><button class="btn">Save</button></p></noscript></form>'
-    . '<form class="card spages" method="post" data-t="6">' . csrf_field() . '<input type="hidden" name="wa_pop_save" value="1">'
-    . '<h2>WhatsApp popups <small class="muted">“New here? AED 20, coupon on WhatsApp” for new visitors</small></h2><div class="pgs" onchange="this.closest(\'form\').submit()">'
-    . implode('', array_map(fn($k, $l) => '<label class="pg"><span>' . h($l[0]) . '<small class="muted">' . h($l[1]) . '</small></span><input type="checkbox" role="switch" name="wa[' . $k . ']" value="1"' . ($waPop[$k] ? ' checked' : '') . ' aria-label="' . h($l[0]) . '"><i class="sw"></i></label>', array_keys(FX_WA_POPUPS), FX_WA_POPUPS))
     . '</div><noscript><p class="sbtn"><button class="btn">Save</button></p></noscript></form>'
     . '<form class="card" method="post" data-t="2">' . csrf_field() . '<input type="hidden" name="cod_save" value="1">'
     . '<h2>Cash on delivery</h2>'
