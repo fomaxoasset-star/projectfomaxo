@@ -2743,7 +2743,7 @@ if (isset($_GET['analytics'])) {
   $isDay = fn($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$v) && strtotime($v);
   $r = (string)($_GET['r'] ?? 'today');   // Analytics opens on Today
   if ($r === 'custom' && $isDay($_GET['d1'] ?? '') && $isDay($_GET['d2'] ?? '')) { $d1 = min($_GET['d1'], $_GET['d2']); $d2 = max($_GET['d1'], $_GET['d2']); }
-  else { if (!in_array($r, ['today', '7', '30'], true)) $r = 'today'; $d2 = date('Y-m-d'); $d1 = date('Y-m-d', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')); }
+  else { if (!in_array($r, ['today', '7', '30', 'year'], true)) $r = 'today'; $d2 = date('Y-m-d'); $d1 = $r === 'year' ? date('Y-m-d', strtotime('-1 year +1 day')) : date('Y-m-d', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')); }   // Year = the last 12 months, as the countries list had
   $span = [$d1 . ' 00:00:00', $d2 . ' 23:59:59'];
   $nDays = (int)round((strtotime($d2) - strtotime($d1)) / 86400) + 1;
   $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
@@ -3066,7 +3066,7 @@ if (isset($_GET['analytics'])) {
   /* on a phone the label sits on top with a short note under the number; laptop shows label under the number as before */
   $tile = fn($val, $label, $cls = '', $note = '') => '<div class="tile ' . $cls . '"><b>' . $val . '</b><span>' . $label . '</span>' . ($note !== '' ? '<small class="tn">' . $note . '</small>' : '') . '</div>';
   $dk = fn($desk, $mob) => '<span class="dk">' . $desk . '</span><span class="mo">' . $mob . '</span>';
-  $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
+  $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'year' => 'Year'];
   $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'countries' => 'Countries', 'emirates' => 'Emirates', 'devices' => 'Devices', 'pages' => 'Pages', 'returning' => 'Returning', 'left' => 'Left at checkout'];
   /* phone only: the Returning section (laptop shows the Returning box in the top row) */
   $retRows = '';
