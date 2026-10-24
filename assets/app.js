@@ -971,6 +971,7 @@
       '<div class="qr-box">' + qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true }) + '</div>' +
       '<p class="small muted qr-hint" style="text-align:center;margin:0 0 6px">Customer scans with their phone camera and pays by card, Apple Pay or Google Pay.</p>' +
       '<div class="err m-err hidden"></div>' +
+      '<div class="modal-foot"><button class="btn gold big block" data-act="z-paid" data-id="' + d.sale.id + '">✓ Payment received</button></div>' +
       // The customer scans the code; send the link only when they are not at the counter.
       (wa || mail ? '<div class="modal-foot qr-links">' + (wa ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(wa) + '">Send on WhatsApp</a>' : '') +
         (mail ? '<a class="btn" href="' + esc(mail) + '">Send by email</a>' : '') + '</div>' : '') +
@@ -1928,6 +1929,15 @@
       case 'pay': if (PAY) payScreen(el.getAttribute('data-m')); break;
       case 'sw-m': if (PAY && !el.classList.contains('active')) payScreen(el.getAttribute('data-m')); break;
       case 'pay-back': payChooser(); break;
+      case 'z-paid':
+        // Check with Ziina now; only a payment Ziina confirms becomes a paid sale.
+        el.disabled = true; el.textContent = 'Checking with Ziina…';
+        api('ziina_check', { query: '&id=' + id }).then(function (r) {
+          if (r.status === 'paid') { finishPaid(r.sale); return; }
+          el.disabled = false; el.textContent = '✓ Payment received';
+          modalErr(r.status === 'pending' ? 'Ziina has not confirmed this payment yet. Check the customer\u2019s phone says Paid, wait a few seconds and tap again.' : 'The payment was ' + r.status + '. No money was taken.');
+        }).catch(function (er) { el.disabled = false; el.textContent = '✓ Payment received'; modalErr(er.offline ? 'Needs internet to check with Ziina.' : er.message); });
+        break;
       case 'pay-cancel': if (PAY || el.getAttribute('data-id')) openCancel(el); break;
       case 'cancel-back': if (cancelBack) cancelBack(); break;
       case 'pa-open': api('sale_get', { query: '&id=' + id }).then(function (d) { payFromSale(d.sale); payChooser(); }).catch(function (er) { toast(er.message, true); }); break;
