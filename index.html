@@ -2992,6 +2992,9 @@ const moneyHTML = (v, dec) => hasPrice(v) ? `<span class="amt"><span class="cur"
 const wasHTML = (p, size) => { const c = p.compareAt && p.compareAt[size]; return hasPrice(c) && c > p.prices[size] ? `<s class="was">${moneyHTML(c)}</s> ` : ''; };
 const priceHTML = (p, size, cls='price') => { const m = moneyHTML(p.prices[size]); return m ? `<span class="${cls}">${wasHTML(p, size)}${m}</span>` : `<span class="${cls} na">Price on request</span>`; };
 /* limited-time sale countdown: SALE_END comes from products.php (set on fomaxo.com/admin → Offer); on products / sizes with an old price */
+/* each "New here?" WhatsApp box shows only when switched On on admin → Settings → Pages → WhatsApp popups (AJAY, 2026-10-24) */
+let WA_POP = []; try { WA_POP = JSON.parse(localStorage.getItem('fomaxo_wapop') || '[]') || []; } catch(e) {}
+const waPopOn = k => Array.isArray(WA_POP) && WA_POP.includes(k);
 let SALE_END = 0, SALE_ALWAYS = false, SALE_POPUP = true, SALE_LINE = true, SALE_PCT = 0, NEW_POP = null, SALE_ITEMS = [], SALE_WORDS = {}, SALE_LINES = null, SALE_SIZE = null;   // SALE_SIZE: sale popup sizes {L:{img,title,pct,sub,btn},P:{…}} (NEW_POP.fs: the new product popup's)   // SALE_LINES: the products with the line by prices ('all' = every one with an old price; null = saved before that: the products in the offer)   // SALE_ITEMS: the products in the offer (none = all on sale); SALE_WORDS: {title, sub, btn} typed on the admin   // NEW_POP: {status: soon|arrived, name, line, product} from admin → Offer   // SALE_PCT: % typed on the admin (never more than the real saving)
    // SALE_ALWAYS: offer on with no timer; popup / line: what shows (admin → Offer)
 try { const v = JSON.parse(localStorage.getItem('fomaxo_sale') || '{}'); SALE_END = +v.e || 0; SALE_ALWAYS = !!v.a; SALE_POPUP = v.p !== false; SALE_LINE = v.l !== false; SALE_PCT = +v.pc || 0; NEW_POP = v.np || null; SALE_ITEMS = Array.isArray(v.it) ? v.it : []; SALE_WORDS = v.w || {}; SALE_LINES = Array.isArray(v.ln) || v.ln === 'all' ? v.ln : null; SALE_SIZE = v.sz || null; } catch(e) {}
@@ -3053,13 +3056,15 @@ function promoMaybe(){
    the number goes to Admin → Analytics → Left at checkout like the bag box (same AED 20 coupon, sent from there on WhatsApp) */
 let welT = 0, welOn = false;
 /* a new visitor: no welcome box yet, no number known, no order; they see only the welcome box, or the limited time offer popup when it is on */
-function welDue(){ try { return !(localStorage.getItem('fomaxo_wel') || bagWaKnown()); } catch(e) { return false; } }
+function welNew(){ try { return !(localStorage.getItem('fomaxo_wel') || bagWaKnown()); } catch(e) { return false; } }
+const welDue = () => waPopOn('welcome') && welNew();   // switched Off: no welcome box, so the other popups are not held back for it
 function welcomeMaybe(){
-  if (!welDue()) return;
+  if (!welNew()) return;
   if (welOn) return; welOn = true;
   let waited = 0;
   const go = () => { clearTimeout(welT);
     if (!prodLoaded && waited < 4000) { waited += 150; welT = setTimeout(go, 150); return; }   // the offer settings first (products.php)
+    if (!waPopOn('welcome')) { welOn = false; return; }   // admin → Settings → Pages → WhatsApp popups: Welcome popup Off
     if (saleReady()) { welOn = false; promoMaybe(); return; }   // the limited time offer popup shows instead
     if (/^#\/(checkout|thank-you|order-confirmed|review)/.test(location.hash) || document.querySelector('.promo') || document.querySelector('.drawer.open,#cart.open')) { welOn = false; welT = setTimeout(welcomeMaybe, 20000); return; }
     try { if (sessionStorage.getItem('fomaxo_promo')) return; localStorage.setItem('fomaxo_wel', '1'); sessionStorage.setItem('fomaxo_promo', '1'); } catch(e) { return; }
@@ -3353,7 +3358,7 @@ function waKeep(phSel, nmSel, t){
   [ph, nm].forEach(el => { if (el) { el.addEventListener('change', keep); el.addEventListener('blur', keep); } });
 }
 function bagWaHTML(){
-  if (bagWaBought()) return '';   // ordered since: no coupon line at all
+  if (!waPopOn('bag') || bagWaBought()) return '';   // switched Off, or ordered since: no coupon line at all
   try { if (localStorage.getItem('fomaxo_bagwa')) return '<p class="bag-wa-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; } catch(e) {}
   if (bagWaKnown()) return '';
   return `<form class="bag-wa" id="bagWa" novalidate><label for="bagWaIn">New here? AED 20 off orders · Coupon on WhatsApp</label><div class="bag-wa-row">${ccPick()}<input id="bagWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="Your WhatsApp number" aria-label="Your WhatsApp number"><button class="btn sm" type="submit">Send</button></div></form>`;
@@ -3370,7 +3375,7 @@ function bagWaWire(t){
    Real offer: the coupon is sent from admin Left at checkout (AED 20 off, min AED 80, ends in 2 days).
    Shown until they give their WhatsApp number or order once. */
 function pmWaHTML(){
-  if (bagWaKnown()) return '';
+  if (!waPopOn('offer') || bagWaKnown()) return '';
   return `<div class="pm-wa"><p class="pm-wa-t"><b>New here? GET AED 20</b><span>· Coupon on WhatsApp</span></p><form class="pm-wa-row" id="pmWa" novalidate><input id="pmWaName" class="pm-wa-nm" type="text" autocomplete="name" maxlength="60" placeholder="Name" aria-label="Your name"><span class="cc-row">${ccPick()}<input id="pmWaIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="WhatsApp Number" aria-label="Your WhatsApp number"></span><button class="btn" type="submit">${CO_ICON.whatsapp}<span>Send</span></button></form></div>`;
 }
 function pmWaWire(){
@@ -6154,6 +6159,7 @@ async function loadProducts(){
   if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); bestSync(); shopResort(); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
+  if (d && Array.isArray(d.waPop)) { const ch = JSON.stringify(d.waPop) !== JSON.stringify(WA_POP); WA_POP = d.waPop; try { localStorage.setItem('fomaxo_wapop', JSON.stringify(WA_POP)); } catch(e) {} if (ch) renderCart(); }
   if (d && Array.isArray(d.hidePages) && JSON.stringify(d.hidePages) !== JSON.stringify(HIDE_PAGES)) {
     HIDE_PAGES = d.hidePages; try { localStorage.setItem('fomaxo_hide_pages', JSON.stringify(HIDE_PAGES)); } catch(e) {}
     applyPages(); const s0 = (location.hash.replace(/^#\/?/, '').split(/[/?]/)[0]); if (HIDE_PAGES.includes(s0)) location.replace('#/'); else if (s0 === 'combo' || s0 === 'gifts') route();   // PC on/off changes what combos and gifts hold

@@ -2246,6 +2246,12 @@ if (isset($_GET['settings'])) {
       fomaxo_setting($pdo, 'hide_pages', json_encode($hide));
       flash(($hide ? 'Hidden: ' . implode(', ', array_map(fn($k) => FX_SITE_PAGES[$k], $hide)) . '. ' : 'All pages are shown. ') . 'It shows on the website within a minute.', true); go(['settings' => 1]);
     }
+    if (isset($_POST['wa_pop_save'])) {   // the WhatsApp coupon boxes on the website: ticked = shown
+      $on = (array)($_POST['wa'] ?? []); $set = []; foreach (array_keys(FX_WA_POPUPS) as $k) $set[$k] = empty($on[$k]) ? 0 : 1;
+      fomaxo_setting($pdo, 'wa_popups', json_encode($set));
+      $names = array_map(fn($k) => FX_WA_POPUPS[$k][0], array_keys(array_filter($set)));
+      flash('WhatsApp popups on: ' . ($names ? implode(', ', $names) : 'none') . '. It shows on the website within a minute.', true); go(['settings' => 1]);
+    }
     if (isset($_POST['cod_save'])) {   // cash on delivery minimum and maximum (AED); maximum empty or 0 = no upper limit
       $mn = trim((string)($_POST['cod_min'] ?? '')); $mx = trim((string)($_POST['cod_max'] ?? ''));
       if (!ctype_digit($mn) || (int)$mn > 1000000) { flash('Please type the cash on delivery minimum in AED (numbers only, 0 for none).'); go(['settings' => 1]); }
@@ -2283,7 +2289,7 @@ if (isset($_GET['settings'])) {
   }
   $ads = json_decode((string)fomaxo_setting($pdo, 'ads'), true) ?: [];
   [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo); $sd = fomaxo_sameday($pdo); $sdRaw = json_decode((string)fomaxo_setting($pdo, 'sameday'), true) ?: [];
-  $pgOff = json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: [];
+  $pgOff = json_decode((string)fomaxo_setting($pdo, 'hide_pages'), true) ?: []; $waPop = fomaxo_wa_popups($pdo);
   $adOn = fn($k) => ($ads[$k] ?? '') !== '' ? '<span class="lvl-ok">●</span> On' : '<span class="muted">○ Off</span>';
   require_once dirname(__DIR__) . '/ads-server-lib.php';
   $adTok = fomaxo_ads_tokens(); $adSent = fomaxo_ads_last($pdo);
@@ -2306,6 +2312,10 @@ if (isset($_GET['settings'])) {
     . '<form class="card spages" method="post" data-t="6">' . csrf_field() . '<input type="hidden" name="pages_save" value="1">'
     . '<h2>Site pages <small class="muted">Off hides a page from the website</small></h2><div class="pgs" onchange="this.closest(\'form\').submit()">'
     . implode('', array_map(fn($k, $l) => '<label class="pg"><span>' . h($l) . '</span><input type="checkbox" role="switch" name="pg[' . $k . ']" value="1"' . (in_array($k, $pgOff, true) ? '' : ' checked') . ' aria-label="' . h($l) . '"><i class="sw"></i></label>', array_keys(FX_SITE_PAGES), FX_SITE_PAGES))
+    . '</div><noscript><p class="sbtn"><button class="btn">Save</button></p></noscript></form>'
+    . '<form class="card spages" method="post" data-t="6">' . csrf_field() . '<input type="hidden" name="wa_pop_save" value="1">'
+    . '<h2>WhatsApp popups <small class="muted">“New here? AED 20, coupon on WhatsApp” for new visitors</small></h2><div class="pgs" onchange="this.closest(\'form\').submit()">'
+    . implode('', array_map(fn($k, $l) => '<label class="pg"><span>' . h($l[0]) . '<small class="muted">' . h($l[1]) . '</small></span><input type="checkbox" role="switch" name="wa[' . $k . ']" value="1"' . ($waPop[$k] ? ' checked' : '') . ' aria-label="' . h($l[0]) . '"><i class="sw"></i></label>', array_keys(FX_WA_POPUPS), FX_WA_POPUPS))
     . '</div><noscript><p class="sbtn"><button class="btn">Save</button></p></noscript></form>'
     . '<form class="card" method="post" data-t="2">' . csrf_field() . '<input type="hidden" name="cod_save" value="1">'
     . '<h2>Cash on delivery</h2>'
