@@ -459,6 +459,20 @@ main.fit .pfh{display:none!important}}
 .petools .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px}
 .peft{display:flex;align-items:center;gap:10px;padding:10px 16px 14px}.peft .muted{flex:1;margin:0}
 @media (max-width:759px){.pedit{padding:0}.pebox{border-radius:0;height:100%;border:0}.petools{gap:6px}.petools .seg button{padding:6px 9px}.peft{padding:10px 12px calc(12px + env(safe-area-inset-bottom))}}
+/* Client report (?analytics=1&client=1): a page that scrolls, made to show someone */
+.cl{max-width:1280px;margin:0 auto;padding-bottom:16px}.chead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:12px}.chead h1{margin:0}.ctitle{margin:2px 0 0;font-size:15px;color:var(--gold);font-weight:600}
+.cpick{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0}.cpick select{width:auto;font-size:13px;padding:5px 8px}.cpick .seg a{font-size:12.5px;padding:4px 12px}@media (max-width:759px){.cpick{width:100%;flex-wrap:nowrap}.cpick select{flex:1;min-width:0}.cprint{display:none}}
+.ctiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}.ctile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.ctile span{display:block;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}.ctile b{display:block;font-size:20px;font-weight:600;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}.ctile small{display:block;font-size:11.5px;color:var(--muted)}
+.ctiles .ctile:first-child b{color:var(--gold)}
+.cgrid2,.cgrid3{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:10px}.cl .card{display:flex;flex-direction:column;min-width:0}
+.cch{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 0 8px}.cch h2{margin:0;font-size:15.5px}.cch .val{font-size:12px;color:var(--muted)}
+.cl .chartbox{height:190px;display:flex}.cl .sub{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin:8px 0 0}.cl .sub b{color:var(--ink);white-space:nowrap}
+.cl tfoot td{border-top:2px solid var(--gold);border-bottom:0}.cl tr.muted td{opacity:.55}.cl .ptab .fb{margin:4px 0 0;height:5px;max-width:160px}.cnote{margin:4px 0 0}
+@media (min-width:760px){.ctiles{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.ctile{padding:12px 14px}.ctile b{font-size:22px}
+  .cgrid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cgrid3{grid-template-columns:repeat(3,minmax(0,1fr))}.cgrid3.yr{grid-template-columns:repeat(2,minmax(0,1fr))}.cl .chartbox{height:220px}.cl .k-months{grid-column:1/-1}}
+@media (min-width:1100px){.cgrid3.yr{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);grid-template-areas:"months prod cty" "months prod em"}.cgrid3.yr .k-months{grid-column:auto;grid-area:months}.cgrid3.yr .k-prod{grid-area:prod}.cgrid3.yr .k-cty{grid-area:cty}.cgrid3.yr .k-em{grid-area:em}}
+@media print{.top,.tabsw,.tabs,.cpick,.cl .tip{display:none!important}html,body{height:auto;overflow:visible;display:block}main.wrap{overflow:visible}.cl .card{break-inside:avoid}}
 CSS;
 }
 function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
@@ -2756,6 +2770,112 @@ if (isset($_GET['analytics'])) {
   $buyOk = fn($a) => "($a.ev = 'buy' AND IF($a.ref IS NOT NULL, EXISTS (SELECT 1 FROM fx_orders o WHERE o.order_no = $a.ref AND $realO),
                       " . ($resetAt !== '' ? "$a.at >= " . $pdo->quote($resetAt) . ' AND ' : '') . "NOT EXISTS (SELECT 1 FROM fx_leads lb JOIN fx_orders o ON o.order_no = lb.order_no WHERE lb.sid = $a.sid AND NOT ($realO))))";
   $notTrash = fx_not_trash($pdo);
+  /* ---- Client report (?analytics=1&client=1): a clean page to show someone how the shop is doing, by month or by year.
+     Visitors, orders and income only: no names, mobiles or Left at checkout. Orders and income count real orders (New, Paid or Delivered, not a test) ---- */
+  if (isset($_GET['client'])) {
+    $yr = ($_GET['v'] ?? '') === 'y';
+    $first = (string)$pdo->query("SELECT LEAST(COALESCE((SELECT MIN(created_at) FROM fx_orders WHERE test = 0), NOW()), COALESCE((SELECT MIN(at) FROM fx_events), NOW()))")->fetchColumn();
+    $firstM = substr($first ?: date('Y-m-d'), 0, 7);
+    $months = []; for ($t = strtotime(date('Y-m-01')); date('Y-m', $t) >= $firstM; $t = strtotime('-1 month', $t)) $months[] = date('Y-m', $t);
+    $years = array_values(array_unique(array_map(fn($m) => substr($m, 0, 4), $months)));
+    if ($yr) { $y = (string)($_GET['y'] ?? ''); if (!in_array($y, $years, true)) $y = $years[0]; $c1 = "$y-01-01"; $c2 = "$y-12-31"; $title = $y; }
+    else { $m = (string)($_GET['m'] ?? ''); if (!in_array($m, $months, true)) $m = $months[0]; $c1 = "$m-01"; $c2 = date('Y-m-t', strtotime($c1)); $title = date('F Y', strtotime($c1)); }
+    $cs = [$c1 . ' 00:00:00', $c2 . ' 23:59:59'];
+    $cq = function ($sql, $args = []) use ($pdo, $cs) { $s = $pdo->prepare($sql); $s->execute($args ?: $cs); return $s; };
+    $pct = fn($a, $b) => $b > 0 ? round(100 * $a / $b, 1) : 0;
+    $pctT = fn($v) => rtrim(rtrim(number_format($v, 1), '0'), '.') . '%';
+    $aed = fn($v) => 'AED ' . number_format(round((float)$v));
+
+    $v = array_map('intval', $cq("SELECT COUNT(DISTINCT vid) visitors, COUNT(DISTINCT sid) visits, COUNT(DISTINCT CASE WHEN " . $buyOk('e') . " THEN sid END) buy
+                                  FROM fx_events e WHERE at BETWEEN ? AND ?$notTrash")->fetch());
+    $o = $cq("SELECT COUNT(*) n, COALESCE(SUM(o.total), 0) t FROM fx_orders o WHERE $realO AND o.created_at BETWEEN ? AND ?")->fetch();
+    $on = (int)$o['n']; $ot = (float)$o['t'];
+    /* repeat customers: orders in the period from a mobile (last 9 digits) that had ordered before */
+    $rep = 0;
+    try { $rep = (int)$cq("SELECT COUNT(*) FROM fx_orders o WHERE $realO AND o.phone <> '' AND o.created_at BETWEEN ? AND ? AND EXISTS (SELECT 1 FROM fx_orders x WHERE x.status IN ('New', 'Paid', 'Delivered') AND x.test = 0
+                             AND x.created_at < o.created_at AND RIGHT(REGEXP_REPLACE(x.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9))")->fetchColumn(); } catch (Throwable $e) {}
+
+    /* income and visitors per day (a month) or per month (a year) */
+    $kf = $yr ? '%Y-%m' : '%Y-%m-%d';
+    $inc = $cnt = $vis = $buy = [];
+    foreach ($cq("SELECT DATE_FORMAT(created_at, '$kf') k, COUNT(*) n, SUM(total) t FROM fx_orders WHERE " . str_replace('o.', '', $realO) . " AND created_at BETWEEN ? AND ? GROUP BY k") as $row) { $inc[$row['k']] = (float)$row['t']; $cnt[$row['k']] = (int)$row['n']; }
+    foreach ($cq("SELECT DATE_FORMAT(at, '$kf') k, COUNT(DISTINCT vid) n, COUNT(DISTINCT sid) s, COUNT(DISTINCT CASE WHEN " . $buyOk('e') . " THEN sid END) b FROM fx_events e WHERE at BETWEEN ? AND ?$notTrash GROUP BY k") as $row) { $vis[$row['k']] = (int)$row['n']; $buy[$row['k']] = [(int)$row['b'], (int)$row['s']]; }
+    $pi = $pv = []; $rows = '';
+    $cEnd = min(strtotime($c2), strtotime(date('Y-m-d')));   // this month or year: the graphs stop at today
+    for ($t = strtotime($c1); $t <= strtotime($c2); $t = strtotime($yr ? 'first day of next month' : '+1 day', $t)) {
+      $k = date($yr ? 'Y-m' : 'Y-m-d', $t);
+      if ($t <= $cEnd) {
+      $pi[] = ['v' => $inc[$k] ?? 0, 'l' => date($yr ? 'M' : 'j', $t), 't' => date($yr ? 'F Y' : 'D j M', $t) . ': ' . $aed($inc[$k] ?? 0) . ' · ' . ($cnt[$k] ?? 0) . ' order' . (($cnt[$k] ?? 0) === 1 ? '' : 's')];
+      $pv[] = ['v' => $vis[$k] ?? 0, 'l' => date($yr ? 'M' : 'j', $t), 't' => date($yr ? 'F Y' : 'D j M', $t) . ': ' . number_format($vis[$k] ?? 0) . ' visitors'];
+      }
+      if ($yr) $rows .= '<tr' . ($k > date('Y-m') ? ' class="muted"' : '') . '><td>' . date('F', $t) . '</td><td class="num">' . number_format($vis[$k] ?? 0) . '</td><td class="num">' . ($cnt[$k] ?? 0) . '</td><td class="num">' . $pctT($pct($buy[$k][0] ?? 0, $buy[$k][1] ?? 0)) . '</td><td class="num"><b>' . $aed($inc[$k] ?? 0) . '</b></td></tr>';
+    }
+    $unit = $yr ? 'month' : 'day';
+    $gInc = fx_graph($pi, 'Income per ' . $unit, false, fn($x) => 'Best ' . $unit . ': ' . $aed($x));
+    $gVis = fx_graph($pv, 'Visitors per ' . $unit, false, fn($x) => 'Busiest ' . $unit . ': ' . number_format($x) . ' visitors', true);
+
+    /* products sold: units from the order lines */
+    $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $row) { $pd = json_decode($row['data'], true); $names[$row['id']] = $pd['name'] ?? $row['id']; }
+    $sold = [];
+    foreach ($cq("SELECT lines_json FROM fx_orders WHERE " . str_replace('o.', '', $realO) . " AND lines_json IS NOT NULL AND created_at BETWEEN ? AND ?") as $row)
+      foreach ((array)json_decode($row['lines_json'], true) as $l) { $id = (string)($l['id'] ?? ''); if ($id === '') continue;
+        $sold[$id] ??= ['n' => 0, 't' => 0.0]; $sold[$id]['n'] += max(0, (int)($l['qty'] ?? 0)); $sold[$id]['t'] += max(0, (int)($l['qty'] ?? 0)) * (float)($l['price'] ?? 0); }
+    uasort($sold, fn($a, $b) => $b['n'] <=> $a['n'] ?: $b['t'] <=> $a['t']);
+    $units = array_sum(array_column($sold, 'n')); $pT = '';
+    foreach ($sold as $id => $s) $pT .= '<tr><td><b>' . h($names[$id] ?? ucfirst($id)) . '</b><div class="fb"><i style="width:' . max(1, $pct($s['n'], $units)) . '%"></i></div></td><td class="num">' . number_format($s['n']) . '</td><td class="num">' . $pctT($pct($s['n'], $units)) . '</td></tr>';
+
+    /* countries and emirates */
+    require_once dirname(__DIR__) . '/geo-lib.php';
+    $geo = function ($rows, $label) use ($pct, $pctT) {
+      $tot = array_sum(array_column($rows, 'n')); $tr = '';
+      foreach ($rows as $row) $tr .= '<tr><td>' . $row['name'] . '</td><td class="num">' . number_format($row['n']) . '</td><td class="gbar"><div class="fb"><i style="width:' . max(1, $pct($row['n'], $tot)) . '%"></i></div></td><td class="num muted">' . $pctT($pct($row['n'], $tot)) . '</td></tr>';
+      return '<table class="mini gtab"><thead><tr><th>' . $label . '</th><th class="num">Visitors</th><th class="gbar"></th><th class="num">Share</th></tr></thead><tbody>' . $tr . '</tbody></table>';
+    };
+    $cR = $eR = [];
+    try {
+      foreach ($cq("SELECT country, COUNT(DISTINCT vid) n FROM fx_events WHERE country IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY country ORDER BY n DESC, country LIMIT 10") as $row)
+        $cR[] = ['name' => fomaxo_flag($row['country']) . ' ' . h(fomaxo_country_name($row['country'])), 'n' => (int)$row['n']];
+      $em = array_fill_keys(FOMAXO_EMIRATES, 0);
+      foreach ($cq("SELECT region, COUNT(DISTINCT vid) n FROM fx_events WHERE country = 'AE' AND at BETWEEN ? AND ?$notTrash GROUP BY region") as $row) if (isset($em[$row['region']])) $em[$row['region']] = (int)$row['n'];
+      arsort($em); foreach ($em as $name => $n) $eR[] = ['name' => h($name), 'n' => $n];
+    } catch (Throwable $e) {}
+    /* devices */
+    $dv = ['phone' => 0, 'computer' => 0, 'tablet' => 0];
+    foreach ($cq("SELECT x.device, COUNT(*) n FROM (SELECT sid, MIN(device) device FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ?$notTrash GROUP BY sid) x WHERE x.device IN ('phone', 'tablet', 'computer') GROUP BY x.device") as $row) $dv[$row['device']] = (int)$row['n'];
+    $dvAll = array_sum($dv);
+
+    $tile = fn($val, $label, $note = '') => '<div class="ctile"><span>' . $label . '</span><b>' . $val . '</b>' . ($note !== '' ? '<small>' . $note . '</small>' : '') . '</div>';
+    $pick = '<form class="cpick" method="get"><input type="hidden" name="analytics" value="1"><input type="hidden" name="client" value="1">' . ($yr ? '<input type="hidden" name="v" value="y">' : '')
+      . '<nav class="seg"><a href="' . h(self_url(['analytics' => 1, 'client' => 1])) . '"' . ($yr ? '' : ' class="on"') . '>Monthly</a><a href="' . h(self_url(['analytics' => 1, 'client' => 1, 'v' => 'y'])) . '"' . ($yr ? ' class="on"' : '') . '>Yearly</a></nav>'
+      . '<select name="' . ($yr ? 'y' : 'm') . '" aria-label="' . ($yr ? 'Year' : 'Month') . '" onchange="this.form.submit()">'
+      . implode('', array_map(fn($x) => '<option value="' . h($x) . '"' . ($x === ($yr ? $y : $m) ? ' selected' : '') . '>' . h($yr ? $x : date('F Y', strtotime("$x-01"))) . '</option>', $yr ? $years : $months)) . '</select>'
+      . '<button type="button" class="btn sm line cprint" onclick="window.print()">Print / PDF</button></form>';
+    $card = fn($cls, $h, $body, $val = '') => '<section class="card ' . $cls . '"><div class="cch"><h2>' . $h . '</h2>' . ($val !== '' ? '<span class="val">' . $val . '</span>' : '') . '</div>' . $body . '</section>';
+    $since = fomaxo_setting($pdo, 'geo_since');
+    page('Client report', '<div class="cl">'
+      . '<div class="pagehead chead"><div><h1>FOMAXO report</h1><p class="muted ctitle">' . h($yr ? 'Year ' . $title : $title) . '</p></div>' . $pick . '</div>'
+      . '<div class="ctiles">'
+      . $tile($aed($ot), 'Income', $on ? $aed($ot / $on) . ' per order' : 'no orders yet')
+      . $tile(number_format($on), 'Orders', $units ? number_format($units) . ' items sold' : '')
+      . $tile(number_format($v['visitors']), 'Visitors', number_format($v['visits']) . ' visits')
+      . $tile($pctT($pct($v['buy'], $v['visits'])), 'Conversion rate', 'visits that bought')
+      . $tile($pctT($pct($rep, $on)), 'Repeat orders', $rep . ' from past customers')
+      . $tile($dvAll ? $pctT($pct($dv['phone'], $dvAll)) : '–', 'On phones', $dvAll ? $pctT($pct($dv['computer'], $dvAll)) . ' computer · ' . $pctT($pct($dv['tablet'], $dvAll)) . ' tablet' : '')
+      . '</div>'
+      . '<div class="cgrid2">'
+      . $card('k-inc', 'Income', '<div class="chartbox">' . $gInc . '</div><p class="sub"><span class="tip">Tap a bar to see that ' . $unit . '</span><b>' . $aed($ot) . ' in total</b></p>', 'per ' . $unit)
+      . $card('k-vis', 'Visitors', '<div class="chartbox">' . $gVis . '</div><p class="sub"><span class="tip">Tap a point to see that ' . $unit . '</span><b>' . number_format($v['visitors']) . ' in total</b></p>', 'per ' . $unit)
+      . '</div><div class="cgrid3' . ($yr ? ' yr' : '') . '">'
+      . ($yr ? $card('k-months', 'Month by month', '<div class="list"><table class="mini"><thead><tr><th>Month</th><th class="num">Visitors</th><th class="num">Orders</th><th class="num">Conv.</th><th class="num">Income</th></tr></thead><tbody>' . $rows
+               . '</tbody><tfoot><tr><td><b>Total</b></td><td class="num"><b>' . number_format($v['visitors']) . '</b></td><td class="num"><b>' . $on . '</b></td><td class="num"><b>' . $pctT($pct($v['buy'], $v['visits'])) . '</b></td><td class="num"><b>' . $aed($ot) . '</b></td></tr></tfoot></table></div>') : '')
+      . $card('k-prod', 'Best sellers', $pT ? '<div class="list"><table class="mini ptab"><thead><tr><th>Product</th><th class="num">Sold</th><th class="num">Share</th></tr></thead><tbody>' . $pT . '</tbody></table></div>' : '<p class="muted empty">No orders in this ' . ($yr ? 'year' : 'month') . ' yet.</p>')
+      . $card('k-cty', 'Top countries', $cR ? '<div class="list">' . $geo($cR, 'Country') . '</div>' : '<p class="muted empty">No visitors yet.</p>')
+      . $card('k-em', 'UAE visitors by emirate', array_sum(array_column($eR, 'n')) ? '<div class="list">' . $geo($eR, 'Emirate') . '</div>' : '<p class="muted empty">No visitors from the UAE yet.</p>')
+      . '</div>'
+      . '<p class="muted small cnote">Income and orders count real orders only (cancelled, refunded and test orders are left out). Visitor counting started ' . ($since ? h(date('j M Y', strtotime($since))) : 'in Oct 2026') . '. Location is approximate.</p>'
+      . '</div>'
+      . '<script>document.querySelectorAll(".cl .chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)})</script>', true, false);
+  }
   $f = $q("SELECT COUNT(DISTINCT vid) visitors, COUNT(DISTINCT sid) visits, SUM(ev = 'view') views,
                   COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) product, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) cart,
                   COUNT(DISTINCT CASE WHEN ev = 'checkout' THEN sid END) checkout, COUNT(DISTINCT CASE WHEN ev = 'pay' THEN sid END) pay,
@@ -3081,7 +3201,7 @@ if (isset($_GET['analytics'])) {
                : '<p class="muted empty">No repeat orders in these dates.</p>')
     . '<p class="muted small gnote">Orders in these dates from a mobile that had ordered before.</p></section>';
   page('Analytics', '<div class="db an">'
-    . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . '<div class="seg">'
+    . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a><a href="./?analytics=1&amp;client=1">Client</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . '<div class="seg">'
     . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k] + $cvq)) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
     . '<input type="hidden" name="r" value="custom"><input type="date" name="d1" value="' . h($d1) . '" aria-label="From"><input type="date" name="d2" value="' . h($d2) . '" aria-label="To"><button class="btn sm' . ($r === 'custom' ? '' : ' line') . '">Show</button></form></div>'
     . '<div class="tiles at">'
