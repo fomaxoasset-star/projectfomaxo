@@ -141,7 +141,7 @@ em{font-style:italic}
 /* ---------- announcement + nav ---------- */
 .announce{position:relative;z-index:41;background:#000;border-bottom:1px solid var(--line);text-align:center;font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--champagne);padding:10px 16px}
 .announce b{color:var(--gold);font-weight:400}
-.announce b svg{display:inline-block;width:.8em;height:.8em;fill:currentColor;vertical-align:-.06em}   /* gold star, as tall as the capitals and centred on them: decoration, not a close button */
+.announce b svg{display:inline-block;width:1.3em;height:1.3em;fill:currentColor;vertical-align:-.27em}   /* big gold star centred on the capitals: decoration, not a close button */
 header.nav{position:sticky;top:var(--sat);z-index:40;transition:background .5s,border-color .5s,backdrop-filter .5s;border-bottom:1px solid transparent}
 header.nav.solid,body:not(.home) header.nav{background:rgba(var(--bg-rgb),.86);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-color:var(--line)}
 .nav-in{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:30px;padding:18px var(--pad);max-width:1600px;margin:0 auto}
@@ -1239,7 +1239,7 @@ html:not(.sd-on) .ann-sd{display:none}   /* top bar "Same-day delivery" only whi
   .ann-msgs span.out{opacity:0;transform:translateY(-60%)}
   .announce .mode-switch{flex:none}
   .ann-rot>b:last-child{display:none}
-  .ann-rot>b{transform:translateY(.13em)}   /* star centred on the rotating words */
+  .ann-rot>b{transform:translateY(.145em)}   /* star centred on the rotating words */
 }
 @media(prefers-reduced-motion:reduce){.ann-msgs span{transition:none}}
 /* ===== mobile spacing system: consistent 16px gutter, calmer vertical rhythm ===== */
