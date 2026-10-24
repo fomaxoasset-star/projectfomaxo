@@ -970,7 +970,6 @@
       amountBox('Customer pays', d.sale.total) +
       '<div class="qr-box">' + qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true }) + '</div>' +
       '<p class="small muted qr-hint" style="text-align:center;margin:0 0 6px">Customer scans with their phone camera and pays by card, Apple Pay or Google Pay.</p>' +
-      '<div class="status-line" id="z-status"><span class="spinner"></span> Waiting for payment…</div>' +
       '<div class="err m-err hidden"></div>' +
       // The customer scans the code; send the link only when they are not at the counter.
       (wa || mail ? '<div class="modal-foot qr-links">' + (wa ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(wa) + '">Send on WhatsApp</a>' : '') +
