@@ -2793,8 +2793,10 @@ if (isset($_GET['progress'])) {
       if ($yr) $rows .= '<tr' . ($k > date('Y-m') ? ' class="muted"' : '') . '><td>' . date('F', $t) . '</td><td class="num">' . number_format($vis[$k] ?? 0) . '</td><td class="num">' . ($cnt[$k] ?? 0) . '</td><td class="num"><b>' . $aed($inc[$k] ?? 0) . '</b></td></tr>';
     }
     $unit = $yr ? 'month' : 'day';
-    $pi = array_values(array_filter($pi, fn($p) => $p['v'] > 0));   // Sales: only the days (or months) that had sales, side by side, so there are no empty gaps
-    $gInc = $pi ? fx_graph($pi, 'Sales on ' . $unit . 's with sales', false, fn($x) => 'Best ' . $unit . ': ' . $aed($x)) : '<p class="muted empty">No sales in this ' . ($yr ? 'year' : 'month') . ' yet.</p>';
+    /* Sales: a line of the total so far, rising with each sale, so one big day never makes the rest look empty. Tapping a point shows that day and the total */
+    while (count($pi) > 1 && $pi[0]['v'] <= 0) array_shift($pi);   // the line starts at the first sale, not with empty days before it
+    $run = 0; foreach ($pi as &$p) { $run += $p['v']; $p['t'] .= ' · total ' . $aed($run); $p['v'] = $run; } unset($p);
+    $gInc = fx_graph($pi, 'Total sales so far', false, fn($x) => 'Total: ' . $aed($x), true);
     $gVis = fx_graph($pv, 'Visitors each ' . $unit, false, fn($x) => 'Busiest ' . $unit . ': ' . number_format($x) . ' visitors', true);
 
     /* products sold: units from the order lines */
@@ -2859,7 +2861,7 @@ if (isset($_GET['progress'])) {
       . $tile($aed($all['t']), 'Total sales so far', number_format((int)$all['n']) . ' orders' . ($all['f'] ? ' since ' . date('M Y', strtotime($all['f'])) : ''))
       . '</div>'
       . '<div class="cgrid2">'
-      . $card('k-inc', 'Sales', '<div class="chartbox">' . $gInc . '</div><p class="sub"><span class="tip">Tap a bar to see that ' . $unit . '</span><b>' . $aed($ot) . ' in total</b></p>', count($pi) . ' ' . $unit . (count($pi) === 1 ? '' : 's') . ' with sales')
+      . $card('k-inc', 'Sales', '<div class="chartbox">' . $gInc . '</div><p class="sub"><span class="tip">Tap a point to see that ' . $unit . '</span><b>' . $aed($ot) . ' in total</b></p>', 'total so far')
       . $card('k-vis', 'Visitors', '<div class="chartbox">' . $gVis . '</div><p class="sub"><span class="tip">Tap a point to see that ' . $unit . '</span><b>' . number_format($v['visitors']) . ' in total</b></p>', 'each ' . $unit)
       . '</div><div class="cgrid3' . ($yr ? ' yr' : '') . '">'
       . ($yr ? $card('k-months', 'Month by month', '<div class="list"><table class="mini"><thead><tr><th>Month</th><th class="num">Visitors</th><th class="num">Orders</th><th class="num">Sales</th></tr></thead><tbody>' . $rows
