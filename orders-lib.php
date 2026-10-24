@@ -986,9 +986,9 @@ function fomaxo_cost_of($lines, $costs) {
 }
 /* website pages that admin → Settings → Site pages can hide (Home, Fragrances, products, bag and checkout always stay) */
 const FX_SITE_PAGES = ['personal-care' => 'Personal Care', 'pc' => 'PC', 'gifts' => 'Gifts', 'combo' => 'Combo', 'collections' => 'Collections', 'about' => 'About FOMAXO', 'contact' => 'Contact', 'franchise' => 'Franchise'];
-/* The three "New here? AED 20, coupon on WhatsApp" boxes (admin → Settings → Pages → WhatsApp popups, products.php waPop):
+/* The three "New here? AED 20, coupon on WhatsApp" boxes (admin → Offers → WhatsApp popups, products.php waPop):
    welcome = the popup a new visitor sees on arrival, offer = the box inside the offer popup, bag = the line inside the bag. Never saved = Off (AJAY, 2026-10-24). */
-const FX_WA_POPUPS = ['welcome' => ['Welcome popup', 'Opens for a new visitor as the site opens'], 'offer' => ['In the offer popup', 'Name and WhatsApp box inside the sale popup'], 'bag' => ['In the bag', 'One line inside the bag']];
+const FX_WA_POPUPS = ['welcome' => ['Welcome popup', 'Opens for a new visitor as the site opens'], 'offer' => ['Offer popup', 'Name and WhatsApp box inside the sale popup'], 'bag' => ['Bag', 'One line inside the bag']];
 function fomaxo_wa_popups(?PDO $pdo): array {
   $o = []; if ($pdo) { try { $o = json_decode((string)fomaxo_setting($pdo, 'wa_popups'), true); } catch (Throwable $e) {} }
   $o = is_array($o) ? $o : []; $r = []; foreach (array_keys(FX_WA_POPUPS) as $k) $r[$k] = !empty($o[$k]); return $r;
