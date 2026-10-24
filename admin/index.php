@@ -2857,7 +2857,7 @@ if (isset($_GET['progress'])) {
       . $tile(number_format($on), 'Orders', $grow($on, (int)$bo['n']) ?: ($units ? number_format($units) . ' items sold' : ''))
       . $tile(number_format($v['visitors']), 'Visitors', $grow($v['visitors'], $bv) ?: number_format($v['visits']) . ' visits')
       . $tile(($b100 = $pct($v['buy'], $v['visits'])) >= 1 ? round($b100) . ' in 100' : $pctT($b100), 'Visitors who buy', 'out of every 100 visits')
-      . $tile($pctT($pct($rep, $on)), 'Buy again', $rep . ' orders from past customers')
+      . $tile($pctT($pct($rep, $on)), 'Buy again')
       . $tile($aed($all['t']), 'Total sales so far', number_format((int)$all['n']) . ' orders' . ($all['f'] ? ' since ' . date('M Y', strtotime($all['f'])) : ''))
       . '</div>'
       . '<div class="cgrid2">'
