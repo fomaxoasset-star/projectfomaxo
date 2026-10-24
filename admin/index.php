@@ -144,7 +144,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .tabs a.on{color:var(--gold);border-bottom-color:var(--gold)}
 .tb{display:inline-flex;margin-left:4px;vertical-align:1px}.tb[hidden]{display:none}.tb i{font:700 9.5px/1 Manrope,Arial,sans-serif!important;font-size-adjust:none!important;letter-spacing:0;font-style:normal;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 0 1.5px var(--panel)}.tb i+i{margin-left:-3px}
 .tb-orders{background:#e0342b}.tb-bad{background:#4f7fc4}.tb-faulty{background:#d0644e}.tb-late{background:#e0a03a;color:#2a1c05!important}.tb-leads{background:#c9a45c;color:#17130b!important}
-@media (max-width:759px){.tabsw .tabs a:has(.tb:not([hidden])){position:relative;overflow:visible}.tabsw .tabs:has(.tb:not([hidden])) a:nth-child(-n+6){padding-top:12px}.tabsw .tabs .tb{position:absolute;top:-1px;right:-3px;margin:0;z-index:1}.tabsw .tabs .tb i{min-width:14px;height:14px;font-size:8.5px!important;padding:0 3px}}
+@media (max-width:759px){.tabsw .tabs a:has(.tb:not([hidden])){position:relative;overflow:visible}.tabsw .tabs:has(.tb:not([hidden])) a:nth-child(-n+7){padding-top:12px}.tabsw .tabs .tb{position:absolute;top:-1px;right:-3px;margin:0;z-index:1}.tabsw .tabs .tb i{min-width:14px;height:14px;font-size:8.5px!important;padding:0 3px}}
 /* new order pop-ups (FX_ALERT_JS), like fomaxo.in: top right, full width on phones, gold edge, stay until closed */
 .noa-stack{position:fixed;top:14px;right:14px;z-index:60;display:flex;flex-direction:column;gap:8px;width:min(340px,calc(100% - 28px));pointer-events:none}
 .noa{pointer-events:auto;display:flex;align-items:stretch;background:var(--panel);border:1px solid var(--gold);border-left-width:4px;border-radius:10px;box-shadow:0 12px 32px #0003;animation:noaIn .35s ease;transition:opacity .25s,transform .25s}
@@ -207,7 +207,7 @@ label.chk{display:flex;align-items:center;gap:8px;text-transform:none;letter-spa
 .phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:6px}.ph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--line)}
 .pimgw{position:relative}.pno{position:absolute;left:6px;top:6px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(0,0,0,.7);color:#fff;padding:2px 7px;border-radius:10px}.ph.first .pno{background:var(--gold);color:var(--gold-ink)}.ph.first img{border:2px solid var(--gold)}.pmv{display:grid;grid-template-columns:36px 1fr 36px;gap:4px;margin:6px 0 2px}.pmv button{height:34px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0}.pmv button[data-mv='-1'],.pmv button[data-mv='1']{font-size:20px;line-height:1;color:var(--gold)}.pmv button[data-mv='0']{border-color:var(--gold);color:var(--gold)}.pmv button:disabled{opacity:.3;cursor:default}.phrm{width:100%;height:30px;margin-top:2px;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}.phrm:hover{color:var(--bad);border-color:var(--bad)}.phrm:disabled{opacity:.4}.ph.up img{opacity:.45}.ph.up .pmv,.ph.up .phrm,.ph.up .pedt{visibility:hidden}.ph.up .pimgw::after{content:"Adding…";position:absolute;inset:auto 0 42% 0;text-align:center;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px #000}.phnew{margin-top:8px}.szph small{display:block;margin:5px 0 4px;font-size:11.5px;color:var(--muted)}.szph.own small{color:var(--gold)}.szph .szpick{display:block;text-align:center;margin:0;cursor:pointer}.szph.up img{opacity:.45}.szph .pimgw:not(:has(img)){aspect-ratio:1;border:1px dashed var(--line);border-radius:8px}
 @media (min-width:760px){.tabs{display:flex;justify-content:center;gap:10px}.tabs a{padding:11px 22px}}
-/* tabs in two rows of six, no sideways scrolling (AJAY's order) */.tabsw .tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));overflow:visible}.tabsw .tnav{display:none!important}.tabsw .tabs a{white-space:nowrap;overflow:hidden;text-overflow:clip}@media (max-width:759px){.tabsw .tabs{grid-template-columns:repeat(6,auto);justify-content:space-evenly;padding:0 2px}.tabsw .tabs a{font-size:10.5px;letter-spacing:0;padding:8px 1px 6px}}@media (min-width:760px){.tabsw .tabs{grid-template-columns:repeat(12,auto);justify-content:center;column-gap:0}.tabsw .tabs a{padding:11px 7px;font-size:10.5px;letter-spacing:.03em}}@media (min-width:1100px){.tabsw .tabs a{padding:11px 13px;font-size:12px;letter-spacing:.08em}}@media (min-width:1500px){.tabsw .tabs a{padding:11px 20px;font-size:12.5px;letter-spacing:.1em}}
+/* tabs in two rows (7 + 6 on a phone), no sideways scrolling (AJAY's order) */.tabsw .tabs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));overflow:visible}.tabsw .tnav{display:none!important}.tabsw .tabs a{white-space:nowrap;overflow:hidden;text-overflow:clip}@media (max-width:759px){.tabsw .tabs{grid-template-columns:repeat(7,auto);justify-content:space-evenly;padding:0 2px}.tabsw .tabs a{font-size:10.5px;letter-spacing:0;padding:8px 1px 6px}}@media (min-width:760px){.tabsw .tabs{grid-template-columns:repeat(13,auto);justify-content:center;column-gap:0}.tabsw .tabs a{padding:11px 7px;font-size:10.5px;letter-spacing:.03em}}@media (max-width:400px){.tabsw .tabs a{font-size:9.8px}}@media (min-width:1100px){.tabsw .tabs a{padding:11px 13px;font-size:12px;letter-spacing:.08em}}@media (min-width:1500px){.tabsw .tabs a{padding:11px 20px;font-size:12.5px;letter-spacing:.1em}}
 .lvl-out{color:var(--bad)}.lvl-low{color:var(--warn)}.lvl-ok{color:var(--ok)}
 .lowlvl{margin:0 0 10px;display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;padding:10px 14px}.lowlvl label{margin:0;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}.lowlvl input{max-width:90px}.lowlvl p{flex:1 1 240px;margin:0 !important}
 .stock td,.exp td{vertical-align:middle}.stock input{width:110px;text-align:right}
@@ -430,6 +430,7 @@ button.rqwa{border:0;cursor:pointer;font-family:inherit}@media(min-width:701px) 
 [dir=rtl],[dir=rtl] *,[dir=auto]:dir(rtl),[dir=auto]:dir(rtl) *,.arx,.arx *{font-family:Tajawal,Arial,sans-serif!important;font-size-adjust:none;letter-spacing:0;word-spacing:normal}
 /* bigger admin head (top tabs), AJAY 09/10/2026: letters about 30% taller, padding trimmed so the 12 tabs keep one line on laptop and two rows of six on phone */
 .tabsw .tabs a{font-size-adjust:.66}@media (min-width:760px){.tabsw .tabs a{font-size-adjust:.75}.tabsw .tabs a{padding-left:max(6px,calc(var(--tp,20px)*.6));padding-right:max(6px,calc(var(--tp,20px)*.6))}}
+/* 13 tabs (Progress added): small laptops keep them on one line */@media (min-width:760px) and (max-width:1099px){.tabsw .tabs a{padding-left:4px;padding-right:4px;font-size-adjust:.6;letter-spacing:0}}
 /* phone (AJAY 09/10/2026): the top part of a page is short and stays put, only the list scrolls. Number boxes and chips become one thin row each
    (swipe sideways for more); filters, search, dates and Excel fold under one "Filters & search" button (FX_PHONE_JS) */
 @media (max-width:759px){main.fit .pagehead>h1{display:none}main.fit .pagehead:not(:has(>:not(h1))){display:none}
@@ -459,7 +460,7 @@ main.fit .pfh{display:none!important}}
 .petools .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px}
 .peft{display:flex;align-items:center;gap:10px;padding:10px 16px 14px}.peft .muted{flex:1;margin:0}
 @media (max-width:759px){.pedit{padding:0}.pebox{border-radius:0;height:100%;border:0}.petools{gap:6px}.petools .seg button{padding:6px 9px}.peft{padding:10px 12px calc(12px + env(safe-area-inset-bottom))}}
-/* Client report (?analytics=1&client=1): a page that scrolls, made to show someone */
+/* Progress (?progress=1): a page that scrolls, made to show someone */
 .cl{max-width:1280px;margin:0 auto;padding-bottom:16px}.chead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:12px}.chead h1{margin:0}.ctitle{margin:2px 0 0;font-size:15px;color:var(--gold);font-weight:600}
 .cpick{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0}.cpick select{width:auto;font-size:13px;padding:5px 8px}.cpick .seg a{font-size:12.5px;padding:4px 12px}@media (max-width:759px){.cpick{width:100%;flex-wrap:nowrap}.cpick select{flex:1;min-width:0}.cprint{display:none}}
 .ctiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}.ctile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
@@ -493,7 +494,7 @@ function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the 
      . (!empty($_SESSION['admin']) ? '<div class="tabsw"><a class="tnav" data-d="-1" aria-label="Previous page" hidden>‹</a><nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
          [['Home', './', !$_GET], ['Products', './?products=1', isset($_GET['products'])], ['Stocks', './?stock=1', isset($_GET['stock'])],
           ['Orders' . fx_tb($bd, 'orders'), './?orders=1', $ord],
-          ['Reviews' . fx_tb($bd, 'reviews'), './?reviews=1', isset($_GET['reviews'])], ['Analytics' . fx_tb($bd, 'analytics'), './?analytics=1', isset($_GET['analytics'])],
+          ['Reviews' . fx_tb($bd, 'reviews'), './?reviews=1', isset($_GET['reviews'])], ['Analytics' . fx_tb($bd, 'analytics'), './?analytics=1', isset($_GET['analytics'])], ['Progress', './?progress=1', isset($_GET['progress'])],
           ['Coupons', './?coupons=1', isset($_GET['coupons'])], ['Offers', './?offer=1', isset($_GET['offer'])], ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Sales', './?reports=1', isset($_GET['reports'])],
           ['Members', './?members=1', isset($_GET['members'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav><a class="tnav" data-d="1" aria-label="Next page" hidden>›</a></div>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . ($fit ? ' fit' : '') . '">' . $body . '</main>'
@@ -2730,49 +2731,15 @@ if (isset($_GET['coupons'])) {
     . '})();</script>', true, true);
 }
 
-/* ---- analytics: visitors, where they come from, and where sales are lost (filled by track.php on the website) ---- */
-if (isset($_GET['analytics'])) {
-  fx_trash_web_sweep($pdo);   // orders already in Trash leave Analytics too (once)
-  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lead_hide'])) {   // the × on a Left at checkout row: hide it from the list (nothing is deleted)
-    $sids = array_slice(array_values(array_filter(explode(',', (string)$_POST['lead_hide']), fn($x) => $x !== '')), 0, 500);   // all of that customer's visits
-    $ok = csrf_ok() && $sids && $pdo->prepare('UPDATE fx_leads SET hidden = 1 WHERE sid IN (' . implode(',', array_fill(0, count($sids), '?')) . ')')->execute($sids);
-    http_response_code($ok ? 204 : 403); exit;
-  }
-  if (isset($_GET['leads'])) {   // Excel: everyone who typed their details at checkout, from the start, and whether they ordered later
-    $ordered = "(l.order_no IS NOT NULL OR EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
-                 AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9)))";
-    $addr = $pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'address'")->fetch() ? 'l.address' : "''";
-    header('Content-Type: text/csv; charset=UTF-8');
-    header('Content-Disposition: attachment; filename="fomaxo-checkout-details-' . date('Y-m-d') . '.csv"');
-    $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
-    fputcsv($out, ['Started', 'Last change', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Products in bag', 'Bag value (AED)', 'Left at', 'Ordered later', 'Tries']);
-    $stageName = ['visit' => 'Opened our WhatsApp link', 'buyer' => 'Past buyer visiting', 'invite' => 'Invited a friend who ordered', 'coupon' => 'Wants WhatsApp coupon', 'details' => 'Delivery details', 'payment' => 'Payment choice', 'card' => 'Card payment page'];
-    $cell = fn($v) => is_string($v) && preg_match('/^[=+\-@]/', $v) && !preg_match('/^\+?[\d\s()\-]+$/', $v) ? "'" . $v : $v;   // typed by visitors: never let Excel run it as a formula
-    $G = []; foreach ($pdo->query("SELECT l.*, $addr addr, $ordered ordered FROM fx_leads l ORDER BY l.updated_at DESC") as $l) $G[fx_lead_key($l)][] = $l;   // one row per customer
-    foreach (fx_lead_groups($G) as $l)
-      fputcsv($out, array_map($cell, [$l['created_at'], $l['updated_at'], fomaxo_en_both($l['name']), $l['phone'], $l['email'], $l['emirate'], fomaxo_en_both($l['addr']), $l['items'],
-                     $l['total'] === null ? '' : number_format((float)$l['total'], 2, '.', ''), $stageName[$l['stage']] ?? $l['stage'], $l['ordered'] ? 'Yes' . ($l['order_no'] ? ' (' . $l['order_no'] . ')' : '') : 'No', $l['tries']]));
-    exit;
-  }
-  $isDay = fn($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$v) && strtotime($v);
-  $r = (string)($_GET['r'] ?? 'today');   // Analytics opens on Today
-  if ($r === 'custom' && $isDay($_GET['d1'] ?? '') && $isDay($_GET['d2'] ?? '')) { $d1 = min($_GET['d1'], $_GET['d2']); $d2 = max($_GET['d1'], $_GET['d2']); }
-  else { if (!in_array($r, ['today', '7', '30'], true)) $r = 'today'; $d2 = date('Y-m-d'); $d1 = date('Y-m-d', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')); }
-  $span = [$d1 . ' 00:00:00', $d2 . ' 23:59:59'];
-  $nDays = (int)round((strtotime($d2) - strtotime($d1)) / 86400) + 1;
-  $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
-
-  /* a purchase counts only while its order is a real one, as the Orders tile (New, Paid or Delivered, not a test). Purchases noted
-     before 21/10/2026 have no order number: they count from the orders reset of 11/10/2026 on, unless their checkout record names an
-     order that is cancelled, refunded, a test or still waiting for payment */
-  $realO = "o.status IN ('New', 'Paid', 'Delivered') AND o.test = 0";
-  $resetAt = (string)fomaxo_setting($pdo, 'orders_reset');
-  $buyOk = fn($a) => "($a.ev = 'buy' AND IF($a.ref IS NOT NULL, EXISTS (SELECT 1 FROM fx_orders o WHERE o.order_no = $a.ref AND $realO),
-                      " . ($resetAt !== '' ? "$a.at >= " . $pdo->quote($resetAt) . ' AND ' : '') . "NOT EXISTS (SELECT 1 FROM fx_leads lb JOIN fx_orders o ON o.order_no = lb.order_no WHERE lb.sid = $a.sid AND NOT ($realO))))";
-  $notTrash = fx_not_trash($pdo);
-  /* ---- Client report (?analytics=1&client=1): a clean page to show someone how the shop is doing, by month or by year.
+/* ---- Progress (?progress=1): a clean page to show someone how the shop is doing, by month or by year.
      Visitors, orders and income only: no names, mobiles or Left at checkout. Orders and income count real orders (New, Paid or Delivered, not a test) ---- */
-  if (isset($_GET['client'])) {
+if (isset($_GET['progress'])) {
+    fx_trash_web_sweep($pdo);
+    $realO = "o.status IN ('New', 'Paid', 'Delivered') AND o.test = 0";   // as Analytics: a purchase counts only while its order is a real one
+    $resetAt = (string)fomaxo_setting($pdo, 'orders_reset');
+    $buyOk = fn($a) => "($a.ev = 'buy' AND IF($a.ref IS NOT NULL, EXISTS (SELECT 1 FROM fx_orders o WHERE o.order_no = $a.ref AND $realO),
+                        " . ($resetAt !== '' ? "$a.at >= " . $pdo->quote($resetAt) . ' AND ' : '') . "NOT EXISTS (SELECT 1 FROM fx_leads lb JOIN fx_orders o ON o.order_no = lb.order_no WHERE lb.sid = $a.sid AND NOT ($realO))))";
+    $notTrash = fx_not_trash($pdo);
     $yr = ($_GET['v'] ?? '') === 'y';
     $first = (string)$pdo->query("SELECT LEAST(COALESCE((SELECT MIN(created_at) FROM fx_orders WHERE test = 0), NOW()), COALESCE((SELECT MIN(at) FROM fx_events), NOW()))")->fetchColumn();
     $firstM = substr($first ?: date('Y-m-d'), 0, 7);
@@ -2845,15 +2812,15 @@ if (isset($_GET['analytics'])) {
     $dvAll = array_sum($dv);
 
     $tile = fn($val, $label, $note = '') => '<div class="ctile"><span>' . $label . '</span><b>' . $val . '</b>' . ($note !== '' ? '<small>' . $note . '</small>' : '') . '</div>';
-    $pick = '<form class="cpick" method="get"><input type="hidden" name="analytics" value="1"><input type="hidden" name="client" value="1">' . ($yr ? '<input type="hidden" name="v" value="y">' : '')
-      . '<nav class="seg"><a href="' . h(self_url(['analytics' => 1, 'client' => 1])) . '"' . ($yr ? '' : ' class="on"') . '>Monthly</a><a href="' . h(self_url(['analytics' => 1, 'client' => 1, 'v' => 'y'])) . '"' . ($yr ? ' class="on"' : '') . '>Yearly</a></nav>'
+    $pick = '<form class="cpick" method="get"><input type="hidden" name="progress" value="1">' . ($yr ? '<input type="hidden" name="v" value="y">' : '')
+      . '<nav class="seg"><a href="' . h(self_url(['progress' => 1])) . '"' . ($yr ? '' : ' class="on"') . '>Monthly</a><a href="' . h(self_url(['progress' => 1, 'v' => 'y'])) . '"' . ($yr ? ' class="on"' : '') . '>Yearly</a></nav>'
       . '<select name="' . ($yr ? 'y' : 'm') . '" aria-label="' . ($yr ? 'Year' : 'Month') . '" onchange="this.form.submit()">'
       . implode('', array_map(fn($x) => '<option value="' . h($x) . '"' . ($x === ($yr ? $y : $m) ? ' selected' : '') . '>' . h($yr ? $x : date('F Y', strtotime("$x-01"))) . '</option>', $yr ? $years : $months)) . '</select>'
       . '<button type="button" class="btn sm line cprint" onclick="window.print()">Print / PDF</button></form>';
     $card = fn($cls, $h, $body, $val = '') => '<section class="card ' . $cls . '"><div class="cch"><h2>' . $h . '</h2>' . ($val !== '' ? '<span class="val">' . $val . '</span>' : '') . '</div>' . $body . '</section>';
     $since = fomaxo_setting($pdo, 'geo_since');
-    page('Client report', '<div class="cl">'
-      . '<div class="pagehead chead"><div><h1>FOMAXO report</h1><p class="muted ctitle">' . h($yr ? 'Year ' . $title : $title) . '</p></div>' . $pick . '</div>'
+    page('Progress', '<div class="cl">'
+      . '<div class="pagehead chead"><div><h1>Progress</h1><p class="muted ctitle">' . h($yr ? 'Year ' . $title : $title) . '</p></div>' . $pick . '</div>'
       . '<div class="ctiles">'
       . $tile($aed($ot), 'Income', $on ? $aed($ot / $on) . ' per order' : 'no orders yet')
       . $tile(number_format($on), 'Orders', $units ? number_format($units) . ' items sold' : '')
@@ -2875,7 +2842,48 @@ if (isset($_GET['analytics'])) {
       . '<p class="muted small cnote">Income and orders count real orders only (cancelled, refunded and test orders are left out). Visitor counting started ' . ($since ? h(date('j M Y', strtotime($since))) : 'in Oct 2026') . '. Location is approximate.</p>'
       . '</div>'
       . '<script>document.querySelectorAll(".cl .chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)})</script>', true, false);
+}
+
+/* ---- analytics: visitors, where they come from, and where sales are lost (filled by track.php on the website) ---- */
+if (isset($_GET['analytics'])) {
+  fx_trash_web_sweep($pdo);   // orders already in Trash leave Analytics too (once)
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['lead_hide'])) {   // the × on a Left at checkout row: hide it from the list (nothing is deleted)
+    $sids = array_slice(array_values(array_filter(explode(',', (string)$_POST['lead_hide']), fn($x) => $x !== '')), 0, 500);   // all of that customer's visits
+    $ok = csrf_ok() && $sids && $pdo->prepare('UPDATE fx_leads SET hidden = 1 WHERE sid IN (' . implode(',', array_fill(0, count($sids), '?')) . ')')->execute($sids);
+    http_response_code($ok ? 204 : 403); exit;
   }
+  if (isset($_GET['leads'])) {   // Excel: everyone who typed their details at checkout, from the start, and whether they ordered later
+    $ordered = "(l.order_no IS NOT NULL OR EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
+                 AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9)))";
+    $addr = $pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'address'")->fetch() ? 'l.address' : "''";
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="fomaxo-checkout-details-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
+    fputcsv($out, ['Started', 'Last change', 'Name', 'Mobile', 'Email', 'Emirate', 'Address', 'Products in bag', 'Bag value (AED)', 'Left at', 'Ordered later', 'Tries']);
+    $stageName = ['visit' => 'Opened our WhatsApp link', 'buyer' => 'Past buyer visiting', 'invite' => 'Invited a friend who ordered', 'coupon' => 'Wants WhatsApp coupon', 'details' => 'Delivery details', 'payment' => 'Payment choice', 'card' => 'Card payment page'];
+    $cell = fn($v) => is_string($v) && preg_match('/^[=+\-@]/', $v) && !preg_match('/^\+?[\d\s()\-]+$/', $v) ? "'" . $v : $v;   // typed by visitors: never let Excel run it as a formula
+    $G = []; foreach ($pdo->query("SELECT l.*, $addr addr, $ordered ordered FROM fx_leads l ORDER BY l.updated_at DESC") as $l) $G[fx_lead_key($l)][] = $l;   // one row per customer
+    foreach (fx_lead_groups($G) as $l)
+      fputcsv($out, array_map($cell, [$l['created_at'], $l['updated_at'], fomaxo_en_both($l['name']), $l['phone'], $l['email'], $l['emirate'], fomaxo_en_both($l['addr']), $l['items'],
+                     $l['total'] === null ? '' : number_format((float)$l['total'], 2, '.', ''), $stageName[$l['stage']] ?? $l['stage'], $l['ordered'] ? 'Yes' . ($l['order_no'] ? ' (' . $l['order_no'] . ')' : '') : 'No', $l['tries']]));
+    exit;
+  }
+  $isDay = fn($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$v) && strtotime($v);
+  $r = (string)($_GET['r'] ?? 'today');   // Analytics opens on Today
+  if ($r === 'custom' && $isDay($_GET['d1'] ?? '') && $isDay($_GET['d2'] ?? '')) { $d1 = min($_GET['d1'], $_GET['d2']); $d2 = max($_GET['d1'], $_GET['d2']); }
+  else { if (!in_array($r, ['today', '7', '30'], true)) $r = 'today'; $d2 = date('Y-m-d'); $d1 = date('Y-m-d', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')); }
+  $span = [$d1 . ' 00:00:00', $d2 . ' 23:59:59'];
+  $nDays = (int)round((strtotime($d2) - strtotime($d1)) / 86400) + 1;
+  $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
+
+  /* a purchase counts only while its order is a real one, as the Orders tile (New, Paid or Delivered, not a test). Purchases noted
+     before 21/10/2026 have no order number: they count from the orders reset of 11/10/2026 on, unless their checkout record names an
+     order that is cancelled, refunded, a test or still waiting for payment */
+  $realO = "o.status IN ('New', 'Paid', 'Delivered') AND o.test = 0";
+  $resetAt = (string)fomaxo_setting($pdo, 'orders_reset');
+  $buyOk = fn($a) => "($a.ev = 'buy' AND IF($a.ref IS NOT NULL, EXISTS (SELECT 1 FROM fx_orders o WHERE o.order_no = $a.ref AND $realO),
+                      " . ($resetAt !== '' ? "$a.at >= " . $pdo->quote($resetAt) . ' AND ' : '') . "NOT EXISTS (SELECT 1 FROM fx_leads lb JOIN fx_orders o ON o.order_no = lb.order_no WHERE lb.sid = $a.sid AND NOT ($realO))))";
+  $notTrash = fx_not_trash($pdo);
   $f = $q("SELECT COUNT(DISTINCT vid) visitors, COUNT(DISTINCT sid) visits, SUM(ev = 'view') views,
                   COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) product, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) cart,
                   COUNT(DISTINCT CASE WHEN ev = 'checkout' THEN sid END) checkout, COUNT(DISTINCT CASE WHEN ev = 'pay' THEN sid END) pay,
@@ -3201,7 +3209,7 @@ if (isset($_GET['analytics'])) {
                : '<p class="muted empty">No repeat orders in these dates.</p>')
     . '<p class="muted small gnote">Orders in these dates from a mobile that had ordered before.</p></section>';
   page('Analytics', '<div class="db an">'
-    . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a><a href="./?analytics=1&amp;client=1">Client</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . '<div class="seg">'
+    . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . '<div class="seg">'
     . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k] + $cvq)) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
     . '<input type="hidden" name="r" value="custom"><input type="date" name="d1" value="' . h($d1) . '" aria-label="From"><input type="date" name="d2" value="' . h($d2) . '" aria-label="To"><button class="btn sm' . ($r === 'custom' ? '' : ' line') . '">Show</button></form></div>'
     . '<div class="tiles at">'
