@@ -478,7 +478,16 @@ main.fit:has(>.cl){overflow:auto}
 @media (min-width:1100px) and (min-height:760px){main.fit:has(>.cl){overflow:hidden}main.fit>.cl{flex:1 1 auto;min-height:0;width:100%;display:flex;flex-direction:column;padding-bottom:0}.cl>*{flex:none}
   .cl .chead{margin-bottom:8px}.cl .ctiles{margin-bottom:8px}.cl .ctile{padding:9px 14px}.cl .ctile b{font-size:21px;margin:1px 0}.cl .cgrid2{margin-bottom:8px}.cl .chartbox{height:clamp(120px,22vh,210px)}.cl .card{padding:12px 16px}
   .cl .cgrid3{flex:1 1 auto;min-height:0;margin-bottom:6px;align-items:stretch}.cl .cgrid3>.card{min-height:0;overflow:hidden}.cl .cgrid3 .list{flex:1 1 auto;min-height:0;overflow:auto}.cl .cgrid3 table.mini td,.cl .cgrid3 table.mini th{padding-top:4px;padding-bottom:4px}.cl .ptab .fb{display:none}.cl tfoot td{position:sticky;bottom:0;background:var(--panel)}}
-@media print{.top,.tabsw,.tabs,.cpick,.cl .tip{display:none!important}html,body{height:auto;overflow:visible;display:block}main.wrap{overflow:visible}.cl .card{break-inside:avoid}}
+/* Print / PDF: one A4 page, landscape, always light (no dark ink), laid out like the laptop screen */
+@page{size:A4 landscape;margin:8mm}
+@media print{:root{--bg:#fff;--panel:#fff;--ink:#16130f;--muted:#5d554a;--line:#e3d9c8;--gold:#8f6b37;--gold-ink:#fff;--ok:#2f6b3a;--bad:#9b2c2c}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .top,.tabsw,.tabs,.cpick,.cl .sub .tip,.zoom{display:none!important}html,body{height:auto!important;overflow:visible!important;display:block!important;background:#fff}main.wrap,main.fit{overflow:visible!important;display:block!important;padding:0!important;max-width:none!important}
+  main.fit>.cl{display:block!important;height:auto!important;max-width:none;padding:0}.cl .chead{margin:0 0 6px}.cl .chead h1{font-size:18px}.cl .ctitle{font-size:13px}
+  .cl .ctiles{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:6px;margin:0 0 6px}.cl .ctile{padding:6px 9px}.cl .ctile b{font-size:17px}.cl .ctile small,.cl .ctile b,.cl table.mini td{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}.cl .ctile small{font-size:10px}
+  .cl .cgrid2{grid-template-columns:1fr 1fr!important;gap:6px;margin:0 0 6px}.cl .card{padding:8px 11px;break-inside:avoid}.cl .cch{margin:0 0 4px}.cl .cch h2{font-size:13px}.cl .chartbox{height:190px!important}.cl .sub{margin:4px 0 0;font-size:10px}
+  .cl .cgrid3{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px;margin:0 0 4px}.cl .cgrid3.yr{grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr))!important}.cl .cgrid3 .k-months{grid-column:auto!important}
+  .cl .cgrid3 .list{overflow:visible!important;max-height:none!important}.cl table.mini{font-size:11.5px}.cl table.mini th,.cl table.mini td{padding:3.5px 5px}.cl .ptab .fb,.cl .gbar{display:none!important}.cl tfoot td{position:static!important}.cnote{font-size:9.5px}}
 CSS;
 }
 function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
