@@ -366,7 +366,7 @@ main.fit>.fill,main.fit>.fitform,main.fit>.db,main.fit>.cgrid,main.fit>.rmob,mai
 .cpbar a.on{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.cpbar a.on b,.cpbar a.on small{color:var(--gold-ink)}
 .oclean .ctag{display:table;margin:3px 0 0;font-family:ui-monospace,Menlo,Consolas,monospace;border-radius:5px;padding:1px 7px;font-size:11px}
 .ofl .dts{grid-column:1/-1}.ofl .dts .seg{display:flex;width:100%;margin:0;box-sizing:border-box}.ofl .dts .seg a{flex:1;text-align:center}
-.ocount{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.ocount{margin:0 0 6px;font-size:12px;color:var(--muted)}.olist.acts tr.row[hidden]{display:none!important}
 .ofl{margin:0 0 10px}
 @media (min-width:860px){.ems.track.ocp .em{display:flex;justify-content:space-between;align-items:center;padding-left:14px;padding-right:14px}.ems.track.ocp .em b{font-size:15px}
 .filters.ofl{grid-template-columns:minmax(0,135px) minmax(0,145px) auto minmax(0,128px) minmax(0,128px) minmax(0,1fr) auto;background:none;border:0;padding:0;box-shadow:none}.ofl .dts{grid-column:auto}.ofl .dts .seg{width:auto}.ofl .dts .seg a{padding:6px 10px}
@@ -4242,7 +4242,7 @@ foreach ($rows as $o) {
   $img = '';   // photo of the first perfume in the order
   foreach (json_decode((string)($o['lines_json'] ?? ''), true) ?: [] as $l) if (is_array($l) && empty($l['free']) && !empty($l['id'])) { $img = $pic[$l['id']] ?? ($CATALOG[$l['id']]['images'][0] ?? ''); break; }
   $days = in_array($o['status'], ['New', 'Paid'], true) ? (int)floor((time() - strtotime($o['created_at'])) / 86400) : 0;
-  $tr .= '<tr class="row st-' . h(strtok($o['status'], ' ')) . '" onclick="location.href=\'' . $u . '\'">'
+  $tr .= '<tr class="row st-' . h(strtok($o['status'], ' ')) . '" data-s="' . h(mb_strtolower(implode(' ', [$o['order_no'], $o['name'], $o['phone'], $o['items'], $o['coupon'] ?? '']))) . '" data-p="' . h(preg_replace('/\D/', '', (string)$o['phone'])) . '" onclick="location.href=\'' . $u . '\'">'
        . '<td class="oi"><input type="checkbox" class="otk" name="nos[]" value="' . h($o['order_no']) . '" form="obulk" onclick="event.stopPropagation()" aria-label="Tick ' . h($o['order_no']) . '"><form method="post" class="otx" onclick="event.stopPropagation()" onsubmit="return confirm(\'Close ' . h($o['order_no']) . '? It leaves Sales, the boxes and every count, and is kept in Trash.\')">' . csrf_field() . '<input type="hidden" name="trash" value="' . h($o['order_no']) . '"><input type="hidden" name="back" value="' . h((string)($_SERVER['QUERY_STRING'] ?? '')) . '"><button class="rmx" title="Close this order (kept in Trash)" aria-label="Close ' . h($o['order_no']) . '">✕</button></form><span class="oth">' . ($img ? '<img src="' . h(fx_small_img($img)) . '" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'../assets/img/' . h($img) . '.webp\'">' : '') . '</span>'
        . '<span class="onb"><a href="' . $u . '">' . h($o['order_no']) . '</a>' . ($o['seen_at'] === null && !$o['test'] && !in_array($o['status'], ['Awaiting payment', 'Cancelled', 'Refunded'], true) ? '<span class="newo">NEW</span>' : '') . ($o['test'] ? ' <span class="muted small">test</span>' : '')
        . ($days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '') . '</span></td>'
@@ -4311,9 +4311,13 @@ page('Orders', flash()
   . '<form id="obulk" method="post" hidden>' . csrf_field() . '<input type="hidden" name="back" value="' . h((string)($_SERVER['QUERY_STRING'] ?? '')) . '"></form>'
   /* Select all and the ticks light "N ticked" with Paid, Delivered and Close for the ticked orders */
   . '<script>(function(){var all=document.querySelector("[data-oall]");if(!all)return;var bar=document.querySelector(".obsel"),n=bar.querySelector("[data-on]"),bx=[].slice.call(document.querySelectorAll(".otk"));'
-  . 'var up=function(){var k=bx.filter(function(x){return x.checked}).length;n.textContent=k;bar.hidden=!k;bar.closest(".ocount").classList.toggle("oon",k>0);all.checked=k>0&&k===bx.length;all.indeterminate=k>0&&k<bx.length;bx.forEach(function(x){x.closest("tr").classList.toggle("otick",x.checked)})};'
-  . 'all.addEventListener("change",function(){bx.forEach(function(x){x.checked=all.checked});up()});bx.forEach(function(x){x.addEventListener("change",up)});up();'
-  . 'document.getElementById("obulk").addEventListener("submit",function(e){var b=e.submitter;if(b&&b.dataset.ask&&!confirm(b.dataset.ask.replace("{n}",n.textContent)))e.preventDefault()})})();</script>'
+  /* the search box hides the orders that do not match as you type (before Show), and Select all / Paid / Delivered / Close only take the orders shown:
+     a typed "fake" with Select all must never close every order (AJAY, 2026-10-25) */
+  . 'var sh=function(x){return !x.closest("tr").hidden},q=document.getElementById("q");'
+  . 'var up=function(){var v=bx.filter(sh),k=v.filter(function(x){return x.checked}).length;n.textContent=k;bar.hidden=!k;bar.closest(".ocount").classList.toggle("oon",k>0);all.checked=k>0&&k===v.length;all.indeterminate=k>0&&k<v.length;bx.forEach(function(x){x.closest("tr").classList.toggle("otick",x.checked)})};'
+  . 'all.addEventListener("change",function(){bx.forEach(function(x){x.checked=all.checked&&sh(x)});up()});bx.forEach(function(x){x.addEventListener("change",up)});'
+  . 'if(q)q.addEventListener("input",function(){var t=q.value.trim().toLowerCase(),d=t.replace(/\\D/g,"").slice(-10);bx.forEach(function(x){var r=x.closest("tr"),ok=!t||r.dataset.s.indexOf(t)>-1||(d.length>=4&&r.dataset.p.indexOf(d)>-1);r.hidden=!ok;if(!ok)x.checked=false});up()});up();'
+  . 'document.getElementById("obulk").addEventListener("submit",function(e){bx.forEach(function(x){if(!sh(x))x.checked=false});up();var b=e.submitter;if(!+n.textContent||(b&&b.dataset.ask&&!confirm(b.dataset.ask.replace("{n}",n.textContent))))e.preventDefault()})})();</script>'
   /* a button on a row (Paid, Delivered, Cancel, close) reloads the page: come back to the same place in the list, not the top */
   . '<script>(function(){var K="fxOrdPos",l=document.querySelector(".olist.acts");if(!l)return;var box=l.closest(".fill");'
   . 'l.addEventListener("submit",function(e){if(e.defaultPrevented)return;var r=e.target.closest("tr.row"),n=r&&r.querySelector(".onb a");try{sessionStorage.setItem(K,JSON.stringify({t:Date.now(),b:box?box.scrollTop:0,w:window.scrollY,o:n?n.textContent:"",y:r?r.getBoundingClientRect().top:0}))}catch(x){}});'
