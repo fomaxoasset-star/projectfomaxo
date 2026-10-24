@@ -465,14 +465,19 @@ main.fit .pfh{display:none!important}}
 .cpick{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0}.cpick select{width:auto;font-size:13px;padding:5px 8px}.cpick .seg a{font-size:12.5px;padding:4px 12px}@media (max-width:759px){.cpick{width:100%;flex-wrap:nowrap}.cpick select{flex:1;min-width:0}.cprint{display:none}}
 .ctiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}.ctile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
 .ctile span{display:block;font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}.ctile b{display:block;font-size:20px;font-weight:600;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}.ctile small{display:block;font-size:11.5px;color:var(--muted)}
-.ctiles .ctile:first-child b{color:var(--gold)}
+.ctiles .ctile:first-child b{color:var(--gold)}.ctile em{font-style:normal;font-weight:700}.ctile em.up{color:var(--ok)}.ctile em.dn{color:var(--bad)}
 .cgrid2,.cgrid3{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:10px}.cl .card{display:flex;flex-direction:column;min-width:0}
 .cch{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 0 8px}.cch h2{margin:0;font-size:15.5px}.cch .val{font-size:12px;color:var(--muted)}
 .cl .chartbox{height:190px;display:flex}.cl .sub{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin:8px 0 0}.cl .sub b{color:var(--ink);white-space:nowrap}
 .cl tfoot td{border-top:2px solid var(--gold);border-bottom:0}.cl tr.muted td{opacity:.55}.cl .ptab .fb{margin:4px 0 0;height:5px;max-width:160px}.cnote{margin:4px 0 0}
 @media (min-width:760px){.ctiles{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.ctile{padding:12px 14px}.ctile b{font-size:22px}
   .cgrid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cgrid3{grid-template-columns:repeat(3,minmax(0,1fr))}.cgrid3.yr{grid-template-columns:repeat(2,minmax(0,1fr))}.cl .chartbox{height:220px}.cl .k-months{grid-column:1/-1}}
-@media (min-width:1100px){.cgrid3.yr{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);grid-template-areas:"months prod cty" "months prod em"}.cgrid3.yr .k-months{grid-column:auto;grid-area:months}.cgrid3.yr .k-prod{grid-area:prod}.cgrid3.yr .k-cty{grid-area:cty}.cgrid3.yr .k-em{grid-area:em}}
+@media (min-width:1100px){.cgrid3.yr{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)}.cgrid3.yr .k-months{grid-column:auto}}
+/* one screen on a laptop: the lists at the bottom take the room left and scroll inside; small or short screens scroll the page */
+main.fit:has(>.cl){overflow:auto}
+@media (min-width:1100px) and (min-height:760px){main.fit:has(>.cl){overflow:hidden}main.fit>.cl{flex:1 1 auto;min-height:0;width:100%;display:flex;flex-direction:column;padding-bottom:0}.cl>*{flex:none}
+  .cl .chead{margin-bottom:8px}.cl .ctiles{margin-bottom:8px}.cl .ctile{padding:9px 14px}.cl .ctile b{font-size:21px;margin:1px 0}.cl .cgrid2{margin-bottom:8px}.cl .chartbox{height:clamp(120px,22vh,210px)}.cl .card{padding:12px 16px}
+  .cl .cgrid3{flex:1 1 auto;min-height:0;margin-bottom:6px;align-items:stretch}.cl .cgrid3>.card{min-height:0;overflow:hidden}.cl .cgrid3 .list{flex:1 1 auto;min-height:0;overflow:auto}.cl .cgrid3 table.mini td,.cl .cgrid3 table.mini th{padding-top:4px;padding-bottom:4px}.cl .ptab .fb{display:none}.cl tfoot td{position:sticky;bottom:0;background:var(--panel)}}
 @media print{.top,.tabsw,.tabs,.cpick,.cl .tip{display:none!important}html,body{height:auto;overflow:visible;display:block}main.wrap{overflow:visible}.cl .card{break-inside:avoid}}
 CSS;
 }
@@ -2769,17 +2774,18 @@ if (isset($_GET['progress'])) {
     foreach ($cq("SELECT DATE_FORMAT(at, '$kf') k, COUNT(DISTINCT vid) n, COUNT(DISTINCT sid) s, COUNT(DISTINCT CASE WHEN " . $buyOk('e') . " THEN sid END) b FROM fx_events e WHERE at BETWEEN ? AND ?$notTrash GROUP BY k") as $row) { $vis[$row['k']] = (int)$row['n']; $buy[$row['k']] = [(int)$row['b'], (int)$row['s']]; }
     $pi = $pv = []; $rows = '';
     $cEnd = min(strtotime($c2), strtotime(date('Y-m-d')));   // this month or year: the graphs stop at today
-    for ($t = strtotime($c1); $t <= strtotime($c2); $t = strtotime($yr ? 'first day of next month' : '+1 day', $t)) {
+    $cStart = $yr ? max(strtotime($c1), strtotime($firstM . '-01')) : strtotime($c1);   // a year starts at the month the shop started
+    for ($t = $cStart; $t <= strtotime($c2); $t = strtotime($yr ? 'first day of next month' : '+1 day', $t)) {
       $k = date($yr ? 'Y-m' : 'Y-m-d', $t);
       if ($t <= $cEnd) {
       $pi[] = ['v' => $inc[$k] ?? 0, 'l' => date($yr ? 'M' : 'j', $t), 't' => date($yr ? 'F Y' : 'D j M', $t) . ': ' . $aed($inc[$k] ?? 0) . ' · ' . ($cnt[$k] ?? 0) . ' order' . (($cnt[$k] ?? 0) === 1 ? '' : 's')];
       $pv[] = ['v' => $vis[$k] ?? 0, 'l' => date($yr ? 'M' : 'j', $t), 't' => date($yr ? 'F Y' : 'D j M', $t) . ': ' . number_format($vis[$k] ?? 0) . ' visitors'];
       }
-      if ($yr) $rows .= '<tr' . ($k > date('Y-m') ? ' class="muted"' : '') . '><td>' . date('F', $t) . '</td><td class="num">' . number_format($vis[$k] ?? 0) . '</td><td class="num">' . ($cnt[$k] ?? 0) . '</td><td class="num">' . $pctT($pct($buy[$k][0] ?? 0, $buy[$k][1] ?? 0)) . '</td><td class="num"><b>' . $aed($inc[$k] ?? 0) . '</b></td></tr>';
+      if ($yr) $rows .= '<tr' . ($k > date('Y-m') ? ' class="muted"' : '') . '><td>' . date('F', $t) . '</td><td class="num">' . number_format($vis[$k] ?? 0) . '</td><td class="num">' . ($cnt[$k] ?? 0) . '</td><td class="num"><b>' . $aed($inc[$k] ?? 0) . '</b></td></tr>';
     }
     $unit = $yr ? 'month' : 'day';
-    $gInc = fx_graph($pi, 'Income per ' . $unit, false, fn($x) => 'Best ' . $unit . ': ' . $aed($x));
-    $gVis = fx_graph($pv, 'Visitors per ' . $unit, false, fn($x) => 'Busiest ' . $unit . ': ' . number_format($x) . ' visitors', true);
+    $gInc = fx_graph($pi, 'Sales each ' . $unit, false, fn($x) => 'Best ' . $unit . ': ' . $aed($x));
+    $gVis = fx_graph($pv, 'Visitors each ' . $unit, false, fn($x) => 'Busiest ' . $unit . ': ' . number_format($x) . ' visitors', true);
 
     /* products sold: units from the order lines */
     $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $row) { $pd = json_decode($row['data'], true); $names[$row['id']] = $pd['name'] ?? $row['id']; }
@@ -2800,7 +2806,7 @@ if (isset($_GET['progress'])) {
     };
     $cR = $eR = [];
     try {
-      foreach ($cq("SELECT country, COUNT(DISTINCT vid) n FROM fx_events WHERE country IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY country ORDER BY n DESC, country LIMIT 10") as $row)
+      foreach ($cq("SELECT country, COUNT(DISTINCT vid) n FROM fx_events WHERE country IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY country ORDER BY n DESC, country LIMIT 6") as $row)
         $cR[] = ['name' => fomaxo_flag($row['country']) . ' ' . h(fomaxo_country_name($row['country'])), 'n' => (int)$row['n']];
       $em = array_fill_keys(FOMAXO_EMIRATES, 0);
       foreach ($cq("SELECT region, COUNT(DISTINCT vid) n FROM fx_events WHERE country = 'AE' AND at BETWEEN ? AND ?$notTrash GROUP BY region") as $row) if (isset($em[$row['region']])) $em[$row['region']] = (int)$row['n'];
@@ -2810,6 +2816,20 @@ if (isset($_GET['progress'])) {
     $dv = ['phone' => 0, 'computer' => 0, 'tablet' => 0];
     foreach ($cq("SELECT x.device, COUNT(*) n FROM (SELECT sid, MIN(device) device FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ?$notTrash GROUP BY sid) x WHERE x.device IN ('phone', 'tablet', 'computer') GROUP BY x.device") as $row) $dv[$row['device']] = (int)$row['n'];
     $dvAll = array_sum($dv);
+    /* growth: the same days of the month (or year) before, so a month still running is never set against a whole month */
+    $done = min(strtotime($c2), strtotime(date('Y-m-d')));
+    $b1 = date('Y-m-d', strtotime($yr ? '-1 year' : 'first day of previous month', strtotime($c1)));
+    $b2 = min(date('Y-m-d', strtotime($yr ? '-1 year' : '-1 month', $done)), date($yr ? 'Y-12-31' : 'Y-m-t', strtotime($b1)));
+    $bs = [$b1 . ' 00:00:00', $b2 . ' 23:59:59'];
+    $bo = $cq("SELECT COUNT(*) n, COALESCE(SUM(o.total), 0) t FROM fx_orders o WHERE $realO AND o.created_at BETWEEN ? AND ?", $bs)->fetch();
+    $bv = (int)$cq("SELECT COUNT(DISTINCT vid) FROM fx_events WHERE at BETWEEN ? AND ?$notTrash", $bs)->fetchColumn();
+    $vsL = $yr ? date('Y', strtotime($b1)) : date('M', strtotime($b1));
+    $grow = function ($now, $before) use ($vsL) {
+      if ($before <= 0) return '';
+      $g = round(($now - $before) / $before * 100);
+      return '<em class="' . ($g >= 0 ? 'up' : 'dn') . '">' . ($g >= 0 ? '▲ ' : '▼ ') . abs($g) . '%</em> ' . ($g >= 0 ? 'more' : 'less') . ' than ' . $vsL;
+    };
+    $all = $pdo->query("SELECT COUNT(*) n, COALESCE(SUM(total), 0) t, MIN(created_at) f FROM fx_orders o WHERE $realO")->fetch();
 
     $tile = fn($val, $label, $note = '') => '<div class="ctile"><span>' . $label . '</span><b>' . $val . '</b>' . ($note !== '' ? '<small>' . $note . '</small>' : '') . '</div>';
     $pick = '<form class="cpick" method="get"><input type="hidden" name="progress" value="1">' . ($yr ? '<input type="hidden" name="v" value="y">' : '')
@@ -2818,30 +2838,29 @@ if (isset($_GET['progress'])) {
       . implode('', array_map(fn($x) => '<option value="' . h($x) . '"' . ($x === ($yr ? $y : $m) ? ' selected' : '') . '>' . h($yr ? $x : date('F Y', strtotime("$x-01"))) . '</option>', $yr ? $years : $months)) . '</select>'
       . '<button type="button" class="btn sm line cprint" onclick="window.print()">Print / PDF</button></form>';
     $card = fn($cls, $h, $body, $val = '') => '<section class="card ' . $cls . '"><div class="cch"><h2>' . $h . '</h2>' . ($val !== '' ? '<span class="val">' . $val . '</span>' : '') . '</div>' . $body . '</section>';
-    $since = fomaxo_setting($pdo, 'geo_since');
     page('Progress', '<div class="cl">'
       . '<div class="pagehead chead"><div><h1>Progress</h1><p class="muted ctitle">' . h($yr ? 'Year ' . $title : $title) . '</p></div>' . $pick . '</div>'
       . '<div class="ctiles">'
-      . $tile($aed($ot), 'Income', $on ? $aed($ot / $on) . ' per order' : 'no orders yet')
-      . $tile(number_format($on), 'Orders', $units ? number_format($units) . ' items sold' : '')
-      . $tile(number_format($v['visitors']), 'Visitors', number_format($v['visits']) . ' visits')
-      . $tile($pctT($pct($v['buy'], $v['visits'])), 'Conversion rate', 'visits that bought')
-      . $tile($pctT($pct($rep, $on)), 'Repeat orders', $rep . ' from past customers')
-      . $tile($dvAll ? $pctT($pct($dv['phone'], $dvAll)) : '–', 'On phones', $dvAll ? $pctT($pct($dv['computer'], $dvAll)) . ' computer · ' . $pctT($pct($dv['tablet'], $dvAll)) . ' tablet' : '')
+      . $tile($aed($ot), 'Sales', $grow($ot, (float)$bo['t']) ?: ($on ? $aed($ot / $on) . ' per order' : 'no orders yet'))
+      . $tile(number_format($on), 'Orders', $grow($on, (int)$bo['n']) ?: ($units ? number_format($units) . ' items sold' : ''))
+      . $tile(number_format($v['visitors']), 'Visitors', $grow($v['visitors'], $bv) ?: number_format($v['visits']) . ' visits')
+      . $tile(($b100 = $pct($v['buy'], $v['visits'])) >= 1 ? round($b100) . ' in 100' : $pctT($b100), 'Visitors who buy', 'out of every 100 visits')
+      . $tile($pctT($pct($rep, $on)), 'Buy again', $rep . ' orders from past customers')
+      . $tile($aed($all['t']), 'Total sales so far', number_format((int)$all['n']) . ' orders' . ($all['f'] ? ' since ' . date('M Y', strtotime($all['f'])) : ''))
       . '</div>'
       . '<div class="cgrid2">'
-      . $card('k-inc', 'Income', '<div class="chartbox">' . $gInc . '</div><p class="sub"><span class="tip">Tap a bar to see that ' . $unit . '</span><b>' . $aed($ot) . ' in total</b></p>', 'per ' . $unit)
-      . $card('k-vis', 'Visitors', '<div class="chartbox">' . $gVis . '</div><p class="sub"><span class="tip">Tap a point to see that ' . $unit . '</span><b>' . number_format($v['visitors']) . ' in total</b></p>', 'per ' . $unit)
+      . $card('k-inc', 'Sales', '<div class="chartbox">' . $gInc . '</div><p class="sub"><span class="tip">Tap a bar to see that ' . $unit . '</span><b>' . $aed($ot) . ' in total</b></p>', 'each ' . $unit)
+      . $card('k-vis', 'Visitors', '<div class="chartbox">' . $gVis . '</div><p class="sub"><span class="tip">Tap a point to see that ' . $unit . '</span><b>' . number_format($v['visitors']) . ' in total</b></p>', 'each ' . $unit)
       . '</div><div class="cgrid3' . ($yr ? ' yr' : '') . '">'
-      . ($yr ? $card('k-months', 'Month by month', '<div class="list"><table class="mini"><thead><tr><th>Month</th><th class="num">Visitors</th><th class="num">Orders</th><th class="num">Conv.</th><th class="num">Income</th></tr></thead><tbody>' . $rows
-               . '</tbody><tfoot><tr><td><b>Total</b></td><td class="num"><b>' . number_format($v['visitors']) . '</b></td><td class="num"><b>' . $on . '</b></td><td class="num"><b>' . $pctT($pct($v['buy'], $v['visits'])) . '</b></td><td class="num"><b>' . $aed($ot) . '</b></td></tr></tfoot></table></div>') : '')
-      . $card('k-prod', 'Best sellers', $pT ? '<div class="list"><table class="mini ptab"><thead><tr><th>Product</th><th class="num">Sold</th><th class="num">Share</th></tr></thead><tbody>' . $pT . '</tbody></table></div>' : '<p class="muted empty">No orders in this ' . ($yr ? 'year' : 'month') . ' yet.</p>')
-      . $card('k-cty', 'Top countries', $cR ? '<div class="list">' . $geo($cR, 'Country') . '</div>' : '<p class="muted empty">No visitors yet.</p>')
-      . $card('k-em', 'UAE visitors by emirate', array_sum(array_column($eR, 'n')) ? '<div class="list">' . $geo($eR, 'Emirate') . '</div>' : '<p class="muted empty">No visitors from the UAE yet.</p>')
+      . ($yr ? $card('k-months', 'Month by month', '<div class="list"><table class="mini"><thead><tr><th>Month</th><th class="num">Visitors</th><th class="num">Orders</th><th class="num">Sales</th></tr></thead><tbody>' . $rows
+               . '</tbody><tfoot><tr><td><b>Total</b></td><td class="num"><b>' . number_format($v['visitors']) . '</b></td><td class="num"><b>' . $on . '</b></td><td class="num"><b>' . $aed($ot) . '</b></td></tr></tfoot></table></div>') : '')
+      . $card('k-prod', 'Most sold', $pT ? '<div class="list"><table class="mini ptab"><thead><tr><th>Perfume</th><th class="num">Sold</th><th class="num">Share</th></tr></thead><tbody>' . $pT . '</tbody></table></div>' : '<p class="muted empty">No orders in this ' . ($yr ? 'year' : 'month') . ' yet.</p>')
+      . $card('k-cty', 'Visitors by country', $cR ? '<div class="list">' . $geo($cR, 'Country') . '</div>' : '<p class="muted empty">No visitors yet.</p>')
+      . $card('k-em', 'Visitors by emirate', array_sum(array_column($eR, 'n')) ? '<div class="list">' . $geo($eR, 'Emirate') . '</div>' : '<p class="muted empty">No visitors from the UAE yet.</p>')
       . '</div>'
-      . '<p class="muted small cnote">Income and orders count real orders only (cancelled, refunded and test orders are left out). Visitor counting started ' . ($since ? h(date('j M Y', strtotime($since))) : 'in Oct 2026') . '. Location is approximate.</p>'
+      . '<p class="muted small cnote">Sales and orders count real orders only: cancelled and returned orders are left out. Visitor locations are approximate.</p>'
       . '</div>'
-      . '<script>document.querySelectorAll(".cl .chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)})</script>', true, false);
+      . '<script>document.querySelectorAll(".cl .chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)})</script>', true, true);
 }
 
 /* ---- analytics: visitors, where they come from, and where sales are lost (filled by track.php on the website) ---- */
