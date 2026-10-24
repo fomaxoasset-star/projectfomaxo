@@ -600,6 +600,8 @@ switch ($action) {
     // ---------------- Sales history ----------------
     case 'sales':
         $u = require_user();
+        // QR sales still "Waiting" (the QR screen was closed): ask Ziina if the customer has paid since.
+        check_waiting_ziina($u, 10);
         [$from, $to] = date_range();
         $params = [$from, $to];
         $where = 's.created_at BETWEEN ? AND ?';
@@ -629,6 +631,12 @@ switch ($action) {
 
     case 'sale_get':
         $u = require_user();
+        $w = q1("SELECT * FROM sales WHERE id = ? AND status = 'pending' AND method = 'ziina'", [(int) ($_GET['id'] ?? 0)]);
+        if ($w) {
+            try {
+                refresh_ziina_sale($w, $u['id']);
+            } catch (Throwable $e) { /* Ziina not reachable: show it as waiting */ }
+        }
         $s = load_sale('id', (int) ($_GET['id'] ?? 0));
         if (!$s || ($u['role'] !== 'manager' && $s['user_id'] !== $u['id'])) {
             fail('Sale not found.', 404);

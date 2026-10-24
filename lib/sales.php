@@ -345,6 +345,21 @@ function move_stock($productId, $storeId, $userId, $change, $reason, $note = '',
     return $after;
 }
 
+/** Checks the newest QR sales still waiting (last 3 days) with Ziina, so payments made after the QR screen closed are recorded. */
+function check_waiting_ziina($user, $max = 10)
+{
+    $since = date('Y-m-d H:i:s', time() - 3 * 86400);
+    $rows = q("SELECT * FROM sales WHERE status = 'pending' AND method = 'ziina' AND ziina_id IS NOT NULL AND ziina_id <> '' AND created_at >= ?
+               ORDER BY id DESC LIMIT " . (int) $max, [$since])->fetchAll();
+    foreach ($rows as $w) {
+        try {
+            refresh_ziina_sale($w, $user['id']);
+        } catch (Throwable $e) {
+            break; // Ziina not reachable right now: try again next time
+        }
+    }
+}
+
 /** Checks a pending Ziina sale with Ziina and updates it. Returns the sale status. */
 function refresh_ziina_sale($sale, $userId)
 {
