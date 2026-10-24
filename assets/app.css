@@ -747,3 +747,8 @@ a.btn { text-decoration: none; }
 .pay-sheet .pchoice { text-align: center; }
 .pay-sheet .link-btn.other-card { display: block; margin-left: auto; margin-right: auto; text-align: center; }
 .pay-sheet .change-box.big { align-items: center; text-align: center; }
+
+/* Custom item tile and box */
+.ptile-custom .ph { background: var(--gold-dim); display: grid; place-items: center; }
+.ptile-custom .ph-letter { font-size: 56px; color: var(--gold-2); }
+.ci-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }

@@ -122,7 +122,19 @@ function create_sale($user, $b, $method)
     }
     $qtyById = [];
     $priceById = [];
+    $customLines = [];
     foreach ($items as $it) {
+        if (!empty($it['custom'])) {
+            // Custom item (Gift, Combo ...): name and price typed at the till, no stock.
+            $cname = text_in($it['name'] ?? '', 60);
+            $cprice = (int) ($it['price'] ?? -1);
+            $cqty = (int) ($it['qty'] ?? 0);
+            if ($cname === '' || $cprice < 0 || $cprice > 10000000 || $cqty <= 0 || $cqty > 999) {
+                fail('A custom item needs a name, a price and a quantity.');
+            }
+            $customLines[] = ['product_id' => 0, 'name' => $cname, 'variant' => '', 'price' => $cprice, 'qty' => $cqty, 'was' => null];
+            continue;
+        }
         $pid = (int) ($it['product_id'] ?? 0);
         $qty = (int) ($it['qty'] ?? 0);
         if ($pid <= 0 || $qty <= 0 || $qty > 999) {
@@ -135,7 +147,7 @@ function create_sale($user, $b, $method)
     }
     $storeId = resolve_store($user, $b['store_id'] ?? 0);
     $ids = array_keys($qtyById);
-    $rows = q('SELECT * FROM products WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids)->fetchAll();
+    $rows = $ids ? q('SELECT * FROM products WHERE id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids)->fetchAll() : [];
     $products = [];
     foreach ($rows as $r) {
         $products[(int) $r['id']] = $r;
@@ -162,6 +174,7 @@ function create_sale($user, $b, $method)
         $was = (int) ($p['compare_at'] ?? 0);
         $lines[] = ['product_id' => $pid, 'name' => $p['name'], 'variant' => $p['variant'], 'price' => $price, 'qty' => $qty, 'was' => $was > $price ? $was : null];
     }
+    $lines = array_merge($lines, $customLines);
 
     // Coupon code (same codes as fomaxo.com). Checked again here; offline sales keep what the till showed.
     $coupon = null;
@@ -324,6 +337,9 @@ function mark_paid($saleId, $userId, $paidAt = null)
 
 function move_stock($productId, $storeId, $userId, $change, $reason, $note = '', $saleId = null)
 {
+    if ((int) $productId <= 0) {
+        return 0; // custom items (Gift, Combo ...) have no stock
+    }
     $st = q('UPDATE product_stock SET stock = stock + ? WHERE product_id = ? AND store_id = ?', [$change, $productId, $storeId]);
     if ($st->rowCount() === 0) {
         insert('product_stock', ['product_id' => $productId, 'store_id' => $storeId, 'stock' => $change]);

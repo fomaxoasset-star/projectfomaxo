@@ -246,8 +246,8 @@
   }
   function cartLines() {
     return S.cart.map(function (c) {
-      var p = productById(c.product_id) || { name: c.name, variant: c.variant, price: c.price };
-      return { product_id: c.product_id, name: p.name, variant: p.variant, price: p.price, qty: c.qty };
+      var p = c.custom ? c : productById(c.product_id) || { name: c.name, variant: c.variant, price: c.price };
+      return { product_id: c.product_id, name: p.name, variant: p.variant || '', price: p.price, qty: c.qty, custom: !!c.custom };
     });
   }
   function productById(id) { for (var i = 0; i < S.products.length; i++) if (S.products[i].id === id) return S.products[i]; return null; }
@@ -519,7 +519,9 @@
         (any ? 'Try a different search.' : isManager() ? 'Go to <b>Stock</b> to add products.' : 'Ask a manager to add products.') + '</div>';
       return;
     }
-    el.innerHTML = groups.map(function (g) {
+    var customTile = '<button class="ptile ptile-custom" data-act="custom-item"><span class="ph"><span class="ph-letter">＋</span></span>' +
+      '<span class="pt-name">Custom item</span><span class="pt-sub">Gift, combo… your price</span></button>';
+    el.innerHTML = customTile + groups.map(function (g) {
       var inCart = 0, from = Infinity, anyStock = false;
       g.sizes.forEach(function (p) {
         S.cart.forEach(function (c) { if (c.product_id === p.id) inCart += c.qty; });
@@ -580,7 +582,7 @@
   function changeQty(id, d) {
     var before = snapshotBag(), removedName = '';
     S.cart.forEach(function (c) {
-      if (c.product_id === id && c.qty + d <= 0) { var rp = productById(id); removedName = rp ? shortName(rp.name) + ' ' + rp.variant : 'item'; }
+      if (c.product_id === id && c.qty + d <= 0) { var rp = productById(id); removedName = c.custom ? c.name : rp ? shortName(rp.name) + ' ' + rp.variant : 'item'; }
     });
     S.cart.forEach(function (c) {
       if (c.product_id !== id) return;
@@ -608,8 +610,8 @@
       '<div class="cart-lines">' + (empty ? '<div class="empty"><div class="big">Bag is empty</div>Tap a perfume to add it.</div>' :
         lines.map(function (l) {
           var p = productById(l.product_id) || {};
-          return '<div class="cline">' + (p.image ? '<img src="' + esc(thumb(p.image, 360)) + '" alt="" onerror="this.remove()">' : '<span class="cl-ph">' + esc(shortName(l.name).charAt(0)) + '</span>') +
-            '<div class="cl-mid"><b>' + esc(shortName(l.name)) + '</b><span>' + esc(l.variant) + ' · ' + money(l.price) + '</span></div>' +
+          return '<div class="cline">' + (p.image ? '<img src="' + esc(thumb(p.image, 360)) + '" alt="" onerror="this.remove()">' : '<span class="cl-ph">' + (l.custom ? '🎁' : esc(shortName(l.name).charAt(0))) + '</span>') +
+            '<div class="cl-mid"><b>' + esc(l.custom ? l.name : shortName(l.name)) + '</b><span>' + (l.custom ? 'Custom' : esc(l.variant)) + ' · ' + money(l.price) + '</span></div>' +
             '<div class="qty big"><button data-act="qty" data-id="' + l.product_id + '" data-d="-1" aria-label="One less">−</button><span>' + l.qty + '</span>' +
             '<button data-act="qty" data-id="' + l.product_id + '" data-d="1" aria-label="One more">+</button></div></div>';
         }).join('') + freeLineHtml()) + '</div>' +
@@ -633,6 +635,26 @@
     var p = productById(c.free.product_id) || { name: c.free.name, variant: '' };
     return '<div class="cline free">' + (p.image ? '<img src="' + esc(thumb(p.image, 360)) + '" alt="">' : '<span class="cl-ph">🎁</span>') +
       '<div class="cl-mid"><b>' + esc(shortName(p.name)) + '</b><span>' + esc(p.variant) + ' · Free with coupon</span></div><b class="free-tag">FREE</b></div>';
+  }
+  // ---- Custom item: a name and a price typed at the till (Gift, Combo ...). No stock.
+  function customItemModal() {
+    openModal('Custom item', '<div class="err m-err hidden"></div><form id="ci-form" autocomplete="off">' +
+      '<div class="ci-chips">' + ['Gift', 'Combo', 'Gift wrap', 'Gift set'].map(function (n) { return '<button type="button" class="btn sm" data-act="ci-name" data-v="' + n + '">' + n + '</button>'; }).join('') + '</div>' +
+      '<label class="field"><span>Name (shown on the receipt)</span><input class="input" name="name" maxlength="60" required autofocus placeholder="e.g. Combo — 2 perfumes"></label>' +
+      '<div class="grid2"><label class="field"><span>Price AED</span><input class="input" name="price" type="number" inputmode="decimal" step="0.01" min="0" required placeholder="0.00"></label>' +
+      '<label class="field"><span>Quantity</span><input class="input" name="qty" type="number" inputmode="numeric" min="1" max="999" value="1" required></label></div>' +
+      '<div class="modal-foot"><button class="btn" type="button" data-act="modal-close">Cancel</button><button class="btn gold big" type="submit">Add to bag</button></div></form>');
+    $('#ci-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var f = e.target, name = f.name.value.replace(/\s+/g, ' ').trim(), price = toFils(f.price.value), qty = parseInt(f.qty.value, 10) || 0;
+      if (!name) { modalErr('Type a name, e.g. Gift or Combo.'); return; }
+      if (f.price.value === '' || price < 0) { modalErr('Type the price.'); return; }
+      if (qty < 1 || qty > 999) { modalErr('Quantity must be 1 or more.'); return; }
+      var before = snapshotBag();
+      S.cart.push({ product_id: -(Date.now() % 1000000000), custom: true, name: name, variant: '', price: price, qty: qty });
+      closeModal(); renderTiles(); renderCart();
+      flashAdded(name, function () { restoreBag(before); });
+    });
   }
   function couponModal() {
     var c = S.coupon;
@@ -789,7 +811,7 @@
   function buildPayload(method, extra) {
     var p = {
       uuid: uuid(), receipt_token: randHex(16), method: method, store_id: curStoreId(),
-      items: cartLines().map(function (l) { return { product_id: l.product_id, qty: l.qty, price: l.price }; }),
+      items: cartLines().map(function (l) { return l.custom ? { custom: 1, name: l.name, price: l.price, qty: l.qty } : { product_id: l.product_id, qty: l.qty, price: l.price }; }),
       discount: S.discount, customer: S.customer ? { phone: S.customer.phone, name: S.customer.name, email: S.customer.email || '' } : null,
       coupon: S.coupon ? S.coupon.code : '',
       coupon_info: S.coupon ? { kind: S.coupon.kind, amount: S.coupon.amount, label: S.coupon.label, free_product_id: S.coupon.free ? S.coupon.free.product_id : 0 } : null,
@@ -1864,6 +1886,8 @@
       case 'more2': couponDiscountModal(); break;
       case 'r-show': showReceipt(currentReceipt, false); break;
       case 'qty': changeQty(id, parseInt(el.getAttribute('data-d'), 10)); break;
+      case 'custom-item': customItemModal(); break;
+      case 'ci-name': { var ci = $('#ci-form'); if (ci) { ci.name.value = el.getAttribute('data-v'); ci.price.focus(); } break; }
       case 'cart-clear':
         openModal('Empty the bag?', '<p style="margin-top:0">Remove all items' + (S.customer || S.coupon || S.discount ? ', the customer, coupon and discount' : '') + ' from the bag?</p>' +
           '<div class="modal-foot"><button class="btn big" data-act="modal-close">No, keep</button><button class="btn danger big" data-act="cart-clear-yes">Yes, empty</button></div>');
