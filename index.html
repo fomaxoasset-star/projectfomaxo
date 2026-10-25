@@ -5777,9 +5777,16 @@ function edgeArrows(sc){ const w = sc && sc.parentElement; if (!w || !w.classLis
   addEventListener('resize', fit, {passive: true}); fit();
   if (window.ResizeObserver) new ResizeObserver(fit).observe(sc);   // a row drawn while hidden gets its arrows once it shows
   if (sc._egT) return; sc._egT = 1;   // a finger swipe that starts on the first / last videos and pulls past the end jumps round too
+  const edge = () => { const m = sc.scrollWidth - sc.clientWidth, rtl = getComputedStyle(sc).direction === 'rtl', x = sc.scrollLeft; return m <= 2 ? 0 : x <= (rtl ? -m : 0) + 2 ? -1 : x >= (rtl ? 0 : m) - 2 ? 1 : 0; };   // -1 at the left end, 1 at the right end
   let tx = 0, ty = 0, at = 0;
-  sc.addEventListener('touchstart', e => { const t = e.touches[0], m = sc.scrollWidth - sc.clientWidth, rtl = getComputedStyle(sc).direction === 'rtl', x = sc.scrollLeft; tx = t.clientX; ty = t.clientY; at = m <= 2 ? 0 : x <= (rtl ? -m : 0) + 2 ? -1 : x >= (rtl ? 0 : m) - 2 ? 1 : 0; }, {passive: true});
-  sc.addEventListener('touchend', e => { const t = e.changedTouches[0], dx = t.clientX - tx; if (!at || Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(t.clientY - ty)) return; const d = dx > 0 ? -1 : 1; if (d === at) rowStep(sc, d); }, {passive: true}); }
+  sc.addEventListener('touchstart', e => { const t = e.touches[0]; tx = t.clientX; ty = t.clientY; at = edge(); }, {passive: true});
+  sc.addEventListener('touchend', e => { const t = e.changedTouches[0], dx = t.clientX - tx; if (!at || Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(t.clientY - ty)) return; const d = dx > 0 ? -1 : 1; if (d === at) rowStep(sc, d); }, {passive: true});
+  /* the same with a two-finger swipe on a laptop trackpad (AJAY 2026-10-25): only a new swipe that starts at the end (not the glide of the swipe that got there);
+     after the jump the rest of that swipe is used up, so the row stays on the first / last videos */
+  let lw = 0, ls = 0, ge = 0, acc = 0, used = false; sc.addEventListener('scroll', () => ls = Date.now(), {passive: true});
+  sc.addEventListener('wheel', e => { const t = Date.now(); if (t - lw > 300) { acc = 0; used = false; ge = t - ls > 400 ? edge() : 0; } lw = t;
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; if (used) return e.preventDefault(); if (!ge) return;
+    acc += e.deltaX; if (ge * acc > 0) e.preventDefault(); if (ge * acc > 60) { used = true; rowStep(sc, ge); } }, {passive: false}); }
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
 function vidLit(v, done){ if (v._lit) return; v._lit = 1; const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d', {willReadFrequently: true}); let n = 0;
   const chk = () => { if (!v.getAttribute('src')) { v._lit = 0; return; } let ok = false; try { g.drawImage(v, 0, 0, 8, 8); const d = g.getImageData(0, 0, 8, 8).data; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 36) { ok = true; break; } } catch (e) { ok = true; }
