@@ -2434,7 +2434,7 @@ video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit
 .vr-nav{align-self:flex-end}.vr-nav[hidden]{display:none}.vr-nav button{width:40px;height:40px;font-size:20px}
 @media(min-width:601px) and (max-width:1599px){.vrow{--n:8}}@media(min-width:601px) and (max-width:1279px){.vrow{--n:6}}@media(min-width:601px) and (max-width:999px){.vrow{--n:4}}.vrow.pp .vt{flex-basis:clamp(150px,17vw,230px)}.vrow.pp .vt.wide{flex-basis:calc(2 * clamp(150px,17vw,230px) + 14px)}@media(min-width:601px){.vrow.pp .vt{flex-shrink:1;min-width:150px}.vrow.pp .vt.wide{min-width:314px}}@media(max-width:600px){.vrow.pp{margin-right:calc(-1 * var(--pad));padding-right:var(--pad)}.vrow.pp .vt{flex-basis:40vw}.vrow.pp .vt.wide{flex-basis:calc(80vw + 10px)}}   /* only whole videos in the row (never one cut in half): 9 across on a big laptop, 8 / 6 / 4 on smaller screens, 2 on a phone; the arrows turn a page. Product pages (.pp) keep the earlier sizes: big tiles that shrink a little to fit the page */
 @media(max-width:600px){.vr-nav{display:none}}
-.eg-w{position:relative}.eg{display:none;position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:40px;height:40px;border-radius:50%;place-items:center;padding:0;background:rgba(0,0,0,.55);border:1px solid rgba(240,211,160,.55);color:#f0d3a0;cursor:pointer;transition:opacity .3s}.eg-on>.eg{display:grid}.eg svg{width:18px;height:18px}.eg-l{left:8px}.eg-r{right:8px}.eg[disabled]{opacity:.3;cursor:default}   /* round arrows on both sides of a video row */
+.eg-w{position:relative}.eg{display:none;position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:40px;height:40px;border-radius:50%;place-items:center;padding:0;background:rgba(0,0,0,.55);border:1px solid rgba(240,211,160,.55);color:#f0d3a0;cursor:pointer;transition:opacity .3s}.eg-on>.eg{display:grid}.eg svg{width:18px;height:18px}.eg-l{left:8px}.eg-r{right:8px}   /* round arrows on both sides of a video row */
 @media(max-width:600px){.eg{width:34px;height:34px}.eg svg{width:16px;height:16px}.eg-l{left:4px}.eg-r{right:4px}}
 
 .rl-s.emb .rl-stage{display:flex;flex-direction:column;background:#000}
@@ -5763,16 +5763,23 @@ function vidSecHTML(){
       ${p ? `<span class="vt-p${v.w ? ' has-w' : ''}">${v.w ? `<i class="vt-w">${esc(v.w)}</i>` : ''}<img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now${ps.length ? ` · + ${ps.length} more` : ''}</i></span></span>`}</button>`; }).join('')}</div></div></div>`;
 }
 let vrIO = null, vrNear = null;
-/* a sideways video row also gets a round arrow on its left and one on its right (phone and laptop, next to the ‹ › above it; AJAY 2026-10-25): each moves one screen of videos that way; at the start / end that arrow fades. Only scrolls: what loads is still decided by what is on screen */
+/* a sideways video row also gets a round arrow on its left and one on its right (phone and laptop, next to the ‹ › above it; AJAY 2026-10-25): each moves one screen of videos that way.
+   From the first videos a move back (arrow or finger) jumps to the last ones, and from the end a move on jumps back to the first (AJAY 2026-10-25: "from first, swipe both sides"); the jump is instant, so the videos in between never load */
+function rowStep(sc, d){ const m = sc.scrollWidth - sc.clientWidth, rtl = getComputedStyle(sc).direction === 'rtl', lo = rtl ? -m : 0, hi = rtl ? 0 : m, x = sc.scrollLeft;   // d: -1 left, 1 right (as the arrows point)
+  if (d > 0 && x >= hi - 2) sc.scrollTo({left: lo, behavior: 'instant'});
+  else if (d < 0 && x <= lo + 2) sc.scrollTo({left: hi, behavior: 'instant'});
+  else { const g = parseFloat(getComputedStyle(sc).columnGap) || 0; sc.scrollBy({left: d * (sc.clientWidth + g), behavior: 'smooth'}); } }
 function edgeArrows(sc){ const w = sc && sc.parentElement; if (!w || !w.classList.contains('eg-w')) return;
   $$(':scope > .eg', w).forEach(b => b.remove());
   w.insertAdjacentHTML('beforeend', `<button type="button" class="eg eg-l" data-eg="-1" aria-label="Previous videos">${VI.left}</button><button type="button" class="eg eg-r" data-eg="1" aria-label="More videos">${VI.right}</button>`);
-  const [l, r] = $$(':scope > .eg', w);
-  const fit = () => { if (!document.contains(sc)) return removeEventListener('resize', fit); const m = sc.scrollWidth - sc.clientWidth, x = Math.abs(sc.scrollLeft), rtl = getComputedStyle(sc).direction === 'rtl';
-    w.classList.toggle('eg-on', m > 2); (rtl ? r : l).disabled = x <= 2; (rtl ? l : r).disabled = x >= m - 2; };
-  [l, r].forEach(b => b.onclick = () => { const g = parseFloat(getComputedStyle(sc).columnGap) || 0; sc.scrollBy({left: +b.dataset.eg * (sc.clientWidth + g), behavior: 'smooth'}); });
-  sc.addEventListener('scroll', fit, {passive: true}); addEventListener('resize', fit, {passive: true}); fit();
-  if (window.ResizeObserver) new ResizeObserver(fit).observe(sc); }   // a row drawn while hidden gets its arrows once it shows
+  $$(':scope > .eg', w).forEach(b => b.onclick = () => rowStep(sc, +b.dataset.eg));
+  const fit = () => { if (!document.contains(sc)) return removeEventListener('resize', fit); w.classList.toggle('eg-on', sc.scrollWidth - sc.clientWidth > 2); };
+  addEventListener('resize', fit, {passive: true}); fit();
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(sc);   // a row drawn while hidden gets its arrows once it shows
+  if (sc._egT) return; sc._egT = 1;   // a finger swipe that starts on the first / last videos and pulls past the end jumps round too
+  let tx = 0, ty = 0, at = 0;
+  sc.addEventListener('touchstart', e => { const t = e.touches[0], m = sc.scrollWidth - sc.clientWidth, rtl = getComputedStyle(sc).direction === 'rtl', x = sc.scrollLeft; tx = t.clientX; ty = t.clientY; at = m <= 2 ? 0 : x <= (rtl ? -m : 0) + 2 ? -1 : x >= (rtl ? 0 : m) - 2 ? 1 : 0; }, {passive: true});
+  sc.addEventListener('touchend', e => { const t = e.changedTouches[0], dx = t.clientX - tx; if (!at || Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(t.clientY - ty)) return; const d = dx > 0 ? -1 : 1; if (d === at) rowStep(sc, d); }, {passive: true}); }
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
 function vidLit(v, done){ if (v._lit) return; v._lit = 1; const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d', {willReadFrequently: true}); let n = 0;
   const chk = () => { if (!v.getAttribute('src')) { v._lit = 0; return; } let ok = false; try { g.drawImage(v, 0, 0, 8, 8); const d = g.getImageData(0, 0, 8, 8).data; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 36) { ok = true; break; } } catch (e) { ok = true; }
@@ -5791,7 +5798,7 @@ function bindVids(){
   }, 2000);   // the videos start by themselves as the page opens (autoplay, muted, looping)
   const row = $('#vrow'), nav = $('.vr-nav');   // laptop: arrows when the videos are wider than the page
   edgeArrows(row);   // and round arrows on the left and right of the row (phone and laptop)
-  if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => row.scrollBy({left: +b.dataset.vscroll * (row.clientWidth + 14), behavior: 'smooth'})); }
+  if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => rowStep(row, +b.dataset.vscroll)); }
   const nc = navigator.connection; if (nc && (nc.saveData || /2g|3g/.test(nc.effectiveType || ''))) return;   // data saver or a slow connection: covers only until tapped
   /* light on the page: a tile loads its small preview only when it is on screen and the page has finished loading, at most 2 at a time;
      a tile without a preview keeps its photo (the full video loads only in the player); a browser that holds back autoplay downloads nothing until the first tap or click */
