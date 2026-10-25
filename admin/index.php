@@ -181,7 +181,7 @@ dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0}dt{color:v
 .db .note{font-size:11.5px;margin:0 0 8px}
 .dgrid{display:grid;gap:8px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.15fr) minmax(0,1fr)}.dgrid>*{min-width:0}
 .db .list{overflow:auto;flex:1 1 auto;min-height:0;overscroll-behavior:contain}.db .list li{padding:5px 0;font-size:13.5px}.db .list.orders li{padding:0}.db .list.orders a{padding:5px 0}.db .list .r{flex-direction:row;align-items:center;gap:8px}.db .list small{font-size:11.5px}
-.db .empty{margin:0;font-size:13px}.lmore{margin:0 0 8px;flex:none}.db .empty+.lmore{margin:8px 0 0}.lmore a{color:var(--gold);font-weight:600}.stage-ord{color:var(--gold);font-weight:600}
+.db .empty{margin:0;font-size:13px}
 @media (max-width:759px){.lists{overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:8px;min-height:0}.lists>.card{flex:none;overflow:visible}.lists .c-stock{order:-1}.lists .list{overflow:visible}
   .tile{padding:6px 9px}.tile b{font-size:15px}.tile.todo b{font-size:18px}.tile span{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .db .list.orders small{display:none}.db .list.orders a>span:first-child{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.db .seg button{padding:3px 7px}}
@@ -727,7 +727,7 @@ function fx_lead_key($l) {
 function fx_lead_groups($groups) {
   global $pdo; $sent = json_decode((string)fomaxo_setting($pdo, 'wa_sent'), true) ?: [];
   return array_values(array_map(function ($g) use ($sent) {
-    $l = $g[0]; $l['tries'] = count($g); $l['sids'] = array_column($g, 'sid'); $l['times'] = array_column($g, 'updated_at'); $l['mark'] = $l['sid']; $l['grp'] = $g; $best = '';
+    $l = $g[0]; $l['tries'] = count($g); $l['sids'] = array_column($g, 'sid'); $l['times'] = array_column($g, 'updated_at'); $l['mark'] = $l['sid']; $best = '';
     foreach ($l['sids'] as $sid) if (($d = (string)($sent['lt:' . $sid] ?? '')) > $best) { $best = $d; $l['mark'] = $sid; }
     return $l;
   }, $groups));
@@ -3170,20 +3170,13 @@ if (isset($_GET['analytics'])) {
   $stageName = ['visit' => 'Opened our WhatsApp link, not at checkout yet', 'buyer' => 'Past buyer visiting, not at checkout yet', 'invite' => 'Invited a friend who ordered: send their coupon', 'coupon' => 'Gave WhatsApp for the coupon: send it', 'details' => 'Delivery details', 'payment' => 'Payment choice', 'card' => 'Card payment page'];
   $left = $leftM = ''; $leftN = ['visit' => 0, 'buyer' => 0, 'invite' => 0, 'coupon' => 0, 'details' => 0, 'payment' => 0, 'card' => 0];
   $leadHid = $pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'hidden'")->fetch() ? ' AND l.hidden = 0' : '';
-  /* people who ordered later or were taken off with × are left out; "Show them" (lall=1) lists them too, marked, so the list always
-     matches Conversion → Typed name or mobile */
-  $lall = !empty($_GET['lall']); $leftOut = ['ord' => [], 'hid' => []];
-  foreach ($q("SELECT l.*, COALESCE(NULLIF(l.order_no, ''), (SELECT CONCAT(o.order_no, IF(o.test, ' (test)', '')) FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
-                               AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9) ORDER BY o.created_at LIMIT 1)) ord_no
-               FROM fx_leads l WHERE l.updated_at BETWEEN ? AND ?
+  foreach ($q("SELECT l.* FROM fx_leads l WHERE l.updated_at BETWEEN ? AND ? AND l.order_no IS NULL$leadHid
+               AND NOT EXISTS (SELECT 1 FROM fx_orders o WHERE o.status IN ('New', 'Paid', 'Delivered') AND o.created_at >= l.created_at - INTERVAL 1 HOUR
+                               AND l.phone <> '' AND RIGHT(REGEXP_REPLACE(o.phone, '[^0-9]', ''), 9) = RIGHT(REGEXP_REPLACE(l.phone, '[^0-9]', ''), 9))
                ORDER BY l.updated_at DESC LIMIT 1000")->fetchAll() as $l) {   // one line per customer per day (fx_lead_groups), at most 200
-    $why = $l['ord_no'] !== null ? 'ord' : ($leadHid !== '' && (int)$l['hidden'] ? 'hid' : '');
-    if ($why !== '') { $leftOut[$why][fx_lead_key($l)] = 1; if (!$lall) continue; }
     if (count($leftG ??= []) >= 200 && !isset($leftG[fx_lead_key($l)])) continue;
     $leftG[fx_lead_key($l)][] = $l;
   }
-  $leftOut['hid'] = array_diff_key($leftOut['hid'], $leftOut['ord']);   // ordered says more than removed
-  $leftMore = count($leftOut['ord']) + count($leftOut['hid']);
   $leadCat = null;   // product names for the WhatsApp visits below, read once
   foreach (fx_lead_groups($leftG ?? []) as $l) {
     if (in_array($l['stage'], ['visit', 'buyer'], true) && $l['items'] === '') {   // opened from our WhatsApp, or a past buyer back: the products they looked at
@@ -3197,8 +3190,6 @@ if (isset($_GET['analytics'])) {
     $recent = strtotime($l['updated_at']) > time() - 900;
     /* one line per person like fomaxo.in: × · date · name · emirate · bag · left at · ordered later · WhatsApp · ›; tap the line for everything else */
     $when = strtotime($l['updated_at']); $na = '<span class="muted">—</span>';
-    $lolT = ($on = array_values(array_filter(array_column($l['grp'], 'ord_no'))))[0] ?? null;
-    $lolT = $lolT !== null ? '<b class="stage-ord">Ordered ' . h($lolT) . '</b>' : (array_filter(array_column($l['grp'], 'hidden')) && $leadHid !== '' ? '<span class="muted">Removed with ×</span>' : 'Not ordered');
     $pill = '<span class="lpill stage-' . h($l['stage']) . '">' . h(['visit' => 'Opened link', 'buyer' => 'Past buyer', 'invite' => 'Invited a friend', 'coupon' => 'Wants coupon', 'details' => 'At details', 'payment' => 'At payment', 'card' => 'At card page'][$l['stage']] ?? $l['stage']) . '</span>';
     $left .= '<li class="lx"><details><summary>'
            . '<button type="button" class="lxx" data-sid="' . h(implode(',', $l['sids'])) . '" aria-label="Remove from this list" title="Remove from this list">×</button>'
@@ -3206,7 +3197,7 @@ if (isset($_GET['analytics'])) {
            . '<span class="ln"><b><span class="lnm">' . hx($l['name'] ?: 'No name') . '</span>' . ($l['tries'] > 1 ? '<small class="ltr" title="Came to checkout ' . $l['tries'] . ' times">×' . $l['tries'] . '<span class="ltw"> tries</span></small>' : '') . '</b><span class="lsub muted">' . h(date('d M, H:i', $when)) . ($l['emirate'] !== '' ? ' · ' . h($l['emirate']) : '') . ($l['stage'] === 'coupon' ? ' · <b class="stage-coupon">Wants coupon</b>' : '') . '</span></span>'
            . '<span class="lem" title="' . h(trim(($l['address'] ?? '') . (($l['address'] ?? '') !== '' && $l['emirate'] !== '' ? ', ' : '') . $l['emirate'])) . '">' . (($adr = trim(($l['address'] ?? '') . (($l['address'] ?? '') !== '' && $l['emirate'] !== '' ? ', ' : '') . $l['emirate'])) !== '' ? h($adr) : $na) . '</span>'
            . '<span class="lv">' . ($l['total'] !== null ? money($l['total']) : $na) . '</span>'
-           . '<span class="lst">' . $pill . '</span><span class="lol">' . $lolT . '</span>'
+           . '<span class="lst">' . $pill . '</span><span class="lol">Not ordered</span>'
            . (($lw = $l['phone'] !== '' ? fx_wa_btn($l['phone'], $l['name'] ?: $l['phone'], ($lm = fx_left_msg($l))[0], $lm[1], 'lt:' . $l['mark'], $l['stage'] === 'invite' ? 'g' : 'lt', $lm[2], 'wa wag', false, array_slice(fx_left_msg($l, !$lm[2]), 0, 2)) : '') !== '' ? ($l['stage'] === 'invite' ? str_replace('data-wabox="g"', 'data-wabox="g" data-k0="pct"', $lw) : $lw) : '<span class="wa none"></span>')
            . '<span class="lch" aria-hidden="true"></span></summary>'
            . '<dl class="ld"><dt class="rp ra">Date</dt><dd class="rp ra">' . h(date('d M Y, H:i', $when)) . ($recent ? ' <span class="muted">· may still be checking out</span>' : '') . '</dd>'
@@ -3216,7 +3207,7 @@ if (isset($_GET['analytics'])) {
            . '<dt' . (mb_strlen($adr) <= 34 ? ' class="rp' . (($l['address'] ?? '') === '' ? ' ra' : '') . '"' : '') . '>Address</dt><dd' . (mb_strlen($adr) <= 34 ? ' class="rp' . (($l['address'] ?? '') === '' ? ' ra' : '') . '"' : '') . '>' . ($adr !== '' ? hx($adr) : '—') . '</dd>'
            . '<dt>Products</dt><dd>' . ($l['items'] !== '' ? h($l['items']) : '—') . '</dd>'
            . '<dt class="rp">Left at</dt><dd class="rp">' . h($stageName[$l['stage']] ?? $l['stage']) . '</dd>'
-           . '<dt class="rp">Ordered later</dt><dd class="rp">' . $lolT . '</dd>'
+           . '<dt class="rp">Ordered later</dt><dd class="rp">Not ordered</dd>'
            . '</dl></details></li>';
   }
 
@@ -3248,14 +3239,6 @@ if (isset($_GET['analytics'])) {
     . ($retRows ? '<div class="list"><table class="mini rtab"><thead><tr><th>Customer</th><th class="num">Orders</th><th class="num">Spent</th><th class="num">Since last</th></tr></thead><tbody>' . $retRows . '</tbody></table></div>'
                : '<p class="muted empty">No repeat orders in these dates.</p>')
     . '<p class="muted small gnote">Orders in these dates from a mobile that had ordered before.</p></section>';
-  /* under Left at checkout: how many typed their details but are not listed, and why, with Show them / Hide them */
-  $leftNote = '';
-  if ($leftMore) {
-    $lq = ['analytics' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []);
-    $why = array_filter([count($leftOut['ord']) ? count($leftOut['ord']) . ' ordered later' : '', count($leftOut['hid']) ? count($leftOut['hid']) . ' removed with ×' : '']);
-    $leftNote = '<p class="muted small lmore">' . ($lall ? 'Showing everyone who typed their details, also ' . implode(' and ', $why) . '. <a href="' . h(self_url($lq)) . '#left">Hide them</a>'
-                                                  : $leftMore . ($leftMore === 1 ? ' more person' : ' more people') . ' typed their details but ' . ($leftMore === 1 ? 'is' : 'are') . ' not listed: ' . implode(', ', $why) . '. <a href="' . h(self_url($lq + ['lall' => 1])) . '#left">Show them</a>') . '</p>';
-  }
   page('Analytics', '<div class="db an">'
     . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . '<div class="seg">'
     . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k] + $cvq)) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
@@ -3271,15 +3254,15 @@ if (isset($_GET['analytics'])) {
             $retN . ($retN === 1 ? ' person' : ' people') . ($retD !== null ? ' · reorder in ' . $retD . ($retD === 1 ? ' day' : ' days') : ''))
     . $tile('AED ' . number_format(round((float)$ord['t'])), 'Revenue', 'rev', 'AED ' . number_format((int)$ord['n'] ? round((float)$ord['t'] / (int)$ord['n']) : 0) . ' per order')
     . '</div>'
-    . ($cv ? $cvGrid : '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === ($lall ? 'left' : 'funnel') ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
+    . ($cv ? $cvGrid : '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
     . '<div class="dgrid agrid">'
-    . '<section class="card a-funnel' . ($lall ? '' : ' on') . '" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
+    . '<section class="card a-funnel on" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
     . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a point to see its visitors</span><b>' . number_format($f['visitors']) . ' visitor' . ((int)$f['visitors'] === 1 ? '' : 's') . ' in total</b></p>' . ($devAll ? '<div class="dstrip" title="Tap for the full devices table">' . implode('', array_map(fn($k, $l) => '<button type="button" data-open="devices"><span>' . $l . '</span><b>' . $pctT($pct($devR[$k]['visits'], $devAll)) . '</b><span>' . number_format($devR[$k]['visitors']) . ' visitor' . ($devR[$k]['visitors'] === 1 ? '' : 's') . '</span><span>' . number_format($devR[$k]['bought']) . ' sold</span></button>', array_keys($devN), $devN)) . $langS . '</div>' : '') . '</section>'
     . $retCard
-    . '<section class="card a-left' . ($lall ? ' on' : '') . '" id="left" data-p="left"><div class="ch"><h2>Left at checkout <small class="lcnt">' . array_sum($leftN) . (array_sum($leftN) === 1 ? ' person' : ' people') . '</small> <small class="lwho">Everyone who typed their details at checkout, opened a link from our WhatsApp, came back after buying or invited a friend who ordered, ' . h(date('j', strtotime($d1)) . ($d1 !== $d2 ? (date('M', strtotime($d1)) !== date('M', strtotime($d2)) ? ' ' . date('M', strtotime($d1)) : '') . '–' . date('j', strtotime($d2)) : '') . ' ' . date('M', strtotime($d2))) . '</small></h2><a class="btn sm lxls" href="./?analytics=1&amp;leads=1">Excel</a></div>' . ($left ? $leftNote : '')
+    . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout <small class="lcnt">' . array_sum($leftN) . (array_sum($leftN) === 1 ? ' person' : ' people') . '</small> <small class="lwho">Everyone who typed their details at checkout, opened a link from our WhatsApp, came back after buying or invited a friend who ordered, ' . h(date('j', strtotime($d1)) . ($d1 !== $d2 ? (date('M', strtotime($d1)) !== date('M', strtotime($d2)) ? ' ' . date('M', strtotime($d1)) : '') . '–' . date('j', strtotime($d2)) : '') . ' ' . date('M', strtotime($d2))) . '</small></h2><a class="btn sm lxls" href="./?analytics=1&amp;leads=1">Excel</a></div>'
     . ($left ? '<div class="list lwrap"><div class="lhd" aria-hidden="true"><span></span><span>Date</span><span>Name</span><span>Address</span><span>Bag</span><span>Left at</span><span>Ordered later</span><span></span><span></span></div><ul class="leads lxl">' . $left . '</ul></div><form id="lhide" hidden>' . csrf_field() . '</form>'
       . '<script>document.querySelectorAll(".lxx").forEach(function(b){b.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();if(!confirm("Remove from this list?"))return;var f=new FormData(document.getElementById("lhide"));f.append("lead_hide",b.dataset.sid);var li=b.closest("li");li.style.opacity=".4";fetch("./?analytics=1",{method:"POST",body:f,credentials:"same-origin"}).then(function(r){if(r.ok)li.remove();else{li.style.opacity="";alert("Please try again.")}}).catch(function(){li.style.opacity=""})})})</script>'
-      : '<p class="muted empty">Nobody left checkout after typing their details.</p>' . $leftNote) . '</section>'
+      : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
     . '<section class="card a-sources" data-p="sources"><div class="ch"><h2>Where visitors come from</h2><div class="seg pswap" role="group"><button type="button" data-sw="products">Products</button><button type="button" data-sw="pages">Pages</button><button type="button" data-sw="sources" class="on">Sources</button></div></div>'
     . ($src ? '<div class="list"><table class="mini"><thead><tr><th>Source</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th></tr></thead><tbody>' . $src . '</tbody></table></div>' : '<p class="muted empty">No visits yet.</p>') . '</section>'
     . '<section class="card a-products" data-p="products"><div class="ch"><h2>Products</h2><div class="seg pswap" role="group"><button type="button" data-sw="products" class="on">Products</button><button type="button" data-sw="pages">Pages</button><button type="button" data-sw="sources">Sources</button></div></div>'
