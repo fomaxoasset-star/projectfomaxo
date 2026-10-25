@@ -732,14 +732,17 @@ function fx_lead_groups($groups) {
     return $l;
   }, $groups));
 }
-/* visits whose order went to the Trash (mostly test orders): left out of every Analytics count and the Home visitors graph, as their
+/* visits whose order went to the Trash (mostly test orders), and visits removed with × from Left at checkout: left out of every Analytics count and the Home visitors graph, as their
    purchase and their Left at checkout line already are; Put back brings them back. Gives " AND sid NOT IN (…)", or '' */
 function fx_not_trash($pdo) {
   static $sql = null; if ($sql !== null) return $sql;
   $sids = [];
   try { foreach ($pdo->query('SELECT row_json FROM fx_orders_trash') as $t) { $o = json_decode((string)$t['row_json'], true);
     foreach (array_merge((array)($o['_web']['leads'] ?? []), (array)($o['_web']['buys'] ?? [])) as $w) if (preg_match('/^[a-z0-9]{8,16}$/', (string)($w['sid'] ?? ''))) $sids[$w['sid']] = 1; } } catch (Throwable $e) {}
-  return $sql = $sids ? " AND sid NOT IN ('" . implode("','", array_keys($sids)) . "')" : '';
+  $sql = $sids ? " AND sid NOT IN ('" . implode("','", array_keys($sids)) . "')" : '';
+  /* people taken off Left at checkout with × (and who did not order in that visit) leave every count too, AJAY 25/10/2026 */
+  try { if ($pdo->query("SHOW COLUMNS FROM fx_leads LIKE 'hidden'")->fetch()) $sql .= " AND sid NOT IN (SELECT h.sid FROM fx_leads h WHERE h.hidden = 1 AND h.order_no IS NULL)"; } catch (Throwable $e) {}
+  return $sql;
 }
 function fx_wa_sent_day($mark) {
   global $pdo; static $s = null;
@@ -3050,7 +3053,7 @@ if (isset($_GET['analytics'])) {
             . '</td><td class="num">' . number_format($x['u']) . '</td><td class="num"><b>' . ($x['v'] ? $pctT($pct($x['o'], $x['v'])) : '–') . '</b></td></tr>';
 
     /* 2. checkout drop-off: the last step each checkout reached, the boxes left empty by people who did not order, and card payments not finished */
-    $typed = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_leads WHERE created_at BETWEEN ? AND ?")->fetchColumn();
+    $typed = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_leads WHERE created_at BETWEEN ? AND ?$notTrash")->fetchColumn();
     $cs = [['Opened checkout', $f['checkout']], ['Typed name or mobile', $typed], ['Reached payment choice', $f['pay']], ['Opened card page', $f['card']], ['Bought', $f['buy']]];
     $csMax = max(array_column($cs, 1)) ?: 0; $drop = ''; $prev = null;
     foreach ($cs as [$label, $n]) {
@@ -3261,7 +3264,7 @@ if (isset($_GET['analytics'])) {
     . $retCard
     . '<section class="card a-left" data-p="left"><div class="ch"><h2>Left at checkout <small class="lcnt">' . array_sum($leftN) . (array_sum($leftN) === 1 ? ' person' : ' people') . '</small> <small class="lwho">Everyone who typed their details at checkout, opened a link from our WhatsApp, came back after buying or invited a friend who ordered, ' . h(date('j', strtotime($d1)) . ($d1 !== $d2 ? (date('M', strtotime($d1)) !== date('M', strtotime($d2)) ? ' ' . date('M', strtotime($d1)) : '') . '–' . date('j', strtotime($d2)) : '') . ' ' . date('M', strtotime($d2))) . '</small></h2><a class="btn sm lxls" href="./?analytics=1&amp;leads=1">Excel</a></div>'
     . ($left ? '<div class="list lwrap"><div class="lhd" aria-hidden="true"><span></span><span>Date</span><span>Name</span><span>Address</span><span>Bag</span><span>Left at</span><span>Ordered later</span><span></span><span></span></div><ul class="leads lxl">' . $left . '</ul></div><form id="lhide" hidden>' . csrf_field() . '</form>'
-      . '<script>document.querySelectorAll(".lxx").forEach(function(b){b.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();if(!confirm("Remove from this list?"))return;var f=new FormData(document.getElementById("lhide"));f.append("lead_hide",b.dataset.sid);var li=b.closest("li");li.style.opacity=".4";fetch("./?analytics=1",{method:"POST",body:f,credentials:"same-origin"}).then(function(r){if(r.ok)li.remove();else{li.style.opacity="";alert("Please try again.")}}).catch(function(){li.style.opacity=""})})})</script>'
+      . '<script>document.querySelectorAll(".lxx").forEach(function(b){b.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();if(!confirm("Remove? They also leave the Analytics and Conversion counts."))return;var f=new FormData(document.getElementById("lhide"));f.append("lead_hide",b.dataset.sid);var li=b.closest("li");li.style.opacity=".4";fetch("./?analytics=1",{method:"POST",body:f,credentials:"same-origin"}).then(function(r){if(r.ok)li.remove();else{li.style.opacity="";alert("Please try again.")}}).catch(function(){li.style.opacity=""})})})</script>'
       : '<p class="muted empty">Nobody left checkout after typing their details.</p>') . '</section>'
     . '<section class="card a-sources" data-p="sources"><div class="ch"><h2>Where visitors come from</h2><div class="seg pswap" role="group"><button type="button" data-sw="products">Products</button><button type="button" data-sw="pages">Pages</button><button type="button" data-sw="sources" class="on">Sources</button></div></div>'
     . ($src ? '<div class="list"><table class="mini"><thead><tr><th>Source</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th></tr></thead><tbody>' . $src . '</tbody></table></div>' : '<p class="muted empty">No visits yet.</p>') . '</section>'
