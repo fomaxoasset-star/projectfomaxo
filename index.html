@@ -3451,6 +3451,7 @@ function addedPanel(id, opt, qty, names){
     ${dc.units ? `<div class="ad-offer"><span>${qtyNudge(dc)}</span>${qdBar(dc)}</div>` : ''}
     <div class="ad-acts">${ok ? `<a class="btn sm" href="#/checkout" data-adclose>Checkout${T.after !== null ? ' · ' + aed(T.after) : ''}</a>` : `<span class="btn sm co-min">${minMsg(T.short)}</span>`}<button class="btn line sm" type="button" data-adbag>View bag (${n})</button></div>`;
   $('#toast').classList.remove('show');
+  if ($('#cart').classList.contains('open')) return hideAdded();   // the open bag already shows it: never two bag views at once
   addedEl.setAttribute('aria-hidden', 'false'); addedEl.classList.add('show');
   clearTimeout(addT); const wait = () => { addT = setTimeout(() => addHold ? wait() : hideAdded(), 7000); }; wait();
 }
@@ -3505,7 +3506,7 @@ function afterBuyRecs(lines){
 
 /* ============================ OVERLAYS ============================ */
 const scrim = $('#scrim');
-function openPanel(el){ closePanels(); el.classList.add('open'); el.setAttribute('aria-hidden','false'); if (el.id === 'cart') scrim.classList.add('open'); document.body.classList.add('lock'); }
+function openPanel(el){ closePanels(); if (el.id === 'cart') hideAdded(); el.classList.add('open'); el.setAttribute('aria-hidden','false'); if (el.id === 'cart') scrim.classList.add('open'); document.body.classList.add('lock'); }
 function closePanels(){ $$('.drawer.open,.search.open,.mnav.open').forEach(x => { x.classList.remove('open'); x.setAttribute('aria-hidden','true'); }); scrim.classList.remove('open'); document.body.classList.remove('lock'); }
 /* phones: a swipe anywhere in the bag (top bar, totals, buttons) moves only the products list; the page behind never moves */
 (() => { const cart = document.getElementById('cart'); if (!cart) return; let y = null;
