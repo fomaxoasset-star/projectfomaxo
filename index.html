@@ -520,7 +520,7 @@ html[data-mode="light"] .sort-by select{color:var(--ink,#1a140c)}html[data-mode=
 /* phone: sideways swipe row (AJAY 2026-10-11), and the price lined up with the picture: old price on its left edge, new price on its right edge */
 @media(max-width:600px){.also-row{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:4px;gap:18px}.also-row::-webkit-scrollbar{display:none}.also-row>.card{flex:0 0 80%;scroll-snap-align:start}.also-row .row1{flex-direction:column;align-items:stretch;gap:6px}.also-row .row1 [data-price]{display:block;width:100%}.also-row .row1 .price,.also-row .row1 .price:has(.was){display:flex;align-items:baseline;gap:8px;width:100%}.also-row .row1 .price>.amt:last-child{margin-left:auto}}
 .rec{position:relative;min-width:0;flex:0 0 calc((100% - 30px) / 3.6);scroll-snap-align:start}
-.rec a{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;text-align:left}
+.rec-card{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;text-align:start;width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .rec img{width:100%;max-width:100%;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
 .rec b{font-weight:400;font-size:11.5px;line-height:1.25;color:var(--ivory);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rec-p{font-size:11px;color:var(--gold);white-space:nowrap}
@@ -544,6 +544,8 @@ html[data-mode="light"] .sort-by select{color:var(--ink,#1a140c)}html[data-mode=
 .toast{position:fixed;left:50%;bottom:28px;z-index:80;transform:translate(-50%,40px);opacity:0;visibility:hidden;background:var(--panel);border:1px solid var(--gold);padding:14px 22px;display:flex;gap:16px;align-items:center;font-size:13px;transition:transform .6s var(--ease);max-width:calc(100vw - 32px)}
 .toast{transition:transform .6s var(--ease),opacity .4s,visibility .4s}.toast.show{transform:translate(-50%,0);opacity:1;visibility:visible}
 @media(max-width:600px){.toast{left:16px;right:16px;transform:translateY(40px);justify-content:space-between}.toast.show{transform:none}}
+/* added from inside the open bag: the line sits at the top so it never covers Checkout, and no View bag link (the bag is open) */
+.toast.in-bag,.toast.in-bag.show{top:16px;bottom:auto;left:auto;right:16px;width:min(428px,calc(100vw - 32px));transform:none;justify-content:center;pointer-events:none}.toast.in-bag #toastView{display:none}
 .toast a{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-hi);white-space:nowrap}
 
 /* ---------- footer ---------- */
@@ -3351,6 +3353,7 @@ function buyNow(line){
 function clearBuy(){ buyLines = []; try { sessionStorage.removeItem('fomaxo_buy'); } catch(e) {} }
 // a Buy now item left from before this change goes into the bag too (unless we're back from paying for it)
 if (buyLines.length && !/src=buy/.test(location.hash)) { buyLines.forEach(l => { const key = (l.picks || []).join('|'); if (!cart.some(x => x.id === l.id && String(x.opt) === String(l.opt) && (x.picks || []).join('|') === key)) cart.push(l); }); clearBuy(); try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} }
+// tapping anywhere on a card only adds it to the bag, never opens the product page (AJAY 2026-10-26)
 // "You may also like" in the bag: every size of every fragrance the customer doesn't have yet in that size (AJAY 2026-10-11: show the 100ml and 50ml too),
 // biggest size first (100ml, then 50ml, then 10ml minis), King always last; the Discovery Set has its own "Not sure yet?" link.
 // Within each size the order follows real orders (AJAY 2026-10-11: change it every time, by customer, for the most sales): first what people bought together
@@ -3364,7 +3367,7 @@ function bagRecs(){
     .sort((a, b) => (a[0].id === 'king') - (b[0].id === 'king'));
   if (!recs.length) return '';
   return `<div class="recs"><div class="recs-h"><h5>You may also like</h5><span class="recs-nav"><button type="button" data-recscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-recscroll="1" aria-label="Scroll for more">›</button></span></div><div class="recs-row">${recs.map(([p, sz]) => `<div class="rec">
-      <a href="#/product/${p.id}?size=${sz}" data-close><img src="${SM(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></a>
+      <button type="button" class="rec-card" data-recadd="${p.id}" data-recsz="${sz}" aria-label="Add ${esc(p.name)} ${sz}ml to your bag"><img src="${SM(imgFor(p, sz))}" alt="${esc(p.name)}" loading="lazy"><b>${esc(p.name)}</b><span class="rec-p">${moneyHTML(p.prices[sz])} <small>· ${sz}ml</small></span></button>
       <button type="button" class="rec-add" data-recadd="${p.id}" data-recsz="${sz}" aria-label="Add ${esc(p.name)} ${sz}ml to your bag">+</button></div>`).join('')}</div></div>`;
 }
 /* bag: the customer can type their own WhatsApp number to get an AED 20 off coupon; they show in admin Left at checkout, where the WhatsApp + 10% code button sends it.
@@ -3510,7 +3513,7 @@ function addedPanel(id, opt, qty, names){
     ${dc.units ? `<div class="ad-offer"><span>${qtyNudge(dc)}</span>${qdBar(dc)}</div>` : ''}
     <div class="ad-acts">${ok ? `<a class="btn sm" href="#/checkout" data-adclose>Checkout${T.after !== null ? ' · ' + aed(T.after) : ''}</a>` : `<span class="btn sm co-min">${minMsg(T.short)}</span>`}<button class="btn line sm" type="button" data-adbag>View bag (${n})</button></div>`;
   $('#toast').classList.remove('show');
-  if ($('#cart').classList.contains('open')) return hideAdded();   // the open bag already shows it: never two bag views at once
+  if ($('#cart').classList.contains('open')) { hideAdded(); if (!names) toast(`${p.name} · ${optLabel(p, opt)} added to your bag`, true); return; }   // the open bag already shows it: never two bag views at once, just a short line
   addedEl.setAttribute('aria-hidden', 'false'); addedEl.classList.add('show');
   clearTimeout(addT); const wait = () => { addT = setTimeout(() => addHold ? wait() : hideAdded(), 7000); }; wait();
 }
@@ -3591,7 +3594,7 @@ scrim.onclick = closePanels;
 document.addEventListener('click', e => { if (e.target.closest('[data-close]')) closePanels(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanels(); });
 $('#toastView').onclick = e => { e.preventDefault(); $('#toast').classList.remove('show'); renderCart(); openPanel($('#cart')); };
-let tt; function toast(msg){ $('#toastMsg').textContent = msg; const t = $('#toast'); t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 3600); }
+let tt; function toast(msg, inBag){ $('#toastMsg').textContent = msg; const t = $('#toast'); t.classList.toggle('in-bag', !!inBag); t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 3600); }
 
 /* search */
 function runSearch(q){
@@ -4063,8 +4066,8 @@ function product(id, q){
         <div class="pwrow"><a class="pwx" data-invite href="https://wa.me/?text=${encodeURIComponent(document.documentElement.lang === 'ar' ? `${p.name} من FOMAXO، ألقِ نظرة: https://fomaxo.com/fomaxo-${slugOf(p)}?lang=ar${invRef('&')}` : `${p.name} by FOMAXO, have a look: https://fomaxo.com/fomaxo-${slugOf(p)}${invRef('?')}`)}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span class="pwt"><b>Share with friends</b><small>Invite Friends, Get Coupons</small></span></a><a class="pwx pwx-gold" href="https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent(document.documentElement.lang === 'ar' ? `مرحباً FOMAXO، أرسلوا لي أحدث العروض من فضلكم. (أتصفح ${p.name})` : `Hi FOMAXO, please send me your latest offers. (I am looking at ${p.name})`)}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span class="pwt"><b>Get offers on WhatsApp</b><small>Get Exclusive Offers &amp; Coupons</small></span></a></div>
         <div class="perks">${perks.map(x => `<div>${x[0]}<span>${x[1]}</span></div>`).join('')}</div>
         <div class="acc">
-          <details${matchMedia('(min-width:961px)').matches ? '' : ' open'}><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
-          ${p.notes && p.notes.key ? `<details open><summary>Fragrance notes</summary><div class="body notes-list"><div><b>Key notes</b><span>${esc(p.notes.key)}</span></div></div></details>` : ''}${p.notes && !p.notes.key ? `<details><summary>Fragrance notes</summary><div class="body notes-list"><div><b>Top</b><span>${esc(p.notes.top)}</span></div><div><b>Heart</b><span>${esc(p.notes.heart)}</span></div><div><b>Base</b><span>${esc(p.notes.base)}</span></div></div></details>` : ''}
+          <details><summary>Description</summary><div class="body">${p.description.map(d => `<p>${esc(d)}</p>`).join('')}</div></details>
+          ${p.notes && p.notes.key ? `<details${matchMedia('(min-width:961px)').matches ? ' open' : ''}><summary>Fragrance notes</summary><div class="body notes-list"><div><b>Key notes</b><span>${esc(p.notes.key)}</span></div></div></details>` : ''}${p.notes && !p.notes.key ? `<details><summary>Fragrance notes</summary><div class="body notes-list"><div><b>Top</b><span>${esc(p.notes.top)}</span></div><div><b>Heart</b><span>${esc(p.notes.heart)}</span></div><div><b>Base</b><span>${esc(p.notes.base)}</span></div></div></details>` : ''}
           <details><summary>Shipping &amp; delivery</summary><div class="body">${ship}</div></details>
           <details><summary>Gifting &amp; personalisation</summary><div class="body"><p>Designed as the perfect gift for weddings, functions and special occasions. Premium packaging makes it ready to gift without extra effort.</p><p>Custom engraving is available on bottles for names, initials or special messages.</p><p><a class="link ext" href="#/collections/name" aria-label="Explore Exclusive Personalized Gifting">Explore Exclusive Personalized Gifting<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg></a></p></div></details>
         </div>
