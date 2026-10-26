@@ -50,7 +50,7 @@ if(history.replaceState)try{history.replaceState(history.state,"",location.pathn
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
-r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=73";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=74";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("style");f.textContent="@font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/amiri-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/amiri-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:300;font-display:swap;src:url(/assets/fonts/tajawal-300-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/tajawal-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/tajawal-500-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/tajawal-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}";document.head.appendChild(f)}})();   /* Arabic fonts (Tajawal, Amiri; Arabic letters only) from our own server, same files Google Fonts sends */</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -2184,6 +2184,12 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 /* bag buttons: Checkout, pay line, then Continue shopping at the bottom */
 .dr-btns{display:contents} .dr-btns .btn.line{order:2} .dr-foot .pay-note{order:1}
 .ph-sub{display:none!important}
+.btn.wa-order,html[data-mode="light"] .btn.wa-order{background:transparent;color:var(--champagne);box-shadow:inset 0 0 0 1px #25D366;gap:8px}
+.btn.wa-order:hover,html[data-mode="light"] .btn.wa-order:hover{background:rgba(37,211,102,.08);box-shadow:inset 0 0 0 1px #25D366}
+.btn.wa-order svg{width:17px;height:17px;flex:none;color:#25D366}
+.dr-foot .wa-order{order:1}
+.co-go+.wa-order{margin-top:10px;min-height:44px}
+@media(max-width:600px){ #cart .dr-foot .btn.wa-order{min-height:40px;font-size:10.5px} }
 @media(max-width:600px){
   #cart .dr-foot .sub-row.ph-sub{display:flex!important}
   #cart .co-amt{display:none}
@@ -3396,6 +3402,17 @@ function pmWaWire(){
     FXT.lead('coupon', {name: nm, phone: v}, cart, subtotal(cart) || 0, true); renderCart();
     f.closest('.pm-wa').innerHTML = '<p class="pwel-ok">Thank you. We will send your AED 20 coupon on WhatsApp.</p>'; };
 }
+/* checkout "Order on WhatsApp": the order is saved (awaiting payment) and WhatsApp opens with it written in, plus a secure card / Apple Pay link
+   the customer taps in the chat to pay; *stars* make the total bold, no emoji. WhatsApp itself cannot take money in the UAE. */
+function waOrderURL(lines, d, payUrl){
+  const ar = document.documentElement.lang === 'ar', T = orderTotals(lines, '', true);
+  const rows = lines.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `- ${p.name} ${optLabel(p, l.opt)} x ${l.qty}${hasPrice(v) ? ' - ' + aed(v * l.qty) : ''}`; }).join('\n');
+  const who = d ? [d.name, d.area, d.emirate].filter(Boolean).join(', ') : '', tot = T.total !== null ? aed(T.total) : '';
+  const t = ar ? `مرحباً FOMAXO، أرغب في طلب:\n${rows}${tot ? `\nالمجموع: *${tot}*` : ''}${who ? `\n${who}` : ''}${payUrl ? `\n\nالدفع بالبطاقة أو Apple Pay:\n${payUrl}` : ''}`
+    : `Hello FOMAXO, I would like to order:\n${rows}${tot ? `\nTotal: *${tot}*` : ''}${who ? `\n${who}` : ''}${payUrl ? `\n\nPay by card or Apple Pay:\n${payUrl}` : ''}`;
+  return `https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent(t)}`;
+}
+const waOrderBtn = id => `<button class="btn wa-order block" id="${id}" type="button">${(() => { try { return CO_ICON.whatsapp; } catch(e) { return ''; } })()}<span>Order on WhatsApp</span></button>`;
 function renderCart(){
   const n = cart.reduce((a, l) => a + l.qty, 0);
   const cc = $('#cartCount'); cc.textContent = n; cc.classList.toggle('on', n > 0);
@@ -4859,6 +4876,7 @@ function checkoutPage(q){
           <div class="co-pay" id="coPay" role="radiogroup" aria-label="Payment method"></div>
           <p class="co-err" id="coErr" role="alert" hidden></p>
           <button class="btn block co-go" id="coGo" type="submit"></button>
+          ${waOrderBtn('coWaOrder')}
           <ul class="co-trust">
             <li>${ICON.truck}<span>Delivered in 1–3 days across the UAE</span></li>
             ${CARD_ON ? `<li>${CO_ICON.lock}<span>Secure card payments by ${CARD_BY}</span></li>` : ''}
@@ -5074,6 +5092,27 @@ function bindCheckout(q){
       return;
     }
     busy = false; go.innerHTML = old; go.disabled = false; showErr(r.error); draw();
+  };
+  // "Order on WhatsApp": same checks as the main button, then the order is saved with a card link and WhatsApp opens with both
+  const waO = $('#coWaOrder');
+  if (waO) waO.onclick = async () => {
+    if (busy) return;
+    err.hidden = err1.hidden = true;
+    const d = details(), bad = check(d), ls = lines();
+    $$('.bad', form).forEach(x => x.classList.remove('bad'));
+    if (bad.length){
+      bad.forEach(b => form.elements[b[0]].classList.add('bad'));
+      err1.textContent = `Please add your ${listTxt(bad.map(b => b[1]))} so we can deliver your order.`; err1.hidden = false;
+      form.elements[bad[0][0]].focus({preventScroll: true}); $('#coStep1').scrollIntoView({behavior: 'smooth', block: 'start'});
+      return;
+    }
+    if (orderTotals(ls, 'card', true).short > 0) return;
+    try { localStorage.setItem('fomaxo_details', JSON.stringify(d)); } catch(x) {}
+    busy = true; const old = waO.innerHTML; waO.disabled = true; waO.textContent = 'Opening WhatsApp…';
+    const r = CARD_ON ? await sendOrder(ls, 'card', d, src) : {};
+    if (r.url) { FXT.lead('card', d, ls, orderTotals(ls, 'card', true).total, true); FXT.send('card'); }
+    location.href = waOrderURL(ls, d, r.url);   // no card link (card payments off or not reachable): WhatsApp still opens with the order
+    busy = false; waO.innerHTML = old; waO.disabled = false;
   };
 }
 function orderConfirmed(q){
