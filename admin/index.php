@@ -3454,7 +3454,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
       'The first page they land on decides everything. If it does not match the ad or loads slowly, they go back.',
       ['Send ads to the exact product and size shown in the ad (for example the Old Money 10ml page).', 'Keep the first screen simple: photo, name, price, one button.'], 'fix landing page');
   }
-  foreach ($srcR as $row) if ($row['visits'] >= 30 && $pct($row['adds'], $row['visits']) < 1) {   // a source that brings many visits and almost no adds
+  foreach ($srcR as $row) if (in_array($row['k'], ['Facebook', 'Instagram', 'TikTok', 'Snapchat'], true) && $row['visits'] >= 50 && $pct($row['adds'], $row['visits']) < 1) {   // an ad source that brings many visits and almost no adds (Direct, Google and WhatsApp are not ads)
     $tip((int)$row['visits'] - (int)$row['adds'], 'Visitors from ' . h($row['k']) . ' almost never add to the bag', ['<b>' . $nf($row['visits']) . '</b> visits from ' . h($row['k']) . ', <b>' . $nf($row['adds']) . '</b> added to the bag.'],
       'The ad or post brings the wrong people, or sends them to the wrong page.', ['Check who the ad is shown to and where (Audience Network brings many accidental taps).', 'Check the ad link opens the product it shows.'], 'check ads'); break; }
   if (($p = $devR['phone'] ?? null) && ($c = $devR['computer'] ?? null) && $p['visits'] >= 15 && $c['visits'] >= 15 && $pct($c['adds'], $c['visits']) > 0 && $pct($p['adds'], $p['visits']) < $pct($c['adds'], $c['visits']) / 2)
@@ -3469,7 +3469,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
       'An error can stop a button from working, so people cannot add to bag or pay.', ['Nothing for you to do: we read the error and fix it.'], 'fix the error');
   /* fixes already built and live (reply word => day it went live): the tip leaves the list and waits in Done.
      It comes back only when a week has passed and the chosen dates start after the fix, so it is judged on new visits only */
-  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26'];
+  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26'];
   $doneH = []; $back = fn($w) => isset($done[$w]) && time() >= strtotime($done[$w] . ' +7 days') && $span[0] >= $done[$w] . ' 00:00:00';
   foreach ($tips as $i => $t) if (isset($done[$t['word']])) {
     if ($back($t['word'])) { $tips[$i]['data'][] = '<b>Fixed on ' . date('d/m/Y', strtotime($done[$t['word']])) . ', and still happening on the new visits.</b>'; continue; }
@@ -3517,7 +3517,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
             . '<div class="tst"><span class="tl">Steps</span><ol>' . implode('', array_map(fn($s) => '<li>' . $s . '</li>', $t['steps'])) . '<li>Reply <b class="tword">' . h($t['word']) . '</b> in our chat and we build it, with pictures first.</li></ol></div></div></li>';
   $doneL = '';
   foreach ($doneH as $w => $title)
-    $doneL .= '<li><span class="dck" aria-hidden="true"></span><div><b>' . ($title ?: h(ucfirst($w))) . '</b><span class="muted small">Fixed on ' . date('d/m/Y', strtotime($done[$w])) . ' · checked again on ' . date('d/m/Y', strtotime($done[$w] . ' +7 days')) . '</span></div></li>';
+    $doneL .= '<li><span class="dck" aria-hidden="true"></span><div><b>' . ($title ?: (['check ads' => 'Visitors from one source almost never add to the bag'][$w] ?? h(ucfirst($w)))) . '</b><span class="muted small">Fixed on ' . date('d/m/Y', strtotime($done[$w])) . ' · checked again on ' . date('d/m/Y', strtotime($done[$w] . ' +7 days')) . '</span></div></li>';
   $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
   page('Improve', '<div class="db imp">'
     . '<div class="pagehead"><h1>Improve</h1><div class="seg">' . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['improve' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div></div>'
