@@ -947,7 +947,7 @@
 "Street": "الشارع",
 "Area": "المنطقة",
 "Note": "ملاحظة",
-"We remember these details on this device for your next order. We will WhatsApp you about your delivery and, after it arrives, ask for a quick review.": "نحفظ هذه التفاصيل على هذا الجهاز لطلبك القادم. سنراسلك عبر واتساب بخصوص التوصيل، وبعد وصول طلبك سنطلب منك تقييماً سريعاً.",
+"We remember these details on this device for your next order. We will WhatsApp you to confirm your exact address and delivery and, after it arrives, ask for a quick review.": "نحفظ هذه التفاصيل على هذا الجهاز لطلبك القادم. سنراسلك عبر واتساب لتأكيد عنوانك بالتفصيل والتوصيل، وبعد وصول طلبك سنطلب منك تقييماً سريعاً.",
 "Payment": "الدفع",
 "Fill in your full name, mobile number, emirate, villa / building no, street and area to choose how to pay.": "أدخل اسمك الكامل ورقم الجوال والإمارة ورقم الفيلا / المبنى والشارع والمنطقة لاختيار طريقة الدفع.",
 "Card / Apple Pay / Google Pay": "بطاقة / Apple Pay / Google Pay",
