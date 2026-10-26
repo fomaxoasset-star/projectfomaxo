@@ -291,14 +291,14 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 /* Improve: where visitors stop, and the tips to fix first with their numbers and steps (laptop: one screen, two columns; phone: one after the other) */
 .igrid{display:grid;gap:10px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr)}.imp{display:flex;flex-direction:column;height:100%}.imp .pagehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.imp .pagehead .seg{margin-left:auto}
 .i-fun .fun li.worst .fl>span:first-child{font-weight:600}.i-fun .fun li.worst .fb i{background:var(--bad)}.ihow{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:13px}.ihow ol{margin:4px 0 0;padding-left:18px}.ihow li{margin:2px 0}
-.tips{list-style:none;margin:0;padding:0}.tip{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}.tip:last-child{border-bottom:0}
+.tips{list-style:none;margin:0;padding:0}.itip{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}.itip:last-child{border-bottom:0}
 .tno{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
-.tip h3{margin:2px 0 6px;font-size:15.5px;font-weight:600;line-height:1.3}.tip p{margin:0 0 6px;font-size:13.5px;line-height:1.45}.tip .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}
+.itip h3{margin:2px 0 6px;font-size:15.5px;font-weight:600;line-height:1.3}.itip p{margin:0 0 6px;font-size:13.5px;line-height:1.45}.itip .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}
 .tst ol{margin:0;padding-left:18px;font-size:13.5px;line-height:1.45}.tst li{margin:2px 0}.tword{color:var(--gold);white-space:nowrap}.i-tips .ch{display:flex;align-items:center;gap:8px}.i-tips .ch .btn{margin-left:auto;flex:none}
 @media (min-width:760px){.igrid{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)}.i-fun,.i-tips{min-height:0}.i-fun{overflow:auto}}
 @media (max-width:759px){.igrid{overflow:auto;overscroll-behavior:contain}.igrid{display:block}.igrid>.card{display:block!important;overflow:visible!important;margin-bottom:10px}.igrid .list{overflow:visible!important;max-height:none!important}.imp .pagehead h1{display:none}.imp .pagehead .seg{display:flex;width:100%;margin:0;padding:0;gap:0;border-radius:8px;overflow:hidden}.imp .pagehead .seg a{flex:1;text-align:center;font-size:13px;padding:7px 0;border-radius:0}.imp .pagehead .seg a+a{border-left:1px solid var(--line)}}
 .list .vlist>li.vv{display:block;padding:9px 2px}.list .vs>li{display:flex;justify-content:flex-start;align-items:flex-start;padding:5px 8px;border:1px solid var(--line);text-align:left}.list .vs>li:last-child{border:1px solid var(--line)}
-.list .tips>li.tip{display:grid;justify-content:stretch;align-items:start;padding:12px 2px}.list .tst ol>li{display:list-item;padding:1px 0;border:0}.list .tst ol>li:last-child{border:0}.tip .tno{margin-top:2px}
+.list .tips>li.itip{display:grid;justify-content:stretch;align-items:start;padding:12px 2px}.list .tst ol>li{display:list-item;padding:1px 0;border:0}.list .tst ol>li:last-child{border:0}.itip .tno{margin-top:2px}
 /* phone: no zooming by itself (iPhone zooms into boxes under 16px, double-tap zooms); two-finger pinch still works */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overflow-x:hidden}
 @media (max-width:759px){input,select,textarea{font-size:16px!important}
@@ -3479,7 +3479,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
   }
   $tipsH = '';
   foreach ($tips as $i => $t)
-    $tipsH .= '<li class="tip"><span class="tno">' . ($i + 1) . '</span><div><h3>' . $t['title'] . '</h3>'
+    $tipsH .= '<li class="itip"><span class="tno">' . ($i + 1) . '</span><div><h3>' . $t['title'] . '</h3>'
             . '<p class="tdat"><span class="tl">What the data shows</span>' . implode('<br>', $t['data']) . '</p>'
             . '<p class="twhy"><span class="tl">Why it matters</span>' . $t['why'] . '</p>'
             . '<div class="tst"><span class="tl">Steps</span><ol>' . implode('', array_map(fn($s) => '<li>' . $s . '</li>', $t['steps'])) . '<li>Reply <b class="tword">' . h($t['word']) . '</b> in our chat and we build it, with pictures first.</li></ol></div></div></li>';
