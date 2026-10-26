@@ -2370,20 +2370,24 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 }
 @media(min-width:961px) and (max-height:800px){.pdp-crumbs{display:none}.pdp{padding-top:10px}.acc .body{max-height:calc(84px / var(--bz,1))}}
 /* phone product page: name, smell, stars and price reach the first screen (ad visitors left at 9% of the page, AJAY "fix old money" 2026-10-26):
-   no path line, the photo a little smaller (same 3:4 shape, nothing cut), less space under it */
+   no path line, less space under the photo (photo full width again, AJAY 13:10) */
 @media(max-width:600px){
   .pdp-crumbs{display:none}
   .pdp{padding-top:12px}
-  .gallery{gap:10px;--stw:min(100%,calc(46svh * .75))}
-  .stage{width:var(--stw);margin:0 auto}
-  .gallery>.best{right:calc((100% - var(--stw)) / 2 - 11px)}   /* Best seller badge stays on the photo corner */
-  .thumbs{justify-content:center}
+  .gallery{gap:10px}
   .pdp{row-gap:18px}
 }
 /* phone bottom bar: the two promises right above the Add to bag button */
 .mbuy{flex-wrap:wrap;row-gap:8px}
 .mbuy .mb-why{flex-basis:100%;order:-1;text-align:center;font-size:min(10px,2.6vw);letter-spacing:.14em;white-space:nowrap;text-transform:uppercase;color:var(--gold);line-height:1.2}
 .mbuy .mb-why i{font-style:normal;margin:0 .5em;opacity:.6}
+/* phone bottom bar: real star rating next to the name (taps to the reviews) and the Smells like notes under it (AJAY "fix product page" 2026-10-26) */
+.mbuy .mb-top{display:flex;align-items:center;gap:8px;min-width:0}
+.mbuy .mb-top b{min-width:0}
+.mbuy .crate{display:inline-flex;align-items:center;gap:4px;flex:none;font-size:11px;letter-spacing:.04em;color:var(--fg,inherit);white-space:nowrap}
+.mbuy .crate .rw-stars{display:none}.mbuy .crate>span::before{content:'★';color:var(--gold);margin-inline-end:4px}   /* one gold star + 4.9 (12), so the name keeps its room */
+.mbuy .crate.none{display:none}
+.mbuy .mb-sm{display:block;font-style:normal;font-size:11px;letter-spacing:.06em;color:var(--fg,inherit);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px 0 1px}
 /* ===== Arabic (عربي) — the site turns right-to-left; English text is swapped by assets/i18n-ar.js ===== */
 html.i18n-wait body{visibility:hidden}
 html.i18n-wait .hc-early,html.i18n-wait #heroCine .hc-slides{visibility:visible}   /* the home banner picture has no words, so Arabic visitors see it while the Arabic text loads */
@@ -4120,7 +4124,7 @@ function bindProduct(p){
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
-  function renderMbuy(){ mb.innerHTML = `<div class="n"><b>${esc(p.name)}</b><small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
+  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
   renderMbuy();
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
@@ -5194,7 +5198,8 @@ const rwShort = v => v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).
 /* star line under the product name: shown straight away (card summary), always visible; no reviews yet = faint stars */
 /* product page: "Smells like" one note from the top, heart and base, so a first-time visitor knows the scent in one line */
 const SMELL_PICK = {gold: ['Bergamot', 'Agarwood', 'Musk']};   // AJAY's choice of notes for a product's Smells like line (instead of the first top/heart/base note)
-const smellHTML = p => { const n = p.notes; if (!n || n.key) return ''; const w = SMELL_PICK[p.id] || [n.top, n.heart, n.base].map(x => String(x || '').split('·')[0].trim()).filter(Boolean); return w.length ? `<p class="pd-smell"><span>Smells like</span>${w.map(esc).join(' · ')}</p>` : ''; };
+const smellWords = p => { const n = p.notes; if (!n || n.key) return []; return SMELL_PICK[p.id] || [n.top, n.heart, n.base].map(x => String(x || '').split('·')[0].trim()).filter(Boolean); };
+const smellHTML = p => { const w = smellWords(p); return w.length ? `<p class="pd-smell"><span>Smells like</span>${w.map(esc).join(' · ')}</p>` : ''; };
 /* the 10ml as a cheap first try (only when the product has a 10ml with a price and another size is picked) */
 const tryHTML = (p, size) => p.kind !== 'set' && p.sizes.includes(10) && hasPrice(p.prices[10]) && size !== 10 ? `New to FOMAXO? <b>Try the 10ml first · ${moneyHTML(p.prices[10])}</b>` : '';
 /* best real review under the price: 5 stars with words, verified first, then most helpful, then newest */
