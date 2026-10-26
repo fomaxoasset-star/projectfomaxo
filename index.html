@@ -2190,6 +2190,16 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
   #cart .dr-foot .ph-sub .gold{color:var(--gold)}
   #cart .dr-foot .pay-note{margin:0}
 }
+/* calmer phone bag: products, then Checkout; the Discovery Set line goes and "You may also like" becomes a small swipe strip */
+@media(max-width:600px){
+  #cart .upsell{display:none}
+  #cart .recs{margin-top:10px;padding:8px 0 4px}
+  #cart .recs-nav{display:none}
+  #cart .rec{flex-basis:calc((100% - 40px) / 5.3)}
+  #cart .rec b{font-size:10.5px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  #cart .rec .rec-p{display:none}
+  #cart .rec .rec-add{width:22px;height:22px;font-size:14px;top:4px;right:4px}
+}
 
 .co-r3{display:grid;gap:14px}
 /* laptop checkout: same fields, tighter spacing so the whole checkout fits one screen */
