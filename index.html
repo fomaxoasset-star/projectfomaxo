@@ -2382,8 +2382,8 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 }
 /* phone bottom bar: the two promises right above the Add to bag button */
 .mbuy{flex-wrap:wrap;row-gap:8px}
-.mbuy .mb-why{flex-basis:100%;order:-1;text-align:center;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);line-height:1.2}
-.mbuy .mb-why i{font-style:normal;margin:0 6px;opacity:.6}
+.mbuy .mb-why{flex-basis:100%;order:-1;text-align:center;font-size:min(10px,2.6vw);letter-spacing:.14em;white-space:nowrap;text-transform:uppercase;color:var(--gold);line-height:1.2}
+.mbuy .mb-why i{font-style:normal;margin:0 .5em;opacity:.6}
 /* ===== Arabic (عربي) — the site turns right-to-left; English text is swapped by assets/i18n-ar.js ===== */
 html.i18n-wait body{visibility:hidden}
 html.i18n-wait .hc-early,html.i18n-wait #heroCine .hc-slides{visibility:visible}   /* the home banner picture has no words, so Arabic visitors see it while the Arabic text loads */
@@ -3283,6 +3283,8 @@ let SAMEDAY = null, coSdOn = false, coSD = '';
 const sdEms = (v = SAMEDAY) => EMIRATES.filter(e => v && v.areas && v.areas[e]).sort((a, b) => (b === v.here) - (a === v.here)).join(', ');   // same-day emirates: the visitor's own emirate first (approximate, from their internet address), then Dubai, Sharjah, Ajman (AJAY 2026-10-23)
 const sdHr = () => new Date(Date.now() + 4 * 3600e3).getUTCHours();   // Dubai hour
 const sdOpen = () => !!SAMEDAY && !SAMEDAY.full && sdHr() >= (SAMEDAY.from || 0) && sdHr() < SAMEDAY.cut;   // inside the order hours (admin → Settings → Same-day) and today's same-day orders not full
+/* phone bottom bar promises; Same-day delivery only while it is switched on, reaches the visitor's emirate and today's order hours are open (AJAY 2026-10-26) */
+const mbWhy = () => (SAMEDAY && SAMEDAY.here && sdOpen() ? '<span>Same-day delivery</span><i>·</i>' : '') + '<span>Free delivery</span><i>·</i><span>Cash on delivery</span>';
 const hr12 = h => (h % 12 || 12) + (h < 12 ? ' AM' : ' PM');
 const sdBy = () => SAMEDAY && SAMEDAY.by > 12 ? (SAMEDAY.by - 12) + ' PM' : '';   // "arrives today by 9 PM" (admin → Settings → Cash → Arrives by; empty = not said)
 const sdFee = after => !SAMEDAY ? 0 : SAMEDAY.free > 0 && after >= SAMEDAY.free ? 0 : SAMEDAY.fee;
@@ -4118,7 +4120,7 @@ function bindProduct(p){
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
-  function renderMbuy(){ mb.innerHTML = `<div class="n"><b>${esc(p.name)}</b><small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why"><span>Free delivery</span><i>·</i><span>Cash on delivery</span></div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
+  function renderMbuy(){ mb.innerHTML = `<div class="n"><b>${esc(p.name)}</b><small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
   renderMbuy();
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
@@ -6270,7 +6272,7 @@ async function loadProducts(){
     applyPages(); const s0 = (location.hash.replace(/^#\/?/, '').split(/[/?]/)[0]); if (HIDE_PAGES.includes(s0)) location.replace('#/'); else if (s0 === 'combo' || s0 === 'gifts') route();   // PC on/off changes what combos and gifts hold
   }
   if (d && d.cod && +d.cod.min >= 0 && +d.cod.max >= 0) { const fee = 'fee' in d.cod && +d.cod.fee >= 0 ? +d.cod.fee : COD_FEE; if (+d.cod.min !== COD_MIN || +d.cod.max !== COD_MAX || fee !== COD_FEE) { COD_MIN = +d.cod.min; COD_MAX = +d.cod.max; COD_FEE = fee; coRefresh && coRefresh(); const as = $('.buy .assure'); if (as) as.outerHTML = assureHTML(); } }
-  if (d && 'sameday' in d) { const v = d.sameday && d.sameday.areas && +d.sameday.fee >= 0 ? d.sameday : null; try { v ? localStorage.setItem('fomaxo_sd', sdEms(v)) : localStorage.removeItem('fomaxo_sd'); } catch(e) {} if (JSON.stringify(v) !== JSON.stringify(SAMEDAY)) { SAMEDAY = v; coRefresh && coRefresh(); const pl = $('.buy .pdels'); if (pl) pl.outerHTML = pdelHTML(); const as = $('.buy .assure'); if (as) as.outerHTML = assureHTML(); } }
+  if (d && 'sameday' in d) { const v = d.sameday && d.sameday.areas && +d.sameday.fee >= 0 ? d.sameday : null; try { v ? localStorage.setItem('fomaxo_sd', sdEms(v)) : localStorage.removeItem('fomaxo_sd'); } catch(e) {} if (JSON.stringify(v) !== JSON.stringify(SAMEDAY)) { SAMEDAY = v; coRefresh && coRefresh(); const pl = $('.buy .pdels'); if (pl) pl.outerHTML = pdelHTML(); const mw = $('#mbuy .mb-why'); if (mw) mw.innerHTML = mbWhy(); const as = $('.buy .assure'); if (as) as.outerHTML = assureHTML(); } }
   document.documentElement.classList.toggle('sd-on', !!SAMEDAY);   // top bar Same-day delivery on / off
   { const ps = $('.perks-strip'); if (ps && ps.classList.contains('n5') !== !!perkSD()) ps.outerHTML = perksHTML(); }   // home strip: Same-Day Delivery item on / off
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
