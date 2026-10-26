@@ -3319,8 +3319,8 @@ let SAMEDAY = null, coSdOn = false, coSD = '';
 const sdEms = (v = SAMEDAY) => EMIRATES.filter(e => v && v.areas && v.areas[e]).sort((a, b) => (b === v.here) - (a === v.here)).join(', ');   // same-day emirates: the visitor's own emirate first (approximate, from their internet address), then Dubai, Sharjah, Ajman (AJAY 2026-10-23)
 const sdHr = () => new Date(Date.now() + 4 * 3600e3).getUTCHours();   // Dubai hour
 const sdOpen = () => !!SAMEDAY && !SAMEDAY.full && sdHr() >= (SAMEDAY.from || 0) && sdHr() < SAMEDAY.cut;   // inside the order hours (admin → Settings → Same-day) and today's same-day orders not full
-/* phone bottom bar promises; Same-day delivery only while it is switched on, reaches the visitor's emirate and today's order hours are open (AJAY 2026-10-26) */
-const mbWhy = () => (SAMEDAY && SAMEDAY.here && sdOpen() ? '<span>Same-day delivery</span><i>·</i>' : '') + '<span>Free delivery</span><i>·</i><span>Cash on delivery</span>';
+/* phone bottom bar promises; Same-day delivery whenever it is switched on in admin → Settings, like the top bar (AJAY 2026-10-26); the line under the price says hours and areas */
+const mbWhy = () => (SAMEDAY ? '<span>Same-day delivery</span><i>·</i>' : '') + '<span>Free delivery</span><i>·</i><span>Cash on delivery</span>';
 const hr12 = h => (h % 12 || 12) + (h < 12 ? ' AM' : ' PM');
 const sdBy = () => SAMEDAY && SAMEDAY.by > 12 ? (SAMEDAY.by - 12) + ' PM' : '';   // "arrives today by 9 PM" (admin → Settings → Cash → Arrives by; empty = not said)
 const sdFee = after => !SAMEDAY ? 0 : SAMEDAY.free > 0 && after >= SAMEDAY.free ? 0 : SAMEDAY.fee;
