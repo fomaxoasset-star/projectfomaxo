@@ -3403,7 +3403,12 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
 
   /* the tips: each one only when its numbers are there; the most people affected first */
   $tips = [];
-  $tip = function ($people, $title, $data, $why, $steps, $word) use (&$tips) { $tips[] = compact('people', 'title', 'data', 'why', 'steps', 'word'); };
+  /* the fix a reply word builds: different tips (and funnel steps) that need the same fix share one key, so each fix shows once */
+  $pNames = array_map('mb_strtolower', $names);
+  $fixOf = fn($w) => ['fix product page' => 'page', 'fix landing page' => 'page', 'fix phone' => 'page', 'fix home' => 'home', 'fix home page' => 'home'][$w]
+    ?? (str_starts_with($w, 'fix ') && in_array(substr($w, 4), $pNames, true) ? 'page' : $w);
+  $pgFix = fn($pg) => $pg === '/' ? 'home' : (str_starts_with($pg, '/product/') ? 'page' : null);
+  $tip = function ($people, $title, $data, $why, $steps, $word, $fix = null) use (&$tips, $fixOf) { $fix ??= $fixOf($word); $tips[] = compact('people', 'title', 'data', 'why', 'steps', 'word', 'fix'); };
   $leaks = [
     ['product', 'cart', 'People look at the perfume but do not add it to the bag', 'fix product page',
       fn() => ($prodPc !== null && $prodPc !== false ? ['On product pages people saw ' . (int)$prodPc . '% of the page on average.'] : []) + [9 => $topProd && $topProd['v'] ? h($names[$topProd['product']] ?? $topProd['product']) . ': ' . $nf($topProd['v']) . ' visits saw it, ' . $nf($topProd['a']) . ' added it to the bag.' : ''],
@@ -3435,17 +3440,17 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
       ['<b>' . $nf($row['left_n']) . '</b> of ' . $nf($row['seen']) . ' visits ended here (' . $pctT($pct($row['left_n'], $row['seen'])) . '), after <b>' . fx_secs($row['secs']) . '</b> on average' . ($row['pc'] !== null ? ', seeing ' . (int)$row['pc'] . '% of the page' : '') . '.'],
       $fast ? 'They leave within seconds, so the first screen is not what they expected from the ad or link.' : 'They stay a while and still leave, so the page does not give them a clear next step.',
       $fast ? ['Make the top of this page match the ad: the same photo, price and offer they tapped on.', 'Check it opens fast on your phone with mobile data.'] : ['Look where they stop in <b>Analytics → Visits</b> and put a clear button (Add to bag / Try 10ml) there.'],
-      'fix ' . mb_strtolower(fx_pg_name($row['pg'], $names)));
+      'fix ' . mb_strtolower(fx_pg_name($row['pg'], $names)), $pgFix($row['pg']));
   }
   $n = $m = 0;
   foreach ($V['taps'] as $row) {   // taps on things that are not buttons, and the same spot tapped 3 times fast
     if ($row['dead'] && $n < 1 && $row['people'] >= 3 && $row['label'] !== '') { $n++;
       $tip((int)$row['people'], 'People tap “' . h($row['label']) . '” on ' . h(fx_pg_name($row['pg'], $names)) . ', but nothing happens',
         ['<b>' . $nf($row['people']) . '</b> people tapped it ' . $nf($row['taps']) . ' times.'], 'They expect it to open or do something. Making it work removes a small annoyance.',
-        [str_starts_with($row['label'], 'Photo') ? 'Make the photo open bigger when tapped.' : 'Make it a link to the right place (size, reviews or Add to bag).'], 'make it tappable'); }
+        [str_starts_with($row['label'], 'Photo') ? 'Make the photo open bigger when tapped.' : 'Make it a link to the right place (size, reviews or Add to bag).'], 'make it tappable', 'tap ' . $row['label']); }
     if ($row['rage'] > 0 && $m < 1) { $p = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_trail WHERE k = 't' AND rage = 1 AND label = ? AND at BETWEEN ? AND ?", [$row['label'], $span[0], $span[1]])->fetchColumn();
       if ($p >= 2) { $m++; $tip($p, 'People tap “' . h($row['label']) . '” again and again', ['<b>' . $nf($p) . '</b> people tapped the same spot 3 times in a second on ' . h(fx_pg_name($row['pg'], $names)) . '.'],
-        'This usually means it is slow, too small, or does not work on their phone.', ['Try it on your own phone. If it is slow or does nothing, tell us.'], 'check ' . mb_strtolower($row['label'])); } }
+        'This usually means it is slow, too small, or does not work on their phone.', ['Try it on your own phone. If it is slow or does nothing, tell us.'], 'check ' . mb_strtolower($row['label']), 'tap ' . $row['label']); } }
   }
   if ($F['visits'] >= 20 && $pct($bounce, $F['visits']) >= 50) {
     $worst = null; foreach ($srcR as $row) if ($row['visits'] >= 10 && (!$worst || $row['visits'] > $worst['visits'])) $worst = $row;
@@ -3470,14 +3475,24 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
   /* fixes already built and live (reply word => day it went live): the tip leaves the list (nothing shown).
      It comes back only when a week has passed and the chosen dates start after the fix, so it is judged on new visits only */
   $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-10-26'];
-  $doneH = []; $back = fn($w) => isset($done[$w]) && time() >= strtotime($done[$w] . ' +7 days') && $span[0] >= $done[$w] . ' 00:00:00';
-  foreach ($tips as $i => $t) if (isset($done[$t['word']])) {
-    if ($back($t['word'])) { $tips[$i]['data'][] = '<b>Fixed on ' . date('d/m/Y', strtotime($done[$t['word']])) . ', and still happening on the new visits.</b>'; continue; }
-    $doneH[$t['word']] = $t['title']; unset($tips[$i]);
-  }
-  foreach ($done as $w => $d) if (!isset($doneH[$w]) && !in_array($w, array_column($tips, 'word'), true)) $doneH[$w] = '';
+  /* tips that need the same fix join into one: the one with the most people leads, the others add their numbers */
   usort($tips, fn($a, $b) => $b['people'] <=> $a['people']);
-  $tips = array_slice($tips, 0, 6);
+  $one = [];
+  foreach ($tips as $t) {
+    if (!isset($one[$t['fix']])) { $one[$t['fix']] = $t; continue; }
+    $o = &$one[$t['fix']];
+    $o['data'] = array_slice(array_values(array_unique(array_merge($o['data'], $t['data']))), 0, 3);
+    $o['steps'] = array_slice(array_values(array_unique(array_merge($o['steps'], $t['steps']))), 0, 3); unset($o);
+  }
+  $tips = array_values($one);
+  $doneFix = []; foreach ($done as $w => $d) $doneFix[$fixOf($w)] = max($doneFix[$fixOf($w)] ?? '', $d);   // a fix is done when any of its reply words is
+  $doneH = []; $back = fn($f) => isset($doneFix[$f]) && time() >= strtotime($doneFix[$f] . ' +7 days') && $span[0] >= $doneFix[$f] . ' 00:00:00';
+  foreach ($tips as $i => $t) if (isset($doneFix[$t['fix']])) {
+    if ($back($t['fix'])) { $tips[$i]['data'][] = '<b>Fixed on ' . date('d/m/Y', strtotime($doneFix[$t['fix']])) . ', and still happening on the new visits.</b>'; continue; }
+    if (isset($done[$t['word']])) $doneH[$t['word']] = $t['title']; unset($tips[$i]);
+  }
+  foreach ($done as $w => $d) if (!isset($doneH[$w]) && !in_array($fixOf($w), array_column($tips, 'fix'), true)) $doneH[$w] = '';
+  $tips = array_slice(array_values($tips), 0, 6);
 
   /* the funnel: each step, how many stopped, the biggest leak marked */
   $steps = [['visits', 'Visited the site'], ['product', 'Saw a product'], ['cart', 'Added to bag'], ['checkout', 'Opened checkout'], ['typed', 'Typed details'], ['pay', 'Reached payment'], ['buy', 'Bought']];
@@ -3504,9 +3519,10 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
     $fun .= '<li' . ($worst && $worst[0] === $i ? ' class="worst"' : '') . '><details class="fs" name="fs"><summary><div class="fl"><span>' . $l . ($lost > 0 ? ' <span class="fd">' . $nf($lost) . ' stopped' . ($worst && $worst[0] === $i ? ' · biggest loss' : '') . '</span>' : '') . '</span><span><b>' . $nf($F[$k]) . '</b> <span class="muted">' . $pctT($pct($F[$k], $F['visits'])) . '</span><i class="fchev" aria-hidden="true"></i></span></div>'
           . '<div class="fb"><i style="width:' . ($F['visits'] ? max(1, $pct($F[$k], $F['visits'])) : 0) . '%"></i></div></summary>'
           . '<div class="fsi"><p class="muted">' . $what . '</p><p><span class="tl">What the data shows</span>' . implode('<br>', $data) . '</p>'
-          . ($i === 0 || $lost > 0 ? '<p><span class="tl">' . ($i ? 'Why people stop here' : 'Why it matters') . '</span>' . $why . '</p>' . (isset($done[$word])
-              ? '<p><span class="tl">Done</span>Fixed on ' . date('d/m/Y', strtotime($done[$word])) . '. We check the numbers again on ' . date('d/m/Y', strtotime($done[$word] . ' +7 days')) . '.</p>'
-              : '<div class="tst"><span class="tl">What to do</span><ol>' . implode('', array_map(fn($x) => '<li>' . $x . '</li>', $todo)) . '<li>Reply <b class="tword">' . h($word) . '</b> in our chat and we build it, with pictures first.</li></ol></div>') : '')
+          . ($i === 0 || $lost > 0 ? '<p><span class="tl">' . ($i ? 'Why people stop here' : 'Why it matters') . '</span>' . $why . '</p>' . (isset($doneFix[$fixOf($word)])
+              ? '<p><span class="tl">Done</span>Fixed on ' . date('d/m/Y', strtotime($doneFix[$fixOf($word)])) . '. We check the numbers again on ' . date('d/m/Y', strtotime($doneFix[$fixOf($word)] . ' +7 days')) . '.</p>'
+              : (($tn = array_search($fixOf($word), array_column($tips, 'fix'), true)) !== false ? '<p><span class="tl">What to do</span>See tip <b>' . ($tn + 1) . '</b> in What to fix first.</p>'   // the same fix is a tip already: point to it, not the same steps again
+              : '<div class="tst"><span class="tl">What to do</span><ol>' . implode('', array_map(fn($x) => '<li>' . $x . '</li>', $todo)) . '<li>Reply <b class="tword">' . h($word) . '</b> in our chat and we build it, with pictures first.</li></ol></div>')) : '')
           . '</div></details></li>';
   }
   $tipsH = '';
