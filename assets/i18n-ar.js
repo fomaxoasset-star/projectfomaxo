@@ -947,7 +947,7 @@
 "Room No / Floor": "رقم الغرفة / الطابق",
 "Address": "العنوان",
 "Villa / building, street, area": "الفيلا / المبنى، الشارع، المنطقة",
-"+ Add a landmark or delivery note": "+ أضف معلماً قريباً أو ملاحظة للتوصيل",
+"Landmark / delivery note": "معلم قريب / ملاحظة للتوصيل",
 "in 1–3 days": "خلال 1–3 أيام",
 "1–3 days, or same-day": "1–3 أيام، أو في نفس اليوم",
 "pay when it arrives": "ادفع عند الوصول",
