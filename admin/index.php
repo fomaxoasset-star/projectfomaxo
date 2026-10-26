@@ -3467,7 +3467,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
   if (($er = $V['errors'][0] ?? null) && $er['people'] >= 2)
     $tip((int)$er['people'], 'An error happens on ' . h(fx_pg_name($er['pg'], $names)), ['<b>' . $nf($er['people']) . '</b> visits had this error ' . $nf($er['n']) . ' times: <span class="muted">' . h($er['label']) . '</span>'],
       'An error can stop a button from working, so people cannot add to bag or pay.', ['Nothing for you to do: we read the error and fix it.'], 'fix the error');
-  /* fixes already built and live (reply word => day it went live): the tip leaves the list and waits in Done.
+  /* fixes already built and live (reply word => day it went live): the tip leaves the list (nothing shown).
      It comes back only when a week has passed and the chosen dates start after the fix, so it is judged on new visits only */
   $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-10-26'];
   $doneH = []; $back = fn($w) => isset($done[$w]) && time() >= strtotime($done[$w] . ' +7 days') && $span[0] >= $done[$w] . ' 00:00:00';
@@ -3515,9 +3515,6 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
             . '<p class="tdat"><span class="tl">What the data shows</span>' . implode('<br>', $t['data']) . '</p>'
             . '<p class="twhy"><span class="tl">Why it matters</span>' . $t['why'] . '</p>'
             . '<div class="tst"><span class="tl">Steps</span><ol>' . implode('', array_map(fn($s) => '<li>' . $s . '</li>', $t['steps'])) . '<li>Reply <b class="tword">' . h($t['word']) . '</b> in our chat and we build it, with pictures first.</li></ol></div></div></li>';
-  $doneL = '';
-  foreach ($doneH as $w => $title)
-    $doneL .= '<li><span class="dck" aria-hidden="true"></span><div><b>' . ($title ?: (['check ads' => 'Visitors from one source almost never add to the bag'][$w] ?? h(ucfirst($w)))) . '</b><span class="muted small">Fixed on ' . date('d/m/Y', strtotime($done[$w])) . ' · checked again on ' . date('d/m/Y', strtotime($done[$w] . ' +7 days')) . '</span></div></li>';
   $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
   page('Improve', '<div class="db imp">'
     . '<div class="pagehead"><h1>Improve</h1><div class="seg">' . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['improve' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div></div>'
@@ -3526,8 +3523,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
     . '<p class="muted small gnote">' . ($F['visits'] < 20 ? '<b>Only ' . $nf($F['visits']) . ' visits in these dates: pick 7 or 30 days for surer tips.</b> ' : '') . 'Each line counts visits. The red words show how many stopped at that step. <b>Tap a step</b> to see why and what to do.</p>'
     . '<div class="ihow"><b>How to use this page</b><ol><li>Start with tip 1: it affects the most people.</li><li>Read what the data shows and follow the steps.</li><li>Check again after a week: the numbers should move.</li></ol></div></section>'
     . '<section class="card i-tips"><div class="ch"><h2>What to fix first</h2><a class="btn sm line" href="./?analytics=1&amp;vj=1&amp;r=' . h($r) . '">See the visits</a></div>'
-    . ($tipsH ? '<div class="list"><ol class="tips">' . $tipsH . '</ol></div>' : '<p class="muted empty">No clear problem in these dates yet. Pick 7 or 30 days, or check back when more people have visited.</p>')
-    . ($doneL ? '<div class="idone"><h3>Done</h3><ul>' . $doneL . '</ul><p class="muted small">A done tip goes back on the list only if the numbers are still bad a week after the fix.</p></div>' : '')
+    . ($tipsH ? '<div class="list"><ol class="tips">' . $tipsH . '</ol></div>' : ($doneH ? '<p class="muted empty">Nothing new to fix right now. A fixed tip comes back here only if the numbers are still bad a week after the fix.</p>' : '<p class="muted empty">No clear problem in these dates yet. Pick 7 or 30 days, or check back when more people have visited.</p>'))
     . '</section></div></div>', true, true);
 } catch (Throwable $e) {
   page('Improve', '<div class="db imp"><div class="pagehead"><h1>Improve</h1></div><section class="card"><p class="muted empty">Improve could not open: ' . h($e->getMessage()) . ' (line ' . $e->getLine() . '). Send us a picture of this line.</p></section></div>', true, true);
