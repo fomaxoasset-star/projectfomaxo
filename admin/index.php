@@ -3159,8 +3159,9 @@ if (isset($_GET['analytics'])) {
   $vj = isset($_GET['vj']) && !$cv;
   if ($vj) $cvq = ['vj' => 1];
   $vjGrid = '';
-  if ($vj) {
+  if ($vj) try {   // a failure shows its reason instead of a white page
     require_once dirname(__DIR__) . '/insights-lib.php';
+    require_once dirname(__DIR__) . '/geo-lib.php';   // fomaxo_flag() for each visit's country
     $V = fx_visits_data($pdo, $span[0], $span[1], $notTrash, 60);
     if (isset($_GET['csv'])) {   // every visit step by step, for Excel or to send to us
       header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="fomaxo-visits-' . $d1 . '-to-' . $d2 . '.csv"');
@@ -3208,6 +3209,8 @@ if (isset($_GET['analytics'])) {
       . $tapList('btn', 'No taps counted yet.') . $tapList('dead', 'Nobody tapped something that is not a button.') . $tapList('rage', 'No angry taps. Good.')
       . '<p class="muted small gnote">Not buttons: people tapped a photo or words and nothing happened, so they may expect it to open. What people type is never kept.</p></section>'
       . '</div>';
+  } catch (Throwable $e) {
+    $vjGrid = '<section class="card"><p class="muted empty">Visits could not open: ' . h($e->getMessage()) . ' (line ' . $e->getLine() . '). Send us a picture of this line.</p></section>';
   }
 
   /* where visitors are: country of each visit, and the emirate for the UAE (looked up from the IP address when the visit starts; the address is not kept) */
@@ -3368,7 +3371,7 @@ if (isset($_GET['analytics'])) {
 
 /* ---- Improve (AJAY 26/10/2026): how to get more people to buy, in plain words. Each tip comes from the visit data of the dates picked
    (Analytics and Analytics → Visits), shows the numbers behind it and the steps to take. Nothing is a guess: a tip only shows when the data says so. ---- */
-if (isset($_GET['improve'])) {
+if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a white page
   require_once dirname(__DIR__) . '/insights-lib.php';
   $r = (string)($_GET['r'] ?? '7'); if (!in_array($r, ['today', '7', '30'], true)) $r = '7';
   $span = [date('Y-m-d 00:00:00', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')), date('Y-m-d 23:59:59')];
@@ -3490,6 +3493,8 @@ if (isset($_GET['improve'])) {
     . '<section class="card i-tips"><div class="ch"><h2>What to fix first</h2><a class="btn sm line" href="./?analytics=1&amp;vj=1&amp;r=' . h($r) . '">See the visits</a></div>'
     . ($tipsH ? '<div class="list"><ol class="tips">' . $tipsH . '</ol></div>' : '<p class="muted empty">No clear problem in these dates yet. Pick 7 or 30 days, or check back when more people have visited.</p>')
     . '</section></div></div>', true, true);
+} catch (Throwable $e) {
+  page('Improve', '<div class="db imp"><div class="pagehead"><h1>Improve</h1></div><section class="card"><p class="muted empty">Improve could not open: ' . h($e->getMessage()) . ' (line ' . $e->getLine() . '). Send us a picture of this line.</p></section></div>', true, true);
 }
 
 /* ---- reports: sales, costs and profit or loss by month and by year ---- */
