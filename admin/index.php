@@ -2945,6 +2945,7 @@ if (isset($_GET['analytics'])) {
   $isDay = fn($v) => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)$v) && strtotime($v);
   $r = (string)($_GET['r'] ?? 'today');   // Analytics opens on Today
   if ($r === 'custom' && $isDay($_GET['d1'] ?? '') && $isDay($_GET['d2'] ?? '')) { $d1 = min($_GET['d1'], $_GET['d2']); $d2 = max($_GET['d1'], $_GET['d2']); }
+  elseif ($r === 'yesterday') { $d1 = $d2 = date('Y-m-d', strtotime('-1 day')); }   // Yesterday = the whole day before today, Dubai time
   else { if (!in_array($r, ['today', '7', '30', 'year'], true)) $r = 'today'; $d2 = date('Y-m-d'); $d1 = $r === 'year' ? date('Y-m-d', strtotime('-1 year +1 day')) : date('Y-m-d', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')); }   // Year = the last 12 months, as the countries list had
   $span = [$d1 . ' 00:00:00', $d2 . ' 23:59:59'];
   $nDays = (int)round((strtotime($d2) - strtotime($d1)) / 86400) + 1;
@@ -3224,8 +3225,8 @@ if (isset($_GET['analytics'])) {
 
   /* where visitors are: country of each visit, and the emirate for the UAE (looked up from the IP address when the visit starts; the address is not kept) */
   require_once dirname(__DIR__) . '/geo-lib.php';
-  $gr = ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'year' => 'Year'];
-  $gFrom = ['today' => date('Y-m-d 00:00:00'), '7' => date('Y-m-d 00:00:00', strtotime('-6 day')), '30' => date('Y-m-d 00:00:00', strtotime('-29 day')), 'year' => date('Y-m-d 00:00:00', strtotime('-1 year +1 day'))];
+  $gr = ['today' => 'Today', 'yesterday' => 'Yesterday', '7' => '7 days', '30' => '30 days', 'year' => 'Year'];
+  $gFrom = ['today' => date('Y-m-d 00:00:00'), 'yesterday' => date('Y-m-d 00:00:00', strtotime('-1 day')), '7' => date('Y-m-d 00:00:00', strtotime('-6 day')), '30' => date('Y-m-d 00:00:00', strtotime('-29 day')), 'year' => date('Y-m-d 00:00:00', strtotime('-1 year +1 day'))];
   $gTo = array_fill_keys(array_keys($gFrom), date('Y-m-d 23:59:59'));
   if ($r === 'custom') {   // dates picked with Show: these lists follow them too (their own buttons still switch)
     $gr = ['custom' => $d1 === $d2 ? date('j M', strtotime($d1)) : (substr($d1, 0, 7) === substr($d2, 0, 7) ? date('j', strtotime($d1)) : date('j M', strtotime($d1))) . '–' . date('j M', strtotime($d2))] + $gr;
@@ -3319,7 +3320,7 @@ if (isset($_GET['analytics'])) {
   /* on a phone the label sits on top with a short note under the number; laptop shows label under the number as before */
   $tile = fn($val, $label, $cls = '', $note = '') => '<div class="tile ' . $cls . '"><b>' . $val . '</b><span>' . $label . '</span>' . ($note !== '' ? '<small class="tn">' . $note . '</small>' : '') . '</div>';
   $dk = fn($desk, $mob) => '<span class="dk">' . $desk . '</span><span class="mo">' . $mob . '</span>';
-  $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'year' => 'Year'];
+  $rl = ['today' => 'Today', 'yesterday' => 'Yesterday', '7' => '7 days', '30' => '30 days', 'year' => 'Year'];
   $panes = ['funnel' => 'Funnel', 'visitors' => 'Visitors', 'sources' => 'Sources', 'products' => 'Products', 'countries' => 'Countries', 'emirates' => 'Emirates', 'devices' => 'Devices', 'pages' => 'Pages', 'returning' => 'Returning', 'left' => 'Left at checkout'];
   /* phone only: the Returning section (laptop shows the Returning box in the top row) */
   $retRows = '';
@@ -3382,8 +3383,9 @@ if (isset($_GET['analytics'])) {
    (Analytics and Analytics → Visits), shows the numbers behind it and the steps to take. Nothing is a guess: a tip only shows when the data says so. ---- */
 if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a white page
   require_once dirname(__DIR__) . '/insights-lib.php';
-  $r = (string)($_GET['r'] ?? '7'); if (!in_array($r, ['today', '7', '30'], true)) $r = '7';
-  $span = [date('Y-m-d 00:00:00', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')), date('Y-m-d 23:59:59')];
+  $r = (string)($_GET['r'] ?? '7'); if (!in_array($r, ['today', 'yesterday', '7', '30'], true)) $r = '7';
+  $span = $r === 'yesterday' ? [date('Y-m-d 00:00:00', strtotime('-1 day')), date('Y-m-d 23:59:59', strtotime('-1 day'))]   // the whole day before today, Dubai time
+        : [date('Y-m-d 00:00:00', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')), date('Y-m-d 23:59:59')];
   $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
   $notTrash = fx_not_trash($pdo);
   $realO = "o.status IN ('New', 'Paid', 'Delivered') AND o.test = 0";   // as Analytics: a purchase counts only while its order is a real one
@@ -3544,7 +3546,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
             . '<p class="tdat"><span class="tl">What the data shows</span>' . implode('<br>', $t['data']) . '</p>'
             . '<p class="twhy"><span class="tl">Why it matters</span>' . $t['why'] . '</p>'
             . '<div class="tst"><span class="tl">Steps</span><ol>' . implode('', array_map(fn($s) => '<li>' . $s . '</li>', $t['steps'])) . '<li>Reply <b class="tword">' . h($t['word']) . '</b> in our chat and we build it, with pictures first.</li></ol></div></div></li>';
-  $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
+  $rl = ['today' => 'Today', 'yesterday' => 'Yesterday', '7' => '7 days', '30' => '30 days'];
   page('Improve', '<div class="db imp">'
     . '<div class="pagehead"><h1>Improve</h1><div class="seg">' . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['improve' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div></div>'
     . '<div class="igrid">'
