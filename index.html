@@ -2374,8 +2374,9 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 @media(max-width:600px){
   .pdp-crumbs{display:none}
   .pdp{padding-top:12px}
-  .gallery{gap:10px}
-  .stage{width:min(100%,calc(46svh * .75));margin:0 auto}
+  .gallery{gap:10px;--stw:min(100%,calc(46svh * .75))}
+  .stage{width:var(--stw);margin:0 auto}
+  .gallery>.best{right:calc((100% - var(--stw)) / 2 - 11px)}   /* Best seller badge stays on the photo corner */
   .thumbs{justify-content:center}
   .pdp{row-gap:18px}
 }
