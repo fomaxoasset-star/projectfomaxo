@@ -75,6 +75,7 @@ var f=document.createElement("style");f.textContent="@font-face{font-family:'Ami
 html{scroll-behavior:smooth;background:var(--black);-webkit-text-size-adjust:100%}
 body{background:var(--black);color:var(--ivory);font-family:var(--sans);font-weight:300;font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 body.lock{overflow:hidden}
+body.pin{position:fixed;left:0;right:0;width:100%}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{background:none;border:0;cursor:pointer}
@@ -3509,8 +3510,13 @@ function afterBuyRecs(lines){
 
 /* ============================ OVERLAYS ============================ */
 const scrim = $('#scrim');
-function openPanel(el){ closePanels(); if (el.id === 'cart') hideAdded(); el.classList.add('open'); el.setAttribute('aria-hidden','false'); if (el.id === 'cart') scrim.classList.add('open'); document.body.classList.add('lock'); }
-function closePanels(){ $$('.drawer.open,.search.open,.mnav.open').forEach(x => { x.classList.remove('open'); x.setAttribute('aria-hidden','true'); }); scrim.classList.remove('open'); document.body.classList.remove('lock'); }
+/* phones: the page under an open bag/menu is pinned in place, so the browser bar never slides in or out and the bag keeps one size while it is scrolled */
+let pinY = null;
+function pinPage(on){ const b = document.body;
+  if (on && pinY === null && matchMedia('(max-width:600px)').matches) { pinY = scrollY; b.style.top = -pinY + 'px'; b.classList.add('pin'); }
+  else if (!on && pinY !== null) { const y = pinY; pinY = null; b.classList.remove('pin'); b.style.top = ''; scrollTo({top: y, behavior: 'instant'}); } }
+function openPanel(el){ closePanels(); if (el.id === 'cart') hideAdded(); el.classList.add('open'); el.setAttribute('aria-hidden','false'); if (el.id === 'cart') scrim.classList.add('open'); document.body.classList.add('lock'); pinPage(true); }
+function closePanels(){ $$('.drawer.open,.search.open,.mnav.open').forEach(x => { x.classList.remove('open'); x.setAttribute('aria-hidden','true'); }); scrim.classList.remove('open'); document.body.classList.remove('lock'); pinPage(false); }
 /* phones: a swipe anywhere in the bag (top bar, totals, buttons) moves only the products list; the page behind never moves */
 (() => { const cart = document.getElementById('cart'); if (!cart) return; let y = null;
   cart.addEventListener('touchstart', e => { const b = cart.querySelector('.dr-body'); y = b && !b.contains(e.target) && !e.target.closest('select,input,textarea') ? e.touches[0].clientY : null; }, {passive: true});
