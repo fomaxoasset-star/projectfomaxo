@@ -8,12 +8,12 @@ http_response_code(204);
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') exit;
 $ua = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 400);
 if ($ua === '' || preg_match('/bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|whatsapp\/|curl|wget|python|monitor/i', $ua)) exit;
-$raw = file_get_contents('php://input', false, null, 0, 4096);
+$raw = file_get_contents('php://input', false, null, 0, 8192);
 $d = json_decode((string)$raw, true);
 if (!is_array($d)) exit;
 $id = fn($k) => preg_match('/^[a-z0-9]{8,16}$/', (string)($d[$k] ?? '')) ? (string)$d[$k] : null;
 $vid = $id('v'); $sid = $id('s'); $ev = (string)($d['e'] ?? '');
-if (!$vid || !$sid || !in_array($ev, ['view', 'product', 'cart', 'checkout', 'pay', 'card', 'buy', 'ping', 'lead', 'scroll', 'invite'], true)) exit;
+if (!$vid || !$sid || !in_array($ev, ['view', 'product', 'cart', 'checkout', 'pay', 'card', 'buy', 'ping', 'lead', 'scroll', 'invite', 'trail'], true)) exit;
 $t = fn($k, $max) => trim(mb_substr(preg_replace('/[\x00-\x1f]+/u', ' ', (string)($d[$k] ?? '')), 0, $max));
 
 require __DIR__ . '/orders-lib.php';
@@ -34,6 +34,32 @@ date_default_timezone_set('Asia/Dubai');
 try {
   $page = $t('p', 80);
   $pdo->prepare('REPLACE INTO fx_live (vid, seen, page) VALUES (?, NOW(), ?)')->execute([$vid, $page]);
+  if ($ev === 'trail') {   // taps, how far down each page was seen, how fast the site opened and page errors, for Analytics → Visits (only button names and box names, never what was typed)
+    $device = preg_match('/iPad|Tablet|(Android(?!.*Mobile))/i', $ua) ? 'tablet' : (preg_match('/Mobi|iPhone|Android/i', $ua) ? 'phone' : 'computer');
+    $rows = [];
+    foreach (array_slice((array)($d['t'] ?? []), 0, 25) as $x) {
+      if (!is_array($x) || !in_array($x['k'] ?? '', ['t', 's', 'l', 'e'], true)) continue;
+      $cl = fn($v, $max) => trim(mb_substr(preg_replace('/[\x00-\x1f]+/u', ' ', (string)$v), 0, $max));
+      $n = fn($v) => max(0, min(100, (int)$v));
+      $rows[] = [$sid, $vid, $cl($x['p'] ?? '', 80), $x['k'], in_array($x['k'], ['t', 'e'], true) ? $cl($x['l'] ?? '', 60) : '', $n($x['x'] ?? 0), $n($x['y'] ?? 0), $x['k'] === 's' ? $n($x['pc'] ?? 0) : null, empty($x['d']) ? 0 : 1, empty($x['r']) ? 0 : 1, $device, $x['k'] === 'l' ? max(0, min(60000, (int)($x['ms'] ?? 0))) : null];
+    }
+    if (!$rows) exit;
+    $add = fn() => $pdo->prepare('INSERT INTO fx_trail (at, sid, vid, page, k, label, x, y, pc, dead, rage, device, ms) VALUES ' . implode(',', array_fill(0, count($rows), '(NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')))
+        ->execute(array_merge(...$rows));
+    try { $add(); } catch (Throwable $e) {   // the first time: make the table
+      $pdo->exec("CREATE TABLE IF NOT EXISTS fx_trail (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, at DATETIME NOT NULL, sid CHAR(16) NOT NULL, vid CHAR(16) NOT NULL,
+                  page VARCHAR(80) NOT NULL DEFAULT '', k CHAR(1) NOT NULL, label VARCHAR(60) NOT NULL DEFAULT '', x TINYINT UNSIGNED NOT NULL DEFAULT 0, y TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                  pc TINYINT UNSIGNED NULL, dead TINYINT(1) NOT NULL DEFAULT 0, rage TINYINT(1) NOT NULL DEFAULT 0, device VARCHAR(8) NOT NULL DEFAULT '', ms MEDIUMINT UNSIGNED NULL, KEY (at), KEY (sid)) DEFAULT CHARSET=utf8mb4");
+      $add(); }
+    if (mt_rand(1, 300) === 1) $pdo->exec('DELETE FROM fx_trail WHERE at < NOW() - INTERVAL 120 DAY');   // taps are kept 4 months
+    require_once __DIR__ . '/insights-lib.php';
+    if (fx_insights_due($pdo)) register_shutdown_function(function () use ($pdo) {   // the plain-text summary in insights/, at most once an hour, after this message is answered
+      while (ob_get_level()) ob_end_flush();
+      if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+      fx_insights_write($pdo);
+    });
+    exit;
+  }
   if ($ev === 'ping') {   // still on the page: note it on the latest page of this visit, for the time spent on each page
     try { $pdo->prepare("UPDATE fx_events SET left_at = NOW() WHERE sid = ? AND ev = 'view' ORDER BY id DESC LIMIT 1")->execute([$sid]); } catch (Throwable $e) {}
     exit;

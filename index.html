@@ -5627,6 +5627,38 @@ const FXT = (() => {
     for (const m of [25, 50, 75, 100]) if (pc >= (m === 100 ? 98 : m) && !depth[m]) { depth[m] = 1; send('scroll', {d: m}); }
   }, 300); }, {passive: true});
   setInterval(() => { if (!document.hidden && sid && Date.now() - lastT < 18e5) post({v: vid, s: sid, e: 'ping', p: (location.hash || '#/').slice(1, 81)}); }, 6e4);
+  /* visit trail for fomaxo.com/admin → Analytics → Visits (our own Clarity): what each visit taps, how far down each page it scrolls,
+     and taps on things that do nothing or are tapped again and again. Never what is typed: a box is noted only by its name; on pages that
+     show customer details only buttons and links are named. Kept in this tab and sent in one small message every 15 s or when the page changes or closes. */
+  let trail = [], tPage = '', tMax = 0, tTaps = [];
+  const pg = () => (location.hash || '#/').slice(1, 81);
+  const flush = () => { if (tPage && tMax) { trail.push({k: 's', p: tPage, pc: Math.min(100, tMax)}); tMax = 0; }
+    if (trail.length && sid) post({v: vid, s: sid, e: 'trail', p: pg(), t: trail.splice(0, 25)}); else trail = []; };
+  const seenPc = () => { const h = document.documentElement.scrollHeight; return h > 10 ? Math.round(Math.min(1, (scrollY + innerHeight) / h) * 100) : 0; };
+  const tapName = (el, mask) => {
+    const t = el.tagName, clean = s => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 50);
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(t)) return 'Box: ' + clean(el.getAttribute('aria-label') || el.name || el.placeholder || el.type);
+    let s = clean(el.getAttribute('aria-label') || el.title);
+    if (!s && !(mask && !/^(A|BUTTON|LABEL|SUMMARY)$/.test(t))) { const w = clean(el.innerText || el.alt); if (w.length < 45 || /^(A|BUTTON|LABEL|SUMMARY)$/.test(t)) s = w; }   // a long block of words is named by its kind
+    if (!s) { const im = t === 'IMG' ? el : el.querySelector('img'); if (im) s = 'Photo' + (im.alt && !mask ? ': ' + clean(im.alt) : ''); }
+    return s || (el.id ? '#' + el.id : t.toLowerCase() + (typeof el.className === 'string' && el.className ? '.' + el.className.split(' ')[0] : ''));
+  };
+  document.addEventListener('click', e => { if (off || !sid || !e.isTrusted) return;
+    const tg = e.target instanceof Element ? e.target : null; if (!tg) return;
+    const hit = tg.closest('a,button,input,select,textarea,label,summary,[role=button],[onclick],[data-r],[data-p],[data-id]');
+    const el = hit || tg, mask = !!tg.closest('[data-clarity-mask]'), now = Date.now();
+    tTaps = tTaps.filter(x => now - x.t < 1000 && Math.abs(x.x - e.clientX) < 40 && Math.abs(x.y - e.clientY) < 40); tTaps.push({t: now, x: e.clientX, y: e.clientY});
+    const h = document.documentElement.scrollHeight;
+    trail.push({k: 't', p: pg(), l: tapName(el, mask), x: Math.round(e.clientX / innerWidth * 100), y: h ? Math.round((e.clientY + scrollY) / h * 100) : 0, d: hit ? 0 : 1, r: tTaps.length === 3 ? 1 : 0});
+    if (trail.length >= 25) flush();
+  }, {capture: true, passive: true});
+  let tWait = 0; addEventListener('scroll', () => { if (tWait) return; tWait = setTimeout(() => { tWait = 0; tMax = Math.max(tMax, seenPc()); }, 400); }, {passive: true});
+  setInterval(() => { if (trail.length) flush(); }, 15e3);
+  addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+  // how long the website took to open on this phone or computer (once per visit to the site), and errors on the page (a button that breaks shows here)
+  addEventListener('load', () => setTimeout(() => { try { const n = performance.getEntriesByType('navigation')[0], ms = n && n.loadEventStart > 0 ? Math.round(n.loadEventStart) : 0; if (ms && !off) trail.push({k: 'l', p: pg(), ms: Math.min(ms, 60000)}); } catch(e) {} }, 0), {once: true});
+  let errN = 0; addEventListener('error', e => { if (off || !(e instanceof ErrorEvent) || errN++ >= 5) return; trail.push({k: 'e', p: pg(), l: String(e.message || 'Error').replace(/\d{6,}/g, '#').slice(0, 60)}); }, true);
+  const trailPage = () => { flush(); tPage = pg(); setTimeout(() => { if (tPage === pg()) tMax = Math.max(tMax, seenPc()); }, 1500); };   // a short page counts as seen to its end
   return {
     send,
     once(e, data) { if (sent[e]) return; sent[e] = 1; send(e, data); },
@@ -5634,7 +5666,7 @@ const FXT = (() => {
       const k = location.hash, now = Date.now();
       if (k === lastView && now - lastViewT < 2000) return;
       lastView = k; lastViewT = now;
-      send('view'); ADS.page(); if (k === '' || k === '#/') depth = {};
+      trailPage(); send('view'); ADS.page(); if (k === '' || k === '#/') depth = {};
       if (who) { send('lead', {st: 'visit', who}); who = ''; try { sessionStorage.removeItem('fomaxo_who_visit'); } catch(e) {} }
       else if (buyer) { send('lead', {st: 'buyer', phone: buyer}); buyer = ''; }   // ordered before on this device: the admin sees them by name when they come back
       if (seg[0] === 'product' && P[seg[1]] && !P[seg[1]].hidden) { send('product', {id: seg[1]}); ADS.view(P[seg[1]]); }

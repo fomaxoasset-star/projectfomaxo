@@ -275,6 +275,30 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 @media (max-width:759px){.aview{display:flex;width:100%;padding:0;gap:0;border-radius:8px;overflow:hidden}.aview a{flex:1;text-align:center;font-size:13px;font-weight:600;padding:7px 0;border-radius:0;color:var(--ink)}.aview a.on{background:var(--gold);color:var(--gold-ink)}.aview a+a{border-left:1px solid var(--line)}
   .cvpick button:nth-child(n+4){border-bottom:0}.cvpick button:last-child{grid-column:span 2;border-right:0}}
 @media (min-width:760px) and (max-height:540px){.an .agrid.cv{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:330px 330px 300px;grid-template-areas:"cprod cdrop" "ccamp cscroll" "cmulti cmulti"}}
+/* Analytics → Visits: visits step by step, where people leave, what people tap (laptop: one screen; phone: one section at a time) */
+.vlist{list-style:none;margin:0;padding:0}.vv{padding:9px 2px;border-bottom:1px solid var(--line)}.vv:last-child{border-bottom:0}
+.vh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;margin-bottom:6px}.vd{font-weight:600}.ve{margin-left:auto;color:var(--muted)}.ve.ok{color:var(--ok,#6fbf73)}.ve.hot{color:var(--gold)}.ve.bad{color:var(--bad)}
+.vs{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:flex-start}.vs li{position:relative;border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12.5px;display:flex;flex-direction:column;gap:2px;max-width:100%;min-width:0}
+.vs li>span.muted{font-size:11.5px}.vs li+li::before{content:"›";position:absolute;left:-11px;top:12px;color:var(--gold);font-weight:600}
+.vt{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}.v-paths i,.vt i{font-style:normal;font-size:11px;background:rgba(201,169,97,.16);color:var(--ink);border-radius:5px;padding:1px 6px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v-paths i.dd,.vt i.dd{background:rgba(128,128,128,.2);color:var(--muted)}.v-paths i.rg,.vt i.rg{background:rgba(220,80,80,.18);color:var(--bad)}.vt i.more{background:none;color:var(--muted)}
+.ttab td b{font-weight:600;overflow-wrap:anywhere}.ttab .tpg{display:block;font-size:11px}.ltab2 td b{font-weight:600}.ltab2 .fb{margin:4px 0 0;height:5px;max-width:140px}.v-taps .ch{flex-wrap:wrap;gap:6px}.v-paths .ch .vxls{flex:none;margin-left:auto}.v-paths .ch h2 small{font-family:Manrope,sans-serif;font-size:12px;letter-spacing:0;text-transform:none;font-weight:400;margin-left:6px}
+.v-leave,.v-taps{container-type:inline-size}@container (max-width:360px){.ltab2 th:nth-child(5),.ltab2 td:nth-child(5){display:none}}
+@media (min-width:760px){.agrid.vj{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"vpaths vleave" "vpaths vtaps"}
+  .v-paths{grid-area:vpaths}.v-leave{grid-area:vleave}.v-taps{grid-area:vtaps}.agrid.vj>.card{display:flex}}
+@media (max-width:759px){.vjpick button{white-space:normal;line-height:1.15}.vjpick button:nth-child(n){border-bottom:0}}
+@media (min-width:760px) and (max-height:540px){.an .agrid.vj{grid-template-columns:minmax(0,1fr);grid-template-rows:520px 330px 330px;grid-template-areas:"vpaths" "vleave" "vtaps"}}
+/* Improve: where visitors stop, and the tips to fix first with their numbers and steps (laptop: one screen, two columns; phone: one after the other) */
+.igrid{display:grid;gap:10px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr)}.imp{display:flex;flex-direction:column;height:100%}.imp .pagehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.imp .pagehead .seg{margin-left:auto}
+.i-fun .fun li.worst .fl>span:first-child{font-weight:600}.i-fun .fun li.worst .fb i{background:var(--bad)}.ihow{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:13px}.ihow ol{margin:4px 0 0;padding-left:18px}.ihow li{margin:2px 0}
+.tips{list-style:none;margin:0;padding:0}.tip{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}.tip:last-child{border-bottom:0}
+.tno{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.tip h3{margin:2px 0 6px;font-size:15.5px;font-weight:600;line-height:1.3}.tip p{margin:0 0 6px;font-size:13.5px;line-height:1.45}.tip .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}
+.tst ol{margin:0;padding-left:18px;font-size:13.5px;line-height:1.45}.tst li{margin:2px 0}.tword{color:var(--gold);white-space:nowrap}.i-tips .ch{display:flex;align-items:center;gap:8px}.i-tips .ch .btn{margin-left:auto;flex:none}
+@media (min-width:760px){.igrid{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)}.i-fun,.i-tips{min-height:0}.i-fun{overflow:auto}}
+@media (max-width:759px){.igrid{overflow:auto;overscroll-behavior:contain}.igrid{display:block}.igrid>.card{display:block!important;overflow:visible!important;margin-bottom:10px}.igrid .list{overflow:visible!important;max-height:none!important}.imp .pagehead h1{display:none}.imp .pagehead .seg{display:flex;width:100%;margin:0;padding:0;gap:0;border-radius:8px;overflow:hidden}.imp .pagehead .seg a{flex:1;text-align:center;font-size:13px;padding:7px 0;border-radius:0}.imp .pagehead .seg a+a{border-left:1px solid var(--line)}}
+.list .vlist>li.vv{display:block;padding:9px 2px}.list .vs>li{display:flex;justify-content:flex-start;align-items:flex-start;padding:5px 8px;border:1px solid var(--line);text-align:left}.list .vs>li:last-child{border:1px solid var(--line)}
+.list .tips>li.tip{display:grid;justify-content:stretch;align-items:start;padding:12px 2px}.list .tst ol>li{display:list-item;padding:1px 0;border:0}.list .tst ol>li:last-child{border:0}.tip .tno{margin-top:2px}
 /* phone: no zooming by itself (iPhone zooms into boxes under 16px, double-tap zooms); two-finger pinch still works */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{touch-action:manipulation;overflow-x:hidden}
 @media (max-width:759px){input,select,textarea{font-size:16px!important}
@@ -508,7 +532,7 @@ function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the 
      . (!empty($_SESSION['admin']) ? '<div class="tabsw"><a class="tnav" data-d="-1" aria-label="Previous page" hidden>‹</a><nav class="tabs">' . implode('', array_map(fn($t) => '<a href="' . $t[1] . '"' . ($t[2] ? ' class="on"' : '') . '>' . $t[0] . '</a>',
          [['Home', './', !$_GET], ['Products', './?products=1', isset($_GET['products'])], ['Stocks', './?stock=1', isset($_GET['stock'])],
           ['Orders' . fx_tb($bd, 'orders'), './?orders=1', $ord],
-          ['Reviews' . fx_tb($bd, 'reviews'), './?reviews=1', isset($_GET['reviews'])], ['Analytics' . fx_tb($bd, 'analytics'), './?analytics=1', isset($_GET['analytics'])], ['Progress', './?progress=1', isset($_GET['progress'])],
+          ['Reviews' . fx_tb($bd, 'reviews'), './?reviews=1', isset($_GET['reviews'])], ['Analytics' . fx_tb($bd, 'analytics'), './?analytics=1', isset($_GET['analytics'])], ['Improve', './?improve=1', isset($_GET['improve'])], ['Progress', './?progress=1', isset($_GET['progress'])],
           ['Coupons', './?coupons=1', isset($_GET['coupons'])], ['Offers', './?offer=1', isset($_GET['offer'])], ['Expenses', './?expenses=1', isset($_GET['expenses'])], ['Sales', './?reports=1', isset($_GET['reports'])],
           ['Members', './?members=1', isset($_GET['members'])], ['Settings', './?settings=1', isset($_GET['settings'])]])) . '</nav><a class="tnav" data-d="1" aria-label="Next page" hidden>›</a></div>' : '')
      . '<main class="wrap' . ($wide ? '' : ' narrow') . ($fit ? ' fit' : '') . '">' . $body . '</main>'
@@ -3131,6 +3155,61 @@ if (isset($_GET['analytics'])) {
       . '</div>';
   }
 
+  /* ---- Visits view (?analytics=1&vj=1): our own Clarity. Where visits leave, what they tap, and the newest visits step by step (insights-lib.php) ---- */
+  $vj = isset($_GET['vj']) && !$cv;
+  if ($vj) $cvq = ['vj' => 1];
+  $vjGrid = '';
+  if ($vj) {
+    require_once dirname(__DIR__) . '/insights-lib.php';
+    $V = fx_visits_data($pdo, $span[0], $span[1], $notTrash, 60);
+    if (isset($_GET['csv'])) {   // every visit step by step, for Excel or to send to us
+      header('Content-Type: text/csv; charset=utf-8'); header('Content-Disposition: attachment; filename="fomaxo-visits-' . $d1 . '-to-' . $d2 . '.csv"');
+      $out = fopen('php://output', 'w'); fwrite($out, "\xEF\xBB\xBF");
+      fputcsv($out, ['Visit started', 'Device', 'Country', 'From', 'End', 'Step', 'Page', 'Time on page', 'Seen down the page', 'Tapped']);
+      foreach (fx_visits_data($pdo, $span[0], $span[1], $notTrash, 500)['paths'] as $v) foreach ($v['steps'] as $i => $st)
+        fputcsv($out, [$v['start'], $v['device'], $v['country'], $v['source'], fx_visit_end($v['end']), $i + 1, fx_pg_name($st['pg'], $names), fx_secs($st['secs']), $st['pc'] !== null ? $st['pc'] . '%' : '',
+                       implode(', ', array_map(fn($t) => ($t['dead'] ? '(not a button) ' : '') . $t['l'] . ($t['rage'] ? ' [angry]' : ''), $st['taps']))]);
+      exit;
+    }
+    $bar = fn($n, $max) => '<div class="fb"><i style="width:' . ($max ? max(1, round($n / $max * 100, 1)) : 0) . '%"></i></div>';
+    /* 1. where people leave */
+    $lvMax = $V['leave'] ? max(array_column($V['leave'], 'left_n')) : 0; $lvT = '';
+    foreach ($V['leave'] as $row)
+      $lvT .= '<tr><td><b>' . h(fx_pg_name($row['pg'], $names)) . '</b>' . $bar($row['left_n'], $lvMax) . '</td><td class="num">' . number_format($row['seen']) . '</td><td class="num">' . number_format($row['left_n'])
+            . '</td><td class="num"><b>' . $pctT($pct($row['left_n'], $row['seen'])) . '</b></td><td class="num">' . fx_secs($row['secs']) . '</td><td class="num">' . ($row['pc'] !== null ? (int)$row['pc'] . '%' : '–') . '</td></tr>';
+    /* 2. what people tap: buttons, things that are not buttons, angry taps */
+    $tp = ['btn' => '', 'dead' => '', 'rage' => '']; $tn = ['btn' => 0, 'dead' => 0, 'rage' => 0];
+    foreach ($V['taps'] as $row) foreach (['btn' => !$row['dead'], 'dead' => (bool)$row['dead'], 'rage' => $row['rage'] > 0] as $k => $ok)
+      if ($ok && $tn[$k]++ < 60) $tp[$k] .= '<tr><td><b>' . h($row['label'] !== '' ? $row['label'] : '–') . '</b><span class="muted tpg">' . h(fx_pg_name($row['pg'], $names)) . '</span></td><td class="num">' . number_format($k === 'rage' ? $row['rage'] : $row['taps']) . '</td><td class="num">' . number_format($row['people']) . '</td></tr>';
+    $tapList = fn($k, $empty) => '<div class="list" data-r="' . $k . '"' . ($k === 'btn' ? '' : ' hidden') . '>' . ($tp[$k] ? '<table class="mini ttab"><thead><tr><th>' . ($k === 'btn' ? 'Button or link' : 'Tapped') . ' · page</th><th class="num">Taps</th><th class="num">People</th></tr></thead><tbody>' . $tp[$k] . '</tbody></table>' : '<p class="muted empty">' . $empty . '</p>') . '</div>';
+    /* 3. the newest visits, step by step */
+    $endCls = ['bought' => 'ok', 'payment' => 'hot', 'checkout' => 'hot', 'bag' => 'hot', 'bounce' => 'bad', 'left' => ''];
+    $devIc = ['phone' => 'Phone', 'computer' => 'Laptop', 'tablet' => 'Tablet'];
+    $paths = '';
+    foreach ($V['paths'] as $v) {
+      $steps = [];
+      foreach ($v['steps'] as $st) {
+        $taps = array_map(fn($t) => '<i class="' . ($t['rage'] || !empty($t['err']) ? 'rg' : ($t['dead'] ? 'dd' : '')) . '">' . h($t['l']) . '</i>', array_slice($st['taps'], 0, 8));
+        $steps[] = '<li><b>' . h(fx_pg_name($st['pg'], $names)) . '</b><span class="muted">' . fx_secs($st['secs']) . ($st['pc'] !== null ? ' · seen ' . (int)$st['pc'] . '%' : '') . '</span>'
+                 . ($taps ? '<span class="vt">' . implode('', $taps) . (count($st['taps']) > 8 ? '<i class="more">+' . (count($st['taps']) - 8) . '</i>' : '') . '</span>' : '') . '</li>';
+      }
+      $paths .= '<li class="vv"><div class="vh"><span class="vd">' . h(date('d M, H:i', strtotime($v['start']))) . '</span><span class="muted">' . h($devIc[$v['device']] ?? 'Other') . ($v['country'] ? ' · ' . fomaxo_flag($v['country']) . ' ' . h($v['country']) : '') . ($v['source'] ? ' · ' . h($v['source']) : '') . ($v['load'] ? ' · opened in ' . h(number_format($v['load'] / 1000, 1)) . 's' : '') . '</span>'
+              . '<span class="lpill ve ' . ($endCls[$v['end']] ?? '') . '">' . h(fx_visit_end($v['end'])) . '</span></div><ol class="vs">' . implode('', $steps) . '</ol></li>';
+    }
+    $vjPanes = ['vpaths' => 'Visits step by step', 'vleave' => 'Where people leave', 'vtaps' => 'What people tap'];
+    $vjNote = $V['has_trail'] ? '' : '<p class="muted small gnote">Taps and scrolling are counted from today. Pages and times go back further.</p>';
+    $vjGrid = '<nav class="apick vjpick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'vpaths' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($vjPanes), $vjPanes)) . '</nav>'
+      . '<div class="dgrid agrid vj">'
+      . '<section class="card v-paths on" data-p="vpaths"><div class="ch"><h2>Visits step by step <small class="muted">newest first</small></h2><a class="btn sm vxls" href="' . h(self_url(['analytics' => 1, 'vj' => 1, 'csv' => 1, 'r' => 'custom', 'd1' => $d1, 'd2' => $d2])) . '">Excel</a></div>'
+      . ($paths ? '<div class="list"><ul class="vlist">' . $paths . '</ul></div><p class="muted small gnote">Each box is a page: how long they stayed, how far down they saw, and what they tapped. <i class="dd">Grey</i> = tapped something that is not a button. <i class="rg">Red</i> = tapped the same spot 3 times fast, or an error on the page.</p>' : '<p class="muted empty">No visits in these dates.</p>') . '</section>'
+      . '<section class="card v-leave" data-p="vleave"><div class="ch"><h2>Where people leave</h2></div>'
+      . ($lvT ? '<div class="list"><table class="mini ltab2"><thead><tr><th>Last page</th><th class="num">Saw it</th><th class="num">Left</th><th class="num">Left %</th><th class="num">Time</th><th class="num">Seen</th></tr></thead><tbody>' . $lvT . '</tbody></table></div><p class="muted small gnote">Left: visits that ended on this page. Seen: how far down the page people got, on average.</p>' : '<p class="muted empty">No visits in these dates.</p>') . $vjNote . '</section>'
+      . '<section class="card v-taps" data-p="vtaps"><div class="ch"><h2>What people tap</h2><div class="seg gseg" role="group"><button type="button" data-r="btn" class="on">Buttons</button><button type="button" data-r="dead">Not buttons' . ($tn['dead'] ? ' (' . $tn['dead'] . ')' : '') . '</button><button type="button" data-r="rage">Angry' . ($tn['rage'] ? ' (' . $tn['rage'] . ')' : '') . '</button></div></div>'
+      . $tapList('btn', 'No taps counted yet.') . $tapList('dead', 'Nobody tapped something that is not a button.') . $tapList('rage', 'No angry taps. Good.')
+      . '<p class="muted small gnote">Not buttons: people tapped a photo or words and nothing happened, so they may expect it to open. What people type is never kept.</p></section>'
+      . '</div>';
+  }
+
   /* where visitors are: country of each visit, and the emirate for the UAE (looked up from the IP address when the visit starts; the address is not kept) */
   require_once dirname(__DIR__) . '/geo-lib.php';
   $gr = ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'year' => 'Year'];
@@ -3243,7 +3322,7 @@ if (isset($_GET['analytics'])) {
                : '<p class="muted empty">No repeat orders in these dates.</p>')
     . '<p class="muted small gnote">Orders in these dates from a mobile that had ordered before.</p></section>';
   page('Analytics', '<div class="db an">'
-    . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . '<div class="seg">'
+    . '<div class="pagehead"><h1>Analytics</h1><nav class="seg aview"><a href="' . h(self_url(['analytics' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv || $vj ? '' : ' class="on"') . '>Overview</a><a href="' . h(self_url(['analytics' => 1, 'cv' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($cv ? ' class="on"' : '') . '>Conversion</a><a href="' . h(self_url(['analytics' => 1, 'vj' => 1] + ($r !== 'today' ? ['r' => $r] + ($r === 'custom' ? ['d1' => $d1, 'd2' => $d2] : []) : []))) . '"' . ($vj ? ' class="on"' : '') . '>Visits</a></nav><form class="arange" method="get"><input type="hidden" name="analytics" value="1">' . ($cv ? '<input type="hidden" name="cv" value="1">' : '') . ($vj ? '<input type="hidden" name="vj" value="1">' : '') . '<div class="seg">'
     . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['analytics' => 1, 'r' => $k] + $cvq)) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div>'
     . '<input type="hidden" name="r" value="custom"><input type="date" name="d1" value="' . h($d1) . '" aria-label="From"><input type="date" name="d2" value="' . h($d2) . '" aria-label="To"><button class="btn sm' . ($r === 'custom' ? '' : ' line') . '">Show</button></form></div>'
     . '<div class="tiles at">'
@@ -3257,7 +3336,7 @@ if (isset($_GET['analytics'])) {
             $retN . ($retN === 1 ? ' person' : ' people') . ($retD !== null ? ' · reorder in ' . $retD . ($retD === 1 ? ' day' : ' days') : ''))
     . $tile('AED ' . number_format(round((float)$ord['t'])), 'Revenue', 'rev', 'AED ' . number_format((int)$ord['n'] ? round((float)$ord['t'] / (int)$ord['n']) : 0) . ' per order')
     . '</div>'
-    . ($cv ? $cvGrid : '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
+    . ($vj ? $vjGrid : ($cv ? $cvGrid : '<nav class="apick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'funnel' ? ' class="on"' : '') . '>' . $l . ($k === 'left' && array_sum($leftN) ? ' (' . array_sum($leftN) . ')' : '') . '</button>', array_keys($panes), $panes)) . '</nav>'
     . '<div class="dgrid agrid">'
     . '<section class="card a-funnel on" data-p="funnel"><div class="ch"><h2>Where sales are lost</h2></div><ul class="list fun">' . $fun . '</ul></section>'
     . '<section class="card a-visitors" data-p="visitors"><div class="ch"><h2>Visitors</h2><span class="val">' . h(date('j M', strtotime($d1)) . ($d1 !== $d2 ? ' – ' . date('j M', strtotime($d2)) : '')) . '</span></div><div class="chartbox">' . $chart . '</div><p class="sub"><span class="tip">Tap a point to see its visitors</span><b>' . number_format($f['visitors']) . ' visitor' . ((int)$f['visitors'] === 1 ? '' : 's') . ' in total</b></p>' . ($devAll ? '<div class="dstrip" title="Tap for the full devices table">' . implode('', array_map(fn($k, $l) => '<button type="button" data-open="devices"><span>' . $l . '</span><b>' . $pctT($pct($devR[$k]['visits'], $devAll)) . '</b><span>' . number_format($devR[$k]['visitors']) . ' visitor' . ($devR[$k]['visitors'] === 1 ? '' : 's') . '</span><span>' . number_format($devR[$k]['bought']) . ' sold</span></button>', array_keys($devN), $devN)) . $langS . '</div>' : '') . '</section>'
@@ -3276,7 +3355,7 @@ if (isset($_GET['analytics'])) {
     . '<section class="card a-emirates" data-p="emirates"><div class="ch"><h2>UAE visitors by emirate</h2>' . $gSeg . '</div>' . $gEmirates . '<p class="muted small gnote">Approximate: phone networks often show Dubai or Abu Dhabi. ' . $gNote . '</p></section>'
     . '<section class="card a-devices" data-p="devices"><div class="ch"><h2>Devices</h2></div>'
     . ($devAll ? '<div class="list"><table class="mini dtab"><thead><tr><th>Device</th><th class="num">Visitors</th><th class="num">Visits</th><th class="num">Bought</th><th class="num">Conv.</th><th class="num">Share</th></tr></thead><tbody>' . $devT . $langT . '</tbody></table></div>' : '<p class="muted empty">No visits in these dates.</p>') . '</section>'
-    . '</div>') . '</div>'
+    . '</div>')) . '</div>'
     . '<script>document.querySelectorAll(".gseg button").forEach(function(b){b.addEventListener("click",function(){var c=b.closest(".card");c.querySelectorAll(".gseg button").forEach(function(x){x.classList.toggle("on",x===b)});c.querySelectorAll(".list[data-r]").forEach(function(x){x.hidden=x.dataset.r!==b.dataset.r})})});'
     . '(function(){var open=null,back=null;function shut(){if(!open)return;open.classList.remove("big");open.querySelector(".zoom").textContent="⤢";open.querySelector(".zoom").setAttribute("aria-label","Open bigger");back.remove();open=null;document.body.classList.remove("zoomed")}'
     . 'function show(c){shut();open=c;c.classList.add("big");var z=c.querySelector(".zoom");z.textContent="×";z.setAttribute("aria-label","Close");back=document.createElement("div");back.className="zback";back.onclick=shut;document.body.appendChild(back);document.body.classList.add("zoomed");c.scrollTop=0}'
@@ -3285,6 +3364,132 @@ if (isset($_GET['analytics'])) {
     . 'document.querySelectorAll("[data-sw]").forEach(function(b){b.onclick=function(e){e.stopPropagation();var g=document.querySelector(".agrid");g.classList.toggle("show-pages",b.dataset.sw==="pages");g.classList.toggle("show-sources",b.dataset.sw==="sources")}});document.querySelectorAll("[data-open]").forEach(function(b){b.onclick=function(e){e.stopPropagation();var c=document.querySelector(".agrid>.card[data-p="+b.dataset.open+"]");if(c)show(c)}});document.addEventListener("keydown",function(e){if(e.key==="Escape")shut()})})();'
     . 'document.querySelectorAll(".apick button").forEach(function(b){b.addEventListener("click",function(){document.querySelectorAll(".apick button,.agrid>.card").forEach(function(x){x.classList.toggle("on",x.dataset.p===b.dataset.p)})})});'
     . 'document.querySelectorAll(".chart .hit").forEach(function(r){var s=function(){var c=r.closest(".card");c.querySelector(".tip").textContent=r.dataset.t;c.querySelectorAll(".hit.on").forEach(function(x){x.classList.remove("on")});r.classList.add("on")};r.addEventListener("mouseenter",s);r.addEventListener("click",s)});</script>', true, true);
+}
+
+/* ---- Improve (AJAY 26/10/2026): how to get more people to buy, in plain words. Each tip comes from the visit data of the dates picked
+   (Analytics and Analytics → Visits), shows the numbers behind it and the steps to take. Nothing is a guess: a tip only shows when the data says so. ---- */
+if (isset($_GET['improve'])) {
+  require_once dirname(__DIR__) . '/insights-lib.php';
+  $r = (string)($_GET['r'] ?? '7'); if (!in_array($r, ['today', '7', '30'], true)) $r = '7';
+  $span = [date('Y-m-d 00:00:00', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')), date('Y-m-d 23:59:59')];
+  $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
+  $notTrash = fx_not_trash($pdo);
+  $realO = "o.status IN ('New', 'Paid', 'Delivered') AND o.test = 0";   // as Analytics: a purchase counts only while its order is a real one
+  $resetAt = (string)fomaxo_setting($pdo, 'orders_reset');
+  $buyOk = fn($a) => "($a.ev = 'buy' AND IF($a.ref IS NOT NULL, EXISTS (SELECT 1 FROM fx_orders o WHERE o.order_no = $a.ref AND $realO),
+                      " . ($resetAt !== '' ? "$a.at >= " . $pdo->quote($resetAt) . ' AND ' : '') . "NOT EXISTS (SELECT 1 FROM fx_leads lb JOIN fx_orders o ON o.order_no = lb.order_no WHERE lb.sid = $a.sid AND NOT ($realO))))";
+  $pct = fn($a, $b) => $b > 0 ? round(100 * $a / $b, 1) : 0;
+  $pctT = fn($v) => rtrim(rtrim(number_format($v, 1), '0'), '.') . '%';
+  $nf = fn($n) => number_format((int)$n);
+  $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $row) { $pd = json_decode($row['data'], true); $names[$row['id']] = $pd['name'] ?? $row['id']; }
+  $F = array_map('intval', $q("SELECT COUNT(DISTINCT sid) visits, COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) product, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) cart,
+                                      COUNT(DISTINCT CASE WHEN ev = 'checkout' THEN sid END) checkout, COUNT(DISTINCT CASE WHEN ev = 'pay' THEN sid END) pay,
+                                      COUNT(DISTINCT CASE WHEN " . $buyOk('e') . " THEN sid END) buy FROM fx_events e WHERE at BETWEEN ? AND ?$notTrash")->fetch());
+  $F['typed'] = min($F['checkout'] ?: PHP_INT_MAX, (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_leads WHERE stage IN ('details', 'payment', 'card') AND created_at BETWEEN ? AND ?$notTrash")->fetchColumn());
+  $V = fx_visits_data($pdo, $span[0], $span[1], $notTrash, 0);
+  $bounce = (int)$q("SELECT COUNT(*) FROM (SELECT sid, SUM(ev = 'view') v, SUM(ev IN ('cart', 'checkout', 'pay', 'card', 'buy')) o FROM fx_events WHERE at BETWEEN ? AND ?$notTrash GROUP BY sid) x WHERE v = 1 AND o = 0")->fetchColumn();
+  $by = fn($col) => $q("SELECT x.k, COUNT(*) visits, SUM(EXISTS (SELECT 1 FROM fx_events c WHERE c.sid = x.sid AND c.ev = 'cart')) adds
+                         FROM (SELECT sid, MIN($col) k FROM fx_events WHERE ev = 'view' AND $col IS NOT NULL AND $col <> '' AND at BETWEEN ? AND ?$notTrash GROUP BY sid) x GROUP BY x.k ORDER BY visits DESC")->fetchAll();
+  $srcR = $by('source'); $devR = []; foreach ($by('device') as $row) $devR[$row['k']] = $row;
+  $pgPc = []; foreach ($V['leave'] as $row) $pgPc[$row['pg']] = $row;
+  $prodPc = $q("SELECT ROUND(AVG(m)) FROM (SELECT sid, MAX(pc) m FROM fx_trail WHERE k = 's' AND page LIKE '/product/%' AND at BETWEEN ? AND ?$notTrash GROUP BY sid, SUBSTRING_INDEX(page, '?', 1)) x", $span);
+  $prodPc = $prodPc ? $prodPc->fetchColumn() : null;
+  $topProd = $q("SELECT product, COUNT(DISTINCT CASE WHEN ev = 'product' THEN sid END) v, COUNT(DISTINCT CASE WHEN ev = 'cart' THEN sid END) a FROM fx_events WHERE ev IN ('product', 'cart') AND product IS NOT NULL AND at BETWEEN ? AND ?$notTrash GROUP BY product ORDER BY v DESC LIMIT 1")->fetch();
+
+  /* the tips: each one only when its numbers are there; the most people affected first */
+  $tips = [];
+  $tip = function ($people, $title, $data, $why, $steps, $word) use (&$tips) { $tips[] = compact('people', 'title', 'data', 'why', 'steps', 'word'); };
+  $leaks = [
+    ['product', 'cart', 'People look at the perfume but do not add it to the bag', 'fix product page',
+      fn() => ($prodPc !== null && $prodPc !== false ? ['On product pages people saw ' . (int)$prodPc . '% of the page on average.'] : []) + [9 => $topProd && $topProd['v'] ? h($names[$topProd['product']] ?? $topProd['product']) . ': ' . $nf($topProd['v']) . ' visits saw it, ' . $nf($topProd['a']) . ' added it to the bag.' : ''],
+      'Nobody can buy without adding to the bag first, so this is where most sales are lost.',
+      ['Open <b>Analytics → Visits</b> and read 5 visits that saw a product page: what they tapped and where they stopped.', 'The first screen of the product page should show price, size, smell and delivery, with one gold Add to bag button.', 'Show the cheaper first try (10ml) and real reviews close to the button.']],
+    ['cart', 'checkout', 'People add to the bag but do not open checkout', 'fix bag', fn() => [],
+      'They already chose a perfume. Something in the bag stops them: the price, delivery or the next button.',
+      ['Open your own bag on your phone: is the total and free delivery clear, and is Checkout easy to see?', 'Look at the bag steps in <b>Analytics → Visits</b>: what did they tap last?']],
+    ['checkout', 'typed', 'People open checkout but do not type anything', 'fix checkout', fn() => [],
+      'The checkout page looks like too much work, or they are not sure yet (payment, delivery time, returns).',
+      ['Look at <b>Analytics → Visits</b> for visits that ended on Checkout: how long they stayed and what they tapped.', 'Keep only the boxes we really need and keep Cash on delivery easy to see.']],
+    ['typed', 'pay', 'People type their details but stop before paying', 'fix checkout', fn() => [],
+      'They really wanted to buy. Usually one box or one doubt stops them.',
+      ['See which box was left empty in <b>Analytics → Conversion → Checkout</b>.', 'WhatsApp them from <b>Analytics → Left at checkout</b>: they gave their mobile.']],
+    ['pay', 'buy', 'People reach payment but do not finish', 'check payment', fn() => [],
+      'The last step failed or felt unsafe.',
+      ['Check Ziina for failed or unfinished payments.', 'WhatsApp them from <b>Analytics → Left at checkout</b> with a payment link or offer Cash on delivery.']],
+  ];
+  $stepName = ['visits' => 'visits', 'product' => 'saw a product', 'cart' => 'added to bag', 'checkout' => 'opened checkout', 'typed' => 'typed details', 'pay' => 'reached payment', 'buy' => 'bought'];
+  foreach ($leaks as [$a, $b, $title, $word, $extra, $why, $steps]) {
+    $lost = $F[$a] - $F[$b]; if ($F[$a] < 3 || $lost <= 0) continue;
+    $tip($lost, $title, array_values(array_filter(array_merge(['<b>' . $nf($F[$a]) . '</b> visits ' . $stepName[$a] . ', only <b>' . $nf($F[$b]) . '</b> ' . $stepName[$b] . ' (' . $pctT($pct($F[$b], $F[$a])) . '). <b>' . $nf($lost) . '</b> stopped here.'], $extra()))), $why, $steps, $word);
+  }
+  $n = 0;
+  foreach ($V['leave'] as $row) {   // pages where many visits end (not the thank-you pages)
+    if ($n >= 2 || preg_match('~^/(thank-you|order-confirmed|review)~', $row['pg']) || $row['left_n'] < 5 || $pct($row['left_n'], $row['seen']) < 60) continue; $n++;
+    $fast = $row['secs'] !== null && $row['secs'] < 15;
+    $tip((int)$row['left_n'], 'Many people leave on ' . h(fx_pg_name($row['pg'], $names)),
+      ['<b>' . $nf($row['left_n']) . '</b> of ' . $nf($row['seen']) . ' visits ended here (' . $pctT($pct($row['left_n'], $row['seen'])) . '), after <b>' . fx_secs($row['secs']) . '</b> on average' . ($row['pc'] !== null ? ', seeing ' . (int)$row['pc'] . '% of the page' : '') . '.'],
+      $fast ? 'They leave within seconds, so the first screen is not what they expected from the ad or link.' : 'They stay a while and still leave, so the page does not give them a clear next step.',
+      $fast ? ['Make the top of this page match the ad: the same photo, price and offer they tapped on.', 'Check it opens fast on your phone with mobile data.'] : ['Look where they stop in <b>Analytics → Visits</b> and put a clear button (Add to bag / Try 10ml) there.'],
+      'fix ' . mb_strtolower(fx_pg_name($row['pg'], $names)));
+  }
+  $n = $m = 0;
+  foreach ($V['taps'] as $row) {   // taps on things that are not buttons, and the same spot tapped 3 times fast
+    if ($row['dead'] && $n < 1 && $row['people'] >= 3 && $row['label'] !== '') { $n++;
+      $tip((int)$row['people'], 'People tap “' . h($row['label']) . '” on ' . h(fx_pg_name($row['pg'], $names)) . ', but nothing happens',
+        ['<b>' . $nf($row['people']) . '</b> people tapped it ' . $nf($row['taps']) . ' times.'], 'They expect it to open or do something. Making it work removes a small annoyance.',
+        [str_starts_with($row['label'], 'Photo') ? 'Make the photo open bigger when tapped.' : 'Make it a link to the right place (size, reviews or Add to bag).'], 'make it tappable'); }
+    if ($row['rage'] > 0 && $m < 1) { $p = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_trail WHERE k = 't' AND rage = 1 AND label = ? AND at BETWEEN ? AND ?", [$row['label'], $span[0], $span[1]])->fetchColumn();
+      if ($p >= 2) { $m++; $tip($p, 'People tap “' . h($row['label']) . '” again and again', ['<b>' . $nf($p) . '</b> people tapped the same spot 3 times in a second on ' . h(fx_pg_name($row['pg'], $names)) . '.'],
+        'This usually means it is slow, too small, or does not work on their phone.', ['Try it on your own phone. If it is slow or does nothing, tell us.'], 'check ' . mb_strtolower($row['label'])); } }
+  }
+  if ($F['visits'] >= 20 && $pct($bounce, $F['visits']) >= 50) {
+    $worst = null; foreach ($srcR as $row) if ($row['visits'] >= 10 && (!$worst || $row['visits'] > $worst['visits'])) $worst = $row;
+    $tip($bounce, $pctT($pct($bounce, $F['visits'])) . ' of visits leave after one page without adding anything',
+      ['<b>' . $nf($bounce) . '</b> of ' . $nf($F['visits']) . ' visits saw one page and left.' . ($worst ? ' Most visits come from <b>' . h($worst['k']) . '</b> (' . $nf($worst['visits']) . ').' : '')],
+      'The first page they land on decides everything. If it does not match the ad or loads slowly, they go back.',
+      ['Send ads to the exact product and size shown in the ad (for example the Old Money 10ml page).', 'Keep the first screen simple: photo, name, price, one button.'], 'fix landing page');
+  }
+  foreach ($srcR as $row) if ($row['visits'] >= 30 && $pct($row['adds'], $row['visits']) < 1) {   // a source that brings many visits and almost no adds
+    $tip((int)$row['visits'] - (int)$row['adds'], 'Visitors from ' . h($row['k']) . ' almost never add to the bag', ['<b>' . $nf($row['visits']) . '</b> visits from ' . h($row['k']) . ', <b>' . $nf($row['adds']) . '</b> added to the bag.'],
+      'The ad or post brings the wrong people, or sends them to the wrong page.', ['Check who the ad is shown to and where (Audience Network brings many accidental taps).', 'Check the ad link opens the product it shows.'], 'check ads'); break; }
+  if (($p = $devR['phone'] ?? null) && ($c = $devR['computer'] ?? null) && $p['visits'] >= 15 && $c['visits'] >= 15 && $pct($c['adds'], $c['visits']) > 0 && $pct($p['adds'], $p['visits']) < $pct($c['adds'], $c['visits']) / 2)
+    $tip((int)$p['visits'], 'Phones add to the bag much less than laptops', ['Phone: ' . $pctT($pct($p['adds'], $p['visits'])) . ' of ' . $nf($p['visits']) . ' visits added to bag. Laptop: ' . $pctT($pct($c['adds'], $c['visits'])) . ' of ' . $nf($c['visits']) . '.'],
+      'Something on the phone page is harder: a button is low, a popup covers it, or it is slow.', ['Open the product page on your phone and add to bag yourself. Note anything slow or hidden.'], 'fix phone');
+  $sp = $V['speed']['phone'] ?? null;   // how fast the site opens on phones (most visitors)
+  if ($sp && $sp['n'] >= 10 && $pct($sp['slow'], $sp['n']) >= 30)
+    $tip((int)$sp['slow'], 'The site opens slowly on many phones', ['On phones the site took <b>' . number_format($sp['avg_ms'] / 1000, 1) . ' s</b> on average to open; <b>' . $nf($sp['slow']) . '</b> of ' . $nf($sp['n']) . ' (' . $pctT($pct($sp['slow'], $sp['n'])) . ') took more than 3 seconds.'],
+      'People from ads leave if the page is not ready within about 3 seconds.', ['Open the site on your phone with mobile data (Wi-Fi off) and count the seconds.'], 'make it faster');
+  if (($er = $V['errors'][0] ?? null) && $er['people'] >= 2)
+    $tip((int)$er['people'], 'An error happens on ' . h(fx_pg_name($er['pg'], $names)), ['<b>' . $nf($er['people']) . '</b> visits had this error ' . $nf($er['n']) . ' times: <span class="muted">' . h($er['label']) . '</span>'],
+      'An error can stop a button from working, so people cannot add to bag or pay.', ['Nothing for you to do: we read the error and fix it.'], 'fix the error');
+  usort($tips, fn($a, $b) => $b['people'] <=> $a['people']);
+  $tips = array_slice($tips, 0, 6);
+
+  /* the funnel: each step, how many stopped, the biggest leak marked */
+  $steps = [['visits', 'Visited the site'], ['product', 'Saw a product'], ['cart', 'Added to bag'], ['checkout', 'Opened checkout'], ['typed', 'Typed details'], ['pay', 'Reached payment'], ['buy', 'Bought']];
+  $worst = null; for ($i = 1; $i < count($steps); $i++) { $lost = $F[$steps[$i - 1][0]] - $F[$steps[$i][0]]; if ($lost > 0 && (!$worst || $lost > $worst[1])) $worst = [$i, $lost]; }
+  $fun = '';
+  foreach ($steps as $i => [$k, $l]) {
+    $lost = $i ? $F[$steps[$i - 1][0]] - $F[$k] : 0;
+    $fun .= '<li' . ($worst && $worst[0] === $i ? ' class="worst"' : '') . '><div class="fl"><span>' . $l . ($lost > 0 ? ' <span class="fd">' . $nf($lost) . ' stopped' . ($worst && $worst[0] === $i ? ' · biggest loss' : '') . '</span>' : '') . '</span><span><b>' . $nf($F[$k]) . '</b> <span class="muted">' . $pctT($pct($F[$k], $F['visits'])) . '</span></span></div>'
+          . '<div class="fb"><i style="width:' . ($F['visits'] ? max(1, $pct($F[$k], $F['visits'])) : 0) . '%"></i></div></li>';
+  }
+  $tipsH = '';
+  foreach ($tips as $i => $t)
+    $tipsH .= '<li class="tip"><span class="tno">' . ($i + 1) . '</span><div><h3>' . $t['title'] . '</h3>'
+            . '<p class="tdat"><span class="tl">What the data shows</span>' . implode('<br>', $t['data']) . '</p>'
+            . '<p class="twhy"><span class="tl">Why it matters</span>' . $t['why'] . '</p>'
+            . '<div class="tst"><span class="tl">Steps</span><ol>' . implode('', array_map(fn($s) => '<li>' . $s . '</li>', $t['steps'])) . '<li>Reply <b class="tword">' . h($t['word']) . '</b> in our chat and we build it, with pictures first.</li></ol></div></div></li>';
+  $rl = ['today' => 'Today', '7' => '7 days', '30' => '30 days'];
+  page('Improve', '<div class="db imp">'
+    . '<div class="pagehead"><h1>Improve</h1><div class="seg">' . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['improve' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div></div>'
+    . '<div class="igrid">'
+    . '<section class="card i-fun"><div class="ch"><h2>Where visitors stop</h2></div><ul class="list fun">' . $fun . '</ul>'
+    . '<p class="muted small gnote">' . ($F['visits'] < 20 ? '<b>Only ' . $nf($F['visits']) . ' visits in these dates: pick 7 or 30 days for surer tips.</b> ' : '') . 'Each line counts visits. The red words show how many stopped at that step.</p>'
+    . '<div class="ihow"><b>How to use this page</b><ol><li>Start with tip 1: it affects the most people.</li><li>Read what the data shows and follow the steps.</li><li>Check again after a week: the numbers should move.</li></ol></div></section>'
+    . '<section class="card i-tips"><div class="ch"><h2>What to fix first</h2><a class="btn sm line" href="./?analytics=1&amp;vj=1&amp;r=' . h($r) . '">See the visits</a></div>'
+    . ($tipsH ? '<div class="list"><ol class="tips">' . $tipsH . '</ol></div>' : '<p class="muted empty">No clear problem in these dates yet. Pick 7 or 30 days, or check back when more people have visited.</p>')
+    . '</section></div></div>', true, true);
 }
 
 /* ---- reports: sales, costs and profit or loss by month and by year ---- */
