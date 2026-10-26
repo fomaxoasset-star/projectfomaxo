@@ -1700,12 +1700,6 @@ html[data-mode="light"] .co-row.disc,html[data-mode="light"] .co-row.disc .price
 .co-done b.price{font-family:var(--serif);letter-spacing:0;font-size:30px}
 .co-done .co-small{flex-basis:100%}
 html[data-mode="light"] .co-err{color:#a8321f;border-color:#c0503c}
-.co-cf{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6)}   /* Confirm / Change box after tapping Card or Cash on delivery (AJAY 2026-10-26) */
-.co-cf-box{width:100%;max-width:380px;box-sizing:border-box;padding:26px 22px 22px;background:var(--black);border:1px solid var(--gold);text-align:center;color:var(--ivory)}
-.co-cf-box h3{margin:0 0 10px;font-size:22px}
-.co-cf-a{margin:0;font-size:26px;color:var(--gold)}
-.co-cf-s{margin:6px 0 20px;font-size:14px;color:var(--muted)}
-.co-cf-b{display:grid;gap:10px}.co-cf-b .btn{width:100%;justify-content:center}
 .co .co-lock{justify-content:center;text-align:center;color:#f0a497;border-color:#e0705f}.co .co-lock svg{color:inherit}html[data-mode="light"] .co .co-lock{color:#a8321f;border-color:#c0503c}   /* missing details line in Payment: red, same words as the message under Note (AJAY 2026-10-26) */
 html[data-mode="light"] .co-done b{color:var(--gold)}
 @media(max-width:900px){
@@ -5069,8 +5063,8 @@ function bindCheckout(q){
     const opt = (id, title, sub, off) => { off = off || locked; return `<label class="co-opt${coPay === id && !locked ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`; };
     $('#coPay').innerHTML = (locked ? `<p class="co-lock">${CO_ICON.lock}<span>Please add your ${listTxt(missing.map(b => b[1]))} so we can deliver your order.</span></p>` : '') + (CARD_ON ? opt('card', 'Card / Apple Pay / Google Pay', `Pay securely now with ${CARD_BY}`) : '') +
       opt('cod', 'Cash on delivery', sdNoCod ? `<span class="co-opt-1l">Not for same-day delivery</span><span class="co-opt-2l">Please pay by card.</span>` : codOk ? `<span class="co-opt-1l">Pay in Cash When Order Arrives</span>${COD_FEE ? `<span class="co-opt-2l">Fee ${aed(COD_FEE)}</span>` : ''}` : codBig ? `<span class="co-opt-1l">COD for orders under ${aed(COD_MAX)}</span><span class="co-opt-2l">Please pay by card.</span>` : `For orders above ${aed(COD_MIN)}${COD_FEE ? ` · ${aed(COD_FEE)} fee` : ''}<span class="co-opt-more">Add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more to activate COD</span>`, !codOk);
-    // tapping Card or Cash on delivery opens a small Confirm / Change box; the button below still pays straight away (AJAY 2026-10-26)
-    $$('#coPay input').forEach(r => r.onclick = () => { coPay = r.value; err.hidden = true; draw(); if (!busy && !go.disabled) payAsk(r.value); });
+    // tapping Card or Cash on delivery only picks it; the button below pays (AJAY 2026-10-26)
+    $$('#coPay input').forEach(r => r.onclick = () => { coPay = r.value; err.hidden = true; draw(); });
     // main button
     if (busy) return;
     const noWay = coPay === 'cod' && !codOk;   // only when card payments are switched off and the order is under the cash on delivery minimum
@@ -5149,18 +5143,6 @@ function bindCheckout(q){
   const showErr = m => { err.textContent = m; err.hidden = false; };
   const zq = q.get('ziina');
   if (zq === 'cancel' || zq === 'failed') showErr(zq === 'cancel' ? 'Payment cancelled. No money was taken. Try again or choose another way to pay.' : 'Payment did not go through. No money was taken. Try again or choose another way to pay.');
-  // small confirm box after tapping Card or Cash on delivery: the amount, then Confirm (pays / places the order) or Change (closes, nothing happens)
-  function payAsk(how){
-    const old = $('.co-cf'); if (old) old.remove();
-    const T = orderTotals(lines(), how, true), card = how === 'card';
-    const box = document.createElement('div'); box.className = 'co-cf';
-    box.innerHTML = `<div class="co-cf-box" role="dialog" aria-modal="true" aria-labelledby="coCfT"><h3 id="coCfT">${card ? 'Pay by card?' : 'Place your order?'}</h3>
-      ${T.total !== null ? `<p class="co-cf-a price">${moneyHTML(T.total, true)}</p>` : ''}<p class="co-cf-s">${card ? `Secure payment with ${CARD_BY}` : 'Pay in cash when your order arrives'}</p>
-      <div class="co-cf-b"><button type="button" class="btn" data-cf="go">${card ? 'Confirm and pay' : 'Confirm order'}</button><button type="button" class="btn line" data-cf="x">Change</button></div></div>`;
-    const close = () => { box.remove(); removeEventListener('keydown', esc1); }, esc1 = e => { if (e.key === 'Escape') close(); };
-    box.onclick = e => { const b = e.target.closest('[data-cf]'); if (e.target === box || (b && b.dataset.cf === 'x')) close(); else if (b) { close(); if (!busy && !go.disabled) go.click(); } };
-    addEventListener('keydown', esc1); document.body.append(box); $('[data-cf=go]', box).focus({preventScroll: true});
-  }
   // red line under each missing box, and the first red box comes to the middle of the screen (clear of the top bar) with the cursor in it
   function showBad(bad){
     $$('.bad', form).forEach(x => x.classList.remove('bad'));
