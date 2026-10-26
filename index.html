@@ -5150,7 +5150,12 @@ function bindCheckout(q){
     feShow(bad);
     err1.textContent = `Please add your ${listTxt(bad.map(b => b[1]))} so we can deliver your order.`; err1.hidden = false;
     const first = form.elements[bad[0][0]];
-    first.focus({preventScroll: true}); first.scrollIntoView({behavior: 'smooth', block: 'center'});
+    first.focus({preventScroll: true});
+    // phone: the box goes just under the top bar, so the keyboard opening below it never covers it (AJAY 2026-10-26); laptop: middle of the screen
+    if (matchMedia('(max-width: 760px), (pointer: coarse)').matches) {
+      const nav = $('#nav'), lb = first.closest('label') || first, under = Math.max(0, nav ? nav.getBoundingClientRect().bottom : 0);
+      scrollTo({top: Math.max(0, scrollY + lb.getBoundingClientRect().top - under - 12), behavior: 'smooth'});
+    } else first.scrollIntoView({behavior: 'smooth', block: 'center'});
   }
   // details still missing: tapping Card, Cash on delivery or the "Fill in your…" line does the same as the button (AJAY 2026-10-26)
   $('#coPay').addEventListener('click', e => {
