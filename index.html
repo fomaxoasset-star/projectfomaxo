@@ -5142,20 +5142,26 @@ function bindCheckout(q){
   const showErr = m => { err.textContent = m; err.hidden = false; };
   const zq = q.get('ziina');
   if (zq === 'cancel' || zq === 'failed') showErr(zq === 'cancel' ? 'Payment cancelled. No money was taken. Try again or choose another way to pay.' : 'Payment did not go through. No money was taken. Try again or choose another way to pay.');
+  // red line under each missing box, the message under Note, and the first red box comes to the middle of the screen (clear of the top bar) with the cursor in it
+  function showBad(bad){
+    $$('.bad', form).forEach(x => x.classList.remove('bad'));
+    bad.forEach(b => form.elements[b[0]].classList.add('bad'));
+    feShow(bad);
+    err1.textContent = `Please add your ${listTxt(bad.map(b => b[1]))} so we can deliver your order.`; err1.hidden = false;
+    const first = form.elements[bad[0][0]];
+    first.focus({preventScroll: true}); first.scrollIntoView({behavior: 'smooth', block: 'center'});
+  }
+  // details still missing: tapping Card, Cash on delivery or the "Fill in your…" line does the same as the button (AJAY 2026-10-26)
+  $('#coPay').addEventListener('click', e => {
+    if (busy || !e.target.closest('.co-lock,label.co-opt')) return;
+    const bad = check(details()); if (!bad.length) return;
+    e.preventDefault(); err.hidden = true; showBad(bad);
+  });
   form.onsubmit = async e => {
     e.preventDefault(); if (busy) return;
     err.hidden = err1.hidden = true;
     const d = details(), bad = check(d), ls = lines();
-    $$('.bad', form).forEach(x => x.classList.remove('bad'));
-    if (bad.length){
-      bad.forEach(b => form.elements[b[0]].classList.add('bad'));
-      feShow(bad);
-      err1.textContent = `Please add your ${listTxt(bad.map(b => b[1]))} so we can deliver your order.`; err1.hidden = false;
-      // the first red box comes to the middle of the screen (clear of the top bar) with the cursor in it
-      const first = form.elements[bad[0][0]];
-      first.focus({preventScroll: true}); first.scrollIntoView({behavior: 'smooth', block: 'center'});
-      return;
-    }
+    if (bad.length) return showBad(bad);
     if (orderTotals(ls, coPay, true).short > 0 || (coPay === 'cod' && !(orderTotals(ls, '', true).after >= COD_MIN && !(COD_MAX > 0 && orderTotals(ls, '', true).after >= COD_MAX)))) return;
     try { localStorage.setItem('fomaxo_details', JSON.stringify(d)); } catch(x) {}
     busy = true; const old = go.innerHTML; go.disabled = true;
