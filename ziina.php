@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method not allowed']); exit; }
 
 /* ---------------- 1) create the payment ---------------- */
+$t0 = microtime(true);   // speed.log: how long our part and Ziina's part take for each Card tap
 $in = json_decode(file_get_contents('php://input'), true) ?: [];
 $order = fomaxo_price_order($in);
 if (isset($order['error'])) { http_response_code(400); echo json_encode(['error' => $order['error']]); exit; }
@@ -82,6 +83,7 @@ $base = ($https ? 'https' : 'http') . "://$host$dir/";
 $back = $base . 'ziina.php?return=';
 $src  = ($in['src'] ?? '') === 'buy' ? '&src=buy' : '';
 $count = array_sum(array_map(fn($it) => $it['qty'], $order['items']));
+$t1 = microtime(true);
 [$code, $pi, $raw] = ziina_call('POST', "$API/payment_intent", $token, [
   'amount'        => $order['totalFils'],          // AED in fils (base units)
   'currency_code' => 'AED',
@@ -92,11 +94,15 @@ $count = array_sum(array_map(fn($it) => $it['qty'], $order['items']));
   'test'          => $testMode,
   'allow_tips'    => false,
 ]);
+$t2 = microtime(true);
 if (!in_array($code, [200, 201], true) || empty($pi['redirect_url']) || empty($pi['id'])) {
   error_log('FOMAXO Ziina create error: ' . $raw);
   fomaxo_order_set($no, ['status' => 'Cancelled', 'admin_note' => 'Card payment page could not be opened.']);
   http_response_code(502); echo json_encode(['error' => 'Card payment is unavailable right now. Please choose cash on delivery.']); exit;
 }
+
+/* the shopper goes to Ziina's page now; the bookkeeping below carries on after the answer is sent */
+fomaxo_reply_now(['url' => $pi['redirect_url']]);
 
 $rows = [];
 foreach ($order['items'] as $it) $rows[] = "• {$it['qty']} x {$it['name']}" . ($it['desc'] ? " ({$it['desc']})" : '') . ' — ' . fomaxo_aed($it['unit'] * $it['qty']);
@@ -114,4 +120,4 @@ $visit = ziina_lead_card($cust, $order);   // admin → Left at checkout shows t
 fomaxo_log_order([date('Y-m-d H:i'), $no, 'Ziina — awaiting payment' . ($testMode ? ' (TEST)' : ''), fomaxo_aed($order['totalFils']), $cust['name'], $cust['phone'], $cust['email'],
                   $cust['emirate'], $cust['address'], $cust['note'], implode(' | ', $order['summary'])]);
 
-echo json_encode(['url' => $pi['redirect_url']]);
+@file_put_contents(ziina_dir() . '/speed.log', date('Y-m-d H:i:s') . sprintf(" our part %d ms, Ziina %d ms\n", ($t1 - $t0) * 1000, ($t2 - $t1) * 1000), FILE_APPEND | LOCK_EX);

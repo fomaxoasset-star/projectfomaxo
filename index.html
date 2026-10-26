@@ -4938,6 +4938,8 @@ function bindCheckout(q){
   const buy = q.get('buy') === '1' && buyLines.length > 0, src = buy ? 'buy' : 'bag', lines = () => buy ? buyLines : cart;
   const form = $('#coForm'); if (!form) return;
   const err = $('#coErr'), err1 = $('#coErr1'), go = $('#coGo');
+  // card payments: the browser opens its line to Ziina's payment page while the form is filled in, so the page opens sooner after the tap
+  if (CARD_ON && !$('link[data-ziina]')) ['preconnect', 'dns-prefetch'].forEach(rel => { const l = document.createElement('link'); l.rel = rel; l.href = 'https://pay.ziina.com'; l.dataset.ziina = ''; document.head.append(l); });
   const d0 = savedDetails();
   CO_FIELDS.forEach(k => { const el = form.elements[k]; if (el && typeof d0[k] === 'string') el.value = CO_CAPS.includes(k) ? capWords(d0[k]) : k === 'phone' ? enDigits(d0[k]) : d0[k]; });
   ccFit(form.elements.phone);   // saved as "+971 543146334": the box shows only the number
