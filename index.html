@@ -50,7 +50,7 @@ if(history.replaceState)try{history.replaceState(history.state,"",location.pathn
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
-r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=75";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=76";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("style");f.textContent="@font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/amiri-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/amiri-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:300;font-display:swap;src:url(/assets/fonts/tajawal-300-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/tajawal-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/tajawal-500-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/tajawal-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}";document.head.appendChild(f)}})();   /* Arabic fonts (Tajawal, Amiri; Arabic letters only) from our own server, same files Google Fonts sends */</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -1551,6 +1551,9 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 @media(max-width:620px){.co-ar2{grid-template-columns:minmax(0,1fr)}}
 .co .form select option{background:var(--black);color:var(--ivory)}
 .co .form .bad,.co .form select.bad{border-color:#e0705f;box-shadow:inset 0 0 0 1px #e0705f}
+.co .form label .co-fe{margin-top:-2px;font-size:12.5px;line-height:1.35;letter-spacing:.02em;text-transform:none;color:#f0a497}   /* red line under a missing box (AJAY 2026-10-26) */
+.co .form label .co-fe-sp{visibility:hidden}
+html[data-mode="light"] .co .form label .co-fe{color:#c0392b}
 #coStep1{scroll-margin-top:calc(var(--ann-h,40px) + 100px)}
 .co .form ::placeholder{color:var(--muted);opacity:.75}
 .co-small{font-size:13.5px;line-height:1.5;color:var(--muted)}
@@ -4900,7 +4903,6 @@ function checkoutPage(q){
       <form class="co-main form" id="coForm" novalidate>
         <section class="co-step">
           <h2 id="coStep1"><span>1</span>Delivery details</h2>
-          <p class="co-err" id="coErr1" role="alert" hidden></p>
           <div class="co-r3"><label>Full name<input name="name" autocomplete="name" maxlength="80" required></label>
           <div class="row2"><label>Mobile<span class="cc-row">${ccPick()}<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="50 123 4567" maxlength="20" required></span></label>
             <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></label></div></div>
@@ -4914,6 +4916,7 @@ function checkoutPage(q){
             <label class="co-a-a">Area<input name="area" autocomplete="address-level2" maxlength="80" placeholder="e.g. Jumeirah 1" required></label>
           </div>
           <label><span>Note <span class="co-opt-l">(optional)</span></span><textarea name="note" class="co-note" maxlength="300" placeholder="Landmark, delivery time or gift message"></textarea></label></div>
+          <p class="co-err" id="coErr1" role="alert" hidden></p>
           <div class="co-sd" id="coSd" hidden></div>
           <label class="co-wa"><input type="checkbox" name="wa"><i class="co-wa-i" aria-hidden="true">${CO_ICON.whatsapp}</i><span>Send me offers and updates on WhatsApp</span></label>
           <p class="co-small">We save your details on this device and WhatsApp you to confirm your address.</p>
@@ -4951,7 +4954,7 @@ function bindCheckout(q){
     if (!j.phone) try { localStorage.removeItem('fomaxo_who'); } catch(e) {} }).catch(() => {});
   if (form.elements.wa) form.elements.wa.checked = d0.wa === '1';   // WhatsApp offers: unticked until the customer ticks it
   const details = () => Object.assign(Object.fromEntries(CO_FIELDS.map(k => [k, (form.elements[k].value || '').trim()])), {phone: ccVal(form.elements.phone), wa: form.elements.wa && form.elements.wa.checked ? '1' : ''});   // mobile with the country code picked next to it
-  const remember = e => { if (e.target.name === 'pay') return; e.target.classList.remove('bad');
+  const remember = e => { if (e.target.name === 'pay') return; if (e.target.classList.contains('bad')) { e.target.classList.remove('bad'); feOff(e.target); }
     const t = e.target; if (t.name === 'phone') { const v = enDigits(t.value); if (v !== t.value) { const a = t.selectionStart; t.value = v; try { t.setSelectionRange(a, a); } catch(x) {} } }
     if (CO_CAPS.includes(t.name)) { const v = capWords(t.value); if (v !== t.value) { const a = t.selectionStart, z = t.selectionEnd; t.value = v; try { t.setSelectionRange(a, z); } catch(x) {} } } const key = JSON.stringify(details()); try { localStorage.setItem('fomaxo_details', key); } catch(x) {} if (!busy && key !== drawnKey) { drawnKey = key; draw(); } };
   // redraw only when a detail really changed: leaving a box (change) would otherwise rebuild the payment options under the customer's finger and swallow that tap
@@ -5111,6 +5114,30 @@ function bindCheckout(q){
     return bad;
   }
   const listTxt = a => a.join(', ').replace(/, ([^,]*)$/, ' and $1');
+  // a short red line right under each box that is empty or wrong (AJAY 2026-10-26)
+  const FE = {name: 'Please enter your full name.', phone: 'Please enter a valid mobile number.', email: 'Please enter a valid email.', emirate: 'Please choose your emirate.', area: 'Please enter your area.'};
+  function feShow(bad){
+    $$('.co-fe', form).forEach(x => x.remove());
+    bad.forEach(([k, w]) => { const lb = form.elements[k].closest('label'); if (!lb || $('.co-fe', lb)) return;
+      const t = document.createElement('span'); t.className = 'co-fe'; t.fld = form.elements[k]; t.textContent = w === 'same-day area' ? 'Same-day does not reach this area yet.' : FE[k]; lb.append(t); });
+    feRow();
+  }
+  function feOff(el){ const lb = el.closest('label'), t = lb && $('.co-fe:not(.co-fe-sp)', lb); if (t) { t.remove(); feRow(); } }
+  // boxes beside a red box keep the same space under them, so nothing next to it moves or stretches
+  function feRow(){
+    $$('.co-fe-sp', form).forEach(x => x.remove());
+    const fe = $$('.co-fe', form); if (!fe.length) return;
+    // rows are measured with the red lines out of the way (a red line already stretches the boxes beside it)
+    fe.forEach(t => t.hidden = true);
+    const boxes = CO_FIELDS.map(k => form.elements[k]).filter(f => f && f.closest('label')).map(f => [f.closest('label'), f, Math.round(f.getBoundingClientRect().top)]);
+    fe.forEach(t => t.hidden = false);
+    fe.forEach(t => {
+      const y = (boxes.find(x => x[1] === t.fld) || [])[2];
+      boxes.forEach(([lb, g, gy]) => { if (g === t.fld || $('.co-fe', lb) || Math.abs(gy - y) > 2) return;
+        const sp = document.createElement('span'); sp.className = 'co-fe co-fe-sp'; sp.setAttribute('aria-hidden', 'true'); sp.textContent = t.textContent; lb.append(sp); });
+    });
+  }
+  addEventListener('resize', () => { if (form.isConnected) feRow(); });
   coRefresh = draw; draw();
   const showErr = m => { err.textContent = m; err.hidden = false; };
   const zq = q.get('ziina');
@@ -5122,8 +5149,11 @@ function bindCheckout(q){
     $$('.bad', form).forEach(x => x.classList.remove('bad'));
     if (bad.length){
       bad.forEach(b => form.elements[b[0]].classList.add('bad'));
+      feShow(bad);
       err1.textContent = `Please add your ${listTxt(bad.map(b => b[1]))} so we can deliver your order.`; err1.hidden = false;
-      form.elements[bad[0][0]].focus({preventScroll: true}); $('#coStep1').scrollIntoView({behavior: 'smooth', block: 'start'});
+      // the first red box comes to the middle of the screen (clear of the top bar) with the cursor in it
+      const first = form.elements[bad[0][0]];
+      first.focus({preventScroll: true}); first.scrollIntoView({behavior: 'smooth', block: 'center'});
       return;
     }
     if (orderTotals(ls, coPay, true).short > 0 || (coPay === 'cod' && !(orderTotals(ls, '', true).after >= COD_MIN && !(COD_MAX > 0 && orderTotals(ls, '', true).after >= COD_MAX)))) return;
