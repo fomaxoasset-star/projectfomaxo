@@ -4849,11 +4849,11 @@ function checkoutPage(q){
             <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></label></div></div>
           <div class="co-r3 co-r3b"><label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
           <div class="co-ar co-ar1">
-            <label class="co-a-b"><span>Villa / building no <span class="co-opt-l">(optional)</span></span><input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12"></label>
-            <label class="co-a-r"><span>Room No / Floor <span class="co-opt-l">(optional)</span></span><input name="room" autocomplete="address-line2" maxlength="20" placeholder="e.g. 1204"></label>
+            <label class="co-a-b">Villa / building no<input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12"></label>
+            <label class="co-a-r">Room No / Floor<input name="room" autocomplete="address-line2" maxlength="20" placeholder="e.g. 1204"></label>
           </div></div>
           <div class="co-r3 co-r3c"><div class="co-ar co-ar2">
-            <label class="co-a-s"><span>Street <span class="co-opt-l">(optional)</span></span><input name="street" maxlength="100" placeholder="e.g. Al Wasl Road"></label>
+            <label class="co-a-s">Street<input name="street" maxlength="100" placeholder="e.g. Al Wasl Road"></label>
             <label class="co-a-a">Area<input name="area" autocomplete="address-level2" maxlength="80" placeholder="e.g. Jumeirah 1" required></label>
           </div>
           <label><span>Note <span class="co-opt-l">(optional)</span></span><textarea name="note" class="co-note" maxlength="300" placeholder="Landmark, delivery time or gift message"></textarea></label></div>
