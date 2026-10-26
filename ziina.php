@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['verify'])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Method not allowed']); exit; }
 
 /* ---------------- 1) create the payment ---------------- */
+$t0 = microtime(true);   // speed.log: how long our part and Ziina's part take for each Card tap
 $in = json_decode(file_get_contents('php://input'), true) ?: [];
 $order = fomaxo_price_order($in);
 if (isset($order['error'])) { http_response_code(400); echo json_encode(['error' => $order['error']]); exit; }
@@ -82,6 +83,7 @@ $base = ($https ? 'https' : 'http') . "://$host$dir/";
 $back = $base . 'ziina.php?return=';
 $src  = ($in['src'] ?? '') === 'buy' ? '&src=buy' : '';
 $count = array_sum(array_map(fn($it) => $it['qty'], $order['items']));
+$t1 = microtime(true);
 [$code, $pi, $raw] = ziina_call('POST', "$API/payment_intent", $token, [
   'amount'        => $order['totalFils'],          // AED in fils (base units)
   'currency_code' => 'AED',
@@ -92,6 +94,7 @@ $count = array_sum(array_map(fn($it) => $it['qty'], $order['items']));
   'test'          => $testMode,
   'allow_tips'    => false,
 ]);
+$t2 = microtime(true);
 if (!in_array($code, [200, 201], true) || empty($pi['redirect_url']) || empty($pi['id'])) {
   error_log('FOMAXO Ziina create error: ' . $raw);
   fomaxo_order_set($no, ['status' => 'Cancelled', 'admin_note' => 'Card payment page could not be opened.']);
@@ -107,11 +110,25 @@ if ($sd) $rows[] = $sd['row'];
 
 $pid = preg_replace('/[^A-Za-z0-9_\-]/', '', $pi['id']);
 fomaxo_order_set($no, ['ref' => $pid]);
-$visit = ziina_lead_card($cust, $order);   // admin → Left at checkout shows them at "Card payment page" now, paid or not
-@file_put_contents(ziina_dir() . "/$pid.json", json_encode(['no' => $no, 'sid' => $visit['sid'] ?? '', 'vid' => $visit['vid'] ?? '', 'created' => date('Y-m-d H:i'), 'totalFils' => $order['totalFils'],
+$pay = ['no' => $no, 'sid' => '', 'vid' => '', 'created' => date('Y-m-d H:i'), 'totalFils' => $order['totalFils'],
   'summary' => $order['summary'], 'rows' => $rows, 'cust' => $cust, 'ship' => $sd ? $sd['row'] : '', 'test' => $testMode, 'coupon' => $order['coupon'],
-  'pids' => array_values(array_unique(array_map(fn($l) => (string)($l['id'] ?? ''), (array)($in['lines'] ?? []))))]), LOCK_EX);
+  'pids' => array_values(array_unique(array_map(fn($l) => (string)($l['id'] ?? ''), (array)($in['lines'] ?? []))))];
+@file_put_contents(ziina_dir() . "/$pid.json", json_encode($pay), LOCK_EX);   // saved before the answer, so the payment re-check always finds it
+
+/* the shopper goes to Ziina's page now; only the extras below carry on after the answer is sent */
+fomaxo_reply_now(['url' => $pi['redirect_url']]);
+
+$visit = ziina_lead_card($cust, $order);   // admin → Left at checkout shows them at "Card payment page" now, paid or not
+if ($visit && ($visit['sid'] ?? '') !== '') {   // the shopper's own visit, kept with the payment for Analytics (only if the re-check has not taken the file yet)
+  $h = @fopen(ziina_dir() . "/$pid.json", 'r+');
+  if ($h && flock($h, LOCK_EX)) {   // same lock as ziina_verify()
+    $j = json_decode((string)stream_get_contents($h), true);
+    if (is_array($j) && empty($j['paid']) && empty($j['closed'])) { ftruncate($h, 0); rewind($h); fwrite($h, json_encode(['sid' => $visit['sid'], 'vid' => $visit['vid'] ?? ''] + $j)); }
+    flock($h, LOCK_UN);
+  }
+  if ($h) fclose($h);
+}
 fomaxo_log_order([date('Y-m-d H:i'), $no, 'Ziina — awaiting payment' . ($testMode ? ' (TEST)' : ''), fomaxo_aed($order['totalFils']), $cust['name'], $cust['phone'], $cust['email'],
                   $cust['emirate'], $cust['address'], $cust['note'], implode(' | ', $order['summary'])]);
 
-echo json_encode(['url' => $pi['redirect_url']]);
+@file_put_contents(ziina_dir() . '/speed.log', date('Y-m-d H:i:s') . sprintf(" our part %d ms, Ziina %d ms\n", ($t1 - $t0) * 1000, ($t2 - $t1) * 1000), FILE_APPEND | LOCK_EX);
