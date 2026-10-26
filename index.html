@@ -75,6 +75,7 @@ var f=document.createElement("style");f.textContent="@font-face{font-family:'Ami
 html{scroll-behavior:smooth;background:var(--black);-webkit-text-size-adjust:100%}
 body{background:var(--black);color:var(--ivory);font-family:var(--sans);font-weight:300;font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 body.lock{overflow:hidden}
+html:has(body.pin),body.pin{overscroll-behavior-y:none}
 body.pin{position:fixed;left:0;right:0;width:100%}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -3521,6 +3522,13 @@ function closePanels(){ $$('.drawer.open,.search.open,.mnav.open').forEach(x => 
 (() => { const cart = document.getElementById('cart'); if (!cart) return; let y = null;
   cart.addEventListener('touchstart', e => { const b = cart.querySelector('.dr-body'); y = b && !b.contains(e.target) && !e.target.closest('select,input,textarea') ? e.touches[0].clientY : null; }, {passive: true});
   cart.addEventListener('touchmove', e => { if (y === null) return; const b = cart.querySelector('.dr-body'), ny = e.touches[0].clientY; b.scrollTop += y - ny; y = ny; e.preventDefault(); }, {passive: false});
+  /* pulling down at the top of the products list (or up at its end) never reaches the page, so the phone never reloads it */
+  let ly = null, lx = 0;
+  cart.addEventListener('touchstart', e => { ly = e.touches.length === 1 ? e.touches[0].clientY : null; lx = e.touches[0].clientX; }, {passive: true});
+  cart.addEventListener('touchmove', e => { if (ly === null || y !== null || !e.cancelable) return; const b = cart.querySelector('.dr-body'); if (!b || !b.contains(e.target) || e.target.closest('select,input,textarea')) return;
+    const ny = e.touches[0].clientY, nx = e.touches[0].clientX, down = ny > ly, side = Math.abs(nx - lx) > Math.abs(ny - ly); ly = ny; lx = nx;
+    if (side) return;   // sideways swipes (the "You may also like" row) carry on as before
+    if (down ? b.scrollTop <= 0 : b.scrollTop + b.clientHeight >= b.scrollHeight - 1) e.preventDefault(); }, {passive: false});
 })();
 $('#openCart').onclick = () => { $('#toast').classList.remove('show'); renderCart(); openPanel($('#cart')); };
 $('#openMenu').onclick = () => openPanel($('#mnav'));
