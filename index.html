@@ -3601,11 +3601,11 @@ $('#q').addEventListener('input', e => runSearch(e.target.value));
 /* ============================ SHARED PARTS ============================ */
 /* star rating on each product card, from real reviews only (reviews.php?summary); no reviews yet = faint empty stars */
 let RATES = null;
-const rateHTML = p => { const r = RATES && RATES[p.id], n = r ? r.count : 0;
-  return `<a class="crate${n ? '' : ' none'}" data-rate="${p.id}" href="#/product/${p.id}?reviews=1" aria-label="${n ? `Rated ${r.avg.toFixed(1)} out of 5 from ${n} review${n > 1 ? 's' : ''}` : 'No reviews yet'}">${rwStars(n ? r.avg : 0, 'sm')}${n ? `<span>${r.avg.toFixed(1)} (${n})</span>` : ''}</a>`; };
+const rateHTML = (p, plain) => { const r = RATES && RATES[p.id], n = r ? r.count : 0;   // plain: stars to read only, not a link (phone bottom bar, where a tap adds to bag)
+  return `<${plain ? 'span' : 'a'} class="crate${n ? '' : ' none'}" data-rate="${p.id}"${plain ? '' : ` href="#/product/${p.id}?reviews=1"`} aria-label="${n ? `Rated ${r.avg.toFixed(1)} out of 5 from ${n} review${n > 1 ? 's' : ''}` : 'No reviews yet'}">${rwStars(n ? r.avg : 0, 'sm')}${n ? `<span>${r.avg.toFixed(1)} (${n})</span>` : ''}</${plain ? 'span' : 'a'}>`; };
 async function loadRates(){
   try { const r = await fetch(`${RW_API}?summary`, {cache: 'no-store'}); if (r.ok) { const d = await r.json(); if (d && d.products) RATES = d.products; } } catch(e) {}
-  if (RATES) { $$('[data-rate]').forEach(el => { const p = P[el.dataset.rate]; if (p) el.outerHTML = rateHTML(p); }); shopResort(); }
+  if (RATES) { $$('[data-rate]').forEach(el => { const p = P[el.dataset.rate]; if (p) el.outerHTML = rateHTML(p, el.tagName === 'SPAN'); }); shopResort(); }
 }
 /* stock from stock.php: only sizes running low are listed (null = in stock). Typed in on fomaxo.com/admin → Stock. */
 let STOCK = {}, STOCK_MAX = {}, pdpStock = null;
@@ -4158,8 +4158,8 @@ function bindProduct(p){
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
-  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
-    // the whole bar adds to bag: shoppers tapped the empty space around the button and nothing happened (recorder: #mbuy dead taps). The stars link keeps its job
+  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p, true)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
+    // the whole bar adds to bag: shoppers tapped the empty space around the button and nothing happened (recorder: #mbuy dead taps). The stars here are to read only, so the bar has one job (AJAY 2026-10-26)
     mb.dataset.tap = '1'; mb.onclick = e => { const b = $('#mbAdd'); if (b && !b.disabled && !e.target.closest('a,button')) b.click(); }; }
   renderMbuy();
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
