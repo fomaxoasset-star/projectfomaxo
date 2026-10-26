@@ -290,7 +290,7 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 @media (min-width:760px) and (max-height:540px){.an .agrid.vj{grid-template-columns:minmax(0,1fr);grid-template-rows:520px 330px 330px;grid-template-areas:"vpaths" "vleave" "vtaps"}}
 /* Improve: where visitors stop, and the tips to fix first with their numbers and steps (laptop: one screen, two columns; phone: one after the other) */
 .igrid{display:grid;gap:10px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr)}.imp{display:flex;flex-direction:column;height:100%}.imp .pagehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.imp .pagehead .seg{margin-left:auto}
-.i-fun .fun li.worst .fl>span:first-child{font-weight:600}.i-fun .fun li.worst .fb i{background:var(--bad)}.ihow{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:13px}.ihow ol{margin:4px 0 0;padding-left:18px}.ihow li{margin:2px 0}
+.i-fun .fun li.worst .fl>span:first-child{font-weight:600}.fs>summary{list-style:none;cursor:pointer;border-radius:6px;padding:2px 4px;margin:0 -4px}.fs>summary::-webkit-details-marker{display:none}.fs>summary:hover{background:var(--soft,rgba(184,146,74,.08))}.fchev{display:inline-block;width:7px;height:7px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg);margin:0 2px 2px 8px;transition:transform .15s}.fs[open] .fchev{transform:rotate(-135deg);margin-bottom:-2px}.fsi{margin:6px 0 8px;padding:8px 10px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:6px;font-size:13px;line-height:1.45}.fsi p{margin:0 0 6px}.fsi .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}.fsi .tst ol{margin:0;padding-left:18px}.list .fsi .tst ol>li{display:list-item;padding:1px 0;border:0}.i-fun .fun li.worst .fb i{background:var(--bad)}.ihow{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:13px}.ihow ol{margin:4px 0 0;padding-left:18px}.ihow li{margin:2px 0}
 .tips{list-style:none;margin:0;padding:0}.itip{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}.itip:last-child{border-bottom:0}
 .tno{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .itip h3{margin:2px 0 6px;font-size:15.5px;font-weight:600;line-height:1.3}.itip p{margin:0 0 6px;font-size:13.5px;line-height:1.45}.itip .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}
@@ -3471,11 +3471,30 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
   /* the funnel: each step, how many stopped, the biggest leak marked */
   $steps = [['visits', 'Visited the site'], ['product', 'Saw a product'], ['cart', 'Added to bag'], ['checkout', 'Opened checkout'], ['typed', 'Typed details'], ['pay', 'Reached payment'], ['buy', 'Bought']];
   $worst = null; for ($i = 1; $i < count($steps); $i++) { $lost = $F[$steps[$i - 1][0]] - $F[$steps[$i][0]]; if ($lost > 0 && (!$worst || $lost > $worst[1])) $worst = [$i, $lost]; }
+  /* tap a step: what it means, its numbers, why people stop there and what to do (the same words as the tips) */
+  $info = [
+    'visits' => ['Everyone who opened any page of the site in these dates.', array_merge(
+        [$srcR ? 'Most visits came from ' . implode(', ', array_map(fn($r) => '<b>' . h($r['k']) . '</b> (' . $nf($r['visits']) . ' visits, ' . $nf($r['adds']) . ' added to bag)', array_slice($srcR, 0, 3))) . '.' : ''],
+        [isset($devR['phone']) || isset($devR['computer']) ? 'Phone: <b>' . $nf($devR['phone']['visits'] ?? 0) . '</b> visits · Laptop: <b>' . $nf($devR['computer']['visits'] ?? 0) . '</b> visits.' : ''],
+        [$F['visits'] ? '<b>' . $nf($bounce) . '</b> of ' . $nf($F['visits']) . ' (' . $pctT($pct($bounce, $F['visits'])) . ') saw one page and left.' : '']),
+      'More visitors only help when they are the right people and land on the right page. A source with many visits and no adds to bag costs money for nothing.',
+      ['Compare the sources above: keep the ones whose visitors add to bag, change or stop the rest.', 'Send every ad to the exact product it shows (for example the Old Money 10ml page).'], 'check ads'],
+    'product' => ['Visits that opened at least one perfume page.', ['<b>' . $nf($F['visits'] - $F['product']) . '</b> visits never opened a perfume page.'],
+      'They landed on the home page or another page and did not find a perfume they liked, so they left.',
+      ['Make the first screen of the home page show the best sellers with prices.', 'Send ads straight to a product page, not the home page.'], 'fix home page'],
+  ];
+  foreach ($leaks as [$a, $b, $title, $word, $extra, $why, $steps0]) $info[$b] = [$title . '.', $extra(), $why, $steps0, $word];
+  $info['cart'][0] = 'Visits that added a perfume to the bag.'; $info['checkout'][0] = 'Visits that opened the checkout page.';
+  $info['typed'][0] = 'Visits that typed their name or mobile at checkout.'; $info['pay'][0] = 'Visits that reached the pay step (card or Cash on delivery).'; $info['buy'][0] = 'Visits that placed a real order.';
   $fun = '';
   foreach ($steps as $i => [$k, $l]) {
-    $lost = $i ? $F[$steps[$i - 1][0]] - $F[$k] : 0;
-    $fun .= '<li' . ($worst && $worst[0] === $i ? ' class="worst"' : '') . '><div class="fl"><span>' . $l . ($lost > 0 ? ' <span class="fd">' . $nf($lost) . ' stopped' . ($worst && $worst[0] === $i ? ' · biggest loss' : '') . '</span>' : '') . '</span><span><b>' . $nf($F[$k]) . '</b> <span class="muted">' . $pctT($pct($F[$k], $F['visits'])) . '</span></span></div>'
-          . '<div class="fb"><i style="width:' . ($F['visits'] ? max(1, $pct($F[$k], $F['visits'])) : 0) . '%"></i></div></li>';
+    $lost = $i ? $F[$steps[$i - 1][0]] - $F[$k] : 0; [$what, $data, $why, $todo, $word] = $info[$k];
+    $data = array_values(array_filter(array_merge([$i ? '<b>' . $nf($F[$steps[$i - 1][0]]) . '</b> ' . $stepName[$steps[$i - 1][0]] . ', <b>' . $nf($F[$k]) . '</b> ' . $stepName[$k] . ($lost > 0 ? ': <b>' . $nf($lost) . '</b> stopped here (' . $pctT($pct($lost, $F[$steps[$i - 1][0]])) . ').' : '. Nobody stopped here.') : '<b>' . $nf($F['visits']) . '</b> visits.'], $data)));
+    $fun .= '<li' . ($worst && $worst[0] === $i ? ' class="worst"' : '') . '><details class="fs" name="fs"><summary><div class="fl"><span>' . $l . ($lost > 0 ? ' <span class="fd">' . $nf($lost) . ' stopped' . ($worst && $worst[0] === $i ? ' · biggest loss' : '') . '</span>' : '') . '</span><span><b>' . $nf($F[$k]) . '</b> <span class="muted">' . $pctT($pct($F[$k], $F['visits'])) . '</span><i class="fchev" aria-hidden="true"></i></span></div>'
+          . '<div class="fb"><i style="width:' . ($F['visits'] ? max(1, $pct($F[$k], $F['visits'])) : 0) . '%"></i></div></summary>'
+          . '<div class="fsi"><p class="muted">' . $what . '</p><p><span class="tl">What the data shows</span>' . implode('<br>', $data) . '</p>'
+          . ($i === 0 || $lost > 0 ? '<p><span class="tl">' . ($i ? 'Why people stop here' : 'Why it matters') . '</span>' . $why . '</p><div class="tst"><span class="tl">What to do</span><ol>' . implode('', array_map(fn($x) => '<li>' . $x . '</li>', $todo)) . '<li>Reply <b class="tword">' . h($word) . '</b> in our chat and we build it, with pictures first.</li></ol></div>' : '')
+          . '</div></details></li>';
   }
   $tipsH = '';
   foreach ($tips as $i => $t)
@@ -3488,7 +3507,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
     . '<div class="pagehead"><h1>Improve</h1><div class="seg">' . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['improve' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div></div>'
     . '<div class="igrid">'
     . '<section class="card i-fun"><div class="ch"><h2>Where visitors stop</h2></div><ul class="list fun">' . $fun . '</ul>'
-    . '<p class="muted small gnote">' . ($F['visits'] < 20 ? '<b>Only ' . $nf($F['visits']) . ' visits in these dates: pick 7 or 30 days for surer tips.</b> ' : '') . 'Each line counts visits. The red words show how many stopped at that step.</p>'
+    . '<p class="muted small gnote">' . ($F['visits'] < 20 ? '<b>Only ' . $nf($F['visits']) . ' visits in these dates: pick 7 or 30 days for surer tips.</b> ' : '') . 'Each line counts visits. The red words show how many stopped at that step. <b>Tap a step</b> to see why and what to do.</p>'
     . '<div class="ihow"><b>How to use this page</b><ol><li>Start with tip 1: it affects the most people.</li><li>Read what the data shows and follow the steps.</li><li>Check again after a week: the numbers should move.</li></ol></div></section>'
     . '<section class="card i-tips"><div class="ch"><h2>What to fix first</h2><a class="btn sm line" href="./?analytics=1&amp;vj=1&amp;r=' . h($r) . '">See the visits</a></div>'
     . ($tipsH ? '<div class="list"><ol class="tips">' . $tipsH . '</ol></div>' : '<p class="muted empty">No clear problem in these dates yet. Pick 7 or 30 days, or check back when more people have visited.</p>')
