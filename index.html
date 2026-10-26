@@ -4124,7 +4124,8 @@ function bindProduct(p){
      the phone sends no click: the photo stayed zoomed and every swipe only moved it around (AJAY 2026-10-26: "swipe photos seems stuck" after a few taps) */
   let zt = null;
   stage.addEventListener('touchstart', e => { zt = e.touches.length === 1 ? {x: e.touches[0].clientX, y: e.touches[0].clientY, at: Date.now(), y0: scrollY} : null; }, {passive: true});
-  stage.addEventListener('touchmove', e => { if (zt && e.touches.length > 1) zt = null; }, {passive: true});
+  stage.addEventListener('touchmove', e => { if (zt && e.touches.length > 1) zt = null;
+    if (e.touches.length === 1 && stage.classList.contains('zoom') && $$('.thumbs button').length < 2) { e.preventDefault(); zoomAt(e.touches[0].clientX, e.touches[0].clientY); } }, {passive: false});   // one-photo products: the finger moves the zoomed photo too (with more photos the swipe code below does it)
   stage.addEventListener('touchend', e => { if (!zt || e.touches.length) return; const c = e.changedTouches[0];
     if (Math.hypot(c.clientX - zt.x, c.clientY - zt.y) < 24 && Date.now() - zt.at < 500 && Math.abs(scrollY - zt.y0) < 2) { tapZoom(c.clientX, c.clientY); tapDone = Date.now(); } zt = null; });
   stage.onmousemove = e => { if (!stage.classList.contains('zoom')) return; const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${(e.clientX-r.left)/r.width*100}% ${(e.clientY-r.top)/r.height*100}%`; };
