@@ -1546,7 +1546,7 @@ html[data-mode="light"] .dr-foot .qd-row,html[data-mode="light"] .dr-foot .qd-ro
 .co-ar2{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
 .co-ar label{min-width:0;grid-template-rows:1fr auto;align-items:end}
 .co-ar input{width:100%;min-width:0}
-.co-assure{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:14px 0;margin:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}   /* free delivery, cash on delivery, easy returns: above Delivery details */
+.co-assure{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:14px 0;margin:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}   /* free delivery, cash on delivery: above Delivery details */
 .co-assure li{display:flex;align-items:center;gap:10px;min-width:0}
 .co-assure svg{flex:none;width:24px;height:24px;color:var(--gold)}
 .co-assure span{display:grid;gap:1px;min-width:0}
@@ -4900,8 +4900,7 @@ const CO_ICON = {
 };
 function coAssure(){
   const it = [[ICON.truck, 'Free delivery', SAMEDAY ? '1–3 days, or same-day' : 'in 1–3 days'],
-    [AS_ICON.cod, 'Cash on delivery', COD_MIN > 0 ? 'over ' + aed(COD_MIN) : 'pay when it arrives'],
-    [AS_ICON.shield, '<a href="#/returns">Easy returns</a>', '7 days, free collection']];
+    [AS_ICON.cod, 'Cash on delivery', COD_MIN > 0 ? 'over ' + aed(COD_MIN) : 'pay when it arrives']];   // Easy returns taken off (AJAY, 2026-10-26)
   return `<ul class="co-assure">${it.map(x => `<li>${x[0]}<span><b>${x[1]}</b><small>${x[2]}</small></span></li>`).join('')}</ul>`;
 }
 function checkoutPage(q){
@@ -5020,7 +5019,7 @@ function bindCheckout(q){
     if (coPay !== 'cod' && !CARD_ON) coPay = 'cod';
     if (coPay !== 'card' && coPay !== 'cod') coPay = CARD_ON ? 'card' : 'cod';
     const T = orderTotals(ls, coPay, true), dc = T.dc;
-    // the three things people want to know before typing: when it arrives, whether they can pay cash, whether they can send it back (fix checkout, 2026-10-26)
+    // what people want to know before typing: when it arrives and whether they can pay cash (fix checkout, 2026-10-26)
     const as = coAssure(), asB = $('#coAs'); if (asB && asB.innerHTML !== as) asB.innerHTML = as;
     // order summary
     const items = ls.map(l => { const p = P[l.id], v = p.prices[l.opt]; return `<div class="co-item" data-openbag role="button" tabindex="0" title="Open your bag to change it"><span class="co-img"><img src="${SM(lineImg(l))}" alt=""><i>${l.qty}</i></span><div>${lineInfo(l, true)}${l.qty > 1 && hasPrice(v) ? `<small>${moneyHTML(v)} each</small>` : ''}</div>${linePriceHTML(p, l)}</div>`; }).join('');
