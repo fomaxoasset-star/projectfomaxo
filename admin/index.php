@@ -291,7 +291,7 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 /* Improve: where visitors stop, and the tips to fix first with their numbers and steps (laptop: one screen, two columns; phone: one after the other) */
 .igrid{display:grid;gap:10px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr)}.imp{display:flex;flex-direction:column;height:100%}.imp .pagehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.imp .pagehead .seg{margin-left:auto}
 .i-fun .fun li.worst .fl>span:first-child{font-weight:600}.fs>summary{list-style:none;cursor:pointer;border-radius:6px;padding:2px 4px;margin:0 -4px}.fs>summary::-webkit-details-marker{display:none}.fs>summary:hover{background:var(--soft,rgba(184,146,74,.08))}.fchev{display:inline-block;width:7px;height:7px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg);margin:0 2px 2px 8px;transition:transform .15s}.fs[open] .fchev{transform:rotate(-135deg);margin-bottom:-2px}.fsi{margin:6px 0 8px;padding:8px 10px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:6px;font-size:13px;line-height:1.45}.fsi p{margin:0 0 6px}.fsi .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}.fsi .tst ol{margin:0;padding-left:18px}.list .fsi .tst ol>li{display:list-item;padding:1px 0;border:0}.i-fun .fun li.worst .fb i{background:var(--bad)}.ihow{flex:none;margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:13px}.ihow ol{margin:4px 0 0;padding-left:18px}.ihow li{margin:2px 0}
-.tips{list-style:none;margin:0;padding:0}.itip{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}.itip:last-child{border-bottom:0}
+.tips{list-style:none;margin:0;padding:0}.itip{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}.itip:last-child{border-bottom:0}.itip>div{position:relative}.iclose{float:right;margin:0 0 4px 8px}.iclose button{width:32px;height:32px;border:1px solid var(--line);border-radius:50%;background:none;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:0}.iclose button:hover{color:var(--gold);border-color:var(--gold)}.iundo{display:inline;margin-left:6px}.iundo button{background:none;border:0;padding:0;color:var(--gold);font:inherit;text-decoration:underline;cursor:pointer}
 .tno{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .fxl{margin:0;padding-left:18px}.fxl li{margin:3px 0}.list .fxl>li{display:list-item;padding:1px 0;border:0}.idone{margin-top:6px;border-top:1px solid var(--line);padding-top:10px}.idone h3{margin:0 0 6px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}.idone ul{list-style:none;margin:0;padding:0}.idone li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start;padding:5px 0;font-size:13.5px;line-height:1.35}.idone li span.small{display:block}.idone p{margin:6px 0 0}
 .dck{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--gold);position:relative;margin-top:1px}.dck::after{content:"";position:absolute;left:5px;top:2px;width:4px;height:8px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg)}
@@ -3384,6 +3384,13 @@ if (isset($_GET['analytics'])) {
 if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a white page
   require_once dirname(__DIR__) . '/insights-lib.php';
   $r = (string)($_GET['r'] ?? '7'); if (!in_array($r, ['today', 'yesterday', '7', '30'], true)) $r = '7';
+  /* tips the owner closed with ×: they leave What to fix first and wait in Fixed with an Undo */
+  $closed = json_decode((string)fomaxo_setting($pdo, 'improve_closed'), true) ?: [];
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && csrf_ok() && ($ck = trim((string)($_POST['iclose'] ?? ''))) !== '') {
+    if (!empty($_POST['undo'])) unset($closed[$ck]); else $closed[$ck] = ['d' => date('Y-m-d'), 't' => mb_substr(trim(strip_tags((string)($_POST['title'] ?? ''))), 0, 120)];
+    fomaxo_setting($pdo, 'improve_closed', json_encode($closed, JSON_UNESCAPED_UNICODE));
+    header('Location: ./?improve=1&r=' . $r); exit;
+  }
   $span = $r === 'yesterday' ? [date('Y-m-d 00:00:00', strtotime('-1 day')), date('Y-m-d 23:59:59', strtotime('-1 day'))]   // the whole day before today, Dubai time
         : [date('Y-m-d 00:00:00', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')), date('Y-m-d 23:59:59')];
   $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
@@ -3501,7 +3508,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
     if (isset($done[$t['word']])) $doneH[$t['word']] = $t['title']; unset($tips[$i]);
   }
   foreach ($done as $w => $d) if (!isset($doneH[$w]) && !in_array($fixOf($w), array_column($tips, 'fix'), true)) $doneH[$w] = '';
-  $tips = array_slice(array_values($tips), 0, 6);
+  $tips = array_slice(array_values(array_filter($tips, fn($t) => !isset($closed[$t['fix']]))), 0, 6);
 
   /* the funnel: each step, how many stopped, the biggest leak marked */
   $steps = [['visits', 'Visited the site'], ['product', 'Saw a product'], ['cart', 'Added to bag'], ['checkout', 'Opened checkout'], ['typed', 'Typed details'], ['pay', 'Reached payment'], ['buy', 'Bought']];
@@ -3538,11 +3545,15 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
     'fix landing page' => 'First page from ads', 'check ads' => 'Ads brought visitors who did not add to bag', 'fix bag' => 'Bag: people did not open checkout', 'fix checkout' => 'Checkout: people did not type their details',
     'make it faster' => 'Site opened slowly on phones', 'fix phone' => 'Phone: people did not add to bag', 'tap Photo' => 'Photo: tapping did nothing (now one tap zooms it)'];
   $fixL = ''; foreach ($doneH as $w => $title) $fixL .= '<li>' . ($fixName[$w] ?? ($title ?: h(ucfirst($w)))) . ' <span class="muted">· fixed ' . date('d/m/Y', strtotime($done[$w])) . ', checked again ' . date('d/m/Y', strtotime($done[$w] . ' +7 days')) . '</span></li>';
-  if ($fixL) $fun .= '<li class="fixed"><details class="fs" name="fs"><summary><div class="fl"><span>Fixed <span class="muted">' . count($doneH) . '</span></span><span><i class="fchev" aria-hidden="true"></i></span></div></summary>'
+  foreach ($closed as $ck => $c) $fixL .= '<li>' . h($c['t'] !== '' ? $c['t'] : ucfirst($ck)) . ' <span class="muted">· closed by you ' . date('d/m/Y', strtotime($c['d'])) . '</span>'
+    . '<form method="post" class="iundo">' . csrf_field() . '<input type="hidden" name="iclose" value="' . h($ck) . '"><input type="hidden" name="undo" value="1"><button type="submit">Undo</button></form></li>';
+  if ($fixL) $fun .= '<li class="fixed"><details class="fs" name="fs"><summary><div class="fl"><span>Fixed <span class="muted">' . (count($doneH) + count($closed)) . '</span></span><span><i class="fchev" aria-hidden="true"></i></span></div></summary>'
           . '<div class="fsi"><p class="muted">Problems we already fixed. Each one comes back to What to fix first only if its numbers are still bad a week after the fix.</p><ul class="fxl">' . $fixL . '</ul></div></details></li>';
   $tipsH = '';
   foreach ($tips as $i => $t)
-    $tipsH .= '<li class="itip"><span class="tno">' . ($i + 1) . '</span><div><h3>' . $t['title'] . '</h3>'
+    $tipsH .= '<li class="itip"><span class="tno">' . ($i + 1) . '</span><div>'
+            . '<form method="post" class="iclose" onsubmit="return confirm(\'Close this tip? It moves to Fixed. You can Undo it there.\')">' . csrf_field() . '<input type="hidden" name="iclose" value="' . h($t['fix']) . '"><input type="hidden" name="title" value="' . h(strip_tags($t['title'])) . '"><button type="submit" aria-label="Close this tip" title="Close this tip">×</button></form>'
+            . '<h3>' . $t['title'] . '</h3>'
             . '<p class="tdat"><span class="tl">What the data shows</span>' . implode('<br>', $t['data']) . '</p>'
             . '<p class="twhy"><span class="tl">Why it matters</span>' . $t['why'] . '</p>'
             . '<div class="tst"><span class="tl">Steps</span><ol>' . implode('', array_map(fn($s) => '<li>' . $s . '</li>', $t['steps'])) . '<li>Reply <b class="tword">' . h($t['word']) . '</b> in our chat and we build it, with pictures first.</li></ol></div></div></li>';
