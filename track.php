@@ -34,22 +34,22 @@ date_default_timezone_set('Asia/Dubai');
 try {
   $page = $t('p', 80);
   $pdo->prepare('REPLACE INTO fx_live (vid, seen, page) VALUES (?, NOW(), ?)')->execute([$vid, $page]);
-  if ($ev === 'trail') {   // taps and how far down each page was seen, for Analytics → Visits (only button names and box names, never what was typed)
+  if ($ev === 'trail') {   // taps, how far down each page was seen, how fast the site opened and page errors, for Analytics → Visits (only button names and box names, never what was typed)
     $device = preg_match('/iPad|Tablet|(Android(?!.*Mobile))/i', $ua) ? 'tablet' : (preg_match('/Mobi|iPhone|Android/i', $ua) ? 'phone' : 'computer');
     $rows = [];
     foreach (array_slice((array)($d['t'] ?? []), 0, 25) as $x) {
-      if (!is_array($x) || !in_array($x['k'] ?? '', ['t', 's'], true)) continue;
+      if (!is_array($x) || !in_array($x['k'] ?? '', ['t', 's', 'l', 'e'], true)) continue;
       $cl = fn($v, $max) => trim(mb_substr(preg_replace('/[\x00-\x1f]+/u', ' ', (string)$v), 0, $max));
       $n = fn($v) => max(0, min(100, (int)$v));
-      $rows[] = [$sid, $vid, $cl($x['p'] ?? '', 80), $x['k'], $x['k'] === 't' ? $cl($x['l'] ?? '', 60) : '', $n($x['x'] ?? 0), $n($x['y'] ?? 0), $x['k'] === 's' ? $n($x['pc'] ?? 0) : null, empty($x['d']) ? 0 : 1, empty($x['r']) ? 0 : 1, $device];
+      $rows[] = [$sid, $vid, $cl($x['p'] ?? '', 80), $x['k'], in_array($x['k'], ['t', 'e'], true) ? $cl($x['l'] ?? '', 60) : '', $n($x['x'] ?? 0), $n($x['y'] ?? 0), $x['k'] === 's' ? $n($x['pc'] ?? 0) : null, empty($x['d']) ? 0 : 1, empty($x['r']) ? 0 : 1, $device, $x['k'] === 'l' ? max(0, min(60000, (int)($x['ms'] ?? 0))) : null];
     }
     if (!$rows) exit;
-    $add = fn() => $pdo->prepare('INSERT INTO fx_trail (at, sid, vid, page, k, label, x, y, pc, dead, rage, device) VALUES ' . implode(',', array_fill(0, count($rows), '(NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')))
+    $add = fn() => $pdo->prepare('INSERT INTO fx_trail (at, sid, vid, page, k, label, x, y, pc, dead, rage, device, ms) VALUES ' . implode(',', array_fill(0, count($rows), '(NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')))
         ->execute(array_merge(...$rows));
     try { $add(); } catch (Throwable $e) {   // the first time: make the table
       $pdo->exec("CREATE TABLE IF NOT EXISTS fx_trail (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, at DATETIME NOT NULL, sid CHAR(16) NOT NULL, vid CHAR(16) NOT NULL,
                   page VARCHAR(80) NOT NULL DEFAULT '', k CHAR(1) NOT NULL, label VARCHAR(60) NOT NULL DEFAULT '', x TINYINT UNSIGNED NOT NULL DEFAULT 0, y TINYINT UNSIGNED NOT NULL DEFAULT 0,
-                  pc TINYINT UNSIGNED NULL, dead TINYINT(1) NOT NULL DEFAULT 0, rage TINYINT(1) NOT NULL DEFAULT 0, device VARCHAR(8) NOT NULL DEFAULT '', KEY (at), KEY (sid)) DEFAULT CHARSET=utf8mb4");
+                  pc TINYINT UNSIGNED NULL, dead TINYINT(1) NOT NULL DEFAULT 0, rage TINYINT(1) NOT NULL DEFAULT 0, device VARCHAR(8) NOT NULL DEFAULT '', ms MEDIUMINT UNSIGNED NULL, KEY (at), KEY (sid)) DEFAULT CHARSET=utf8mb4");
       $add(); }
     if (mt_rand(1, 300) === 1) $pdo->exec('DELETE FROM fx_trail WHERE at < NOW() - INTERVAL 120 DAY');   // taps are kept 4 months
     require_once __DIR__ . '/insights-lib.php';

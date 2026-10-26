@@ -3189,11 +3189,11 @@ if (isset($_GET['analytics'])) {
     foreach ($V['paths'] as $v) {
       $steps = [];
       foreach ($v['steps'] as $st) {
-        $taps = array_map(fn($t) => '<i class="' . ($t['rage'] ? 'rg' : ($t['dead'] ? 'dd' : '')) . '">' . h($t['l']) . '</i>', array_slice($st['taps'], 0, 8));
+        $taps = array_map(fn($t) => '<i class="' . ($t['rage'] || !empty($t['err']) ? 'rg' : ($t['dead'] ? 'dd' : '')) . '">' . h($t['l']) . '</i>', array_slice($st['taps'], 0, 8));
         $steps[] = '<li><b>' . h(fx_pg_name($st['pg'], $names)) . '</b><span class="muted">' . fx_secs($st['secs']) . ($st['pc'] !== null ? ' · seen ' . (int)$st['pc'] . '%' : '') . '</span>'
                  . ($taps ? '<span class="vt">' . implode('', $taps) . (count($st['taps']) > 8 ? '<i class="more">+' . (count($st['taps']) - 8) . '</i>' : '') . '</span>' : '') . '</li>';
       }
-      $paths .= '<li class="vv"><div class="vh"><span class="vd">' . h(date('d M, H:i', strtotime($v['start']))) . '</span><span class="muted">' . h($devIc[$v['device']] ?? 'Other') . ($v['country'] ? ' · ' . fomaxo_flag($v['country']) . ' ' . h($v['country']) : '') . ($v['source'] ? ' · ' . h($v['source']) : '') . '</span>'
+      $paths .= '<li class="vv"><div class="vh"><span class="vd">' . h(date('d M, H:i', strtotime($v['start']))) . '</span><span class="muted">' . h($devIc[$v['device']] ?? 'Other') . ($v['country'] ? ' · ' . fomaxo_flag($v['country']) . ' ' . h($v['country']) : '') . ($v['source'] ? ' · ' . h($v['source']) : '') . ($v['load'] ? ' · opened in ' . h(number_format($v['load'] / 1000, 1)) . 's' : '') . '</span>'
               . '<span class="lpill ve ' . ($endCls[$v['end']] ?? '') . '">' . h(fx_visit_end($v['end'])) . '</span></div><ol class="vs">' . implode('', $steps) . '</ol></li>';
     }
     $vjPanes = ['vpaths' => 'Visits step by step', 'vleave' => 'Where people leave', 'vtaps' => 'What people tap'];
@@ -3201,7 +3201,7 @@ if (isset($_GET['analytics'])) {
     $vjGrid = '<nav class="apick vjpick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'vpaths' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($vjPanes), $vjPanes)) . '</nav>'
       . '<div class="dgrid agrid vj">'
       . '<section class="card v-paths on" data-p="vpaths"><div class="ch"><h2>Visits step by step <small class="muted">newest first</small></h2><a class="btn sm vxls" href="' . h(self_url(['analytics' => 1, 'vj' => 1, 'csv' => 1, 'r' => 'custom', 'd1' => $d1, 'd2' => $d2])) . '">Excel</a></div>'
-      . ($paths ? '<div class="list"><ul class="vlist">' . $paths . '</ul></div><p class="muted small gnote">Each box is a page: how long they stayed, how far down they saw, and what they tapped. <i class="dd">Grey</i> = tapped something that is not a button. <i class="rg">Red</i> = tapped the same spot 3 times fast.</p>' : '<p class="muted empty">No visits in these dates.</p>') . '</section>'
+      . ($paths ? '<div class="list"><ul class="vlist">' . $paths . '</ul></div><p class="muted small gnote">Each box is a page: how long they stayed, how far down they saw, and what they tapped. <i class="dd">Grey</i> = tapped something that is not a button. <i class="rg">Red</i> = tapped the same spot 3 times fast, or an error on the page.</p>' : '<p class="muted empty">No visits in these dates.</p>') . '</section>'
       . '<section class="card v-leave" data-p="vleave"><div class="ch"><h2>Where people leave</h2></div>'
       . ($lvT ? '<div class="list"><table class="mini ltab2"><thead><tr><th>Last page</th><th class="num">Saw it</th><th class="num">Left</th><th class="num">Left %</th><th class="num">Time</th><th class="num">Seen</th></tr></thead><tbody>' . $lvT . '</tbody></table></div><p class="muted small gnote">Left: visits that ended on this page. Seen: how far down the page people got, on average.</p>' : '<p class="muted empty">No visits in these dates.</p>') . $vjNote . '</section>'
       . '<section class="card v-taps" data-p="vtaps"><div class="ch"><h2>What people tap</h2><div class="seg gseg" role="group"><button type="button" data-r="btn" class="on">Buttons</button><button type="button" data-r="dead">Not buttons' . ($tn['dead'] ? ' (' . $tn['dead'] . ')' : '') . '</button><button type="button" data-r="rage">Angry' . ($tn['rage'] ? ' (' . $tn['rage'] . ')' : '') . '</button></div></div>'
@@ -3455,6 +3455,13 @@ if (isset($_GET['improve'])) {
   if (($p = $devR['phone'] ?? null) && ($c = $devR['computer'] ?? null) && $p['visits'] >= 15 && $c['visits'] >= 15 && $pct($c['adds'], $c['visits']) > 0 && $pct($p['adds'], $p['visits']) < $pct($c['adds'], $c['visits']) / 2)
     $tip((int)$p['visits'], 'Phones add to the bag much less than laptops', ['Phone: ' . $pctT($pct($p['adds'], $p['visits'])) . ' of ' . $nf($p['visits']) . ' visits added to bag. Laptop: ' . $pctT($pct($c['adds'], $c['visits'])) . ' of ' . $nf($c['visits']) . '.'],
       'Something on the phone page is harder: a button is low, a popup covers it, or it is slow.', ['Open the product page on your phone and add to bag yourself. Note anything slow or hidden.'], 'fix phone');
+  $sp = $V['speed']['phone'] ?? null;   // how fast the site opens on phones (most visitors)
+  if ($sp && $sp['n'] >= 10 && $pct($sp['slow'], $sp['n']) >= 30)
+    $tip((int)$sp['slow'], 'The site opens slowly on many phones', ['On phones the site took <b>' . number_format($sp['avg_ms'] / 1000, 1) . ' s</b> on average to open; <b>' . $nf($sp['slow']) . '</b> of ' . $nf($sp['n']) . ' (' . $pctT($pct($sp['slow'], $sp['n'])) . ') took more than 3 seconds.'],
+      'People from ads leave if the page is not ready within about 3 seconds.', ['Open the site on your phone with mobile data (Wi-Fi off) and count the seconds.'], 'make it faster');
+  if (($er = $V['errors'][0] ?? null) && $er['people'] >= 2)
+    $tip((int)$er['people'], 'An error happens on ' . h(fx_pg_name($er['pg'], $names)), ['<b>' . $nf($er['people']) . '</b> visits had this error ' . $nf($er['n']) . ' times: <span class="muted">' . h($er['label']) . '</span>'],
+      'An error can stop a button from working, so people cannot add to bag or pay.', ['Nothing for you to do: we read the error and fix it.'], 'fix the error');
   usort($tips, fn($a, $b) => $b['people'] <=> $a['people']);
   $tips = array_slice($tips, 0, 6);
 

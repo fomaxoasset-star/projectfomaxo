@@ -5655,6 +5655,9 @@ const FXT = (() => {
   let tWait = 0; addEventListener('scroll', () => { if (tWait) return; tWait = setTimeout(() => { tWait = 0; tMax = Math.max(tMax, seenPc()); }, 400); }, {passive: true});
   setInterval(() => { if (trail.length) flush(); }, 15e3);
   addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+  // how long the website took to open on this phone or computer (once per visit to the site), and errors on the page (a button that breaks shows here)
+  addEventListener('load', () => setTimeout(() => { try { const n = performance.getEntriesByType('navigation')[0], ms = n && n.loadEventStart > 0 ? Math.round(n.loadEventStart) : 0; if (ms && !off) trail.push({k: 'l', p: pg(), ms: Math.min(ms, 60000)}); } catch(e) {} }, 0), {once: true});
+  let errN = 0; addEventListener('error', e => { if (off || !(e instanceof ErrorEvent) || errN++ >= 5) return; trail.push({k: 'e', p: pg(), l: String(e.message || 'Error').replace(/\d{6,}/g, '#').slice(0, 60)}); }, true);
   const trailPage = () => { flush(); tPage = pg(); setTimeout(() => { if (tPage === pg()) tMax = Math.max(tMax, seenPc()); }, 1500); };   // a short page counts as seen to its end
   return {
     send,
