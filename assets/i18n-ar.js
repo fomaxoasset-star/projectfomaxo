@@ -1002,6 +1002,8 @@
 "Your area": "منطقتك",
 "Choose your area": "اختر منطقتك",
 "Not in the list? Choose standard delivery.": "منطقتك غير موجودة؟ اختر التوصيل العادي.",
+"We save your details on this device and WhatsApp you to confirm your address.": "نحفظ بياناتك على هذا الجهاز ونراسلك عبر واتساب لتأكيد عنوانك.",
+"Same-day does not reach this area yet. Please choose standard delivery.": "التوصيل في نفس اليوم لا يصل إلى هذه المنطقة بعد. يرجى اختيار التوصيل العادي.",
 "Same-day delivery: your order arrives today.": "توصيل في نفس اليوم: يصلك طلبك اليوم.",
 "Same-day delivery: your order arrives today. Questions? WhatsApp us on": "توصيل في نفس اليوم: يصلك طلبك اليوم. لديك أسئلة؟ راسلنا على واتساب",
 "Same-day delivery is not available right now. Please choose standard delivery.": "التوصيل في نفس اليوم غير متاح حالياً. يرجى اختيار التوصيل العادي.",
