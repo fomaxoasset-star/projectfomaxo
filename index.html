@@ -3174,7 +3174,8 @@ const ICON = {
 /* ============================ CART ============================ */
 let cart = [];
 try { cart = JSON.parse(localStorage.getItem('fomaxo_cart') || '[]').filter(l => P[l.id] && P[l.id].sizes.map(String).includes(String(l.opt))); } catch(e) { cart = []; }
-const save = () => { try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} renderCart(); };
+let mbSync = null;   // product page: keeps the bottom bar's button in step with the bag
+const save = () => { try { localStorage.setItem('fomaxo_cart', JSON.stringify(cart)); } catch(e) {} renderCart(); mbSync && mbSync(); };
 document.addEventListener('touchstart', () => {}, {passive: true});   // iPhone shows the pressed look (:active) only when the page listens to touches
 function addToCart(id, opt, qty=1, silent, picks){
   const left = maxQty(id, opt), inBag = inBagQty(id, opt);   // never more in the bag than we have (or MAX_PER_ITEM)
@@ -4201,13 +4202,16 @@ function bindProduct(p){
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
-  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p, true)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
+  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p, true)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if ($('#mbAdd').classList.contains('mb-go')) { location.hash = '#/checkout'; return; } if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
     // the whole bar adds to bag: shoppers tapped the empty space around the button and nothing happened (recorder: #mbuy dead taps). The stars here are to read only, so the bar has one job (AJAY 2026-10-26)
-    mb.dataset.tap = '1'; mb.onclick = e => { const b = $('#mbAdd'); if (b && !b.disabled && !e.target.closest('a,button')) b.click(); }; }
+    mb.dataset.tap = '1'; mb.onclick = e => { const b = $('#mbAdd'); if (b && !b.disabled && !e.target.closest('a,button')) b.click(); }; mbSync(); }
+  // once this size is in the bag the bottom bar becomes Checkout: shoppers added from the bar and then never opened the bag (recorder, AJAY 2026-10-27)
+  mbSync = () => { const b = $('#mbAdd'); if (!b || b.disabled) return; const T = orderTotals(cart, ''), go = inBagQty(p.id, size) > 0 && (T.after === null || T.short <= 0);
+    b.classList.toggle('mb-go', go); b.textContent = go ? 'Checkout' + (T.after !== null ? ' · ' + aed(T.after) : '') : 'Add to bag'; };
   renderMbuy();
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
-    ['#addBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) { b.classList.toggle('oos', out); b.textContent = out ? 'Out of stock' : 'Add to bag'; } });
+    ['#addBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) { b.classList.toggle('oos', out); b.textContent = out ? 'Out of stock' : 'Add to bag'; } }); if (out) $('#mbAdd')?.classList.remove('mb-go'); mbSync();
     $$('#sizes button').forEach(b => b.classList.toggle('so', stockLeft(p.id, b.dataset.s) === 0)); qcap(); };
   pdpStock(); btRender(p, size); requestAnimationFrame(fitPdp); document.fonts && document.fonts.ready.then(fitPdp);
   const addBtn = $('#addBtn');
@@ -5890,7 +5894,7 @@ function route(){
   const seg = path.split('/').filter(Boolean);
   if (seg[0] && HIDE_PAGES.includes(seg[0])) { location.replace('#/'); return; }
   const rwPopEl = $('#rwFormBox.pop'); if (rwPopEl) { rwPopEl.remove(); document.body.classList.remove('lock'); }   // leaving with the review window open
-  clearInterval(heroTimer); mobileBarCheck = null; coRefresh = null; pdpStock = null; $('#mbuy').classList.remove('show'); hideAdded();
+  clearInterval(heroTimer); mobileBarCheck = null; mbSync = null; coRefresh = null; pdpStock = null; $('#mbuy').classList.remove('show'); hideAdded();
   document.title = 'FOMAXO — The House of Modern Luxury';
   let html, after;
   switch (seg[0]){
