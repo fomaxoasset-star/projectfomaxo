@@ -5774,13 +5774,24 @@ new MutationObserver(fitSoon).observe(document.documentElement, {attributes: tru
 /* a reload stays on the same page and at the same spot (phone and laptop); a fresh visit opens the home page at the top.
    The spot is kept for this tab only, saved when the page is left or hidden. */
 try { history.scrollRestoration = 'manual'; } catch(e) {}
-let reloadY = 0;
+let reloadY = 0, reloadSpot = null;
+// the spot is a part of the page (the box at the top of the screen) plus how far it sat from the top, not just pixels:
+// open/closed boxes (Description, Fragrance notes...), videos and reviews that load later change the page height, so plain pixels landed lower (on reviews or the bottom)
+const spotEls = () => [...document.querySelectorAll('#app [id], #app details, #app section')].filter(e => e.offsetParent);
+const spotKey = (e, all) => e.id ? '#' + e.id : e.tagName + ':' + all.filter(x => !x.id && x.tagName === e.tagName).indexOf(e);
 (() => { let t = ''; try { t = performance.getEntriesByType('navigation')[0].type; } catch(e) {}
-  try { const s = JSON.parse(sessionStorage.getItem('fx_spot') || 'null'); if (t === 'reload' && s && s.h === location.hash) reloadY = +s.y || 0; } catch(e) {}
-  const keep = () => { try { sessionStorage.setItem('fx_spot', JSON.stringify({h: location.hash, y: Math.round(scrollY)})); } catch(e) {} };
+  try { const s = JSON.parse(sessionStorage.getItem('fx_spot') || 'null'); if (t === 'reload' && s && s.h === location.hash) { reloadY = +s.y || 0; reloadSpot = s; } } catch(e) {}
+  const keep = () => { try {
+    const all = spotEls(), a = all.find(e => e.getBoundingClientRect().bottom > 100), d = [...document.querySelectorAll('#app details')].map(x => x.open ? 1 : 0).join('');
+    sessionStorage.setItem('fx_spot', JSON.stringify({h: location.hash, y: Math.round(scrollY), a: a && scrollY > 0 ? spotKey(a, all) : '', o: a ? Math.round(a.getBoundingClientRect().top) : 0, d})); } catch(e) {} };
   addEventListener('pagehide', keep); document.addEventListener('visibilitychange', () => { if (document.hidden) keep(); });
   if (reloadY) { const stop = () => { reloadY = 0; }; ['wheel', 'touchstart', 'keydown'].forEach(k => addEventListener(k, stop, {once: true, passive: true})); setTimeout(stop, 5000); addEventListener('load', () => backToSpot(), {once: true}); } })();
-function backToSpot(){ if (!reloadY) return; const go = () => { if (!reloadY) return; window.scrollTo({top: reloadY, left: 0, behavior: 'instant'}); if (Math.abs(scrollY - reloadY) > 2) setTimeout(go, 100); }; go(); }   // tries again while pictures load and the page grows, up to 5s or until the shopper scrolls
+function backToSpot(){ if (!reloadY) return;
+  const s = reloadSpot || {}, ds = [...document.querySelectorAll('#app details')];
+  if (s.d && s.d.length === ds.length) ds.forEach((x, i) => { x.open = s.d[i] === '1'; });   // boxes the shopper had opened are open again
+  const target = () => { if (s.a) { const all = spotEls(), e = all.find(x => spotKey(x, all) === s.a); if (e) return Math.max(0, Math.round(e.getBoundingClientRect().top + scrollY - (+s.o || 0))); } return reloadY; };
+  const go = () => { if (!reloadY) return; const y = target(); if (Math.abs(scrollY - y) > 2) window.scrollTo({top: y, left: 0, behavior: 'instant'}); setTimeout(go, 150); };
+  go(); }   // keeps the spot while pictures, videos and reviews load and the page grows, up to 5s or until the shopper scrolls
 function route(){
   const raw = location.hash.replace(/^#/, '') || '/';
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
