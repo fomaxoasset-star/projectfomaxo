@@ -990,6 +990,7 @@
 "Confirmed with your order": "مؤكّد مع طلبك",
 "Customer photo": "صورة العميل",
 "Customer photos": "صور العملاء",
+"Zoom photo": "تكبير الصورة",
 "Dark mode": "الوضع الداكن",
 "Delivery is free anywhere in the UAE.": "التوصيل مجاني لجميع أنحاء الإمارات.",
 "Same-day delivery": "توصيل في نفس اليوم",

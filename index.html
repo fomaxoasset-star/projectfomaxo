@@ -4103,13 +4103,13 @@ function bindProduct(p){
     qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } const sb = $('.gallery > [data-best]'); if (sb) { sb.dataset.k = soldKey(p, size); bestSync(); } fitPdp();
   });
   const stage = $('#stage');
-  /* laptop: a click zooms. Phone: only a double tap zooms (at the tapped spot) and a double tap zooms back out; a single tap does nothing */
+  /* laptop: a click zooms. Phone: one tap zooms in at the tapped spot (a finger then moves around the photo) and one more tap zooms back out.
+     Before, a phone tap did nothing (only a double tap zoomed): the recorder saw Instagram phone visitors tapping it again and again (AJAY 2026-10-26) */
   const zoomAt = (x, y) => { const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${Math.min(100, Math.max(0, (x - r.left) / r.width * 100))}% ${Math.min(100, Math.max(0, (y - r.top) / r.height * 100))}%`; };
-  let lastTap = 0;
+  stage.setAttribute('role', 'button'); stage.setAttribute('aria-label', 'Zoom photo'); stage.dataset.tap = '1';
   stage.onclick = e => {
     if (matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches) { stage.classList.toggle('zoom'); return; }
-    const now = Date.now(); if (now - lastTap > 350) { lastTap = now; return; }
-    lastTap = 0; if (!stage.classList.contains('zoom')) zoomAt(e.clientX, e.clientY); stage.classList.toggle('zoom');
+    if (!stage.classList.contains('zoom')) zoomAt(e.clientX, e.clientY); stage.classList.toggle('zoom');
   };
   stage.onmousemove = e => { if (!stage.classList.contains('zoom')) return; const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${(e.clientX-r.left)/r.width*100}% ${(e.clientY-r.top)/r.height*100}%`; };
   stage.onmouseleave = () => { if (matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches) stage.classList.remove('zoom'); };   // a phone tap also sends mouse events: keep its zoom
