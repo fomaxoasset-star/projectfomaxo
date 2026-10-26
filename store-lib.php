@@ -128,7 +128,7 @@ function fomaxo_customer($in) {
   if ($out['email'] !== '' && !filter_var($out['email'], FILTER_VALIDATE_EMAIL)) return ['error' => 'Please enter a valid email address.'];
   if (!in_array($out['emirate'], $EMIRATES, true)) return ['error' => 'Please choose your emirate.'];
   if ($out['building'] !== '' || $out['street'] !== '' || $out['area'] !== '') {
-    if (mb_strlen($out['area']) < 2) return ['error' => 'Please enter your area.'];   // villa / building and street are optional: the exact address is confirmed on WhatsApp
+    if ($out['building'] === '' || mb_strlen($out['street']) < 2 || mb_strlen($out['area']) < 2) return ['error' => 'Please enter your full delivery address.'];
     $out['address'] = implode(', ', array_filter([$out['building'], $out['room'] !== '' ? 'Room/Floor ' . $out['room'] : '', $out['street'], $out['area']]));
   } elseif (mb_strlen($out['address']) < 5) {   // older page with a single address box
     return ['error' => 'Please enter your full delivery address.'];
