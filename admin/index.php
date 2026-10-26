@@ -297,7 +297,8 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 .dck{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--gold);position:relative;margin-top:1px}.dck::after{content:"";position:absolute;left:5px;top:2px;width:4px;height:8px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg)}
 .itip h3{margin:2px 0 6px;font-size:15.5px;font-weight:600;line-height:1.3}.itip p{margin:0 0 6px;font-size:13.5px;line-height:1.45}.itip .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}
 .tst ol{margin:0;padding-left:18px;font-size:13.5px;line-height:1.45}.tst li{margin:2px 0}.tword{color:var(--gold);white-space:nowrap}.i-tips .ch{display:flex;align-items:center;gap:8px}.i-tips .ch .btn{margin-left:auto;flex:none}
-@media (min-width:760px){.igrid{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)}.i-fun,.i-tips{min-height:0}.i-fun{overflow:auto}}
+@media (min-width:760px){.igrid{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);grid-template-rows:minmax(0,1.6fr) minmax(170px,1fr);grid-template-areas:"fun tips" "fun taps"}.i-fun,.i-tips,.i-taps{min-height:0}.i-fun{overflow:auto;grid-area:fun}.i-tips{grid-area:tips}.i-taps{grid-area:taps;display:flex;flex-direction:column}.i-taps .list{flex:1 1 auto;min-height:0;overflow:auto}}
+.igrid .list[hidden]{display:none!important}
 @media (max-width:759px){.igrid{overflow:auto;overscroll-behavior:contain}.igrid{display:block}.igrid>.card{display:block!important;overflow:visible!important;margin-bottom:10px}.igrid .list{overflow:visible!important;max-height:none!important}.imp .pagehead h1{display:none}.imp .pagehead .seg{display:flex;width:100%;margin:0;padding:0;gap:0;border-radius:8px;overflow:hidden}.imp .pagehead .seg a{flex:1;text-align:center;font-size:13px;padding:7px 0;border-radius:0}.imp .pagehead .seg a+a{border-left:1px solid var(--line)}}
 .list .vlist>li.vv{display:block;padding:9px 2px}.list .vs>li{display:flex;justify-content:flex-start;align-items:flex-start;padding:5px 8px;border:1px solid var(--line);text-align:left}.list .vs>li:last-child{border:1px solid var(--line)}
 .list .tips>li.itip{display:grid;justify-content:stretch;align-items:start;padding:12px 2px}.list .tst ol>li{display:list-item;padding:1px 0;border:0}.list .tst ol>li:last-child{border:0}.itip .tno{margin-top:2px}
@@ -515,6 +516,16 @@ main.fit:has(>.cl){overflow:auto}
   .cl .cgrid3{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px;margin:0 0 4px}.cl .cgrid3.yr{grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr))!important}.cl .cgrid3 .k-months{grid-column:auto!important}
   .cl .cgrid3 .list{overflow:visible!important;max-height:none!important}.cl table.mini{font-size:11.5px}.cl table.mini th,.cl table.mini td{padding:3.5px 5px}.cl .ptab .fb,.cl .gbar{display:none!important}.cl tfoot td{position:static!important}.cnote{font-size:9.5px}}
 CSS;
+}
+/* "What people tap" (Analytics → Visits and Improve): buttons, things that are not buttons, angry taps, from fx_visits_data(). Its tabs switch with the .gseg script */
+function fx_taps_card($V, $names, $cls, $attr = '') {
+  $tp = ['btn' => '', 'dead' => '', 'rage' => '']; $tn = ['btn' => 0, 'dead' => 0, 'rage' => 0];
+  foreach ($V['taps'] as $row) foreach (['btn' => !$row['dead'], 'dead' => (bool)$row['dead'], 'rage' => $row['rage'] > 0] as $k => $ok)
+    if ($ok && $tn[$k]++ < 60) $tp[$k] .= '<tr><td><b>' . h($row['label'] !== '' ? $row['label'] : '–') . '</b><span class="muted tpg">' . h(fx_pg_name($row['pg'], $names)) . '</span></td><td class="num">' . number_format($k === 'rage' ? $row['rage'] : $row['taps']) . '</td><td class="num">' . number_format($row['people']) . '</td></tr>';
+  $tapList = fn($k, $empty) => '<div class="list" data-r="' . $k . '"' . ($k === 'btn' ? '' : ' hidden') . '>' . ($tp[$k] ? '<table class="mini ttab"><thead><tr><th>' . ($k === 'btn' ? 'Button or link' : 'Tapped') . ' · page</th><th class="num">Taps</th><th class="num">People</th></tr></thead><tbody>' . $tp[$k] . '</tbody></table>' : '<p class="muted empty">' . $empty . '</p>') . '</div>';
+  return '<section class="' . $cls . '"' . $attr . '><div class="ch"><h2>What people tap</h2><div class="seg gseg" role="group"><button type="button" data-r="btn" class="on">Buttons</button><button type="button" data-r="dead">Not buttons' . ($tn['dead'] ? ' (' . $tn['dead'] . ')' : '') . '</button><button type="button" data-r="rage">Angry' . ($tn['rage'] ? ' (' . $tn['rage'] . ')' : '') . '</button></div></div>'
+    . $tapList('btn', 'No taps counted yet.') . $tapList('dead', 'Nobody tapped something that is not a button.') . $tapList('rage', 'No angry taps. Good.')
+    . '<p class="muted small gnote">Not buttons: people tapped a photo or words and nothing happened, so they may expect it to open. What people type is never kept.</p></section>';
 }
 function page($title, $body, $wide = false, $fit = false) {   // $fit: fill the screen, lists scroll inside .fill
   $ord = !isset($_GET['products']) && (bool)array_intersect_key($_GET, array_flip(['orders', 'o', 'q', 'status', 'pay', 'from', 'to', 'p', 'cp']));
@@ -3180,11 +3191,6 @@ if (isset($_GET['analytics'])) {
     foreach ($V['leave'] as $row)
       $lvT .= '<tr><td><b>' . h(fx_pg_name($row['pg'], $names)) . '</b>' . $bar($row['left_n'], $lvMax) . '</td><td class="num">' . number_format($row['seen']) . '</td><td class="num">' . number_format($row['left_n'])
             . '</td><td class="num"><b>' . $pctT($pct($row['left_n'], $row['seen'])) . '</b></td><td class="num">' . fx_secs($row['secs']) . '</td><td class="num">' . ($row['pc'] !== null ? (int)$row['pc'] . '%' : '–') . '</td></tr>';
-    /* 2. what people tap: buttons, things that are not buttons, angry taps */
-    $tp = ['btn' => '', 'dead' => '', 'rage' => '']; $tn = ['btn' => 0, 'dead' => 0, 'rage' => 0];
-    foreach ($V['taps'] as $row) foreach (['btn' => !$row['dead'], 'dead' => (bool)$row['dead'], 'rage' => $row['rage'] > 0] as $k => $ok)
-      if ($ok && $tn[$k]++ < 60) $tp[$k] .= '<tr><td><b>' . h($row['label'] !== '' ? $row['label'] : '–') . '</b><span class="muted tpg">' . h(fx_pg_name($row['pg'], $names)) . '</span></td><td class="num">' . number_format($k === 'rage' ? $row['rage'] : $row['taps']) . '</td><td class="num">' . number_format($row['people']) . '</td></tr>';
-    $tapList = fn($k, $empty) => '<div class="list" data-r="' . $k . '"' . ($k === 'btn' ? '' : ' hidden') . '>' . ($tp[$k] ? '<table class="mini ttab"><thead><tr><th>' . ($k === 'btn' ? 'Button or link' : 'Tapped') . ' · page</th><th class="num">Taps</th><th class="num">People</th></tr></thead><tbody>' . $tp[$k] . '</tbody></table>' : '<p class="muted empty">' . $empty . '</p>') . '</div>';
     /* 3. the newest visits, step by step */
     $endCls = ['bought' => 'ok', 'payment' => 'hot', 'checkout' => 'hot', 'bag' => 'hot', 'bounce' => 'bad', 'left' => ''];
     $devIc = ['phone' => 'Phone', 'computer' => 'Laptop', 'tablet' => 'Tablet'];
@@ -3207,9 +3213,7 @@ if (isset($_GET['analytics'])) {
       . ($paths ? '<div class="list"><ul class="vlist">' . $paths . '</ul></div><p class="muted small gnote">Each box is a page: how long they stayed, how far down they saw, and what they tapped. <i class="dd">Grey</i> = tapped something that is not a button. <i class="rg">Red</i> = tapped the same spot 3 times fast, or an error on the page.</p>' : '<p class="muted empty">No visits in these dates.</p>') . '</section>'
       . '<section class="card v-leave" data-p="vleave"><div class="ch"><h2>Where people leave</h2></div>'
       . ($lvT ? '<div class="list"><table class="mini ltab2"><thead><tr><th>Last page</th><th class="num">Saw it</th><th class="num">Left</th><th class="num">Left %</th><th class="num">Time</th><th class="num">Seen</th></tr></thead><tbody>' . $lvT . '</tbody></table></div><p class="muted small gnote">Left: visits that ended on this page. Seen: how far down the page people got, on average.</p>' : '<p class="muted empty">No visits in these dates.</p>') . $vjNote . '</section>'
-      . '<section class="card v-taps" data-p="vtaps"><div class="ch"><h2>What people tap</h2><div class="seg gseg" role="group"><button type="button" data-r="btn" class="on">Buttons</button><button type="button" data-r="dead">Not buttons' . ($tn['dead'] ? ' (' . $tn['dead'] . ')' : '') . '</button><button type="button" data-r="rage">Angry' . ($tn['rage'] ? ' (' . $tn['rage'] . ')' : '') . '</button></div></div>'
-      . $tapList('btn', 'No taps counted yet.') . $tapList('dead', 'Nobody tapped something that is not a button.') . $tapList('rage', 'No angry taps. Good.')
-      . '<p class="muted small gnote">Not buttons: people tapped a photo or words and nothing happened, so they may expect it to open. What people type is never kept.</p></section>'
+      . fx_taps_card($V, $names, 'card v-taps', ' data-p="vtaps"')
       . '</div>';
   } catch (Throwable $e) {
     $vjGrid = '<section class="card"><p class="muted empty">Visits could not open: ' . h($e->getMessage()) . ' (line ' . $e->getLine() . '). Send us a picture of this line.</p></section>';
@@ -3546,7 +3550,8 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
     . '<div class="ihow"><b>How to use this page</b><ol><li>Start with tip 1: it affects the most people.</li><li>Read what the data shows and follow the steps.</li><li>Check again after a week: the numbers should move.</li></ol></div></section>'
     . '<section class="card i-tips"><div class="ch"><h2>What to fix first</h2><a class="btn sm line" href="./?analytics=1&amp;vj=1&amp;r=' . h($r) . '">See the visits</a></div>'
     . ($tipsH ? '<div class="list"><ol class="tips">' . $tipsH . '</ol></div>' : ($doneH ? '<p class="muted empty">Nothing new to fix right now. A fixed tip comes back here only if the numbers are still bad a week after the fix.</p>' : '<p class="muted empty">No clear problem in these dates yet. Pick 7 or 30 days, or check back when more people have visited.</p>'))
-    . '</section></div></div>', true, true);
+    . '</section>' . fx_taps_card($V, $names, 'card v-taps i-taps') . '</div></div>'
+    . '<script>document.querySelectorAll(".i-taps .gseg button").forEach(function(b){b.addEventListener("click",function(){var c=b.closest(".card");c.querySelectorAll(".gseg button").forEach(function(x){x.classList.toggle("on",x===b)});c.querySelectorAll(".list[data-r]").forEach(function(x){x.hidden=x.dataset.r!==b.dataset.r})})})</script>', true, true);
 } catch (Throwable $e) {
   page('Improve', '<div class="db imp"><div class="pagehead"><h1>Improve</h1></div><section class="card"><p class="muted empty">Improve could not open: ' . h($e->getMessage()) . ' (line ' . $e->getLine() . '). Send us a picture of this line.</p></section></div>', true, true);
 }
