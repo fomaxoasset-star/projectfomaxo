@@ -1112,6 +1112,16 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
   .hc-buy{justify-content:space-between;padding:14px 16px;background:rgba(5,5,5,.62);border:1px solid rgba(215,170,105,.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .hc-copy{padding-bottom:210px}
 }
+.hc-top{display:none}
+@media(max-width:980px){
+  .hc-buy{flex-wrap:wrap;row-gap:10px}
+  .hc-top{display:flex;flex:1 0 100%;justify-content:space-between;align-items:baseline;gap:12px}
+  .hc-what{display:flex;align-items:baseline;gap:8px;min-width:0}
+  .hc-what b{font-weight:500;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hc-what span{font-size:12px;letter-spacing:.12em;color:#f6efe2;white-space:nowrap}
+  .hc-buy:not(.own) .hc-p .price small{display:none}   /* the size is named above, so the price is that size's own price, not a "from" */
+  .hc-all{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#f6efe2;white-space:nowrap;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(215,170,105,.6)}
+}
 /* benefits strip */
 .perks-strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--deep)}
 .perks-strip .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -3701,6 +3711,9 @@ const heroName = s => s.own ? 'FOMAXO' : P[s.id].name;
 const heroHref = s => s.own ? '#/fragrances' : '#/product/' + s.id;
 const heroFrom = () => moneyHTML(Math.min(...FRAG.flatMap(p => Object.values(p.prices)).filter(hasPrice)));
 const heroPrice = s => s.own ? `<span class="price"><small>from</small> ${heroFrom()}</span>` : fromHTML(P[s.id]);   // a product hidden on the admin drops out of the slideshow
+/* phone + tablet (the "Now showing" name is hidden there): the box says which perfume and size the price and Add to bag are for (AJAY "fix home", 2026-10-26) */
+const heroSize = p => { const v = p.sizes.filter(z => hasPrice(p.prices[z])); return v.length ? v.reduce((a, z) => p.prices[z] < p.prices[a] ? z : a) : defaultSize(p); };   // the size whose price the box shows
+const heroWhat = s => s.own ? `<b>FOMAXO</b><span>${[...new Set(FRAG.flatMap(p => p.sizes))].sort((a, b) => a - b).map(z => z + 'ml').join(' · ')}</span>` : `<b>${esc(heroName(s))}</b><span>${heroSize(P[s.id])}ml</span>`;
 /* home strip under the banner; Same-Day Delivery next to Free delivery only while same-day is switched on (admin → Settings → Same-day; AJAY 2026-10-23).
    Its areas are remembered on this device so the strip opens with the right number of items */
 const perkSD = () => { if (SAMEDAY || prodLoaded) return SAMEDAY ? sdEms() : ''; try { return localStorage.getItem('fomaxo_sd') || ''; } catch(e) { return ''; } };
@@ -3728,7 +3741,7 @@ function home(){
     <div class="hc-bar">
       <div class="hc-nav" id="hcNav">${slides.map((s,i) => `<button class="${i?'':'on'}" data-i="${i}" aria-label="Show ${esc(heroName(s))}"><span class="n">0${i+1}</span><span class="t">${esc(heroName(s))}</span><i></i></button>`).join('')}</div>
       <a class="hc-now" id="hcNow" href="${heroHref(slides[0])}"><small>Now showing</small><b id="hcName">${esc(heroName(slides[0]))}</b><span>Discover →</span></a>
-      <div class="hc-buy" id="hcBuy"><div class="hc-p" id="hcPrice">${heroPrice(slides[0])}</div><button class="btn sm" id="hcAdd" type="button">${slides[0].own ? 'Shop all sizes' : 'Add to bag'}</button></div>
+      <div class="hc-buy${slides[0].own ? ' own' : ''}" id="hcBuy"><div class="hc-top"><a class="hc-what" id="hcWhat" href="${heroHref(slides[0])}">${heroWhat(slides[0])}</a><a class="hc-all" href="#/fragrances">View all →</a></div><div class="hc-p" id="hcPrice">${heroPrice(slides[0])}</div><button class="btn sm" id="hcAdd" type="button">${slides[0].own ? 'Shop all sizes' : 'Add to bag'}</button></div>
     </div>
   </section>
 
@@ -5796,8 +5809,8 @@ function bindHome(){
   let shown = false;
   const show = n => { i = n; wake(figs[i]); clearTimeout(nextT); nextT = setTimeout(() => wake(figs[(i+1) % figs.length]), 2500); figs.forEach((f,k) => f.classList.toggle('on', k === i)); btns.forEach((b,k) => { b.classList.toggle('on', k === i); b.classList.remove('run'); });
     if (shown) void btns[i].offsetWidth; shown = true; btns[i].classList.add('run');   // restart the bar's fill (not needed the first time, which saves a full page layout while the page opens)
-    const s = heroSlides()[i]; $('#hcName').textContent = heroName(s); $('#hcNow').href = heroHref(s); $('#hcPrice').innerHTML = heroPrice(s); $('#hcAdd').textContent = s.own ? 'Shop all sizes' : 'Add to bag'; };
-  $('#hcAdd').onclick = () => { const s = heroSlides()[i]; if (s.own){ location.hash = '#/fragrances'; return; } const p = P[s.id]; addToCart(p.id, defaultSize(p)); };
+    const s = heroSlides()[i]; $('#hcName').textContent = heroName(s); $('#hcNow').href = heroHref(s); $('#hcPrice').innerHTML = heroPrice(s); $('#hcWhat').innerHTML = heroWhat(s); $('#hcBuy').classList.toggle('own', !!s.own); $('#hcWhat').href = heroHref(s); $('#hcAdd').textContent = s.own ? 'Shop all sizes' : 'Add to bag'; };
+  $('#hcAdd').onclick = () => { const s = heroSlides()[i]; if (s.own){ location.hash = '#/fragrances'; return; } const p = P[s.id]; addToCart(p.id, heroSize(p)); };   // the size whose price is on screen
   const start = () => { clearInterval(heroTimer); heroTimer = setInterval(() => show((i+1) % figs.length), 6500); };
   btns.forEach(b => b.onclick = () => { show(+b.dataset.i); start(); });
   show(0); start();
