@@ -4111,10 +4111,20 @@ function bindProduct(p){
      Before, a phone tap did nothing (only a double tap zoomed): the recorder saw Instagram phone visitors tapping it again and again (AJAY 2026-10-26) */
   const zoomAt = (x, y) => { const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${Math.min(100, Math.max(0, (x - r.left) / r.width * 100))}% ${Math.min(100, Math.max(0, (y - r.top) / r.height * 100))}%`; };
   stage.setAttribute('role', 'button'); stage.setAttribute('aria-label', 'Zoom photo'); stage.dataset.tap = '1';
+  let tapDone = 0;
+  const tapZoom = (x, y) => { if (!stage.classList.contains('zoom')) zoomAt(x, y); stage.classList.toggle('zoom'); };
   stage.onclick = e => {
     if (matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches) { stage.classList.toggle('zoom'); return; }
-    if (!stage.classList.contains('zoom')) zoomAt(e.clientX, e.clientY); stage.classList.toggle('zoom');
+    if (Date.now() - tapDone < 800) return;   // the finger's tap was already handled (below)
+    tapZoom(e.clientX, e.clientY);
   };
+  /* phone: the tap is read from the finger itself, so it zooms in or out even when the finger slid a little. A real finger always slides a few px, and past ~10 px
+     the phone sends no click: the photo stayed zoomed and every swipe only moved it around (AJAY 2026-10-26: "swipe photos seems stuck" after a few taps) */
+  let zt = null;
+  stage.addEventListener('touchstart', e => { zt = e.touches.length === 1 ? {x: e.touches[0].clientX, y: e.touches[0].clientY, at: Date.now(), y0: scrollY} : null; }, {passive: true});
+  stage.addEventListener('touchmove', e => { if (zt && e.touches.length > 1) zt = null; }, {passive: true});
+  stage.addEventListener('touchend', e => { if (!zt || e.touches.length) return; const c = e.changedTouches[0];
+    if (Math.hypot(c.clientX - zt.x, c.clientY - zt.y) < 24 && Date.now() - zt.at < 500 && Math.abs(scrollY - zt.y0) < 2) { tapZoom(c.clientX, c.clientY); tapDone = Date.now(); } zt = null; });
   stage.onmousemove = e => { if (!stage.classList.contains('zoom')) return; const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${(e.clientX-r.left)/r.width*100}% ${(e.clientY-r.top)/r.height*100}%`; };
   stage.onmouseleave = () => { if (matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches) stage.classList.remove('zoom'); };   // a phone tap also sends mouse events: keep its zoom
   /* phone: swipe the big photo left / right for the next / previous photo (goes round at the ends); the neighbour photo slides in beside it */
