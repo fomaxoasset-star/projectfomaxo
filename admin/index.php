@@ -3469,7 +3469,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
       'An error can stop a button from working, so people cannot add to bag or pay.', ['Nothing for you to do: we read the error and fix it.'], 'fix the error');
   /* fixes already built and live (reply word => day it went live): the tip leaves the list and waits in Done.
      It comes back only when a week has passed and the chosen dates start after the fix, so it is judged on new visits only */
-  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26'];
+  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26'];
   $doneH = []; $back = fn($w) => isset($done[$w]) && time() >= strtotime($done[$w] . ' +7 days') && $span[0] >= $done[$w] . ' 00:00:00';
   foreach ($tips as $i => $t) if (isset($done[$t['word']])) {
     if ($back($t['word'])) { $tips[$i]['data'][] = '<b>Fixed on ' . date('d/m/Y', strtotime($done[$t['word']])) . ', and still happening on the new visits.</b>'; continue; }
