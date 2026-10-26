@@ -1700,6 +1700,7 @@ html[data-mode="light"] .co-row.disc,html[data-mode="light"] .co-row.disc .price
 .co-done b.price{font-family:var(--serif);letter-spacing:0;font-size:30px}
 .co-done .co-small{flex-basis:100%}
 html[data-mode="light"] .co-err{color:#a8321f;border-color:#c0503c}
+.co .co-lock{justify-content:center;text-align:center;color:#f0a497;border-color:#e0705f}.co .co-lock svg{color:inherit}html[data-mode="light"] .co .co-lock{color:#a8321f;border-color:#c0503c}   /* missing details line in Payment: red, same words as the message under Note (AJAY 2026-10-26) */
 html[data-mode="light"] .co-done b{color:var(--gold)}
 @media(max-width:900px){
   .co{padding-top:24px}
@@ -5060,7 +5061,7 @@ function bindCheckout(q){
     const missing = check(details()), locked = missing.length > 0;
     FXT.lead(locked ? 'details' : 'payment', details(), ls, T.total); if (!locked) FXT.once('pay');
     const opt = (id, title, sub, off) => { off = off || locked; return `<label class="co-opt${coPay === id && !locked ? ' on' : ''}${off ? ' off' : ''}"><input type="radio" name="pay" value="${id}"${coPay === id ? ' checked' : ''}${off ? ' disabled' : ''}><span class="co-opt-t"><b>${title}</b><small>${sub}</small></span><span class="co-opt-i">${CO_ICON[id]}</span></label>`; };
-    $('#coPay').innerHTML = (locked ? `<p class="co-lock">${CO_ICON.lock}<span>Fill in your ${listTxt(missing.map(b => b[1]))} to choose how to pay.</span></p>` : '') + (CARD_ON ? opt('card', 'Card / Apple Pay / Google Pay', `Pay securely now with ${CARD_BY}`) : '') +
+    $('#coPay').innerHTML = (locked ? `<p class="co-lock">${CO_ICON.lock}<span>Please add your ${listTxt(missing.map(b => b[1]))} so we can deliver your order.</span></p>` : '') + (CARD_ON ? opt('card', 'Card / Apple Pay / Google Pay', `Pay securely now with ${CARD_BY}`) : '') +
       opt('cod', 'Cash on delivery', sdNoCod ? `<span class="co-opt-1l">Not for same-day delivery</span><span class="co-opt-2l">Please pay by card.</span>` : codOk ? `<span class="co-opt-1l">Pay in Cash When Order Arrives</span>${COD_FEE ? `<span class="co-opt-2l">Fee ${aed(COD_FEE)}</span>` : ''}` : codBig ? `<span class="co-opt-1l">COD for orders under ${aed(COD_MAX)}</span><span class="co-opt-2l">Please pay by card.</span>` : `For orders above ${aed(COD_MIN)}${COD_FEE ? ` · ${aed(COD_FEE)} fee` : ''}<span class="co-opt-more">Add ${aed(Math.round((COD_MIN - (base.after || 0)) * 100) / 100)} more to activate COD</span>`, !codOk);
     // tapping Card goes straight to Ziina (no money is taken until they pay there); Cash on delivery only gets picked, so no order is placed by a stray tap; the button below still pays either way (AJAY 2026-10-26)
     $$('#coPay input').forEach(r => r.onclick = () => { coPay = r.value; err.hidden = true; draw(); if (r.value === 'card' && !busy && !go.disabled) go.click(); });
