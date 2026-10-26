@@ -358,6 +358,7 @@
 "Shop the collection": "تسوّق المجموعة",
 "from": "ابتداءً من",
 "Discovery Set": "مجموعة الاكتشاف",
+"Discovery": "الاكتشاف",
 "Now showing": "المعروض الآن",
 "Discover →": "اكتشف ←",
 "Add to bag": "أضف إلى الحقيبة",
