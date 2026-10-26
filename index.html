@@ -5915,9 +5915,10 @@ function loopRow(sc){ if (!sc || sc.dataset.loop) return; const ks = [...sc.chil
   let t = 0; const fix = () => { const w = W(), x = Math.abs(sc.scrollLeft); if (w && x < w * .5) sc.scrollLeft = s * (x + w); else if (w && x > w * 1.5) sc.scrollLeft = s * (x - w); };
   sc.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(fix, 150); }, {passive: true}); }
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
-function vidLit(v, done){ if (v._lit) return; v._lit = 1; const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d', {willReadFrequently: true}); let n = 0;
-  const chk = () => { if (!v.getAttribute('src')) { v._lit = 0; return; } let ok = false; try { g.drawImage(v, 0, 0, 8, 8); const d = g.getImageData(0, 0, 8, 8).data; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 36) { ok = true; break; } } catch (e) { ok = true; }
-    if (ok) { v._lit = 0; return done(); } if (++n < 150) next(); else v._lit = 0; };   // about 5 seconds of black frames: the photo stays
+function vidLit(v, done){ (v._litQ = v._litQ || []).push(done); if (v._lit) return; v._lit = 1;   // a video the player borrows from the row can be checked for both at once: each waiting cover goes when the check passes
+  const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d', {willReadFrequently: true}); let n = 0;
+  const chk = () => { if (!v.getAttribute('src')) { v._lit = 0; v._litQ = []; return; } let ok = false; try { g.drawImage(v, 0, 0, 8, 8); const d = g.getImageData(0, 0, 8, 8).data; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 36) { ok = true; break; } } catch (e) { ok = true; }
+    if (ok) { v._lit = 0; const q = v._litQ; v._litQ = []; return q.forEach(f => f()); } if (++n < 150) next(); else { v._lit = 0; v._litQ = []; } };   // about 5 seconds of black frames: the photo stays
   const next = () => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(chk) : setTimeout(chk, 200);
   next(); }
 function bindVids(){
