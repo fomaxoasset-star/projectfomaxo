@@ -75,6 +75,8 @@ var f=document.createElement("style");f.textContent="@font-face{font-family:'Ami
 html{scroll-behavior:smooth;background:var(--black);-webkit-text-size-adjust:100%}
 body{background:var(--black);color:var(--ivory);font-family:var(--sans);font-weight:300;font-size:16px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 body.lock{overflow:hidden}
+html:has(body.pin),body.pin{overscroll-behavior-y:none}
+body.pin{position:fixed;left:0;right:0;width:100%}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit}
 button{background:none;border:0;cursor:pointer}
@@ -1110,6 +1112,16 @@ h3{font-size:clamp(19px,1.5vw,23px);letter-spacing:.08em;line-height:1.25}
   .hc-buy{justify-content:space-between;padding:14px 16px;background:rgba(5,5,5,.62);border:1px solid rgba(215,170,105,.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
   .hc-copy{padding-bottom:210px}
 }
+.hc-top{display:none}
+@media(max-width:980px){
+  .hc-buy{flex-wrap:wrap;row-gap:10px}
+  .hc-top{display:flex;flex:1 0 100%;justify-content:space-between;align-items:baseline;gap:12px}
+  .hc-what{display:flex;align-items:baseline;gap:8px;min-width:0}
+  .hc-what b{font-weight:500;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hc-what span{font-size:12px;letter-spacing:.12em;color:#f6efe2;white-space:nowrap}
+  .hc-buy:not(.own) .hc-p .price small{display:none}   /* the size is named above, so the price is that size's own price, not a "from" */
+  .hc-all{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#f6efe2;white-space:nowrap;text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(215,170,105,.6)}
+}
 /* benefits strip */
 .perks-strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--deep)}
 .perks-strip .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -1389,7 +1401,8 @@ html[data-mode="light"] .btn:not(.line){color:#fffaf1}
 .card .desc,.lead,.small,.pillars p,.etier ul,.tier ul,.fgrid a,.perks-strip span{color:var(--muted)}
 .hc-nav button{color:rgba(246,239,226,.82)}
 .hc-nav button.on{color:#f0d3a0}
-.hero-cine .hc-lead{color:#f3e6cc;max-width:760px}
+.hero-cine .hc-lead{color:#f3e6cc;max-width:920px;text-transform:uppercase;letter-spacing:.03em}   /* all capitals (AJAY 2026-10-26) */
+@media(max-width:600px){.hero-cine .hc-lead{font-size:min(16px,4.1vw);letter-spacing:.02em}}
 .hc-now small{color:#d8ccb4}
 .track-lab span{color:var(--muted)}
 .form input::placeholder,.form textarea::placeholder,.notify input::placeholder{color:var(--dim);opacity:1}
@@ -1959,7 +1972,7 @@ html[data-mode="light"] .form .rw-need select,html[data-mode="light"] .form labe
 .ad-acts{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
 .ad-acts .btn{width:100%;justify-content:center;text-align:center;white-space:nowrap}
 .ad-acts .co-min{grid-column:1/-1;white-space:normal;pointer-events:none;opacity:.75}
-@media(max-width:600px){.added{left:12px;right:12px;bottom:12px;width:auto;max-width:none;padding:16px 14px 14px}.mbuy.show ~ .added{bottom:calc(84px + var(--sab))}.ad-acts{grid-template-columns:1.2fr 1fr;gap:8px}.ad-acts > *{min-width:0}.ad-acts .btn{padding-left:8px;padding-right:8px;letter-spacing:.12em;font-size:11px}}
+@media(max-width:600px){.added{left:12px;right:12px;bottom:12px;width:auto;max-width:none;padding:16px 14px 14px}.mbuy.show ~ .added{bottom:calc(104px + var(--sab))}.ad-acts{grid-template-columns:1.2fr 1fr;gap:8px}.ad-acts > *{min-width:0}.ad-acts .btn{padding-left:8px;padding-right:8px;letter-spacing:.12em;font-size:11px}}
 .p-save{display:block;margin-top:6px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .p-save .amt{font-size:1.25em}
 .pp-line{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px}
@@ -2377,6 +2390,25 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
   .acc summary{font-size:15px;padding:6px 0}
 }
 @media(min-width:961px) and (max-height:800px){.pdp-crumbs{display:none}.pdp{padding-top:10px}.acc .body{max-height:calc(84px / var(--bz,1))}}
+/* phone product page: name, smell, stars and price reach the first screen (ad visitors left at 9% of the page, AJAY "fix old money" 2026-10-26):
+   no path line, less space under the photo (photo full width again, AJAY 13:10) */
+@media(max-width:600px){
+  .pdp-crumbs{display:none}
+  .pdp{padding-top:12px}
+  .gallery{gap:10px}
+  .pdp{row-gap:18px}
+}
+/* phone bottom bar: the two promises right above the Add to bag button */
+.mbuy{flex-wrap:wrap;row-gap:8px}
+.mbuy .mb-why{flex-basis:100%;order:-1;text-align:center;font-size:min(10px,2.6vw);letter-spacing:.14em;white-space:nowrap;text-transform:uppercase;color:var(--gold);line-height:1.2}
+.mbuy .mb-why i{font-style:normal;margin:0 .5em;opacity:.6}
+/* phone bottom bar: real star rating next to the name (taps to the reviews) and the Smells like notes under it (AJAY "fix product page" 2026-10-26) */
+.mbuy .mb-top{display:flex;align-items:center;gap:8px;min-width:0}
+.mbuy .mb-top b{min-width:0}
+.mbuy .crate{display:inline-flex;align-items:center;gap:4px;flex:none;font-size:11px;letter-spacing:.04em;color:var(--fg,inherit);white-space:nowrap}
+.mbuy .crate .rw-stars{display:none}.mbuy .crate>span::before{content:'★';color:var(--gold);margin-inline-end:4px}   /* one gold star + 4.9 (12), so the name keeps its room */
+.mbuy .crate.none{display:none}
+.mbuy .mb-sm{display:block;font-style:normal;font-size:11px;letter-spacing:.06em;color:var(--fg,inherit);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px 0 1px}
 /* ===== Arabic (عربي) — the site turns right-to-left; English text is swapped by assets/i18n-ar.js ===== */
 html.i18n-wait body{visibility:hidden}
 html.i18n-wait .hc-early,html.i18n-wait #heroCine .hc-slides{visibility:visible}   /* the home banner picture has no words, so Arabic visitors see it while the Arabic text loads */
@@ -3276,6 +3308,8 @@ let SAMEDAY = null, coSdOn = false, coSD = '';
 const sdEms = (v = SAMEDAY) => EMIRATES.filter(e => v && v.areas && v.areas[e]).sort((a, b) => (b === v.here) - (a === v.here)).join(', ');   // same-day emirates: the visitor's own emirate first (approximate, from their internet address), then Dubai, Sharjah, Ajman (AJAY 2026-10-23)
 const sdHr = () => new Date(Date.now() + 4 * 3600e3).getUTCHours();   // Dubai hour
 const sdOpen = () => !!SAMEDAY && !SAMEDAY.full && sdHr() >= (SAMEDAY.from || 0) && sdHr() < SAMEDAY.cut;   // inside the order hours (admin → Settings → Same-day) and today's same-day orders not full
+/* phone bottom bar promises; Same-day delivery only while it is switched on, reaches the visitor's emirate and today's order hours are open (AJAY 2026-10-26) */
+const mbWhy = () => (SAMEDAY && SAMEDAY.here && sdOpen() ? '<span>Same-day delivery</span><i>·</i>' : '') + '<span>Free delivery</span><i>·</i><span>Cash on delivery</span>';
 const hr12 = h => (h % 12 || 12) + (h < 12 ? ' AM' : ' PM');
 const sdBy = () => SAMEDAY && SAMEDAY.by > 12 ? (SAMEDAY.by - 12) + ' PM' : '';   // "arrives today by 9 PM" (admin → Settings → Cash → Arrives by; empty = not said)
 const sdFee = after => !SAMEDAY ? 0 : SAMEDAY.free > 0 && after >= SAMEDAY.free ? 0 : SAMEDAY.fee;
@@ -3519,12 +3553,24 @@ function afterBuyRecs(lines){
 
 /* ============================ OVERLAYS ============================ */
 const scrim = $('#scrim');
-function openPanel(el){ closePanels(); if (el.id === 'cart') hideAdded(); el.classList.add('open'); el.setAttribute('aria-hidden','false'); if (el.id === 'cart') scrim.classList.add('open'); document.body.classList.add('lock'); }
-function closePanels(){ $$('.drawer.open,.search.open,.mnav.open').forEach(x => { x.classList.remove('open'); x.setAttribute('aria-hidden','true'); }); scrim.classList.remove('open'); document.body.classList.remove('lock'); }
+/* phones: the page under an open bag/menu is pinned in place, so the browser bar never slides in or out and the bag keeps one size while it is scrolled */
+let pinY = null;
+function pinPage(on){ const b = document.body;
+  if (on && pinY === null && matchMedia('(max-width:600px)').matches) { pinY = scrollY; b.style.top = -pinY + 'px'; b.classList.add('pin'); }
+  else if (!on && pinY !== null) { const y = pinY; pinY = null; b.classList.remove('pin'); b.style.top = ''; scrollTo({top: y, behavior: 'instant'}); } }
+function openPanel(el){ closePanels(); if (el.id === 'cart') hideAdded(); el.classList.add('open'); el.setAttribute('aria-hidden','false'); if (el.id === 'cart') scrim.classList.add('open'); document.body.classList.add('lock'); pinPage(true); }
+function closePanels(){ $$('.drawer.open,.search.open,.mnav.open').forEach(x => { x.classList.remove('open'); x.setAttribute('aria-hidden','true'); }); scrim.classList.remove('open'); document.body.classList.remove('lock'); pinPage(false); }
 /* phones: a swipe anywhere in the bag (top bar, totals, buttons) moves only the products list; the page behind never moves */
 (() => { const cart = document.getElementById('cart'); if (!cart) return; let y = null;
   cart.addEventListener('touchstart', e => { const b = cart.querySelector('.dr-body'); y = b && !b.contains(e.target) && !e.target.closest('select,input,textarea') ? e.touches[0].clientY : null; }, {passive: true});
   cart.addEventListener('touchmove', e => { if (y === null) return; const b = cart.querySelector('.dr-body'), ny = e.touches[0].clientY; b.scrollTop += y - ny; y = ny; e.preventDefault(); }, {passive: false});
+  /* pulling down at the top of the products list (or up at its end) never reaches the page, so the phone never reloads it */
+  let ly = null, lx = 0;
+  cart.addEventListener('touchstart', e => { ly = e.touches.length === 1 ? e.touches[0].clientY : null; lx = e.touches[0].clientX; }, {passive: true});
+  cart.addEventListener('touchmove', e => { if (ly === null || y !== null || !e.cancelable) return; const b = cart.querySelector('.dr-body'); if (!b || !b.contains(e.target) || e.target.closest('select,input,textarea')) return;
+    const ny = e.touches[0].clientY, nx = e.touches[0].clientX, down = ny > ly, side = Math.abs(nx - lx) > Math.abs(ny - ly); ly = ny; lx = nx;
+    if (side) return;   // sideways swipes (the "You may also like" row) carry on as before
+    if (down ? b.scrollTop <= 0 : b.scrollTop + b.clientHeight >= b.scrollHeight - 1) e.preventDefault(); }, {passive: false});
 })();
 $('#openCart').onclick = () => { $('#toast').classList.remove('show'); renderCart(); openPanel($('#cart')); };
 $('#openMenu').onclick = () => openPanel($('#mnav'));
@@ -3676,6 +3722,9 @@ const heroName = s => s.own ? 'FOMAXO' : P[s.id].name;
 const heroHref = s => s.own ? '#/fragrances' : '#/product/' + s.id;
 const heroFrom = () => moneyHTML(Math.min(...FRAG.flatMap(p => Object.values(p.prices)).filter(hasPrice)));
 const heroPrice = s => s.own ? `<span class="price"><small>from</small> ${heroFrom()}</span>` : fromHTML(P[s.id]);   // a product hidden on the admin drops out of the slideshow
+/* phone + tablet (the "Now showing" name is hidden there): the box says which perfume and size the price and Add to bag are for (AJAY "fix home", 2026-10-26) */
+const heroSize = p => { const v = p.sizes.filter(z => hasPrice(p.prices[z])); return v.length ? v.reduce((a, z) => p.prices[z] < p.prices[a] ? z : a) : defaultSize(p); };   // the size whose price the box shows
+const heroWhat = s => s.own ? `<b>FOMAXO</b><span>${[...new Set(FRAG.flatMap(p => p.sizes))].sort((a, b) => a - b).map(z => z + 'ml').join(' · ')}</span>` : `<b>${esc(heroName(s))}</b><span>${heroSize(P[s.id])}ml</span>`;
 /* home strip under the banner; Same-Day Delivery next to Free delivery only while same-day is switched on (admin → Settings → Same-day; AJAY 2026-10-23).
    Its areas are remembered on this device so the strip opens with the right number of items */
 const perkSD = () => { if (SAMEDAY || prodLoaded) return SAMEDAY ? sdEms() : ''; try { return localStorage.getItem('fomaxo_sd') || ''; } catch(e) { return ''; } };
@@ -3703,7 +3752,7 @@ function home(){
     <div class="hc-bar">
       <div class="hc-nav" id="hcNav">${slides.map((s,i) => `<button class="${i?'':'on'}" data-i="${i}" aria-label="Show ${esc(heroName(s))}"><span class="n">0${i+1}</span><span class="t">${esc(heroName(s))}</span><i></i></button>`).join('')}</div>
       <a class="hc-now" id="hcNow" href="${heroHref(slides[0])}"><small>Now showing</small><b id="hcName">${esc(heroName(slides[0]))}</b><span>Discover →</span></a>
-      <div class="hc-buy" id="hcBuy"><div class="hc-p" id="hcPrice">${heroPrice(slides[0])}</div><button class="btn sm" id="hcAdd" type="button">${slides[0].own ? 'Shop all sizes' : 'Add to bag'}</button></div>
+      <div class="hc-buy${slides[0].own ? ' own' : ''}" id="hcBuy"><div class="hc-top"><a class="hc-what" id="hcWhat" href="${heroHref(slides[0])}">${heroWhat(slides[0])}</a><a class="hc-all" href="#/fragrances">View all →</a></div><div class="hc-p" id="hcPrice">${heroPrice(slides[0])}</div><button class="btn sm" id="hcAdd" type="button">${slides[0].own ? 'Shop all sizes' : 'Add to bag'}</button></div>
     </div>
   </section>
 
@@ -4099,7 +4148,7 @@ function bindProduct(p){
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
-  function renderMbuy(){ mb.innerHTML = `<div class="n"><b>${esc(p.name)}</b><small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
+  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
   renderMbuy();
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
@@ -4845,11 +4894,11 @@ function checkoutPage(q){
             <label><span>Email <span class="co-opt-l">(optional)</span></span><input name="email" type="email" inputmode="email" autocomplete="email" maxlength="120"></label></div></div>
           <div class="co-r3 co-r3b"><label>Emirate<select name="emirate" required><option value="">Choose your emirate</option>${EMIRATES.map(e => `<option>${e}</option>`).join('')}</select></label>
           <div class="co-ar co-ar1">
-            <label class="co-a-b"><span>Villa / building no <span class="co-opt-l">(optional)</span></span><input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12"></label>
-            <label class="co-a-r"><span>Room No / Floor <span class="co-opt-l">(optional)</span></span><input name="room" autocomplete="address-line2" maxlength="20" placeholder="e.g. 1204"></label>
+            <label class="co-a-b">Villa / building no<input name="building" autocomplete="address-line1" maxlength="40" placeholder="e.g. Villa 12"></label>
+            <label class="co-a-r">Room No / Floor<input name="room" autocomplete="address-line2" maxlength="20" placeholder="e.g. 1204"></label>
           </div></div>
           <div class="co-r3 co-r3c"><div class="co-ar co-ar2">
-            <label class="co-a-s"><span>Street <span class="co-opt-l">(optional)</span></span><input name="street" maxlength="100" placeholder="e.g. Al Wasl Road"></label>
+            <label class="co-a-s">Street<input name="street" maxlength="100" placeholder="e.g. Al Wasl Road"></label>
             <label class="co-a-a">Area<input name="area" autocomplete="address-level2" maxlength="80" placeholder="e.g. Jumeirah 1" required></label>
           </div>
           <label><span>Note <span class="co-opt-l">(optional)</span></span><textarea name="note" class="co-note" maxlength="300" placeholder="Landmark, delivery time or gift message"></textarea></label></div>
@@ -5173,7 +5222,8 @@ const rwShort = v => v.replace(/[^\p{L}\p{M}\s'\-.]/gu, '').trim().split(/\s+/).
 /* star line under the product name: shown straight away (card summary), always visible; no reviews yet = faint stars */
 /* product page: "Smells like" one note from the top, heart and base, so a first-time visitor knows the scent in one line */
 const SMELL_PICK = {gold: ['Bergamot', 'Agarwood', 'Musk']};   // AJAY's choice of notes for a product's Smells like line (instead of the first top/heart/base note)
-const smellHTML = p => { const n = p.notes; if (!n || n.key) return ''; const w = SMELL_PICK[p.id] || [n.top, n.heart, n.base].map(x => String(x || '').split('·')[0].trim()).filter(Boolean); return w.length ? `<p class="pd-smell"><span>Smells like</span>${w.map(esc).join(' · ')}</p>` : ''; };
+const smellWords = p => { const n = p.notes; if (!n || n.key) return []; return SMELL_PICK[p.id] || [n.top, n.heart, n.base].map(x => String(x || '').split('·')[0].trim()).filter(Boolean); };
+const smellHTML = p => { const w = smellWords(p); return w.length ? `<p class="pd-smell"><span>Smells like</span>${w.map(esc).join(' · ')}</p>` : ''; };
 /* the 10ml as a cheap first try (only when the product has a 10ml with a price and another size is picked) */
 const tryHTML = (p, size) => p.kind !== 'set' && p.sizes.includes(10) && hasPrice(p.prices[10]) && size !== 10 ? `New to FOMAXO? <b>Try the 10ml first · ${moneyHTML(p.prices[10])}</b>` : '';
 /* best real review under the price: 5 stars with words, verified first, then most helpful, then newest */
@@ -5623,6 +5673,38 @@ const FXT = (() => {
     for (const m of [25, 50, 75, 100]) if (pc >= (m === 100 ? 98 : m) && !depth[m]) { depth[m] = 1; send('scroll', {d: m}); }
   }, 300); }, {passive: true});
   setInterval(() => { if (!document.hidden && sid && Date.now() - lastT < 18e5) post({v: vid, s: sid, e: 'ping', p: (location.hash || '#/').slice(1, 81)}); }, 6e4);
+  /* visit trail for fomaxo.com/admin → Analytics → Visits (our own Clarity): what each visit taps, how far down each page it scrolls,
+     and taps on things that do nothing or are tapped again and again. Never what is typed: a box is noted only by its name; on pages that
+     show customer details only buttons and links are named. Kept in this tab and sent in one small message every 15 s or when the page changes or closes. */
+  let trail = [], tPage = '', tMax = 0, tTaps = [];
+  const pg = () => (location.hash || '#/').slice(1, 81);
+  const flush = () => { if (tPage && tMax) { trail.push({k: 's', p: tPage, pc: Math.min(100, tMax)}); tMax = 0; }
+    if (trail.length && sid) post({v: vid, s: sid, e: 'trail', p: pg(), t: trail.splice(0, 25)}); else trail = []; };
+  const seenPc = () => { const h = document.documentElement.scrollHeight; return h > 10 ? Math.round(Math.min(1, (scrollY + innerHeight) / h) * 100) : 0; };
+  const tapName = (el, mask) => {
+    const t = el.tagName, clean = s => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 50);
+    if (/^(INPUT|SELECT|TEXTAREA)$/.test(t)) return 'Box: ' + clean(el.getAttribute('aria-label') || el.name || el.placeholder || el.type);
+    let s = clean(el.getAttribute('aria-label') || el.title);
+    if (!s && !(mask && !/^(A|BUTTON|LABEL|SUMMARY)$/.test(t))) { const w = clean(el.innerText || el.alt); if (w.length < 45 || /^(A|BUTTON|LABEL|SUMMARY)$/.test(t)) s = w; }   // a long block of words is named by its kind
+    if (!s) { const im = t === 'IMG' ? el : el.querySelector('img'); if (im) s = 'Photo' + (im.alt && !mask ? ': ' + clean(im.alt) : ''); }
+    return s || (el.id ? '#' + el.id : t.toLowerCase() + (typeof el.className === 'string' && el.className ? '.' + el.className.split(' ')[0] : ''));
+  };
+  document.addEventListener('click', e => { if (off || !sid || !e.isTrusted) return;
+    const tg = e.target instanceof Element ? e.target : null; if (!tg) return;
+    const hit = tg.closest('a,button,input,select,textarea,label,summary,[role=button],[onclick],[data-r],[data-p],[data-id]');
+    const el = hit || tg, mask = !!tg.closest('[data-clarity-mask]'), now = Date.now();
+    tTaps = tTaps.filter(x => now - x.t < 1000 && Math.abs(x.x - e.clientX) < 40 && Math.abs(x.y - e.clientY) < 40); tTaps.push({t: now, x: e.clientX, y: e.clientY});
+    const h = document.documentElement.scrollHeight;
+    trail.push({k: 't', p: pg(), l: tapName(el, mask), x: Math.round(e.clientX / innerWidth * 100), y: h ? Math.round((e.clientY + scrollY) / h * 100) : 0, d: hit ? 0 : 1, r: tTaps.length === 3 ? 1 : 0});
+    if (trail.length >= 25) flush();
+  }, {capture: true, passive: true});
+  let tWait = 0; addEventListener('scroll', () => { if (tWait) return; tWait = setTimeout(() => { tWait = 0; tMax = Math.max(tMax, seenPc()); }, 400); }, {passive: true});
+  setInterval(() => { if (trail.length) flush(); }, 15e3);
+  addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+  // how long the website took to open on this phone or computer (once per visit to the site), and errors on the page (a button that breaks shows here)
+  addEventListener('load', () => setTimeout(() => { try { const n = performance.getEntriesByType('navigation')[0], ms = n && n.loadEventStart > 0 ? Math.round(n.loadEventStart) : 0; if (ms && !off) trail.push({k: 'l', p: pg(), ms: Math.min(ms, 60000)}); } catch(e) {} }, 0), {once: true});
+  let errN = 0; addEventListener('error', e => { if (off || !(e instanceof ErrorEvent) || errN++ >= 5) return; trail.push({k: 'e', p: pg(), l: String(e.message || 'Error').replace(/\d{6,}/g, '#').slice(0, 60)}); }, true);
+  const trailPage = () => { flush(); tPage = pg(); setTimeout(() => { if (tPage === pg()) tMax = Math.max(tMax, seenPc()); }, 1500); };   // a short page counts as seen to its end
   return {
     send,
     once(e, data) { if (sent[e]) return; sent[e] = 1; send(e, data); },
@@ -5630,7 +5712,7 @@ const FXT = (() => {
       const k = location.hash, now = Date.now();
       if (k === lastView && now - lastViewT < 2000) return;
       lastView = k; lastViewT = now;
-      send('view'); ADS.page(); if (k === '' || k === '#/') depth = {};
+      trailPage(); send('view'); ADS.page(); if (k === '' || k === '#/') depth = {};
       if (who) { send('lead', {st: 'visit', who}); who = ''; try { sessionStorage.removeItem('fomaxo_who_visit'); } catch(e) {} }
       else if (buyer) { send('lead', {st: 'buyer', phone: buyer}); buyer = ''; }   // ordered before on this device: the admin sees them by name when they come back
       if (seg[0] === 'product' && P[seg[1]] && !P[seg[1]].hidden) { send('product', {id: seg[1]}); ADS.view(P[seg[1]]); }
@@ -5738,8 +5820,8 @@ function bindHome(){
   let shown = false;
   const show = n => { i = n; wake(figs[i]); clearTimeout(nextT); nextT = setTimeout(() => wake(figs[(i+1) % figs.length]), 2500); figs.forEach((f,k) => f.classList.toggle('on', k === i)); btns.forEach((b,k) => { b.classList.toggle('on', k === i); b.classList.remove('run'); });
     if (shown) void btns[i].offsetWidth; shown = true; btns[i].classList.add('run');   // restart the bar's fill (not needed the first time, which saves a full page layout while the page opens)
-    const s = heroSlides()[i]; $('#hcName').textContent = heroName(s); $('#hcNow').href = heroHref(s); $('#hcPrice').innerHTML = heroPrice(s); $('#hcAdd').textContent = s.own ? 'Shop all sizes' : 'Add to bag'; };
-  $('#hcAdd').onclick = () => { const s = heroSlides()[i]; if (s.own){ location.hash = '#/fragrances'; return; } const p = P[s.id]; addToCart(p.id, defaultSize(p)); };
+    const s = heroSlides()[i]; $('#hcName').textContent = heroName(s); $('#hcNow').href = heroHref(s); $('#hcPrice').innerHTML = heroPrice(s); $('#hcWhat').innerHTML = heroWhat(s); $('#hcBuy').classList.toggle('own', !!s.own); $('#hcWhat').href = heroHref(s); $('#hcAdd').textContent = s.own ? 'Shop all sizes' : 'Add to bag'; };
+  $('#hcAdd').onclick = () => { const s = heroSlides()[i]; if (s.own){ location.hash = '#/fragrances'; return; } const p = P[s.id]; addToCart(p.id, heroSize(p)); };   // the size whose price is on screen
   const start = () => { clearInterval(heroTimer); heroTimer = setInterval(() => show((i+1) % figs.length), 6500); };
   btns.forEach(b => b.onclick = () => { show(+b.dataset.i); start(); });
   show(0); start();
@@ -6219,7 +6301,7 @@ async function loadProducts(){
     applyPages(); const s0 = (location.hash.replace(/^#\/?/, '').split(/[/?]/)[0]); if (HIDE_PAGES.includes(s0)) location.replace('#/'); else if (s0 === 'combo' || s0 === 'gifts') route();   // PC on/off changes what combos and gifts hold
   }
   if (d && d.cod && +d.cod.min >= 0 && +d.cod.max >= 0) { const fee = 'fee' in d.cod && +d.cod.fee >= 0 ? +d.cod.fee : COD_FEE; if (+d.cod.min !== COD_MIN || +d.cod.max !== COD_MAX || fee !== COD_FEE) { COD_MIN = +d.cod.min; COD_MAX = +d.cod.max; COD_FEE = fee; coRefresh && coRefresh(); const as = $('.buy .assure'); if (as) as.outerHTML = assureHTML(); } }
-  if (d && 'sameday' in d) { const v = d.sameday && d.sameday.areas && +d.sameday.fee >= 0 ? d.sameday : null; try { v ? localStorage.setItem('fomaxo_sd', sdEms(v)) : localStorage.removeItem('fomaxo_sd'); } catch(e) {} if (JSON.stringify(v) !== JSON.stringify(SAMEDAY)) { SAMEDAY = v; coRefresh && coRefresh(); const pl = $('.buy .pdels'); if (pl) pl.outerHTML = pdelHTML(); const as = $('.buy .assure'); if (as) as.outerHTML = assureHTML(); } }
+  if (d && 'sameday' in d) { const v = d.sameday && d.sameday.areas && +d.sameday.fee >= 0 ? d.sameday : null; try { v ? localStorage.setItem('fomaxo_sd', sdEms(v)) : localStorage.removeItem('fomaxo_sd'); } catch(e) {} if (JSON.stringify(v) !== JSON.stringify(SAMEDAY)) { SAMEDAY = v; coRefresh && coRefresh(); const pl = $('.buy .pdels'); if (pl) pl.outerHTML = pdelHTML(); const mw = $('#mbuy .mb-why'); if (mw) mw.innerHTML = mbWhy(); const as = $('.buy .assure'); if (as) as.outerHTML = assureHTML(); } }
   document.documentElement.classList.toggle('sd-on', !!SAMEDAY);   // top bar Same-day delivery on / off
   { const ps = $('.perks-strip'); if (ps && ps.classList.contains('n5') !== !!perkSD()) ps.outerHTML = perksHTML(); }   // home strip: Same-Day Delivery item on / off
   if (!d || !Array.isArray(d.products) || !d.products.length) return;   // database not set up or down: keep the list we have
