@@ -100,7 +100,7 @@ function fomaxo_price_order($in) {
 }
 
 /* Delivery details from the checkout page. Returns ['error'=>...] or clean details. Used by every payment type.
-   Address comes in separate boxes (villa/building no, room no / floor optional, street, area); email is optional. */
+   Address comes in one box (address); older pages sent separate boxes (villa/building no, room no / floor, street, area). Email is optional. */
 $EMIRATES = ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ras Al Khaimah', 'Fujairah'];
 /* a real-looking phone number, any country — same rules as phoneOk() in index.html */
 function fomaxo_phone_ok($v) {
@@ -130,7 +130,7 @@ function fomaxo_customer($in) {
   if ($out['building'] !== '' || $out['street'] !== '' || $out['area'] !== '') {
     if (mb_strlen($out['area']) < 2) return ['error' => 'Please enter your area.'];   // villa / building and street are optional: the exact address is confirmed on WhatsApp
     $out['address'] = implode(', ', array_filter([$out['building'], $out['room'] !== '' ? 'Room/Floor ' . $out['room'] : '', $out['street'], $out['area']]));
-  } elseif (mb_strlen($out['address']) < 5) {   // older page with a single address box
+  } elseif (mb_strlen($out['address']) < 5) {   // the checkout's one Address box (villa / building, street, area), since 26 Oct 2026
     return ['error' => 'Please enter your full delivery address.'];
   }
   return $out;
