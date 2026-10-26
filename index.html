@@ -1971,7 +1971,8 @@ html[data-mode="light"] .form .rw-need select,html[data-mode="light"] .form labe
 @media(max-width:600px){.added{transition:transform .22s var(--ease),opacity .15s,visibility .15s}}   /* phones: the Added box appears quicker after a tap */
 .added .ad-x{position:absolute;top:6px;right:8px;width:30px;height:30px;background:none;border:0;color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
 .added .ad-x:hover{color:var(--gold-hi)}
-.ad-top{display:grid;grid-template-columns:58px 1fr;gap:14px;align-items:center;padding-right:22px}
+.ad-top{display:grid;grid-template-columns:58px 1fr auto;gap:14px;align-items:center;padding-right:22px;cursor:pointer}   /* the whole product line opens the bag: shoppers tapped it and nothing happened (recorder, AJAY 2026-10-27) */
+.ad-top .ad-go{font-style:normal;font-size:26px;line-height:1;color:var(--gold)}
 .ad-top img{width:58px;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
 .ad-top div{display:flex;flex-direction:column;gap:3px;min-width:0}
 .ad-top small{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--gold)}
@@ -3506,7 +3507,7 @@ function addedPanel(id, opt, qty, names){
   const p = P[id], dc = qtyDiscount(cart), T = orderTotals(cart, ''), n = cart.reduce((a, l) => a + l.qty, 0);
   const v = p.prices[opt], ok = T.after === null || T.short <= 0;
   addedEl.innerHTML = `<button class="ad-x" type="button" data-adclose aria-label="Close">×</button>
-    <div class="ad-top"><img src="${SM(imgFor(p, opt))}" alt=""><div>${names ? `<small>✓ ${names.length} items added to your bag</small><b>${names.map(esc).join(' + ')}</b>` : `<small>✓ Added to your bag</small><b>${esc(p.name)}</b><span>${optLabel(p, opt)}${qty > 1 ? ' × ' + qty : ''}${hasPrice(v) ? ' · ' + moneyHTML(v * qty) : ''}</span>`}</div></div>
+    <div class="ad-top" data-adbag role="button" tabindex="0" aria-label="View bag"><img src="${SM(imgFor(p, opt))}" alt=""><div>${names ? `<small>✓ ${names.length} items added to your bag</small><b>${names.map(esc).join(' + ')}</b>` : `<small>✓ Added to your bag</small><b>${esc(p.name)}</b><span>${optLabel(p, opt)}${qty > 1 ? ' × ' + qty : ''}${hasPrice(v) ? ' · ' + moneyHTML(v * qty) : ''}</span>`}</div><i class="ad-go" aria-hidden="true">›</i></div>
     ${dc.units ? `<div class="ad-offer"><span>${qtyNudge(dc)}</span>${qdBar(dc)}</div>` : ''}
     <div class="ad-acts">${ok ? `<a class="btn sm" href="#/checkout" data-adclose>Checkout${T.after !== null ? ' · ' + aed(T.after) : ''}</a>` : `<span class="btn sm co-min">${minMsg(T.short)}</span>`}<button class="btn line sm" type="button" data-adbag>View bag (${n})</button></div>`;
   $('#toast').classList.remove('show');
@@ -3518,6 +3519,7 @@ addedEl.addEventListener('mouseenter', () => addHold = true);
 addedEl.addEventListener('mouseleave', () => addHold = false);
 addedEl.addEventListener('focusin', () => addHold = true);
 addedEl.addEventListener('focusout', () => addHold = false);
+addedEl.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.ad-top')) e.target.click(); });
 addedEl.addEventListener('click', e => {
   if (e.target.closest('[data-adclose]')) hideAdded();
   if (e.target.closest('[data-adbag]')) { hideAdded(); renderCart(); openPanel($('#cart')); }
