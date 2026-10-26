@@ -5837,6 +5837,14 @@ function backToSpot(){ if (!reloadY) return;
   const target = () => { if (s.a) { const all = spotEls(), e = all.find(x => spotKey(x, all) === s.a); if (e) return Math.max(0, Math.round(e.getBoundingClientRect().top + scrollY - (+s.o || 0))); } return reloadY; };
   const go = () => { if (!reloadY) return; const y = target(); if (Math.abs(scrollY - y) > 2) window.scrollTo({top: y, left: 0, behavior: 'instant'}); setTimeout(go, 150); };
   go(); }   // keeps the spot while pictures, videos and reviews load and the page grows, up to 5s or until the shopper scrolls
+let quietRoute = false;   // set by redrawQuiet(): the same page drawn again in place (no fade-in, no jump to the top)
+/* the page drawn again in place when the live product list arrives and differs from the built-in one (every first visit): it used to fade in a second time, a blink about 2 s after opening */
+function redrawQuiet(){
+  const y = scrollY, open = [...document.querySelectorAll('#app details')].map(d => d.open);
+  quietRoute = true; try { route(); } finally { quietRoute = false; }
+  const ds = document.querySelectorAll('#app details'); if (ds.length === open.length) ds.forEach((d, i) => { d.open = open[i]; });   // boxes the shopper opened stay open
+  if (y) window.scrollTo({top: y, left: 0, behavior: 'instant'});
+}
 function route(){
   const raw = location.hash.replace(/^#/, '') || '/';
   const [path, qs] = raw.split('?'); const q = new URLSearchParams(qs || '');
@@ -5871,12 +5879,11 @@ function route(){
   if (html === '') return;
   document.body.classList.toggle('home', !seg[0]);
   document.body.classList.toggle('co-page', seg[0] === 'checkout');
-  const early = $('.hc-early', app);   // first open of the home page: the banner is already showing, so no fade-in
+  const early = quietRoute || $('.hc-early', app);   // first open of the home page: the banner is already showing, so no fade-in (same for a quiet redraw)
   app.innerHTML = `<div class="page-fade${early ? ' no-fade' : ''}"${/^(checkout|order-confirmed|thank-you|review|contact|franchise)$/.test(seg[0]) ? ' data-clarity-mask="true"' : ''}>${html}</div>`;   // typed and shown customer details stay hidden in Clarity recordings
-  FXT.view(seg);
+  if (!quietRoute) FXT.view(seg);   // a quiet redraw is the same page, not a second visit to it
   $$('#menu a').forEach(a => a.classList.toggle('on', a.dataset.r === seg[0] || (a.dataset.r === 'fragrances' && seg[0] === 'product')));
-  closePanels();
-  window.scrollTo({top: 0, left: 0, behavior: 'instant'});
+  if (!quietRoute) { closePanels(); window.scrollTo({top: 0, left: 0, behavior: 'instant'}); }
   after && after();
   applyStock();
   bindCommon();
@@ -6380,7 +6387,7 @@ async function loadProducts(){
   productsJSON = js;
   cart = cart.filter(l => P[l.id] && !P[l.id].hidden && P[l.id].sizes.map(String).includes(String(l.opt)));
   footShop(); save();
-  if (!/^#\/checkout/.test(location.hash)) { route(); applyStock(); backToSpot(); }
+  if (!/^#\/checkout/.test(location.hash)) { redrawQuiet(); applyStock(); backToSpot(); }
 }
 renderCart(); route(); backToSpot(); bindCommon(); loadRates(); loadStock(); loadProducts(); promoMaybe(); welcomeMaybe();
 let lpAt = Date.now(); const lpAgain = () => { if (document.hidden || Date.now() - lpAt < 3000) return; lpAt = Date.now(); loadProducts(); };   // back on the tab (e.g. after saving on admin): fetch the latest prices and offers again
