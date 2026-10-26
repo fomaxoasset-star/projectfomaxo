@@ -400,6 +400,7 @@ html[data-mode="light"] .sort-by select{color:var(--ink,#1a140c)}html[data-mode=
 /* mobile sticky buy */
 .mbuy{position:fixed;left:0;right:0;bottom:0;z-index:35;background:rgba(var(--bg-rgb),.94);backdrop-filter:blur(14px);border-top:1px solid var(--line-2);padding:12px 16px calc(12px + var(--sab));display:none;gap:12px;align-items:center;transform:translateY(110%);transition:transform .5s var(--ease)}
 .mbuy.show{transform:none}
+.mbuy[data-tap]{cursor:pointer}
 .mbuy .n{flex:1;min-width:0}
 .mbuy .n b{display:block;font-family:var(--display);font-weight:300;font-size:15px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mbuy .n small{font-size:10px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
@@ -4152,7 +4153,9 @@ function bindProduct(p){
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
-  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
+  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
+    // the whole bar adds to bag: shoppers tapped the empty space around the button and nothing happened (recorder: #mbuy dead taps). The stars link keeps its job
+    mb.dataset.tap = '1'; mb.onclick = e => { const b = $('#mbAdd'); if (b && !b.disabled && !e.target.closest('a,button')) b.click(); }; }
   renderMbuy();
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
@@ -5695,7 +5698,7 @@ const FXT = (() => {
   };
   document.addEventListener('click', e => { if (off || !sid || !e.isTrusted) return;
     const tg = e.target instanceof Element ? e.target : null; if (!tg) return;
-    const hit = tg.closest('a,button,input,select,textarea,label,summary,[role=button],[onclick],[data-r],[data-p],[data-id]');
+    const hit = tg.closest('a,button,input,select,textarea,label,summary,[role=button],[onclick],[data-r],[data-p],[data-id],[data-tap]');
     const el = hit || tg, mask = !!tg.closest('[data-clarity-mask]'), now = Date.now();
     tTaps = tTaps.filter(x => now - x.t < 1000 && Math.abs(x.x - e.clientX) < 40 && Math.abs(x.y - e.clientY) < 40); tTaps.push({t: now, x: e.clientX, y: e.clientY});
     const h = document.documentElement.scrollHeight;
