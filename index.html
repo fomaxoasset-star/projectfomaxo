@@ -342,19 +342,7 @@ html[data-mode="light"] .sort-by select{color:var(--ink,#1a140c)}html[data-mode=
 .thumbs img{width:100%;height:100%;object-fit:cover}
 .stage{position:relative;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:zoom-in}
 .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease),opacity .5s;filter:saturate(.92) contrast(1.04)}
-/* product photos full screen (pdpViewer): black in both light and dark, like any photo viewer */
-.pv{position:fixed;inset:0;z-index:500;background:#000;color:#f2ebdd;overscroll-behavior:contain}
-.pv-track{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior:contain;touch-action:pan-x}
-.pv-track::-webkit-scrollbar{display:none}
-.pv-s{flex:0 0 100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.pv-s img{width:100%;height:100%;object-fit:contain;transform-origin:50% 50%;-webkit-user-select:none;user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none;cursor:zoom-in}
-.pv.zoomed .pv-track{overflow-x:hidden;touch-action:none}.pv.zoomed .pv-s img{cursor:zoom-out}
-.pv-x,.pv-p{position:absolute;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(242,235,221,.35);color:#f2ebdd;line-height:1;padding:0;z-index:1}
-.pv-x{top:calc(12px + env(safe-area-inset-top));right:12px;font-size:30px;padding-bottom:3px}
-.pv-p{top:50%;transform:translateY(-50%);font-size:28px;padding-bottom:4px}.pv-p[data-go="-1"]{left:12px}.pv-p[data-go="1"]{right:12px}
-.pv-n{position:absolute;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);margin:0;padding:4px 12px;border-radius:999px;background:rgba(0,0,0,.5);font-size:13px;letter-spacing:.08em;color:#f2ebdd;pointer-events:none}
-.pv.zoomed .pv-p,.pv.zoomed .pv-n{opacity:0;pointer-events:none}
-@media(hover:hover) and (pointer:fine){.pv-x:hover,.pv-p:hover{border-color:var(--gold,#c9a96e)}}
+.stage.zoom img{transform:scale(1.8)}
 .buy{display:flex;flex-direction:column;gap:26px}
 .buy h1{font-size:clamp(34px,3.6vw,56px);letter-spacing:.12em}
 .buy .sub{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold)}
@@ -4091,70 +4079,6 @@ function product(id, q){
     </section>
   </div>`;
 }
-/* product photos full screen (tap the big photo): swipe or ‹ › for the other photos, pinch or double tap (laptop: click) to zoom in and move around,
-   ×, Back, Esc, a tap beside the photo or a swipe down closes it. A photo loads only when it is shown or next to the one shown, so the page itself loads nothing more */
-function pdpViewer(keys, i, name, onClose){
-  if ($('#pv') || !keys.length) return;
-  const n = keys.length, el = document.createElement('div');
-  el.id = 'pv'; el.className = 'pv'; el.dir = 'ltr'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Product photos');
-  el.innerHTML = `<div class="pv-track">${keys.map((k, j) => `<div class="pv-s"><img data-src="${IMG(k)}" alt="FOMAXO ${esc(name)}${n > 1 ? ' ' + (j + 1) : ''}" draggable="false"></div>`).join('')}</div>
-    <button type="button" class="pv-x" aria-label="Close">×</button>${n > 1 ? `<button type="button" class="pv-p" data-go="-1" aria-label="Previous photo">‹</button><button type="button" class="pv-p" data-go="1" aria-label="Next photo">›</button><p class="pv-n"></p>` : ''}`;
-  document.body.appendChild(el); document.body.classList.add('lock');
-  try { history.pushState({pv: 1}, ''); } catch(e) {}
-  const track = $('.pv-track', el), imgs = $$('.pv-s img', el);
-  let cur = -1, s = 1, tx = 0, ty = 0;   // zoom of the photo shown: scale and move
-  const im = () => imgs[cur];
-  const fit = () => { const g = im(), W = track.clientWidth, H = track.clientHeight, r = g.naturalWidth ? Math.min(W / g.naturalWidth, H / g.naturalHeight) : 1; return [g.naturalWidth * r || W, g.naturalHeight * r || H, W, H]; };
-  const paint = t => { const [pw, ph, W, H] = fit(), mx = Math.max(0, (pw * s - W) / 2), my = Math.max(0, (ph * s - H) / 2);
-    tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty));
-    const g = im(); g.style.transition = t ? 'transform .25s ease-out' : 'none'; g.style.transform = s > 1 ? `translate(${tx}px,${ty}px) scale(${s})` : ''; el.classList.toggle('zoomed', s > 1); };
-  const zoomTo = (z, x, y) => { const r = track.getBoundingClientRect(), cx = x - r.left - r.width / 2, cy = y - r.top - r.height / 2; tx = (tx - cx) * z / s + cx; ty = (ty - cy) * z / s + cy; s = z; if (s <= 1) { s = 1; tx = ty = 0; } paint(true); };
-  const onPhoto = (x, y) => { const [pw, ph] = fit(), r = track.getBoundingClientRect(); return Math.abs(x - r.left - r.width / 2 - tx) <= pw * s / 2 && Math.abs(y - r.top - r.height / 2 - ty) <= ph * s / 2; };
-  const act = k => { if (k === cur) return; if (cur >= 0) { s = 1; tx = ty = 0; paint(); } cur = k;
-    imgs.forEach((g, j) => { if (!g.src && (j === k || Math.abs(j - k) === 1 || Math.abs(j - k) === n - 1)) g.src = g.dataset.src; });   // this photo and its neighbours
-    const c = $('.pv-n', el); if (c) c.textContent = `${k + 1} / ${n}`; };
-  const go = k => { k = (k + n) % n; track.scrollTo({left: k * track.clientWidth, behavior: Math.abs(k - cur) > 1 ? 'instant' : 'smooth'}); act(k); };
-  track.scrollLeft = i * track.clientWidth; act(i);
-  let raf = 0; track.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => act(Math.round(track.scrollLeft / track.clientWidth))); }, {passive: true});
-  const fix = () => { track.scrollLeft = cur * track.clientWidth; paint(); }; addEventListener('resize', fix);
-  const close = back => { el.remove(); document.body.classList.remove('lock'); removeEventListener('keydown', key); removeEventListener('popstate', pop); removeEventListener('hashchange', hc); removeEventListener('resize', fix);
-    if (back && history.state && history.state.pv) history.back(); if (onClose) onClose(keys[cur]); };
-  const key = e => { if (e.key === 'Escape') close(true); else if (n > 1 && e.key === 'ArrowRight') go(cur + 1); else if (n > 1 && e.key === 'ArrowLeft') go(cur - 1); };
-  const pop = () => close(false), hc = () => close(false);
-  addEventListener('keydown', key); addEventListener('popstate', pop); addEventListener('hashchange', hc);
-  $('.pv-x', el).onclick = () => close(true);
-  $$('.pv-p', el).forEach(b => b.onclick = () => go(cur + +b.dataset.go));
-  /* fingers: two = pinch zoom; one on a zoomed photo = move it; one up or down = drag the photo away to close; sideways the track swipes by itself */
-  let t0 = null, lastTap = 0, tapT = 0, touched = 0;
-  const dist = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-  track.addEventListener('touchstart', e => { touched = Date.now();
-    if (e.touches.length === 2) { t0 = {pinch: dist(e), s, x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2}; return; }
-    const t = e.touches[0]; t0 = {x: t.clientX, y: t.clientY, tx, ty, at: Date.now(), mode: s > 1 ? 'pan' : ''}; }, {passive: true});
-  track.addEventListener('touchmove', e => { if (!t0) return;
-    if (t0.pinch && e.touches.length === 2) { e.preventDefault(); const z = Math.max(1, Math.min(4, t0.s * dist(e) / t0.pinch)); const r = track.getBoundingClientRect(), cx = t0.x - r.left - r.width / 2, cy = t0.y - r.top - r.height / 2; tx = (tx - cx) * z / s + cx; ty = (ty - cy) * z / s + cy; s = z; paint(); return; }
-    if (t0.pinch) return;
-    const t = e.touches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
-    if (t0.mode === 'pan') { e.preventDefault(); tx = t0.tx + dx; ty = t0.ty + dy; paint(); return; }
-    if (!t0.mode) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; t0.mode = Math.abs(dy) > Math.abs(dx) ? 'down' : 'side'; }
-    if (t0.mode === 'down') { e.preventDefault(); const g = im(); g.style.transition = 'none'; g.style.transform = `translateY(${dy}px)`; el.style.backgroundColor = `rgba(0,0,0,${Math.max(.3, 1 - Math.abs(dy) / 400)})`; }
-  }, {passive: false});
-  track.addEventListener('touchend', e => { if (!t0 || e.touches.length) { if (t0 && t0.pinch && e.touches.length === 1) t0 = null; return; }
-    const c = e.changedTouches[0], dy = c.clientY - t0.y, moved = Math.abs(c.clientX - t0.x) > 10 || Math.abs(dy) > 10;
-    if (t0.pinch) { if (s < 1.05) { s = 1; tx = ty = 0; } paint(true); }
-    else if (t0.mode === 'down') { if (Math.abs(dy) > 90) return close(true); const g = im(); g.style.transition = 'transform .2s ease-out'; g.style.transform = ''; el.style.backgroundColor = ''; }
-    else if (!moved && Date.now() - t0.at < 300) {   // a tap: two quick taps zoom in or out; one tap beside the photo closes
-      const now = Date.now(), x = c.clientX, y = c.clientY;
-      if (now - lastTap < 300) { lastTap = 0; clearTimeout(tapT); zoomTo(s > 1 ? 1 : 2.5, x, y); }
-      else { lastTap = now; tapT = setTimeout(() => { if (s === 1 && !onPhoto(x, y)) close(true); }, 300); }
-    }
-    t0 = null; });
-  /* mouse: a click on the photo zooms in there and the photo follows the mouse; a click again zooms out; a click beside the photo closes */
-  track.addEventListener('click', e => { if (Date.now() - touched < 800) return;
-    if (s > 1) return zoomTo(1, e.clientX, e.clientY);
-    if (onPhoto(e.clientX, e.clientY)) zoomTo(2.2, e.clientX, e.clientY); else close(true); });
-  track.addEventListener('mousemove', e => { if (s <= 1 || Date.now() - touched < 800) return; const [pw, ph, W, H] = fit(), r = track.getBoundingClientRect();
-    tx = -((e.clientX - r.left) / W - .5) * Math.max(0, pw * s - W); ty = -((e.clientY - r.top) / H - .5) * Math.max(0, ph * s - H); paint(); });
-}
 function bindProduct(p){
   const stImg = $('#stageImg'), thumbsIn = () => $$('.thumbs img[data-src]').forEach(i => { i.src = i.dataset.src; i.removeAttribute('data-src'); });   // the big photo downloads first, the small photos right after it
   if (!stImg || stImg.complete) thumbsIn(); else { stImg.addEventListener('load', thumbsIn, {once: true}); stImg.addEventListener('error', thumbsIn, {once: true}); setTimeout(thumbsIn, 2500); }
@@ -4179,25 +4103,28 @@ function bindProduct(p){
     qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } const sb = $('.gallery > [data-best]'); if (sb) { sb.dataset.k = soldKey(p, size); bestSync(); } fitPdp();
   });
   const stage = $('#stage');
-  /* a tap (phone) or click (laptop) on the big photo opens it full screen (pdpViewer); closing it leaves the page on the last photo seen.
-     Before, a phone tap did nothing (only a double tap zoomed): the recorder saw people tapping it again and again (AJAY 2026-10-26) */
-  stage.setAttribute('role', 'button'); stage.setAttribute('aria-label', 'Open photo bigger'); stage.dataset.tap = '1';
-  stage.onclick = () => {
-    const k0 = ($('#stageImg').getAttribute('src').match(/img\/(.+)\.webp/) || [])[1], keys = $$('.thumbs button').map(b => b.dataset.g);
-    if (!k0) return; if (!keys.includes(k0)) keys.unshift(k0);
-    pdpViewer(keys, keys.indexOf(k0), p.name, setImg);
+  /* laptop: a click zooms. Phone: one tap zooms in at the tapped spot (a finger then moves around the photo) and one more tap zooms back out.
+     Before, a phone tap did nothing (only a double tap zoomed): the recorder saw Instagram phone visitors tapping it again and again (AJAY 2026-10-26) */
+  const zoomAt = (x, y) => { const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${Math.min(100, Math.max(0, (x - r.left) / r.width * 100))}% ${Math.min(100, Math.max(0, (y - r.top) / r.height * 100))}%`; };
+  stage.setAttribute('role', 'button'); stage.setAttribute('aria-label', 'Zoom photo'); stage.dataset.tap = '1';
+  stage.onclick = e => {
+    if (matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches) { stage.classList.toggle('zoom'); return; }
+    if (!stage.classList.contains('zoom')) zoomAt(e.clientX, e.clientY); stage.classList.toggle('zoom');
   };
+  stage.onmousemove = e => { if (!stage.classList.contains('zoom')) return; const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${(e.clientX-r.left)/r.width*100}% ${(e.clientY-r.top)/r.height*100}%`; };
+  stage.onmouseleave = () => { if (matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches) stage.classList.remove('zoom'); };   // a phone tap also sends mouse events: keep its zoom
   /* phone: swipe the big photo left / right for the next / previous photo (goes round at the ends); the neighbour photo slides in beside it */
   const thumbs = $$('.thumbs button');
   if (thumbs.length > 1) {
-    let x0 = 0, y0 = 0, dx = 0, drag = 0, peekDir = 0;   // drag: 1 = sideways swipe, -1 = page scroll or pinch, 0 = not decided yet
+    let x0 = 0, y0 = 0, dx = 0, drag = 0, peekDir = 0;   // drag: 1 = sideways swipe, -1 = page scroll or zoomed, 0 = not decided yet
     const im = () => $('#stageImg'), n = thumbs.length;
     const peek = document.createElement('img'); peek.className = 'peek'; peek.alt = ''; peek.hidden = true; stage.appendChild(peek);
     const at = d => thumbs[(Math.max(0, thumbs.findIndex(b => b.classList.contains('on'))) + d + n) % n];
     const move = (x, t) => { const w = stage.clientWidth, tr = t ? `transform ${t}s ease-out` : 'none'; im().style.transition = tr; im().style.transform = x ? `translateX(${x}px)` : ''; peek.style.transition = tr; peek.style.transform = `translateX(${x + peekDir * w}px)`; };
-    stage.addEventListener('touchstart', e => { dx = 0; peekDir = 0; drag = e.touches.length > 1 ? -1 : 0; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive: true});
+    stage.addEventListener('touchstart', e => { dx = 0; peekDir = 0; drag = e.touches.length > 1 ? -1 : stage.classList.contains('zoom') ? 2 : 0; /* 2 = zoomed in: the finger moves around the photo */ x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive: true});
     stage.addEventListener('touchmove', e => {
       if (drag < 0) return; const t = e.touches[0];
+      if (drag === 2) { e.preventDefault(); zoomAt(t.clientX, t.clientY); return; }
       dx = t.clientX - x0; const dy = t.clientY - y0;
       if (!drag) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; drag = Math.abs(dx) > Math.abs(dy) ? 1 : -1; if (drag < 0) return; }
       e.preventDefault();
@@ -6311,7 +6238,7 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
   const root = document.documentElement, dot = document.createElement('div'), ring = document.createElement('div');
   dot.className = 'cur-dot'; ring.className = 'cur-ring'; document.body.append(dot, ring); root.classList.add('cur-ready');
   let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y;
-  const VIEW = [['.card .media','View'],['.stage','View'],['.exp a','Discover'],['.coll a','Explore'],['.gallery-g figure','View'],['.ed-media','View']];
+  const VIEW = [['.card .media','View'],['.stage','Zoom'],['.exp a','Discover'],['.coll a','Explore'],['.gallery-g figure','View'],['.ed-media','View']];
   addEventListener('pointermove', e => {
     x = e.clientX; y = e.clientY; root.classList.add('cur-on');
     const t = e.target;
