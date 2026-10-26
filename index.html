@@ -5143,12 +5143,12 @@ function bindCheckout(q){
   const showErr = m => { err.textContent = m; err.hidden = false; };
   const zq = q.get('ziina');
   if (zq === 'cancel' || zq === 'failed') showErr(zq === 'cancel' ? 'Payment cancelled. No money was taken. Try again or choose another way to pay.' : 'Payment did not go through. No money was taken. Try again or choose another way to pay.');
-  // red line under each missing box, the message under Note, and the first red box comes to the middle of the screen (clear of the top bar) with the cursor in it
+  // red line under each missing box, and the first red box comes to the middle of the screen (clear of the top bar) with the cursor in it
   function showBad(bad){
     $$('.bad', form).forEach(x => x.classList.remove('bad'));
     bad.forEach(b => form.elements[b[0]].classList.add('bad'));
     feShow(bad);
-    err1.textContent = `Please add your ${listTxt(bad.map(b => b[1]))} so we can deliver your order.`; err1.hidden = false;
+    // the red "Please add your …" line in Payment already says what is missing, so no second copy under Note (AJAY 2026-10-26)
     const first = form.elements[bad[0][0]];
     first.focus({preventScroll: true});
     // phone: the box goes just under the top bar, so the keyboard opening below it never covers it (AJAY 2026-10-26); laptop: middle of the screen
