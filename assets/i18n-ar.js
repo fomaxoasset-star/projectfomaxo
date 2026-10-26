@@ -813,6 +813,7 @@
 "Your cash on delivery order is confirmed. We will contact you on WhatsApp or by phone to arrange delivery.": "تم تأكيد طلبك بالدفع عند الاستلام. سنتواصل معك عبر واتساب أو الهاتف لترتيب التوصيل.",
 "Delivery is free anywhere in the UAE. Questions? WhatsApp us on": "التوصيل مجاني لجميع أنحاء الإمارات. لديك أسئلة؟ راسلنا على واتساب",
 "Continue shopping": "متابعة التسوق",
+"Order on WhatsApp": "اطلب عبر واتساب",
 "Contact us": "تواصل معنا",
 "While you wait": "بينما تنتظر",
 "Complete your": "أكمل",
