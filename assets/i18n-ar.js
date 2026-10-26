@@ -1325,8 +1325,8 @@
     [/^(\d+)% off \+ a FREE 10ml mini$/, function(m){ return 'خصم ' + m[1] + '% + ميني 10ml مجاناً'; }],
     [/^(\d+)% off \+ FREE 10ml mini$/, function(m){ return 'خصم ' + m[1] + '% + ميني 10ml مجاناً'; }],
     [/^Level (I|II|III|IV)$/, function(m){ return 'المستوى ' + m[1]; }],
-    [/^Pay (AED [\d,.]+ )?securely$/, function(m){ return 'ادفع ' + (m[1] || '') + 'بأمان'; }],
-    [/^Place order · (AED [\d,.]+)$/, function(m){ return 'تأكيد الطلب · ' + m[1]; }],
+    [/^Tap to pay (AED [\d,.]+ )?securely$/, function(m){ return 'اضغط للدفع ' + (m[1] || '') + 'بأمان'; }],
+    [/^Tap to place order · (AED [\d,.]+)$/, function(m){ return 'اضغط لتأكيد الطلب · ' + m[1]; }],
     [/^Fill in your (.+) to choose how to pay\.$/, function(m){ var l = fields(m[1]); return l && 'أدخل ' + l + ' لاختيار طريقة الدفع.'; }],
     [/^Please add your (.+) so we can deliver your order\.$/, function(m){ var l = fields(m[1]); return l && 'يرجى إدخال ' + l + ' لنتمكن من توصيل طلبك.'; }],
     [/^(.+) added to your bag$/, function(m){ return 'تمت إضافة ' + m[1] + ' إلى حقيبتك'; }]
