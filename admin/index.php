@@ -3490,7 +3490,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
       'An error can stop a button from working, so people cannot add to bag or pay.', ['Nothing for you to do: we read the error and fix it.'], 'fix the error');
   /* fixes already built and live (reply word => day it went live): the tip leaves the list (nothing shown).
      It comes back only when a week has passed and the chosen dates start after the fix, so it is judged on new visits only */
-  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-10-26', 'tap Photo' => '2026-10-26'];
+  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-27', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-10-26', 'tap Photo' => '2026-10-26'];
   /* tips that need the same fix join into one: the one with the most people leads, the others add their numbers */
   usort($tips, fn($a, $b) => $b['people'] <=> $a['people']);
   $one = [];
