@@ -521,8 +521,8 @@ CSS;
 function fx_taps_card($V, $names, $cls, $attr = '', $help = false) {   // $help: plain steps for each tab instead of the short note (Improve)
   $tp = ['btn' => '', 'dead' => '', 'rage' => '']; $tn = ['btn' => 0, 'dead' => 0, 'rage' => 0];
   foreach ($V['taps'] as $row) foreach (['btn' => !$row['dead'], 'dead' => (bool)$row['dead'], 'rage' => $row['rage'] > 0] as $k => $ok)
-    if ($ok && $tn[$k]++ < 60) $tp[$k] .= '<tr><td><b>' . h($row['label'] !== '' ? $row['label'] : '–') . '</b><span class="muted tpg">' . h(fx_pg_name($row['pg'], $names)) . '</span></td><td class="num">' . number_format($k === 'rage' ? $row['rage'] : $row['taps']) . '</td><td class="num">' . number_format($row['people']) . '</td></tr>';
-  $tapList = fn($k, $empty) => '<div class="list" data-r="' . $k . '"' . ($k === 'btn' ? '' : ' hidden') . '>' . ($tp[$k] ? '<table class="mini ttab"><thead><tr><th>' . ($k === 'btn' ? 'Button or link' : 'Tapped') . ' · page</th><th class="num">Taps</th><th class="num">People</th></tr></thead><tbody>' . $tp[$k] . '</tbody></table>' : '<p class="muted empty">' . $empty . '</p>') . '</div>';
+    if ($ok && $tn[$k]++ < 60) $tp[$k] .= '<tr><td><b>' . h($row['name'] !== '' ? $row['name'] : '–') . '</b><span class="muted tpg">' . h(fx_pg_name($row['pg'], $names)) . '</span></td><td class="num">' . number_format($k === 'rage' ? $row['rage'] : $row['taps']) . '</td><td class="num">' . number_format($k === 'rage' ? $row['rpeople'] : $row['people']) . '</td></tr>';
+  $tapList = fn($k, $empty) => '<div class="list" data-r="' . $k . '"' . ($k === 'btn' ? '' : ' hidden') . '>' . ($tp[$k] ? '<table class="mini ttab"><thead><tr><th>' . ($k === 'btn' ? 'Button or link' : 'Tapped') . ' · page</th><th class="num">' . ($k === 'rage' ? 'Times' : 'Taps') . '</th><th class="num">People</th></tr></thead><tbody>' . $tp[$k] . '</tbody></table>' : '<p class="muted empty">' . $empty . '</p>') . '</div>';
   return '<section class="' . $cls . '"' . $attr . '><div class="ch"><h2>What people tap</h2><div class="seg gseg" role="group"><button type="button" data-r="btn" class="on">Buttons</button><button type="button" data-r="dead">Not buttons' . ($tn['dead'] ? ' (' . $tn['dead'] . ')' : '') . '</button><button type="button" data-r="rage">Angry' . ($tn['rage'] ? ' (' . $tn['rage'] . ')' : '') . '</button></div></div>'
     . ($help ? '<p class="thelp" data-h="btn">What people tapped most. Many taps on Add to bag is good. What people type is never kept.</p>'
              . '<p class="thelp" data-h="dead" hidden>They tapped a photo or words and nothing happened. Reply <b class="tword">make it tappable</b> and we make it work.</p>'
@@ -3452,12 +3452,12 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
   $n = $m = 0;
   foreach ($V['taps'] as $row) {   // taps on things that are not buttons, and the same spot tapped 3 times fast
     if ($row['dead'] && $n < 1 && $row['people'] >= 3 && $row['label'] !== '') { $n++;
-      $tip((int)$row['people'], 'People tap “' . h($row['label']) . '” on ' . h(fx_pg_name($row['pg'], $names)) . ', but nothing happens',
+      $tip((int)$row['people'], 'People tap “' . h($row['name']) . '” on ' . h(fx_pg_name($row['pg'], $names)) . ', but nothing happens',
         ['<b>' . $nf($row['people']) . '</b> people tapped it ' . $nf($row['taps']) . ' times.'], 'They expect it to open or do something. Making it work removes a small annoyance.',
         [str_starts_with($row['label'], 'Photo') ? 'Make the photo open bigger when tapped.' : 'Make it a link to the right place (size, reviews or Add to bag).'], 'make it tappable', 'tap ' . $row['label']); }
-    if ($row['rage'] > 0 && $m < 1) { $p = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_trail WHERE k = 't' AND rage = 1 AND label = ? AND at BETWEEN ? AND ?", [$row['label'], $span[0], $span[1]])->fetchColumn();
-      if ($p >= 2) { $m++; $tip($p, 'People tap “' . h($row['label']) . '” again and again', ['<b>' . $nf($p) . '</b> people tapped the same spot 3 times in a second on ' . h(fx_pg_name($row['pg'], $names)) . '.'],
-        'This usually means it is slow, too small, or does not work on their phone.', ['Try it on your own phone. If it is slow or does nothing, tell us.'], 'check ' . mb_strtolower($row['label']), 'tap ' . $row['label']); } }
+    if ($row['rage'] > 0 && $m < 1) { $p = (int)$q("SELECT COUNT(DISTINCT sid) FROM fx_trail WHERE k = 't' AND rage = 1 AND label = ? AND at BETWEEN ? AND ?" . fx_tap_fixed_sql(), [$row['label'], $span[0], $span[1]])->fetchColumn();
+      if ($p >= 2) { $m++; $tip($p, 'People tap “' . h($row['name']) . '” again and again', ['<b>' . $nf($p) . '</b> people tapped the same spot 3 times in a second on ' . h(fx_pg_name($row['pg'], $names)) . '.'],
+        'This usually means it is slow, too small, or does not work on their phone.', ['Try it on your own phone. If it is slow or does nothing, tell us.'], 'check ' . mb_strtolower($row['name']), 'tap ' . $row['label']); } }
   }
   if ($F['visits'] >= 20 && $pct($bounce, $F['visits']) >= 50) {
     $worst = null; foreach ($srcR as $row) if ($row['visits'] >= 10 && (!$worst || $row['visits'] > $worst['visits'])) $worst = $row;
