@@ -72,15 +72,16 @@ window.fxPick = function (src, done) {
   var rate = function (sec) { return Math.max(300000, Math.min(2500000, Math.floor(GOAL / Math.max(1, sec || 30)) - AB)); };   // video bits per second for that length
   var side = function (br) { return br < 350000 ? 720 : br < 700000 ? 960 : 1280; };   // longest side: fewer pixels when there are fewer bits, so it stays sharp instead of blocky
   /* fast: re-encode from the file itself, no playing; null = this browser can't, use the slow way */
-  function fast(file, scale) {
+  var HQ = 11.5 * MB * 8, hqRate = function (sec) { return Math.max(1500000, Math.min(8000000, Math.floor(HQ / Math.max(1, sec || 30)) - AB)); };   // the sharp copy (Cloudflare only): about 11 MB, 1080p
+  function fast(file, scale, hq) {
     if (!window.VideoEncoder) { why = 'no VideoEncoder'; return Promise.resolve(null); }
     var M = null, conv = null, src = null;
     return import(new URL('mediabunny.js?v=1.59.1', location.href).href).then(function (m) {
       M = m; src = new M.Input({source: new M.BlobSource(file), formats: M.ALL_FORMATS});
       return Promise.all([src.getPrimaryVideoTrack(), src.computeDuration().catch(function () { return 0; }), src.getPrimaryAudioTrack().catch(function () { return null; })]);
     }).then(function (r) {
-      var t = r[0], at = r[2], br = Math.max(120000, Math.round(rate(r[1]) * (scale || 1))); if (!t) { why = 'no video track'; return null; }
-      var w = t.displayWidth, h = t.displayHeight, k = Math.min(1, side(br) / Math.max(w, h));
+      var t = r[0], at = r[2], br = hq ? hqRate(r[1]) : Math.max(120000, Math.round(rate(r[1]) * (scale || 1))); if (!t) { why = 'no video track'; return null; }
+      var w = t.displayWidth, h = t.displayHeight, k = Math.min(1, (hq ? 1920 : side(br)) / Math.max(w, h));
       w = Math.round(w * k / 2) * 2; h = Math.round(h * k / 2) * 2;
       return Promise.all([M.getFirstEncodableVideoCodec(['avc', 'hevc', 'vp9'], {width: w, height: h}), window.AudioEncoder ? M.getFirstEncodableAudioCodec(['aac', 'opus']).catch(function () { return null; }) : null]).then(function (cs) {
         if (!cs[0]) { why = 'no video encoder ' + w + 'x' + h; return null; }
@@ -91,8 +92,9 @@ window.fxPick = function (src, done) {
           audio: au}).then(function (c) {
           conv = stopNow = c; if (!c.isValid) { why = 'not valid ' + c.discardedTracks.map(function (d) { return d.reason; }).join(' '); return null; }
           if (at && c.discardedTracks.some(function (d) { return d.track.type === 'audio'; })) { why = 'sound would be lost'; return null; }
-          c.onProgress = function (p) { say('Making the video smaller… ' + Math.min(99, Math.round(p * 100)) + '%. Keep this page open.'); };
-          say('Making the video smaller… 0%. Keep this page open.');
+          var lbl = hq ? 'Making the sharp 1080p copy for Cloudflare… ' : 'Making the video smaller… ';
+          c.onProgress = function (p) { say(lbl + Math.min(99, Math.round(p * 100)) + '%. Keep this page open.'); };
+          say(lbl + '0%. Keep this page open.');
           return c.execute().then(function () { var b = out.target.buffer; return b && b.byteLength ? new Blob([b], {type: 'video/mp4'}) : null; });
         });
       });
@@ -158,10 +160,10 @@ window.fxPick = function (src, done) {
   var stopNow = null, how = 'as is', stop = function (t) { btn.disabled = false; btn.textContent = 'Upload'; delete f.dataset.go; say(t); };
   /* every video goes up in pieces, 4 at a time (several times faster on most connections);
      a piece that fails is sent again (4 tries), and the server checks every byte arrived before the video joins the list */
-  function parts(file) {
+  function parts(file, what) {
     var size = Math.min(8 * MB, Math.max(2 * MB, Math.ceil(file.size / 16))), n = Math.ceil(file.size / size), up = '', done = [], next = 0, running = 0, failed = false, csrf = f.querySelector('[name=csrf]').value;
     var r = new Uint8Array(8); crypto.getRandomValues(r); r.forEach(function (x) { up += ('0' + x.toString(16)).slice(-2); });
-    var show = function () { var s = 0; done.forEach(function (d) { s += d || 0; }); say('Uploading… ' + Math.min(99, Math.round(s / file.size * 100)) + '% of ' + Math.max(1, Math.round(file.size / MB)) + ' MB. Keep this page open.'); };
+    var show = function () { var s = 0; done.forEach(function (d) { s += d || 0; }); say('Uploading' + (what ? ' ' + what : '') + '… ' + Math.min(99, Math.round(s / file.size * 100)) + '% of ' + Math.max(1, Math.round(file.size / MB)) + ' MB. Keep this page open.'); };
     return new Promise(function (ok, no) {
       function one(i, tries) {
         var x = new XMLHttpRequest(), fd = new FormData(), b = file.slice(i * size, Math.min(file.size, (i + 1) * size));
@@ -199,9 +201,12 @@ window.fxPick = function (src, done) {
     if (auto) { var a = auto; auto = null; btn.disabled = true; a.then(function (b) { if (b && cin && !(cin.files && cin.files.length)) send.cover = b; send(file); }); return; }
     var src = file || inp.files[0];
     btn.disabled = true; btn.textContent = 'Uploading…'; f.dataset.go = 1;
+    var hq = send.hq; send.hq = null;
     if (src) return parts(src).then(function (p) {
       var fd = new FormData(f); fd.delete('video'); fd.set('parts', p.up); fd.set('parts_n', p.n); fd.set('parts_size', src.size); fd.set('parts_type', src.type); fd.set('how', how + ', ' + p.n + ' pieces'); if (send.cover) fd.set('cover', send.cover, 'cover.jpg');
-      say('Saving the video…'); post(fd);
+      if (!hq) { say('Saving the video…'); post(fd); return; }
+      return parts(hq, 'the sharp copy').then(function (q) { fd.set('hq_parts', q.up); fd.set('hq_parts_n', q.n); fd.set('hq_parts_size', hq.size); say('Saving the video and sending the sharp copy to Cloudflare…'); post(fd); },
+        function () { say('Saving the video (the sharp copy did not upload)…'); post(fd); });   // the small one is up: it still goes on the website
     }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
     var fd = new FormData(f); fd.set('how', how); if (send.cover) fd.set('cover', send.cover, 'cover.jpg'); post(fd);
   }
@@ -224,6 +229,13 @@ window.fxPick = function (src, done) {
     var cant = function () { btn.disabled = false; btn.textContent = 'Upload'; say('This video could not be made smaller here, so it was not uploaded. Please save it as MP4 and upload again. (' + (why || 'no way to convert') + ')'); skipBtn(file); };
     if (!big) { send(null); return; }
     btn.disabled = true; setTimeout(function () { btn.textContent = 'Please wait…'; });
+    /* Cloudflare connected: first a sharp 1080p copy (about 11 MB) that only Cloudflare keeps; then the usual small 720p one for Hostinger, the backup.
+       A browser that can't (no WebCodecs), or 4 minutes without finishing: just the small one, as before */
+    if (f.dataset.hq && !f.dataset.hqDone) { f.dataset.hqDone = 1; var hqStop, hqT = new Promise(function (ok) { hqStop = ok; setTimeout(function () { ok(null); }, 240000); });
+      Promise.race([fast(file, 1, true), hqT]).then(function (h) { try { stopNow && stopNow.cancel(); } catch (e) {} stopNow = null; send.hq = h && h.size ? h : null; why = ''; pct = -1;
+        f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); });
+      return; }
+    delete f.dataset.hqDone;
     /* making it smaller: no progress for 45 seconds, or a tap on Skip = upload the original instead (in pieces) */
     var t0 = Date.now(), last = -1, moved = t0, wasmAt = 0, bail, gaveUp = new Promise(function (ok) { bail = ok; });
     var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; var skipped = false; sk.onclick = function () { skipped = true; bail(); }; if (keeps(file)) note.appendChild(sk);   // any size: the original goes up as it is when Skip is tapped

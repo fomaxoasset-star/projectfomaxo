@@ -10,12 +10,21 @@ require_once __DIR__ . '/media-lib.php';
 const R2_PREFIX = 'com/';
 const R2_FREE = 10 * 1000 ** 3;   // Cloudflare's free space: 10 GB
 function r2_file(): string { return dirname(__DIR__) . '/fomaxo-r2.php'; }
-function r2_conf(): ?array { $f = r2_file(); $c = is_file($f) ? require $f : null; return is_array($c) && !empty($c['acct']) && !empty($c['key']) && !empty($c['secret']) && !empty($c['bucket']) && !empty($c['url']) ? $c : null; }
+/* the keys are pasted once, here: they are also written to fomaxo.in's private folder (same Hostinger account), where its own
+   Cloudflare box reads them (fomaxo-private/r2.php), so both sites use them. Keys pasted on fomaxo.in are read from there too */
+function r2_in_file(): string { $p = getenv('FOMAXO_IN_PRIVATE') ?: dirname(__DIR__, 2) . '/fomaxo.in/fomaxo-private'; return is_dir($p) && is_writable($p) ? "$p/r2.php" : ''; }
+function r2_conf(): ?array {
+  foreach ([r2_file(), r2_in_file()] as $f) { $k = $f !== '' && is_file($f) ? require $f : null;
+    if (is_array($k) && !empty($k['acct']) && !empty($k['key']) && !empty($k['secret']) && !empty($k['bucket']) && !empty($k['url'])) return $k; }
+  return null;
+}
 function r2_save(?array $c): bool {
-  $f = r2_file();
-  if (!$c) return @unlink($f) || !is_file($f);
-  $ok = @file_put_contents($f, "<?php\n// Cloudflare R2 keys for the shop videos (written by fomaxo.com/admin → Products → Videos)\nreturn " . var_export($c, true) . ";\n", LOCK_EX) !== false;
-  if ($ok) @chmod($f, 0600);
+  $ok = true;
+  foreach ([r2_file(), r2_in_file()] as $f) { if ($f === '') continue;
+    if (!$c) { $ok = (@unlink($f) || !is_file($f)) && $ok; continue; }
+    $w = @file_put_contents($f, "<?php\n// Cloudflare R2 keys for the shop videos of fomaxo.com and fomaxo.in (written by fomaxo.com/admin → Products → Videos)\nreturn " . var_export($c, true) . ";\n", LOCK_EX) !== false;
+    if ($w) @chmod($f, 0600); if ($f === r2_file()) $ok = $w;
+  }
   return $ok;
 }
 function r2_on($pdo): bool { return $pdo && (string)fomaxo_setting($pdo, 'r2_on') === '1' && r2_conf() !== null; }
@@ -58,8 +67,12 @@ function r2_put(array $c, string $f): string {
 }
 /* every video file the list uses (the video and its small preview) */
 function r2_wanted($pdo): array {
-  $w = []; foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) foreach ([(string)($v['file'] ?? ''), (string)($v['prev'] ?? '')] as $f)
-    if (preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $f) && ($p = fx_media_path($f)) && is_file($p)) $w[$f] = (int)filesize($p);
+  $w = []; $have = null;
+  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) foreach ([(string)($v['file'] ?? ''), (string)($v['prev'] ?? ''), (string)($v['hq'] ?? '')] as $f) {
+    if (!preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $f)) continue;
+    if (($p = fx_media_path($f)) && is_file($p)) $w[$f] = (int)filesize($p);
+    elseif ($f === (string)($v['hq'] ?? '') && isset(($have ??= r2_have())[$f])) $w[$f] = $have[$f];   // the sharp copy leaves Hostinger once it is on Cloudflare
+  }
   return $w;
 }
 /* copies the videos not on Cloudflare yet, for up to $secs seconds: [copied now, error or ''] */
@@ -79,6 +92,7 @@ function r2_sync($pdo, float $secs = 8): array {
       if (microtime(true) - $t > $secs) break;
       $e = r2_put($c, $f); if ($e !== '') { $err = $e; break; }
       $have[$f] = $sz; r2_have_save($have); $n++;
+      if (str_ends_with($f, '-h.mp4')) @unlink(fx_media('vid') . '/' . substr($f, 4));   // Hostinger keeps only the small copy (the fallback), never the big one
     }
   } finally { flock($lk, LOCK_UN); fclose($lk); }
   if ($n || $gone) fomaxo_products_drop();   // the website picks up the new Cloudflare addresses straight away
@@ -115,6 +129,11 @@ function r2_check(array $c): string {
   $out = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
   if ($code !== 200 || trim((string)$out) !== 'ok') $note .= ($note !== '' ? '. Also, ' : 'The keys work, but ') . $c['url'] . ' does not open the files yet (custom domain not connected to the bucket?)';
   return $note;
+}
+/* the full video for the player: the sharp 1080p copy when Cloudflare plays it (vf = the small Hostinger copy the page falls back to), else the usual one */
+function r2_full($pdo, array $v): array {
+  $h = (string)($v['hq'] ?? ''); $u = $h !== '' ? r2_cdn($pdo, $h) : '';
+  return str_starts_with($u, 'https://') ? ['v' => $u, 'vf' => (string)$v['file']] : ['v' => r2_cdn($pdo, (string)$v['file'])];
 }
 /* the address the website plays 'vid/x.mp4' from: Cloudflare when on and copied, else the file as it is (index.html adds assets/) */
 function r2_cdn($pdo, string $f): string {

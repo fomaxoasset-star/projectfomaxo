@@ -6020,10 +6020,10 @@ function loopRow(sc){ if (!sc || sc.dataset.loop) return; const ks = [...sc.chil
   let t = 0; const fix = () => { const w = W(), x = Math.abs(sc.scrollLeft); if (w && x < w * .5) sc.scrollLeft = s * (x + w); else if (w && x > w * 1.5) sc.scrollLeft = s * (x - w); };
   sc.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(fix, 150); }, {passive: true}); }
 /* videos kept on Cloudflare (Admin → Products → Videos → Cloudflare) are asked for with CORS, so vidLit can still read their frames.
-   One Cloudflare fails to send plays from our own copy in assets/vid instead */
+   One Cloudflare fails to send plays from our own copy in assets/vid instead (data-fbu: the small Hostinger copy of a sharp 1080p video) */
 function vidXO(u){ return /^https:/.test(u || '') ? ' crossorigin="anonymous"' : ''; }
 document.addEventListener('error', e => { const v = e.target, u = v && v.tagName === 'VIDEO' && v.getAttribute('src') || ''; if (!/^https:\/\//.test(u) || v.dataset.fb) return;
-  const f = '/assets/vid/' + u.split('/').pop(), go = v.autoplay || !v.paused; v.dataset.fb = 1; v.removeAttribute('crossorigin'); if (v.dataset.src === u) v.dataset.src = f; v.src = f; if (go) v.play().catch(() => {}); }, true);
+  const f = v.dataset.fbu || '/assets/vid/' + u.split('/').pop(), go = v.autoplay || !v.paused; v.dataset.fb = 1; v.removeAttribute('crossorigin'); if (v.dataset.src === u) v.dataset.src = f; v.src = f; if (go) v.play().catch(() => {}); }, true);
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
 function vidLit(v, done){ (v._litQ = v._litQ || []).push(done); if (v._lit) return; v._lit = 1;   // a video the player borrows from the row can be checked for both at once: each waiting cover goes when the check passes
   const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d', {willReadFrequently: true}); let n = 0;
@@ -6146,7 +6146,7 @@ function reelCard(p){
 function reelSlide(v, k){
   const ps = vidProds(v).map(id => P[id]), name = ps.length ? ps[0].name : 'FOMAXO';
   return `<section class="rl-s${v.e ? ' emb' : ''}${v.wd ? ' wide' : ''}" data-k="${k}"><div class="rl-stage">
-    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" playsinline loop muted preload="none" poster="${vidPoster(v)}"${vidXO(v.v)} data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}${!v.e && vidPoster(v) ? `<img class="rl-pic" src="${vidPoster(v)}" alt="">` : ''}
+    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" playsinline loop muted preload="none" poster="${vidPoster(v)}"${vidXO(v.v)}${v.vf ? ` data-fbu="/assets/${esc(v.vf)}"` : ''} data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}${!v.e && vidPoster(v) ? `<img class="rl-pic" src="${vidPoster(v)}" alt="">` : ''}
     <span class="rl-pause" aria-hidden="true">${VI.play}</span>
     ${v.n && vidPage() ? `<span class="vt-by rl-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}
     ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'Eau de Parfum · Unisex'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`

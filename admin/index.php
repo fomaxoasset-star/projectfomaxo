@@ -1427,12 +1427,12 @@ if (isset($_GET['videos'])) {
       $e = r2_check($c); if (str_starts_with($e, 'Cloudflare did not')) { flash($e); go($back); }
       if (!r2_save($c)) { flash('The keys could not be saved on the server. Please try again.'); go($back); }
       [$n, $err] = r2_sync($pdo, 20); $left = count(array_diff_assoc(r2_wanted($pdo), r2_have()));
-      flash(($e !== '' ? $e . '. Keys saved; ' : 'Cloudflare connected. ') . $n . ' video file' . ($n === 1 ? '' : 's') . ' copied' . ($err !== '' ? " (stopped: $err)" : '') . ($left ? ". $left left: tap Copy the rest now." : '. Switch it on to play the videos from Cloudflare.'), $e === '' && $err === ''); go($back);
+      flash(($e !== '' ? $e . '. Keys saved; ' : 'Cloudflare connected' . (r2_in_file() !== '' ? ' for fomaxo.com and fomaxo.in (switch it on there too, in its admin → Videos). ' : '. ')) . $n . ' video file' . ($n === 1 ? '' : 's') . ' copied' . ($err !== '' ? " (stopped: $err)" : '') . ($left ? ". $left left: tap Copy the rest now." : '. Switch it on to play the videos from Cloudflare.'), $e === '' && $err === ''); go($back);
     }
     if ($act === 'r2_sync') { [$n, $err] = r2_sync($pdo, 25); flash("$n video file" . ($n === 1 ? '' : 's') . ' copied to Cloudflare' . ($err !== '' ? ". Stopped: $err" : '.'), $err === ''); go($back); }
     if ($act === 'r2_on') { $on = !empty($_POST['on']) && r2_conf(); fomaxo_setting($pdo, 'r2_on', $on ? '1' : '0');
       flash($on ? 'Videos now play from Cloudflare. Any video not copied yet still plays from Hostinger.' : 'Videos play from Hostinger again.', true); go($back); }
-    if ($act === 'r2_off') { fomaxo_setting($pdo, 'r2_on', '0'); r2_save(null); flash('Cloudflare disconnected. Videos play from Hostinger as before.', true); go($back); }
+    if ($act === 'r2_off') { fomaxo_setting($pdo, 'r2_on', '0'); r2_save(null); flash('Cloudflare disconnected' . (r2_in_file() !== '' ? ' on both sites' : '') . '. Videos play from Hostinger as before.', true); go($back); }
     $toInOk = fn($v) => empty($v['embed']) && empty($v['from']) && empty($v['sent_in']) && ($fp = fx_media_path($v['file'] ?? '')) && is_file($fp);   // a video on this server, not from fomaxo.in, not sent yet
     if ($act === 'to_in_all') {   // videos uploaded before the tick: send every one not sent yet to fomaxo.in
       $ok = 0; $bad = 0; foreach ($vids as $k => $v) if ($toInOk($v)) { if (fx_vid_to_in(fx_media_path($v['file']), $v)) { $vids[$k]['sent_in'] = true; $ok++; } else $bad++; }
@@ -1514,6 +1514,16 @@ if (isset($_GET['videos'])) {
       @file_put_contents(dirname(__DIR__) . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | upload ' . $name . ' ' . round(filesize("$dir/$name") / 1048576, 1) . ' MB | ' . substr(preg_replace('/[^a-z0-9 .:\/_=,%()-]+/i', '', (string)($_POST['how'] ?? 'as is')), 0, 120) . ' | ' . substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160) . "\n", FILE_APPEND | LOCK_EX);   // so a video that was not made smaller can be looked into
       fx_vid_note("vid/$name", ['how' => substr((string)($_POST['how'] ?? 'as is'), 0, 120), 'sent_type' => (string)($f['type'] ?? ''), 'mime' => $mime, 'browser' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160)]);
       array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$name", 'cover' => $cover, 'product' => $prod, 'on' => true] + (preg_match('/^[a-f0-9]{32}$/', (string)($_POST['fp'] ?? '')) ? ['fp' => (string)$_POST['fp']] : []) + ($words !== '' ? ['words' => $words] : []) + (($_POST['shape'] ?? '') === '169' ? ['wide' => true] : []));
+      if (r2_conf() && preg_match('/^[a-f0-9]{16}$/', (string)($_POST['hq_parts'] ?? ''))) {   // the sharp 1080p copy, made in the browser when Cloudflare is connected: straight to Cloudflare, then off Hostinger
+        unset($out); $hd = fx_media('parts/' . $_POST['hq_parts']); $hn = (int)($_POST['hq_parts_n'] ?? 0); $ht = (int)($_POST['hq_parts_size'] ?? 0); $hq = preg_replace('~\.\w+$~', '', $name) . '-h.mp4';
+        $ok = $hn > 0 && $hn <= 1000 && $ht > 0 && $ht <= 100 * 1048576 && ($out = @fopen("$dir/$hq", 'wb'));
+        for ($k = 0; $ok && $k < $hn; $k++) { $in = @fopen("$hd/$k", 'rb'); if (!$in) { $ok = false; break; } stream_copy_to_stream($in, $out); fclose($in); }
+        if (!empty($out)) fclose($out);
+        clearstatcache(); $ok = $ok && (int)@filesize("$dir/$hq") === $ht && function_exists('finfo_open') && finfo_file(finfo_open(FILEINFO_MIME_TYPE), "$dir/$hq") === 'video/mp4';
+        foreach (glob("$hd/*") ?: [] as $x) @unlink($x); @rmdir($hd);
+        if ($ok) $vids[0]['hq'] = "vid/$hq"; else @unlink("$dir/$hq");
+        unset($out);
+      }
       $toIn = !empty($_POST['to_in']) && fx_vid_to_in("$dir/$name", $vids[0]);   // the tick 'Also add to fomaxo.in'
       if ($toIn) $vids[0]['sent_in'] = true;
       flash('Video added' . ($toIn ? ' here and on fomaxo.in' : '') . '. It shows on the home page within a minute.' . (!empty($_POST['to_in']) && !$toIn ? ' It could not be sent to fomaxo.in: please upload it there too.' : ''), true);
@@ -1546,10 +1556,12 @@ if (isset($_GET['videos'])) {
       if (!empty($v['ig'])) { $seen = json_decode((string)fomaxo_setting($pdo, 'ig_seen'), true) ?: []; $seen[] = $v['ig']; fomaxo_setting($pdo, 'ig_seen', json_encode(array_slice($seen, -300))); }   // Automatic never brings it back
       fx_media_delete($v['file'] ?? '');
       fx_media_delete($v['prev'] ?? '');
+      fx_media_delete($v['hq'] ?? '');   // on Cloudflare, it goes at the next copy (r2_sync)
       fx_media_delete($v['cover'] ?? '');
       flash('Video deleted.', true);
     }
     fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
+    if ($act === 'add' && !empty($vids[0]['hq'])) { try { r2_sync($pdo, 25); } catch (Throwable $e) {} }   // the sharp copy goes to Cloudflare now (what's left goes the next time this page opens)
     go($back);
   }
   /* Automatic Instagram reels are fetched by products.php after a shopper's page has its answer (at most once an hour), never while this page loads */
@@ -1566,6 +1578,7 @@ if (isset($_GET['videos'])) {
     $gone = !$ps && ((string)($v['product'] ?? '') !== '' || !empty($v['also']));   // had products, all deleted
     $fsz = empty($v['embed']) && ($fp = fx_media_path($v['file'] ?? '')) && is_file($fp) ? (int)filesize($fp) : 0;   // 0 = the video file is not on the server
     $fnote = !empty($v['embed']) ? '' : ($fsz ? ' · ' . ($fsz >= 1048576 ? round($fsz / 1048576, 1) . ' MB' : max(1, round($fsz / 1024)) . ' KB') : ' · <b class="vbad">File missing, upload again</b>');
+    if (($v['hq'] ?? '') !== '') $fnote .= isset(($r2hv ??= r2_have())[$v['hq']]) ? ' · 1080p on Cloudflare' : ' · 1080p waiting to copy';   // the sharp copy (only on Cloudflare)
     $hid = $ps && !array_filter($ps, fn($id) => !$names[$id]['hidden']);
     $mk = $fsz > 1.5 * 1048576 && empty($v['embed']) && !(($v['prev'] ?? '') !== '' && is_file((string)fx_media_path($v['prev'])));   // no small preview yet: this page makes one (vshrink.js)
     $tr .= '<div class="vrow' . (empty($v['on']) ? ' off' : '') . '" data-vid="' . h($v['id']) . '"' . (($v['fp'] ?? '') !== '' ? ' data-fp="' . h($v['fp']) . '"' : '') . ($fsz ? ' data-sz="' . $fsz . '"' : '') . ($mk ? ' data-mkprev="1"' : '') . ($fsz && empty($v['embed']) ? ' data-pvsrc="../assets/' . h($v['file']) . '"' . (($v['prev'] ?? '') !== '' && is_file((string)fx_media_path($v['prev'])) ? ' data-pv="1"' : '') : '') . ($fsz && empty($v['embed']) && ($v['cover'] ?? '') === '' ? ' data-mkcover="../assets/' . h($v['file']) . '"' : '') . '><span class="vdrag" title="Drag to change the order" aria-hidden="true"><svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.6"/><circle cx="8" cy="2" r="1.6"/><circle cx="2" cy="8" r="1.6"/><circle cx="8" cy="8" r="1.6"/><circle cx="2" cy="14" r="1.6"/><circle cx="8" cy="14" r="1.6"/></svg></span>'
@@ -1614,9 +1627,9 @@ if (isset($_GET['videos'])) {
       . '<input name="r2_secret" type="password" required autocomplete="new-password" spellcheck="false" placeholder="Secret Access Key" aria-label="Secret Access Key">'
       . '<input name="r2_bucket" required spellcheck="false" autocomplete="off" value="fomaxo-videos-asia" placeholder="Bucket name" aria-label="Bucket name"></div>'
       . '<div class="igadd"><input name="r2_url" type="url" required spellcheck="false" value="https://v.fomaxo.com" placeholder="https://v.fomaxo.com" aria-label="Public address"><button class="btn" onclick="if(this.form.checkValidity())this.textContent=\'Checking…\'">Connect</button></div>'
-      . '<details class="igtok"><summary>Where are these?</summary><ol><li>Open <b>dash.cloudflare.com</b> → R2 Object Storage</li><li>Account ID is on the right of the R2 page</li><li>Manage API tokens → Create API token → Object Read &amp; Write, bucket fomaxo-videos-asia</li><li>Copy the Access Key ID and Secret Access Key</li><li>The same keys as on fomaxo.in work here too</li></ol><p>Kept on your Hostinger server only, never shown again. The videos go in their own com/ folder, apart from fomaxo.in\'s.</p></details></form>'
+      . '<details class="igtok"><summary>Where are these?</summary><ol><li>Open <b>dash.cloudflare.com</b> → R2 Object Storage</li><li>Account ID is on the right of the R2 page</li><li>Manage API tokens → Create API token → Object Read &amp; Write, bucket fomaxo-videos-asia</li><li>Copy the Access Key ID and Secret Access Key</li><li>Paste them here once: fomaxo.in gets them too</li></ol><p>Kept on your Hostinger server only, never shown again. fomaxo.com\'s videos go in their own com/ folder, apart from fomaxo.in\'s.</p></details></form>'
     : '<form class="card vig" method="post">' . csrf_field() . '<input type="hidden" name="act" value="r2_on">'
-      . '<div class="igh"><h2>Cloudflare <small class="muted">' . h(preg_replace('~^https://~', '', $r2['url'])) . '</small></h2><button class="btn line sm" name="act" value="r2_off" onclick="return confirm(\'Disconnect Cloudflare? Videos play from Hostinger again.\')">Disconnect</button></div>'
+      . '<div class="igh"><h2>Cloudflare <small class="muted">' . h(preg_replace('~^https://~', '', $r2['url'])) . '</small></h2><button class="btn line sm" name="act" value="r2_off" onclick="return confirm(\'Disconnect Cloudflare on fomaxo.com and fomaxo.in? Videos play from Hostinger again.\')">Disconnect</button></div>'
       . '<div class="spages igauto"><div class="pgs"><label class="pg"><span>' . ($r2On ? 'Videos play from Cloudflare' : 'Off: videos play from Hostinger') . '<small class="muted">' . $r2done . ' of ' . count($r2want) . ' video files copied' . ($r2done < count($r2want) ? ', the rest play from Hostinger' : '') . '</small></span><input type="checkbox" role="switch" name="on" value="1"' . ($r2On ? ' checked' : '') . ' aria-label="Play videos from Cloudflare" onchange="this.form.submit()"><i class="sw"></i></label></div></div>'
       . (function () use ($r2n) { $all = r2_total(!empty($r2n)); $u = $all ?? r2_used(); $pc = min(100, $u / R2_FREE * 100); $lv = $u >= R2_FREE ? 'full' : ($u >= 0.8 * R2_FREE ? 'near' : '');   // the 10 GB bar: amber from 8 GB, red at 10 GB
           return '<div class="r2bar' . ($lv ? " $lv" : '') . '"><div class="r2t"><b>' . ($u >= 1e8 ? round($u / 1e9, 1) : round($u / 1e6)) . ($u >= 1e8 ? ' GB' : ' MB') . '</b> used of 10 GB free<span>' . round($pc) . '%</span></div><i><s style="width:' . max($u ? 1 : 0, round($pc, 1)) . '%"></s></i>'
@@ -1631,14 +1644,14 @@ if (isset($_GET['videos'])) {
     . '<input id="v_url" type="url" name="url" required inputmode="url" placeholder="https://www.instagram.com/reel/…" spellcheck="false" aria-label="Video link">'
     . '<div class="igadd">' . $vpick('Product in the video') . '<button class="btn">Add</button></div>'
     . '<p class="muted small shelp">Instagram reel link, or a link that opens the video itself. Not YouTube or TikTok.</p></form>'
-    . '<form class="card vadd" method="post" enctype="multipart/form-data" data-vshrink data-max="' . $max . '">' . csrf_field() . '<input type="hidden" name="act" value="add">'
+    . '<form class="card vadd" method="post" enctype="multipart/form-data" data-vshrink data-max="' . $max . '"' . (r2_conf() ? ' data-hq="1"' : '') . '>' . csrf_field() . '<input type="hidden" name="act" value="add">'
     . '<h2>Upload from your phone</h2>'
     . '<div class="vfiles"><div><label for="v_file">Video</label><input id="v_file" type="file" name="video" accept="video/*,.mp4,.mov,.m4v,.webm,.mkv,.avi" required></div>'
     . '<div><label for="v_cover">Cover photo <span class="opt">(optional)</span></label><input id="v_cover" type="file" name="cover" accept="image/*"></div></div>'
     . '<div class="vshape" role="radiogroup" aria-label="Video shape"><span>Shape</span><label><input type="radio" name="shape" value="916" checked><i></i>9:16 upright</label><label><input type="radio" name="shape" value="169"><i></i>16:9 wide</label></div>'
     . '<div class="igadd">' . $vpick('Product in the video', 'v_prod') . '<button class="btn">Upload</button></div>'
     . (fx_in_inbox() !== '' ? '<label class="vtoin" style="display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:13.5px;cursor:pointer"><input type="checkbox" name="to_in" value="1" checked style="width:18px;height:18px;accent-color:var(--gold,#c9a35b)">Also add to fomaxo.in</label>' : '')
-    . '<p class="muted small shelp">9:16 or 16:9, picked from the video by itself, 10 to 30 seconds. Big videos are made smaller by themselves. Plays muted until tapped. No cover = product photo.</p>'
+    . '<p class="muted small shelp">9:16 or 16:9, picked from the video by itself, 10 to 30 seconds. Big videos are made smaller by themselves' . (r2_conf() ? ', and a sharp 1080p copy goes to Cloudflare' : '') . '. Plays muted until tapped. No cover = product photo.</p>'
     . '<div class="vsh muted small" hidden><span></span></div></form><script src="vshrink.js?v=' . (int)@filemtime(__DIR__ . '/vshrink.js') . '"></script></div>'   /* the file the browser keeps (50 KB), not sent again with every open of this page */
     . '<div class="card vlist' . ($allOn ? '' : ' alloff') . '" data-t="1"><div class="igh"><h2>Your videos <small class="muted">' . $n . '</small> <b class="vok" aria-live="polite"></b></h2>'
     . '<form method="post" class="spages vall">' . csrf_field() . '<input type="hidden" name="act" value="all"><div class="pgs"><label class="pg"><span>' . ($allOn ? 'On website' : 'Off: row hidden') . '</span><input type="checkbox" role="switch" name="on" value="1"' . ($allOn ? ' checked' : '') . ' aria-label="Show videos on the website" onchange="this.form.submit()"><i class="sw"></i></label></div></form></div>'
