@@ -1605,7 +1605,7 @@ if (isset($_GET['videos'])) {
   }
   /* Cloudflare R2: keys once, then the videos are copied there (a few each time this page opens) and a switch plays them from there */
   $r2 = r2_conf(); $r2On = r2_on($pdo);
-  if ($r2) { try { r2_sync($pdo, 6); } catch (Throwable $e) {} }   // new uploads go to Cloudflare the next time this page opens
+  if ($r2) { try { [$r2n] = r2_sync($pdo, 6); } catch (Throwable $e) { $r2n = 0; } }   // new uploads go to Cloudflare the next time this page opens
   $r2want = $r2 ? r2_wanted($pdo) : []; $r2have = $r2 ? r2_have() : []; $r2done = count(array_filter($r2want, fn($sz, $f) => ($r2have[$f] ?? -1) === $sz, ARRAY_FILTER_USE_BOTH));
   $r2Html = !$r2 ? '<form class="card vig" method="post">' . csrf_field() . '<input type="hidden" name="act" value="r2_keys"><h2>Cloudflare <small class="muted">faster videos</small></h2>'
       . '<p class="muted small shelp stop">Keep the videos on Cloudflare too (free up to 10 GB). They play from there, and from Hostinger if Cloudflare ever fails.</p>'
@@ -1618,9 +1618,9 @@ if (isset($_GET['videos'])) {
     : '<form class="card vig" method="post">' . csrf_field() . '<input type="hidden" name="act" value="r2_on">'
       . '<div class="igh"><h2>Cloudflare <small class="muted">' . h(preg_replace('~^https://~', '', $r2['url'])) . '</small></h2><button class="btn line sm" name="act" value="r2_off" onclick="return confirm(\'Disconnect Cloudflare? Videos play from Hostinger again.\')">Disconnect</button></div>'
       . '<div class="spages igauto"><div class="pgs"><label class="pg"><span>' . ($r2On ? 'Videos play from Cloudflare' : 'Off: videos play from Hostinger') . '<small class="muted">' . $r2done . ' of ' . count($r2want) . ' video files copied' . ($r2done < count($r2want) ? ', the rest play from Hostinger' : '') . '</small></span><input type="checkbox" role="switch" name="on" value="1"' . ($r2On ? ' checked' : '') . ' aria-label="Play videos from Cloudflare" onchange="this.form.submit()"><i class="sw"></i></label></div></div>'
-      . (function () { $u = r2_used(); $pc = min(100, $u / R2_FREE * 100); $lv = $u >= R2_FREE ? 'full' : ($u >= 0.8 * R2_FREE ? 'near' : '');   // the 10 GB bar: amber from 8 GB, red at 10 GB
+      . (function () use ($r2n) { $all = r2_total(!empty($r2n)); $u = $all ?? r2_used(); $pc = min(100, $u / R2_FREE * 100); $lv = $u >= R2_FREE ? 'full' : ($u >= 0.8 * R2_FREE ? 'near' : '');   // the 10 GB bar: amber from 8 GB, red at 10 GB
           return '<div class="r2bar' . ($lv ? " $lv" : '') . '"><div class="r2t"><b>' . ($u >= 1e8 ? round($u / 1e9, 1) : round($u / 1e6)) . ($u >= 1e8 ? ' GB' : ' MB') . '</b> used of 10 GB free<span>' . round($pc) . '%</span></div><i><s style="width:' . max($u ? 1 : 0, round($pc, 1)) . '%"></s></i>'
-            . '<small class="muted">fomaxo.com videos only; fomaxo.in\'s videos share the same 10 GB</small>'
+            . '<small class="muted">' . ($all !== null ? 'fomaxo.com and fomaxo.in together (they share the 10 GB)' : 'fomaxo.com videos only; fomaxo.in\'s videos share the same 10 GB') . '</small>'
             . ($lv === 'full' ? '<p>Over the free 10 GB. Cloudflare now charges your card (about $0.015, AED 0.06, per GB each month). Check the payment card in Cloudflare → Billing, or delete old videos.</p>'
               : ($lv === 'near' ? '<p>Nearly full. Above 10 GB Cloudflare charges your card (about $0.015, AED 0.06, per GB a month). Add a payment card in Cloudflare → Billing, or delete old videos.</p>' : '')) . '</div>'; })()
       . ($r2done < count($r2want) ? '<p class="muted small shelp"><button class="lnk" name="act" value="r2_sync" onclick="this.textContent=\'Copying…\'">Copy the rest now</button></p>' : '')

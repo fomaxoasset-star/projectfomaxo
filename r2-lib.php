@@ -85,6 +85,22 @@ function r2_sync($pdo, float $secs = 8): array {
   return [$n, $err];
 }
 function r2_used(): int { return (int)array_sum(r2_have()); }
+/* the whole bucket, both sites (fomaxo.in's files and ours under com/): the free 10 GB is for the two together.
+   Asked from Cloudflare at most every 10 minutes (and after a copy), kept in fomaxo-media/r2-total.json; null when Cloudflare can't say */
+function r2_total(bool $fresh = false): ?int {
+  $j = fx_media() . '/r2-total.json'; $t = json_decode((string)@file_get_contents($j), true);
+  if (!$fresh && is_array($t) && time() - (int)($t['at'] ?? 0) < 600) return (int)$t['bytes'];
+  $c = r2_conf(); if (!$c) return null;
+  $sum = 0; $tok = ''; $pages = 0;
+  do {
+    [$code, $out] = r2_req($c, 'GET', '', ($tok !== '' ? 'continuation-token=' . rawurlencode($tok) . '&' : '') . 'list-type=2');
+    if ($code !== 200) return is_array($t) ? (int)$t['bytes'] : null;
+    preg_match_all('~<Size>(\d+)</Size>~', (string)$out, $m); $sum += array_sum(array_map('intval', $m[1]));
+    $tok = preg_match('~<IsTruncated>true</IsTruncated>~', (string)$out) && preg_match('~<NextContinuationToken>([^<]+)~', (string)$out, $n) ? html_entity_decode($n[1], ENT_XML1) : '';
+  } while ($tok !== '' && ++$pages < 20);
+  @file_put_contents($j, json_encode(['bytes' => $sum, 'at' => time()]), LOCK_EX);
+  return $sum;
+}
 /* checks the keys (a small test file), lets both websites play the videos (CORS, so Safari's black-frame check still works),
    and checks the public address: '' when all is well, else what to fix */
 function r2_check(array $c): string {
