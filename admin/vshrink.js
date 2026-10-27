@@ -279,12 +279,12 @@ window.fxPick = function (src, done) {
     fingerprint(file).then(function (fp) {
       if (inp.files[0] !== file) return; fpIn.value = fp;
       var rows = [].slice.call(document.querySelectorAll('.vrow[data-vid]')), hit = rows.filter(function (r) { return (fp && r.dataset.fp === fp) || +r.dataset.sz === file.size; })[0];
-      if (!hit) return; dupOf = hit;
+      if (!hit || (f.elements.replace && f.elements.replace.value)) return; dupOf = hit;   // replacing a video with its original: of course it is the same one
       var nm = [].map.call(hit.querySelectorAll('.vchip:not(.none)'), function (c) { return c.textContent.replace(/[✕\s]+$/, ''); }).filter(Boolean).slice(0, 2).join(', ');
       dupNote.textContent = '⚠ This video is already uploaded: number ' + (rows.indexOf(hit) + 1) + ' in your list' + (nm ? ' (' + nm + ')' : '') + '. Upload it again only if you mean to.'; dupNote.hidden = false;
     });
   });
-  f.addEventListener('submit', function (e) { if (dupOf && !f.dataset.go && !f.dataset.dupOk) { if (confirm('This video is already in your list. Upload it again?')) f.dataset.dupOk = 1; else { e.preventDefault(); e.stopImmediatePropagation(); } } }, true);
+  f.addEventListener('submit', function (e) { if (dupOf && !f.dataset.go && !f.dataset.dupOk && !(f.elements.replace && f.elements.replace.value)) { if (confirm('This video is already in your list. Upload it again?')) f.dataset.dupOk = 1; else { e.preventDefault(); e.stopImmediatePropagation(); } } }, true);
   inp.addEventListener('change', function () { delete f.dataset.dupOk; });
   inp.addEventListener('change', function () {
     var file = inp.files && inp.files[0], r = f.querySelectorAll('input[name=shape]'); auto = file && window.fxCover ? window.fxCover(file) : null; pk.hidden = !file; pk.textContent = 'Pick cover from the video'; if (!file || r.length < 2) return;
