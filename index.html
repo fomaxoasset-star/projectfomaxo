@@ -6111,6 +6111,14 @@ function vsBind(){
   const later = () => setTimeout(go, 3000);   // 3 seconds after the page has loaded: the photo, prices and Add to bag get the connection first
   document.readyState === 'complete' ? later() : addEventListener('load', later, {once: true});
 }
+/* the player's first 10 seconds of each video it opens, reported once (vlog.php): when the video got its size, could play, played and showed
+   real pictures, how often it waited, so a slow start in one browser (AJAY 2026-10-27: Mac Safari) can be looked into. Changes nothing in how it plays */
+function reelLog(v, s){ if (v._rlog) return; v._rlog = 1; const t0 = performance.now(), at = {}, ms = () => ((performance.now() - t0) / 1000).toFixed(1); let waits = 0;
+  ['loadedmetadata', 'canplay', 'playing', 'error'].forEach(ev => v.addEventListener(ev, () => { if (!(ev in at)) at[ev] = ms(); }));
+  ['waiting', 'stalled'].forEach(ev => v.addEventListener(ev, () => waits++));
+  const sh = new MutationObserver(() => { if (s.classList.contains('shown') && !at.shown) at.shown = ms(); }); sh.observe(s, {attributes: true, attributeFilter: ['class']});
+  setTimeout(() => { sh.disconnect(); try { const b = v.buffered, nc = navigator.connection;
+    navigator.sendBeacon && navigator.sendBeacon('vlog.php', new Blob([JSON.stringify({v: ['player ' + (v.currentSrc || v.src || '').split('/').pop(), 'meta=' + (at.loadedmetadata || '-'), 'canplay=' + (at.canplay || '-'), 'playing=' + (at.playing || '-'), 'shown=' + (at.shown || '-'), 'waits=' + waits, 'err=' + (v.error ? v.error.code : 0) + (at.error ? '@' + at.error : ''), 'played=' + v.currentTime.toFixed(1), 'buffered=' + (b.length ? b.end(b.length - 1).toFixed(1) : 0) + '/' + (v.duration || 0).toFixed(1), 'paused=' + v.paused, 'muted=' + v.muted, 'ready=' + v.readyState, 'net=' + (nc ? nc.effectiveType : '-')]})], {type: 'application/json'})); } catch (e) {} }, 10000); }
 let reelMuted = false;   // the player opens with sound on, quietly (the row stays muted)
 const REEL_VOL = .3; let reelAC = null;
 function quiet(v){   // low volume: iPhone ignores video.volume, so the sound goes through a gain of 0.3 (same-site videos); elsewhere video.volume does it too
@@ -6160,7 +6168,7 @@ function openReel(i){
     const sb = $('.rl-snd', el); if (sb) sb.hidden = !$('video', slides[k]);   // Instagram's player has its own sound
     slides.forEach((s, n) => { const v = $('video', s);
       if (!v) { const f = $('iframe', s); if (f && !f.src && Math.abs(n - k) <= 1) f.src = f.dataset.src; return; }   // Instagram's player: loaded when near, played by a tap on it
-      if (n === k) { if (!v.src) v.src = v.dataset.src; v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
+      if (n === k) { if (!v.src) v.src = v.dataset.src; reelLog(v, s); v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
       else { v.pause(); if (Math.abs(n - k) === 1 && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } } });   // the next and previous videos load now, so a swipe plays at once
     $$('.rl-nav button', el).forEach(b => b.disabled = (+b.dataset.rl < 0 && k === 0) || (+b.dataset.rl > 0 && k === slides.length - 1));
   };
