@@ -397,7 +397,7 @@ html[data-mode="light"] .sort-by select{color:var(--ink,#1a140c)}html[data-mode=
 @media(max-width:960px){.pdp{grid-template-columns:minmax(0,1fr)}.gallery{position:relative;top:0;grid-template-columns:minmax(0,1fr)}.thumbs{flex-direction:row;order:2}.thumbs button{width:72px}}
 /* AJAY: on phone the product photos show whole, not cut or zoomed in: each photo frame takes the photo's own shape (--ar, set by fitPhoto);
    a shop row with different shapes takes the tallest and a wider photo shows whole (fit-c); swipe moves between photos */
-@media(max-width:960px){.stage{aspect-ratio:3/4;touch-action:pan-y pinch-zoom}.stage img{object-fit:cover}.card .media{aspect-ratio:var(--ar-row,var(--ar,4/5))}.card .media.fit-c{background:#0b0a08}.card .media.fit-c img{object-fit:contain}}
+@media(max-width:960px){.stage{aspect-ratio:3/4;touch-action:pan-y}.stage.pz{touch-action:none}.stage img{object-fit:cover}.card .media{aspect-ratio:var(--ar-row,var(--ar,4/5))}.card .media.fit-c{background:#0b0a08}.card .media.fit-c img{object-fit:contain}}
 @media(hover:none){.card:hover .media img{transform:none}}   /* a tap on a phone doesn't leave the card photo enlarged */
 
 /* mobile sticky buy */
@@ -4099,7 +4099,7 @@ function bindProduct(p){
   $('#qp').onclick = () => { if (overMax(getQ() + 1)) massPopup(p.id, size); qty.value = Math.min(capQ(), getQ() + 1); qcap(); };
   qty.onchange = () => { if (overMax(parseInt(qty.value) || 1)) massPopup(p.id, size); qty.value = getQ(); qcap(); };
   const setImg = k => { const im = $('#stageImg'), st = $('#stage');
-    if (st && st.classList.contains('zoom')) { im.style.transition = 'none'; st.classList.remove('zoom'); requestAnimationFrame(() => { im.style.transition = ''; }); }   // a new photo always shows whole, not zoomed
+    if (st && (st.classList.contains('zoom') || st.classList.contains('pz'))) { im.style.transition = 'none'; im.style.transform = ''; st.classList.remove('zoom', 'pz'); if (st._pz) Object.assign(st._pz, {s: 1, x: 0, y: 0}); requestAnimationFrame(() => { im.style.transition = ''; }); }   // a new photo always shows whole, not zoomed
     im.src = IMG(k); $$('.thumbs button').forEach(b => b.classList.toggle('on', b.dataset.g === k)); };
   $$('.thumbs button').forEach(b => b.onclick = () => setImg(b.dataset.g));
   const tr0 = $('#pdTry'); if (tr0) tr0.onclick = () => { const b = $('#sizes button[data-s="10"]'); if (b) b.click(); };
@@ -4112,56 +4112,77 @@ function bindProduct(p){
     qty.value = getQ(); renderMbuy(); pdpStock(); btRender(p, size); const ps = $('#psold'); if (ps) { ps.dataset.s = soldKey(p, size); ps.innerHTML = soldHTML(p.id, soldKey(p, size)); } const sb = $('.gallery > [data-best]'); if (sb) { sb.dataset.k = soldKey(p, size); bestSync(); } fitPdp();
   });
   const stage = $('#stage');
-  /* laptop: a click zooms. Phone: one tap zooms in at the tapped spot (a finger then moves around the photo) and one more tap zooms back out.
-     Before, a phone tap did nothing (only a double tap zoomed): the recorder saw Instagram phone visitors tapping it again and again (AJAY 2026-10-26) */
-  const zoomAt = (x, y) => { const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${Math.min(100, Math.max(0, (x - r.left) / r.width * 100))}% ${Math.min(100, Math.max(0, (y - r.top) / r.height * 100))}%`; };
+  /* laptop: a click zooms, the photo follows the mouse. Phone: the photo zooms like the phone's own photos (AJAY 2026-10-26 "normal zoom in zoom out
+     and move image with finger and swipe like all normal phone functions"): pinch with two fingers, or tap / double tap, to zoom in or out; one finger
+     moves the zoomed photo (it follows the finger and stops at the photo's edges); at an edge a swipe goes on to the next photo; not zoomed, a swipe
+     changes photo. Taps are read from the finger, because a real finger slides a little and then the phone sends no click */
+  const LAP = () => matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches;
   stage.setAttribute('role', 'button'); stage.setAttribute('aria-label', 'Zoom photo'); stage.dataset.tap = '1';
-  let tapDone = 0;
-  const tapZoom = (x, y) => { if (!stage.classList.contains('zoom')) zoomAt(x, y); stage.classList.toggle('zoom'); };
-  stage.onclick = e => {
-    if (matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches) { stage.classList.toggle('zoom'); return; }
-    if (Date.now() - tapDone < 800) return;   // the finger's tap was already handled (below)
-    tapZoom(e.clientX, e.clientY);
-  };
-  /* phone: the tap is read from the finger itself, so it zooms in or out even when the finger slid a little. A real finger always slides a few px, and past ~10 px
-     the phone sends no click: the photo stayed zoomed and every swipe only moved it around (AJAY 2026-10-26: "swipe photos seems stuck" after a few taps) */
-  let zt = null;
-  stage.addEventListener('touchstart', e => { zt = e.touches.length === 1 ? {x: e.touches[0].clientX, y: e.touches[0].clientY, at: Date.now(), y0: scrollY} : null; }, {passive: true});
-  stage.addEventListener('touchmove', e => { if (zt && e.touches.length > 1) zt = null;
-    if (e.touches.length === 1 && stage.classList.contains('zoom') && $$('.thumbs button').length < 2) { e.preventDefault(); zoomAt(e.touches[0].clientX, e.touches[0].clientY); } }, {passive: false});   // one-photo products: the finger moves the zoomed photo too (with more photos the swipe code below does it)
-  stage.addEventListener('touchend', e => { if (!zt || e.touches.length) return; const c = e.changedTouches[0];
-    if (Math.hypot(c.clientX - zt.x, c.clientY - zt.y) < 24 && Date.now() - zt.at < 500 && Math.abs(scrollY - zt.y0) < 2) { tapZoom(c.clientX, c.clientY); tapDone = Date.now(); } zt = null; });
+  let touchAt = 0;
+  stage.onclick = () => { if (LAP()) stage.classList.toggle('zoom'); };   // phones: the touch code below
   stage.onmousemove = e => { if (!stage.classList.contains('zoom')) return; const r = stage.getBoundingClientRect(); $('#stageImg').style.transformOrigin = `${(e.clientX-r.left)/r.width*100}% ${(e.clientY-r.top)/r.height*100}%`; };
-  stage.onmouseleave = () => { if (matchMedia('(min-width: 961px) and (hover: hover) and (pointer: fine)').matches) stage.classList.remove('zoom'); };   // a phone tap also sends mouse events: keep its zoom
-  /* phone: swipe the big photo left / right for the next / previous photo (goes round at the ends); the neighbour photo slides in beside it */
-  const thumbs = $$('.thumbs button');
-  if (thumbs.length > 1) {
-    let x0 = 0, y0 = 0, dx = 0, dy = 0, t0 = 0, drag = 0, peekDir = 0;   // drag: 1 = sideways swipe, -1 = page scroll, 2 = zoomed in, 0 = not decided yet
-    const im = () => $('#stageImg'), n = thumbs.length;
+  stage.onmouseleave = () => { if (LAP()) stage.classList.remove('zoom'); };
+  const PZ = stage._pz = {s: 1, x: 0, y: 0};   // phone zoom: scale and move of the photo (setImg puts it back to 1)
+  const pzSet = (s, x, y, anim) => {
+    const w = stage.clientWidth, h = stage.clientHeight, im = $('#stageImg'); s = Math.min(4, Math.max(1, s));
+    const mx = (s - 1) * w / 2, my = (s - 1) * h / 2;   // the photo fills the frame, so it can move this far before an edge shows
+    PZ.s = s; PZ.x = Math.max(-mx, Math.min(mx, x)); PZ.y = Math.max(-my, Math.min(my, y));
+    im.style.transition = anim ? 'transform .25s ease-out' : 'none'; im.style.transformOrigin = '50% 50%';
+    im.style.transform = s > 1 ? `translate(${PZ.x}px,${PZ.y}px) scale(${s})` : ''; stage.classList.toggle('pz', s > 1);
+  };
+  const rel = (x, y) => { const r = stage.getBoundingClientRect(); return [x - r.left - r.width / 2, y - r.top - r.height / 2]; };   // from the frame's middle
+  const zoomTo = (s, x, y) => { const [px, py] = rel(x, y); pzSet(s, px - (px - PZ.x) * s / PZ.s, py - (py - PZ.y) * s / PZ.s, true); };   // the spot under the finger stays put
+  const tapZoom = (x, y) => { if (PZ.s > 1) pzSet(1, 0, 0, true); else zoomTo(2.5, x, y); };
+  const thumbs = $$('.thumbs button'), n = thumbs.length;
+  const at = d => thumbs[(Math.max(0, thumbs.findIndex(b => b.classList.contains('on'))) + d + n) % n];
+  const centre = b => { const tb = b.parentElement; tb.scrollLeft = b.offsetLeft - tb.offsetLeft - (tb.clientWidth - b.offsetWidth) / 2; };
+  let g = null, lastTap = 0, tapT = 0;
+  const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY), mid = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
+  stage.addEventListener('touchstart', e => { touchAt = Date.now(); const t = e.touches;
+    if (t.length === 2) { const [mx, my] = mid(t), [px, py] = rel(mx, my); g = {pinch: 1, d0: dist(t), s0: PZ.s, ix: (px - PZ.x) / PZ.s, iy: (py - PZ.y) / PZ.s}; return; }   // ix / iy: the photo spot between the fingers
+    if (t.length === 1) g = {x: t[0].clientX, y: t[0].clientY, at: Date.now(), y0: scrollY, sx: PZ.x, sy: PZ.y, zoomed: PZ.s > 1}; else g = null;
+  }, {passive: true});
+  stage.addEventListener('touchmove', e => { if (!g) return; const t = e.touches;
+    if (g.pinch && t.length === 2) { e.preventDefault(); const s = Math.min(4, Math.max(1, g.s0 * dist(t) / g.d0)), [mx, my] = mid(t), [px, py] = rel(mx, my); pzSet(s, px - g.ix * s, py - g.iy * s); return; }
+    if (!g.pinch && g.zoomed && t.length === 1) { e.preventDefault(); pzSet(PZ.s, g.sx + t[0].clientX - g.x, g.sy + t[0].clientY - g.y); }
+  }, {passive: false});
+  stage.addEventListener('touchend', e => { if (!g) return;
+    if (g.pinch) { if (!e.touches.length) { if (PZ.s < 1.08) pzSet(1, 0, 0, true); g = null; } else g = null; return; }
+    if (e.touches.length) return; const c = e.changedTouches[0], dx = c.clientX - g.x, dy = c.clientY - g.y, dt = Date.now() - g.at;
+    if (Math.hypot(dx, dy) < 24 && dt < 500 && Math.abs(scrollY - g.y0) < 2) {   // a tap; two quick taps = one double tap
+      const now = Date.now(), x = c.clientX, y = c.clientY;
+      if (now - lastTap < 300) { clearTimeout(tapT); lastTap = 0; tapZoom(x, y); } else { lastTap = now; tapT = setTimeout(() => { lastTap = 0; tapZoom(x, y); }, 280); }
+    } else if (g.zoomed && n > 1 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {   // zoomed: pushing on past the photo's edge goes to the next / previous photo, like the phone's own photos
+      const mx = (PZ.s - 1) * stage.clientWidth / 2, edge = dx < 0 ? g.sx <= -mx + 2 : g.sx >= mx - 2;
+      if (edge) { const nx = at(dx < 0 ? 1 : -1); setImg(nx.dataset.g); centre(nx); }
+    }
+    g = null; });
+  stage.addEventListener('touchcancel', () => { g = null; });
+  /* phone, not zoomed: swipe the big photo left / right for the next / previous photo (goes round at the ends); the neighbour photo slides in beside it */
+  if (n > 1) {
+    let x0 = 0, y0 = 0, dx = 0, drag = 0, peekDir = 0;   // drag: 1 = sideways swipe, -1 = page scroll, zoomed or two fingers, 0 = not decided yet
+    const im = () => $('#stageImg');
     const peek = document.createElement('img'); peek.className = 'peek'; peek.alt = ''; peek.hidden = true; stage.appendChild(peek);
-    const at = d => thumbs[(Math.max(0, thumbs.findIndex(b => b.classList.contains('on'))) + d + n) % n];
     const move = (x, t) => { const w = stage.clientWidth, tr = t ? `transform ${t}s ease-out` : 'none'; im().style.transition = tr; im().style.transform = x ? `translateX(${x}px)` : ''; peek.style.transition = tr; peek.style.transform = `translateX(${x + peekDir * w}px)`; };
-    stage.addEventListener('touchstart', e => { dx = 0; peekDir = 0; drag = e.touches.length > 1 ? -1 : stage.classList.contains('zoom') ? 2 : 0; /* 2 = zoomed in: the finger moves around the photo */ x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dy = 0; t0 = Date.now(); }, {passive: true});
+    const back = () => { if (drag === 1 && peek.hidden === false) { move(0, .2); setTimeout(() => { peek.hidden = true; im().style.transition = ''; }, 220); } };
+    stage.addEventListener('touchstart', e => { if (e.touches.length > 1) { back(); drag = -1; return; } dx = 0; peekDir = 0; drag = PZ.s > 1 ? -1 : 0; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive: true});
     stage.addEventListener('touchmove', e => {
-      if (drag < 0) return; const t = e.touches[0];
-      if (drag === 2) { e.preventDefault(); zoomAt(t.clientX, t.clientY); dx = t.clientX - x0; dy = t.clientY - y0; return; }
-      dx = t.clientX - x0; dy = t.clientY - y0;
+      if (drag < 0 || e.touches.length > 1) return; const t = e.touches[0];
+      dx = t.clientX - x0; const dy = t.clientY - y0;
       if (!drag) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; drag = Math.abs(dx) > Math.abs(dy) ? 1 : -1; if (drag < 0) return; }
       e.preventDefault();
       const d = dx < 0 ? 1 : -1; if (d !== peekDir) { peekDir = d; peek.src = IMG(at(d).dataset.g); peek.hidden = false; }
       move(dx);
     }, {passive: false});
-    const swipeEnd = () => {
-      /* zoomed in: a slow finger moves around the photo, a quick sideways flick zooms out and goes to the next / previous photo, so a swipe never feels stuck */
-      if (drag === 2) { drag = 0; if (Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 400) { const next = at(dx < 0 ? 1 : -1); setImg(next.dataset.g); const tb = next.parentElement; tb.scrollLeft = next.offsetLeft - tb.offsetLeft - (tb.clientWidth - next.offsetWidth) / 2; } return; }
-      if (drag !== 1) return; drag = 0; const w = stage.clientWidth;
+    const swipeEnd = e => {
+      if (drag !== 1 || (e && e.touches && e.touches.length)) return; drag = 0; const w = stage.clientWidth;
       if (Math.abs(dx) < Math.min(60, w * .18)) { move(0, .2); setTimeout(() => { peek.hidden = true; im().style.transition = ''; }, 220); return; }   // a short drag springs back
       const next = at(peekDir); move(-peekDir * w, .22);
       setTimeout(() => {
         setImg(next.dataset.g);
         const show = () => { peek.hidden = true; im().style.transition = 'none'; im().style.transform = ''; requestAnimationFrame(() => { im().style.transition = ''; }); };
         (im().decode ? im().decode() : Promise.resolve()).then(show, show);   // swap once the new photo is ready, so it doesn't flash
-        const tb = next.parentElement; tb.scrollLeft = next.offsetLeft - tb.offsetLeft - (tb.clientWidth - next.offsetWidth) / 2;
+        centre(next);
       }, 230);
     };
     stage.addEventListener('touchend', swipeEnd); stage.addEventListener('touchcancel', swipeEnd);
