@@ -409,7 +409,7 @@ tr.row[hidden]{display:none!important}.hacts{display:flex;gap:8px;align-items:ce
 .rseg{flex-wrap:wrap}.stars{color:var(--gold);letter-spacing:.06em;white-space:nowrap}.stars i{font-style:normal;color:var(--line)}
 .rfilter .vcount{margin:0;flex:1 1 100%;justify-content:center}.rfilter .vcount .em{font-size:12.5px;padding:4px 11px}.rfilter{margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rfilter select{max-width:240px;width:auto}.rfilter input{flex:1 1 220px;min-width:0;max-width:420px;padding:7px 10px}.rvlist{list-style:none;margin:0;padding:0}.rv{padding:10px 14px;border-bottom:1px solid var(--line);display:grid;gap:3px}.rv:last-child{border-bottom:0}.rv.off{opacity:.55}
 .emo{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}.emo button{font:18px/1 "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 6px;cursor:pointer;min-width:34px}.emo button:hover{border-color:var(--gold)}.rrep{border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent);padding:6px 10px;border-radius:0 6px 6px 0;margin:2px 0 4px}.rrep b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.rrep p{margin:2px 0 0;font-size:13px}.rrep.off{opacity:.6;border-left-color:var(--muted)}.rrep b span{color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500}.btn.rdel{color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}.racts{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}
-/* Reviews like fomaxo.in: photo, product, stars and a Verified purchaser pill; the text big; name · mobile · date · Customer page small below */@media (max-width:759px){.rmob .ems.vcount{flex-wrap:wrap!important;overflow:visible!important;justify-content:center!important;flex:1 1 100%;min-width:0;max-width:100%}}.rv .rh{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.rthumb{flex:none;width:26px;height:26px;border-radius:5px;overflow:hidden;background:var(--line);display:inline-block}.rthumb img{width:100%;height:100%;object-fit:cover;display:block}.vpill{border:1px solid color-mix(in srgb,var(--ok) 60%,transparent);color:var(--ok);border-radius:999px;padding:1px 9px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.vpill.no{border-color:var(--line);color:var(--muted)}.rv .rtx{font-size:15px;margin:6px 0 4px;line-height:1.45}.rv .rmeta{margin:0 0 8px}.rv .rmeta a{color:inherit;text-decoration:underline}.rv .rdel{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 55%,transparent)}.rprodc .ch{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.rprod td.pn{display:flex;align-items:center;gap:10px}.rprod td.pn .rthumb{width:34px;height:34px;border-radius:7px}.rprod td.pn>span{display:flex;flex-direction:column;min-width:0}.rprod td.pn .small{font-size:12px}.rppl tr.trv a{color:var(--gold);text-decoration:underline}.rppl tr.trv td.num{align-self:center;white-space:nowrap}.racts>form{margin:0 !important;display:flex}.racts .btn.sm,.racts summary.btn{margin:0 !important;padding:7px 12px;line-height:1.2;box-sizing:border-box;height:32px;display:inline-flex;align-items:center}.rrf{margin:0}.rbox{display:none;margin-top:8px}.racts:has(.rrf[open])+.rbox{display:block}.rrf[open]>summary.btn{background:var(--gold);color:#000;box-shadow:none}.rrf>summary{list-style:none;display:inline-block;cursor:pointer}.rrf>summary::-webkit-details-marker{display:none}.rrf textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}.rrb{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+/* Reviews like fomaxo.in: photo, product, stars and a Verified purchaser pill; the text big; name · mobile · date · Customer page small below */@media (max-width:759px){.rmob .ems.vcount{flex-wrap:wrap!important;overflow:visible!important;justify-content:center!important;flex:1 1 100%;min-width:0;max-width:100%}}.rv .rh{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.rthumb{flex:none;width:26px;height:26px;border-radius:5px;overflow:hidden;background:var(--line);display:inline-block}.rthumb img{width:100%;height:100%;object-fit:cover;display:block}.vpill{border:1px solid color-mix(in srgb,var(--ok) 60%,transparent);color:var(--ok);border-radius:999px;padding:1px 9px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.vpill.no{border-color:var(--line);color:var(--muted)}.rv .rtx{font-size:15px;margin:6px 0 4px;line-height:1.45}.rv .rmeta{margin:0 0 8px}.rv .rmeta a{color:inherit;text-decoration:underline}.rv .rdel{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 55%,transparent)}.rprodc .ch{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.rprod td.pn{display:flex;align-items:center;gap:10px}.rprod td.pn .rthumb{width:34px;height:34px;border-radius:7px}.rprod td.pn>span{display:flex;flex-direction:column;min-width:0}.rprod td.pn .small{font-size:12px}.rppl tr.trv a{color:var(--gold);text-decoration:underline}.rnby{margin:0 2px 8px;text-align:center}.rnby a,.rnote a{color:var(--gold);text-decoration:underline}.rppl tr.trv td.num{align-self:center;white-space:nowrap}.racts>form{margin:0 !important;display:flex}.racts .btn.sm,.racts summary.btn{margin:0 !important;padding:7px 12px;line-height:1.2;box-sizing:border-box;height:32px;display:inline-flex;align-items:center}.rrf{margin:0}.rbox{display:none;margin-top:8px}.racts:has(.rrf[open])+.rbox{display:block}.rrf[open]>summary.btn{background:var(--gold);color:#000;box-shadow:none}.rrf>summary{list-style:none;display:inline-block;cursor:pointer}.rrf>summary::-webkit-details-marker{display:none}.rrf textarea{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}.rrb{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 
 .rv p{margin:2px 0;white-space:normal}.rv form{margin:4px 0 0}.rph{display:flex;gap:6px}.rph img{width:56px;height:56px;object-fit:cover;border-radius:6px;display:block}
 .dist span{margin-right:8px;white-space:nowrap}.dist b{color:var(--ink);font-weight:600}.rprod .ph,.rppl .ph{display:none}
@@ -3700,7 +3700,7 @@ if (isset($_GET['reviews'])) {
   $all = rv_all(); usort($all, fn($a, $b) => strcmp($b['created'], $a['created']));
   $rg = adm_range('reviews', 'all', ['today' => 'Today', '7' => '7 days', '30' => '30 days', 'all' => 'All']);
   if ($rg['span']) $all = array_values(array_filter($all, fn($r) => substr((string)$r['created'], 0, 10) >= $rg['d1'] && substr((string)$r['created'], 0, 10) <= $rg['d2']));
-  $rbar = '<div class="rgbar">' . adm_range_form($rg, ['reviews' => 1] + array_filter(['v' => (string)($_GET['v'] ?? ''), 'rp' => (string)($_GET['rp'] ?? ''), 'rq' => (string)($_GET['rq'] ?? ''), 'vf' => (string)($_GET['vf'] ?? ''), 'rs' => (string)($_GET['rs'] ?? '')], fn($x) => $x !== '')) . '</div>';
+  $rbar = '<div class="rgbar">' . adm_range_form($rg, ['reviews' => 1] + array_filter(['v' => (string)($_GET['v'] ?? ''), 'rp' => (string)($_GET['rp'] ?? ''), 'rq' => (string)($_GET['rq'] ?? ''), 'vf' => (string)($_GET['vf'] ?? ''), 'rs' => (string)($_GET['rs'] ?? ''), 'rn' => (string)($_GET['rn'] ?? '')], fn($x) => $x !== '')) . '</div>';
   $v = in_array($_GET['v'] ?? '', ['products', 'people'], true) ? $_GET['v'] : 'all';
   $rp = (string)($_GET['rp'] ?? ''); if ($rp !== '' && !isset($CATALOG[$rp])) $rp = '';
   $rs = (int)($_GET['rs'] ?? 0); if ($rs < 1 || $rs > 5) $rs = 0;   // filter by stars
@@ -3709,6 +3709,8 @@ if (isset($_GET['reviews'])) {
     . implode('', array_map(fn($n) => '<option value="' . $n . '"' . ($rs === $n ? ' selected' : '') . '>' . str_repeat('★', $n) . ' ' . $n . ' star' . ($n > 1 ? 's' : '') . '</option>', [5, 4, 3, 2, 1])) . '</select>';
   $live = array_filter($all, fn($r) => empty($r['hidden']));
   $rq = trim((string)($_GET['rq'] ?? ''));
+  $rn = mb_strtolower(trim((string)($_GET['rn'] ?? '')));   // one reviewer, tapped in Top reviewers
+  $rvWho = fn($r) => mb_strtolower(trim((string)(!empty($r['anon']) ? ($r['real'] ?? $r['name']) : $r['name'])));
   $pname = fn($id) => $CATALOG[$id]['name'] ?? $id;
   $stars = fn($n) => '<span class="stars" aria-label="' . (int)$n . ' stars">' . str_repeat('★', (int)$n) . '<i>' . str_repeat('★', 5 - (int)$n) . '</i></span>';
   $avg = $live ? round(array_sum(array_column($live, 'rating')) / count($live), 1) : 0;
@@ -3777,7 +3779,7 @@ if (isset($_GET['reviews'])) {
     $isAr = fx_has_ar((string)($r['text'] ?? ''));   // Arabic review: you write in English, the customer gets Arabic
     $alts = []; for ($i = 0; $i < 3; $i++) $alts[] = [preg_replace('/\s{2,}/u', ' ', $suggest($r, $isAr, $i)), $isAr ? preg_replace('/\s{2,}/u', ' ', $suggest($r, false, $i)) : ''];   // ready replies for Another reply
     $val = $rep !== '' ? ($isAr && fx_has_ar($rep) ? (string)($r['reply_en'] ?? fomaxo_en($rep)) : $rep) : $alts[0][0];
-    foreach (['rp', 'rq', 'vf', 'rs', 'v'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
+    foreach (['rp', 'rq', 'vf', 'rs', 'v', 'rn'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
     $roff = $rep !== '' && !empty($r['reply_hidden']);
     $rform = fn($fields, $label, $cls, $ask = '') => '<form method="post"' . ($ask ? ' onsubmit="return confirm(\'' . $ask . '\')"' : '') . '>' . csrf_field() . $hidden('id', $r['id']) . $keep . $fields . '<button class="btn sm ' . $cls . '">' . $label . '</button></form>';
     return ($rep !== '' ? '<div class="rrep' . ($roff ? ' off' : '') . '"><b>Reply from FOMAXO' . ($roff ? ' <span>· Hidden from the website</span>' : '') . '</b><p>' . (($r['reply_en'] ?? '') !== '' && fx_has_ar($rep) ? nl2br(h($r['reply_en'])) . '<span class="arx" dir="rtl" lang="ar">' . nl2br(h($rep)) . '</span>' : hx($rep, true)) . '</p></div>' : '')
@@ -3804,7 +3806,7 @@ if (isset($_GET['reviews'])) {
   if ($nos) { $q = $pdo->prepare('SELECT order_no, phone, email FROM fx_orders WHERE order_no IN (' . implode(',', array_fill(0, count($nos), '?')) . ')'); $q->execute($nos); foreach ($q as $o) $telAll[$o['order_no']] = $o; }
   $rvItem = function ($r, $tel) use ($pname, $stars, $replyBox, $hidden, $thumb, $ckey) {
     $off = !empty($r['hidden']); $where = trim($r['city'] ?? ''); $cc = (string)($r['country'] ?? '');
-    $keep = ''; foreach (['rp', 'rq', 'vf', 'rs', 'v'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
+    $keep = ''; foreach (['rp', 'rq', 'vf', 'rs', 'v', 'rn'] as $k) if (($_GET[$k] ?? '') !== '') $keep .= $hidden($k, (string)$_GET[$k]);
     $phone = (string)($tel[$r['order'] ?? '']['phone'] ?? ''); $ck = $ckey($phone);
     $is = fx_rv_issue($r); $mob = $phone !== '' ? $phone : (string)($r['mobile'] ?? '');   // the order's mobile, else the one typed on the review form (only FOMAXO sees it)
     $wa = $is !== '' && $mob !== '' ? fx_wa_btn($mob, $r['name'] ?: $mob, ($m = fx_rv_msg($r, $pname($r['product'])))[0], $m[1], 'rv:' . $r['id'], 'rv', $m[2], 'btn sm wag rvwa', false, array_slice(fx_rv_msg($r, $pname($r['product']), !$m[2]), 0, 2)) : '';
@@ -3822,6 +3824,10 @@ if (isset($_GET['reviews'])) {
 
   /* the review list, its filters and Top reviewers: worked out once, shown in the phone page and the laptop page */
   $list = $rp !== '' ? array_filter($all, fn($r) => $r['product'] === $rp) : $all;
+  if ($rn !== '') $list = array_filter($list, fn($r) => $rvWho($r) === $rn);
+  $rnName = ''; foreach ($all as $r) if ($rvWho($r) === $rn) { $rnName = trim((string)(!empty($r['anon']) ? ($r['real'] ?? $r['name']) : $r['name'])); break; }
+  $rnLine = $rn !== '' ? 'Reviews by <b>' . h($rnName !== '' ? $rnName : $rn) . '</b> · <a href="' . h(self_url(['reviews' => 1])) . '">all reviews</a>' : '';
+  $rnKeep = $rn !== '' ? '<input type="hidden" name="rn" value="' . h($rn) . '">' : '';
   $vf = in_array($_GET['vf'] ?? '', ['1', '0'], true) ? $_GET['vf'] : '';   // Verified purchaser / Unverified
   $nv = count(array_filter($list, fn($r) => !empty($r['verified']))); $nu = count($list) - $nv;
   if ($vf !== '') $list = array_filter($list, fn($r) => !empty($r['verified']) === ($vf === '1'));
@@ -3844,7 +3850,7 @@ if (isset($_GET['reviews'])) {
   fomaxo_en_many(array_merge(array_column($list, 'text'), array_column($list, 'name'), array_map(fn($r) => trim($r['city'] ?? ''), $list)));
   foreach ($list as $r) $items .= $rvItem($r, $tel);
   $opts = '<option value="">All products</option>'; foreach ($CATALOG as $id => $p) $opts .= '<option value="' . h($id) . '"' . ($rp === $id ? ' selected' : '') . '>' . h($p['name']) . '</option>';
-  $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []) + ($rs ? ['rs' => $rs] : []) + ($pr !== '' ? ['pr' => $pr] : []);
+  $vq = ['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []) + ($rq !== '' ? ['rq' => $rq] : []) + ($rs ? ['rs' => $rs] : []) + ($pr !== '' ? ['pr' => $pr] : []) + ($rn !== '' ? ['rn' => $rn] : []);
   $chip = fn($v, $label, $n) => '<a class="em' . ($vf === $v ? ' on' : '') . '" href="' . h(self_url($vf === $v ? $vq : $vq + ['vf' => $v])) . '">' . $label . ' <b>' . $n . '</b></a>';
   $sq = $vq; unset($sq['rs']); if ($vf !== '') $sq['vf'] = $vf;
   $schips = implode('', array_map(fn($n) => '<a class="em' . ($rs === $n ? ' on' : '') . '" href="' . h(self_url($rs === $n ? $sq : $sq + ['rs' => $n])) . '">' . $n . '★ <b>' . $nst[$n] . '</b></a>', [5, 4, 3, 2, 1]));
@@ -3874,19 +3880,19 @@ if (isset($_GET['reviews'])) {
           . '<p class="muted small after">Only reviews on the website count. Tap a product to see its reviews.</p></div>';
   } elseif ($v === 'people') {
     $tr = '';
-    foreach ($ppl as $c) $tr .= '<tr class="row"><td><b>' . h($c['name']) . '</b><div class="small muted">' . h(implode(', ', array_map($pname, array_keys($c['products'])))) . '</div></td>'
+    foreach ($ppl as $k => $c) $tr .= '<tr class="row" onclick="location.href=this.dataset.href" data-href="' . h(self_url(['reviews' => 1, 'rn' => $k])) . '"><td><b>' . h($c['name']) . '</b><div class="small muted">' . h(implode(', ', array_map($pname, array_keys($c['products'])))) . '</div></td>'
       . '<td class="num"><b>' . $c['n'] . '</b><span class="ph"> reviews</span></td><td>' . $stars(round($c['sum'] / $c['n'])) . ' <span class="small">' . number_format($c['sum'] / $c['n'], 1) . '</span></td>'
       . '<td class="small muted">' . ($c['verified'] ? $c['verified'] . ' verified · ' : '') . 'last ' . h(date('d M Y', strtotime($c['last']))) . '</td></tr>';
     $body = '<form class="card mmin" method="post">' . csrf_field() . $hidden('v', 'people') . '<label for="reviewer_min">Show customers with at least</label>'
           . '<input id="reviewer_min" type="number" min="1" max="1000" inputmode="numeric" name="reviewer_min" required value="' . $rmin . '"><span>reviews</span><button class="btn sm">Save</button></form>'
           . '<div class="fill">' . ($tr ? '<table class="rppl"><thead><tr><th>Customer</th><th class="num">Reviews</th><th>Average stars</th><th>Details</th></tr></thead><tbody>' . $tr . '</tbody></table>'
               : '<p class="card muted" style="margin:0">No customer has ' . $rmin . ' or more reviews yet.</p>')
-          . '<p class="muted small after">Reviews with the same name count as one customer. Anonymous reviews use the real name the customer typed. Removed reviews are left out.</p></div>';
+          . '<p class="muted small after">Tap a customer to see their reviews. Reviews with the same name count as one customer. Anonymous reviews use the real name the customer typed. Removed reviews are left out.</p></div>';
   } else {
-    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . '<select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>' . ($rs ? '<input type="hidden" name="rs" value="' . $rs . '">' : '')
+    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . $rnKeep . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . '<select name="rp" aria-label="Product" onchange="this.form.submit()">' . $opts . '</select>' . ($rs ? '<input type="hidden" name="rs" value="' . $rs . '">' : '')
           . '<input name="rq" value="' . h($rq) . '" placeholder="Search words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
           . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . $schips . '</nav></form>'
-          . '<div class="fill">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="card muted" style="margin:0">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>')
+          . '<div class="fill">' . ($rnLine !== '' ? '<p class="rnby small">' . $rnLine . '</p>' : '') . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="card muted" style="margin:0">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>')
           . '<p class="muted small after">Hide takes a review off the website and out of the star rating; Show puts it back. Delete removes a review for good.</p></div>';
   }
   $mob = '<div class="pagehead"><h1>Reviews</h1>' . $seg . '</div>' . $rbar
@@ -3909,19 +3915,20 @@ if (isset($_GET['reviews'])) {
   }
   {   // top reviewers
     $tr = '';
-    foreach ($ppl as $c) { $ck = $ckey($c['phone'] ?? ''); $nm = '<b>' . h($c['name']) . '</b>';
-      $tr .= '<tr class="row trv"><td>' . ($ck !== '' ? '<a href="' . h(self_url(['members' => 1, 'c' => $ck])) . '">' . $nm . '</a>' : $nm)
-      . '<div class="small muted">' . (($c['phone'] ?? '') !== '' ? h($c['phone']) . ' · ' : '') . 'average ' . number_format($c['sum'] / $c['n'], 1) . ' ★</div></td>'
+    foreach ($ppl as $k => $c) { $ck = $ckey($c['phone'] ?? '');
+      $tr .= '<tr class="row trv' . ($rn === $k ? ' on' : '') . '" onclick="location.href=this.dataset.href" data-href="' . h(self_url(['reviews' => 1] + ($rn === $k ? [] : ['rn' => $k]))) . '" title="Show their reviews"><td><b>' . h($c['name']) . '</b>'
+      . '<div class="small muted">' . (($c['phone'] ?? '') !== '' ? h($c['phone']) . ' · ' : '') . 'average ' . number_format($c['sum'] / $c['n'], 1) . ' ★'
+      . ($ck !== '' ? ' · <a href="' . h(self_url(['members' => 1, 'c' => $ck])) . '" onclick="event.stopPropagation()">Customer page</a>' : '') . '</div></td>'
       . '<td class="num"><b>' . $c['n'] . '</b> <span class="small muted">review' . ($c['n'] > 1 ? 's' : '') . '</span></td></tr>'; }
     $formR = '<form class="rmin" method="post">' . csrf_field() . '<label for="reviewer_min_d">at least</label>'
           . '<input id="reviewer_min_d" type="number" min="1" max="1000" inputmode="numeric" name="reviewer_min" required value="' . $rmin . '"><span>reviews</span><button class="btn line sm">Save</button></form>';
     $bodyR = $tr ? '<table class="rppl"><tbody>' . $tr . '</tbody></table>' : '<p class="muted empty">Nobody has ' . $rmin . ' or more reviews yet.</p>';
   }
   {   // the reviews
-    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . ($rp !== '' ? '<input type="hidden" name="rp" value="' . h($rp) . '">' : '') . ($rs ? '<input type="hidden" name="rs" value="' . $rs . '">' : '')
+    $body = '<form class="rfilter" method="get"><input type="hidden" name="reviews" value="1">' . $rnKeep . ($vf !== '' ? '<input type="hidden" name="vf" value="' . $vf . '">' : '') . ($rp !== '' ? '<input type="hidden" name="rp" value="' . h($rp) . '">' : '') . ($rs ? '<input type="hidden" name="rs" value="' . $rs . '">' : '')
           . '<input name="rq" value="' . h($rq) . '" placeholder="Words, name or mobile" aria-label="Search reviews"><button class="btn line sm">Search</button>' . ($rq !== '' ? '<a class="small" href="' . h(self_url(['reviews' => 1] + ($rp !== '' ? ['rp' => $rp] : []))) . '">Clear</a>' : '')
           . '<nav class="ems vcount" aria-label="Verified or not">' . $chip('1', 'Verified purchaser', $nv) . $chip('0', 'Unverified', $nu) . $schips . '</nav></form>'
-          . '<div class="rgrid"><section class="card rlist"><p class="rnote small muted">' . count($list) . ' review' . (count($list) === 1 ? '' : 's') . ($rp !== '' ? ' of ' . h($pname($rp)) . ' · <a href="' . h(self_url(['reviews' => 1] + ($rq !== '' ? ['rq' => $rq] : []) + ($vf !== '' ? ['vf' => $vf] : []))) . '">all products</a>' : '')
+          . '<div class="rgrid"><section class="card rlist"><p class="rnote small muted">' . ($rnLine !== '' ? $rnLine . ' · ' : '') . count($list) . ' review' . (count($list) === 1 ? '' : 's') . ($rp !== '' ? ' of ' . h($pname($rp)) . ' · <a href="' . h(self_url(['reviews' => 1] + ($rq !== '' ? ['rq' => $rq] : []) + ($vf !== '' ? ['vf' => $vf] : []))) . '">all products</a>' : '')
           . '. Hidden reviews leave the website and the star rating; Show puts them back. Delete removes a review for good.</p><div class="cscroll">' . ($items ? '<ul class="rvlist">' . $items . '</ul>' : '<p class="muted empty">' . ($rq !== '' ? 'No reviews match.' : 'No reviews yet.') . '</p>') . '</div></section>'
           . '<section class="card rprodc"><div class="ch"><h2>Stars By Product</h2><span class="small muted">Tap a product to see its reviews</span></div><div class="cscroll">' . $bodyP . '</div></section>'
           . '<section class="card rpplc"><div class="ch"><h2>Top Reviewers</h2>' . $formR . '</div><div class="cscroll">' . $bodyR . '</div></section></div>';
