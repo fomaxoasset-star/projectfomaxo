@@ -1984,7 +1984,7 @@ html[data-mode="light"] .form .rw-need select,html[data-mode="light"] .form labe
 .ad-acts{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
 .ad-acts .btn{width:100%;justify-content:center;text-align:center;white-space:nowrap}
 .ad-acts .co-min{grid-column:1/-1;white-space:normal;pointer-events:none;opacity:.75}
-@media(max-width:600px){.added{left:12px;right:12px;width:auto;max-width:none;padding:16px 14px 14px;top:var(--adtop,calc(76px + var(--sat)));bottom:auto;transform:translateY(-16px)}.ad-acts{grid-template-columns:1.2fr 1fr;gap:8px}.ad-acts > *{min-width:0}.ad-acts .btn{padding-left:8px;padding-right:8px;letter-spacing:.12em;font-size:11px}}
+@media(max-width:600px){.added{left:12px;right:12px;width:auto;max-width:none;padding:16px 14px 14px;bottom:var(--adbot,12px)}.ad-acts{grid-template-columns:1.2fr 1fr;gap:8px}.ad-acts > *{min-width:0}.ad-acts .btn{padding-left:8px;padding-right:8px;letter-spacing:.12em;font-size:11px}}
 .p-save{display:block;margin-top:6px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .p-save .amt{font-size:1.25em}
 .pp-line{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px}
@@ -3503,6 +3503,7 @@ function qdBar(dc){
 /* "Added to your bag": a small panel with the product, the multi-buy progress and a straight path to checkout.
    It closes by itself after a few seconds (not while the customer is pointing at or tabbing through it). */
 let addT = 0, addHold = false;
+let mbMoved = 0; addEventListener('scroll', () => mbMoved = Date.now(), {passive: true});   // last time the page moved (phone bar ignores a tap that only stops a scroll)
 const addedEl = $('#added');
 function hideAdded(){ clearTimeout(addT); addOff(); addedEl.classList.remove('show'); addedEl.setAttribute('aria-hidden', 'true'); }
 /* phones: the box goes away as soon as the customer scrolls or taps anywhere else, so it never stays in the way */
@@ -3519,8 +3520,8 @@ function addedPanel(id, opt, qty, names){
     <div class="ad-acts">${ok ? `<a class="btn sm" href="#/checkout" data-adclose>Checkout${T.after !== null ? ' · ' + aed(T.after) : ''}</a>` : `<span class="btn sm co-min">${minMsg(T.short)}</span>`}<button class="btn line sm" type="button" data-adbag>View bag (${n})</button></div>`;
   $('#toast').classList.remove('show');
   if ($('#cart').classList.contains('open')) { hideAdded(); if (!names) toast(`${p.name} · ${optLabel(p, opt)} added to your bag`, true); return; }   // the open bag already shows it: never two bag views at once, just a short line
-  const phone = matchMedia('(max-width:600px)').matches;   // phones: box sits just under the top bar so it never covers Add to bag, and goes away sooner
-  if (phone) { const nav = $('header.nav'), b = nav ? nav.getBoundingClientRect().bottom : 0; addedEl.style.setProperty('--adtop', Math.max(8, Math.round(b) + 8) + 'px'); }
+  const phone = matchMedia('(max-width:600px)').matches;   // phones: box sits just above the bottom Add to bag bar (never over it), and goes away sooner
+  if (phone) { const mb = $('#mbuy'), h = mb && mb.classList.contains('show') ? mb.offsetHeight : 0; addedEl.style.setProperty('--adbot', (h ? h + 8 : 12) + 'px'); }
   addedEl.setAttribute('aria-hidden', 'false'); addedEl.classList.add('show');
   addOff(); if (phone) addOn = setTimeout(() => { addY = scrollY; addEventListener('scroll', addScroll, {passive: true}); document.addEventListener('pointerdown', addTap, true); }, 300);
   clearTimeout(addT); const wait = () => { addT = setTimeout(() => addHold && !phone ? wait() : hideAdded(), phone ? 3000 : 7000); }; wait();
@@ -4214,9 +4215,11 @@ function bindProduct(p){
   $('#addBtn').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
-  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p, true)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; $('#mbAdd').onclick = () => { if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
-    // the whole bar adds to bag: shoppers tapped the empty space around the button and nothing happened (recorder: #mbuy dead taps). The stars here are to read only, so the bar has one job (AJAY 2026-10-26)
-    mb.dataset.tap = '1'; mb.onclick = e => { const b = $('#mbAdd'); if (b && !b.disabled && !e.target.closest('a,button')) b.click(); }; }
+  function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p, true)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; 
+    // only the gold button adds to bag; a tap on the rest of the bar (name, price) takes the shopper up to the sizes instead, so a stray tap never adds by mistake (AJAY 2026-10-27).
+    // A tap that only stops a moving page (within 0.35 s of scrolling) is ignored too.
+    $('#mbAdd').onclick = () => { if (Date.now() - mbMoved < 350) return; if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
+    mb.dataset.tap = '1'; mb.onclick = e => { if (e.target.closest('a,button')) return; const b = $('#addBtn'); if (b) b.scrollIntoView({block: 'center', behavior: 'smooth'}); }; }
   renderMbuy();
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
