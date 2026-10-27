@@ -1984,7 +1984,7 @@ html[data-mode="light"] .form .rw-need select,html[data-mode="light"] .form labe
 .ad-acts{display:grid;grid-template-columns:1.25fr 1fr;gap:10px}
 .ad-acts .btn{width:100%;justify-content:center;text-align:center;white-space:nowrap}
 .ad-acts .co-min{grid-column:1/-1;white-space:normal;pointer-events:none;opacity:.75}
-@media(max-width:600px){.added{left:12px;right:12px;bottom:12px;width:auto;max-width:none;padding:16px 14px 14px}.mbuy.show ~ .added{bottom:calc(104px + var(--sab))}.ad-acts{grid-template-columns:1.2fr 1fr;gap:8px}.ad-acts > *{min-width:0}.ad-acts .btn{padding-left:8px;padding-right:8px;letter-spacing:.12em;font-size:11px}}
+@media(max-width:600px){.added{left:12px;right:12px;width:auto;max-width:none;padding:16px 14px 14px;top:var(--adtop,calc(76px + var(--sat)));bottom:auto;transform:translateY(-16px)}.ad-acts{grid-template-columns:1.2fr 1fr;gap:8px}.ad-acts > *{min-width:0}.ad-acts .btn{padding-left:8px;padding-right:8px;letter-spacing:.12em;font-size:11px}}
 .p-save{display:block;margin-top:6px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .p-save .amt{font-size:1.25em}
 .pp-line{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px}
@@ -3504,7 +3504,12 @@ function qdBar(dc){
    It closes by itself after a few seconds (not while the customer is pointing at or tabbing through it). */
 let addT = 0, addHold = false;
 const addedEl = $('#added');
-function hideAdded(){ clearTimeout(addT); addedEl.classList.remove('show'); addedEl.setAttribute('aria-hidden', 'true'); }
+function hideAdded(){ clearTimeout(addT); addOff(); addedEl.classList.remove('show'); addedEl.setAttribute('aria-hidden', 'true'); }
+/* phones: the box goes away as soon as the customer scrolls or taps anywhere else, so it never stays in the way */
+let addY = 0, addOn = 0;
+const addScroll = () => { if (Math.abs(scrollY - addY) > 24) hideAdded(); };
+const addTap = e => { if (!addedEl.contains(e.target)) hideAdded(); };
+function addOff(){ clearTimeout(addOn); removeEventListener('scroll', addScroll); document.removeEventListener('pointerdown', addTap, true); }
 function addedPanel(id, opt, qty, names){
   const p = P[id], dc = qtyDiscount(cart), T = orderTotals(cart, ''), n = cart.reduce((a, l) => a + l.qty, 0);
   const v = p.prices[opt], ok = T.after === null || T.short <= 0;
@@ -3514,8 +3519,11 @@ function addedPanel(id, opt, qty, names){
     <div class="ad-acts">${ok ? `<a class="btn sm" href="#/checkout" data-adclose>Checkout${T.after !== null ? ' · ' + aed(T.after) : ''}</a>` : `<span class="btn sm co-min">${minMsg(T.short)}</span>`}<button class="btn line sm" type="button" data-adbag>View bag (${n})</button></div>`;
   $('#toast').classList.remove('show');
   if ($('#cart').classList.contains('open')) { hideAdded(); if (!names) toast(`${p.name} · ${optLabel(p, opt)} added to your bag`, true); return; }   // the open bag already shows it: never two bag views at once, just a short line
+  const phone = matchMedia('(max-width:600px)').matches;   // phones: box sits just under the top bar so it never covers Add to bag, and goes away sooner
+  if (phone) { const nav = $('header.nav'), b = nav ? nav.getBoundingClientRect().bottom : 0; addedEl.style.setProperty('--adtop', Math.max(8, Math.round(b) + 8) + 'px'); }
   addedEl.setAttribute('aria-hidden', 'false'); addedEl.classList.add('show');
-  clearTimeout(addT); const wait = () => { addT = setTimeout(() => addHold ? wait() : hideAdded(), 7000); }; wait();
+  addOff(); if (phone) addOn = setTimeout(() => { addY = scrollY; addEventListener('scroll', addScroll, {passive: true}); document.addEventListener('pointerdown', addTap, true); }, 300);
+  clearTimeout(addT); const wait = () => { addT = setTimeout(() => addHold && !phone ? wait() : hideAdded(), phone ? 3000 : 7000); }; wait();
 }
 addedEl.addEventListener('mouseenter', () => addHold = true);
 addedEl.addEventListener('mouseleave', () => addHold = false);
