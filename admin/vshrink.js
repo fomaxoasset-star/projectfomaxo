@@ -198,15 +198,19 @@ window.fxPick = function (src, done) {
   pk.onclick = function () { var file = inp.files && inp.files[0]; if (!file) return; window.fxPick(file, function (b) { if (cin) cin.value = ''; auto = Promise.resolve(b); pk.textContent = 'Cover picked from the video ✓ (tap to change)'; }); };
   if (cin) { cin.parentNode.appendChild(pk); cin.addEventListener('change', function () { if (cin.files && cin.files.length && /✓/.test(pk.textContent)) pk.textContent = 'Pick cover from the video'; }); }   // no cover photo chosen: the best frame of the video becomes its cover
   function send(file) {
+    var rid = f.elements.replace && f.elements.replace.value, rrow = rid && document.querySelector('.vrow[data-vid="' + rid + '"]');
+    if (auto && rrow && !rrow.hasAttribute('data-mkcover')) auto = null;   // replacing a video that has a cover: it keeps that cover
     if (auto) { var a = auto; auto = null; btn.disabled = true; a.then(function (b) { if (b && cin && !(cin.files && cin.files.length)) send.cover = b; send(file); }); return; }
     var src = file || inp.files[0];
     btn.disabled = true; btn.textContent = 'Uploading…'; f.dataset.go = 1;
     var hq = send.hq; send.hq = null;
+    var orig = f.dataset.hq && file && !f.dataset.noOrig && keeps(inp.files[0]) && inp.files[0].size <= 500 * MB ? inp.files[0] : null;   // made smaller: the original from the phone goes to Cloudflare too (Make All Videos Again starts from it)
     if (src) return parts(src).then(function (p) {
       var fd = new FormData(f); fd.delete('video'); fd.set('parts', p.up); fd.set('parts_n', p.n); fd.set('parts_size', src.size); fd.set('parts_type', src.type); fd.set('how', how + ', ' + p.n + ' pieces'); if (send.cover) fd.set('cover', send.cover, 'cover.jpg');
-      if (!hq) { say('Saving the video…'); post(fd); return; }
-      return parts(hq, 'the sharp copy').then(function (q) { fd.set('hq_parts', q.up); fd.set('hq_parts_n', q.n); fd.set('hq_parts_size', hq.size); say('Saving the video and sending the sharp copy to Cloudflare…'); post(fd); },
-        function () { say('Saving the video (the sharp copy did not upload)…'); post(fd); });   // the small one is up: it still goes on the website
+      var more = Promise.resolve(), hqOk = !hq;
+      if (hq) more = more.then(function () { return parts(hq, 'the sharp copy').then(function (q) { fd.set('hq_parts', q.up); fd.set('hq_parts_n', q.n); fd.set('hq_parts_size', hq.size); hqOk = true; }, function () {}); });   // a piece that fails: the small one is up, it still goes on the website
+      if (orig) more = more.then(function () { return parts(orig, 'the original for Cloudflare').then(function (o) { fd.set('orig_parts', o.up); fd.set('orig_parts_n', o.n); fd.set('orig_parts_size', orig.size); }, function () {}); });
+      more.then(function () { say(!hq ? 'Saving the video…' : hqOk ? 'Saving the video and sending the sharp copy to Cloudflare…' : 'Saving the video (the sharp copy did not upload)…'); post(fd); });
     }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
     var fd = new FormData(f); fd.set('how', how); if (send.cover) fd.set('cover', send.cover, 'cover.jpg'); post(fd);
   }
@@ -214,7 +218,7 @@ window.fxPick = function (src, done) {
      so everything on it works again for the next upload, and it shows "Video added" or what went wrong */
   function post(fd) {
     fetch(f.action || location.href, {method: 'POST', body: fd, credentials: 'same-origin', redirect: 'manual'}).then(function (r) {
-      if (r.type === 'opaqueredirect' || r.ok) location.replace(location.href);
+      if (r.type === 'opaqueredirect' || r.ok) { if (!(window.fxRepNext && window.fxRepNext())) location.replace(location.href); }
       else stop('The upload did not finish (error ' + r.status + '). Please tap Upload again.');
     }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
   }
@@ -292,6 +296,62 @@ window.fxPick = function (src, done) {
     v.onloadedmetadata = function () { if (v.videoWidth && v.videoHeight) (v.videoWidth > v.videoHeight ? r[1] : r[0]).checked = true; URL.revokeObjectURL(v.src); };
     v.onerror = function () { URL.revokeObjectURL(v.src); };
   });
+  /* Replace all with sharper videos, and Make All Videos Again: one video after another through this same box, without reloading in between.
+     Replace all: the originals picked from the phone (many at once) are matched to their rows by fingerprint, or by size for videos that went up as they were.
+     Make all: every video's original kept on Cloudflare is loaded and made again. Each keeps its product, words and place, like Replace with sharper video */
+  var q = [], qn = 0, qi = 0, qOk = 0, qMiss = [], qNo = [], lead = '', say1 = say, stop1 = stop;
+  say = function (t) { say1(lead + t); };
+  stop = function (t) { stop1(t); if (lead) { qMiss.push('number ' + q.cur + ' (' + t.replace(/\..*$/, '') + ')'); qOk--; setTimeout(function () { window.fxRepNext() || location.replace(location.href); }, 1500); } };   // one that fails: the next one still goes
+  var MSG = 'fxRepMsg';
+  window.fxRepNext = function () {
+    if (!lead) return false;
+    if (qi) qOk++;
+    var it = q.shift();
+    if (!it) { lead = ''; try { sessionStorage.setItem(MSG, qOk + ' of ' + qn + ' videos ' + (f.dataset.noOrig ? 'made again from their originals' : 'replaced with sharper ones') + '.' + (qMiss.length ? ' Not done: ' + qMiss.join(', ') + '.' : '') + (qNo.length ? ' Not matched (replace these with the button on their row): ' + qNo.join(', ') + '.' : '')); } catch (e) {} return false; }
+    qi++; q.cur = it.n; lead = 'Video ' + qi + ' of ' + qn + ' (number ' + it.n + '): ';
+    delete f.dataset.go; delete f.dataset.hqDone; delete f.dataset.dupOk; f.dataset.noOrig = it.url ? '1' : ''; btn.disabled = true;
+    if (cin) cin.value = ''; send.cover = null;
+    if (window.fxRepSet) window.fxRepSet(it.id, it.n); else f.elements.replace.value = it.id;
+    var got = it.file ? Promise.resolve(it.file) : (say('Loading the original from Cloudflare…'), fetch(it.url).then(function (r) { return r.ok ? r.blob() : Promise.reject(); })
+      .then(function (b) { return new File([b], it.url.split('/').pop(), {type: b.type || 'video/mp4'}); }));
+    got.then(function (file) {
+      var dt = new DataTransfer(); dt.items.add(file); inp.files = dt.files; inp.dispatchEvent(new Event('change'));
+      setTimeout(function () { btn.disabled = false; f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); }, 1500);   // the shape is read from the video first
+    }, function () { qMiss.push('number ' + it.n + ' (its original did not load)'); qOk--; window.fxRepNext() || location.replace(location.href); });
+    return true;
+  };
+  var go = function (items) {
+    q = items.sort(function (a, b) { return a.n - b.n; }); qn = q.length; qi = 0; qOk = 0; lead = ' ';
+    var t = document.querySelector('.ptabs [data-t="2"]'); if (t && getComputedStyle(t.parentNode).display !== 'none') t.click();
+    f.scrollIntoView({block: 'center'}); window.fxRepNext();
+  };
+  var rowsAll = function () { return [].slice.call(document.querySelectorAll('.vrow[data-vid]')); };
+  var bind = function () {   // the list comes after this script
+  var ra = document.querySelector('.vrepall'), rin = document.querySelector('.vrepin'), mk = document.querySelector('.vmkall');
+  if (ra && rin) { ra.onclick = function () { rin.value = ''; rin.click(); };
+    rin.onchange = function () {
+      var files = [].slice.call(rin.files || []); if (!files.length) return; ra.disabled = true; ra.textContent = 'Matching ' + files.length + ' videos…';
+      Promise.all(files.map(fingerprint)).then(function (fps) {
+        var rows = rowsAll(), used = {}, items = []; qMiss = []; qNo = [];
+        files.forEach(function (file, i) {
+          var r = rows.filter(function (r) { return !used[r.dataset.vid] && r.querySelector('.vrep') && ((fps[i] && r.dataset.fp === fps[i]) || +r.dataset.sz === file.size); })[0];
+          if (r) { used[r.dataset.vid] = 1; items.push({id: r.dataset.vid, n: rows.indexOf(r) + 1, file: file}); } else qNo.push(file.name);
+        });
+        ra.disabled = false; ra.textContent = 'Replace all with sharper videos';
+        if (!items.length) { alert('None of these ' + files.length + ' videos matched a video in your list. Pick the same videos you first uploaded, from your phone\'s gallery.'); return; }
+        if (!confirm(items.length + ' of ' + files.length + ' matched: number ' + items.map(function (x) { return x.n; }).sort(function (a, b) { return a - b; }).join(', ') + '.' + (qNo.length ? '\nNot matched (replace these with the button on their row): ' + qNo.join(', ') + '.' : '') + '\n\nReplace them now, one after another? Keep this page open.')) return;
+        ra.disabled = true; if (mk) mk.disabled = true; go(items);
+      });
+    }; }
+  if (mk) mk.onclick = function () {
+    var items = rowsAll().map(function (r, i) { return r.dataset.orig ? {id: r.dataset.vid, n: i + 1, url: r.dataset.orig} : null; }).filter(Boolean);
+    if (!items.length || !confirm('Make all ' + items.length + ' videos again from their originals on Cloudflare? It runs one by one and takes a while; keep this page open.')) return;
+    mk.disabled = true; if (ra) ra.disabled = true; qMiss = []; qNo = []; go(items);
+  };
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind); else bind();
+  var shown = function () { try { var m = sessionStorage.getItem(MSG); if (m) { sessionStorage.removeItem(MSG); var p = document.createElement('p'); p.className = 'msg ' + (/Not done|^0 of/.test(m) ? 'bad' : 'ok'); p.textContent = m; var tl = document.querySelector('.vtools'); if (tl) tl.parentNode.insertBefore(p, tl); } } catch (e) {} };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', shown); else shown();
 })();
 /* Small previews for the home page row: each video without one gets a 640px, silent copy of its first 5 seconds (about 0.25 MB, AJAY 23/10/2026: half the size so the row starts sooner),
    made here in the browser and kept next to it (vid/name-p.mp4). The row plays that; the full video loads only when the player opens.
@@ -331,7 +391,7 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
     all.style.cssText = 'font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:2px 12px;cursor:pointer';
     all.onclick = function () { if (!confirm('Make the preview again for all ' + mkAll.length + ' videos? It runs one by one; keep this page open.')) return;
       all.disabled = true; all.textContent = 'Making All Previews…'; mkAll.forEach(function (r) { if (!r._mk.disabled) r._mk.click(); }); };
-    wrap.appendChild(all); box.parentNode.insertBefore(wrap, box);
+    var tools = document.querySelector('.vtools'); if (tools) tools.insertBefore(all, tools.firstChild); else { wrap.appendChild(all); box.parentNode.insertBefore(wrap, box); }
   }
   /* a way that hangs (some Mac Safari videos never finish in the fast way) is given up after a while, so the next way or the next video goes on */
   var limit = function (p, ms, stop) { var t; return Promise.race([p, new Promise(function (ok) { t = setTimeout(function () { try { stop && stop(); } catch (e) {} ok(null); }, ms); })]).then(function (r) { clearTimeout(t); return r; }); };

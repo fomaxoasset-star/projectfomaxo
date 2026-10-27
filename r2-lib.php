@@ -52,7 +52,7 @@ function r2_req(array $c, string $method, string $path, string $query = '', $bod
   $opt = [CURLOPT_CUSTOMREQUEST => $method, CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_TIMEOUT => 120,
     CURLOPT_HTTPHEADER => array_merge(['Authorization: ' . $auth], array_map(fn($k, $v) => "$k: $v", array_keys(array_diff_key($hd, ['host' => 1])), array_diff_key($hd, ['host' => 1])))];
   $fh = null;
-  if ($file !== '') { $fh = fopen($file, 'rb'); $opt += [CURLOPT_UPLOAD => true, CURLOPT_INFILE => $fh, CURLOPT_INFILESIZE => filesize($file)]; }
+  if ($file !== '') { $fh = fopen($file, 'rb'); $opt = [CURLOPT_UPLOAD => true, CURLOPT_INFILE => $fh, CURLOPT_INFILESIZE => filesize($file), CURLOPT_TIMEOUT => max(120, (int)(filesize($file) / 262144))] + $opt; }   // an original of 300 MB gets 20 minutes
   elseif ($method === 'PUT' || $method === 'POST') $opt[CURLOPT_POSTFIELDS] = (string)$body;
   curl_setopt_array($ch, $opt); $out = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch); if ($fh) fclose($fh);
   if ($out === false) return [0, $err ?: 'no answer'];
@@ -68,10 +68,10 @@ function r2_put(array $c, string $f): string {
 /* every video file the list uses (the video and its small preview) */
 function r2_wanted($pdo): array {
   $w = []; $have = null;
-  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) foreach ([(string)($v['file'] ?? ''), (string)($v['prev'] ?? ''), (string)($v['hq'] ?? '')] as $f) {
+  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) foreach ([(string)($v['file'] ?? ''), (string)($v['prev'] ?? ''), (string)($v['hq'] ?? ''), (string)($v['orig'] ?? '')] as $f) {
     if (!preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $f)) continue;
     if (($p = fx_media_path($f)) && is_file($p)) $w[$f] = (int)filesize($p);
-    elseif ($f === (string)($v['hq'] ?? '') && isset(($have ??= r2_have())[$f])) $w[$f] = $have[$f];   // the sharp copy leaves Hostinger once it is on Cloudflare
+    elseif (in_array($f, [(string)($v['hq'] ?? ''), (string)($v['orig'] ?? '')], true) && isset(($have ??= r2_have())[$f])) $w[$f] = $have[$f];   // the sharp copy and the original leave Hostinger once they are on Cloudflare
   }
   return $w;
 }
@@ -92,7 +92,7 @@ function r2_sync($pdo, float $secs = 8): array {
       if (microtime(true) - $t > $secs) break;
       $e = r2_put($c, $f); if ($e !== '') { $err = $e; break; }
       $have[$f] = $sz; r2_have_save($have); $n++;
-      if (str_ends_with($f, '-h.mp4')) @unlink(fx_media('vid') . '/' . substr($f, 4));   // Hostinger keeps only the small copy (the fallback), never the big one
+      if (preg_match('~-(h|o)\.\w+$~', $f)) @unlink(fx_media('vid') . '/' . substr($f, 4));   // Hostinger keeps only the small copy (the fallback), never the big one or the original
     }
   } finally { flock($lk, LOCK_UN); fclose($lk); }
   if ($n || $gone) fomaxo_products_drop();   // the website picks up the new Cloudflare addresses straight away
@@ -102,7 +102,7 @@ function r2_sync($pdo, float $secs = 8): array {
 function r2_sync_later($pdo, float $secs = 120): void {
   static $on = false; if ($on || !r2_conf()) return; $on = true;
   register_shutdown_function(function () use ($pdo, $secs) {
-    ignore_user_abort(true); @set_time_limit(300);
+    ignore_user_abort(true); @set_time_limit(1500);
     if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
     try { r2_sync($pdo, $secs); } catch (Throwable $e) { @file_put_contents(__DIR__ . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | r2 copy: ' . $e->getMessage() . "\n", FILE_APPEND | LOCK_EX); }
   });
