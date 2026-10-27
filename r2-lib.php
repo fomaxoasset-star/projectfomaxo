@@ -98,6 +98,15 @@ function r2_sync($pdo, float $secs = 8): array {
   if ($n || $gone) fomaxo_products_drop();   // the website picks up the new Cloudflare addresses straight away
   return [$n, $err];
 }
+/* copies to Cloudflare after the page has gone to the browser, so the admin never waits on (or times out over) the copying */
+function r2_sync_later($pdo, float $secs = 120): void {
+  static $on = false; if ($on || !r2_conf()) return; $on = true;
+  register_shutdown_function(function () use ($pdo, $secs) {
+    ignore_user_abort(true); @set_time_limit(300);
+    if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    try { r2_sync($pdo, $secs); } catch (Throwable $e) { @file_put_contents(__DIR__ . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | r2 copy: ' . $e->getMessage() . "\n", FILE_APPEND | LOCK_EX); }
+  });
+}
 function r2_used(): int { return (int)array_sum(r2_have()); }
 /* the whole bucket, both sites (fomaxo.in's files and ours under com/): the free 10 GB is for the two together.
    Asked from Cloudflare at most every 10 minutes (and after a copy), kept in fomaxo-media/r2-total.json; null when Cloudflare can't say */

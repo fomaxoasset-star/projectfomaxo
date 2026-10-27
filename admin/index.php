@@ -37,6 +37,10 @@ function money($v) { return 'AED ' . number_format((float)$v, 2); }
 function self_url($q = []) { return './' . ($q ? '?' . http_build_query($q) : ''); }
 function csrf_ok() { return hash_equals($_SESSION['csrf'] ?? '', (string)($_POST['csrf'] ?? '')); }
 function client_ip() { return substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45); }
+/* a page that stops with an error shows a short note instead of a white page, and the error is written to vid-report.txt (not public) */
+register_shutdown_function(function () { $e = error_get_last(); if (!$e || !in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) return;
+  @file_put_contents(dirname(__DIR__) . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | admin error: ' . $e['message'] . ' (' . basename($e['file']) . ':' . $e['line'] . ")\n", FILE_APPEND | LOCK_EX);
+  if (!headers_sent()) { http_response_code(500); header('Content-Type: text/html; charset=utf-8'); } echo '<p style="font:16px system-ui;padding:24px">Something went wrong on this admin page. Please go <a href="./">back</a> and tell Claude the time.</p>'; });
 function go($q = []) { header('Location: ' . self_url($q), true, 303); exit; }
 /* the period on Home, Expenses, Reviews and Members, like Analytics: Today / 7 days / 30 days (/ Year / All) or From–To dates; each page remembers its last choice */
 function adm_range($pg, $def, $presets) {
@@ -1426,10 +1430,10 @@ if (isset($_GET['videos'])) {
       if (!preg_match('~^https://[a-z0-9.-]+\.[a-z]{2,}$~i', $c['url'])) { flash('Please type the public address, e.g. https://v.fomaxo.com'); go($back); }
       $e = r2_check($c); if (str_starts_with($e, 'Cloudflare did not')) { flash($e); go($back); }
       if (!r2_save($c)) { flash('The keys could not be saved on the server. Please try again.'); go($back); }
-      [$n, $err] = r2_sync($pdo, 20); $left = count(array_diff_assoc(r2_wanted($pdo), r2_have()));
-      flash(($e !== '' ? $e . '. Keys saved; ' : 'Cloudflare connected' . (r2_in_file() !== '' ? ' for fomaxo.com and fomaxo.in (switch it on there too, in its admin → Videos). ' : '. ')) . $n . ' video file' . ($n === 1 ? '' : 's') . ' copied' . ($err !== '' ? " (stopped: $err)" : '') . ($left ? ". $left left: tap Copy the rest now." : '. Switch it on to play the videos from Cloudflare.'), $e === '' && $err === ''); go($back);
+      r2_sync_later($pdo);   // the videos copy to Cloudflare after this page has answered
+      flash(($e !== '' ? $e . '. Keys saved. ' : 'Cloudflare connected' . (r2_in_file() !== '' ? ' for fomaxo.com and fomaxo.in (switch it on there too, in its admin → Videos). ' : '. ')) . 'The videos are copying to Cloudflare now: open this page again in a minute or two, then switch it on.', $e === ''); go($back);
     }
-    if ($act === 'r2_sync') { [$n, $err] = r2_sync($pdo, 25); flash("$n video file" . ($n === 1 ? '' : 's') . ' copied to Cloudflare' . ($err !== '' ? ". Stopped: $err" : '.'), $err === ''); go($back); }
+    if ($act === 'r2_sync') { r2_sync_later($pdo); flash('Copying to Cloudflare now. Open this page again in a minute to see how many are done.', true); go($back); }
     if ($act === 'r2_on') { $on = !empty($_POST['on']) && r2_conf(); fomaxo_setting($pdo, 'r2_on', $on ? '1' : '0');
       flash($on ? 'Videos now play from Cloudflare. Any video not copied yet still plays from Hostinger.' : 'Videos play from Hostinger again.', true); go($back); }
     if ($act === 'r2_off') { fomaxo_setting($pdo, 'r2_on', '0'); r2_save(null); flash('Cloudflare disconnected' . (r2_in_file() !== '' ? ' on both sites' : '') . '. Videos play from Hostinger as before.', true); go($back); }
@@ -1561,7 +1565,7 @@ if (isset($_GET['videos'])) {
       flash('Video deleted.', true);
     }
     fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
-    if ($act === 'add' && !empty($vids[0]['hq'])) { try { r2_sync($pdo, 25); } catch (Throwable $e) {} }   // the sharp copy goes to Cloudflare now (what's left goes the next time this page opens)
+    if ($act === 'add' && !empty($vids[0]['hq'])) r2_sync_later($pdo);   // the sharp copy goes to Cloudflare now, after this page has answered
     go($back);
   }
   /* Automatic Instagram reels are fetched by products.php after a shopper's page has its answer (at most once an hour), never while this page loads */
@@ -1618,7 +1622,7 @@ if (isset($_GET['videos'])) {
   }
   /* Cloudflare R2: keys once, then the videos are copied there (a few each time this page opens) and a switch plays them from there */
   $r2 = r2_conf(); $r2On = r2_on($pdo);
-  if ($r2) { try { [$r2n] = r2_sync($pdo, 6); } catch (Throwable $e) { $r2n = 0; } }   // new uploads go to Cloudflare the next time this page opens
+  $r2n = 0; if ($r2) r2_sync_later($pdo);   // anything not on Cloudflare yet copies after this page has gone to the browser
   $r2want = $r2 ? r2_wanted($pdo) : []; $r2have = $r2 ? r2_have() : []; $r2done = count(array_filter($r2want, fn($sz, $f) => ($r2have[$f] ?? -1) === $sz, ARRAY_FILTER_USE_BOTH));
   $r2Html = !$r2 ? '<form class="card vig" method="post">' . csrf_field() . '<input type="hidden" name="act" value="r2_keys"><h2>Cloudflare <small class="muted">faster videos</small></h2>'
       . '<p class="muted small shelp stop">Keep the videos on Cloudflare too (free up to 10 GB). They play from there, and from Hostinger if Cloudflare ever fails.</p>'
