@@ -6032,16 +6032,17 @@ function bindVids(){
   edgeArrows(row);   // and round arrows on the left and right of the row (phone and laptop)
   if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => rowStep(row, +b.dataset.vscroll)); }
   const nc = navigator.connection; if (nc && (nc.saveData || /2g|3g/.test(nc.effectiveType || ''))) return;   // data saver or a slow connection: covers only until tapped
-  /* light on the page: a tile loads its small preview only when it is on screen and the page has finished loading, at most 2 at a time;
+  /* light on the page: a tile loads its small preview only when it is on screen and the page has finished loading, at most 2 at a time (laptop 4);
      a tile without a preview keeps its photo (the full video loads only in the player); a browser that holds back autoplay downloads nothing until the first tap or click */
   let held = false, slow = false, ready = document.readyState === 'complete'; const wait = new Set();
+  const most = matchMedia('(min-width:601px)').matches ? 4 : 2;   // laptop shows about 8 videos at once: 4 load together so the last ones are not late (AJAY 2026-10-27); phone 2
   const busy = () => tiles.filter(t => { const v = $('video', t); return v && v.getAttribute('src') && v.readyState < 3 && !v.error; }).length;
-  const pump = () => wait.forEach(t => { if (busy() < 2) { wait.delete(t); if (onScreen(t)) run(t, true); } });
+  const pump = () => wait.forEach(t => { if (busy() < most) { wait.delete(t); if (onScreen(t)) run(t, true); } });
   const stop = v => { v.pause(); v.removeAttribute('src'); v.load(); };
   const hold = () => { held = true; tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 2 && w.getAttribute('src')) stop(w); }); wait.clear(); };
   const run = (t, on) => { const v = $('video', t); if (!v) return;
     if (on) { if (held || slow || !ready || $('#reel')) return;
-      if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(t); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true}));
+      if (!v.getAttribute('src')) { if (busy() >= most) { wait.add(t); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true}));
         const tm = setTimeout(() => { if (!held && !v.paused && v.readyState < 3 && v.getAttribute('src')) { slow = true; wait.clear(); tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 3 && w.getAttribute('src')) stop(w); }); } }, 5000); v.addEventListener('canplay', () => clearTimeout(tm), {once: true}); }   // slow Wi-Fi (no speed info, e.g. Safari): a playing preview not ready within 5 seconds = covers only on this visit (one held back by Safari's autoplay rule is not counted as slow)
       v.play().then(() => t.classList.add('playing')).catch(e => { v.dataset.pe = e.name; if (e.name !== 'NotAllowedError') return;
         if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => t.classList.add('playing')).catch(() => hold()), {once: true}); return; }   // Safari can refuse to start a preview that is not loaded yet: it tries again once loaded, and only then holds back
@@ -6060,7 +6061,7 @@ function bindVids(){
   /* after the first scroll: a tile about half a screen away already loads its small preview (same 2 at a time, same address),
      so it is ready and plays at once when it comes on screen */
   const wq = new Set(), warm = t => { const v = $('video', t); if (!v || v.getAttribute('src') || held || slow || !ready || $('#reel')) return;
-    if (busy() >= 2) { wq.add(t); return; } wq.delete(t);
+    if (busy() >= most) { wq.add(t); return; } wq.delete(t);
     v.preload = 'auto'; v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, () => { pump(); wq.forEach(warm); }, {once: true})); };
   addEventListener('scroll', () => { if (vrNear || !document.contains(tiles[0])) return;
     vrNear = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) wq.delete(e.target); else if (!onScreen(e.target)) warm(e.target); }), {rootMargin: '50% 0px'});
@@ -6084,7 +6085,7 @@ function vStrip(){
   edgeArrows($('.vs-row', el));
   vsBind();
 }
-/* the cards play their small silent preview (the same file as the row lower down, first seconds, ~0.5 MB): only after the page has loaded,
+/* the cards play their small silent preview (the same file as the row lower down, first seconds, ~0.25 MB): once the page has loaded,
    only cards on screen, at most 2 loading at a time; a browser that holds back autoplay or data saver keeps the covers (AJAY 2026-10-21) */
 let vsIO = null;
 function vsBind(){
@@ -6099,8 +6100,7 @@ function vsBind(){
     if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(c); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true})); }
     v.play().then(() => vidLit(v, () => c.classList.add('playing'))).catch(e => { if (e.name !== 'NotAllowedError') return; if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => vidLit(v, () => c.classList.add('playing'))).catch(() => { held = true; wait.clear(); }), {once: true}); return; } held = true; wait.clear(); }); };   // Safari: one more try once loaded
   const go = () => { if (!document.contains(cs[0])) return; vsIO = new IntersectionObserver(es => es.forEach(e => run(e.target, e.isIntersecting))); cs.forEach(c => vsIO.observe(c)); };
-  const later = () => setTimeout(go, 3000);   // 3 seconds after the page has loaded: the photo, prices and Add to bag get the connection first
-  document.readyState === 'complete' ? later() : addEventListener('load', later, {once: true});
+  document.readyState === 'complete' ? go() : addEventListener('load', go, {once: true});   // as soon as the page has loaded (the photo, prices and Add to bag are in by then), not 3 seconds later (AJAY 2026-10-27: play as soon as seen)
 }
 let reelMuted = false;   // the player opens with sound on, quietly (the row stays muted)
 const REEL_VOL = .3; let reelAC = null;
