@@ -5804,6 +5804,12 @@ const FXT = (() => {
   addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
   // how long the website took to open on this phone or computer (once per visit to the site), and errors on the page (a button that breaks shows here)
   addEventListener('load', () => setTimeout(() => { try { const n = performance.getEntriesByType('navigation')[0], ms = n && n.loadEventStart > 0 ? Math.round(n.loadEventStart) : 0; if (ms && !off) trail.push({k: 'l', p: pg(), ms: Math.min(ms, 60000)}); } catch(e) {} }, 0), {once: true});
+  // when the first screen (the big photo or words) was shown: what the shopper feels. 'l' above waits for everything on the page, ad trackers too
+  let fMs = 0, fSent = 0; const fPg = pg(), fPush = () => { if (fSent || off) return; fSent = 1; if (fMs) trail.push({k: 'f', p: fPg, ms: Math.min(Math.round(fMs), 60000)}); };
+  try { const lcp = (PerformanceObserver.supportedEntryTypes || []).includes('largest-contentful-paint');   // Safari without it: the first words or picture
+    new PerformanceObserver(l => { for (const x of l.getEntries()) if (lcp || x.name === 'first-contentful-paint') fMs = x.startTime; }).observe({type: lcp ? 'largest-contentful-paint' : 'paint', buffered: true}); } catch(e) {}
+  addEventListener('load', () => setTimeout(fPush, 3000), {once: true}); addEventListener('pointerdown', () => setTimeout(fPush, 0), {once: true, capture: true});
+  addEventListener('pagehide', () => { fPush(); flush(); }); document.addEventListener('visibilitychange', () => { if (document.hidden) { fPush(); flush(); } });
   let errN = 0; addEventListener('error', e => { if (off || !(e instanceof ErrorEvent) || errN++ >= 5) return; trail.push({k: 'e', p: pg(), l: String(e.message || 'Error').replace(/\d{6,}/g, '#').slice(0, 60)}); }, true);
   const trailPage = () => { flush(); tPage = pg(); setTimeout(() => { if (tPage === pg()) tMax = Math.max(tMax, seenPc()); }, 1500); };   // a short page counts as seen to its end
   return {
