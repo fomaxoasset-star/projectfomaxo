@@ -1375,11 +1375,14 @@ function fx_vid_probe(string $path): array {
    note (product, words, shape) are put in fomaxo.in's private video-inbox; fomaxo.in adds it to its own list the next time its shop
    or admin opens (api/video-lib.php video_inbox; the other way round: fx_video_inbox in media-lib.php). '' when fomaxo.in's folder is not there (then the tick is not shown) */
 function fx_in_inbox(): string { $p = getenv('FOMAXO_IN_PRIVATE') ?: dirname(__DIR__, 3) . '/fomaxo.in/fomaxo-private'; return is_dir($p) && is_writable($p) ? "$p/video-inbox" : ''; }
-function fx_vid_to_in(string $path, array $v): bool {
+/* $was = the fingerprint of the video it replaces there (Replace with sharper video on a video both sites have); the sharp 1080p copy goes along while it is still here */
+function fx_vid_to_in(string $path, array $v, string $was = ''): bool {
   $in = fx_in_inbox(); $name = basename($path); if ($in === '' || (!is_dir($in) && !@mkdir($in, 0750, true))) return false;
   $tmp = "$in/$name." . bin2hex(random_bytes(4)) . '.part';
   if (!@copy($path, $tmp) || !@rename($tmp, "$in/$name")) { @unlink($tmp); return false; }
-  if (!@file_put_contents("$in/$name.json", json_encode(['file' => $name] + array_intersect_key($v, array_flip(['product', 'words', 'wide', 'fp', 'person', 'where'])), JSON_UNESCAPED_SLASHES), LOCK_EX)) return false;
+  $hq = ($v['hq'] ?? '') !== '' && ($hp = fx_media_path($v['hq'])) && is_file($hp) ? basename($hp) : '';
+  if ($hq !== '' && (!@copy($hp, "$in/$hq.part") || !@rename("$in/$hq.part", "$in/$hq"))) { @unlink("$in/$hq.part"); $hq = ''; }
+  if (!@file_put_contents("$in/$name.json", json_encode(['file' => $name] + array_intersect_key($v, array_flip(['product', 'words', 'wide', 'fp', 'person', 'where'])) + ($hq !== '' ? ['hq' => $hq] : []) + ($was !== '' ? ['replace' => $was] : []), JSON_UNESCAPED_SLASHES), LOCK_EX)) return false;
   @unlink(dirname($in) . '/live-cache.js');   // fomaxo.in's one-minute copy of its shop answer: its next page load adds the video straight away
   return true;
 }
@@ -1544,9 +1547,11 @@ if (isset($_GET['videos'])) {
         foreach (['file', 'prev', 'hq'] as $k) fx_media_delete($old[$k] ?? '');
         if ($nv['cover'] !== '') fx_media_delete($old['cover'] ?? '');
         if (!empty($nv['orig'])) fx_media_delete($old['orig'] ?? ''); elseif (!empty($old['orig'])) $nv['orig'] = $old['orig'];   // made again from the original on Cloudflare: that original stays
+        $was = (string)($old['fp'] ?? ''); $both = !empty($old['sent_in']) || ($old['from'] ?? '') === 'fomaxo.in';   // a video fomaxo.in has too: replaced there as well
         unset($old['prev'], $old['hq'], $old['fp'], $old['wide'], $old['orig']);
         $vids[$ri] = ['file' => $nv['file']] + ($nv['cover'] !== '' ? ['cover' => $nv['cover']] : []) + array_intersect_key($nv, ['hq' => 1, 'orig' => 1, 'fp' => 1, 'wide' => 1]) + $old;
-        flash('Video number ' . ($ri + 1) . ' replaced' . ($syncNow ? ' with the sharp one. It goes to Cloudflare in a minute' : '') . '. Same product, words and place in the list.', true);
+        $inOk = $both && $was !== '' && fx_vid_to_in("$dir/$name", $vids[$ri], $was);
+        flash('Video number ' . ($ri + 1) . ' replaced' . ($syncNow ? ' with the sharp one. It goes to Cloudflare in a minute' : '') . '. Same product, words and place in the list.' . ($inOk ? ' Replaced on fomaxo.in too.' : ($both ? ' On fomaxo.in it stays as before: replace it there too.' : '')), true);
       } else {
       $toIn = !empty($_POST['to_in']) && fx_vid_to_in("$dir/$name", $vids[0]);   // the tick 'Also add to fomaxo.in'
       if ($toIn) $vids[0]['sent_in'] = true;
