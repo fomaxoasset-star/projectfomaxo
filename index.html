@@ -6119,6 +6119,7 @@ function reelLog(v, s){ if (v._rlog) return; v._rlog = 1; const t0 = performance
   const sh = new MutationObserver(() => { if (s.classList.contains('shown') && !at.shown) at.shown = ms(); }); sh.observe(s, {attributes: true, attributeFilter: ['class']});
   setTimeout(() => { sh.disconnect(); try { const b = v.buffered, nc = navigator.connection;
     navigator.sendBeacon && navigator.sendBeacon('vlog.php', new Blob([JSON.stringify({v: ['player ' + (v.currentSrc || v.src || '').split('/').pop(), 'meta=' + (at.loadedmetadata || '-'), 'canplay=' + (at.canplay || '-'), 'playing=' + (at.playing || '-'), 'shown=' + (at.shown || '-'), 'waits=' + waits, 'err=' + (v.error ? v.error.code : 0) + (at.error ? '@' + at.error : ''), 'played=' + v.currentTime.toFixed(1), 'buffered=' + (b.length ? b.end(b.length - 1).toFixed(1) : 0) + '/' + (v.duration || 0).toFixed(1), 'paused=' + v.paused, 'muted=' + v.muted, 'ready=' + v.readyState, 'net=' + (nc ? nc.effectiveType : '-')]})], {type: 'application/json'})); } catch (e) {} }, 10000); }
+const MAC_SAFARI = /Macintosh/.test(navigator.userAgent) && /Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox/.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1);   // laptop Safari only (not iPhone or iPad)
 let reelMuted = false;   // the player opens with sound on, quietly (the row stays muted)
 const REEL_VOL = .3; let reelAC = null;
 function quiet(v){   // low volume: iPhone ignores video.volume, so the sound goes through a gain of 0.3 (same-site videos); elsewhere video.volume does it too
@@ -6169,7 +6170,8 @@ function openReel(i){
     slides.forEach((s, n) => { const v = $('video', s);
       if (!v) { const f = $('iframe', s); if (f && !f.src && Math.abs(n - k) <= 1) f.src = f.dataset.src; return; }   // Instagram's player: loaded when near, played by a tap on it
       if (n === k) { if (!v.src) v.src = v.dataset.src; reelLog(v, s); v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
-      else { v.pause(); if (Math.abs(n - k) === 1 && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } } });   // the next and previous videos load now, so a swipe plays at once
+      else { v.pause(); if (Math.abs(n - k) === 1 && !v.src) { if (!MAC_SAFARI) { v.preload = 'auto'; v.src = v.dataset.src; } else { const cv = $('video', slides[k]), near = () => { if (cur === k && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } }; cv && cv.readyState > 3 ? near() : (cv && cv.addEventListener('canplaythrough', near, {once: true}), setTimeout(near, 6000)); } } } });   // the next and previous videos load now, so a swipe plays at once
+      // Mac Safari downloads the whole next and previous videos at once, so the one on screen waited (its own report 2026-10-27: 5.5 s, stuck): there they load once it has enough to play to the end (or after 6 s)
     $$('.rl-nav button', el).forEach(b => b.disabled = (+b.dataset.rl < 0 && k === 0) || (+b.dataset.rl > 0 && k === slides.length - 1));
   };
   const sio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) act(+e.target.dataset.k); }), {root: track, threshold: .6});
