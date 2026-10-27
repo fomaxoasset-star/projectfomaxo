@@ -27,7 +27,7 @@ function r2_save(?array $c): bool {
   }
   return $ok;
 }
-function r2_on($pdo): bool { return $pdo && (string)fomaxo_setting($pdo, 'r2_on') === '1' && r2_conf() !== null; }
+function r2_on($pdo): bool { return $pdo && (string)fomaxo_setting($pdo, 'r2_on') === '1' && ($c = r2_conf()) !== null && r2_live($c); }   // switched on AND the public address answers
 /* the name on Cloudflare of 'vid/x.mp4': com/x.mp4 */
 function r2_key(string $f): string { return R2_PREFIX . substr($f, 4); }
 /* the videos already on Cloudflare: 'vid/x.mp4' => size */
@@ -106,6 +106,22 @@ function r2_sync_later($pdo, float $secs = 120): void {
     if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
     try { r2_sync($pdo, $secs); } catch (Throwable $e) { @file_put_contents(__DIR__ . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | r2 copy: ' . $e->getMessage() . "\n", FILE_APPEND | LOCK_EX); }
   });
+}
+/* does the public address really send our files to fomaxo.com (DNS, custom domain, CORS)? One small ask, at most every 10 minutes
+   (kept in fomaxo-media/r2-live.json); while it fails the website plays every video from Hostinger as before and the switch won't turn on */
+function r2_live(array $c, bool $fresh = false): bool {
+  $cf = fx_media() . '/r2-live.json'; $j = json_decode((string)@file_get_contents($cf), true);
+  if (!$fresh && is_array($j) && ($j['t'] ?? 0) > time() - 600) return !empty($j['ok']);
+  $ok = false;
+  if (function_exists('curl_init')) {
+    $acao = ''; $ch = curl_init(rtrim($c['url'], '/') . '/' . R2_PREFIX . 'fomaxo-check.txt');
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 4, CURLOPT_TIMEOUT => 6, CURLOPT_HTTPHEADER => ['Origin: https://fomaxo.com'],
+      CURLOPT_HEADERFUNCTION => function ($ch, $h) use (&$acao) { if (stripos($h, 'access-control-allow-origin:') === 0) $acao = trim(substr($h, 28)); return strlen($h); }]);
+    $out = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+    $ok = $code === 200 && trim((string)$out) === 'ok' && ($acao === '*' || $acao === 'https://fomaxo.com');   // CORS too: the videos are asked for with crossorigin
+  }
+  @file_put_contents($cf, json_encode(['t' => time(), 'ok' => $ok]), LOCK_EX);
+  return $ok;
 }
 function r2_used(): int { return (int)array_sum(r2_have()); }
 /* the whole bucket, both sites (fomaxo.in's files and ours under com/): the free 10 GB is for the two together.
