@@ -50,12 +50,24 @@ function fx_video_inbox($pdo) {
     foreach ($notes as $j) {
       $m = json_decode((string)@file_get_contents($j), true); $f = basename((string)($m['file'] ?? ''));
       if (!is_array($m) || !preg_match('~^[a-z0-9-]+\.(mp4|mov|webm)$~', $f) || !is_file("$in/$f")) { if (@filemtime($j) < time() - 3600) @unlink($j); continue; }   // the file is still being copied: next time
+      $hq = basename((string)($m['hq'] ?? '')); $hq = preg_match('~^[a-z0-9-]+-h\.mp4$~', $hq) && is_file("$in/$hq") ? $hq : '';
+      $at = null; $was = (string)($m['replace'] ?? '');   // Replace with sharper video on fomaxo.com: the video with that fingerprint here gets the new files
+      if ($was !== '') foreach ($vids as $k => $x) if (($x['fp'] ?? '') === $was) { $at = $k; break; }
+      if ($was !== '' && $at === null) { @unlink("$in/$f"); if ($hq !== '') @unlink("$in/$hq"); @unlink($j); continue; }   // not here: nothing to replace, and not added as a new video
       if (!@rename("$in/$f", fx_media('vid') . "/$f")) continue;
       @chmod(fx_media('vid') . "/$f", 0644); @unlink($j); $prod = (string)($m['product'] ?? ''); $words = substr(trim((string)($m['words'] ?? '')), 0, 60);
+      if ($hq !== '' && !(function_exists('r2_conf') && r2_conf() && @rename("$in/$hq", fx_media('vid') . "/$hq"))) { @unlink("$in/$hq"); $hq = ''; }   // the sharp copy: to Cloudflare at the next copy, then off Hostinger
+      if ($at !== null) {
+        foreach (['file', 'prev', 'hq'] as $k) fx_media_delete($vids[$at][$k] ?? '');
+        unset($vids[$at]['prev'], $vids[$at]['hq'], $vids[$at]['wide']);
+        $vids[$at] = ['file' => "vid/$f"] + ($hq !== '' ? ['hq' => "vid/$hq"] : []) + (preg_match('/^[a-f0-9]{32}$/', (string)($m['fp'] ?? '')) ? ['fp' => (string)$m['fp']] : []) + (!empty($m['wide']) ? ['wide' => true] : []) + $vids[$at];
+        $added++; continue;
+      }
       array_unshift($vids, ['id' => bin2hex(random_bytes(5)), 'file' => "vid/$f", 'cover' => '', 'product' => isset($have[$prod]) ? $prod : '', 'on' => true, 'from' => 'fomaxo.in']
-        + (preg_match('/^[a-f0-9]{32}$/', (string)($m['fp'] ?? '')) ? ['fp' => (string)$m['fp']] : []) + ($words !== '' ? ['words' => $words] : []) + (!empty($m['wide']) ? ['wide' => true] : []) + (in_array($m['where'] ?? '', ['home', 'product'], true) ? ['where' => $m['where']] : []) + (($nm = mb_substr(trim((string)($m['person'] ?? '')), 0, 30)) !== '' ? ['person' => $nm] : []));
+        + (preg_match('/^[a-f0-9]{32}$/', (string)($m['fp'] ?? '')) ? ['fp' => (string)$m['fp']] : []) + ($words !== '' ? ['words' => $words] : []) + (!empty($m['wide']) ? ['wide' => true] : []) + (in_array($m['where'] ?? '', ['home', 'product'], true) ? ['where' => $m['where']] : []) + (($nm = mb_substr(trim((string)($m['person'] ?? '')), 0, 30)) !== '' ? ['person' => $nm] : []) + ($hq !== '' ? ['hq' => "vid/$hq"] : []));
       $added++;
     }
     if ($added) fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
+    if ($added && function_exists('r2_sync_later') && array_filter($vids, fn($x) => ($x['hq'] ?? '') !== '' && is_file((string)fx_media_path($x['hq'])))) r2_sync_later($pdo);   // a sharp copy that came with it: to Cloudflare now
   } catch (Throwable $e) {} finally { flock($lk, LOCK_UN); fclose($lk); }
 }
