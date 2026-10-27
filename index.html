@@ -3363,7 +3363,7 @@ function bagRecs(){
   const frag = S.products.filter(p => p.kind !== 'set' && p.prices);
   const rank = bagRank(cart.map(l => l.id)), r = p => rank(p.id);
   const sizes = [...new Set(frag.flatMap(p => p.sizes.filter(s => typeof s === 'number')))].sort((a, b) => b - a);
-  const recs = sizes.flatMap(sz => frag.filter(p => p.sizes.includes(sz) && hasPrice(p.prices[sz]) && !haveSz.has(p.id + '/' + sz)).sort((a, b) => r(a) - r(b)).map(p => [p, sz]))
+  const recs = sizes.flatMap(sz => frag.filter(p => p.sizes.includes(sz) && hasPrice(p.prices[sz]) && !haveSz.has(p.id + '/' + sz) && stockLeft(p.id, sz) !== 0).sort((a, b) => r(a) - r(b)).map(p => [p, sz]))
     .sort((a, b) => (a[0].id === 'king') - (b[0].id === 'king'));
   if (!recs.length) return '';
   return `<div class="recs"><div class="recs-h"><h5>You may also like</h5><span class="recs-nav"><button type="button" data-recscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-recscroll="1" aria-label="Scroll for more">›</button></span></div><div class="recs-row">${recs.map(([p, sz]) => `<div class="rec">
@@ -3671,6 +3671,9 @@ const stockHTML = (id, opt, long) => { const n = stockLeft(id, opt); return n ==
 function applyStock(){
   $$('.card[data-id]').forEach(c => { const p = P[c.dataset.id]; if (!p) return; const sel = c.dataset.sel, el = $('[data-stk]', c);
     if (el) el.innerHTML = stockHTML(p.id, sel); $$('[data-add],[data-buy]', c).forEach(b => b.disabled = stockLeft(p.id, sel) === 0); });
+  $$('#alsoRow .card[data-id]').forEach(c => { const p = P[c.dataset.id]; if (!p) return; const ok = inStockSizes(p).map(String);   // stock arrived after the row was drawn
+    if (!ok.length) return c.remove();
+    if (!ok.includes(String(c.dataset.sel)) || $$('.chip', c).some(x => !ok.includes(x.dataset.size))) { c.outerHTML = card(p, {inStock: true}); const n = $(`#alsoRow .card[data-id="${p.id}"]`); n && n.classList.add('in'); } });
   pdpStock && pdpStock();
   refreshOrderAgain();
 }
@@ -3683,10 +3686,11 @@ async function loadStock(){
   if (/^#\/(combo|gifts)/.test(location.hash)) route();   // combos and gift sets leave out what is out of stock
 }
 function card(p, opts={}){
-  const size = opts.size || defaultSize(p);
+  const ok = opts.inStock ? inStockSizes(p) : p.sizes;   // inStock: only the sizes we have (You may also like)
+  const size = opts.size || (ok.includes(defaultSize(p)) ? defaultSize(p) : ok[0]);
   const img = p.kind === 'set' && !opts.size ? p.images[0] : imgFor(p, size);   // sets open on the main photo; the 3 / 5 photo shows when picked
   const alt = altFor(p, size);
-  const chips = p.sizes.length > 1 && !opts.size ? `<div class="chips">${p.sizes.map(s => `<button class="chip${s===size?' on':''}" data-size="${s}">${optLabel(p, s)}</button>`).join('')}</div>` : `<div class="meta">${p.kind==='set' ? '2ml vials' : sizeLabel(size)} · ${esc(p.family.split('·')[0].trim())}</div>`;
+  const chips = ok.length > 1 && !opts.size ? `<div class="chips">${ok.map(s => `<button class="chip${s===size?' on':''}" data-size="${s}">${optLabel(p, s)}</button>`).join('')}</div>` : `<div class="meta">${p.kind==='set' ? '2ml vials' : sizeLabel(size)} · ${esc(p.family.split('·')[0].trim())}</div>`;
   return `<article class="card rv-up ${opts.d||''}" data-id="${p.id}" data-sel="${size}">
     ${bestHTML(p.id, soldKey(p, size))}
     <a class="media" href="#/product/${p.id}${opts.size ? '?size=' + opts.size : ''}" aria-label="${esc(p.name)}">
@@ -3928,11 +3932,13 @@ const pdpOffer = p => p.kind === 'set' || QTY_DISCOUNT_SKIP.includes(p.id) ? '' 
    then the best sellers, then the rest in a random order that changes each visit. ALSO comes from products.php (only the order, no numbers). */
 let ALSO = {}; try { ALSO = JSON.parse(localStorage.getItem('fomaxo_also') || '{}') || {}; } catch(e) {}
 const ALSO_RND = {};
+// out of stock products and sizes are never shown in "You may also like" (AJAY 2026-10-27), on the product page or in the bag
+const inStockSizes = p => p.sizes.filter(s => stockLeft(p.id, s) !== 0);
 function alsoOrder(id){
   const rank = {}, add = l => (l || []).forEach(x => { if (!(x in rank)) rank[x] = Object.keys(rank).length; });
   add((ALSO.pairs || {})[id]); add(ALSO.top);
   const r = x => x.id in rank ? rank[x.id] : 1e4 + (ALSO_RND[x.id] ??= Math.random());
-  return S.products.filter(x => x.id !== id).sort((a, b) => r(a) - r(b));
+  return S.products.filter(x => x.id !== id && inStockSizes(x).length).sort((a, b) => r(a) - r(b));
 }
 // the bag's order: products bought together with what's in the bag (best first), then the best sellers, then a random order kept for this visit
 function bagRank(ids){
@@ -4082,7 +4088,7 @@ function product(id, q){
 
     <section class="also-sec" style="border-top:1px solid var(--line)">
       <div class="sec-head"><div class="t rv-up"><span class="eyebrow">You may also like</span><h2>Complete your <em class="metal">collection</em></h2></div><span class="also-nav"><button type="button" data-alsoscroll="-1" aria-label="Scroll back">‹</button><button type="button" data-alsoscroll="1" aria-label="Scroll for more">›</button></span></div>
-      <div class="also-row" id="alsoRow" data-p="${p.id}">${related.map((r,i) => card(r, {d: i < 4 ? 'd'+i : ''})).join('')}</div>
+      <div class="also-row" id="alsoRow" data-p="${p.id}">${related.map((r,i) => card(r, {d: i < 4 ? 'd'+i : '', inStock: true})).join('')}</div>
     </section>
   </div>`;
 }
