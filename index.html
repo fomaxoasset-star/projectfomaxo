@@ -5986,7 +5986,7 @@ function vidSecHTML(){
   const l = rowVids(); if (!l.length) return '';
   return `<div class="wrap">${(vidPage() ? secHead('Watch &amp; shop', 'Review <em class="metal">videos</em>', '', false) : secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
     <div class="eg-w"><div class="vrow${vidPage() ? ' pp' : ''}" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = v.sn && !vidPage() ? null : P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
-      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `${v.pv ? `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}" data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : v.v)}"></video>` : ''}${vidPoster(v) ? `<img class="vt-pic" src="${vidPoster(v)}" alt="" loading="lazy">` : ''}`}
+      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `${v.pv ? `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}"${vidXO(v.pv || v.v)} data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : v.v)}"></video>` : ''}${vidPoster(v) ? `<img class="vt-pic" src="${vidPoster(v)}" alt="" loading="lazy">` : ''}`}
       ${v.n && vidPage() ? `<span class="vt-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}<span class="vt-play" aria-hidden="true">${VI.play}</span>
       ${p ? `<span class="vt-p${v.w ? ' has-w' : ''}">${v.w ? `<i class="vt-w">${esc(v.w)}</i>` : ''}<img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now${ps.length ? ` · + ${ps.length} more` : ''}</i></span></span>`}</button>`; }).join('')}</div></div></div>`;
 }
@@ -6019,6 +6019,11 @@ function loopRow(sc){ if (!sc || sc.dataset.loop) return; const ks = [...sc.chil
   sc.scrollLeft = s * W();
   let t = 0; const fix = () => { const w = W(), x = Math.abs(sc.scrollLeft); if (w && x < w * .5) sc.scrollLeft = s * (x + w); else if (w && x > w * 1.5) sc.scrollLeft = s * (x - w); };
   sc.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(fix, 150); }, {passive: true}); }
+/* videos kept on Cloudflare (Admin → Products → Videos → Cloudflare) are asked for with CORS, so vidLit can still read their frames.
+   One Cloudflare fails to send plays from our own copy in assets/vid instead (data-fbu: the small Hostinger copy of a sharp 1080p video) */
+function vidXO(u){ return /^https:/.test(u || '') ? ' crossorigin="anonymous"' : ''; }
+document.addEventListener('error', e => { const v = e.target, u = v && v.tagName === 'VIDEO' && v.getAttribute('src') || ''; if (!/^https:\/\//.test(u) || v.dataset.fb) return;
+  const f = v.dataset.fbu || '/assets/vid/' + u.split('/').pop(), go = v.autoplay || !v.paused; v.dataset.fb = 1; v.removeAttribute('crossorigin'); if (v.dataset.src === u) v.dataset.src = f; v.src = f; if (go) v.play().catch(() => {}); }, true);
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
 function vidLit(v, done){ (v._litQ = v._litQ || []).push(done); if (v._lit) return; v._lit = 1;   // a video the player borrows from the row can be checked for both at once: each waiting cover goes when the check passes
   const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d', {willReadFrequently: true}); let n = 0;
@@ -6086,7 +6091,7 @@ function vStrip(){
   sec && sec.classList.toggle('vs-dup', !!l.length);   // phone: the cards replace the Review videos row lower down (same videos, AJAY 2026-10-21)
   el.hidden = !l.length; if (!l.length) { el.innerHTML = ''; return; }
   el.innerHTML = `<div class="vs-h"><span>Review videos</span><button type="button" class="vs-all" aria-label="Play review videos">${l.length} ›</button></div>
-    <div class="eg-w"><div class="vs-row">${l.map((v, i) => `<button type="button" class="vs-c" data-vi="${i}" aria-label="${v.n ? esc(v.n) + ' ' : ''}video">${vidPoster(v) ? `<img src="${vidPoster(v)}" alt="" loading="lazy" decoding="async" fetchpriority="low">` : ''}${v.pv && !v.e ? `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" muted playsinline loop preload="none" data-src="${esc(v.pv.startsWith('vid/') ? 'assets/' + v.pv : v.pv)}"></video>` : ''}<span class="vs-p" aria-hidden="true">${VI.play}</span>${v.n ? `<bdi class="vs-n">${esc(v.n)}</bdi>` : ''}</button>`).join('')}</div></div>`;
+    <div class="eg-w"><div class="vs-row">${l.map((v, i) => `<button type="button" class="vs-c" data-vi="${i}" aria-label="${v.n ? esc(v.n) + ' ' : ''}video">${vidPoster(v) ? `<img src="${vidPoster(v)}" alt="" loading="lazy" decoding="async" fetchpriority="low">` : ''}${v.pv && !v.e ? `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" muted playsinline loop preload="none"${vidXO(v.pv)} data-src="${esc(v.pv.startsWith('vid/') ? 'assets/' + v.pv : v.pv)}"></video>` : ''}<span class="vs-p" aria-hidden="true">${VI.play}</span>${v.n ? `<bdi class="vs-n">${esc(v.n)}</bdi>` : ''}</button>`).join('')}</div></div>`;
   loopRow($('.vs-row', el));
   $$('.vs-c', el).forEach(b => b.onclick = () => openReel(+b.dataset.vi));
   $('.vs-all', el).onclick = () => openReel(0);
@@ -6141,7 +6146,7 @@ function reelCard(p){
 function reelSlide(v, k){
   const ps = vidProds(v).map(id => P[id]), name = ps.length ? ps[0].name : 'FOMAXO';
   return `<section class="rl-s${v.e ? ' emb' : ''}${v.wd ? ' wide' : ''}" data-k="${k}"><div class="rl-stage">
-    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" playsinline loop muted preload="none" poster="${vidPoster(v)}" data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}${!v.e && vidPoster(v) ? `<img class="rl-pic" src="${vidPoster(v)}" alt="">` : ''}
+    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" playsinline loop muted preload="none" poster="${vidPoster(v)}"${vidXO(v.v)}${v.vf ? ` data-fbu="/assets/${esc(v.vf)}"` : ''} data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}${!v.e && vidPoster(v) ? `<img class="rl-pic" src="${vidPoster(v)}" alt="">` : ''}
     <span class="rl-pause" aria-hidden="true">${VI.play}</span>
     ${v.n && vidPage() ? `<span class="vt-by rl-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}
     ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'Eau de Parfum · Unisex'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`
