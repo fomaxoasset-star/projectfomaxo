@@ -1434,6 +1434,8 @@ if (isset($_GET['videos'])) {
       flash(($e !== '' ? $e . '. Keys saved. ' : 'Cloudflare connected' . (r2_in_file() !== '' ? ' for fomaxo.com and fomaxo.in (switch it on there too, in its admin → Videos). ' : '. ')) . 'The videos are copying to Cloudflare now: open this page again in a minute or two, then switch it on.', $e === ''); go($back);
     }
     if ($act === 'r2_sync') { r2_sync_later($pdo); flash('Copying to Cloudflare now. Open this page again in a minute to see how many are done.', true); go($back); }
+    if ($act === 'r2_on' && !empty($_POST['on']) && ($c = r2_conf()) && !r2_live($c)) { fomaxo_setting($pdo, 'r2_on', '0');   // never switch on while the public address doesn't answer: every video would fail first
+      flash('Not switched on: ' . preg_replace('~^https://~', '', $c['url']) . ' is not working yet (Cloudflare → R2 → bucket → Settings → Custom Domains should say Active). Videos keep playing from Hostinger. Try again once it works.'); go($back); }
     if ($act === 'r2_on') { $on = !empty($_POST['on']) && r2_conf(); fomaxo_setting($pdo, 'r2_on', $on ? '1' : '0');
       flash($on ? 'ON – videos now play from Cloudflare (faster). Any video not copied yet still plays from Hostinger.' : 'OFF – videos play from Hostinger again.', true); go($back); }
     if ($act === 'r2_off') { fomaxo_setting($pdo, 'r2_on', '0'); r2_save(null); flash('Cloudflare disconnected' . (r2_in_file() !== '' ? ' on both sites' : '') . '. Videos play from Hostinger as before.', true); go($back); }

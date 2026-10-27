@@ -107,6 +107,13 @@ function r2_sync_later($pdo, float $secs = 120): void {
     try { r2_sync($pdo, $secs); } catch (Throwable $e) { @file_put_contents(__DIR__ . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | r2 copy: ' . $e->getMessage() . "\n", FILE_APPEND | LOCK_EX); }
   });
 }
+/* does the public address answer (custom domain connected and its DNS working)? turning the switch on checks this first */
+function r2_live(array $c): bool {
+  if (!function_exists('curl_init')) return false;
+  $ch = curl_init(rtrim($c['url'], '/') . '/' . R2_PREFIX . 'fomaxo-check.txt'); curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_TIMEOUT => 15]);
+  $out = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+  return $code === 200 && trim((string)$out) === 'ok';
+}
 function r2_used(): int { return (int)array_sum(r2_have()); }
 /* the whole bucket, both sites (fomaxo.in's files and ours under com/): the free 10 GB is for the two together.
    Asked from Cloudflare at most every 10 minutes (and after a copy), kept in fomaxo-media/r2-total.json; null when Cloudflare can't say */
