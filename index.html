@@ -342,7 +342,7 @@ html[data-mode="light"] .sort-by select{color:var(--ink,#1a140c)}html[data-mode=
 .thumbs img{width:100%;height:100%;object-fit:cover}
 .stage{position:relative;aspect-ratio:4/5;overflow:hidden;border:1px solid var(--line);background:var(--panel);cursor:zoom-in}
 .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease),opacity .5s;filter:saturate(.92) contrast(1.04)}
-.stage.zoom img{transform:scale(1.8)}
+.stage.zoom img{transform:scale(1.8)}.stage .peek[hidden]{display:none}
 .buy{display:flex;flex-direction:column;gap:26px}
 .buy h1{font-size:clamp(34px,3.6vw,56px);letter-spacing:.12em}
 .buy .sub{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold)}
@@ -4138,7 +4138,7 @@ function bindProduct(p){
   const centre = b => { const tb = b.parentElement; tb.scrollLeft = b.offsetLeft - tb.offsetLeft - (tb.clientWidth - b.offsetWidth) / 2; };
   let g = null, lastTap = 0, tapT = 0;
   const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY), mid = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
-  stage.addEventListener('touchstart', e => { touchAt = Date.now(); const t = e.touches;
+  stage.addEventListener('touchstart', e => { if (stage._swap) stage._swap(); touchAt = Date.now(); const t = e.touches;
     if (t.length === 2) { const [mx, my] = mid(t), [px, py] = rel(mx, my); g = {pinch: 1, d0: dist(t), s0: PZ.s, ix: (px - PZ.x) / PZ.s, iy: (py - PZ.y) / PZ.s}; return; }   // ix / iy: the photo spot between the fingers
     if (t.length === 1) g = {x: t[0].clientX, y: t[0].clientY, at: Date.now(), y0: scrollY, sx: PZ.x, sy: PZ.y, zoomed: PZ.s > 1}; else g = null;
   }, {passive: true});
@@ -4178,12 +4178,11 @@ function bindProduct(p){
       if (drag !== 1 || (e && e.touches && e.touches.length)) return; drag = 0; const w = stage.clientWidth;
       if (Math.abs(dx) < Math.min(60, w * .18)) { move(0, .2); setTimeout(() => { peek.hidden = true; im().style.transition = ''; }, 220); return; }   // a short drag springs back
       const next = at(peekDir); move(-peekDir * w, .22);
-      setTimeout(() => {
-        setImg(next.dataset.g);
-        const show = () => { peek.hidden = true; im().style.transition = 'none'; im().style.transform = ''; requestAnimationFrame(() => { im().style.transition = ''; }); };
-        (im().decode ? im().decode() : Promise.resolve()).then(show, show);   // swap once the new photo is ready, so it doesn't flash
-        centre(next);
-      }, 230);
+      let step = 0;   // 1 = new photo set, 2 = shown
+      const set = () => { if (step) return; step = 1; setImg(next.dataset.g); centre(next); };
+      const show = () => { if (step > 1) return; step = 2; stage._swap = null; peek.hidden = true; im().style.transition = 'none'; im().style.transform = ''; requestAnimationFrame(() => { im().style.transition = ''; }); };
+      const tm = setTimeout(() => { set(); (im().decode ? im().decode() : Promise.resolve()).then(show, show); }, 230);   // swap once the new photo is ready, so it doesn't flash
+      stage._swap = () => { clearTimeout(tm); set(); show(); };   // a finger on the photo before the new one has loaded (slow phone network): show it now, so a zoom works on it
     };
     stage.addEventListener('touchend', swipeEnd); stage.addEventListener('touchcancel', swipeEnd);
   }
