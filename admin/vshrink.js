@@ -240,6 +240,7 @@ window.fxPick = function (src, done) {
         f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); });
       return; }
     delete f.dataset.hqDone;
+    if (send.hq && plain && asIs) { send(null); return; }   // sharp copy made, and the video is a light MP4 (10 MB or less): it goes up as it is, no slow shrinking (that sat at 0% for minutes)
     /* making it smaller: no progress for 45 seconds, or a tap on Skip = upload the original instead (in pieces) */
     var t0 = Date.now(), last = -1, moved = t0, wasmAt = 0, bail, gaveUp = new Promise(function (ok) { bail = ok; });
     var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; var skipped = false; sk.onclick = function () { skipped = true; bail(); }; if (keeps(file)) note.appendChild(sk);   // any size: the original goes up as it is when Skip is tapped
@@ -316,12 +317,13 @@ window.fxPick = function (src, done) {
     delete f.dataset.go; delete f.dataset.hqDone; delete f.dataset.dupOk; f.dataset.noOrig = it.url ? '1' : ''; btn.disabled = true;
     if (cin) cin.value = ''; send.cover = null;
     if (window.fxRepSet) window.fxRepSet(it.id, it.n); else f.elements.replace.value = it.id;
-    var got = it.file ? Promise.resolve(it.file) : (say('Loading the original from Cloudflare…'), fetch(it.url).then(function (r) { return r.ok ? r.blob() : Promise.reject(); })
+    var got = it.file ? Promise.resolve(it.file) : (say('Loading the original from Cloudflare…'), fetch(it.url + (it.url.indexOf('?') < 0 ? '?' : '&') + 'fx=' + Date.now(), {cache: 'no-store'}).then(function (r) { return r.ok ? r.blob() : Promise.reject('HTTP ' + r.status); }, function (e) { return Promise.reject('blocked: ' + (e && e.message || e)); })   // a fresh copy each time: a copy kept by Cloudflare or the browser for another site has no permission for this page
       .then(function (b) { return new File([b], it.url.split('/').pop(), {type: b.type || 'video/mp4'}); }));
     got.then(function (file) {
       var dt = new DataTransfer(); dt.items.add(file); inp.files = dt.files; inp.dispatchEvent(new Event('change'));
       setTimeout(function () { btn.disabled = false; f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); }, 1500);   // the shape is read from the video first
-    }, function () { qMiss.push('number ' + it.n + ' (its original did not load)'); qOk--; window.fxRepTick(it.id, true); q.bad = 1; window.fxRepNext() || location.replace(location.href); });
+    }, function (why) { try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['original did not load: ' + why + ' | ' + it.url]})], {type: 'application/json'})); } catch (x) {}
+      qMiss.push('number ' + it.n + ' (its original did not load)'); qOk--; window.fxRepTick(it.id, true); q.bad = 1; window.fxRepNext() || location.replace(location.href); });
     return true;
   };
   var go = function (items) {
