@@ -1549,8 +1549,8 @@ if (isset($_GET['videos'])) {
         if ($nv['cover'] !== '') fx_media_delete($old['cover'] ?? '');
         if (!empty($nv['orig'])) fx_media_delete($old['orig'] ?? ''); elseif (!empty($old['orig'])) $nv['orig'] = $old['orig'];   // made again from the original on Cloudflare: that original stays
         $was = (string)($old['fp'] ?? ''); $both = !empty($old['sent_in']) || ($old['from'] ?? '') === 'fomaxo.in';   // a video fomaxo.in has too: replaced there as well
-        unset($old['prev'], $old['hq'], $old['fp'], $old['wide'], $old['orig']);
-        $vids[$ri] = ['file' => $nv['file']] + ($nv['cover'] !== '' ? ['cover' => $nv['cover']] : []) + array_intersect_key($nv, ['hq' => 1, 'orig' => 1, 'fp' => 1, 'wide' => 1]) + $old;
+        unset($old['prev'], $old['hq'], $old['fp'], $old['orig']);   // the shape (9:16 / 16:9) stays as picked: Make All Videos Again flipped it (AJAY 28/10/2026)
+        $vids[$ri] = ['file' => $nv['file']] + ($nv['cover'] !== '' ? ['cover' => $nv['cover']] : []) + array_intersect_key($nv, ['hq' => 1, 'orig' => 1, 'fp' => 1]) + $old;
         $inOk = $both && $was !== '' && fx_vid_to_in("$dir/$name", $vids[$ri], $was);
         flash('Video number ' . ($ri + 1) . ' replaced' . ($syncNow ? ' with the sharp one. It goes to Cloudflare in a minute' : '') . '. Same product, words and place in the list.' . ($inOk ? ' Replaced on fomaxo.in too.' : ($both ? ' On fomaxo.in it stays as before: replace it there too.' : '')), true);
       } else {
