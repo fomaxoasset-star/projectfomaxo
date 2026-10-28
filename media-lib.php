@@ -53,6 +53,11 @@ function fx_video_inbox($pdo) {
       $hq = basename((string)($m['hq'] ?? '')); $hq = preg_match('~^[a-z0-9-]+-h\.mp4$~', $hq) && is_file("$in/$hq") ? $hq : '';
       $at = null; $was = (string)($m['replace'] ?? '');   // Replace with sharper video on fomaxo.com: the video with that fingerprint here gets the new files
       if ($was !== '') foreach ($vids as $k => $x) if (($x['fp'] ?? '') === $was) { $at = $k; break; }
+      if (!empty($m['match']) && $was === '') {   // "Send sharp videos to fomaxo.com" on fomaxo.in: replaces the same video here (same original file, or the only video of that product), never adds one
+        $was = '-'; $fp = (string)($m['fp'] ?? ''); $prod = (string)($m['product'] ?? '');
+        if ($fp !== '') foreach ($vids as $k => $x) if (($x['fp'] ?? '') === $fp) { $at = $k; break; }
+        if ($at === null && $prod !== '') { $same = array_keys(array_filter($vids, fn($x) => empty($x['embed']) && (string)($x['product'] ?? '') === $prod && empty($x['also']))); if (count($same) === 1) $at = $same[0]; }
+      }
       if ($was !== '' && $at === null) { @unlink("$in/$f"); if ($hq !== '') @unlink("$in/$hq"); @unlink($j); continue; }   // not here: nothing to replace, and not added as a new video
       if (!@rename("$in/$f", fx_media('vid') . "/$f")) continue;
       @chmod(fx_media('vid') . "/$f", 0644); @unlink($j); $prod = (string)($m['product'] ?? ''); $words = substr(trim((string)($m['words'] ?? '')), 0, 60);
