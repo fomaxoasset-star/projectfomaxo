@@ -82,8 +82,10 @@ function r2_sync($pdo, float $secs = 8): array {
   $t = microtime(true); $n = 0; $err = ''; $gone = 0;
   try {
     $have = r2_have(); $want = r2_wanted($pdo);
+    $uses = in_uses();
     foreach (array_diff_key($have, $want) as $f => $sz) {   // deleted videos leave Cloudflare too, so the 10 GB bar stays true (only ones this site copied, under com/)
       if (microtime(true) - $t > $secs) break;
+      if (isset($uses[r2_key($f)])) continue;   // fomaxo.in still plays it: it stays until fomaxo.in lets go of it
       [$code] = r2_req($c, 'DELETE', r2_key($f)); if ($code !== 204 && $code !== 200 && $code !== 404) break;
       unset($have[$f]); r2_have_save($have); $gone++;
     }
@@ -99,11 +101,62 @@ function r2_sync($pdo, float $secs = 8): array {
   return [$n, $err];
 }
 /* copies to Cloudflare after the page has gone to the browser, so the admin never waits on (or times out over) the copying */
+/* keeps only the video files the list really uses (AJAY 28/10/2026: "dont waste space for old and bad and duplicate"): every video file on Hostinger
+   (fomaxo-media/vid and the old copies in public_html/assets/vid) and every video under com/ on Cloudflare that no video in the list uses
+   (its video, small preview, 1080p copy or original) is deleted. Only files over an hour old, so an upload or Make All in progress is never touched.
+   Runs after the videos page has answered, at most once an hour; what it removed goes to vid-report.txt */
+function fx_video_tidy($pdo, bool $now = false): array {
+  $st = fx_media() . '/tidy.json'; $last = json_decode((string)@file_get_contents($st), true);
+  if (!$now && is_array($last) && time() - (int)($last['at'] ?? 0) < 3600) return $last;
+  $keep = [];
+  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (is_array($v)) foreach (['file', 'prev', 'hq', 'orig'] as $k)
+    if (preg_match('~^vid/([a-z0-9-]+\.(?:mp4|mov|webm))$~', (string)($v[$k] ?? ''), $m)) $keep[$m[1]] = true;
+  if (!$keep) return is_array($last) ? $last : [];   // an empty or unreadable list: never wipe everything
+  try { if (r2_share_dedupe($pdo)) return fx_video_tidy($pdo, true); } catch (Throwable $e) {}   // the list changed: count again
+  $inUses = in_uses();
+  $keep['dollar-10db6808.mp4'] = $keep['oldmoney-bff8e026.webm'] = true;   // part of the code itself (GitHub), the update would bring them back
+  $old = time() - 3600; $hn = 0; $hb = 0; $cn = 0; $cb = 0;
+  foreach ([fx_media('vid'), __DIR__ . '/assets/vid'] as $d) foreach (glob("$d/*") ?: [] as $p) {
+    $b = basename($p); if (isset($keep[$b]) || !preg_match('~^[a-z0-9-]+\.(?:mp4|mov|webm|tmp)$~', $b)) continue;
+    if (is_link($p)) { @unlink($p); continue; }
+    if (!is_file($p) || filemtime($p) > $old) continue;
+    $sz = (int)filesize($p); if (@unlink($p)) { $hn++; $hb += $sz; }
+  }
+  $c = r2_conf();
+  if ($c) {   // Cloudflare: everything under com/ that is a video and not kept (fomaxo-check.txt and fomaxo.in's files are never touched)
+    $have = r2_have(); $tok = ''; $pages = 0;
+    do {
+      [$code, $out] = r2_req($c, 'GET', '', ($tok !== '' ? 'continuation-token=' . rawurlencode($tok) . '&' : '') . 'list-type=2&prefix=' . rawurlencode(R2_PREFIX));
+      if ($code !== 200) break;
+      preg_match_all('~<Contents>.*?<Key>([^<]+)</Key>.*?<LastModified>([^<]+)</LastModified>.*?<Size>(\d+)</Size>.*?</Contents>~s', (string)$out, $m, PREG_SET_ORDER);
+      foreach ($m as [, $key, $lm, $sz]) {
+        $key = html_entity_decode($key, ENT_XML1); $b = substr($key, strlen(R2_PREFIX));
+        if (!str_starts_with($key, R2_PREFIX) || isset($keep[$b]) || isset($inUses[$key]) || !preg_match('~^[a-z0-9-]+\.(?:mp4|mov|webm)$~', $b) || strtotime($lm) > $old) continue;
+        [$dc] = r2_req($c, 'DELETE', $key); if ($dc === 204 || $dc === 200 || $dc === 404) { $cn++; $cb += (int)$sz; unset($have["vid/$b"]); }
+      }
+      $tok = preg_match('~<IsTruncated>true</IsTruncated>~', (string)$out) && preg_match('~<NextContinuationToken>([^<]+)~', (string)$out, $n) ? html_entity_decode($n[1], ENT_XML1) : '';
+    } while ($tok !== '' && ++$pages < 20);
+    if ($cn) { r2_have_save($have); @unlink(fx_media() . '/r2-total.json'); }   // the 10 GB bar counts again
+  }
+  try { r2_share_save($pdo); } catch (Throwable $e) {}
+  $r = ['at' => time(), 'host_n' => $hn, 'host_mb' => round($hb / 1048576), 'cf_n' => $cn, 'cf_mb' => round($cb / 1048576)];
+  @file_put_contents($st, json_encode($r), LOCK_EX);
+  if ($hn || $cn) @file_put_contents(__DIR__ . '/vid-report.txt', gmdate('Y-m-d H:i:s') . " | tidy: Hostinger $hn files {$r['host_mb']} MB, Cloudflare $cn files {$r['cf_mb']} MB removed\n", FILE_APPEND | LOCK_EX);
+  return $r;
+}
+function fx_video_tidy_later($pdo): void {
+  register_shutdown_function(function () use ($pdo) {
+    ignore_user_abort(true); @set_time_limit(600);
+    if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    try { fx_video_tidy($pdo); } catch (Throwable $e) { @file_put_contents(__DIR__ . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | tidy: ' . $e->getMessage() . "\n", FILE_APPEND | LOCK_EX); }
+  });
+}
 function r2_sync_later($pdo, float $secs = 120): void {
   static $on = false; if ($on || !r2_conf()) return; $on = true;
   register_shutdown_function(function () use ($pdo, $secs) {
     ignore_user_abort(true); @set_time_limit(1500);
     if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    try { r2_share_save($pdo); } catch (Throwable $e) {}
     try { r2_sync($pdo, $secs); } catch (Throwable $e) { @file_put_contents(__DIR__ . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | r2 copy: ' . $e->getMessage() . "\n", FILE_APPEND | LOCK_EX); }
   });
 }
@@ -156,8 +209,33 @@ function r2_check(array $c): string {
   return $note;
 }
 /* the full video for the player: the sharp 1080p copy when Cloudflare plays it (vf = the small Hostinger copy the page falls back to), else the usual one */
+/* one 1080p file on Cloudflare for both sites (AJAY 28/10/2026: "use same video for both sites"): the site that uploaded a video keeps its file
+   (fomaxo.in at the top of the bucket, fomaxo.com under com/), the other site plays that same file (row field hqk = fomaxo.in's key here).
+   Each site lists the other's files it plays (r2-uses.json) and its own 1080p files by fingerprint (r2-shared.json); neither deletes a file the other plays */
+function in_key(string $k): string { return preg_match('~^[a-z0-9-]{1,60}-h\.mp4$~', $k) ? $k : ''; }   // a fomaxo.in 1080p file (top of the bucket)
+function in_priv(): string { return getenv('FOMAXO_IN_PRIVATE') ?: dirname(__DIR__, 2) . '/fomaxo.in/fomaxo-private'; }
+function in_uses(): array { $j = json_decode((string)@file_get_contents(in_priv() . '/r2-uses.json'), true); return is_array($j) ? array_fill_keys(array_filter($j, 'is_string'), 1) : []; }   // our com/ keys fomaxo.in plays
+function r2_share_save($pdo): void {   // what fomaxo.in reads: its files we play, and our 1080p files by fingerprint
+  $uses = []; $sh = []; $have = r2_have();
+  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) { if (!is_array($v)) continue;
+    if (in_key((string)($v['hqk'] ?? '')) !== '') $uses[] = $v['hqk'];
+    if (preg_match('/^[a-f0-9]{32}$/', (string)($v['fp'] ?? '')) && ($v['hq'] ?? '') !== '' && isset($have[$v['hq']])) $sh[$v['fp']] = r2_key($v['hq']); }
+  @file_put_contents(fx_media() . '/r2-uses.json', json_encode(array_values(array_unique($uses))), LOCK_EX); @file_put_contents(fx_media() . '/r2-shared.json', json_encode($sh), LOCK_EX);
+}
+/* videos that came from fomaxo.in and still have their own 1080p copy here: they play fomaxo.in's file instead, and ours goes (the next copy round deletes it) */
+function r2_share_dedupe($pdo): int {
+  $sh = json_decode((string)@file_get_contents(in_priv() . '/r2-shared.json'), true); if (!is_array($sh) || !$sh) return 0;
+  $vids = json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: []; $n = 0;
+  foreach ($vids as $k => $v) {
+    $ik = in_key((string)($sh[(string)($v['fp'] ?? '')] ?? '')); if (!is_array($v) || $ik === '' || ($v['from'] ?? '') !== 'fomaxo.in' || ($v['hqk'] ?? '') === $ik) continue;
+    $vids[$k]['hqk'] = $ik; if (($v['hq'] ?? '') !== '') { fx_media_delete($v['hq']); unset($vids[$k]['hq']); } $n++;
+  }
+  if ($n) { fomaxo_setting($pdo, 'videos', json_encode(array_values($vids))); fomaxo_products_drop(); }
+  return $n;
+}
 function r2_full($pdo, array $v): array {
   $h = (string)($v['hq'] ?? ''); $u = $h !== '' ? r2_cdn($pdo, $h) : '';
+  if (!str_starts_with($u, 'https://') && in_key((string)($v['hqk'] ?? '')) !== '' && r2_on($pdo)) $u = rtrim((string)r2_conf()['url'], '/') . '/' . $v['hqk'];   // fomaxo.in's file, the same video
   return str_starts_with($u, 'https://') ? ['v' => $u, 'vf' => (string)$v['file']] : ['v' => r2_cdn($pdo, (string)$v['file'])];
 }
 /* the address the website plays 'vid/x.mp4' from: Cloudflare when on and copied, else the file as it is (index.html adds assets/) */
