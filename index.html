@@ -4215,9 +4215,10 @@ function bindProduct(p){
   $('#buyBtn').onclick = () => { if (ready()) buyNow(isSet ? {id:p.id, opt:size, qty:getQ(), picks:[...picks]} : {id:p.id, opt:size, qty:getQ()}); };
   const mb = $('#mbuy');
   function renderMbuy(){ mb.innerHTML = `<div class="n"><span class="mb-top"><b>${esc(p.name)}</b>${rateHTML(p, true)}</span>${smellWords(p).length ? `<em class="mb-sm">${smellWords(p).map(esc).join(' · ')}</em>` : ''}<small>${optLabel(p, size)} · ${moneyHTML(p.prices[size]) ? wasHTML(p, size) + moneyHTML(p.prices[size]) : 'Price on request'}</small></div><button class="btn sm" id="mbAdd">Add to bag</button><div class="mb-why">${mbWhy()}</div>`; 
-    // only the gold button adds to bag; a tap on the rest of the bar (name, price) does nothing, so a stray tap never adds by mistake (AJAY 2026-10-27).
-    // A tap that only stops a moving page (within 0.35 s of scrolling) is ignored too.
-    $('#mbAdd').onclick = () => { if (Date.now() - mbMoved < 350) return; if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); }; }
+    // only the gold button adds to bag, so a stray tap never adds by mistake (AJAY 2026-10-27). A tap that only stops a moving page (within 0.35 s of scrolling) is ignored too.
+    // A tap on the rest of the bar (name, price) takes the shopper up to the sizes and the big Add to bag (Improve tip: people tapped it and nothing happened, AJAY 2026-10-28)
+    $('#mbAdd').onclick = () => { if (Date.now() - mbMoved < 350) return; if (ready()) addToCart(p.id, size, getQ(), false, isSet ? [...picks] : undefined); };
+    mb.dataset.tap = '1'; mb.onclick = e => { if (e.target.closest('a,button')) return; const b = $('#addBtn'); if (b) b.scrollIntoView({block: 'center', behavior: 'smooth'}); }; }
   renderMbuy();
   pdpStock = () => { if (!$('#pstk')) return; const out = stockLeft(p.id, size) === 0; $('#pstk').innerHTML = stockHTML(p.id, size, true);
     ['#addBtn', '#buyBtn', '#mbAdd'].forEach(k => { const b = $(k); if (b) b.disabled = out; });
