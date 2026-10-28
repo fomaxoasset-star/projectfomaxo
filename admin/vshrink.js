@@ -316,12 +316,13 @@ window.fxPick = function (src, done) {
     delete f.dataset.go; delete f.dataset.hqDone; delete f.dataset.dupOk; f.dataset.noOrig = it.url ? '1' : ''; btn.disabled = true;
     if (cin) cin.value = ''; send.cover = null;
     if (window.fxRepSet) window.fxRepSet(it.id, it.n); else f.elements.replace.value = it.id;
-    var got = it.file ? Promise.resolve(it.file) : (say('Loading the original from Cloudflare…'), fetch(it.url).then(function (r) { return r.ok ? r.blob() : Promise.reject(); })
+    var got = it.file ? Promise.resolve(it.file) : (say('Loading the original from Cloudflare…'), fetch(it.url + (it.url.indexOf('?') < 0 ? '?' : '&') + 'fx=' + Date.now(), {cache: 'no-store'}).then(function (r) { return r.ok ? r.blob() : Promise.reject('HTTP ' + r.status); }, function (e) { return Promise.reject('blocked: ' + (e && e.message || e)); })   // a fresh copy each time: a copy kept by Cloudflare or the browser for another site has no permission for this page
       .then(function (b) { return new File([b], it.url.split('/').pop(), {type: b.type || 'video/mp4'}); }));
     got.then(function (file) {
       var dt = new DataTransfer(); dt.items.add(file); inp.files = dt.files; inp.dispatchEvent(new Event('change'));
       setTimeout(function () { btn.disabled = false; f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); }, 1500);   // the shape is read from the video first
-    }, function () { qMiss.push('number ' + it.n + ' (its original did not load)'); qOk--; window.fxRepTick(it.id, true); q.bad = 1; window.fxRepNext() || location.replace(location.href); });
+    }, function (why) { try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['original did not load: ' + why + ' | ' + it.url]})], {type: 'application/json'})); } catch (x) {}
+      qMiss.push('number ' + it.n + ' (its original did not load)'); qOk--; window.fxRepTick(it.id, true); q.bad = 1; window.fxRepNext() || location.replace(location.href); });
     return true;
   };
   var go = function (items) {
