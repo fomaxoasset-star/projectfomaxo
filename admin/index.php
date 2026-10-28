@@ -289,10 +289,11 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 .v-paths i.dd,.vt i.dd{background:rgba(128,128,128,.2);color:var(--muted)}.v-paths i.rg,.vt i.rg{background:rgba(220,80,80,.18);color:var(--bad)}.vt i.more{background:none;color:var(--muted)}
 .ttab td b{font-weight:600;overflow-wrap:anywhere}.ttab .tpg{display:block;font-size:11px}.ltab2 td b{font-weight:600}.ltab2 .fb{margin:4px 0 0;height:5px;max-width:140px}.v-taps .ch{flex-wrap:wrap;gap:6px}.v-paths .ch .vxls{flex:none;margin-left:auto}.v-paths .ch h2 small{font-family:Manrope,sans-serif;font-size:12px;letter-spacing:0;text-transform:none;font-weight:400;margin-left:6px}
 .v-leave,.v-taps{container-type:inline-size}@container (max-width:360px){.ltab2 th:nth-child(5),.ltab2 td:nth-child(5){display:none}}
-@media (min-width:760px){.agrid.vj{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"vpaths vleave" "vpaths vtaps"}
-  .v-paths{grid-area:vpaths}.v-leave{grid-area:vleave}.v-taps{grid-area:vtaps}.agrid.vj>.card{display:flex}}
-@media (max-width:759px){.vjpick button{white-space:normal;line-height:1.15}.vjpick button:nth-child(n){border-bottom:0}}
-@media (min-width:760px) and (max-height:540px){.an .agrid.vj{grid-template-columns:minmax(0,1fr);grid-template-rows:520px 330px 330px;grid-template-areas:"vpaths" "vleave" "vtaps"}}
+@media (min-width:760px){.agrid.vj{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:repeat(3,minmax(0,1fr));grid-template-areas:"vpaths vleave" "vpaths vtaps" "vpaths vcart"}
+  .v-paths{grid-area:vpaths}.v-leave{grid-area:vleave}.v-taps{grid-area:vtaps}.v-cart{grid-area:vcart}.agrid.vj>.card{display:flex}}
+.v-cart .ch{gap:8px}.v-cart .vtot{flex:none;margin-left:auto;font-size:12.5px;font-weight:600;color:var(--gold)}.actab td b{font-weight:600}
+@media (max-width:759px){.vjpick button{white-space:normal;line-height:1.15}.vjpick button:nth-child(n){border-bottom:0}.vjpick button[data-p=vcart]{grid-column:1/-1;border-right:0;border-top:1px solid var(--line)}}
+@media (min-width:760px) and (max-height:540px){.an .agrid.vj{grid-template-columns:minmax(0,1fr);grid-template-rows:520px 330px 330px 300px;grid-template-areas:"vpaths" "vleave" "vtaps" "vcart"}}
 /* Improve: where visitors stop, and the tips to fix first with their numbers and steps (laptop: one screen, two columns; phone: one after the other) */
 .igrid{display:grid;gap:10px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr)}.imp{display:flex;flex-direction:column;height:100%}.imp .pagehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.imp .pagehead .seg{margin-left:auto}
 .i-fun .fun li.worst .fl>span:first-child{font-weight:600}.fs>summary{list-style:none;cursor:pointer;border-radius:6px;padding:2px 4px;margin:0 -4px}.fs>summary::-webkit-details-marker{display:none}.fs>summary:hover{background:var(--soft,rgba(184,146,74,.08))}.fchev{display:inline-block;width:7px;height:7px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg);margin:0 2px 2px 8px;transition:transform .15s}.fs[open] .fchev{transform:rotate(-135deg);margin-bottom:-2px}.fsi{margin:6px 0 8px;padding:8px 10px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:6px;font-size:13px;line-height:1.45}.fsi p{margin:0 0 6px}.fsi .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}.fsi .tst ol{margin:0;padding-left:18px}.list .fsi .tst ol>li{display:list-item;padding:1px 0;border:0}.i-fun .fun li.worst .fb i{background:var(--bad)}.ihow{flex:none;margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:13px}.ihow ol{margin:4px 0 0;padding-left:18px}.ihow li{margin:2px 0}
@@ -3311,7 +3312,16 @@ if (isset($_GET['analytics'])) {
       $paths .= '<li class="vv"><div class="vh"><span class="vd">' . h(date('d M, H:i', strtotime($v['start']))) . '</span><span class="muted">' . h($devIc[$v['device']] ?? 'Other') . ($v['country'] ? ' · ' . fomaxo_flag($v['country']) . ' ' . h($v['country']) : '') . ($v['source'] ? ' · ' . h($v['source']) : '') . ($v['load'] ? ' · opened in ' . h(number_format($v['load'] / 1000, 1)) . 's' : '') . '</span>'
               . '<span class="lpill ve ' . ($endCls[$v['end']] ?? '') . '">' . h(fx_visit_end($v['end'])) . '</span></div><ol class="vs">' . implode('', $steps) . '</ol></li>';
     }
-    $vjPanes = ['vpaths' => 'Visits step by step', 'vleave' => 'Where people leave', 'vtaps' => 'What people tap'];
+    /* 4. people who added to bag, by country (the country is noted on the first page of each visit) */
+    $acRows = []; $acUnk = 0;
+    foreach ($q("SELECT (SELECT g.country FROM fx_events g WHERE g.sid = c.sid AND g.country IS NOT NULL LIMIT 1) cc, COUNT(DISTINCT c.vid) n
+                 FROM fx_events c WHERE c.ev = 'cart' AND c.at BETWEEN ? AND ?$notTrash GROUP BY 1 ORDER BY n DESC, cc") as $row)
+      if ($row['cc']) $acRows[] = ['c' => $row['cc'], 'n' => (int)$row['n']]; else $acUnk += (int)$row['n'];
+    $acTot = array_sum(array_column($acRows, 'n')) + $acUnk; $acT = '';
+    $acRow = fn($name, $n) => '<tr><td><b>' . $name . '</b></td><td class="num"><b>' . number_format($n) . '</b></td><td class="num muted">' . $pctT($pct($n, $acTot)) . '</td></tr>';
+    foreach ($acRows as $row) $acT .= $acRow(fomaxo_flag($row['c']) . ' ' . h(fomaxo_country_name($row['c'])), $row['n']);
+    if ($acUnk) $acT .= $acRow('<span class="muted">Not known</span>', $acUnk);
+    $vjPanes = ['vpaths' => 'Visits step by step', 'vleave' => 'Where people leave', 'vtaps' => 'What people tap', 'vcart' => 'Added to bag by country'];
     $vjNote = $V['has_trail'] ? '' : '<p class="muted small gnote">Taps and scrolling are counted from today. Pages and times go back further.</p>';
     $vjGrid = '<nav class="apick vjpick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'vpaths' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($vjPanes), $vjPanes)) . '</nav>'
       . '<div class="dgrid agrid vj">'
@@ -3320,6 +3330,8 @@ if (isset($_GET['analytics'])) {
       . '<section class="card v-leave" data-p="vleave"><div class="ch"><h2>Where people leave</h2></div>'
       . ($lvT ? '<div class="list"><table class="mini ltab2"><thead><tr><th>Last page</th><th class="num">Saw it</th><th class="num">Left</th><th class="num">Left %</th><th class="num">Time</th><th class="num">Seen</th></tr></thead><tbody>' . $lvT . '</tbody></table></div><p class="muted small gnote">Left: visits that ended on this page. Seen: how far down the page people got, on average.</p>' : '<p class="muted empty">No visits in these dates.</p>') . $vjNote . '</section>'
       . fx_taps_card($V, $names, 'card v-taps', ' data-p="vtaps"')
+      . '<section class="card v-cart" data-p="vcart"><div class="ch"><h2>Added to bag by country</h2>' . ($acTot ? '<span class="vtot">' . number_format($acTot) . ' ' . ($acTot === 1 ? 'person' : 'people') . '</span>' : '') . '</div>'
+      . ($acT ? '<div class="list"><table class="mini ltab2 actab"><thead><tr><th>Country</th><th class="num">People</th><th class="num">Share</th></tr></thead><tbody>' . $acT . '</tbody></table></div><p class="muted small gnote">People who added a perfume to the bag in these dates, by the country they visited from.</p>' : '<p class="muted empty">Nobody added to the bag in these dates.</p>') . '</section>'
       . '</div>';
   } catch (Throwable $e) {
     $vjGrid = '<section class="card"><p class="muted empty">Visits could not open: ' . h($e->getMessage()) . ' (line ' . $e->getLine() . '). Send us a picture of this line.</p></section>';
