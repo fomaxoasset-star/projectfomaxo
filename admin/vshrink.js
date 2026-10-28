@@ -72,7 +72,7 @@ window.fxPick = function (src, done) {
   var rate = function (sec) { return Math.max(300000, Math.min(2500000, Math.floor(GOAL / Math.max(1, sec || 30)) - AB)); };   // video bits per second for that length
   var side = function (br) { return br < 350000 ? 720 : br < 700000 ? 960 : 1280; };   // longest side: fewer pixels when there are fewer bits, so it stays sharp instead of blocky
   /* fast: re-encode from the file itself, no playing; null = this browser can't, use the slow way */
-  var HQ = 11.5 * MB * 8, hqRate = function (sec) { return Math.max(1500000, Math.min(8000000, Math.floor(HQ / Math.max(1, sec || 30)) - AB)); };   // the sharp copy (Cloudflare only): about 11 MB, 1080p
+  var HQ = 11.5 * MB * 8, hqRate = function (sec) { return Math.max(1500000, Math.min(3500000, Math.floor(HQ / Math.max(1, sec || 30)) - AB)); };   // the sharp copy (Cloudflare only): 1080p, at most 3.5 Mbit/s (AJAY 28/10/2026: lighter so it starts at once and doesn't freeze on slower 4G; short videos were 8 Mbit/s, up to 22 MB), about 11 MB at most
   function fast(file, scale, hq) {
     if (!window.VideoEncoder) { why = 'no VideoEncoder'; return Promise.resolve(null); }
     var M = null, conv = null, src = null;
@@ -361,13 +361,13 @@ window.fxPick = function (src, done) {
     try { var m = sessionStorage.getItem(MSG); if (m) { sessionStorage.removeItem(MSG); var p = document.createElement('p'); p.className = 'msg ' + (/Not done|^0 of/.test(m) ? 'bad' : 'ok'); p.textContent = m; var tl = document.querySelector('.vtools'); if (tl) tl.parentNode.insertBefore(p, tl); toast(m, !/Not done|^0 of/.test(m)); } } catch (e) {} };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', shown); else shown();
 })();
-/* Small previews for the home page row: each video without one gets a 640px, silent copy of its first 5 seconds (about 0.25 MB, AJAY 23/10/2026: half the size so the row starts sooner),
+/* Small previews for the home page row: each video without one gets a 640px, silent copy of its first 5 seconds (about 0.2 MB: AJAY 23/10/2026 half the size so the row starts sooner, 28/10/2026 lighter again),
    made here in the browser and kept next to it (vid/name-p.mp4). The row plays that; the full video loads only when the player opens.
    Runs by itself on this page for every video that has none yet (new uploads and older videos), one at a time. */
 setTimeout(function () {   // after the page has loaded (the list comes after this script)
   var rows = [].slice.call(document.querySelectorAll('.vrow[data-pvsrc]')), f = document.querySelector('form[data-vshrink]');   // every uploaded video: data-mkprev = no preview yet (made by itself), data-pv = has one
   if (!rows.length || !f || !window.fetch || !window.Promise) return;
-  var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 5, BR = 450000, pill = null, made = 0, conv = null, how = '', noFast = false, noWasm = false, Fok = false, fails = 0, gone = false, last = '';
+  var csrf = (f.querySelector('[name=csrf]') || {}).value, btn = f.querySelector('.btn'), SEC = 5, BR = 320000, pill = null, made = 0, conv = null, how = '', noFast = false, noWasm = false, Fok = false, fails = 0, gone = false, last = '';
   addEventListener('pagehide', function () { gone = true; });   // leaving or reloading the page: stop, don't log the cut-off ones as failed
   var KEY = 'fxPrevFail', bad = {}; try { bad = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {}
   var mark = function (nm) { bad[nm] = (bad[nm] || 0) + 1; try { localStorage.setItem(KEY, JSON.stringify(bad)); } catch (e) {} };
