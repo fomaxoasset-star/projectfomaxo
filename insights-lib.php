@@ -19,7 +19,7 @@ function fx_tap_name($l) {
   return $map[$l] ?? (preg_match('/^(#[\w-]+|[a-z]+\.[\w-]+)$/', $l) ? 'Part of the page (' . $l . ')' : $l);
 }
 /* taps on things that were fixed later: their Not buttons and Angry taps from before the fix leave What people tap (Dubai time the fix went live) */
-const FX_TAP_FIXED = ['#mbuy' => '2026-10-26 20:06:00', 'div.n' => '2026-10-26 20:06:00',   // bottom Add to bag bar: whole bar adds to bag
+const FX_TAP_FIXED = ['#mbuy' => '2026-10-28 15:00:00', 'div.n' => '2026-10-28 15:00:00',   // bottom Add to bag bar: name/price tap goes to the sizes (set to the time it went live)
   'Photo: FOMAXO %' => '2026-10-26 23:55:00', 'Photo' => '2026-10-26 23:55:00'];   // product page big photo: one tap zooms in on phones (a label ending in % = every label that starts so)
 function fx_tap_fixed_sql() {
   return implode('', array_map(fn($l, $at) => " AND NOT ((dead = 1 OR rage = 1) AND label " . (str_ends_with($l, '%') ? 'LIKE' : '=') . " '" . addslashes($l) . "' AND at < '$at')", array_keys(FX_TAP_FIXED), FX_TAP_FIXED));

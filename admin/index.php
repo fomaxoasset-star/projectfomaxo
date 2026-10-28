@@ -3614,7 +3614,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
       'An error can stop a button from working, so people cannot add to bag or pay.', ['Nothing for you to do: we read the error and fix it.'], 'fix the error');
   /* fixes already built and live (reply word => day it went live): the tip leaves the list (nothing shown).
      It comes back only when a week has passed and the chosen dates start after the fix, so it is judged on new visits only */
-  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-10-26', 'tap Photo' => '2026-10-26'];
+  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-10-26', 'tap Photo' => '2026-10-26', 'tap #mbuy' => '2026-10-28', 'tap div.n' => '2026-10-28'];
   /* tips that need the same fix join into one: the one with the most people leads, the others add their numbers */
   usort($tips, fn($a, $b) => $b['people'] <=> $a['people']);
   $one = [];
@@ -3667,11 +3667,11 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
   }
   $fixName = ['fix old money' => 'Old Money page: people left without a next step', 'fix product page' => 'Product page: people looked but did not add to bag', 'fix home' => 'Home page: no clear next step',
     'fix landing page' => 'First page from ads', 'check ads' => 'Ads brought visitors who did not add to bag', 'fix bag' => 'Bag: people did not open checkout', 'fix checkout' => 'Checkout: people did not type their details',
-    'make it faster' => 'Site opened slowly on phones', 'fix phone' => 'Phone: people did not add to bag', 'tap Photo' => 'Photo: tapping did nothing (now one tap zooms it)'];
-  $fixL = ''; foreach ($doneH as $w => $title) $fixL .= '<li>' . ($fixName[$w] ?? ($title ?: h(ucfirst($w)))) . ' <span class="muted">· fixed ' . date('d/m/Y', strtotime($done[$w])) . ', checked again ' . date('d/m/Y', strtotime($done[$w] . ' +7 days')) . '</span></li>';
+    'make it faster' => 'Site opened slowly on phones', 'fix phone' => 'Phone: people did not add to bag', 'tap Photo' => 'Photo: tapping did nothing (now one tap zooms it)', 'tap #mbuy' => 'Bottom Add to bag bar: tapping the name or price did nothing (now it goes to the sizes)', 'tap div.n' => 'Bottom Add to bag bar: tapping the name or price did nothing (now it goes to the sizes)'];
+  $fixL = ''; $fixSeen = []; foreach ($doneH as $w => $title) if (!isset($fixSeen[$fixName[$w] ?? $w]) && ($fixSeen[$fixName[$w] ?? $w] = 1)) $fixL .= '<li>' . ($fixName[$w] ?? ($title ?: h(ucfirst($w)))) . ' <span class="muted">· fixed ' . date('d/m/Y', strtotime($done[$w])) . ', checked again ' . date('d/m/Y', strtotime($done[$w] . ' +7 days')) . '</span></li>';
   foreach ($closed as $ck => $c) $fixL .= '<li>' . h($c['t'] !== '' ? $c['t'] : ucfirst($ck)) . ' <span class="muted">· closed by you ' . date('d/m/Y', strtotime($c['d'])) . '</span>'
     . '<form method="post" class="iundo">' . csrf_field() . '<input type="hidden" name="iclose" value="' . h($ck) . '"><input type="hidden" name="undo" value="1"><button type="submit">Undo</button></form></li>';
-  if ($fixL) $fun .= '<li class="fixed"><details class="fs" name="fs"><summary><div class="fl"><span>Fixed <span class="muted">' . (count($doneH) + count($closed)) . '</span></span><span><i class="fchev" aria-hidden="true"></i></span></div></summary>'
+  if ($fixL) $fun .= '<li class="fixed"><details class="fs" name="fs"><summary><div class="fl"><span>Fixed <span class="muted">' . (count($fixSeen) + count($closed)) . '</span></span><span><i class="fchev" aria-hidden="true"></i></span></div></summary>'
           . '<div class="fsi"><p class="muted">Problems we already fixed. Each one comes back to What to fix first only if its numbers are still bad a week after the fix.</p><ul class="fxl">' . $fixL . '</ul></div></details></li>';
   $tipsH = '';
   foreach ($tips as $i => $t)
