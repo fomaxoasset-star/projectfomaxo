@@ -204,7 +204,7 @@ window.fxPick = function (src, done) {
     var src = file || inp.files[0];
     btn.disabled = true; btn.textContent = 'Uploading…'; f.dataset.go = 1;
     var hq = send.hq; send.hq = null;
-    var orig = f.dataset.hq && file && !f.dataset.noOrig && keeps(inp.files[0]) && inp.files[0].size <= 500 * MB ? inp.files[0] : null;   // made smaller: the original from the phone goes to Cloudflare too (Make All Videos Again starts from it)
+    var orig = f.dataset.hq && file && !f.dataset.noOrig && keeps(inp.files[0]) && inp.files[0].size <= 4096 * MB ? inp.files[0] : null;   // made smaller: the original from the phone goes to Cloudflare too (Make All Videos Again starts from it)
     if (src) return parts(src).then(function (p) {
       var fd = new FormData(f); fd.delete('video'); fd.set('parts', p.up); fd.set('parts_n', p.n); fd.set('parts_size', src.size); fd.set('parts_type', src.type); fd.set('how', how + ', ' + p.n + ' pieces'); if (send.cover) fd.set('cover', send.cover, 'cover.jpg');
       var more = Promise.resolve(), hqOk = !hq;
@@ -309,18 +309,21 @@ window.fxPick = function (src, done) {
     if (!lead) return false;
     if (qi) { qOk++; if (!q.bad) window.fxRepTick(q.curId); q.bad = 0; }
     var it = q.shift();
-    if (!it) { lead = ''; try { sessionStorage.setItem(MSG, qOk + ' of ' + qn + ' videos ' + (f.dataset.noOrig ? 'made again from their originals' : 'replaced with sharper ones') + '.' + (qMiss.length ? ' Not done: ' + qMiss.join(', ') + '.' : '') + (qNo.length ? ' Not matched (replace these with the button on their row): ' + qNo.join(', ') + '.' : '')); } catch (e) {} return false; }
+    if (!it) { lead = ''; try { sessionStorage.setItem(MSG, qOk + ' of ' + qn + ' videos ' + (f.dataset.noOrig ? 'made again' : 'replaced with sharper ones') + '.' + (qMiss.length ? ' Not done: ' + qMiss.join(', ') + '.' : '') + (qNo.length ? ' Not matched (replace these with the button on their row): ' + qNo.join(', ') + '.' : '')); } catch (e) {} return false; }
     qi++; q.cur = it.n; q.curId = it.id; lead = 'Video ' + qi + ' of ' + qn + ' (number ' + it.n + '): ';
-    delete f.dataset.go; delete f.dataset.hqDone; delete f.dataset.dupOk; f.dataset.noOrig = it.url ? '1' : ''; btn.disabled = true;
+    delete f.dataset.go; delete f.dataset.hqDone; delete f.dataset.dupOk; f.dataset.noOrig = it.urls ? '1' : ''; btn.disabled = true;
     if (cin) cin.value = ''; send.cover = null;
     if (window.fxRepSet) window.fxRepSet(it.id, it.n); else f.elements.replace.value = it.id;
-    var got = it.file ? Promise.resolve(it.file) : (say('Loading the original from Cloudflare…'), fetch(it.url + (it.url.indexOf('?') < 0 ? '?' : '&') + 'fx=' + Date.now(), {cache: 'no-store'}).then(function (r) { return r.ok ? r.blob() : Promise.reject('HTTP ' + r.status); }, function (e) { return Promise.reject('blocked: ' + (e && e.message || e)); })   // a fresh copy each time: a copy kept by Cloudflare or the browser for another site has no permission for this page
-      .then(function (b) { return new File([b], it.url.split('/').pop(), {type: b.type || 'video/mp4'}); }));
+    /* the original first; if it won't load, the 1080p copy on Cloudflare, then the copy on this site. A fresh copy each time: one kept by Cloudflare or the browser for another site has no permission for this page */
+    var load = function (u) { return fetch(u + (u.indexOf('?') < 0 ? '?' : '&') + 'fx=' + Date.now(), {cache: 'no-store'}).then(function (r) { return r.ok ? r.blob() : Promise.reject('HTTP ' + r.status); }, function (e) { return Promise.reject('blocked: ' + (e && e.message || e)); })
+      .then(function (b) { return new File([b], u.split('/').pop(), {type: b.type || 'video/mp4'}); }); };
+    var k = 0, tryNext = function () { var u = it.urls[k++]; return load(u).catch(function (e) { try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['copy did not load: ' + e + ' | ' + u]})], {type: 'application/json'})); } catch (x) {} return k < it.urls.length ? tryNext() : Promise.reject(e); }); };
+    var got = it.file ? Promise.resolve(it.file) : (say('Loading the video…'), tryNext());
     got.then(function (file) {
       var dt = new DataTransfer(); dt.items.add(file); inp.files = dt.files; inp.dispatchEvent(new Event('change'));
       setTimeout(function () { btn.disabled = false; f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); }, 1500);   // the shape is read from the video first
-    }, function (why) { try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['original did not load: ' + why + ' | ' + it.url]})], {type: 'application/json'})); } catch (x) {}
-      qMiss.push('number ' + it.n + ' (its original did not load)'); qOk--; window.fxRepTick(it.id, true); q.bad = 1; window.fxRepNext() || location.replace(location.href); });
+    }, function (why) { try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['no copy loaded: ' + why + ' | ' + it.urls.join(' ')]})], {type: 'application/json'})); } catch (x) {}
+      qMiss.push('number ' + it.n + ' (the video did not load)'); qOk--; window.fxRepTick(it.id, true); q.bad = 1; window.fxRepNext() || location.replace(location.href); });
     return true;
   };
   var go = function (items) {
@@ -332,8 +335,9 @@ window.fxPick = function (src, done) {
   var bind = function () {   // the list comes after this script
   var mk = document.querySelector('.vmkall');
   if (mk) mk.onclick = function () {
-    var items = rowsAll().map(function (r, i) { return r.dataset.orig ? {id: r.dataset.vid, n: i + 1, url: r.dataset.orig} : null; }).filter(Boolean);
-    if (!items.length || !confirm('Make all ' + items.length + ' videos again from their originals on Cloudflare? It runs one by one and takes a while; keep this page open.')) return;
+    /* every uploaded video (AJAY 28/10/2026: "only 19 videos when there is 49"): from its original, else its 1080p copy on Cloudflare, else the copy on this site */
+    var items = rowsAll().map(function (r, i) { var u = [r.dataset.orig, r.dataset.hqu, r.dataset.pvsrc].filter(Boolean); return u.length ? {id: r.dataset.vid, n: i + 1, urls: u} : null; }).filter(Boolean);
+    if (!items.length || !confirm('Make all ' + items.length + ' videos again (1080p for Cloudflare, small copy and preview)? About 1 to 2 minutes each. Keep this page open.')) return;
     mk.disabled = true; qMiss = []; qNo = []; go(items);
   };
   };
