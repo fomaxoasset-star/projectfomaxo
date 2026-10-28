@@ -240,6 +240,7 @@ window.fxPick = function (src, done) {
         f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); });
       return; }
     delete f.dataset.hqDone;
+    if (send.hq && plain && asIs) { send(null); return; }   // sharp copy made, and the video is a light MP4 (10 MB or less): it goes up as it is, no slow shrinking (that sat at 0% for minutes)
     /* making it smaller: no progress for 45 seconds, or a tap on Skip = upload the original instead (in pieces) */
     var t0 = Date.now(), last = -1, moved = t0, wasmAt = 0, bail, gaveUp = new Promise(function (ok) { bail = ok; });
     var sk = document.createElement('button'); sk.type = 'button'; sk.className = 'btn line sm vskip'; sk.textContent = 'Skip, upload original'; var skipped = false; sk.onclick = function () { skipped = true; bail(); }; if (keeps(file)) note.appendChild(sk);   // any size: the original goes up as it is when Skip is tapped
