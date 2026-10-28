@@ -1412,8 +1412,8 @@ if (isset($_GET['videos'])) {
   $back = ['products' => 1, 'videos' => 1];
   $vprods = fn($v) => array_values(array_unique(array_filter(array_merge([(string)($v['product'] ?? '')], (array)($v['also'] ?? [])), fn($id) => is_string($id) && isset($names[$id]))));   // the products a video sells, first one first
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $prod = (string)($_POST['product'] ?? ''); $none = $prod === '-'; if ($none) $prod = '';   // '-' = no product: the video gets a Shop now button
-    $words = $prod === '' && !$none ? mb_substr(trim(preg_replace('/\s+/u', ' ', (string)($_POST['product_text'] ?? ''))), 0, 60) : '';   // typed words, not a product from the list: shown under the video, with Shop now
+    $prod = (string)($_POST['product'] ?? ''); $none = $prod === '-' || $prod === ''; if ($none) $prod = '';   // '-' or nothing picked = no product: the video gets a Shop now button (no product needed, AJAY 28/10/2026)
+    $words = (string)($_POST['product'] ?? '') === '' ? mb_substr(trim(preg_replace('/\s+/u', ' ', (string)($_POST['product_text'] ?? ''))), 0, 60) : '';   // typed words, not a product from the list: shown under the video, with Shop now
     if ($words !== '') $none = true;
     if (!$_POST && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) { flash('The video is too big. Please use one under ' . round(fx_upload_max() / 1048576) . ' MB.'); go($back); }
     if (!csrf_ok()) { flash('Please try again.'); go($back); }
@@ -1505,7 +1505,7 @@ if (isset($_GET['videos'])) {
       elseif (!$none && !isset($names[$prod])) { flash('Please pick the product shown in the video.'); go($back); }
       if (preg_match('/^[a-f0-9]{16}$/', (string)($_POST['parts'] ?? ''))) {   // a video sent in pieces: join them, and check nothing is missing
         $pd = fx_media('parts/' . $_POST['parts']); $pn = (int)($_POST['parts_n'] ?? 0); $total = (int)($_POST['parts_size'] ?? 0);
-        $ok = $pn > 0 && $pn <= 1000 && $total > 0 && $total <= 500 * 1048576 && ($out = @fopen("$pd/all", 'wb'));
+        $ok = $pn > 0 && $pn <= 5000 && $total > 0 && $total <= 4096 * 1048576 && ($out = @fopen("$pd/all", 'wb'));
         for ($k = 0; $ok && $k < $pn; $k++) { $in = @fopen("$pd/$k", 'rb'); if (!$in) { $ok = false; break; } stream_copy_to_stream($in, $out); fclose($in); }
         if (!empty($out)) fclose($out);
         clearstatcache(); $ok = $ok && (int)@filesize("$pd/all") === $total;
@@ -1540,8 +1540,8 @@ if (isset($_GET['videos'])) {
         $to = preg_replace('~\.\w+$~', '', $name) . "-$sfx.$ext";
         if ($ext !== '' && @rename($tmp, "$dir/$to")) $vids[0][$k] = "vid/$to"; else @unlink($tmp);
       };
-      $join('hq', 'h', 100 * 1048576, ['video/mp4' => 'mp4']);
-      $join('orig', 'o', 500 * 1048576, ['video/mp4' => 'mp4', 'video/x-m4v' => 'mp4', 'video/quicktime' => 'mov', 'video/webm' => 'webm']);
+      $join('hq', 'h', 500 * 1048576, ['video/mp4' => 'mp4']);
+      $join('orig', 'o', 4096 * 1048576, ['video/mp4' => 'mp4', 'video/x-m4v' => 'mp4', 'video/quicktime' => 'mov', 'video/webm' => 'webm']);
       $syncNow = !empty($vids[0]['hq']) || !empty($vids[0]['orig']);
       if ($ri !== false) {   // keep the old video's product, words and place; only the files change (the old ones go, on Cloudflare at the next copy)
         $nv = array_shift($vids); $old = $vids[$ri];
@@ -1598,7 +1598,7 @@ if (isset($_GET['videos'])) {
   }
   /* Automatic Instagram reels are fetched by products.php after a shopper's page has its answer (at most once an hour), never while this page loads */
   /* Product in the video: one box to type a name in, or pick from its own dropdown (the free product picker, fx_free_pick_js) */
-  $vpick = fn(string $aria, string $id = '') => '<span class="fpick vpick"><input type="text"' . ($id !== '' ? ' id="' . $id . '"' : '') . ' name="product_text" maxlength="60" data-ffind data-free required placeholder="Type anything, or pick a product" aria-label="' . $aria . '" autocomplete="off">'
+  $vpick = fn(string $aria, string $id = '') => '<span class="fpick vpick"><input type="text"' . ($id !== '' ? ' id="' . $id . '"' : '') . ' name="product_text" maxlength="60" data-ffind data-free placeholder="Type anything, or pick a product" aria-label="' . $aria . '" autocomplete="off">'
     . '<input type="hidden" name="product"><ul class="fplist" hidden>'
     . implode('', array_map(fn($id, $n) => '<li data-v="' . h($id) . '">' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</li>', array_keys($names), $names))
     . '<li data-v="-">No product · Shop now button</li></ul></span>';
@@ -1626,7 +1626,7 @@ if (isset($_GET['videos'])) {
         . '<span class="fpick vpick vplus"><input type="text" name="product_text" maxlength="60" data-ffind data-free placeholder="+ Add or type anything" aria-label="Add a product to this video, or type any words to show on it" autocomplete="off"><input type="hidden" name="add"><ul class="fplist" hidden>'
         . implode('', array_map(fn($id, $n) => in_array($id, $ps, true) ? '' : '<li data-v="' . h($id) . '">' . h($n['name']) . ($n['hidden'] ? ' (hidden)' : '') . '</li>', array_keys($names), $names))
         . ($ps ? (empty($v['shop']) ? '<li data-v="-">+ Shop now button</li>' : '') : '') . '</ul></span></div>')
-      . '<div class="small muted">' . (!empty($v['embed']) ? '' : ($gone ? 'Product deleted: not shown' : ($hid ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : (($v['where'] ?? '') === 'product' ? 'On product pages only' : 'On the home page, number <span class="vnum">' . ($i + 1) . '</span>' . (($v['where'] ?? '') === 'home' ? ' only' : ' + product pages')))))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : (!empty($v['embed']) ? '<b class="vbad">Not on the website: it opened Instagram. Paste its link again or upload the video</b>' : (!empty($v['link']) ? ' · From a link' : '')))) . $fnote . ($fsz && empty($v['embed']) && ($v['orig'] ?? '') === '' && $r2c ? ' · <button type="button" class="lnk vrep" data-rep="' . h($v['id']) . '" data-n="' . ($i + 1) . '">' . (($v['hq'] ?? '') === '' ? 'Replace with sharper video' : 'Replace video') . '</button>' : '') . (!empty($v['from']) ? ' · From ' . h($v['from']) : (!empty($v['sent_in']) ? ' · On fomaxo.in ✓' : ($inBox && $fsz && empty($v['embed']) ? ' · ' . $post($v, 'to_in', '<button class="lnk">Send to fomaxo.in</button>', ' style="display:inline"') : ''))) . '</div>'
+      . '<div class="small muted">' . (!empty($v['embed']) ? '' : ($gone ? 'Product deleted: not shown' : ($hid ? 'Product hidden: not shown' : (empty($v['on']) ? 'Hidden' : (($v['where'] ?? '') === 'product' ? 'On product pages only' : 'On the home page, number <span class="vnum">' . ($i + 1) . '</span>' . (($v['where'] ?? '') === 'home' ? ' only' : ' + product pages')))))) . (!empty($v['auto']) ? ' · Instagram, automatic' : (!empty($v['ig']) ? ' · Instagram' : (!empty($v['embed']) ? '<b class="vbad">Not on the website: it opened Instagram. Paste its link again or upload the video</b>' : (!empty($v['link']) ? ' · From a link' : '')))) . $fnote . ($fsz && empty($v['embed']) ? ' · <button type="button" class="lnk vrep" data-rep="' . h($v['id']) . '" data-n="' . ($i + 1) . '">Replace video</button>' : '') . (!empty($v['from']) ? ' · From ' . h($v['from']) : (!empty($v['sent_in']) ? ' · On fomaxo.in ✓' : ($inBox && $fsz && empty($v['embed']) ? ' · ' . $post($v, 'to_in', '<button class="lnk">Send to fomaxo.in</button>', ' style="display:inline"') : ''))) . '</div>'
       . (empty($v['embed']) ? $post($v, 'shape', '<button class="vsr' . (empty($v['wide']) ? ' on' : '') . '" name="shape" value="916"' . (empty($v['wide']) ? ' disabled' : '') . '><i></i>9:16</button><button class="vsr' . (empty($v['wide']) ? '' : ' on') . '" name="shape" value="169"' . (empty($v['wide']) ? '' : ' disabled') . '><i></i>16:9</button>', ' class="vshr" aria-label="Video shape"') . $post($v, 'where', '<select name="where" onchange="this.form.submit()" aria-label="Where the video shows">' . implode('', array_map(fn($k, $t) => '<option value="' . $k . '"' . (($v['where'] ?? '') === $k ? ' selected' : '') . '>' . $t . '</option>', ['', 'home', 'product'], ['Home + product page', 'Home page only', 'Product page only'])) . '</select>', ' class="vwh"') . $post($v, 'person', '<input name="person" maxlength="30" value="' . h($v['person'] ?? '') . '" placeholder="Name of the person in the video" aria-label="Name of the person in the video (shows on the product page)" onchange="this.form.submit()">', ' class="vperson"') : '') . '</div>'
       . '<div class="vmv">' . $post($v, 'first', '<button class="btn line sm"' . ($i ? '' : ' disabled') . ' aria-label="Move to first" title="Move to first">⇈</button>') . $post($v, 'up', '<button class="btn line sm"' . ($i ? '' : ' disabled') . ' aria-label="Move up">↑</button>') . $post($v, 'down', '<button class="btn line sm"' . ($i < $n - 1 ? '' : ' disabled') . ' aria-label="Move down">↓</button>') . $post($v, 'last', '<button class="btn line sm"' . ($i < $n - 1 ? '' : ' disabled') . ' aria-label="Move to last" title="Move to last">⇊</button>')
       . $post($v, 'del', '<button class="btn line sm vdel" aria-label="Delete video">✕</button>', ' onsubmit="return confirm(\'Delete this video?\')"') . '</div></div>';
@@ -1686,12 +1686,12 @@ if (isset($_GET['videos'])) {
     . '<div class="vshape" role="radiogroup" aria-label="Video shape"><span>Shape</span><label><input type="radio" name="shape" value="916" checked><i></i>9:16 upright</label><label><input type="radio" name="shape" value="169"><i></i>16:9 wide</label></div>'
     . '<div class="igadd">' . $vpick('Product in the video', 'v_prod') . '<button class="btn">Upload</button></div>'
     . (fx_in_inbox() !== '' ? '<label class="vtoin" style="display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:13.5px;cursor:pointer"><input type="checkbox" name="to_in" value="1" checked style="width:18px;height:18px;accent-color:var(--gold,#c9a35b)">Also add to fomaxo.in</label>' : '')
-    . '<p class="muted small shelp">9:16 or 16:9, picked from the video by itself, 10 to 30 seconds. Big videos are made smaller by themselves' . (r2_conf() ? ', and a sharp 1080p copy goes to Cloudflare' : '') . '. Plays muted until tapped. No cover = product photo.</p>'
+    . '<p class="muted small shelp">Any video, any size. Product is optional. ' . (r2_conf() ? 'It makes three: 1080p for Cloudflare, a small copy for Hostinger and the preview' : 'It makes a small copy and the preview') . '. Plays muted until tapped. No cover = product photo.</p>'
     . '<div class="vsh muted small" hidden><span></span></div></form><script src="vshrink.js?v=' . (int)@filemtime(__DIR__ . '/vshrink.js') . '"></script></div>'   /* the file the browser keeps (50 KB), not sent again with every open of this page */
     . '<div class="card vlist' . ($allOn ? '' : ' alloff') . '" data-t="1"><div class="igh"><h2>Your videos <small class="muted">' . $n . '</small> <b class="vok" aria-live="polite"></b></h2>'
     . '<form method="post" class="spages vall">' . csrf_field() . '<input type="hidden" name="act" value="all"><div class="pgs"><label class="pg"><span>' . ($allOn ? 'On website' : 'Off: row hidden') . '</span><input type="checkbox" role="switch" name="on" value="1"' . ($allOn ? ' checked' : '') . ' aria-label="Show videos on the website" onchange="this.form.submit()"><i class="sw"></i></label></div></form></div>'
     . ($toInN > 1 ? '<form method="post" class="vtoall muted small" style="margin:0 0 6px">' . csrf_field() . '<input type="hidden" name="act" value="to_in_all"><button class="lnk" onclick="this.textContent=\'Sending…\'">Send all ' . $toInN . ' to fomaxo.in</button></form>' : '')
-    . ($r2c && $n ? '<div class="vtools"><button type="button" class="vtl vrepall">Replace all with sharper videos</button><details class="vmore"><summary class="vtl">More</summary><div>' . ($origN && r2_live(r2_conf()) ? '<button type="button" class="vtl vmkall" data-n="' . $origN . '">Make All Videos Again</button>' : '') . '</div></details>' . '<input type="file" class="vrepin" accept="video/*,.mp4,.mov,.m4v,.webm" multiple hidden></div>' : '')
+    . ($r2c && $n ? '<div class="vtools">' . ($origN && r2_live(r2_conf()) ? '<button type="button" class="vtl vmkall" data-n="' . $origN . '">Make All Videos Again</button>' : '') . '</div>' : '')
     . ($allOn ? '' : '<p class="msg bad">The video row is hidden on the website. You can still upload, edit, move and delete videos here.</p>')
     . ($tr ?: '<p class="muted">No videos yet. The home page shows the video row once you add one.</p>')
     . '<p class="muted small shelp">Ring dot filled = on the website. Drag the dots on the left to change the order. Tap a product to remove it. No product = Shop now button. Hidden products’ videos are left out.</p></div></div>' . fx_free_pick_js() . <<<'HTML'
@@ -1713,7 +1713,7 @@ if (isset($_GET['videos'])) {
     setTimeout(function () { var b = f.querySelector('.btn'); if (f.dataset.go || f.dataset.hqDone || (b && b.disabled)) return;   // Upload already tapped: it is on its way, never start it twice
       f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); }, 1500);   // the shape is read from the video first
   });
-  window.fxRepSet = set;   // Replace all / Make All Videos Again (vshrink.js) use the same box
+  window.fxRepSet = set;   // Make All Videos Again (vshrink.js) use the same box
 })();
 </script>
 <script>/* drag the dots (mouse or finger) to change the order of the videos; the new order saves at once, without reloading */
