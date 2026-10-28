@@ -233,10 +233,9 @@ function r2_share_dedupe($pdo): int {
   if ($n) { fomaxo_setting($pdo, 'videos', json_encode(array_values($vids))); fomaxo_products_drop(); }
   return $n;
 }
-function r2_full($pdo, array $v): array {
-  $h = (string)($v['hq'] ?? ''); $u = $h !== '' ? r2_cdn($pdo, $h) : '';
-  if (!str_starts_with($u, 'https://') && in_key((string)($v['hqk'] ?? '')) !== '' && r2_on($pdo)) $u = rtrim((string)r2_conf()['url'], '/') . '/' . $v['hqk'];   // fomaxo.in's file, the same video
-  return str_starts_with($u, 'https://') ? ['v' => $u, 'vf' => (string)$v['file']] : ['v' => r2_cdn($pdo, (string)$v['file'])];
+function r2_full($pdo, array $v): array {   // 28/10/2026: the normal size video (from Cloudflare when copied), not the 1080p copy: those were 2-3x bigger and started slower on phones (AJAY)
+  $u = r2_cdn($pdo, (string)$v['file']);
+  return str_starts_with($u, 'https://') ? ['v' => $u, 'vf' => (string)$v['file']] : ['v' => $u];
 }
 /* the address the website plays 'vid/x.mp4' from: Cloudflare when on and copied, else the file as it is (index.html adds assets/) */
 function r2_cdn($pdo, string $f): string {
