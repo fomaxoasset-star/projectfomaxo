@@ -1419,7 +1419,7 @@ if (isset($_GET['videos'])) {
   require_once dirname(__DIR__) . '/instagram-lib.php';
   require_once dirname(__DIR__) . '/r2-lib.php';
   try { fx_video_inbox($pdo); } catch (Throwable $e) {}   // videos sent from fomaxo.in show here straight away
-  fx_shape_fix_1028($pdo); $vids = fx_videos($pdo);
+  fx_shape_fix_1028($pdo); $vids = fx_videos($pdo); if ($_SERVER['REQUEST_METHOD'] === 'GET') fx_video_tidy_later($pdo);   // old, unused video files go, after this page has answered
   $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) { $d = json_decode($r['data'], true) ?: []; $names[$r['id']] = ['name' => $d['name'] ?? $r['id'], 'img' => $d['images'][0] ?? '', 'hidden' => (bool)$r['hidden']]; }
   $back = ['products' => 1, 'videos' => 1];
   $vprods = fn($v) => array_values(array_unique(array_filter(array_merge([(string)($v['product'] ?? '')], (array)($v['also'] ?? [])), fn($id) => is_string($id) && isset($names[$id]))));   // the products a video sells, first one first

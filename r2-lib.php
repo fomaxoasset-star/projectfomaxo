@@ -99,6 +99,52 @@ function r2_sync($pdo, float $secs = 8): array {
   return [$n, $err];
 }
 /* copies to Cloudflare after the page has gone to the browser, so the admin never waits on (or times out over) the copying */
+/* keeps only the video files the list really uses (AJAY 28/10/2026: "dont waste space for old and bad and duplicate"): every video file on Hostinger
+   (fomaxo-media/vid and the old copies in public_html/assets/vid) and every video under com/ on Cloudflare that no video in the list uses
+   (its video, small preview, 1080p copy or original) is deleted. Only files over an hour old, so an upload or Make All in progress is never touched.
+   Runs after the videos page has answered, at most once an hour; what it removed goes to vid-report.txt */
+function fx_video_tidy($pdo, bool $now = false): array {
+  $st = fx_media() . '/tidy.json'; $last = json_decode((string)@file_get_contents($st), true);
+  if (!$now && is_array($last) && time() - (int)($last['at'] ?? 0) < 3600) return $last;
+  $keep = [];
+  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (is_array($v)) foreach (['file', 'prev', 'hq', 'orig'] as $k)
+    if (preg_match('~^vid/([a-z0-9-]+\.(?:mp4|mov|webm))$~', (string)($v[$k] ?? ''), $m)) $keep[$m[1]] = true;
+  if (!$keep) return is_array($last) ? $last : [];   // an empty or unreadable list: never wipe everything
+  $old = time() - 3600; $hn = 0; $hb = 0; $cn = 0; $cb = 0;
+  foreach ([fx_media('vid'), __DIR__ . '/assets/vid'] as $d) foreach (glob("$d/*") ?: [] as $p) {
+    $b = basename($p); if (isset($keep[$b]) || !preg_match('~^[a-z0-9-]+\.(?:mp4|mov|webm|tmp)$~', $b)) continue;
+    if (is_link($p)) { @unlink($p); continue; }
+    if (!is_file($p) || filemtime($p) > $old) continue;
+    $sz = (int)filesize($p); if (@unlink($p)) { $hn++; $hb += $sz; }
+  }
+  $c = r2_conf();
+  if ($c) {   // Cloudflare: everything under com/ that is a video and not kept (fomaxo-check.txt and fomaxo.in's files are never touched)
+    $have = r2_have(); $tok = ''; $pages = 0;
+    do {
+      [$code, $out] = r2_req($c, 'GET', '', ($tok !== '' ? 'continuation-token=' . rawurlencode($tok) . '&' : '') . 'list-type=2&prefix=' . rawurlencode(R2_PREFIX));
+      if ($code !== 200) break;
+      preg_match_all('~<Contents>.*?<Key>([^<]+)</Key>.*?<LastModified>([^<]+)</LastModified>.*?<Size>(\d+)</Size>.*?</Contents>~s', (string)$out, $m, PREG_SET_ORDER);
+      foreach ($m as [, $key, $lm, $sz]) {
+        $key = html_entity_decode($key, ENT_XML1); $b = substr($key, strlen(R2_PREFIX));
+        if (!str_starts_with($key, R2_PREFIX) || isset($keep[$b]) || !preg_match('~^[a-z0-9-]+\.(?:mp4|mov|webm)$~', $b) || strtotime($lm) > $old) continue;
+        [$dc] = r2_req($c, 'DELETE', $key); if ($dc === 204 || $dc === 200 || $dc === 404) { $cn++; $cb += (int)$sz; unset($have["vid/$b"]); }
+      }
+      $tok = preg_match('~<IsTruncated>true</IsTruncated>~', (string)$out) && preg_match('~<NextContinuationToken>([^<]+)~', (string)$out, $n) ? html_entity_decode($n[1], ENT_XML1) : '';
+    } while ($tok !== '' && ++$pages < 20);
+    if ($cn) { r2_have_save($have); @unlink(fx_media() . '/r2-total.json'); }   // the 10 GB bar counts again
+  }
+  $r = ['at' => time(), 'host_n' => $hn, 'host_mb' => round($hb / 1048576), 'cf_n' => $cn, 'cf_mb' => round($cb / 1048576)];
+  @file_put_contents($st, json_encode($r), LOCK_EX);
+  if ($hn || $cn) @file_put_contents(__DIR__ . '/vid-report.txt', gmdate('Y-m-d H:i:s') . " | tidy: Hostinger $hn files {$r['host_mb']} MB, Cloudflare $cn files {$r['cf_mb']} MB removed\n", FILE_APPEND | LOCK_EX);
+  return $r;
+}
+function fx_video_tidy_later($pdo): void {
+  register_shutdown_function(function () use ($pdo) {
+    ignore_user_abort(true); @set_time_limit(600);
+    if (function_exists('litespeed_finish_request')) litespeed_finish_request(); elseif (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    try { fx_video_tidy($pdo); } catch (Throwable $e) { @file_put_contents(__DIR__ . '/vid-report.txt', gmdate('Y-m-d H:i:s') . ' | tidy: ' . $e->getMessage() . "\n", FILE_APPEND | LOCK_EX); }
+  });
+}
 function r2_sync_later($pdo, float $secs = 120): void {
   static $on = false; if ($on || !r2_conf()) return; $on = true;
   register_shutdown_function(function () use ($pdo, $secs) {
