@@ -7,7 +7,7 @@
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src 'self'; img-src 'self' blob: https://*.cdninstagram.com https://*.fbcdn.net" . (defined('FX_IG_API') ? ' ' . FX_IG_API : '') . "; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; media-src 'self' blob:; worker-src 'self' blob:; form-action 'self'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'self'; img-src 'self' blob: https://*.cdninstagram.com https://*.fbcdn.net" . (defined('FX_IG_API') ? ' ' . FX_IG_API : '') . "; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; media-src 'self' blob: https://v.fomaxo.com; connect-src 'self' https://v.fomaxo.com; worker-src 'self' blob:; form-action 'self'; frame-ancestors 'none'");   // v.fomaxo.com = Cloudflare: Make All Videos Again loads the kept originals from there
 require dirname(__DIR__) . '/orders-lib.php';
 require_once dirname(__DIR__) . '/media-lib.php';
 date_default_timezone_set('Asia/Dubai');
