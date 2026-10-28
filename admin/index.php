@@ -274,12 +274,13 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 @media (min-width:760px) and (max-height:540px){main.fit:has(>.db.an){display:block;overflow:auto}main.fit>.db.an{height:auto;min-height:0}.an .agrid{flex:none;height:auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:290px 290px 290px 230px 320px 360px;grid-template-areas:"funnel visitors" "products sources" "countries emirates" "devices devices" "pages pages" "left left"}.agrid>.a-devices{display:flex}.an .agrid>.a-pages,.an .agrid>.a-products{display:flex!important}.an .agrid .a-pages{grid-area:pages}.an .agrid .a-sources{grid-area:sources;display:flex!important}.an .agrid>.card>.ch>h2{display:block!important}.pswap{display:none}.tiles.at{grid-template-columns:repeat(4,1fr)}.tiles.at .tile:last-child{grid-column:auto}}
 /* Analytics → Conversion: five reports, same look as the overview (laptop: one screen, 3 columns; phone: one section at a time) */
 .aview a{cursor:pointer}.ctab td b,.mtab td b{font-weight:600}.c-prod,.c-multi,.c-camp{container-type:inline-size}.c-drop .fun li.fx table{margin-top:2px}.c-scroll .fun li{padding:3px 0}.c-camp .cn{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
-@media (min-width:760px){.agrid.cv{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.15fr);grid-template-areas:"cprod cdrop ccamp" "cmulti cmulti cscroll"}
-  .c-prod{grid-area:cprod}.c-drop{grid-area:cdrop}.c-camp{grid-area:ccamp}.c-multi{grid-area:cmulti}.c-scroll{grid-area:cscroll}.agrid.cv>.card{display:flex}}
+@media (min-width:760px){.agrid.cv{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.15fr);grid-template-areas:"cprod cdrop ccamp" "cmulti ccart cscroll"}
+  .c-prod{grid-area:cprod}.c-drop{grid-area:cdrop}.c-camp{grid-area:ccamp}.c-multi{grid-area:cmulti}.c-cart{grid-area:ccart}.c-scroll{grid-area:cscroll}.agrid.cv>.card{display:flex}}
 @container (max-width:420px){.ctab th:nth-child(5),.ctab td:nth-child(5),.mtab th:nth-child(3),.mtab td:nth-child(3),.mtab th:nth-child(5),.mtab td:nth-child(5){display:none}}
 @media (max-width:759px){.aview{display:flex;width:100%;padding:0;gap:0;border-radius:8px;overflow:hidden}.aview a{flex:1;text-align:center;font-size:13px;font-weight:600;padding:7px 0;border-radius:0;color:var(--ink)}.aview a.on{background:var(--gold);color:var(--gold-ink)}.aview a+a{border-left:1px solid var(--line)}
-  .cvpick button:nth-child(n+4){border-bottom:0}.cvpick button:last-child{grid-column:span 2;border-right:0}}
-@media (min-width:760px) and (max-height:540px){.an .agrid.cv{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:330px 330px 300px;grid-template-areas:"cprod cdrop" "ccamp cscroll" "cmulti cmulti"}}
+  .cvpick button:nth-child(n+4){border-bottom:0}}
+@media (min-width:760px) and (max-height:540px){.an .agrid.cv{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:330px 330px 300px;grid-template-areas:"cprod cdrop" "ccamp cscroll" "cmulti ccart"}}
+.c-cart .ch{gap:8px}.c-cart .vtot{flex:none;margin-left:auto;font-size:12.5px;font-weight:600;color:var(--gold)}.actab td b{font-weight:600}
 /* Analytics → Visits: visits step by step, where people leave, what people tap (laptop: one screen; phone: one section at a time) */
 .vlist{list-style:none;margin:0;padding:0}.vv{padding:9px 2px;border-bottom:1px solid var(--line)}.vv:last-child{border-bottom:0}
 .vh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;margin-bottom:6px}.vd{font-weight:600}.ve{margin-left:auto;color:var(--muted)}.ve.ok{color:var(--ok,#6fbf73)}.ve.hot{color:var(--gold)}.ve.bad{color:var(--bad)}
@@ -289,11 +290,10 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 .v-paths i.dd,.vt i.dd{background:rgba(128,128,128,.2);color:var(--muted)}.v-paths i.rg,.vt i.rg{background:rgba(220,80,80,.18);color:var(--bad)}.vt i.more{background:none;color:var(--muted)}
 .ttab td b{font-weight:600;overflow-wrap:anywhere}.ttab .tpg{display:block;font-size:11px}.ltab2 td b{font-weight:600}.ltab2 .fb{margin:4px 0 0;height:5px;max-width:140px}.v-taps .ch{flex-wrap:wrap;gap:6px}.v-paths .ch .vxls{flex:none;margin-left:auto}.v-paths .ch h2 small{font-family:Manrope,sans-serif;font-size:12px;letter-spacing:0;text-transform:none;font-weight:400;margin-left:6px}
 .v-leave,.v-taps{container-type:inline-size}@container (max-width:360px){.ltab2 th:nth-child(5),.ltab2 td:nth-child(5){display:none}}
-@media (min-width:760px){.agrid.vj{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:repeat(3,minmax(0,1fr));grid-template-areas:"vpaths vleave" "vpaths vtaps" "vpaths vcart"}
-  .v-paths{grid-area:vpaths}.v-leave{grid-area:vleave}.v-taps{grid-area:vtaps}.v-cart{grid-area:vcart}.agrid.vj>.card{display:flex}}
-.v-cart .ch{gap:8px}.v-cart .vtot{flex:none;margin-left:auto;font-size:12.5px;font-weight:600;color:var(--gold)}.actab td b{font-weight:600}
-@media (max-width:759px){.vjpick button{white-space:normal;line-height:1.15}.vjpick button:nth-child(n){border-bottom:0}.vjpick button[data-p=vcart]{grid-column:1/-1;border-right:0;border-top:1px solid var(--line)}}
-@media (min-width:760px) and (max-height:540px){.an .agrid.vj{grid-template-columns:minmax(0,1fr);grid-template-rows:520px 330px 330px 300px;grid-template-areas:"vpaths" "vleave" "vtaps" "vcart"}}
+@media (min-width:760px){.agrid.vj{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"vpaths vleave" "vpaths vtaps"}
+  .v-paths{grid-area:vpaths}.v-leave{grid-area:vleave}.v-taps{grid-area:vtaps}.agrid.vj>.card{display:flex}}
+@media (max-width:759px){.vjpick button{white-space:normal;line-height:1.15}.vjpick button:nth-child(n){border-bottom:0}}
+@media (min-width:760px) and (max-height:540px){.an .agrid.vj{grid-template-columns:minmax(0,1fr);grid-template-rows:520px 330px 330px;grid-template-areas:"vpaths" "vleave" "vtaps"}}
 /* Improve: where visitors stop, and the tips to fix first with their numbers and steps (laptop: one screen, two columns; phone: one after the other) */
 .igrid{display:grid;gap:10px;flex:1 1 auto;min-height:0;grid-template-columns:minmax(0,1fr)}.imp{display:flex;flex-direction:column;height:100%}.imp .pagehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.imp .pagehead .seg{margin-left:auto}
 .i-fun .fun li.worst .fl>span:first-child{font-weight:600}.fs>summary{list-style:none;cursor:pointer;border-radius:6px;padding:2px 4px;margin:0 -4px}.fs>summary::-webkit-details-marker{display:none}.fs>summary:hover{background:var(--soft,rgba(184,146,74,.08))}.fchev{display:inline-block;width:7px;height:7px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg);margin:0 2px 2px 8px;transition:transform .15s}.fs[open] .fchev{transform:rotate(-135deg);margin-bottom:-2px}.fsi{margin:6px 0 8px;padding:8px 10px;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:6px;font-size:13px;line-height:1.45}.fsi p{margin:0 0 6px}.fsi .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}.fsi .tst ol{margin:0;padding-left:18px}.list .fsi .tst ol>li{display:list-item;padding:1px 0;border:0}.i-fun .fun li.worst .fb i{background:var(--bad)}.ihow{flex:none;margin-top:10px;border-top:1px solid var(--line);padding-top:8px;font-size:13px}.ihow ol{margin:4px 0 0;padding-left:18px}.ihow li{margin:2px 0}
@@ -3256,7 +3256,17 @@ if (isset($_GET['analytics'])) {
       }
     } catch (Throwable $e) {}
 
-    $cvPanes = ['cprod' => 'Products', 'cdrop' => 'Checkout', 'ccamp' => 'Campaigns', 'cmulti' => 'Multi-buy', 'cscroll' => 'Homepage scroll'];
+    /* 6. people who added to bag, by country (the country is noted on the first page of each visit) */
+    require_once dirname(__DIR__) . '/geo-lib.php';   // fomaxo_flag() and country names
+    $acRows = []; $acUnk = 0;
+    foreach ($q("SELECT (SELECT g.country FROM fx_events g WHERE g.sid = c.sid AND g.country IS NOT NULL LIMIT 1) cc, COUNT(DISTINCT c.vid) n
+                 FROM fx_events c WHERE c.ev = 'cart' AND c.at BETWEEN ? AND ?$notTrash GROUP BY 1 ORDER BY n DESC, cc") as $row)
+      if ($row['cc']) $acRows[] = ['c' => $row['cc'], 'n' => (int)$row['n']]; else $acUnk += (int)$row['n'];
+    $acTot = array_sum(array_column($acRows, 'n')) + $acUnk; $acT = '';
+    $acRow = fn($name, $n) => '<tr><td><b>' . $name . '</b></td><td class="num"><b>' . number_format($n) . '</b></td><td class="num muted">' . $pctT($pct($n, $acTot)) . '</td></tr>';
+    foreach ($acRows as $row) $acT .= $acRow(fomaxo_flag($row['c']) . ' ' . h(fomaxo_country_name($row['c'])), $row['n']);
+    if ($acUnk) $acT .= $acRow('<span class="muted">Not known</span>', $acUnk);
+    $cvPanes = ['cprod' => 'Products', 'cdrop' => 'Checkout', 'ccamp' => 'Campaigns', 'cmulti' => 'Multi-buy', 'ccart' => 'Bag by country', 'cscroll' => 'Homepage scroll'];
     $cvGrid = '<nav class="apick cvpick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'cprod' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($cvPanes), $cvPanes)) . '</nav>'
       . '<div class="dgrid agrid cv">'
       . '<section class="card c-prod on" data-p="cprod"><div class="ch"><h2>Products: viewed → bag → bought</h2></div>'
@@ -3270,6 +3280,8 @@ if (isset($_GET['analytics'])) {
       . '<section class="card c-multi" data-p="cmulti"><div class="ch"><h2>Multi-buy offer</h2><span class="val">' . ($extra > 0 ? '+AED ' . number_format(round($extra)) : '') . '</span></div>'
       . ($orders ? '<div class="list"><table class="mini mtab"><thead><tr><th>Offer</th><th class="num">Orders</th><th class="num">Items</th><th class="num">Avg. order</th><th class="num">Discount</th><th class="num">Extra</th></tr></thead><tbody>' . $mbT . '</tbody></table></div>'
                  . '<p class="muted small gnote">' . $pctT($pct($mbN, count($orders))) . ' of orders used the offer. Extra: how much more those orders brought than the same number of one-item orders' . ($base !== null ? ' (AED ' . number_format(round($base)) . ' each)' : '') . '.</p>' : '<p class="muted empty">No orders in these dates.</p>') . '</section>'
+      . '<section class="card c-cart" data-p="ccart"><div class="ch"><h2>Added to bag by country</h2>' . ($acTot ? '<span class="vtot">' . number_format($acTot) . ' ' . ($acTot === 1 ? 'person' : 'people') . '</span>' : '') . '</div>'
+      . ($acT ? '<div class="list"><table class="mini ltab2 actab"><thead><tr><th>Country</th><th class="num">People</th><th class="num">Share</th></tr></thead><tbody>' . $acT . '</tbody></table></div><p class="muted small gnote">People who added a perfume to the bag in these dates, by the country they visited from.</p>' : '<p class="muted empty">Nobody added to the bag in these dates.</p>') . '</section>'
       . '<section class="card c-scroll" data-p="cscroll"><div class="ch"><h2>Homepage scroll</h2></div>'
       . ($home ? '<ul class="list fun">' . $sc . '</ul>' : '<p class="muted empty">No homepage visits counted yet.</p>') . '<p class="muted small gnote">' . $cvNote . '</p></section>'
       . '</div>';
@@ -3312,16 +3324,7 @@ if (isset($_GET['analytics'])) {
       $paths .= '<li class="vv"><div class="vh"><span class="vd">' . h(date('d M, H:i', strtotime($v['start']))) . '</span><span class="muted">' . h($devIc[$v['device']] ?? 'Other') . ($v['country'] ? ' · ' . fomaxo_flag($v['country']) . ' ' . h($v['country']) : '') . ($v['source'] ? ' · ' . h($v['source']) : '') . ($v['load'] ? ' · opened in ' . h(number_format($v['load'] / 1000, 1)) . 's' : '') . '</span>'
               . '<span class="lpill ve ' . ($endCls[$v['end']] ?? '') . '">' . h(fx_visit_end($v['end'])) . '</span></div><ol class="vs">' . implode('', $steps) . '</ol></li>';
     }
-    /* 4. people who added to bag, by country (the country is noted on the first page of each visit) */
-    $acRows = []; $acUnk = 0;
-    foreach ($q("SELECT (SELECT g.country FROM fx_events g WHERE g.sid = c.sid AND g.country IS NOT NULL LIMIT 1) cc, COUNT(DISTINCT c.vid) n
-                 FROM fx_events c WHERE c.ev = 'cart' AND c.at BETWEEN ? AND ?$notTrash GROUP BY 1 ORDER BY n DESC, cc") as $row)
-      if ($row['cc']) $acRows[] = ['c' => $row['cc'], 'n' => (int)$row['n']]; else $acUnk += (int)$row['n'];
-    $acTot = array_sum(array_column($acRows, 'n')) + $acUnk; $acT = '';
-    $acRow = fn($name, $n) => '<tr><td><b>' . $name . '</b></td><td class="num"><b>' . number_format($n) . '</b></td><td class="num muted">' . $pctT($pct($n, $acTot)) . '</td></tr>';
-    foreach ($acRows as $row) $acT .= $acRow(fomaxo_flag($row['c']) . ' ' . h(fomaxo_country_name($row['c'])), $row['n']);
-    if ($acUnk) $acT .= $acRow('<span class="muted">Not known</span>', $acUnk);
-    $vjPanes = ['vpaths' => 'Visits step by step', 'vleave' => 'Where people leave', 'vtaps' => 'What people tap', 'vcart' => 'Added to bag by country'];
+    $vjPanes = ['vpaths' => 'Visits step by step', 'vleave' => 'Where people leave', 'vtaps' => 'What people tap'];
     $vjNote = $V['has_trail'] ? '' : '<p class="muted small gnote">Taps and scrolling are counted from today. Pages and times go back further.</p>';
     $vjGrid = '<nav class="apick vjpick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'vpaths' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($vjPanes), $vjPanes)) . '</nav>'
       . '<div class="dgrid agrid vj">'
@@ -3330,8 +3333,6 @@ if (isset($_GET['analytics'])) {
       . '<section class="card v-leave" data-p="vleave"><div class="ch"><h2>Where people leave</h2></div>'
       . ($lvT ? '<div class="list"><table class="mini ltab2"><thead><tr><th>Last page</th><th class="num">Saw it</th><th class="num">Left</th><th class="num">Left %</th><th class="num">Time</th><th class="num">Seen</th></tr></thead><tbody>' . $lvT . '</tbody></table></div><p class="muted small gnote">Left: visits that ended on this page. Seen: how far down the page people got, on average.</p>' : '<p class="muted empty">No visits in these dates.</p>') . $vjNote . '</section>'
       . fx_taps_card($V, $names, 'card v-taps', ' data-p="vtaps"')
-      . '<section class="card v-cart" data-p="vcart"><div class="ch"><h2>Added to bag by country</h2>' . ($acTot ? '<span class="vtot">' . number_format($acTot) . ' ' . ($acTot === 1 ? 'person' : 'people') . '</span>' : '') . '</div>'
-      . ($acT ? '<div class="list"><table class="mini ltab2 actab"><thead><tr><th>Country</th><th class="num">People</th><th class="num">Share</th></tr></thead><tbody>' . $acT . '</tbody></table></div><p class="muted small gnote">People who added a perfume to the bag in these dates, by the country they visited from.</p>' : '<p class="muted empty">Nobody added to the bag in these dates.</p>') . '</section>'
       . '</div>';
   } catch (Throwable $e) {
     $vjGrid = '<section class="card"><p class="muted empty">Visits could not open: ' . h($e->getMessage()) . ' (line ' . $e->getLine() . '). Send us a picture of this line.</p></section>';
