@@ -1608,9 +1608,9 @@ if (isset($_GET['videos'])) {
     $ps = $vprods($v); $pr = $names[$ps[0] ?? ''] ?? null; $poster = $v['cover'] ?: ($pr['img'] ?? '');
     $gone = !$ps && ((string)($v['product'] ?? '') !== '' || !empty($v['also']));   // had products, all deleted
     $fsz = empty($v['embed']) && ($fp = fx_media_path($v['file'] ?? '')) && is_file($fp) ? (int)filesize($fp) : 0;   // 0 = the video file is not on the server
-    $mb = fn($b) => $b >= 1048576 ? round($b / 1048576, 1) . ' MB' : max(1, round($b / 1024)) . ' KB';
+    $mb = fn($b) => $b >= 1048576 ? round($b / 1048576, $b >= 10485760 ? 0 : 1) . ' MB' : max(1, round($b / 1024)) . ' KB';
     $fnote = !empty($v['embed']) ? '' : ($fsz ? ' · ' . $mb($fsz) : ' · <b class="vbad">File missing, upload again</b>');
-    if (($v['hq'] ?? '') !== '') $fnote .= isset(($r2hv ??= r2_have())[$v['hq']]) ? ' · 1080p ' . ($r2hv[$v['hq']] > 0 ? $mb($r2hv[$v['hq']]) . ' ' : '') . 'on Cloudflare' : ' · 1080p waiting to copy';   // the sharp copy (only on Cloudflare), its size as copied
+    if (($v['hq'] ?? '') !== '') $fnote .= isset(($r2hv ??= r2_have())[$v['hq']]) ? ' · 1080p ' . ($r2hv[$v['hq']] > 0 ? $mb($r2hv[$v['hq']]) . ' ' : '') . 'on Cloudflare' : ' · 1080p ' . (($hf = fx_media_path($v['hq'])) && is_file($hf) ? $mb(filesize($hf)) . ' ' : '') . 'waiting to copy';   // the sharp copy (only on Cloudflare), its size as copied
     $orig = ($v['orig'] ?? '') !== '' && $r2c && isset(($r2hv ??= r2_have())[$v['orig']]) ? rtrim((string)r2_conf()['url'], '/') . '/' . r2_key($v['orig']) : '';   // the original from the phone, kept on Cloudflare for Make All Videos Again
     if (($v['orig'] ?? '') !== '') { $fnote .= $orig !== '' ? ' · original ' . ($r2hv[$v['orig']] > 0 ? $mb($r2hv[$v['orig']]) . ' ' : '') . 'kept' : ' · original waiting to copy'; if ($orig !== '') $origN++; }
     $hid = $ps && !array_filter($ps, fn($id) => !$names[$id]['hidden']);
