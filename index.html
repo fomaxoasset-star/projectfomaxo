@@ -28,6 +28,8 @@
    keeps its data for its own photos instead of a banner it never shows. Same picture as HERO_SLIDES[0] and the early banner under <main>: change all three together */
 (function(){var h=location.hash;if(h&&h!=="#"&&h!=="#/")return;[["(max-width:760px)","assets/img/banner-discovery2-m.webp"],["(min-width:761px)","assets/img/banner-discovery2.webp"]].forEach(function(x){var l=document.createElement("link");l.rel="preload";l.as="image";l.media=x[0];l.href=x[1];l.setAttribute("fetchpriority","high");document.head.appendChild(l)})})();</script>
 <link rel="preload" href="assets/fonts/CharlesWrightSingapore.woff2" as="font" type="font/woff2" crossorigin>
+<!-- the shop videos and previews come from Cloudflare: the connection to it is opened now, so the first one starts sooner -->
+<link rel="preconnect" href="https://v.fomaxo.com" crossorigin>
 <!-- the two text fonts (Cormorant Garamond, Jost) come from our own server instead of Google Fonts: no extra connections to two other sites before the words can show. Same font files Google sends (latin + latin-ext); each file is fetched only when the page uses it. The Arabic fonts still come from Google, only for Arabic visitors -->
 <style>@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 600;font-display:swap;src:url(/assets/fonts/cormorant-latin-ext.woff2?v=1) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:300 600;font-display:swap;src:url(/assets/fonts/cormorant-latin.woff2?v=1) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
@@ -6022,6 +6024,9 @@ function loopRow(sc){ if (!sc || sc.dataset.loop) return; const ks = [...sc.chil
 /* videos kept on Cloudflare (Admin → Products → Videos → Cloudflare) are asked for with CORS, so vidLit can still read their frames.
    One Cloudflare fails to send plays from our own copy in assets/vid instead (data-fbu: the small Hostinger copy of a sharp 1080p video) */
 function vidXO(u){ return /^https:/.test(u || '') ? ' crossorigin="anonymous"' : ''; }
+/* slow internet (or data saver): the player plays the small copy (vf) instead of the sharp 1080p one, so it doesn't stop and wait. iPhones don't tell, they keep the sharp one */
+function slowNet(){ const c = navigator.connection; return !!c && (!!c.saveData || /2g|3g/.test(c.effectiveType || '') || (c.downlink > 0 && c.downlink < 4)); }
+const vSrc = v => v.vf && slowNet() ? '/assets/' + v.vf : v.v.startsWith('vid/') ? 'assets/' + v.v : v.v;
 document.addEventListener('error', e => { const v = e.target, u = v && v.tagName === 'VIDEO' && v.getAttribute('src') || ''; if (!/^https:\/\//.test(u) || v.dataset.fb) return;
   const f = v.dataset.fbu || '/assets/vid/' + u.split('/').pop(), go = v.autoplay || !v.paused; v.dataset.fb = 1; v.removeAttribute('crossorigin'); if (v.dataset.src === u) v.dataset.src = f; v.src = f; if (go) v.play().catch(() => {}); }, true);
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
@@ -6146,7 +6151,7 @@ function reelCard(p){
 function reelSlide(v, k){
   const ps = vidProds(v).map(id => P[id]), name = ps.length ? ps[0].name : 'FOMAXO';
   return `<section class="rl-s${v.e ? ' emb' : ''}${v.wd ? ' wide' : ''}" data-k="${k}"><div class="rl-stage">
-    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" playsinline loop muted preload="none" poster="${vidPoster(v)}"${vidXO(v.v)}${v.vf ? ` data-fbu="/assets/${esc(v.vf)}"` : ''} data-src="${esc(v.v.startsWith('vid/') ? 'assets/' + v.v : v.v)}"></video>`}${!v.e && vidPoster(v) ? `<img class="rl-pic" src="${vidPoster(v)}" alt="">` : ''}
+    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" playsinline loop muted preload="none" poster="${vidPoster(v)}"${vidXO(vSrc(v))}${v.vf ? ` data-fbu="/assets/${esc(v.vf)}"` : ''} data-src="${esc(vSrc(v))}"></video>`}${!v.e && vidPoster(v) ? `<img class="rl-pic" data-src="${vidPoster(v)}" alt="">` : ''}
     <span class="rl-pause" aria-hidden="true">${VI.play}</span>
     ${v.n && vidPage() ? `<span class="vt-by rl-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}
     ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'Eau de Parfum · Unisex'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`
@@ -6172,7 +6177,8 @@ function openReel(i){
   const go = k => { k = Math.max(0, Math.min(slides.length - 1, k)); track.scrollTo({left: k * track.clientWidth, behavior: 'smooth'}); };
   const act = k => { if (k === cur) return; cur = k;
     const sb = $('.rl-snd', el); if (sb) sb.hidden = !$('video', slides[k]);   // Instagram's player has its own sound
-    slides.forEach((s, n) => { const v = $('video', s);
+    slides.forEach((s, n) => { const v = $('video', s), pic = $('.rl-pic', s);
+      if (pic && !pic.src && Math.abs(n - k) <= 1) pic.src = pic.dataset.src;   // cover photos only for this video and the ones either side: all of them at once (one per video) held up the tapped video's start
       if (!v) { const f = $('iframe', s); if (f && !f.src && Math.abs(n - k) <= 1) f.src = f.dataset.src; return; }   // Instagram's player: loaded when near, played by a tap on it
       if (n === k) { if (!v.src) v.src = v.dataset.src; reelLog(v, s); v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
       else { v.pause(); if (Math.abs(n - k) === 1 && !v.src) { if (!MAC_SAFARI) { v.preload = 'auto'; v.src = v.dataset.src; } else { const cv = $('video', slides[k]), near = () => { if (cur === k && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } }; cv && cv.readyState > 3 ? near() : (cv && cv.addEventListener('canplaythrough', near, {once: true}), setTimeout(near, 6000)); } } } });   // the next and previous videos load now, so a swipe plays at once
