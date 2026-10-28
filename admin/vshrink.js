@@ -298,12 +298,19 @@ window.fxPick = function (src, done) {
   /* Make All Videos Again: one video after another through this same box, without reloading in between. Every video's original kept on Cloudflare
      is loaded and made again (1080p, small copy, preview). Each keeps its product, words and place, like Replace video */
   var q = [], qn = 0, qi = 0, qOk = 0, qMiss = [], qNo = [], lead = '', say1 = say, stop1 = stop;
-  say = function (t) { say1(lead + t); };
+  say = function (t) { say1(lead + t); if (!lead || !q.curId || !f.dataset.noOrig) return;
+    /* Make All Videos Again shows its progress like Make All Previews Again (AJAY 28/10/2026): the count on its button, each video's step on its own row */
+    var mkb = document.querySelector('.vmkall'); if (mkb) mkb.textContent = 'Making All Videos… ' + qi + ' of ' + qn;
+    var pl = document.querySelector('.vmkpill'); if (!pl) { pl = document.createElement('div'); pl.className = 'vmkpill'; pl.setAttribute('role', 'status'); pl.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:61;background:#111;color:#d4af37;border:1px solid #d4af37;border-radius:999px;padding:6px 14px;font-size:13px;max-width:calc(100vw - 24px)'; document.body.appendChild(pl); }
+    pl.textContent = 'Making all videos again: ' + qi + ' of ' + qn + '…';   // the same black message as the previews' one
+    var r = document.querySelector('.vrow[data-vid="' + q.curId + '"] .vinfo .small'); if (!r) return; var o = r.querySelector('.vrok');
+    if (!o) { o = document.createElement('b'); o.className = 'vrok'; r.insertBefore(o, r.firstChild); }
+    o.style.color = '#b8913a'; o.textContent = t.replace(/\s*Keep this page open\.?/, '') + ' · '; };
   stop = function (t) { stop1(t); if (lead) { qMiss.push('number ' + q.cur + ' (' + t.replace(/\..*$/, '') + ')'); qOk--; window.fxRepTick(q.curId, true); qi && (q.bad = 1); setTimeout(function () { window.fxRepNext() || location.replace(location.href); }, 1500); } };   // one that fails: the next one still goes
   var MSG = 'fxRepMsg', TICK = 'fxRepTicks';
   /* each video replaced gets a green tick on its row: at once while Make All Videos Again runs, and again after the page reloads */
   var tick = function (id) { var bad = id.charAt(0) === '!'; id = id.replace(/^!/, ''); var r = document.querySelector('.vrow[data-vid="' + id + '"] .vinfo .small'); if (!r) return; var o = r.querySelector('.vrok'); if (o) o.remove();
-    var b = document.createElement('b'); b.className = 'vrok'; b.textContent = bad ? '✕ Not replaced · ' : '✓ Replaced · '; b.style.color = bad ? '#c0392b' : '#2e7d32'; r.insertBefore(b, r.firstChild); };   // ✕ = it went wrong: replace it again with the link on its row
+    var b = document.createElement('b'); b.className = 'vrok'; b.textContent = bad ? '✕ Not done · ' : '✓ Done · '; b.style.color = bad ? '#c0392b' : '#2e7d32'; r.insertBefore(b, r.firstChild); };   // ✕ = it went wrong: replace it again with the link on its row
   window.fxRepTick = function (id, bad) { if (!id) return; id = (bad ? '!' : '') + id; tick(id); try { var a = JSON.parse(sessionStorage.getItem(TICK) || '[]').filter(function (x) { return x.replace(/^!/, '') !== id.replace(/^!/, ''); }); a.push(id); sessionStorage.setItem(TICK, JSON.stringify(a)); } catch (e) {} };
   window.fxRepNext = function () {
     if (!lead) return false;
@@ -328,8 +335,8 @@ window.fxPick = function (src, done) {
   };
   var go = function (items) {
     q = items.sort(function (a, b) { return a.n - b.n; }); qn = q.length; qi = 0; qOk = 0; lead = ' ';
-    var t = document.querySelector('.ptabs [data-t="2"]'); if (t && getComputedStyle(t.parentNode).display !== 'none') t.click();
-    f.scrollIntoView({block: 'center'}); window.fxRepNext();
+    if (!items[0] || !items[0].urls) { var t = document.querySelector('.ptabs [data-t="2"]'); if (t && getComputedStyle(t.parentNode).display !== 'none') t.click(); f.scrollIntoView({block: 'center'}); }   // Make All stays on the list, like Make All Previews Again
+    window.fxRepNext();
   };
   var rowsAll = function () { return [].slice.call(document.querySelectorAll('.vrow[data-vid]')); };
   var bind = function () {   // the list comes after this script
