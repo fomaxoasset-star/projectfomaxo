@@ -1357,6 +1357,18 @@ function fx_save_photo($tmp, $id, $upload = true) {   // $upload false: a file t
 /* ---- shop videos (Products → Videos): short vertical videos on the home page; tapping one opens it full screen with its product's
    Add to bag / Buy now. Kept as a list in fx_settings 'videos'; the files go in fomaxo-media/vid (cover photos in fomaxo-media/up), above public_html. ---- */
 function fx_videos($pdo) { return array_values(array_filter(json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [], fn($v) => is_array($v) && !empty($v['id']))); }
+/* once (28/10/2026): Make All Videos Again had flipped 9:16 / 16:9; every video goes back to the shape it had that morning, found by its cover
+   (16:9 = the two below, 9:16 = the rest of that list). Videos added later are left as they are */
+function fx_shape_fix_1028($pdo) {
+  if (fomaxo_setting($pdo, 'shape_fix_1028') === '1') return;
+  $wide = ['218335fe', 'a351fc55']; $tall = ['ad03f699', 'c9f50601', '9e0a1fdb', 'ab824aad', '42a7e73d', 'c97a0a29', '8a3e305c', '36bc394d', '418efbfc', 'cd858788', '8ab24951', '6f852eef', 'fe318f0a', '215782ff', 'ffd1b807', '155a8166', 'b7bc85c0', '4fba901d', '193be321', 'e4d26442', '5bef6394', '88dcf2ca', 'f79537e9', 'acf20e17', '5277f77b', '877546b6', 'f28abf34', '89d74fbf', '161e9868', '5b12e47d', '701d1d3d', 'eec18b21', 'b18d9ef2', 'db752386', 'b939962d', '486c34a7', 'd1494cc6', 'f50c89dc', '6d0a41ed', 'cd1764ba'];
+  $vids = json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: []; $n = 0;
+  foreach ($vids as &$v) { if (!is_array($v) || !preg_match('~-cover-([a-f0-9]{8})$~', (string)($v['cover'] ?? ''), $m)) continue;
+    if (in_array($m[1], $wide, true) && empty($v['wide'])) { $v['wide'] = true; $n++; }
+    elseif (in_array($m[1], $tall, true) && !empty($v['wide'])) { unset($v['wide']); $n++; } }
+  unset($v); if ($n) fomaxo_setting($pdo, 'videos', json_encode(array_values($vids)));
+  fomaxo_setting($pdo, 'shape_fix_1028', '1'); if ($n && function_exists('fomaxo_products_drop')) fomaxo_products_drop();
+}
 function fx_upload_max() {   // the biggest upload Hostinger accepts, in bytes
   $b = fn($s) => (int)$s * (['K' => 1024, 'M' => 1048576, 'G' => 1073741824][strtoupper(substr(trim((string)$s), -1))] ?? 1);
   $m = array_filter([$b(ini_get('upload_max_filesize')), $b(ini_get('post_max_size'))]);
@@ -1407,7 +1419,7 @@ if (isset($_GET['videos'])) {
   require_once dirname(__DIR__) . '/instagram-lib.php';
   require_once dirname(__DIR__) . '/r2-lib.php';
   try { fx_video_inbox($pdo); } catch (Throwable $e) {}   // videos sent from fomaxo.in show here straight away
-  $vids = fx_videos($pdo);
+  fx_shape_fix_1028($pdo); $vids = fx_videos($pdo);
   $names = []; foreach (fomaxo_product_rows($pdo) ?: [] as $r) { $d = json_decode($r['data'], true) ?: []; $names[$r['id']] = ['name' => $d['name'] ?? $r['id'], 'img' => $d['images'][0] ?? '', 'hidden' => (bool)$r['hidden']]; }
   $back = ['products' => 1, 'videos' => 1];
   $vprods = fn($v) => array_values(array_unique(array_filter(array_merge([(string)($v['product'] ?? '')], (array)($v['also'] ?? [])), fn($id) => is_string($id) && isset($names[$id]))));   // the products a video sells, first one first
