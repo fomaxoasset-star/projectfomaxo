@@ -335,12 +335,43 @@ window.fxPick = function (src, done) {
   if (ra && rin) { ra.onclick = function () { rin.value = ''; rin.click(); };
     rin.onchange = function () {
       var files = [].slice.call(rin.files || []); if (!files.length) return; ra.disabled = true; ra.textContent = 'Matching ' + files.length + ' videos…';
+      /* matched by fingerprint (or size) first; a phone often gives a slightly different copy of the same video, and older uploads have no
+         fingerprint, so the rest are matched by the video itself: same length (within 0.6 s, older recorded copies drift), same shape (within 3%) and the same picture
+         inside it (one frame shrunk to 16x16, colours compared) */
+      var probe = function (src) { return new Promise(function (ok) { var v = document.createElement('video'), str = typeof src === 'string', u = str ? src : URL.createObjectURL(src), t = setTimeout(function () { end(info || null); }, 20000), info = null;
+        var end = function (x) { clearTimeout(t); if (!str) URL.revokeObjectURL(u); v.removeAttribute('src'); try { v.load(); } catch (e) {} ok(x); };
+        if (str) v.crossOrigin = 'anonymous';
+        v.preload = 'auto'; v.muted = true; v.playsInline = true;
+        v.onloadedmetadata = function () { if (!(isFinite(v.duration) && v.duration > 0 && v.videoHeight)) return end(null); info = {d: v.duration, a: v.videoWidth / v.videoHeight, px: null}; v.currentTime = Math.min(1, v.duration * 0.4); };
+        v.onseeked = function () { if (Math.abs(v.currentTime - Math.min(1, v.duration * 0.4)) > 0.1) return end(info);   // seek didn't land (no Range on the server): no picture, length only
+          try { var b = document.createElement('canvas'), c = document.createElement('canvas'); b.width = b.height = 128; c.width = c.height = 16; var g = c.getContext('2d'), h = b.getContext('2d');
+            h.drawImage(v, 0, 0, 128, 128); g.imageSmoothingQuality = 'high'; g.drawImage(b, 0, 0, 16, 16); info.px = g.getImageData(0, 0, 16, 16).data; } catch (e) {} end(info); };   // via 128x128, so a small and a sharp copy of the same frame come out alike
+        v.onerror = function () { end(info); }; v.src = u; }); };
+      var pool = function (list, fn) { var out = [], k = 0; var run = function () { if (k >= list.length) return Promise.resolve(); var j = k++; return fn(list[j]).then(function (x) { out[j] = x; ra.textContent = 'Checking the videos themselves… ' + out.filter(Boolean).length + ' / ' + list.length; return run(); }); };
+        return Promise.all([run(), run(), run(), run()]).then(function () { return out; }); };   // 4 at a time, so 80 videos don't all load at once
+      var diff = function (p, q) { if (!p || !q) return -1; var s = 0, n = 0; for (var i = 0; i < p.length; i += 4) { s += Math.abs(p[i] - q[i]) + Math.abs(p[i + 1] - q[i + 1]) + Math.abs(p[i + 2] - q[i + 2]); n += 3; } return s / n; };   // 0 = same picture, -1 = no picture to compare
       Promise.all(files.map(fingerprint)).then(function (fps) {
-        var rows = rowsAll(), used = {}, items = []; qMiss = []; qNo = [];
+        var rows = rowsAll(), used = {}, items = [], left = []; qMiss = []; qNo = [];
         files.forEach(function (file, i) {
           var r = rows.filter(function (r) { return !used[r.dataset.vid] && r.querySelector('.vrep') && ((fps[i] && r.dataset.fp === fps[i]) || +r.dataset.sz === file.size); })[0];
-          if (r) { used[r.dataset.vid] = 1; items.push({id: r.dataset.vid, n: rows.indexOf(r) + 1, file: file}); } else qNo.push(file.name);
+          if (r) { used[r.dataset.vid] = 1; items.push({id: r.dataset.vid, n: rows.indexOf(r) + 1, file: file}); } else left.push(file);
         });
+        if (!left.length) return items;
+        ra.textContent = 'Checking the videos themselves…';
+        var cand = rows.filter(function (r) { return !used[r.dataset.vid] && r.querySelector('.vrep') && r.dataset.pvsrc; });
+        return pool(left, probe).then(function (fl) {
+          return pool(cand, function (r) { return probe(r.dataset.pvsrc); }).then(function (rl) {
+            left.forEach(function (file, i) {
+              var m = fl[i], near = !m ? [] : cand.map(function (r, k) { return {r: r, x: rl[k]}; }).filter(function (c) { return c.x && !used[c.r.dataset.vid] && Math.abs(c.x.d - m.d) <= 0.6 && Math.abs(c.x.a / m.a - 1) <= 0.03; })
+                .map(function (c) { c.p = diff(c.x.px, m.px); return c; }).filter(function (c) { return c.p < 30; })   // picture too different: another video of the same length
+                .sort(function (a, b) { return (a.p < 0 || b.p < 0 ? 0 : a.p - b.p) || Math.abs(a.x.d - m.d) - Math.abs(b.x.d - m.d); });
+              var ok = near.length === 1 || (near.length > 1 && (near[0].p >= 0 && near[1].p >= 0 ? near[1].p - near[0].p > 8 : Math.abs(near[1].x.d - m.d) - Math.abs(near[0].x.d - m.d) > 0.15));   // two alike: not guessed
+              if (ok) { var r = near[0].r; used[r.dataset.vid] = 1; items.push({id: r.dataset.vid, n: rows.indexOf(r) + 1, file: file}); } else qNo.push(file.name);
+            });
+            return items;
+          });
+        });
+      }).then(function (items) {
         ra.disabled = false; ra.textContent = 'Replace all with sharper videos';
         if (!items.length) { alert('None of these ' + files.length + ' videos matched a video in your list. Pick the same videos you first uploaded, from your phone\'s gallery.'); return; }
         if (!confirm(items.length + ' of ' + files.length + ' matched: number ' + items.map(function (x) { return x.n; }).sort(function (a, b) { return a - b; }).join(', ') + '.' + (qNo.length ? '\nNot matched (replace these with the button on their row): ' + qNo.join(', ') + '.' : '') + '\n\nReplace them now, one after another? Keep this page open.')) return;

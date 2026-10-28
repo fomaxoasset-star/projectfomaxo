@@ -1702,8 +1702,13 @@ if (isset($_GET['videos'])) {
     [pick, tin].forEach(function (x) { if (x) { x.style.display = id ? 'none' : ''; x.querySelectorAll('input').forEach(function (i) { i.disabled = !!id; }); } });
   }
   document.addEventListener('click', function (e) {
-    var b = e.target.closest('.vrep'); if (b) { set(b.dataset.rep, b.dataset.n); var t = document.querySelector('.ptabs [data-t="2"]'); if (t && getComputedStyle(t.parentNode).display !== 'none') t.click(); f.scrollIntoView({block: 'center'}); f.elements.video.click(); }
-    if (e.target.closest('.vrepx')) set('');
+    var b = e.target.closest('.vrep'); if (b) { set(b.dataset.rep, b.dataset.n); f.dataset.one = '1'; var t = document.querySelector('.ptabs [data-t="2"]'); if (t && getComputedStyle(t.parentNode).display !== 'none') t.click(); f.scrollIntoView({block: 'center'}); f.elements.video.click(); }
+    if (e.target.closest('.vrepx')) { set(''); delete f.dataset.one; }
+  });
+  /* one row's Replace: the upload starts by itself once the video is picked, no Upload button to find */
+  f.elements.video.addEventListener('change', function () {
+    if (!f.dataset.one || !f.elements.replace.value || !this.files.length) return; delete f.dataset.one;
+    setTimeout(function () { f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); }, 1500);   // the shape is read from the video first
   });
   window.fxRepSet = set;   // Replace all / Make All Videos Again (vshrink.js) use the same box
 })();
