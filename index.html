@@ -6050,7 +6050,7 @@ function bindVids(){
   const row = $('#vrow'), nav = $('.vr-nav');   // laptop: arrows when the videos are wider than the page
   edgeArrows(row);   // and round arrows on the left and right of the row (phone and laptop)
   if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => rowStep(row, +b.dataset.vscroll)); }
-  const nc = navigator.connection; if (nc && (nc.saveData || /2g|3g/.test(nc.effectiveType || ''))) return;   // data saver or a slow connection: covers only until tapped
+  const nc = navigator.connection; if (nc && (nc.saveData || /2g/.test(nc.effectiveType || ''))) return;   // data saver or a very slow connection: covers only until tapped. Not on '3g': Chrome says 3g on ordinary Wi-Fi too (after a big upload, AJAY's laptop 28/10/2026) and the row stayed still; previews are only about 0.2 MB
   /* light on the page: a tile loads its small preview only when it is on screen and the page has finished loading, at most 2 at a time;
      a tile without a preview keeps its photo (the full video loads only in the player); a browser that holds back autoplay downloads nothing until the first tap or click */
   let held = false, slow = false, ready = document.readyState === 'complete'; const wait = new Set();
@@ -6108,7 +6108,7 @@ function vStrip(){
 let vsIO = null;
 function vsBind(){
   vsIO && vsIO.disconnect(); vsIO = null;
-  const nc = navigator.connection, cs = $$('#vStrip .vs-c').filter(c => $('video', c)); if (!cs.length || (nc && (nc.saveData || /2g|3g/.test(nc.effectiveType || '')))) return;   // data saver or a slow connection: covers only
+  const nc = navigator.connection, cs = $$('#vStrip .vs-c').filter(c => $('video', c)); if (!cs.length || (nc && (nc.saveData || /2g/.test(nc.effectiveType || '')))) return;   // data saver or a very slow connection: covers only (not on '3g', see bindVids)
   let held = false; const wait = new Set();
   const busy = () => cs.filter(c => { const v = $('video', c); return v.getAttribute('src') && v.readyState < 3 && !v.error; }).length;
   const pump = () => wait.forEach(c => { if (busy() < 2) { wait.delete(c); run(c, true); } });
