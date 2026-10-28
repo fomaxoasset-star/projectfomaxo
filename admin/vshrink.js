@@ -218,7 +218,7 @@ window.fxPick = function (src, done) {
      so everything on it works again for the next upload, and it shows "Video added" or what went wrong */
   function post(fd) {
     fetch(f.action || location.href, {method: 'POST', body: fd, credentials: 'same-origin', redirect: 'manual'}).then(function (r) {
-      if (r.type === 'opaqueredirect' || r.ok) { if (!(window.fxRepNext && window.fxRepNext())) location.replace(location.href); }
+      if (r.type === 'opaqueredirect' || r.ok) { if (!(window.fxRepNext && window.fxRepNext())) { try { sessionStorage.setItem('fxUpDone', '1'); } catch (e) {} location.replace(location.href); } }
       else stop('The upload did not finish (error ' + r.status + '). Please tap Upload again.');
     }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
   }
@@ -350,7 +350,14 @@ window.fxPick = function (src, done) {
   };
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind); else bind();
-  var shown = function () { try { var m = sessionStorage.getItem(MSG); if (m) { sessionStorage.removeItem(MSG); var p = document.createElement('p'); p.className = 'msg ' + (/Not done|^0 of/.test(m) ? 'bad' : 'ok'); p.textContent = m; var tl = document.querySelector('.vtools'); if (tl) tl.parentNode.insertBefore(p, tl); } } catch (e) {} };
+  /* after an upload or replace: what happened, in a box in the middle of the screen (tap or 10 s to close), so it is never missed */
+  var toast = function (t, ok) {
+    var d = document.createElement('div'); d.setAttribute('role', 'alert'); d.className = 'vdone';
+    d.style.cssText = 'position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:90;max-width:min(440px,calc(100vw - 32px));padding:18px 22px;border-radius:14px;font:600 15px/1.45 Manrope,system-ui,sans-serif;text-align:center;cursor:pointer;box-shadow:0 12px 40px rgba(0,0,0,.35);color:#fff;background:' + (ok ? '#2e7d32' : '#b3261e');
+    d.textContent = (ok ? '✓ ' : '! ') + t; d.onclick = function () { d.remove(); }; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 10000);
+  };
+  var shown = function () { try { var done = sessionStorage.getItem('fxUpDone'); sessionStorage.removeItem('fxUpDone'); var fl = document.querySelector('main p.msg, p.msg'); if (done && fl && !sessionStorage.getItem(MSG)) toast(fl.textContent, fl.classList.contains('ok')); } catch (e) {}
+    try { var m = sessionStorage.getItem(MSG); if (m) { sessionStorage.removeItem(MSG); var p = document.createElement('p'); p.className = 'msg ' + (/Not done|^0 of/.test(m) ? 'bad' : 'ok'); p.textContent = m; var tl = document.querySelector('.vtools'); if (tl) tl.parentNode.insertBefore(p, tl); toast(m, !/Not done|^0 of/.test(m)); } } catch (e) {} };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', shown); else shown();
 })();
 /* Small previews for the home page row: each video without one gets a 640px, silent copy of its first 5 seconds (about 0.25 MB, AJAY 23/10/2026: half the size so the row starts sooner),
