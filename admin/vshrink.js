@@ -218,7 +218,7 @@ window.fxPick = function (src, done) {
      so everything on it works again for the next upload, and it shows "Video added" or what went wrong */
   function post(fd) {
     fetch(f.action || location.href, {method: 'POST', body: fd, credentials: 'same-origin', redirect: 'manual'}).then(function (r) {
-      if (r.type === 'opaqueredirect' || r.ok) { if (!(window.fxRepNext && window.fxRepNext())) location.replace(location.href); }
+      if (r.type === 'opaqueredirect' || r.ok) { if (!(window.fxRepNext && window.fxRepNext())) { try { sessionStorage.setItem('fxUpDone', '1'); if (f.elements.replace && f.elements.replace.value) window.fxRepTick(f.elements.replace.value); } catch (e) {} location.replace(location.href); } }
       else stop('The upload did not finish (error ' + r.status + '). Please tap Upload again.');
     }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
   }
@@ -301,14 +301,18 @@ window.fxPick = function (src, done) {
      Make all: every video's original kept on Cloudflare is loaded and made again. Each keeps its product, words and place, like Replace with sharper video */
   var q = [], qn = 0, qi = 0, qOk = 0, qMiss = [], qNo = [], lead = '', say1 = say, stop1 = stop;
   say = function (t) { say1(lead + t); };
-  stop = function (t) { stop1(t); if (lead) { qMiss.push('number ' + q.cur + ' (' + t.replace(/\..*$/, '') + ')'); qOk--; setTimeout(function () { window.fxRepNext() || location.replace(location.href); }, 1500); } };   // one that fails: the next one still goes
-  var MSG = 'fxRepMsg';
+  stop = function (t) { stop1(t); if (lead) { qMiss.push('number ' + q.cur + ' (' + t.replace(/\..*$/, '') + ')'); qOk--; window.fxRepTick(q.curId, true); qi && (q.bad = 1); setTimeout(function () { window.fxRepNext() || location.replace(location.href); }, 1500); } };   // one that fails: the next one still goes
+  var MSG = 'fxRepMsg', TICK = 'fxRepTicks';
+  /* each video replaced gets a green tick on its row: at once while Replace all runs, and again after the page reloads */
+  var tick = function (id) { var bad = id.charAt(0) === '!'; id = id.replace(/^!/, ''); var r = document.querySelector('.vrow[data-vid="' + id + '"] .vinfo .small'); if (!r) return; var o = r.querySelector('.vrok'); if (o) o.remove();
+    var b = document.createElement('b'); b.className = 'vrok'; b.textContent = bad ? '✕ Not replaced · ' : '✓ Replaced · '; b.style.color = bad ? '#c0392b' : '#2e7d32'; r.insertBefore(b, r.firstChild); };   // ✕ = it went wrong: replace it again with the link on its row
+  window.fxRepTick = function (id, bad) { if (!id) return; id = (bad ? '!' : '') + id; tick(id); try { var a = JSON.parse(sessionStorage.getItem(TICK) || '[]').filter(function (x) { return x.replace(/^!/, '') !== id.replace(/^!/, ''); }); a.push(id); sessionStorage.setItem(TICK, JSON.stringify(a)); } catch (e) {} };
   window.fxRepNext = function () {
     if (!lead) return false;
-    if (qi) qOk++;
+    if (qi) { qOk++; if (!q.bad) window.fxRepTick(q.curId); q.bad = 0; }
     var it = q.shift();
     if (!it) { lead = ''; try { sessionStorage.setItem(MSG, qOk + ' of ' + qn + ' videos ' + (f.dataset.noOrig ? 'made again from their originals' : 'replaced with sharper ones') + '.' + (qMiss.length ? ' Not done: ' + qMiss.join(', ') + '.' : '') + (qNo.length ? ' Not matched (replace these with the button on their row): ' + qNo.join(', ') + '.' : '')); } catch (e) {} return false; }
-    qi++; q.cur = it.n; lead = 'Video ' + qi + ' of ' + qn + ' (number ' + it.n + '): ';
+    qi++; q.cur = it.n; q.curId = it.id; lead = 'Video ' + qi + ' of ' + qn + ' (number ' + it.n + '): ';
     delete f.dataset.go; delete f.dataset.hqDone; delete f.dataset.dupOk; f.dataset.noOrig = it.url ? '1' : ''; btn.disabled = true;
     if (cin) cin.value = ''; send.cover = null;
     if (window.fxRepSet) window.fxRepSet(it.id, it.n); else f.elements.replace.value = it.id;
@@ -317,7 +321,7 @@ window.fxPick = function (src, done) {
     got.then(function (file) {
       var dt = new DataTransfer(); dt.items.add(file); inp.files = dt.files; inp.dispatchEvent(new Event('change'));
       setTimeout(function () { btn.disabled = false; f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); }, 1500);   // the shape is read from the video first
-    }, function () { qMiss.push('number ' + it.n + ' (its original did not load)'); qOk--; window.fxRepNext() || location.replace(location.href); });
+    }, function () { qMiss.push('number ' + it.n + ' (its original did not load)'); qOk--; window.fxRepTick(it.id, true); q.bad = 1; window.fxRepNext() || location.replace(location.href); });
     return true;
   };
   var go = function (items) {
@@ -350,7 +354,15 @@ window.fxPick = function (src, done) {
   };
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind); else bind();
-  var shown = function () { try { var m = sessionStorage.getItem(MSG); if (m) { sessionStorage.removeItem(MSG); var p = document.createElement('p'); p.className = 'msg ' + (/Not done|^0 of/.test(m) ? 'bad' : 'ok'); p.textContent = m; var tl = document.querySelector('.vtools'); if (tl) tl.parentNode.insertBefore(p, tl); } } catch (e) {} };
+  /* after an upload or replace: what happened, in a box in the middle of the screen (tap or 10 s to close), so it is never missed */
+  var toast = function (t, ok) {
+    var d = document.createElement('div'); d.setAttribute('role', 'alert'); d.className = 'vdone';
+    d.style.cssText = 'position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:90;max-width:min(440px,calc(100vw - 32px));padding:18px 22px;border-radius:14px;font:600 15px/1.45 Manrope,system-ui,sans-serif;text-align:center;cursor:pointer;box-shadow:0 12px 40px rgba(0,0,0,.35);color:#fff;background:' + (ok ? '#2e7d32' : '#b3261e');
+    d.textContent = (ok ? '✓ ' : '! ') + t; d.onclick = function () { d.remove(); }; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 10000);
+  };
+  var shown = function () { try { JSON.parse(sessionStorage.getItem(TICK) || '[]').forEach(tick); sessionStorage.removeItem(TICK); } catch (e) {}
+    try { var done = sessionStorage.getItem('fxUpDone'); sessionStorage.removeItem('fxUpDone'); var fl = document.querySelector('main p.msg, p.msg'); if (done && fl && !sessionStorage.getItem(MSG)) toast(fl.textContent, fl.classList.contains('ok')); } catch (e) {}
+    try { var m = sessionStorage.getItem(MSG); if (m) { sessionStorage.removeItem(MSG); var p = document.createElement('p'); p.className = 'msg ' + (/Not done|^0 of/.test(m) ? 'bad' : 'ok'); p.textContent = m; var tl = document.querySelector('.vtools'); if (tl) tl.parentNode.insertBefore(p, tl); toast(m, !/Not done|^0 of/.test(m)); } } catch (e) {} };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', shown); else shown();
 })();
 /* Small previews for the home page row: each video without one gets a 640px, silent copy of its first 5 seconds (about 0.25 MB, AJAY 23/10/2026: half the size so the row starts sooner),
