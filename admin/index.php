@@ -1709,7 +1709,8 @@ if (isset($_GET['videos'])) {
   /* one row's Replace: the upload starts by itself once the video is picked, no Upload button to find */
   f.elements.video.addEventListener('change', function () {
     if (!f.dataset.one || !f.elements.replace.value || !this.files.length) return; delete f.dataset.one;
-    setTimeout(function () { f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); }, 1500);   // the shape is read from the video first
+    setTimeout(function () { var b = f.querySelector('.btn'); if (f.dataset.go || f.dataset.hqDone || (b && b.disabled)) return;   // Upload already tapped: it is on its way, never start it twice
+      f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', {cancelable: true})); }, 1500);   // the shape is read from the video first
   });
   window.fxRepSet = set;   // Replace all / Make All Videos Again (vshrink.js) use the same box
 })();

@@ -338,8 +338,9 @@ window.fxPick = function (src, done) {
       /* matched by fingerprint (or size) first; a phone often gives a slightly different copy of the same video, and older uploads have no
          fingerprint, so the rest are matched by the video itself: same length (within 0.6 s, older recorded copies drift), same shape (within 3%) and the same picture
          inside it (one frame shrunk to 16x16, colours compared) */
-      var probe = function (src) { return new Promise(function (ok) { var v = document.createElement('video'), str = typeof src === 'string', u = str ? src : URL.createObjectURL(src), t = setTimeout(function () { end(info || null); }, 20000), info = null;
-        var end = function (x) { clearTimeout(t); if (!str) URL.revokeObjectURL(u); v.removeAttribute('src'); try { v.load(); } catch (e) {} ok(x); };
+      var probe = function (src) { return new Promise(function (ok) { var v = document.createElement('video'), str = typeof src === 'string', u = str ? src : URL.createObjectURL(src), t = setTimeout(function () { end(info || null); }, 8000), info = null;
+        var end = function (x) { clearTimeout(t); if (!str) URL.revokeObjectURL(u); v.removeAttribute('src'); try { v.load(); } catch (e) {} v.remove(); ok(x); };
+        v.style.cssText = 'position:fixed;left:-9999px;top:0;width:2px;height:2px'; document.body.appendChild(v);   // iPhone Safari only loads a video that is on the page
         if (str) v.crossOrigin = 'anonymous';
         v.preload = 'auto'; v.muted = true; v.playsInline = true;
         v.onloadedmetadata = function () { if (!(isFinite(v.duration) && v.duration > 0 && v.videoHeight)) return end(null); info = {d: v.duration, a: v.videoWidth / v.videoHeight, px: null}; v.currentTime = Math.min(1, v.duration * 0.4); };
