@@ -336,7 +336,8 @@ window.fxPick = function (src, done) {
   var mk = document.querySelector('.vmkall');
   if (mk) mk.onclick = function () {
     /* every uploaded video (AJAY 28/10/2026: "only 19 videos when there is 49"): from its original, else its 1080p copy on Cloudflare, else the copy on this site */
-    var items = rowsAll().map(function (r, i) { var u = [r.dataset.orig, r.dataset.hqu, r.dataset.pvsrc].filter(Boolean); return u.length ? {id: r.dataset.vid, n: i + 1, urls: u} : null; }).filter(Boolean);
+    var items = rowsAll().map(function (r, i) { var u = [r.dataset.orig, r.dataset.hqu, r.dataset.pvsrc, r.dataset.fu].filter(Boolean); return u.length ? {id: r.dataset.vid, n: i + 1, urls: u} : null; }).filter(Boolean);
+    try { navigator.sendBeacon && navigator.sendBeacon('../vlog.php', new Blob([JSON.stringify({v: ['make all: ' + items.length + ' of ' + rowsAll().length + ' rows' + (items.length < rowsAll().length ? ' (left out: ' + rowsAll().filter(function (r) { return !items.some(function (x) { return x.id === r.dataset.vid; }); }).map(function (r) { return rowsAll().indexOf(r) + 1; }).join(', ') + ')' : '')]})], {type: 'application/json'})); } catch (x) {}
     if (!items.length || !confirm('Make all ' + items.length + ' videos again (1080p for Cloudflare, small copy and preview)? About 1 to 2 minutes each. Keep this page open.')) return;
     mk.disabled = true; qMiss = []; qNo = []; go(items);
   };
