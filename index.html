@@ -6019,7 +6019,14 @@ function loopRow(sc){ if (!sc || sc.dataset.loop) return; const ks = [...sc.chil
   const a = ks.map(k => k.cloneNode(true)), b = ks.map(k => k.cloneNode(true)); a.forEach(k => sc.insertBefore(k, ks[0])); b.forEach(k => sc.appendChild(k));
   const s = getComputedStyle(sc).direction === 'rtl' ? -1 : 1, W = () => Math.abs(ks[0].offsetLeft - a[0].offsetLeft);
   sc.scrollLeft = s * W();
-  let t = 0; const fix = () => { const w = W(), x = Math.abs(sc.scrollLeft); if (w && x < w * .5) sc.scrollLeft = s * (x + w); else if (w && x > w * 1.5) sc.scrollLeft = s * (x - w); };
+  /* the jump back to the middle copy lands on other (cloned) tiles: the videos on screen move with it, so a playing preview keeps playing instead of starting again from its photo (AJAY 28/10/2026) */
+  const swap = (p, q) => { const v = $('video', p), u = $('video', q); if (!v || !u || !v.getAttribute('src')) return;
+    const m = document.createComment(''); u.replaceWith(m); v.replaceWith(u); m.replaceWith(v);
+    ['shown', 'playing'].forEach(c => { const x = p.classList.contains(c); p.classList.toggle(c, q.classList.contains(c)); q.classList.toggle(c, x); }); };
+  let t = 0; const fix = () => { const w = W(), x = Math.abs(sc.scrollLeft), d = w && x < w * .5 ? 1 : w && x > w * 1.5 ? -1 : 0; if (!d) return;
+    const all = [...sc.children], r0 = sc.getBoundingClientRect();
+    all.forEach((k, i) => { const q = all[i + d * ks.length], r = k.getBoundingClientRect(); if (q && r.right > r0.left && r.left < r0.right) swap(k, q); });
+    sc.scrollLeft = s * (x + d * w); };
   sc.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(fix, 150); }, {passive: true}); }
 /* videos kept on Cloudflare (Admin → Products → Videos → Cloudflare) are asked for with CORS, so vidLit can still read their frames.
    One Cloudflare fails to send plays from our own copy in assets/vid instead (data-fbu: the small Hostinger copy of a sharp 1080p video) */
@@ -6056,7 +6063,7 @@ function bindVids(){
   loopRow($('#vrow'));
   const tiles = $$('#vrow .vt'); if (!tiles.length) return;
   tiles.forEach(t => t.onclick = () => openReel(+t.dataset.vi));
-  tiles.forEach(t => { const v = $('video', t); if (v) { v.addEventListener('playing', () => t.classList.add('playing')); v.addEventListener('playing', () => vidLit(v, () => t.classList.add('shown'))); v.addEventListener('emptied', () => t.classList.remove('shown')); v.addEventListener('pause', () => { v.dataset.pev = (+v.dataset.pev || 0) + 1; t.classList.remove('playing'); }); } });
+  tiles.forEach(t => { const v = $('video', t); if (v) { const T = () => v.closest('.vt') || t; v.addEventListener('playing', () => T().classList.add('playing')); v.addEventListener('playing', () => vidLit(v, () => T().classList.add('shown'))); v.addEventListener('emptied', () => T().classList.remove('shown')); v.addEventListener('pause', () => { v.dataset.pev = (+v.dataset.pev || 0) + 1; T().classList.remove('playing'); }); } });
   const onScreen = t => { const r = t.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0; };
   const cover = v => { if (v.dataset.poster) { v.poster = v.dataset.poster; delete v.dataset.poster; } };   // a tile's cover goes on its video only when that preview starts loading (the tile's own photo shows until then): all 41 at once held the previews back on phone internet
   let kicks = 0; const kick = setInterval(() => {   // for the first 12 seconds: any video on screen that is still paused is started again (some Safari versions drop the first start)
@@ -6135,7 +6142,7 @@ function vsBind(){
     if (!on) { wait.delete(c); v.pause(); return; }
     if (held || $('#reel')) return;
     if (!v.getAttribute('src')) { if (busy() >= 4) { wait.add(c); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true})); }
-    v.play().then(() => vidLit(v, () => c.classList.add('playing'))).catch(e => { if (e.name !== 'NotAllowedError') return; if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => vidLit(v, () => c.classList.add('playing'))).catch(() => { held = true; wait.clear(); }), {once: true}); return; } held = true; wait.clear(); }); };   // Safari: one more try once loaded
+    v.play().then(() => vidLit(v, () => (v.closest('.vs-c') || c).classList.add('playing'))).catch(e => { if (e.name !== 'NotAllowedError') return; if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => vidLit(v, () => (v.closest('.vs-c') || c).classList.add('playing'))).catch(() => { held = true; wait.clear(); }), {once: true}); return; } held = true; wait.clear(); }); };   // Safari: one more try once loaded
   const go = () => { if (!document.contains(cs[0])) return; vsIO = new IntersectionObserver(es => es.forEach(e => run(e.target, e.isIntersecting))); cs.forEach(c => vsIO.observe(c)); };
   const later = () => setTimeout(go, 3000);   // 3 seconds after the page has loaded: the photo, prices and Add to bag get the connection first
   document.readyState === 'complete' ? later() : addEventListener('load', later, {once: true});
