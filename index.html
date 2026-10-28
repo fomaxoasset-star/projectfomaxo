@@ -6036,6 +6036,18 @@ function vidLit(v, done){ (v._litQ = v._litQ || []).push(done); if (v._lit) retu
     if (ok) { v._lit = 0; const q = v._litQ; v._litQ = []; return q.forEach(f => f()); } if (++n < 150) next(); else { v._lit = 0; v._litQ = []; } };   // about 5 seconds of black frames: the photo stays
   const next = () => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(chk) : setTimeout(chk, 200);
   next(); }
+/* Improve → Video speed (AJAY 28/10/2026): how fast this shopper's previews and full videos started, whether one froze or did not play.
+   One small note per preview row and per video opened; it only measures, nothing about how videos play depends on it */
+let vsPrev = false;   // one preview note per page visit (the row is drawn again when stock or the page changes)
+function vsSend(how, steps, src){ try { const nc = navigator.connection, body = JSON.stringify({t: 'vtime', how, net: nc && nc.effectiveType || '', vf: String(src || '').split('/').pop().split('?')[0], vt: steps.map(([k, n]) => [k, Math.round(n)])});
+  if (!navigator.sendBeacon || !navigator.sendBeacon('vlog.php', new Blob([body], {type: 'application/json'}))) fetch('vlog.php', {method: 'POST', body, keepalive: true}).catch(() => {}); } catch (e) {} }
+function vsWatch(v){ if (v._vs) return; v._vs = 1; const t0 = performance.now(); let st = v.paused || v.readyState < 3 ? -1 : 0, fr = 0, done = false;   // a full video in the player: start time and freezes in its first 15 s
+  const fin = () => { if (done) return; done = true; clearInterval(iv); const el = performance.now() - t0; if (st < 0 && el < 5000) return;   // closed or swiped on within 5 s before it started: not counted
+    vsSend('video', st < 0 ? [['none', el]] : [['start', st], ['freeze', fr]], v.currentSrc || v.dataset.src); };
+  v.addEventListener('playing', () => { if (st < 0) st = performance.now() - t0; });
+  v.addEventListener('waiting', () => { if (st >= 0 && !v.seeking && v.currentTime > .3) fr++; });   // stopped to load more while playing = froze
+  const iv = setInterval(() => { if (!document.contains(v) || (v.paused && st >= 0) || performance.now() - t0 > 15000) fin(); }, 500);
+  addEventListener('pagehide', fin, {once: true}); }
 function bindVids(){
   vrIO && vrIO.disconnect(); vrIO = null; vrNear && vrNear.disconnect(); vrNear = null;
   loopRow($('#vrow'));
@@ -6067,6 +6079,10 @@ function bindVids(){
         hold(); });
     } else { wait.delete(t); if (!v.paused) { v.pause(); v.dataset.pz = (+v.dataset.pz || 0) + 1; t.classList.remove('playing'); } if (v.readyState < 2 && v.getAttribute('src')) { stop(v); pump(); } } };
   tiles.forEach((t, i) => { const v = $('video', t); if (v && tiles[i + 1]) v.addEventListener('playing', () => warm(tiles[i + 1]), {once: true}); });   // a playing preview gets the next one along the row ready
+  let vsT0 = 0, vsDone = false;   // Improve → Video speed: how long after the row came on screen the first preview played, or that none did within 12 s
+  tiles.forEach(t => { const v = $('video', t); if (v) v.addEventListener('playing', () => { if (vsT0 && !vsDone && !vsPrev) { vsDone = vsPrev = true; vsSend('preview', [['start', performance.now() - vsT0]], v.currentSrc); } }); });
+  const vsSeen = t => { if (vsT0 || !$('video', t)) return; vsT0 = performance.now();
+    setTimeout(() => { if (vsDone || vsPrev || !document.contains(tiles[0])) return; const on = tiles.find(x => onScreen(x) && $('video', x)); if (!on) return; vsDone = vsPrev = true; vsSend('preview', [['none', performance.now() - vsT0]].concat(held ? [['held', 1]] : []), $('video', on).dataset.src); }, 12000); };
   const again = () => { held = false; tiles.forEach(t => { const r = t.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0) run(t, true); }); };   // a phone that held back autoplay (iPhone Low Power Mode) plays them at the first touch
   ['touchend', 'pointerdown', 'keydown'].forEach(ev => addEventListener(ev, again, {once: true, passive: true}));   // a laptop or phone that held back autoplay (Low Power Mode, Safari's Auto-Play setting) starts them on the first tap, click or key
   const report = () => { try {   // 4 seconds after the row first comes on screen: report how each video is doing (vlog.php), to look into videos that will not play
@@ -6074,7 +6090,7 @@ function bindVids(){
     navigator.sendBeacon && navigator.sendBeacon('vlog.php', new Blob([JSON.stringify({v: rep})], {type: 'application/json'}));
   } catch (e) {} };
   let told = false;
-  vrIO = new IntersectionObserver(es => es.forEach(e => { run(e.target, e.isIntersecting); if (e.isIntersecting && !told) { told = true; setTimeout(report, 4000); } }), {rootMargin: '0px'});   // a video plays, muted, while its tile is on screen; off screen it pauses (and stops loading)
+  vrIO = new IntersectionObserver(es => es.forEach(e => { run(e.target, e.isIntersecting); if (e.isIntersecting) vsSeen(e.target); if (e.isIntersecting && !told) { told = true; setTimeout(report, 4000); } }), {rootMargin: '0px'});   // a video plays, muted, while its tile is on screen; off screen it pauses (and stops loading)
   tiles.forEach(t => vrIO.observe(t));
   /* a tile about half a screen away already loads its small preview (same 4 at a time, same address),
      so it is ready and plays at once when it comes on screen */
@@ -6179,7 +6195,7 @@ function openReel(i){
     slides.forEach((s, n) => { const v = $('video', s), pic = $('.rl-pic', s);
       if (pic && !pic.src && Math.abs(n - k) <= 1) pic.src = pic.dataset.src;   // cover photos only for this video and the ones either side: all of them at once (one per video) held up the tapped video's start
       if (!v) { const f = $('iframe', s); if (f && !f.src && Math.abs(n - k) <= 1) f.src = f.dataset.src; return; }   // Instagram's player: loaded when near, played by a tap on it
-      if (n === k) { if (!v.src) v.src = v.dataset.src; reelLog(v, s); v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
+      if (n === k) { if (!v.src) v.src = v.dataset.src; vsWatch(v); reelLog(v, s); v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
       else { v.pause(); if (Math.abs(n - k) === 1 && !v.src) { if (!MAC_SAFARI) { v.preload = 'auto'; v.src = v.dataset.src; } else { const cv = $('video', slides[k]), near = () => { if (cur === k && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } }; cv && cv.readyState > 3 ? near() : (cv && cv.addEventListener('canplaythrough', near, {once: true}), setTimeout(near, 6000)); } } } });   // the next and previous videos load now, so a swipe plays at once
       // Mac Safari downloads the whole next and previous videos at once, so the one on screen waited (its own report 2026-10-27: 5.5 s, stuck): there they load once it has enough to play to the end (or after 6 s)
     $$('.rl-nav button', el).forEach(b => b.disabled = (+b.dataset.rl < 0 && k === 0) || (+b.dataset.rl > 0 && k === slides.length - 1));
