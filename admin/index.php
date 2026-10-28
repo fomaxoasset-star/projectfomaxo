@@ -303,6 +303,12 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 .dck{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--gold);position:relative;margin-top:1px}.dck::after{content:"";position:absolute;left:5px;top:2px;width:4px;height:8px;border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(45deg)}
 .itip h3{margin:2px 0 6px;font-size:15.5px;font-weight:600;line-height:1.3}.itip p{margin:0 0 6px;font-size:13.5px;line-height:1.45}.itip .tl{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-bottom:1px}
 .tst ol{margin:0;padding-left:18px;font-size:13.5px;line-height:1.45}.tst li{margin:2px 0}.tword{color:var(--gold);white-space:nowrap}.i-tips .ch{display:flex;align-items:center;gap:8px}.i-tips .ch .btn{margin-left:auto;flex:none}
+/* Improve → Video speed box (left, under Where visitors stop; the tips keep the whole right side) */
+.i-vs h4{margin:10px 0 6px;font-size:13px;color:var(--gold);font-weight:600}.vsb{padding:0 2px}.vsk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.vsk .kp{border:1px solid var(--line);border-radius:10px;padding:8px 10px}.vsk .kp b{display:block;font-size:20px;line-height:1.2}.vsk .kp span{color:var(--muted);font-size:12px;line-height:1.35}
+.vsk .g b{color:var(--ok)}.vsk .a b{color:var(--warn)}.vsp{list-style:none;margin:0;padding:0}.vsp li{padding:6px 9px;border:1px solid var(--line);border-radius:8px;margin-bottom:5px;font-size:13px}
+.vsp .t{font-weight:700}.vsp .red .t{color:var(--bad)}.vsp .amb .t{color:var(--warn)}.vst{width:100%;border-collapse:collapse;font-size:13px}.vst th,.vst td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}.vst th{color:var(--muted);font-weight:500}.vst .r{text-align:right}.vst .ok{color:var(--ok)}.vst .bad{color:var(--bad)}
+@media (min-width:760px){.igrid{grid-template-rows:minmax(0,1fr) minmax(0,auto)}.igrid>.i-fun{grid-area:1/1}.igrid>.i-vs{grid-area:2/1;max-height:42vh;overflow-y:auto;overscroll-behavior:contain}.igrid>.i-tips{grid-area:1/2/3/3}}
 @media (min-width:760px){.igrid{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)}.i-fun,.i-tips{min-height:0}.db .i-fun{overflow-y:auto;overscroll-behavior:contain}.i-fun>*{flex:none}.i-fun>.i-taps{flex:1 0 170px;display:flex;flex-direction:column;min-height:170px}.i-taps .list{flex:1 1 0;min-height:0;overflow-y:auto!important;overscroll-behavior:contain}}
 .i-fun>.list{flex:none!important;overflow:visible!important;max-height:none!important}.thelp{margin:0 0 6px;font-size:13px;line-height:1.45}.thelp[hidden]{display:none}.i-taps{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}.i-taps .ch{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:4px}.i-taps .ch h2{font-size:15px;margin:0}.igrid .list[hidden]{display:none!important}
 @media (max-width:759px){.igrid{overflow:auto;overscroll-behavior:contain}.igrid{display:block}.igrid>.card{display:block!important;overflow:visible!important;margin-bottom:10px}.igrid .list{overflow:visible!important;max-height:none!important}.igrid .i-taps .list{overflow-y:auto!important;max-height:55vh!important;overscroll-behavior:contain}.imp .pagehead h1{display:none}.imp .pagehead .seg{display:flex;width:100%;margin:0;padding:0;gap:0;border-radius:8px;overflow:hidden}.imp .pagehead .seg a{flex:1;text-align:center;font-size:13px;padding:7px 0;border-radius:0}.imp .pagehead .seg a+a{border-left:1px solid var(--line)}}
@@ -3520,6 +3526,44 @@ if (isset($_GET['analytics'])) {
 
 /* ---- Improve (AJAY 26/10/2026): how to get more people to buy, in plain words. Each tip comes from the visit data of the dates picked
    (Analytics and Analytics → Visits), shows the numbers behind it and the steps to take. Nothing is a guess: a tip only shows when the data says so. ---- */
+/* Improve → Video speed (AJAY 28/10/2026): how fast previews and full videos started for shoppers, which froze and which did not play,
+   from the lines the shop's pages send (vid-speed.txt, written by vlog.php: "d/m H:i:s | iPhone Safari | preview|video | 4g | file | start 812, freeze 0" or "none 12000").
+   Same box on fomaxo.in. $from/$to: Y-m-d */
+function fx_vspeed_box(string $file, string $from, string $to): string {
+  $rows = []; $y = (int)date('Y'); $m = (int)date('n');
+  foreach (is_file($file) ? (file($file, FILE_IGNORE_NEW_LINES) ?: []) : [] as $l) {
+    $p = explode(' | ', $l); if (count($p) < 6 || !in_array($p[2], ['preview', 'video'], true) || !preg_match('~^(\d\d)/(\d\d) (\d\d:\d\d)~', $p[0], $d)) continue;
+    $day = sprintf('%04d-%02d-%02d', (int)$d[2] > $m ? $y - 1 : $y, $d[2], $d[1]); if ($day < $from || $day > $to) continue;
+    $st = []; foreach (explode(', ', $p[5]) as $s) { [$k, $v] = array_pad(explode(' ', $s, 2), 2, 0); $st[$k] = (int)$v; }
+    $rows[] = ['when' => "$d[1]/$d[2] $d[3]", 'dev' => trim(str_replace('(owner)', '', $p[1])), 'own' => str_contains($p[1], '(owner)'), 'how' => $p[2], 'net' => strtoupper($p[3]), 'vf' => $p[4], 'ms' => isset($st['start']) ? $st['start'] : null, 'fr' => $st['freeze'] ?? 0, 'held' => !empty($st['held'])];
+  }
+  $med = function (array $a) { if (!$a) return '–'; sort($a); $v = $a[intdiv(count($a), 2)]; return number_format($v / 1000, 1) . ' s'; };
+  $part = fn($how) => array_values(array_filter($rows, fn($r) => $r['how'] === $how));
+  $P = $part('preview'); $Vd = $part('video');
+  $ok = fn($a) => array_values(array_filter(array_column($a, 'ms'), fn($x) => $x !== null));
+  $pc = fn($a) => $a ? round(100 * count($ok($a)) / count($a)) . '%' : '–';
+  $froze = array_values(array_filter($Vd, fn($r) => $r['fr'] > 0));
+  $name = function ($vf) { $k = preg_replace('~-[a-f0-9]{8}.*$~', '', basename((string)$vf)); return $k !== '' ? ucwords(str_replace(['pc-', '-'], ['', ' '], $k)) . ' video' : ''; };
+  $probs = array_reverse(array_values(array_filter($rows, fn($r) => $r['ms'] === null || $r['fr'] > 0)));
+  $li = '';
+  foreach (array_slice($probs, 0, 30) as $r) {
+    $t = $r['ms'] === null ? ($r['how'] === 'preview' ? '✕ Preview did not play' . ($r['held'] ? ' (phone blocks moving videos, e.g. Low Power Mode)' : '') : '✕ Full video did not play') : '⚠ Video froze ' . $r['fr'] . ($r['fr'] > 1 ? ' times' : ' time');
+    $li .= '<li class="' . ($r['ms'] === null ? 'red' : 'amb') . '"><span class="t">' . h($t) . '</span> · ' . h($r['dev']) . ($r['net'] !== '' ? ' · ' . h($r['net']) : '') . ' · ' . h($r['when']) . ($r['own'] ? ' · <span class="muted">you</span>' : '') . ' <span class="muted small">· ' . h($name($r['vf'])) . '</span></li>';
+  }
+  $by = []; foreach ($rows as $r) { $b = &$by[$r['dev']]; $b ??= ['n' => 0, 'p' => [], 'v' => [], 'x' => 0]; $b['n']++; if ($r['ms'] !== null) $b[$r['how'] === 'preview' ? 'p' : 'v'][] = $r['ms']; if ($r['ms'] === null || $r['fr'] > 0) $b['x']++; unset($b); }
+  uasort($by, fn($a, $b) => $b['n'] <=> $a['n']);
+  $tr = ''; foreach ($by as $dev => $b) $tr .= '<tr><td>' . h($dev) . '</td><td class="r">' . $b['n'] . '</td><td class="r">' . $med($b['p']) . '</td><td class="r">' . $med($b['v']) . '</td><td class="r ' . ($b['x'] ? 'bad' : 'ok') . '">' . $b['x'] . '</td></tr>';
+  $tile = fn($cls, $big, $l1, $l2) => '<div class="kp ' . $cls . '"><b>' . $big . '</b><span>' . $l1 . '<br>' . $l2 . '</span></div>';
+  $pOk = $ok($P); $vOk = $ok($Vd);
+  return '<section class="card i-vs"><div class="ch"><h2>Video speed</h2><span class="muted small">Every shopper\'s phone and computer, these dates</span></div><div class="vsb">'
+    . (!$rows ? '<p class="muted empty">No video plays in these dates yet. Shoppers\' previews and videos show here as they watch them.</p>' :
+      '<div class="vsk">' . $tile(count($pOk) < count($P) ? 'a' : 'g', $med($pOk), 'Previews start in', $pc($P) . ' of ' . count($P) . ' played')
+      . $tile(count($vOk) < count($Vd) ? 'a' : 'g', $med($vOk), 'Full videos start in', $pc($Vd) . ' of ' . count($Vd) . ' played')
+      . $tile($froze ? 'a' : 'g', (string)count($froze), 'Videos froze', 'while playing') . '</div>'
+      . '<h4>Problems <small class="muted">newest first</small></h4>' . ($li ? '<ul class="vsp">' . $li . '</ul>' : '<p class="muted small vsnone">None: every preview and video played without freezing.</p>')
+      . '<h4>By phone and browser</h4><table class="vst"><tr><th>Phone / computer</th><th class="r">Plays</th><th class="r">Preview starts</th><th class="r">Video starts</th><th class="r">Problems</th></tr>' . $tr . '</table>')
+    . '</div></section>';
+}
 if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a white page
   require_once dirname(__DIR__) . '/insights-lib.php';
   $r = (string)($_GET['r'] ?? '7'); if (!in_array($r, ['today', 'yesterday', '7', '30'], true)) $r = '7';
@@ -3703,6 +3747,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
     . '<section class="card i-fun"><div class="ch"><h2>Where visitors stop</h2></div><ul class="list fun">' . $fun . '</ul>'
     . '<p class="muted small gnote">' . ($F['visits'] < 20 ? '<b>Only ' . $nf($F['visits']) . ' visits in these dates: pick 7 or 30 days for surer tips.</b> ' : '') . 'Each line counts visits. The red words show how many stopped at that step. <b>Tap a step</b> to see why and what to do.</p>'
     . fx_taps_card($V, $names, 'v-taps i-taps', '', true) . '</section>'
+    . fx_vspeed_box(dirname(__DIR__) . '/vid-speed.txt', ...['today' => [date('Y-m-d'), date('Y-m-d')], 'yesterday' => [date('Y-m-d', strtotime('-1 day')), date('Y-m-d', strtotime('-1 day'))], '7' => [date('Y-m-d', strtotime('-6 days')), date('Y-m-d')], '30' => [date('Y-m-d', strtotime('-29 days')), date('Y-m-d')]][$r])
     . '<section class="card i-tips"><div class="ch"><h2>What to fix first</h2><a class="btn sm line" href="./?analytics=1&amp;vj=1&amp;r=' . h($r) . '">See the visits</a></div>'
     . ($tipsH ? '<div class="list"><ol class="tips">' . $tipsH . '</ol></div>' : ($doneH ? '<p class="muted empty">Nothing new to fix right now. A fixed tip comes back here only if the numbers are still bad a week after the fix.</p>' : '<p class="muted empty">No clear problem in these dates yet. Pick 7 or 30 days, or check back when more people have visited.</p>'))
     . '<div class="ihow"><b>How to use this page</b><ol><li>Start with tip 1: it affects the most people.</li><li>Read what the data shows and follow the steps.</li><li>Check again after a week: the numbers should move.</li></ol></div>' . '</section></div></div>'
