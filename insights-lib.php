@@ -46,7 +46,7 @@ function fx_visits_data($pdo, $from, $to, $not = '', $paths = 40) {
     foreach ($out['taps'] as &$r) $r['name'] = fx_tap_name($r['label']); unset($r);
     $out['has_trail'] = (bool)$q("SELECT 1 FROM fx_trail LIMIT 1", []);
     /* how fast the website opened (seconds until the page was ready), by device, and errors on the page */
-    foreach ($q("SELECT device, COUNT(*) n, ROUND(AVG(ms)) avg_ms, SUM(ms > 3000) slow FROM fx_trail WHERE k = 'l' AND ms > 0 AND at BETWEEN ? AND ?$not GROUP BY device ORDER BY n DESC") as $r) $out['speed'][$r['device']] = $r;
+    foreach (['shown' => 'f', 'speed' => 'l'] as $key => $k) foreach ($q("SELECT device, COUNT(*) n, ROUND(AVG(ms)) avg_ms, SUM(ms > 3000) slow FROM fx_trail WHERE k = '$k' AND ms > 0 AND at BETWEEN ? AND ?$not GROUP BY device ORDER BY n DESC") as $r) $out[$key][$r['device']] = $r;   // shown = first screen showed (what the shopper feels), speed = everything loaded
     $out['errors'] = $q("SELECT $pg pg, label, COUNT(DISTINCT sid) people, COUNT(*) n FROM fx_trail WHERE k = 'e' AND at BETWEEN ? AND ?$not GROUP BY pg, label ORDER BY people DESC, n DESC LIMIT 20");
   } catch (Throwable $e) {}   // before the first tap makes fx_trail
   /* the newest visits, step by step */
@@ -58,7 +58,7 @@ function fx_visits_data($pdo, $from, $to, $not = '', $paths = 40) {
       $T = []; try { foreach ($q("SELECT sid, at, $pg pg, k, label, pc, dead, rage, ms FROM fx_trail WHERE sid IN ($in) ORDER BY at, id", $sids) as $r) $T[$r['sid']][] = $r; } catch (Throwable $e) {}
       foreach ($sids as $sid) {
         $ev = $V[$sid] ?? []; if (!$ev) continue;
-        $visit = ['sid' => $sid, 'start' => $ev[0]['at'], 'device' => '', 'country' => '', 'source' => '', 'steps' => [], 'end' => 'left', 'load' => null];
+        $visit = ['sid' => $sid, 'start' => $ev[0]['at'], 'device' => '', 'country' => '', 'source' => '', 'steps' => [], 'end' => 'left', 'load' => null, 'shown' => null];
         $done = [];
         foreach ($ev as $r) {
           if ($r['device'] && !$visit['device']) $visit['device'] = $r['device'];
@@ -71,6 +71,7 @@ function fx_visits_data($pdo, $from, $to, $not = '', $paths = 40) {
         for ($i = 0; $i < count($st); $i++) { $end = $st[$i + 1]['at'] ?? $st[$i]['until']; $st[$i]['secs'] = $end ? min(1800, max(0, strtotime($end) - strtotime($st[$i]['at']))) : null; }
         foreach ($T[$sid] ?? [] as $t) {   // each tap, scroll and error goes to the last step on that page that started before it
           if ($t['k'] === 'l') { $visit['load'] ??= (int)$t['ms']; continue; }
+          if ($t['k'] === 'f') { $visit['shown'] ??= (int)$t['ms']; continue; }
           for ($i = count($st) - 1; $i >= 0; $i--) if ($st[$i]['pg'] === $t['pg'] && $st[$i]['at'] <= $t['at']) break;
           if ($i < 0) for ($i = 0; $i < count($st); $i++) if ($st[$i]['pg'] === $t['pg']) break;
           if ($i >= count($st) || $i < 0) continue;
@@ -105,9 +106,10 @@ function fx_insights_write($pdo) {
       $L[] = "==== $title: {$D['visits']} visits ===="; $L[] = '';
       $L[] = 'WHERE PEOPLE LEAVE (page | visits that saw it | left from it | % left | avg time | avg seen down the page | % reached the bottom)';
       foreach ($D['leave'] as $r) $L[] = sprintf('%s | %d | %d | %d%% | %s | %s | %s', fx_pg_name($r['pg'], $names), $r['seen'], $r['left_n'], $r['seen'] ? round(100 * $r['left_n'] / $r['seen']) : 0, fx_secs($r['secs']), $r['pc'] !== null ? $r['pc'] . '%' : '–', $r['bottom'] !== null ? $r['bottom'] . '%' : '–');
-      $L[] = ''; $L[] = 'HOW FAST THE SITE OPENED (device | page loads | average | slower than 3 s)';
-      foreach ($D['speed'] as $dv => $r) $L[] = sprintf('%s | %d | %.1fs | %d%%', $dv, $r['n'], $r['avg_ms'] / 1000, round(100 * $r['slow'] / max(1, $r['n'])));
-      if (!$D['speed']) $L[] = '(none)';
+      foreach (['FIRST SCREEN SHOWN (what the shopper feels)' => 'shown', 'HOW FAST THE SITE OPENED (everything loaded)' => 'speed'] as $h => $key) {
+        $L[] = ''; $L[] = "$h (device | page loads | average | slower than 3 s)";
+        foreach ($D[$key] ?? [] as $dv => $r) $L[] = sprintf('%s | %d | %.1fs | %d%%', $dv, $r['n'], $r['avg_ms'] / 1000, round(100 * $r['slow'] / max(1, $r['n'])));
+        if (empty($D[$key])) $L[] = '(none)'; }
       $L[] = ''; $L[] = 'ERRORS ON THE PAGE (page | error | people | times)';
       foreach ($D['errors'] as $r) $L[] = sprintf('%s | %s | %d | %d', fx_pg_name($r['pg'], $names), $r['label'], $r['people'], $r['n']);
       if (!$D['errors']) $L[] = '(none)';
@@ -118,7 +120,7 @@ function fx_insights_write($pdo) {
       }
       $L[] = ''; $L[] = 'NEWEST VISITS, STEP BY STEP';
       foreach ($D['paths'] as $v) {
-        $L[] = date('d/m H:i', strtotime($v['start'])) . ' · ' . ($v['device'] ?: '?') . ' · ' . ($v['country'] ?: '?') . ' · from ' . ($v['source'] ?: '?') . ($v['load'] ? ' · opened in ' . round($v['load'] / 1000, 1) . 's' : '') . ' · ' . fx_visit_end($v['end']);
+        $L[] = date('d/m H:i', strtotime($v['start'])) . ' · ' . ($v['device'] ?: '?') . ' · ' . ($v['country'] ?: '?') . ' · from ' . ($v['source'] ?: '?') . ($v['shown'] ? ' · showed in ' . round($v['shown'] / 1000, 1) . 's' : '') . ($v['load'] ? ' · opened in ' . round($v['load'] / 1000, 1) . 's' : '') . ' · ' . fx_visit_end($v['end']);
         foreach ($v['steps'] as $s) {
           $taps = array_map(fn($t) => ($t['dead'] ? '(not a button) ' : '') . $t['l'] . ($t['rage'] ? ' [angry]' : ''), $s['taps']);
           $L[] = '   ' . fx_pg_name($s['pg'], $names) . ' · ' . fx_secs($s['secs']) . ($s['pc'] !== null ? ' · seen ' . $s['pc'] . '%' : '') . ($taps ? ' · tapped: ' . implode(', ', array_slice($taps, 0, 12)) . (count($taps) > 12 ? ' …' : '') : '');

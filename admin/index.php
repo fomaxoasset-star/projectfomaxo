@@ -3351,7 +3351,7 @@ if (isset($_GET['analytics'])) {
         $steps[] = '<li><b>' . h(fx_pg_name($st['pg'], $names)) . '</b><span class="muted">' . fx_secs($st['secs']) . ($st['pc'] !== null ? ' · seen ' . (int)$st['pc'] . '%' : '') . '</span>'
                  . ($taps ? '<span class="vt">' . implode('', $taps) . (count($st['taps']) > 8 ? '<i class="more">+' . (count($st['taps']) - 8) . '</i>' : '') . '</span>' : '') . '</li>';
       }
-      $paths .= '<li class="vv"><div class="vh"><span class="vd">' . h(date('d M, H:i', strtotime($v['start']))) . '</span><span class="muted">' . h($devIc[$v['device']] ?? 'Other') . ($v['country'] ? ' · ' . fomaxo_flag($v['country']) . ' ' . h($v['country']) : '') . ($v['source'] ? ' · ' . h($v['source']) : '') . ($v['load'] ? ' · opened in ' . h(number_format($v['load'] / 1000, 1)) . 's' : '') . '</span>'
+      $paths .= '<li class="vv"><div class="vh"><span class="vd">' . h(date('d M, H:i', strtotime($v['start']))) . '</span><span class="muted">' . h($devIc[$v['device']] ?? 'Other') . ($v['country'] ? ' · ' . fomaxo_flag($v['country']) . ' ' . h($v['country']) : '') . ($v['source'] ? ' · ' . h($v['source']) : '') . (!empty($v['shown']) ? ' · showed in ' . h(number_format($v['shown'] / 1000, 1)) . 's' : '') . ($v['load'] ? ' · ' . (!empty($v['shown']) ? 'all loaded ' : 'opened in ') . h(number_format($v['load'] / 1000, 1)) . 's' : '') . '</span>'
               . '<span class="lpill ve ' . ($endCls[$v['end']] ?? '') . '">' . h(fx_visit_end($v['end'])) . '</span></div><ol class="vs">' . implode('', $steps) . '</ol></li>';
     }
     $vjPanes = ['vpaths' => 'Visits step by step', 'vleave' => 'Where people leave', 'vtaps' => 'What people tap'];
@@ -3664,7 +3664,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
   if (($p = $devR['phone'] ?? null) && ($c = $devR['computer'] ?? null) && $p['visits'] >= 15 && $c['visits'] >= 15 && $pct($c['adds'], $c['visits']) > 0 && $pct($p['adds'], $p['visits']) < $pct($c['adds'], $c['visits']) / 2)
     $tip((int)$p['visits'], 'Phones add to the bag much less than laptops', ['Phone: ' . $pctT($pct($p['adds'], $p['visits'])) . ' of ' . $nf($p['visits']) . ' visits added to bag. Laptop: ' . $pctT($pct($c['adds'], $c['visits'])) . ' of ' . $nf($c['visits']) . '.'],
       'Something on the phone page is harder: a button is low, a popup covers it, or it is slow.', ['Open the product page on your phone and add to bag yourself. Note anything slow or hidden.'], 'fix phone');
-  $sp = $V['speed']['phone'] ?? null;   // how fast the site opens on phones (most visitors)
+  $sp = ($V['shown']['phone']['n'] ?? 0) >= 10 ? $V['shown']['phone'] : ($V['speed']['phone'] ?? null);   // how fast the first screen shows on phones (most visitors); before 'shown' was recorded, how fast everything loaded
   if ($sp && $sp['n'] >= 10 && $pct($sp['slow'], $sp['n']) >= 30)
     $tip((int)$sp['slow'], 'The site opens slowly on many phones', ['On phones the site took <b>' . number_format($sp['avg_ms'] / 1000, 1) . ' s</b> on average to open; <b>' . $nf($sp['slow']) . '</b> of ' . $nf($sp['n']) . ' (' . $pctT($pct($sp['slow'], $sp['n'])) . ') took more than 3 seconds.'],
       'People from ads leave if the page is not ready within about 3 seconds.', ['Open the site on your phone with mobile data (Wi-Fi off) and count the seconds.'], 'make it faster');

@@ -38,10 +38,10 @@ try {
     $device = preg_match('/iPad|Tablet|(Android(?!.*Mobile))/i', $ua) ? 'tablet' : (preg_match('/Mobi|iPhone|Android/i', $ua) ? 'phone' : 'computer');
     $rows = [];
     foreach (array_slice((array)($d['t'] ?? []), 0, 25) as $x) {
-      if (!is_array($x) || !in_array($x['k'] ?? '', ['t', 's', 'l', 'e'], true)) continue;
+      if (!is_array($x) || !in_array($x['k'] ?? '', ['t', 's', 'l', 'f', 'e'], true)) continue;
       $cl = fn($v, $max) => trim(mb_substr(preg_replace('/[\x00-\x1f]+/u', ' ', (string)$v), 0, $max));
       $n = fn($v) => max(0, min(100, (int)$v));
-      $rows[] = [$sid, $vid, $cl($x['p'] ?? '', 80), $x['k'], in_array($x['k'], ['t', 'e'], true) ? $cl($x['l'] ?? '', 60) : '', $n($x['x'] ?? 0), $n($x['y'] ?? 0), $x['k'] === 's' ? $n($x['pc'] ?? 0) : null, empty($x['d']) ? 0 : 1, empty($x['r']) ? 0 : 1, $device, $x['k'] === 'l' ? max(0, min(60000, (int)($x['ms'] ?? 0))) : null];
+      $rows[] = [$sid, $vid, $cl($x['p'] ?? '', 80), $x['k'], in_array($x['k'], ['t', 'e'], true) ? $cl($x['l'] ?? '', 60) : '', $n($x['x'] ?? 0), $n($x['y'] ?? 0), $x['k'] === 's' ? $n($x['pc'] ?? 0) : null, empty($x['d']) ? 0 : 1, empty($x['r']) ? 0 : 1, $device, in_array($x['k'], ['l', 'f'], true) ? max(0, min(60000, (int)($x['ms'] ?? 0))) : null];
     }
     if (!$rows) exit;
     $add = fn() => $pdo->prepare('INSERT INTO fx_trail (at, sid, vid, page, k, label, x, y, pc, dead, rage, device, ms) VALUES ' . implode(',', array_fill(0, count($rows), '(NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')))
