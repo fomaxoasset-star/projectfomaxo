@@ -391,7 +391,7 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
     all.style.cssText = 'font:inherit;font-size:12px;line-height:1.6;color:#b8913a;background:none;border:1px solid currentColor;border-radius:999px;padding:2px 12px;cursor:pointer';
     all.onclick = function () { if (!confirm('Make the preview again for all ' + mkAll.length + ' videos? It runs one by one; keep this page open.')) return;
       all.disabled = true; all.textContent = 'Making All Previews…'; mkAll.forEach(function (r) { if (!r._mk.disabled) r._mk.click(); }); };
-    var tools = document.querySelector('.vtools'); if (tools) tools.insertBefore(all, tools.firstChild); else { wrap.appendChild(all); box.parentNode.insertBefore(wrap, box); }
+    var tools = document.querySelector('.vmore>div'); if (tools) tools.appendChild(all); else { wrap.appendChild(all); box.parentNode.insertBefore(wrap, box); }
   }
   /* a way that hangs (some Mac Safari videos never finish in the fast way) is given up after a while, so the next way or the next video goes on */
   var limit = function (p, ms, stop) { var t; return Promise.race([p, new Promise(function (ok) { t = setTimeout(function () { try { stop && stop(); } catch (e) {} ok(null); }, ms); })]).then(function (r) { clearTimeout(t); return r; }); };
