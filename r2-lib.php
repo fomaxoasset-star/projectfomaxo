@@ -110,6 +110,7 @@ function fx_video_tidy($pdo, bool $now = false): array {
   foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (is_array($v)) foreach (['file', 'prev', 'hq', 'orig'] as $k)
     if (preg_match('~^vid/([a-z0-9-]+\.(?:mp4|mov|webm))$~', (string)($v[$k] ?? ''), $m)) $keep[$m[1]] = true;
   if (!$keep) return is_array($last) ? $last : [];   // an empty or unreadable list: never wipe everything
+  $keep['dollar-10db6808.mp4'] = $keep['oldmoney-bff8e026.webm'] = true;   // part of the code itself (GitHub), the update would bring them back
   $old = time() - 3600; $hn = 0; $hb = 0; $cn = 0; $cb = 0;
   foreach ([fx_media('vid'), __DIR__ . '/assets/vid'] as $d) foreach (glob("$d/*") ?: [] as $p) {
     $b = basename($p); if (isset($keep[$b]) || !preg_match('~^[a-z0-9-]+\.(?:mp4|mov|webm|tmp)$~', $b)) continue;
