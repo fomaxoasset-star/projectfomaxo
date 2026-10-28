@@ -2467,8 +2467,8 @@ html[lang=ar] .lang-sw{font-family:"Jost",Arial,sans-serif;letter-spacing:.08em}
 .vt::after{content:"";position:absolute;inset:auto 0 0;height:48%;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,0));pointer-events:none}
 .vt-by{position:absolute;top:0;left:0;right:0;z-index:1;padding:12px 48px 44px 10px;background:linear-gradient(rgba(0,0,0,.85),rgba(0,0,0,.5) 50%,transparent);pointer-events:none;display:flex;align-items:center;gap:6px;min-width:0;font-size:12.5px;font-weight:500;letter-spacing:.04em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}.vt-by svg{width:16px;height:16px;flex:none;color:#f0d3a0}.vt-by bdi{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* product page: the name of the person in the video */
 .rl-by{padding:calc(23px + env(safe-area-inset-top)) 66px 64px 66px;font-size:15px;gap:8px}.rl-by svg{width:20px;height:20px}@media(min-width:760px){.rl-by{padding:16px 16px 64px}}   /* the same name in the full-screen player, at the top of the video (phone: between the sound and close buttons) */
-.vt-play{position:absolute;top:10px;right:10px;z-index:1;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);border:1px solid rgba(240,211,160,.5);color:#f0d3a0}
-.vt-play svg{width:12px;height:12px;margin-left:2px}
+.vt-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);border:1px solid rgba(240,211,160,.5);color:#f0d3a0}
+.vt-play svg{width:20px;height:20px;margin-left:3px}   /* big play button in the middle until the preview plays: shoppers see at once these are videos (AJAY 28/10/2026) */
 .vt.playing .vt-play{opacity:0;transition:opacity .4s}
 video::-webkit-media-controls,video::-webkit-media-controls-panel,video::-webkit-media-controls-overlay-enclosure,video::-webkit-media-controls-overlay-play-button,video::-webkit-media-controls-start-playback-button{display:none!important;-webkit-appearance:none;opacity:0!important}   /* no Safari pause / play button over the videos */
 .vt-p{position:absolute;left:10px;right:10px;bottom:10px;z-index:1;display:flex;align-items:center;gap:8px;min-width:0}
@@ -5988,7 +5988,7 @@ function vidSecHTML(){
   const l = rowVids(); if (!l.length) return '';
   return `<div class="wrap">${(vidPage() ? secHead('Watch &amp; shop', 'Review <em class="metal">videos</em>', '', false) : secHead('Watch &amp; shop', 'Shop the <em class="metal">video</em>', '', false)).replace(/<\/div>$/, '<span class="recs-nav vr-nav" hidden><button type="button" data-vscroll="-1" aria-label="Previous videos">‹</button><button type="button" data-vscroll="1" aria-label="More videos">›</button></span></div>')}
     <div class="eg-w"><div class="vrow${vidPage() ? ' pp' : ''}" id="vrow">${l.map((v, i) => { const ps = vidProds(v), p = v.sn && !vidPage() ? null : P[ps[0]], s = p && defaultSize(p); return `<button class="vt${v.wd ? ' wide' : ''}${vidPoster(v) ? '' : ' np'}" type="button" data-vi="${i}" aria-label="${p ? esc(p.name) : v.w ? esc(v.w) : 'FOMAXO'} video">
-      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `${v.pv ? `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" autoplay muted playsinline loop preload="none" poster="${vidPoster(v)}"${vidXO(v.pv || v.v)} data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : v.v)}"></video>` : ''}${vidPoster(v) ? `<img class="vt-pic" src="${vidPoster(v)}" alt="" loading="lazy">` : ''}`}
+      ${v.e ? `<img class="vt-img" src="${vidPoster(v)}" alt="" loading="lazy">` : `${v.pv ? `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" autoplay muted playsinline loop preload="none" data-poster="${vidPoster(v)}"${vidXO(v.pv || v.v)} data-src="${esc((v.pv || v.v).startsWith('vid/') ? 'assets/' + (v.pv || v.v) : (v.pv || v.v))}"></video>` : ''}${vidPoster(v) ? `<img class="vt-pic" src="${vidPoster(v)}" alt="" loading="lazy">` : ''}`}
       ${v.n && vidPage() ? `<span class="vt-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}<span class="vt-play" aria-hidden="true">${VI.play}</span>
       ${p ? `<span class="vt-p${v.w ? ' has-w' : ''}">${v.w ? `<i class="vt-w">${esc(v.w)}</i>` : ''}<img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now${ps.length ? ` · + ${ps.length} more` : ''}</i></span></span>`}</button>`; }).join('')}</div></div></div>`;
 }
@@ -6043,6 +6043,7 @@ function bindVids(){
   tiles.forEach(t => t.onclick = () => openReel(+t.dataset.vi));
   tiles.forEach(t => { const v = $('video', t); if (v) { v.addEventListener('playing', () => t.classList.add('playing')); v.addEventListener('playing', () => vidLit(v, () => t.classList.add('shown'))); v.addEventListener('emptied', () => t.classList.remove('shown')); v.addEventListener('pause', () => { v.dataset.pev = (+v.dataset.pev || 0) + 1; t.classList.remove('playing'); }); } });
   const onScreen = t => { const r = t.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0; };
+  const cover = v => { if (v.dataset.poster) { v.poster = v.dataset.poster; delete v.dataset.poster; } };   // a tile's cover goes on its video only when that preview starts loading (the tile's own photo shows until then): all 41 at once held the previews back on phone internet
   let kicks = 0; const kick = setInterval(() => {   // for the first 12 seconds: any video on screen that is still paused is started again (some Safari versions drop the first start)
     if (++kicks > 6 || !document.contains(tiles[0])) return clearInterval(kick);
     tiles.forEach(t => { const v = $('video', t); if (v && v.paused && v.getAttribute('src') && !held && !slow && !$('#reel') && onScreen(t)) { v.muted = true; v.play().then(() => { v.dataset.kick = 'ok'; t.classList.add('playing'); }).catch(e => { v.dataset.kick = e.name; }); } });
@@ -6050,22 +6051,22 @@ function bindVids(){
   const row = $('#vrow'), nav = $('.vr-nav');   // laptop: arrows when the videos are wider than the page
   edgeArrows(row);   // and round arrows on the left and right of the row (phone and laptop)
   if (nav) { const fit = () => { nav.hidden = row.scrollWidth <= row.clientWidth + 2; }; fit(); addEventListener('resize', fit, {passive: true}); $$('[data-vscroll]', nav).forEach(b => b.onclick = () => rowStep(row, +b.dataset.vscroll)); }
-  /* light on the page: a tile loads its small preview only when it is on screen and the page has finished loading, at most 2 at a time;
+  /* light on the page: a tile loads its small preview as soon as it is on screen (or about to be), at most 4 at a time;
      a tile without a preview keeps its photo (the full video loads only in the player); a browser that holds back autoplay downloads nothing until the first tap or click */
-  let held = false, slow = false, ready = document.readyState === 'complete'; const wait = new Set();
+  let held = false, slow = false, ready = true; const wait = new Set();   // no waiting for the whole page to load: an on-screen preview starts at once (AJAY 28/10/2026)
   const busy = () => tiles.filter(t => { const v = $('video', t); return v && v.getAttribute('src') && v.readyState < 3 && !v.error; }).length;
-  const pump = () => wait.forEach(t => { if (busy() < 2) { wait.delete(t); if (onScreen(t)) run(t, true); } });
+  const pump = () => wait.forEach(t => { if (busy() < 4) { wait.delete(t); if (onScreen(t)) run(t, true); } });
   const stop = v => { v.pause(); v.removeAttribute('src'); v.load(); };
   const hold = () => { held = true; tiles.forEach(x => { const w = $('video', x); if (w && w.readyState < 2 && w.getAttribute('src')) stop(w); }); wait.clear(); };
   const run = (t, on) => { const v = $('video', t); if (!v) return;
     if (on) { if (held || slow || !ready || $('#reel')) return;
-      if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(t); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true}));
+      if (!v.getAttribute('src')) { if (busy() >= 4) { wait.add(t); return; } cover(v); v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true}));
       }   // no 'too slow' cut-off: on any connection the previews keep loading and play when ready (AJAY 28/10/2026: previews on every connection and browser)
       v.play().then(() => t.classList.add('playing')).catch(e => { v.dataset.pe = e.name; if (e.name !== 'NotAllowedError') return;
         if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => t.classList.add('playing')).catch(() => hold()), {once: true}); return; }   // Safari can refuse to start a preview that is not loaded yet: it tries again once loaded, and only then holds back
         hold(); });
     } else { wait.delete(t); if (!v.paused) { v.pause(); v.dataset.pz = (+v.dataset.pz || 0) + 1; t.classList.remove('playing'); } if (v.readyState < 2 && v.getAttribute('src')) { stop(v); pump(); } } };
-  if (!ready) addEventListener('load', () => { ready = true; tiles.forEach(t => onScreen(t) && run(t, true)); }, {once: true});
+  tiles.forEach((t, i) => { const v = $('video', t); if (v && tiles[i + 1]) v.addEventListener('playing', () => warm(tiles[i + 1]), {once: true}); });   // a playing preview gets the next one along the row ready
   const again = () => { held = false; tiles.forEach(t => { const r = t.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0 && r.left < innerWidth && r.right > 0) run(t, true); }); };   // a phone that held back autoplay (iPhone Low Power Mode) plays them at the first touch
   ['touchend', 'pointerdown', 'keydown'].forEach(ev => addEventListener(ev, again, {once: true, passive: true}));   // a laptop or phone that held back autoplay (Low Power Mode, Safari's Auto-Play setting) starts them on the first tap, click or key
   const report = () => { try {   // 4 seconds after the row first comes on screen: report how each video is doing (vlog.php), to look into videos that will not play
@@ -6075,14 +6076,13 @@ function bindVids(){
   let told = false;
   vrIO = new IntersectionObserver(es => es.forEach(e => { run(e.target, e.isIntersecting); if (e.isIntersecting && !told) { told = true; setTimeout(report, 4000); } }), {rootMargin: '0px'});   // a video plays, muted, while its tile is on screen; off screen it pauses (and stops loading)
   tiles.forEach(t => vrIO.observe(t));
-  /* after the first scroll: a tile about half a screen away already loads its small preview (same 2 at a time, same address),
+  /* a tile about half a screen away already loads its small preview (same 4 at a time, same address),
      so it is ready and plays at once when it comes on screen */
   const wq = new Set(), warm = t => { const v = $('video', t); if (!v || v.getAttribute('src') || held || slow || !ready || $('#reel')) return;
-    if (busy() >= 2) { wq.add(t); return; } wq.delete(t);
-    v.preload = 'auto'; v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, () => { pump(); wq.forEach(warm); }, {once: true})); };
-  addEventListener('scroll', () => { if (vrNear || !document.contains(tiles[0])) return;
-    vrNear = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) wq.delete(e.target); else if (!onScreen(e.target)) warm(e.target); }), {rootMargin: '50% 0px'});
-    tiles.forEach(t => vrNear.observe(t)); }, {once: true, passive: true});
+    if (busy() >= 4) { wq.add(t); return; } wq.delete(t);
+    cover(v); v.preload = 'auto'; v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, () => { pump(); wq.forEach(warm); }, {once: true})); };
+  vrNear = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) wq.delete(e.target); else if (!onScreen(e.target)) warm(e.target); }), {rootMargin: '50% 0px'});
+  tiles.forEach(t => vrNear.observe(t));
 }
 function renderVids(){ const el = $('#vidSec'); if (!el) return; const h = vidSecHTML(); el.innerHTML = h; el.hidden = !h; $$('.rv-up', el).forEach(x => x.classList.add('in')); bindVids(); vStrip(); }
 /* phone product page: the same Review videos as small upright cards just above the product photo (AJAY 2026-10-21, option 1 with cards).
@@ -6110,11 +6110,11 @@ function vsBind(){
   const cs = $$('#vStrip .vs-c').filter(c => $('video', c)); if (!cs.length) return;   // previews play on every connection (AJAY 28/10/2026)
   let held = false; const wait = new Set();
   const busy = () => cs.filter(c => { const v = $('video', c); return v.getAttribute('src') && v.readyState < 3 && !v.error; }).length;
-  const pump = () => wait.forEach(c => { if (busy() < 2) { wait.delete(c); run(c, true); } });
+  const pump = () => wait.forEach(c => { if (busy() < 4) { wait.delete(c); run(c, true); } });
   const run = (c, on) => { const v = $('video', c);
     if (!on) { wait.delete(c); v.pause(); return; }
     if (held || $('#reel')) return;
-    if (!v.getAttribute('src')) { if (busy() >= 2) { wait.add(c); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true})); }
+    if (!v.getAttribute('src')) { if (busy() >= 4) { wait.add(c); return; } v.src = v.dataset.src; ['canplay', 'error'].forEach(ev => v.addEventListener(ev, pump, {once: true})); }
     v.play().then(() => vidLit(v, () => c.classList.add('playing'))).catch(e => { if (e.name !== 'NotAllowedError') return; if (v.readyState < 3 && !v._re) { v._re = 1; v.preload = 'auto'; v.addEventListener('canplay', () => v.play().then(() => vidLit(v, () => c.classList.add('playing'))).catch(() => { held = true; wait.clear(); }), {once: true}); return; } held = true; wait.clear(); }); };   // Safari: one more try once loaded
   const go = () => { if (!document.contains(cs[0])) return; vsIO = new IntersectionObserver(es => es.forEach(e => run(e.target, e.isIntersecting))); cs.forEach(c => vsIO.observe(c)); };
   const later = () => setTimeout(go, 3000);   // 3 seconds after the page has loaded: the photo, prices and Add to bag get the connection first
