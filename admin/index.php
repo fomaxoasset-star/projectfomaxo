@@ -274,12 +274,13 @@ table.mini th{position:sticky;top:0;background:var(--panel)}
 @media (min-width:760px) and (max-height:540px){main.fit:has(>.db.an){display:block;overflow:auto}main.fit>.db.an{height:auto;min-height:0}.an .agrid{flex:none;height:auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:290px 290px 290px 230px 320px 360px;grid-template-areas:"funnel visitors" "products sources" "countries emirates" "devices devices" "pages pages" "left left"}.agrid>.a-devices{display:flex}.an .agrid>.a-pages,.an .agrid>.a-products{display:flex!important}.an .agrid .a-pages{grid-area:pages}.an .agrid .a-sources{grid-area:sources;display:flex!important}.an .agrid>.card>.ch>h2{display:block!important}.pswap{display:none}.tiles.at{grid-template-columns:repeat(4,1fr)}.tiles.at .tile:last-child{grid-column:auto}}
 /* Analytics → Conversion: five reports, same look as the overview (laptop: one screen, 3 columns; phone: one section at a time) */
 .aview a{cursor:pointer}.ctab td b,.mtab td b{font-weight:600}.c-prod,.c-multi,.c-camp{container-type:inline-size}.c-drop .fun li.fx table{margin-top:2px}.c-scroll .fun li{padding:3px 0}.c-camp .cn{display:block;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
-@media (min-width:760px){.agrid.cv{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.15fr);grid-template-areas:"cprod cdrop ccamp" "cmulti cmulti cscroll"}
-  .c-prod{grid-area:cprod}.c-drop{grid-area:cdrop}.c-camp{grid-area:ccamp}.c-multi{grid-area:cmulti}.c-scroll{grid-area:cscroll}.agrid.cv>.card{display:flex}}
+@media (min-width:760px){.agrid.cv{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.15fr);grid-template-areas:"cprod cdrop ccamp" "cmulti ccart cscroll"}
+  .c-prod{grid-area:cprod}.c-drop{grid-area:cdrop}.c-camp{grid-area:ccamp}.c-multi{grid-area:cmulti}.c-cart{grid-area:ccart}.c-scroll{grid-area:cscroll}.agrid.cv>.card{display:flex}}
 @container (max-width:420px){.ctab th:nth-child(5),.ctab td:nth-child(5),.mtab th:nth-child(3),.mtab td:nth-child(3),.mtab th:nth-child(5),.mtab td:nth-child(5){display:none}}
 @media (max-width:759px){.aview{display:flex;width:100%;padding:0;gap:0;border-radius:8px;overflow:hidden}.aview a{flex:1;text-align:center;font-size:13px;font-weight:600;padding:7px 0;border-radius:0;color:var(--ink)}.aview a.on{background:var(--gold);color:var(--gold-ink)}.aview a+a{border-left:1px solid var(--line)}
-  .cvpick button:nth-child(n+4){border-bottom:0}.cvpick button:last-child{grid-column:span 2;border-right:0}}
-@media (min-width:760px) and (max-height:540px){.an .agrid.cv{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:330px 330px 300px;grid-template-areas:"cprod cdrop" "ccamp cscroll" "cmulti cmulti"}}
+  .cvpick button:nth-child(n+4){border-bottom:0}}
+@media (min-width:760px) and (max-height:540px){.an .agrid.cv{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:330px 330px 300px;grid-template-areas:"cprod cdrop" "ccamp cscroll" "cmulti ccart"}}
+.c-cart .ch{gap:8px}.c-cart .vtot{flex:none;margin-left:auto;font-size:12.5px;font-weight:600;color:var(--gold)}.actab td b{font-weight:600}
 /* Analytics → Visits: visits step by step, where people leave, what people tap (laptop: one screen; phone: one section at a time) */
 .vlist{list-style:none;margin:0;padding:0}.vv{padding:9px 2px;border-bottom:1px solid var(--line)}.vv:last-child{border-bottom:0}
 .vh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;margin-bottom:6px}.vd{font-weight:600}.ve{margin-left:auto;color:var(--muted)}.ve.ok{color:var(--ok,#6fbf73)}.ve.hot{color:var(--gold)}.ve.bad{color:var(--bad)}
@@ -3262,7 +3263,17 @@ if (isset($_GET['analytics'])) {
       }
     } catch (Throwable $e) {}
 
-    $cvPanes = ['cprod' => 'Products', 'cdrop' => 'Checkout', 'ccamp' => 'Campaigns', 'cmulti' => 'Multi-buy', 'cscroll' => 'Homepage scroll'];
+    /* 6. people who added to bag, by country (the country is noted on the first page of each visit) */
+    require_once dirname(__DIR__) . '/geo-lib.php';   // fomaxo_flag() and country names
+    $acRows = []; $acUnk = 0;
+    foreach ($q("SELECT (SELECT g.country FROM fx_events g WHERE g.sid = c.sid AND g.country IS NOT NULL LIMIT 1) cc, COUNT(DISTINCT c.vid) n
+                 FROM fx_events c WHERE c.ev = 'cart' AND c.at BETWEEN ? AND ?$notTrash GROUP BY 1 ORDER BY n DESC, cc") as $row)
+      if ($row['cc']) $acRows[] = ['c' => $row['cc'], 'n' => (int)$row['n']]; else $acUnk += (int)$row['n'];
+    $acTot = array_sum(array_column($acRows, 'n')) + $acUnk; $acT = '';
+    $acRow = fn($name, $n) => '<tr><td><b>' . $name . '</b></td><td class="num"><b>' . number_format($n) . '</b></td><td class="num muted">' . $pctT($pct($n, $acTot)) . '</td></tr>';
+    foreach ($acRows as $row) $acT .= $acRow(fomaxo_flag($row['c']) . ' ' . h(fomaxo_country_name($row['c'])), $row['n']);
+    if ($acUnk) $acT .= $acRow('<span class="muted">Not known</span>', $acUnk);
+    $cvPanes = ['cprod' => 'Products', 'cdrop' => 'Checkout', 'ccamp' => 'Campaigns', 'cmulti' => 'Multi-buy', 'ccart' => 'Bag by country', 'cscroll' => 'Homepage scroll'];
     $cvGrid = '<nav class="apick cvpick" role="tablist">' . implode('', array_map(fn($k, $l) => '<button type="button" data-p="' . $k . '"' . ($k === 'cprod' ? ' class="on"' : '') . '>' . $l . '</button>', array_keys($cvPanes), $cvPanes)) . '</nav>'
       . '<div class="dgrid agrid cv">'
       . '<section class="card c-prod on" data-p="cprod"><div class="ch"><h2>Products: viewed → bag → bought</h2></div>'
@@ -3276,6 +3287,8 @@ if (isset($_GET['analytics'])) {
       . '<section class="card c-multi" data-p="cmulti"><div class="ch"><h2>Multi-buy offer</h2><span class="val">' . ($extra > 0 ? '+AED ' . number_format(round($extra)) : '') . '</span></div>'
       . ($orders ? '<div class="list"><table class="mini mtab"><thead><tr><th>Offer</th><th class="num">Orders</th><th class="num">Items</th><th class="num">Avg. order</th><th class="num">Discount</th><th class="num">Extra</th></tr></thead><tbody>' . $mbT . '</tbody></table></div>'
                  . '<p class="muted small gnote">' . $pctT($pct($mbN, count($orders))) . ' of orders used the offer. Extra: how much more those orders brought than the same number of one-item orders' . ($base !== null ? ' (AED ' . number_format(round($base)) . ' each)' : '') . '.</p>' : '<p class="muted empty">No orders in these dates.</p>') . '</section>'
+      . '<section class="card c-cart" data-p="ccart"><div class="ch"><h2>Added to bag by country</h2>' . ($acTot ? '<span class="vtot">' . number_format($acTot) . ' ' . ($acTot === 1 ? 'person' : 'people') . '</span>' : '') . '</div>'
+      . ($acT ? '<div class="list"><table class="mini ltab2 actab"><thead><tr><th>Country</th><th class="num">People</th><th class="num">Share</th></tr></thead><tbody>' . $acT . '</tbody></table></div><p class="muted small gnote">People who added a perfume to the bag in these dates, by the country they visited from.</p>' : '<p class="muted empty">Nobody added to the bag in these dates.</p>') . '</section>'
       . '<section class="card c-scroll" data-p="cscroll"><div class="ch"><h2>Homepage scroll</h2></div>'
       . ($home ? '<ul class="list fun">' . $sc . '</ul>' : '<p class="muted empty">No homepage visits counted yet.</p>') . '<p class="muted small gnote">' . $cvNote . '</p></section>'
       . '</div>';
