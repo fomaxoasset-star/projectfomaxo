@@ -5991,7 +5991,7 @@ function vidSecHTML(){
       ${v.n && vidPage() ? `<span class="vt-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}<span class="vt-play" aria-hidden="true">${VI.play}</span>
       ${p ? `<span class="vt-p${v.w ? ' has-w' : ''}">${v.w ? `<i class="vt-w">${esc(v.w)}</i>` : ''}<img src="${SM(imgFor(p, s))}" alt="" loading="lazy"><span><b>${esc(p.name)}</b>${ps.length > 1 ? `<i class="vt-more">+ ${ps.length - 1} more</i>` : priceHTML(p, s)}</span></span>` : `<span class="vt-p vt-shop"><span><b>${v.w ? esc(v.w) : 'FOMAXO'}</b><i class="vt-more">Shop now${ps.length ? ` · + ${ps.length} more` : ''}</i></span></span>`}</button>`; }).join('')}</div></div></div>`;
 }
-let vrIO = null, vrNear = null;
+let vrIO = null, vrNear = null, vrSec = null, vrHTML = null;   // vrSec / vrHTML: the video row on the page and the videos it was drawn from
 /* a sideways video row also gets a round arrow on its left and one on its right (phone and laptop, next to the ‹ › above it; AJAY 2026-10-25): each moves one screen of videos that way.
    From the first videos a move back (arrow or finger) jumps to the last ones, and from the end a move on jumps back to the first (AJAY 2026-10-25: "from first, swipe both sides"); the jump is instant, so the videos in between never load */
 function rowStep(sc, d){ const m = sc.scrollWidth - sc.clientWidth, rtl = getComputedStyle(sc).direction === 'rtl', lo = rtl ? -m : 0, hi = rtl ? 0 : m, x = sc.scrollLeft;   // d: -1 left, 1 right (as the arrows point)
@@ -6048,6 +6048,9 @@ function vsWatch(v){ if (v._vs) return; v._vs = 1; const t0 = performance.now();
   const iv = setInterval(() => { if (!document.contains(v) || (v.paused && st >= 0) || performance.now() - t0 > 15000) fin(); }, 500);
   addEventListener('pagehide', fin, {once: true}); }
 function bindVids(){
+  const sec = $('#vidSec'), h = vidSecHTML();
+  if (quietRoute && sec && vrSec && sec !== vrSec && h === vrHTML && !document.contains(vrSec)) { sec.replaceWith(vrSec); return; }   // the page drawn again in place with the same videos: the row that is already playing stays (it used to start every preview again, AJAY 28/10/2026)
+  vrSec = sec; vrHTML = h;
   vrIO && vrIO.disconnect(); vrIO = null; vrNear && vrNear.disconnect(); vrNear = null;
   loopRow($('#vrow'));
   const tiles = $$('#vrow .vt'); if (!tiles.length) return;
@@ -6099,7 +6102,8 @@ function bindVids(){
   vrNear = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) wq.delete(e.target); else if (!onScreen(e.target)) warm(e.target); }), {rootMargin: '50% 0px'});
   tiles.forEach(t => vrNear.observe(t));
 }
-function renderVids(){ const el = $('#vidSec'); if (!el) return; const h = vidSecHTML(); el.innerHTML = h; el.hidden = !h; $$('.rv-up', el).forEach(x => x.classList.add('in')); bindVids(); vStrip(); }
+function renderVids(){ const el = $('#vidSec'); if (!el) return; const h = vidSecHTML(); if (el === vrSec && h === vrHTML) return;   // the video list changed in ways the row does not show: the previews keep playing
+  el.innerHTML = h; el.hidden = !h; $$('.rv-up', el).forEach(x => x.classList.add('in')); bindVids(); vStrip(); }
 /* phone product page: the same Review videos as small upright cards just above the product photo (AJAY 2026-10-21, option 1 with cards).
    Covers only: no video loads until a card is tapped, which opens the same player. Laptop has no strip (the Review videos row lower down stays on both). */
 let vsMQ = null;
