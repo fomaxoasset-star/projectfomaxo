@@ -37,4 +37,4 @@ $html = preg_replace('#<body>#', '<body>' . $q($text), $html, 1);
 
 header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: ' . ($ar ? 'no-cache' : 'public, max-age=300'));
-echo $html;
+echo fomaxo_lean_page($html);   // without the code notes (lean-lib.php)
