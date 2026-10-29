@@ -1,7 +1,14 @@
 <?php
-/* FOMAXO — the home page for an Arabic link (fomaxo.com/?lang=ar, .htaccess sends it here). Sends the normal website (index.html,
+/* FOMAXO — the home page (fomaxo.com/, .htaccess sends it here) and the home page for an Arabic link (fomaxo.com/?lang=ar). Sends the normal website (index.html,
    looks exactly the same) with Arabic words in the link preview, so a link shared from the Arabic site shows Arabic on WhatsApp and Instagram.
    Google gets an Arabic title and description here, and the Arabic and English home pages point to each other (hreflang). */
+if (($_GET['lang'] ?? '') !== 'ar') {   // the plain home page (fomaxo.com/): index.html as it is, only without its code notes (lean-lib.php)
+  require __DIR__ . '/lean-lib.php';
+  header('Content-Type: text/html; charset=utf-8');
+  header('Cache-Control: no-cache');
+  fomaxo_send_page((string)@file_get_contents(__DIR__ . '/index.html'));
+  exit;
+}
 require __DIR__ . '/seo-lib.php';
 
 $html = (string)@file_get_contents(__DIR__ . '/index.html');

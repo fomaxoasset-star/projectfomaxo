@@ -27,6 +27,8 @@ RewriteRule ^media/r/([a-f0-9]{16}-\d\.jpg)$ reviews.php?photo=$1 [L]
 # the home page as an Arabic link (fomaxo.com/?lang=ar): same page, Arabic words in the WhatsApp / Instagram preview
 RewriteCond %{QUERY_STRING} (^|&)lang=ar(&|$)
 RewriteRule ^(index\.html)?$ home.php [L,QSA]
+# the home page itself goes through home.php too: the same index.html, sent without its code notes (about 30 KB less, lean-lib.php)
+RewriteRule ^(index\.html)?$ home.php [L,QSA]
 
 # product addresses for Google: fomaxo.com/fomaxo-gold → product.php; fomaxo.com/sitemap.xml → sitemap.php
 RewriteRule ^sitemap\.xml$ sitemap.php [L]
