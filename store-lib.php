@@ -32,6 +32,7 @@ function fomaxo_price_order($in) {
   if (!$lines || count($lines) > 30) return ['error' => 'Your bag is empty.'];
 
   $count = 0; $hasMini = false;
+  $capName = is_array($in['customer'] ?? null) && is_string($in['customer']['name'] ?? null) ? $in['customer']['name'] : '';   // the owner name lifts the per item limit
   foreach ($lines as $l) {
     $lid = $l['id'] ?? '';
     if (!in_array($lid, $MB_EXCLUDE, true)) $count += max(0, (int)($l['qty'] ?? 0));
@@ -46,7 +47,7 @@ function fomaxo_price_order($in) {
     $qty = (int)($l['qty'] ?? 0);
     if (!isset($CATALOG[$id]) || !isset($CATALOG[$id]['prices'][$opt]) || $qty < 1)
       return ['error' => 'An item in your bag is no longer available. Please refresh and try again.'];
-    if ($qty > fomaxo_max_per_item()) return ['error' => 'You can order up to ' . fomaxo_max_per_item() . ' of one item online. For a bigger order, please message us on WhatsApp.'];   // same limit as the bag
+    if ($qty > fomaxo_item_cap($capName)) return ['error' => 'You can order up to ' . fomaxo_item_cap($capName) . ' of one item online. For a bigger order, please message us on WhatsApp.'];   // same limit as the bag
     $p = $CATALOG[$id];
     $isSet = $p['kind'] === 'set';
     $name = "FOMAXO {$p['name']} — " . ($isSet ? "Set of $opt" : "{$opt}ml");

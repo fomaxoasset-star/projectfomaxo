@@ -8,19 +8,23 @@ header('Content-Type: application/json');
 header('Cache-Control: no-cache');   // asked again on every page load, so a stock count saved on admin shows straight away; "not changed" when nothing changed
 header('X-LiteSpeed-Cache-Control: no-cache');
 require __DIR__ . '/orders-lib.php';
+/* POST {own: full name}: when it is the admin → Stocks "No limit name", every size goes up to its stock (up to 999). Wrong names get the normal answer. */
+$own = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') { $b = json_decode(file_get_contents('php://input'), true); $own = is_array($b) && is_string($b['own'] ?? null) && fomaxo_is_owner($b['own']); }
+$per = $own ? 999 : fomaxo_max_per_item();
 $out = []; $max = [];
 $pdo = fomaxo_db();
 if ($pdo) {
   try {
     foreach (fomaxo_stock_map($pdo) as $k => $n) {
       [$id, $opt] = explode('|', $k, 2);
-      if ($n < fomaxo_max_per_item()) $max[$id][$opt] = max(0, $n);
+      if ($n < $per) $max[$id][$opt] = max(0, $n);
       if ($n > fomaxo_low_stock()) continue;
       $out[$id][$opt] = max(0, $n);
     }
   } catch (Throwable $e) {}
 }
-$json = json_encode(['low' => fomaxo_low_stock(), 'stock' => (object)$out, 'max' => (object)$max, 'perItem' => fomaxo_max_per_item()]);
+$json = json_encode(['low' => fomaxo_low_stock(), 'stock' => (object)$out, 'max' => (object)$max, 'perItem' => $per] + ($own ? ['own' => true] : []));
 $tag = substr(md5($json), 0, 16); header('ETag: "' . $tag . '"');
 if (strpos((string)($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''), $tag) !== false) { http_response_code(304); exit; }
 echo $json;

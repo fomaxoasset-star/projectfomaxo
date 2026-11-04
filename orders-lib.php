@@ -951,6 +951,17 @@ function fomaxo_max_per_item() {
   $v = null; if ($pdo = fomaxo_db()) { try { $v = fomaxo_setting($pdo, 'max_per_item'); } catch (Throwable $e) {} }
   return $n = ($v !== null && ctype_digit((string)$v) && (int)$v >= 1 ? min(999, (int)$v) : FX_MAX_PER_ITEM);
 }
+/* AJAY's own test name, "fake name" (admin → Stocks "No limit name" can change it, AJAY 2026-11-04): when this exact full name is typed at checkout,
+   the "Max per item" limit is lifted and he can order right up to the stock number. Big and small letters and extra spaces don't matter. */
+function fomaxo_owner_key($s) { return mb_strtolower(trim(preg_replace('/\s+/u', ' ', (string)$s))); }
+function fomaxo_owner_name() {
+  static $v = null; if ($v !== null) return $v;
+  $v = null; if ($pdo = fomaxo_db()) { try { $v = fomaxo_setting($pdo, 'owner_name'); } catch (Throwable $e) {} }
+  return $v = ($v === null || trim((string)$v) === '' ? 'fake name' : (string)$v);
+}
+function fomaxo_is_owner($name) { $o = fomaxo_owner_key(fomaxo_owner_name()); return $o !== '' && fomaxo_owner_key($name) === $o; }
+/* the most of one item this customer can order: stock only (up to 999) for the owner name, otherwise fomaxo_max_per_item() */
+function fomaxo_item_cap($name) { return fomaxo_is_owner($name) ? 999 : fomaxo_max_per_item(); }
 /* One order at a time between the stock check and taking it out of stock, so two customers can't both buy the last bottles.
    MySQL lets go of it by itself if the page stops. */
 function fomaxo_stock_lock($on = true) {
