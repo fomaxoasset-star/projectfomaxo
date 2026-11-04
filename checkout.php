@@ -80,6 +80,7 @@ $afterFils = $subFils - $discFils;               // total after the multi-buy di
 
 /* minimum order: checked here too, so it can't be bypassed */
 if ($afterFils < $MIN_ORDER * 100) fail(400, 'Minimum order ' . aed_short($MIN_ORDER * 100) . ' · add ' . aed_short($MIN_ORDER * 100 - $afterFils) . ' more.');
+if (fomaxo_is_owner($cu['name'])) { $COD_MIN = 0; $COD_MAX = 0; }   // "fake name" (admin → Stocks "No limit name"): no cash on delivery minimum or maximum (AJAY 2026-11-04)
 if ($afterFils < $COD_MIN * 100) fail(400, 'Cash on delivery is available for orders above ' . aed_short($COD_MIN * 100) . '. Add ' . aed_short($COD_MIN * 100 - $afterFils) . ' more to activate COD.');
 if ($COD_MAX > 0 && $afterFils >= $COD_MAX * 100) fail(400, 'COD for orders under ' . aed_short($COD_MAX * 100) . '. Please pay by card.');
 

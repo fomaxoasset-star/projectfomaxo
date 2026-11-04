@@ -5076,9 +5076,9 @@ function bindCheckout(q){
     requestAnimationFrame(fitCo);
     const ls = lines(); if (!ls.length){ route(); return; }
     const base = orderTotals(ls, '', true);
-    const codBig = COD_MAX > 0 && base.after !== null && base.after >= COD_MAX;
+    const codBig = !OWN && COD_MAX > 0 && base.after !== null && base.after >= COD_MAX;
     const sdNoCod = !!(coSdOn && SAMEDAY && SAMEDAY.cod === false);   // admin → Settings: same-day orders pay by card
-    const codOk = base.after !== null && base.after >= COD_MIN && !codBig && !sdNoCod;
+    const codOk = base.after !== null && (OWN || base.after >= COD_MIN) && !codBig && !sdNoCod;
     if (coPay === 'cod' && !codOk && CARD_ON) coPay = 'card';
     if (coPay !== 'cod' && !CARD_ON) coPay = 'cod';
     if (coPay !== 'card' && coPay !== 'cod') coPay = CARD_ON ? 'card' : 'cod';
@@ -5238,7 +5238,7 @@ function bindCheckout(q){
     err.hidden = err1.hidden = true;
     const d = details(), bad = check(d), ls = lines();
     if (bad.length) return showBad(bad);
-    if (orderTotals(ls, coPay, true).short > 0 || (coPay === 'cod' && !(orderTotals(ls, '', true).after >= COD_MIN && !(COD_MAX > 0 && orderTotals(ls, '', true).after >= COD_MAX)))) return;
+    if (orderTotals(ls, coPay, true).short > 0 || (coPay === 'cod' && !OWN && !(orderTotals(ls, '', true).after >= COD_MIN && !(COD_MAX > 0 && orderTotals(ls, '', true).after >= COD_MAX)))) return;
     try { localStorage.setItem('fomaxo_details', JSON.stringify(d)); } catch(x) {}
     busy = true; const old = go.innerHTML; go.disabled = true;
     go.textContent = coPay === 'card' ? 'Opening secure payment…' : 'Placing your order…';
