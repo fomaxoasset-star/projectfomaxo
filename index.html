@@ -3749,6 +3749,24 @@ const pageHead = (crumb, title, lead='') => `<div class="phead"><div class="wrap
 const finalCTA = () => `<section class="final"><div class="wrap">${emblem('fin-em rv-up')}<span class="eyebrow rv-up">Inspire greatness</span><h2 class="rv-up d1">Define your<br><span class="metal">signature luxury</span></h2><div class="ctas fin-ctas rv-up d2"><a class="btn" href="#/fragrances">Shop FOMAXO</a>${shown('discovery') ? '<a class="btn line" href="#/product/discovery">Try the Discovery Set</a>' : ''}</div></div></section>`;
 const pyramid = n => n.key ? `<div class="pyramid one"><div>Key notes<span>${esc(n.key)}</span></div></div>` : `<div class="pyramid"><div>Top<span>${esc(n.top)}</span></div><div>Heart<span>${esc(n.heart)}</span></div><div>Base<span>${esc(n.base)}</span></div></div>`;
 
+/* Distinct Blends (home): the 4 best sellers, AJAY 2026-11-04 "top 4 best sellers". BEST comes from products.php: every product by bottles really bought
+   (real orders only, no "fake name"), only the order, no numbers. Only full fragrances that can show here (not the Discovery Set, not hidden, with notes);
+   if fewer than 4 have sold, the old four (Gold, Dollar, Old Money, Royal Candy) fill the rest. */
+let BEST = []; try { BEST = JSON.parse(localStorage.getItem('fomaxo_best') || '[]') || []; } catch(e) {}
+const blendIds = () => { const ok = id => { const p = P[id]; return p && p.kind !== 'set' && !p.hidden && p.notes && p.images && p.images[0] && p.description && p.description.length; }, out = [];
+  [...(Array.isArray(BEST) ? BEST : []), 'gold','dollar','oldmoney','royalcandy', ...FRAG.map(p => p.id)].forEach(id => { if (out.length < 4 && ok(id) && !out.includes(id)) out.push(id); }); return out; };
+const blendsHTML = () =>
+  blendIds().map(id => P[id]).map((p,i) => `<div class="ed ${i%2?'rev':''}">
+      <a class="ed-media rv-up" href="#/product/${p.id}"><img data-parallax="0.08" ${pic(p.images[0])} alt="FOMAXO ${esc(p.name)}" loading="lazy"></a>
+      <div class="ed-copy rv-up d1">
+        <span class="num">0${i+1}</span>
+        <span class="eyebrow">${tierOf(p) ? esc(tierOf(p).name) + ' · ' : ''}${esc(p.family)}</span>
+        <h2 class="tier-name">${esc(p.name)}</h2>
+        <p class="lead">${esc(p.description[p.description.length-1])}</p>
+        ${pyramid(p.notes)}
+        <div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">${fromHTML(p)}
+          <div class="ctas"><a class="btn line sm" href="#/product/${p.id}">Discover</a><button class="btn sm" data-quickadd="${p.id}">Add to bag</button></div></div>
+      </div></div>`).join('');
 /* ============================ PAGES ============================ */
 /* homepage hero slideshow: photo, crop focus */
 const HERO_SLIDES = [
@@ -3827,17 +3845,7 @@ function home(){
 
   <section class="sec" style="padding-top:0" id="tiers"><div class="wrap">
     ${secHead('The fragrance collection', 'Distinct <em class="metal">blends</em>', '<p class="lead">Four fragrances that define the house of FOMAXO.</p>')}
-    ${['gold','dollar','oldmoney','royalcandy'].map(id => P[id]).filter(p => p && !p.hidden).map((p,i) => `<div class="ed ${i%2?'rev':''}">
-      <a class="ed-media rv-up" href="#/product/${p.id}"><img data-parallax="0.08" ${pic(p.images[0])} alt="FOMAXO ${esc(p.name)}" loading="lazy"></a>
-      <div class="ed-copy rv-up d1">
-        <span class="num">0${i+1}</span>
-        <span class="eyebrow">${tierOf(p) ? esc(tierOf(p).name) + ' · ' : ''}${esc(p.family)}</span>
-        <h2 class="tier-name">${esc(p.name)}</h2>
-        <p class="lead">${esc(p.description[p.description.length-1])}</p>
-        ${pyramid(p.notes)}
-        <div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">${fromHTML(p)}
-          <div class="ctas"><a class="btn line sm" href="#/product/${p.id}">Discover</a><button class="btn sm" data-quickadd="${p.id}">Add to bag</button></div></div>
-      </div></div>`).join('')}
+    <div id="blends">${blendsHTML()}</div>
   </div></section>
 
   <section class="sec" style="padding-top:0"><div class="wrap">
@@ -6483,6 +6491,7 @@ async function loadProducts(){
   if (d && d.bt && typeof d.bt === 'object' && JSON.stringify(d.bt) !== JSON.stringify(BT)) { BT = {pct: +d.bt.pct || 0, aed: +d.bt.aed || 0, on: d.bt.on !== false, pairs: d.bt.pairs || {}}; try { localStorage.setItem('fomaxo_bt', JSON.stringify(BT)); } catch(e) {} renderCart(); coRefresh && coRefresh(); const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.together && typeof d.together === 'object' && JSON.stringify(d.together) !== JSON.stringify(TOGETHER)) { TOGETHER = d.together; try { localStorage.setItem('fomaxo_together', JSON.stringify(TOGETHER)); } catch(e) {} const bt = $('#bt'); if (bt && P[bt.dataset.p]) btRender(P[bt.dataset.p], +($('#sizes .on')?.dataset.s) || defaultSize(P[bt.dataset.p])); }
   if (d && d.also && typeof d.also === 'object' && JSON.stringify(d.also) !== JSON.stringify(ALSO)) { ALSO = d.also; try { localStorage.setItem('fomaxo_also', JSON.stringify(ALSO)); } catch(e) {} const row = $('#alsoRow'); if (row) alsoOrder(row.dataset.p).forEach(x => { const c = row.querySelector(`.card[data-id="${x.id}"]`); if (c) row.appendChild(c); }); }
+  if (d && Array.isArray(d.best) && JSON.stringify(d.best) !== JSON.stringify(BEST)) { const was = blendIds().join(); BEST = d.best; try { localStorage.setItem('fomaxo_best', JSON.stringify(BEST)); } catch(e) {} const bl = $('#blends'); if (bl && blendIds().join() !== was) { bl.innerHTML = blendsHTML(); $$('.rv-up', bl).forEach(x => x.classList.add('in')); $$('[data-quickadd]', bl).forEach(b => b.onclick = () => { const p = P[b.dataset.quickadd]; addToCart(p.id, defaultSize(p)); }); } }
   if (d && d.sold && typeof d.sold === 'object') { SOLD = d.sold; const el = $('#psold'); if (el) el.innerHTML = soldHTML(el.dataset.p, el.dataset.s); $$('[data-sold]').forEach(c => c.innerHTML = soldHTML(c.dataset.sold, c.dataset.k)); bestSync(); shopResort(); }
   if (d && 'ads' in d) ADS.set(d.ads);
   if (d && Array.isArray(d.videos) && JSON.stringify(d.videos) !== JSON.stringify(VIDEOS)) { VIDEOS = d.videos; try { localStorage.setItem('fomaxo_videos', JSON.stringify(VIDEOS)); } catch(e) {} renderVids(); }
