@@ -1205,8 +1205,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['untrash_sel']) && !is
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['purge_sel']) && !isset($_POST['untrash'])) {   // Trash: Delete forever the ticked ones (cannot be undone)
   $nos = array_filter(array_map('strval', (array)($_POST['nos'] ?? [])));
-  $ok = csrf_ok() ? count(array_filter($nos, fn($n) => fx_order_purge($pdo, $n))) : 0;
-  flash($ok ? $ok . ' order' . ($ok > 1 ? 's are' : ' is') . ' deleted forever.' : 'Please tick the orders to delete.', $ok > 0);
+  $sure = strtoupper(trim((string)($_POST['sure'] ?? ''))) === 'DELETE';   // only after typing DELETE (AJAY 04/11/2026)
+  $ok = $sure && csrf_ok() ? count(array_filter($nos, fn($n) => fx_order_purge($pdo, $n))) : 0;
+  flash($ok ? $ok . ' order' . ($ok > 1 ? 's are' : ' is') . ' deleted forever.' : (!$sure ? 'Nothing was deleted. Please type DELETE to delete.' : 'Please tick the orders to delete.'), $ok > 0);
   go(['orders' => 1, 'trash' => 1]);
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['trash']) || isset($_POST['untrash']))) {
@@ -1237,7 +1238,7 @@ if (isset($_GET['orders'], $_GET['trash'])) {
     . 'var find=function(){var t=(q.value||"").trim().toLowerCase(),ng=nt.checked;if(t[0]==="-"){ng=true;t=t.slice(1).trim()}var d=t.replace(/\\D/g,"").slice(-10),k=0;bx.forEach(function(x){var r=tr(x),hit=(r.dataset.s||"").indexOf(t)>-1||(d.length>=4&&(r.dataset.p||"").indexOf(d)>-1),ok=!t||hit!==ng;r.hidden=!ok;if(!ok)x.checked=false;else k++});cnt.hidden=!t;cnt.textContent=k+" of "+bx.length+" shown"+(ng?" without \\""+t+"\\"":"");up()};'
     . 'q.addEventListener("input",find);nt.addEventListener("change",find);q.addEventListener("keydown",function(e){if(e.key==="Enter")e.preventDefault()});'
     . 'all.addEventListener("change",function(){bx.forEach(function(x){x.checked=all.checked&&sh(x)});up()});bx.forEach(function(x){x.addEventListener("change",up)});'
-    . 'f.addEventListener("submit",function(e){bx.forEach(function(x){if(!sh(x))x.checked=false});var s=e.submitter;if(s&&s.hasAttribute("data-trsel")){var n=bx.filter(function(x){return x.checked}).length;if(!confirm("Put back "+n+" order"+(n>1?"s":"")+"?"))e.preventDefault()}if(s&&s.hasAttribute("data-trdel")){var m=bx.filter(function(x){return x.checked}).length;if(!confirm("Delete "+m+" order"+(m>1?"s":"")+" forever? They cannot be put back."))e.preventDefault()}})})();</script>' : ''), true, true);
+    . 'f.addEventListener("submit",function(e){bx.forEach(function(x){if(!sh(x))x.checked=false});var s=e.submitter;if(s&&s.hasAttribute("data-trsel")){var n=bx.filter(function(x){return x.checked}).length;if(!confirm("Put back "+n+" order"+(n>1?"s":"")+"?"))e.preventDefault()}if(s&&s.hasAttribute("data-trdel")){var m=bx.filter(function(x){return x.checked}).length,t=prompt("Type DELETE to delete "+m+" order"+(m>1?"s":"")+" forever. They cannot be put back.","");if((t||"").trim().toUpperCase()!=="DELETE"){e.preventDefault();if(t!==null)alert("Nothing was deleted. Please type DELETE to delete.");return}var h=f.querySelector("input[name=sure]");if(!h){h=document.createElement("input");h.type="hidden";h.name="sure";f.appendChild(h)}h.value="DELETE"}})})();</script>' : ''), true, true);
 }
 
 /* an order's receipt (admin → the order → Receipt): save the courier and tracking number, or email the receipt to the customer */
