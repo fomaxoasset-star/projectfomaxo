@@ -1971,6 +1971,7 @@ if (isset($_GET['products'])) {
       foreach (array_merge($q->fetchAll(PDO::FETCH_ASSOC), fx_trash_sold($pdo, $rg['span'][0] ?? null, $rg['span'][1] ?? null)) as $o) foreach ((array)json_decode((string)$o['lines_json'], true) as $l) { if (!is_array($l) || ($n = max(0, (int)($l['qty'] ?? 0))) < 1) continue; $id = (string)($l['id'] ?? ''); $sold[$id]['n'] = ($sold[$id]['n'] ?? 0) + $n; $sold[$id]['s'][(string)($l['opt'] ?? '')] = ($sold[$id]['s'][(string)($l['opt'] ?? '')] ?? 0) + $n; $soldAll += $n; }
     } catch (Throwable $e) {}
     foreach ($sold as &$x) ksort($x['s'], SORT_NUMERIC); unset($x); uasort($sold, fn($a, $b) => $b['n'] <=> $a['n']); $top = array_key_first($sold);
+    $rank = array_flip(array_keys($sold)); $pos = array_flip(array_keys($rows)); uksort($rows, fn($a, $b) => ($rank[$rows[$a]['id']] ?? PHP_INT_MAX) <=> ($rank[$rows[$b]['id']] ?? PHP_INT_MAX) ?: $pos[$a] <=> $pos[$b]);   // rows in best-seller order: most bottles sold in the period picked first, unsold ones after in their usual order (AJAY 2026-11-04)
     foreach ($rows as $r) {
       $p = json_decode($r['data'], true) ?: [];
       $isSet = ($p['kind'] ?? '') === 'set';
