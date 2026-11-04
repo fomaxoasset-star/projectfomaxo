@@ -960,8 +960,8 @@ function fomaxo_owner_name() {
   return $v = ($v === null || trim((string)$v) === '' ? 'fake name' : (string)$v);
 }
 function fomaxo_is_owner($name) { $o = fomaxo_owner_key(fomaxo_owner_name()); return $o !== '' && fomaxo_owner_key($name) === $o; }
-/* the most of one item this customer can order: stock only (up to 999) for the owner name, otherwise fomaxo_max_per_item() */
-function fomaxo_item_cap($name) { return fomaxo_is_owner($name) ? 999 : fomaxo_max_per_item(); }
+/* the most of one item this customer can order: stock only (no other limit) for the owner name, otherwise fomaxo_max_per_item() */
+function fomaxo_item_cap($name) { return fomaxo_is_owner($name) ? 100000 : fomaxo_max_per_item(); }
 /* One order at a time between the stock check and taking it out of stock, so two customers can't both buy the last bottles.
    MySQL lets go of it by itself if the page stops. */
 function fomaxo_stock_lock($on = true) {

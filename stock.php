@@ -8,10 +8,10 @@ header('Content-Type: application/json');
 header('Cache-Control: no-cache');   // asked again on every page load, so a stock count saved on admin shows straight away; "not changed" when nothing changed
 header('X-LiteSpeed-Cache-Control: no-cache');
 require __DIR__ . '/orders-lib.php';
-/* POST {own: full name}: when it is the admin → Stocks "No limit name", every size goes up to its stock (up to 999). Wrong names get the normal answer. */
+/* POST {own: full name}: when it is the admin → Stocks "No limit name", every size goes up to its stock (any number, e.g. 2000). Wrong names get the normal answer. */
 $own = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') { $b = json_decode(file_get_contents('php://input'), true); $own = is_array($b) && is_string($b['own'] ?? null) && fomaxo_is_owner($b['own']); }
-$per = $own ? 999 : fomaxo_max_per_item();
+$per = $own ? 100000 : fomaxo_max_per_item();
 $out = []; $max = [];
 $pdo = fomaxo_db();
 if ($pdo) {
