@@ -79,16 +79,16 @@ if ($pdo) { try { $pair = []; $top = [];
   arsort($top); $also['top'] = array_keys($top);
 } catch (Throwable $e) {} }
 $also['pairs'] = (object)$also['pairs'];
-/* "14 purchased this week" (product page): bottles of each product really bought in the last 7 days, the same number as admin → Products → Sold → 7 days, from real orders only
+/* "14 purchased last month" (product page): bottles of each product really bought in the last 30 days, from real orders only
    (test, unpaid and cancelled orders don't count; trashed ones still do, AJAY: the number purchased stays). Only products with more than 5 (6 or more) are sent, with the real number; 5 or fewer and the line doesn't show. Never a made-up number. */
 $sold = [];
-if ($pdo) { try { $who = []; $year = date('Y-m-d', strtotime('-6 day')) . ' 00:00:00';   // the last 7 days: today and the 6 days before, like admin → 7 days
+if ($pdo) { try { $who = []; $year = date('Y-m-d', strtotime('-29 day')) . ' 00:00:00';   // the last 30 days: today and the 29 days before (AJAY 4 Nov: "purchased last month")
   foreach (array_merge($pdo->query("SELECT lines_json, phone, created_at FROM fx_orders WHERE test = 0 AND status IN ('New', 'Paid', 'Delivered') AND lines_json IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC), fx_trash_sold($pdo, $year)) as $r) {
     foreach ((array)json_decode($r['lines_json'], true) as $l) { $id = is_array($l) ? (string)($l['id'] ?? '') : ''; if ($id === '' || !preg_match('~^[a-z0-9-]{1,30}$~', $id)) continue;
       $opt = preg_replace('~[^a-z0-9]~', '', strtolower((string)($l['opt'] ?? ''))); if ($opt === '') continue;
       if ($r['created_at'] >= $year) $who[$id][$opt] = ($who[$id][$opt] ?? 0) + max(0, (int)($l['qty'] ?? 0)); }
   }
-  foreach ($who as $id => $byOpt) foreach ($byOpt as $opt => $c) if ($c > 5) $sold[$id][(string)$opt] = $c;   // each size on its own: the real number of bottles of that size, from 6 up ("14 purchased this week")
+  foreach ($who as $id => $byOpt) foreach ($byOpt as $opt => $c) if ($c > 5) $sold[$id][(string)$opt] = $c;   // each size on its own: the real number of bottles of that size, from 6 up ("14 purchased last month")
   foreach ($who as $id => $byOpt) if (($t = array_sum($byOpt)) > 5) $sold[$id]['all'] = $t;   // shop cards: all sizes of that product together
   foreach ($sold as $id => $byOpt) $sold[$id] = (object)$byOpt;
 } catch (Throwable $e) {} }
