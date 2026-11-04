@@ -3934,7 +3934,7 @@ function fragrances(q){
 let SOLD = {};
 const soldN = (id, s) => +((SOLD[id] || {})[s]) || 0;   // bottles of that one size (10ml, 50ml, 100ml each counted on their own)
 const soldKey = (p, s) => s;   // every choice on its own: 10ml, 50ml, 100ml, and the Discovery Set of 3 / of 5
-const soldHTML = (id, s) => soldN(id, s) > 0 ? `${ICON.bag}<span>${soldN(id, s)} purchased this week</span>` : '';
+const soldHTML = (id, s) => soldN(id, s) > 0 ? `${ICON.bag}<span>${soldN(id, s)} purchased last month</span>` : '';
 /* "Best seller" on the product photo, top right: only the product that sold the most real bottles this week (the "X purchased this week" numbers, all sizes together). Never made up. */
 const STAR = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7.3L12 17.8 5.8 21.5l1.6-7.3L2 9.5l7.1-.6z"/></svg>';
 const soldAll = id => +((SOLD[id] || {}).all) || 0;   // all sizes of one product this week (products.php sends it from 6 up)
