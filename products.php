@@ -92,6 +92,17 @@ if ($pdo) { try { $who = []; $year = '2026-10-06 00:00:00'; $upto = '2026-11-04 
   foreach ($who as $id => $byOpt) if (($t = array_sum($byOpt)) > 5) $sold[$id]['all'] = $t;   // shop cards: all sizes of that product together
   foreach ($sold as $id => $byOpt) $sold[$id] = (object)$byOpt;
 } catch (Throwable $e) {} }
+/* Distinct Blends on the home page (AJAY 2026-11-04 "top 4 best sellers"): every product by how many bottles were really bought, all time.
+   Real orders only: test, unpaid, cancelled, trashed, deleted and "fake name" (AJAY's own) orders don't count. Only the order is sent, never the numbers. */
+$best = [];
+if ($pdo) { try { $bn = [];
+  foreach ($pdo->query("SELECT lines_json, name FROM fx_orders WHERE test = 0 AND status IN ('New', 'Paid', 'Delivered') AND lines_json IS NOT NULL") as $r) {
+    if (fomaxo_is_owner($r['name'])) continue;
+    foreach ((array)json_decode($r['lines_json'], true) as $l) { $id = is_array($l) ? (string)($l['id'] ?? '') : ''; if ($id === '' || !preg_match('~^[a-z0-9-]{1,30}$~', $id) || !empty($l['free'])) continue;
+      $bn[$id] = ($bn[$id] ?? 0) + max(0, (int)($l['qty'] ?? 0)); }
+  }
+  $bn = array_filter($bn); arsort($bn); $best = array_keys($bn);
+} catch (Throwable $e) {} }
 /* cash on delivery minimum and maximum (admin → Settings → Cash on delivery); max 0 = no upper limit */
 [$codMin, $codMax, $codFee] = fomaxo_cod_limits($pdo ?: null);
 /* site pages hidden on admin → Settings → Site pages (their links go and their address opens Home) */
@@ -103,7 +114,7 @@ $btSet = fomaxo_bt($pdo ?: null);
 $sdSet = fomaxo_sameday($pdo ?: null);
 $sdOut = $sdSet['on'] ? ['fee' => $sdSet['fee'], 'free' => $sdSet['free'], 'min' => $sdSet['min'], 'from' => $sdSet['from'], 'cut' => $sdSet['cut'], 'cod' => $sdSet['cod'], 'by' => $sdSet['by'], 'full' => fomaxo_sameday_full($sdSet, $pdo ?: null), 'areas' => array_map('array_keys', fomaxo_sameday_areas($sdSet))] : null;
 $sdAreas = $sdOut ? array_keys((array)$sdOut['areas']) : [];
-$json = '{"sold":' . fomaxo_json((object)$sold) . ',"bt":' . fomaxo_json(['pct' => $btSet['pct'], 'aed' => $btSet['aed'], 'on' => $btSet['on'], 'pairs' => (object)$btSet['pairs']]) . ',"together":' . fomaxo_json((object)$together) . ',"also":' . fomaxo_json($also) . ',"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"waPop":' . json_encode($waPop) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"sameday":' . fomaxo_json($sdOut) . ',"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
+$json = '{"sold":' . fomaxo_json((object)$sold) . ',"best":' . fomaxo_json($best) . ',"bt":' . fomaxo_json(['pct' => $btSet['pct'], 'aed' => $btSet['aed'], 'on' => $btSet['on'], 'pairs' => (object)$btSet['pairs']]) . ',"together":' . fomaxo_json((object)$together) . ',"also":' . fomaxo_json($also) . ',"videos":' . fomaxo_json($videos) . ',"ads":' . fomaxo_json((object)$ads) . ',"hidePages":' . json_encode($hidePages) . ',"waPop":' . json_encode($waPop) . ',"cod":{"min":' . $codMin . ',"max":' . $codMax . ',"fee":' . $codFee . '},"sameday":' . fomaxo_json($sdOut) . ',"products":' . ($out ? '[' . implode(',', $out) . ']' : 'null') . ',"saleEnds":' . ($saleEnds ?? 'null') . ',"saleAlways":' . ($saleAlways ? 'true' : 'false') . ',"salePopup":' . ($salePopup ? 'true' : 'false') . ',"saleLine":' . ($saleLine ? 'true' : 'false') . ',"salePct":' . ($salePct ?: 'null') . ',"newPop":' . ($newPop ? fomaxo_json($newPop) : 'null') . ',"saleItems":' . fomaxo_json(array_values($saleItems)) . ',"saleWords":' . fomaxo_json((object)array_filter($saleWords, fn($v) => is_string($v) && $v !== '')) . ',"saleLines":' . ($saleLines === null ? 'null' : fomaxo_json($saleLines)) . ',"saleSize":' . fomaxo_json($saleSize) . '}';
 $built = true;
 if (is_dir(dirname($CACHE)) || @mkdir(dirname($CACHE), 0700, true)) { $tmp = $CACHE . '.' . getmypid(); if (@file_put_contents($tmp, json_encode(['json' => $json, 'areas' => $sdAreas])) === false || !@rename($tmp, $CACHE)) @unlink($tmp); }
 }
