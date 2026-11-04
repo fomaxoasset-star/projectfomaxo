@@ -700,6 +700,24 @@ function fx_order_restore($pdo, $no) {
   if ($took) fomaxo_stock_move($no);
   return true;
 }
+/* Trash → Delete forever (AJAY 04/11/2026): the order leaves Trash for good, so it is out of bottles sold and Members too. Its stock went back when it was
+   closed, and its number is never given out again (trash_max). Its visit (Analytics steps and taps) is deleted too, so Analytics stays as it was. Cannot be undone. */
+function fx_order_purge($pdo, $no) {
+  $s = $pdo->prepare('SELECT row_json FROM fx_orders_trash WHERE order_no = ?'); $s->execute([$no]); $j = $s->fetchColumn();
+  if ($j === false) return false;
+  $o = json_decode((string)$j, true); $sids = [];
+  foreach (array_merge((array)($o['_web']['leads'] ?? []), (array)($o['_web']['buys'] ?? [])) as $w) if (preg_match('/^[a-z0-9]{8,16}$/', (string)($w['sid'] ?? ''))) $sids[$w['sid']] = 1;
+  $sids = array_keys($sids);
+  try {
+    $pdo->beginTransaction();
+    if ($sids) { $in = implode(',', array_fill(0, count($sids), '?'));
+      $pdo->prepare("DELETE FROM fx_events WHERE sid IN ($in)")->execute($sids);
+      try { $pdo->prepare("DELETE FROM fx_trail WHERE sid IN ($in)")->execute($sids); } catch (Throwable $e) {}   // no taps table yet: nothing to delete
+    }
+    $pdo->prepare('DELETE FROM fx_orders_trash WHERE order_no = ?')->execute([$no]);
+    $pdo->commit(); return true;
+  } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('FOMAXO delete forever: ' . $e->getMessage()); return false; }
+}
 /* a trashed order leaves Analytics too: its customer in Left at checkout (and its Excel) and its purchase (the Purchased step, conversion,
    Sources, Devices, Campaigns …), AJAY 19/10/2026. Bottles sold on Products and "X people bought this year" still count it (fx_trash_sold) */
 function fx_trash_web($pdo, $no) {
