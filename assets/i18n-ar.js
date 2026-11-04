@@ -1269,7 +1269,7 @@
     [/^You can order up to (\d+) of one item online\. For a bigger order, please message us on WhatsApp\.$/, function(m){ return 'يمكنك طلب حتى ' + m[1] + ' قطعة من المنتج الواحد عبر الموقع. للطلبات الأكبر، يرجى مراسلتنا عبر واتساب.'; }],
     [/^You can order up to (\d+) of one item online\. For more, message us on WhatsApp\.$/, function(m){ return 'يمكنك طلب حتى ' + m[1] + ' قطعة من المنتج الواحد عبر الموقع. للمزيد، راسلنا عبر واتساب.'; }],
     [/^Only (\d+) left$/, function(m){ return 'بقي ' + m[1] + ' فقط'; }],
-    [/^(\d+) purchased last month$/, function(m){ return 'اشتراه ' + m[1] + ' في الشهر الماضي'; }],
+    [/^(\d+) purchased 6 Oct - 4 Nov$/, function(m){ return 'اشتراه ' + m[1] + ' من 6 أكتوبر إلى 4 نوفمبر'; }],
     [/^Only (\d+) left in stock, order soon$/, function(m){ return 'بقي ' + m[1] + ' فقط في المخزون، اطلب الآن'; }],
     [/^(.+) is out of stock, restocking soon$/, function(m){ return m[1] + ' نفد من المخزون، يعود قريباً'; }],
     [/^Only (\d+) left of (.+), and they are in your bag$/, function(m){ return 'بقي ' + m[1] + ' فقط من ' + m[2] + '، وهي في حقيبتك'; }],
