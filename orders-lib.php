@@ -596,13 +596,6 @@ function fomaxo_save_order($o) {
 
 /* Orders written to the order files (one level above the website) that are not in the order list: kept when the database could not take them.
    Only from the day the order list started, newest first. */
-/* order numbers that must never show in "Not in this list yet": deleted forever from Trash, or taken off that list with Remove (AJAY 04/11/2026).
-   They stay in the backup order files, which are never changed. */
-function fx_log_gone($pdo, $add = []) {
-  $g = json_decode((string)fomaxo_setting($pdo, 'log_gone'), true); $g = is_array($g) ? $g : [];
-  if ($add) { foreach ((array)$add as $n) if (preg_match('/^(FMX|FX|CARD)[-0-9A-Z]+$/', (string)$n)) $g[(string)$n] = 1; fomaxo_setting($pdo, 'log_gone', json_encode($g)); }
-  return $g;
-}
 function fomaxo_log_missing($pdo) {
   $dir = dirname(__DIR__) . '/fomaxo-orders'; $out = [];
   $since = (string)$pdo->query('SELECT MIN(created_at) FROM fx_orders')->fetchColumn();
@@ -634,7 +627,6 @@ function fomaxo_log_missing($pdo) {
     try { $s = $pdo->prepare('SELECT order_no FROM fx_orders_trash WHERE order_no IN (' . implode(',', array_fill(0, count($ch), '?')) . ')'); $s->execute($ch);   // closed orders stay closed
           foreach ($s->fetchAll(PDO::FETCH_COLUMN) as $n) $have[$n] = 1; } catch (Throwable $e) {}
   }
-  $have += fx_log_gone($pdo);   // deleted forever, or removed from this list
   $out = array_filter($out, fn($x) => !isset($have[$x['no']]) && $x['status'] !== 'Awaiting payment' && ($since === '' || $x['date'] >= $since));   // a card payment not made is not an order
   uasort($out, fn($a, $b) => strcmp($b['date'], $a['date']));
   return array_values($out);
@@ -723,7 +715,6 @@ function fx_order_purge($pdo, $no) {
       try { $pdo->prepare("DELETE FROM fx_trail WHERE sid IN ($in)")->execute($sids); } catch (Throwable $e) {}   // no taps table yet: nothing to delete
     }
     $pdo->prepare('DELETE FROM fx_orders_trash WHERE order_no = ?')->execute([$no]);
-    fx_log_gone($pdo, [$no]);   // its copy in the backup order file must not come back as "Not in this list yet"
     $pdo->commit(); return true;
   } catch (Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack(); error_log('FOMAXO delete forever: ' . $e->getMessage()); return false; }
 }
