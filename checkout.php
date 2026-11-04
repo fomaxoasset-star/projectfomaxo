@@ -41,7 +41,7 @@ foreach ($lines as $l) {
   $opt = (string)($l['opt'] ?? '');
   $qty = (int)($l['qty'] ?? 0);
   if (!isset($CATALOG[$id]) || !isset($CATALOG[$id]['prices'][$opt]) || $qty < 1) fail(400, 'An item in your bag is no longer available. Please refresh and try again.');
-  if ($qty > fomaxo_max_per_item()) fail(400, 'You can order up to ' . fomaxo_max_per_item() . ' of one item online. For a bigger order, please message us on WhatsApp.');   // same limit as the bag
+  if ($qty > fomaxo_item_cap($cu['name'])) fail(400, 'You can order up to ' . fomaxo_item_cap($cu['name']) . ' of one item online. For a bigger order, please message us on WhatsApp.');   // same limit as the bag
   $p = $CATALOG[$id];
   $isSet = $p['kind'] === 'set';
   $label = $isSet ? "Set of $opt" : "{$opt}ml";
