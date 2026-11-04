@@ -82,7 +82,7 @@ $also['pairs'] = (object)$also['pairs'];
 /* "14 purchased last month" (product page): bottles of each product really bought in the last 30 days, from real orders only
    (test, unpaid and cancelled orders don't count; trashed ones still do, AJAY: the number purchased stays). Only products with more than 5 (6 or more) are sent, with the real number; 5 or fewer and the line doesn't show. Never a made-up number. */
 $sold = [];
-if ($pdo) { try { $who = []; $year = '2026-10-06 00:00:00'; $upto = '2026-11-04 23:59:59';   // always 6 October to 4 November 2026, fixed (AJAY 4 Nov: "count only from 6 October to 4 November always")
+if ($pdo) { try { $who = []; $year = '2026-10-05 00:00:00'; $upto = '2026-11-03 23:59:59';   // always 5 October to 3 November 2026, fixed (AJAY 4 Nov: "count only from 5 October to 3 November")
   foreach (array_merge($pdo->query("SELECT lines_json, phone, created_at FROM fx_orders WHERE test = 0 AND status IN ('New', 'Paid', 'Delivered') AND lines_json IS NOT NULL")->fetchAll(PDO::FETCH_ASSOC), fx_trash_sold($pdo, $year, $upto)) as $r) {
     foreach ((array)json_decode($r['lines_json'], true) as $l) { $id = is_array($l) ? (string)($l['id'] ?? '') : ''; if ($id === '' || !preg_match('~^[a-z0-9-]{1,30}$~', $id)) continue;
       $opt = preg_replace('~[^a-z0-9]~', '', strtolower((string)($l['opt'] ?? ''))); if ($opt === '') continue;
