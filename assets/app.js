@@ -616,8 +616,8 @@
             '<button data-act="qty" data-id="' + l.product_id + '" data-d="1" aria-label="One more">+</button></div></div>';
         }).join('') + freeLineHtml()) + '</div>' +
       '<div class="cart-foot">' +
-      (empty ? '' : '<div class="foot-btns"><button class="fbtn' + (c ? ' on' : '') + '" data-act="customer"><span>👤</span>' + (c ? esc(c.name || c.phone || c.email) : 'Customer') + '</button>' +
-        '<button class="fbtn' + (S.coupon || d ? ' on' : '') + '" data-act="more2"><span>🎟</span>' + (S.coupon ? esc(S.coupon.code) : d ? 'Discount' : 'Coupon') + '</button></div>') +
+      (empty ? '' : '<div class="foot-btns"><button class="fbtn' + (c ? ' on' : '') + '" data-act="customer"><span>👤</span>' + (c ? esc(c.name || c.phone || c.email) : 'Customer / Member') + '</button>' +
+        '<button class="fbtn' + (S.coupon || d ? ' on' : '') + '" data-act="more2"><span>🎟</span>' + (S.coupon ? esc(S.coupon.code) : d ? 'Discount' : 'Coupon / Discount') + '</button></div>') +
       (t.discount ? '<div class="t-row"><span>Discount</span><span class="num">−' + money(t.discount) + '</span></div>' : '') +
       (S.coupon && !empty ? '<div class="t-row coupon-row"><span>🎟 ' + esc(S.coupon.code) + (S.coupon.kind === 'free' ? ' — free gift added' : '') + '</span><span class="num">' +
         (!t.couponOk ? 'needs AED ' + money(Math.round(S.coupon.min * 100)) : t.coupon ? '−' + money(t.coupon) : 'FREE') + '</span></div>' : '') +
@@ -666,7 +666,7 @@
       '<div class="modal-foot">' + (c ? '<button class="btn danger" data-act="cp-remove">Remove</button>' : '') + '<button class="btn gold big" data-act="cp-apply"' + (S.online ? '' : ' disabled') + '>Apply</button></div>');
   }
   function couponDiscountModal() {
-    openModal('Coupon or discount', '<div class="more-choices">' +
+    openModal('Coupon / Discount', '<div class="more-choices">' +
       '<button class="pchoice" data-act="coupon"><span class="pi">🎟</span><b>Coupon code</b><small>' + (S.coupon ? esc(S.coupon.code) + ' — ' + esc(S.coupon.label || '') : 'Customer has a code') + '</small></button>' +
       '<button class="pchoice" data-act="discount"><span class="pi">🏷</span><b>Discount</b><small>' + (S.discount ? (S.discount.type === 'percent' ? S.discount.value + '% off' : aed(toFils(S.discount.value)) + ' off') : 'None') + '</small></button>' +
       '</div>');
@@ -675,7 +675,7 @@
 
   function customerModal() {
     var c = S.customer || {};
-    openModal('Customer', '<div class="err m-err hidden"></div>' +
+    openModal('Customer / Member', '<div class="err m-err hidden"></div>' +
       '<div class="field"><span>Mobile — type it and the customer is looked up</span><div class="phone-row">' +
         '<label class="cc-wrap" title="Country"><span class="cc-label" id="c-cc-label"></span><select id="c-cc" aria-label="Country code">' + countryOptions() + '</select></label>' +
         '<input class="input" id="c-phone" type="tel" inputmode="tel" autocomplete="off" autofocus></div><div class="small muted c-full" id="c-full"></div></div>' +

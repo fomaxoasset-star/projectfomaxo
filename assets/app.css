@@ -469,8 +469,8 @@ details.ref { margin: 4px 0 6px; } details.ref summary { color: var(--muted); fo
 .free-tag { color: var(--gold-2); letter-spacing: .12em; font-size: 15px; }
 
 .foot-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.fbtn { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 12px; border-radius: 12px; border: 1px dashed var(--line-2); background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.fbtn span { font-size: 20px; flex: none; }
+.fbtn { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 8px 6px; border-radius: 12px; border: 1px dashed var(--line-2); background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; line-height: 1.2; text-align: center; overflow: hidden; overflow-wrap: anywhere; }
+.fbtn span { font-size: 17px; flex: none; }
 .fbtn.on { border-style: solid; border-color: rgba(201,162,75,.6); color: var(--gold-2); background: var(--gold-dim); }
 
 .input.cap { text-transform: uppercase; }
@@ -508,8 +508,8 @@ details.ref { margin: 4px 0 6px; } details.ref summary { color: var(--muted); fo
   .modal-head h2 { font-size: 18px; }
 }
 @media (max-width: 400px) {
-  .fbtn { font-size: 13px; padding: 8px 10px; gap: 6px; }
-  .fbtn span { font-size: 18px; }
+  .fbtn { font-size: 13px; padding: 8px 4px; gap: 5px; }
+  .fbtn span { font-size: 16px; }
   .pay-big { min-height: 60px; padding: 0 16px; font-size: 19px; }
   .pay-big b { font-size: 20px; }
   .change-box.big { flex-direction: column; align-items: flex-start; gap: 2px; font-size: 17px; }
