@@ -88,6 +88,7 @@
     sellView: LS.get('fx_sell_view', 'grid'), sellSort: LS.get('fx_sell_sort', 'az'),
     teamTab: 'performance', team: { preset: 'today', from: null, to: null, user: '' },
     products: LS.get('fx_products', []),
+    productsHash: LS.get('fx_products_hash', ''), productsStore: LS.get('fx_products_store', ''),
     queue: LS.get('fx_queue', []),
     online: navigator.onLine,
     view: 'sell',
@@ -167,7 +168,7 @@
     return api('products', { query: '&store=' + store + (h ? '&h=' + h : '') }).then(function (d) {
       if (d.same) return; // nothing changed: no download, no redraw
       S.products = d.products; S.productsHash = d.hash; S.productsStore = store;
-      LS.set('fx_products', S.products);
+      LS.set('fx_products', S.products); LS.set('fx_products_hash', d.hash || ''); LS.set('fx_products_store', store);
       preloadPhotos();
       if (S.view === 'sell' && $('#tiles')) { renderChips(); renderTiles(); renderCart(); }
       if (S.view === 'stock' && $('#stock-body')) renderStockBody();

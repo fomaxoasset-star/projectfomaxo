@@ -601,7 +601,7 @@ switch ($action) {
     case 'sales':
         $u = require_user();
         // QR sales still "Waiting" (the QR screen was closed): ask Ziina if the customer has paid since.
-        check_waiting_ziina($u, 10);
+        check_waiting_ziina($u);
         [$from, $to] = date_range();
         $params = [$from, $to];
         $where = 's.created_at BETWEEN ? AND ?';

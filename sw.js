@@ -1,6 +1,6 @@
 /* FOMAXO Store System - offline support. Keeps the app itself on the device so it opens without internet.
    Data requests (api.php) always go to the server; the app handles offline sales itself. */
-var VERSION = 'fomaxo-pos-v76';
+var VERSION = 'fomaxo-pos-v77';
 var PHOTOS = 'fomaxo-pos-photos';  // kept across app updates
 var SHELL = [
   './', 'index.html', 'assets/app.css', 'assets/app.js', 'assets/qrcode.js', 'assets/countries.js',
@@ -60,12 +60,16 @@ self.addEventListener('fetch', function (e) {
   if (/\.php$/.test(path) || path.indexOf('/data/') >= 0) return;
 
   if (req.mode === 'navigate') {
-    // Newest app when online, saved copy when offline.
-    e.respondWith(fetch(req, { cache: 'no-cache' }).then(function (res) {
-      var copy = res.clone();
-      caches.open(VERSION).then(function (c) { c.put('index.html', copy); });
+    // Opens at once from the saved copy; a fresh copy is saved in the background for next time.
+    // New versions still arrive straight away: a new sw.js installs, and the app reloads itself when nobody is mid-sale.
+    var fresh = fetch(req, { cache: 'no-cache' }).then(function (res) {
+      if (res.ok) { var copy = res.clone(); caches.open(VERSION).then(function (c) { c.put('index.html', copy); }); }
       return res;
-    }).catch(function () { return caches.match('index.html'); }));
+    });
+    e.respondWith(caches.open(VERSION).then(function (c) { return c.match('index.html'); }).then(function (hit) {
+      if (hit) { e.waitUntil(fresh.catch(function () {})); return hit; }
+      return fresh.catch(function () { return caches.match('index.html'); });
+    }));
     return;
   }
 
