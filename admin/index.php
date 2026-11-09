@@ -3644,6 +3644,12 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
         : [date('Y-m-d 00:00:00', strtotime('-' . ($r === 'today' ? 0 : (int)$r - 1) . ' day')), date('Y-m-d 23:59:59')];
   $q = function ($sql, $args = []) use ($pdo, $span) { $s = $pdo->prepare($sql); $s->execute($args ?: $span); return $s; };
   $notTrash = fx_not_trash($pdo);
+  /* fomaxo.com delivers in the UAE only, so Improve judges the shop on UAE visits (and visits whose country is not known).
+     Visits from other countries (mostly computers that open Home and leave within a second, and our own checks from India) are left out, AJAY 09/11/2026.
+     Analytics and Analytics → Visits still show every visit. */
+  $abroadSql = "SELECT u.sid FROM fx_events u WHERE u.country IS NOT NULL AND u.country <> '' AND u.country <> 'AE'";
+  $s = $pdo->prepare("SELECT COUNT(DISTINCT sid) FROM fx_events WHERE ev = 'view' AND at BETWEEN ? AND ?$notTrash AND sid IN ($abroadSql)"); $s->execute($span); $abroad = (int)$s->fetchColumn();
+  $notTrash .= " AND sid NOT IN ($abroadSql)";
   $realO = "o.status IN ('New', 'Paid', 'Delivered') AND o.test = 0";   // as Analytics: a purchase counts only while its order is a real one
   $resetAt = (string)fomaxo_setting($pdo, 'orders_reset');
   $buyOk = fn($a) => "($a.ev = 'buy' AND IF($a.ref IS NOT NULL, EXISTS (SELECT 1 FROM fx_orders o WHERE o.order_no = $a.ref AND $realO),
@@ -3739,7 +3745,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
       'An error can stop a button from working, so people cannot add to bag or pay.', ['Nothing for you to do: we read the error and fix it.'], 'fix the error');
   /* fixes already built and live (reply word => day it went live): the tip leaves the list (nothing shown).
      It comes back only when a week has passed and the chosen dates start after the fix, so it is judged on new visits only */
-  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-10-26', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-10-26', 'tap Photo' => '2026-10-26'];
+  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-10-26', 'fix landing page' => '2026-11-09', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-10-26', 'tap Photo' => '2026-10-26'];
   /* tips that need the same fix join into one: the one with the most people leads, the others add their numbers */
   usort($tips, fn($a, $b) => $b['people'] <=> $a['people']);
   $one = [];
@@ -3791,7 +3797,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
           . '</div></details></li>';
   }
   $fixName = ['fix old money' => 'Old Money page: people left without a next step', 'fix product page' => 'Product page: people looked but did not add to bag', 'fix home' => 'Home page: no clear next step',
-    'fix landing page' => 'First page from ads', 'check ads' => 'Ads brought visitors who did not add to bag', 'fix bag' => 'Bag: people did not open checkout', 'fix checkout' => 'Checkout: people did not type their details',
+    'fix landing page' => 'Left after one page (tips now count UAE visits only)', 'check ads' => 'Ads brought visitors who did not add to bag', 'fix bag' => 'Bag: people did not open checkout', 'fix checkout' => 'Checkout: people did not type their details',
     'make it faster' => 'Site opened slowly on phones', 'fix phone' => 'Phone: people did not add to bag', 'tap Photo' => 'Photo: tapping did nothing (now one tap zooms it)'];
   $fixL = ''; foreach ($doneH as $w => $title) $fixL .= '<li>' . ($fixName[$w] ?? ($title ?: h(ucfirst($w)))) . ' <span class="muted">· fixed ' . date('d/m/Y', strtotime($done[$w])) . ', checked again ' . date('d/m/Y', strtotime($done[$w] . ' +7 days')) . '</span></li>';
   foreach ($closed as $ck => $c) $fixL .= '<li>' . h($c['t'] !== '' ? $c['t'] : ucfirst($ck)) . ' <span class="muted">· closed by you ' . date('d/m/Y', strtotime($c['d'])) . '</span>'
@@ -3811,7 +3817,7 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
     . '<div class="pagehead"><h1>Improve</h1><div class="seg">' . implode('', array_map(fn($k, $l) => '<a href="' . h(self_url(['improve' => 1, 'r' => $k])) . '"' . ($r === (string)$k ? ' class="on"' : '') . '>' . $l . '</a>', array_keys($rl), $rl)) . '</div></div>'
     . '<div class="igrid">'
     . '<section class="card i-fun"><div class="ch"><h2>Where visitors stop</h2></div><ul class="list fun">' . $fun . '</ul>'
-    . '<p class="muted small gnote">' . ($F['visits'] < 20 ? '<b>Only ' . $nf($F['visits']) . ' visits in these dates: pick 7 or 30 days for surer tips.</b> ' : '') . 'Each line counts visits. The red words show how many stopped at that step. <b>Tap a step</b> to see why and what to do.</p>'
+    . '<p class="muted small gnote">' . ($F['visits'] < 20 ? '<b>Only ' . $nf($F['visits']) . ' visits in these dates: pick 7 or 30 days for surer tips.</b> ' : '') . 'Each line counts <b>UAE visits only</b>' . ($abroad ? ' (' . $nf($abroad) . ' visit' . ($abroad === 1 ? '' : 's') . ' from other countries left out)' : '') . '. The red words show how many stopped at that step. <b>Tap a step</b> to see why and what to do.</p>'
     . fx_taps_card($V, $names, 'v-taps i-taps', '', true) . '</section>'
     . fx_vspeed_box(dirname(__DIR__) . '/vid-speed.txt', ...['today' => [date('Y-m-d'), date('Y-m-d')], 'yesterday' => [date('Y-m-d', strtotime('-1 day')), date('Y-m-d', strtotime('-1 day'))], '7' => [date('Y-m-d', strtotime('-6 days')), date('Y-m-d')], '30' => [date('Y-m-d', strtotime('-29 days')), date('Y-m-d')]][$r])
     . '<section class="card i-tips"><div class="ch"><h2>What to fix first</h2><a class="btn sm line" href="./?analytics=1&amp;vj=1&amp;r=' . h($r) . '">See the visits</a></div>'
