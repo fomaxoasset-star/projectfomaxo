@@ -862,6 +862,8 @@ html[data-mode="light"] .announce .mode-switch .ms-moon{color:#8a7f6c}
 .hero-cine h1 .l2{display:block;font-family:var(--serif);font-style:italic;text-transform:uppercase;letter-spacing:.04em;font-size:1.14em;color:#f8f1e4}
 .hc-lead{font-family:var(--serif);font-style:italic;font-weight:300;font-size:clamp(17px,1.5vw,22px);line-height:1.55;color:var(--champagne);max-width:560px;text-shadow:0 2px 20px rgba(0,0,0,.6)}
 .hero-cine .ctas{justify-content:center;margin-top:6px}
+.blends-all{justify-content:center;margin-top:clamp(24px,4vw,40px)}
+@media(max-width:600px){.blends-all .btn{width:100%}}
 .hero-cine .btn{min-height:56px;padding:0 40px;letter-spacing:.34em}
 .hero-cine .btn.line{color:#f6efe2;box-shadow:inset 0 0 0 1px rgba(240,211,160,.6);background:rgba(5,5,5,.25);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .hero-cine .btn.line:hover{background:rgba(215,170,105,.16);color:var(--gold-hi)}
@@ -3846,6 +3848,7 @@ function home(){
   <section class="sec" style="padding-top:0" id="tiers"><div class="wrap">
     ${secHead('The fragrance collection', 'Distinct <em class="metal">blends</em>', '<p class="lead">Four fragrances that define the house of FOMAXO.</p>')}
     <div id="blends">${blendsHTML()}</div>
+    <div class="ctas blends-all rv-up"><a class="btn" href="#/fragrances">Shop the collection</a></div>
   </div></section>
 
   <section class="sec" style="padding-top:0"><div class="wrap">
