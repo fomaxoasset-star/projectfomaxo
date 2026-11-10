@@ -45,3 +45,28 @@ jobs:
           cd /tmp/out && git init -q -b android-build && git add -A
           git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "build ${{ github.run_number }} (${GITHUB_SHA::7})"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" android-build
+
+  emulator-test:
+    # Installs the signed APK on an Android emulator, opens it, and keeps screenshots + crash log.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash .github/emulator-test.sh
+      - name: Send results to the android-test branch
+        if: always()
+        run: |
+          mkdir -p /tmp/t && cp -r test-out/* /tmp/t/ 2>/dev/null || echo "no output" > /tmp/t/none.txt
+          cd /tmp/t && git init -q -b android-test && git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "test ${{ github.run_number }}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" android-test
