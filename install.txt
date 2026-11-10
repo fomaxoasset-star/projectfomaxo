@@ -1,0 +1,8 @@
+Performing Streamed Install
+Success
+Starting: Intent { cmp=com.fomaxo.pos/.MainActivity }
+Starting: Intent { act=com.fomaxo.pos.OPEN_SALES cmp=com.fomaxo.pos/.MainActivity (has extras) }
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+Broadcasting: Intent { act=com.fomaxo.pos.WIDGET_REFRESH flg=0x400000 cmp=com.fomaxo.pos/.SalesWidget }
+Broadcast completed: result=0
+  mCurrentFocus=Window{bae9dd6 u0 com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity}

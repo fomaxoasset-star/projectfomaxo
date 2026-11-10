@@ -1,0 +1,3 @@
+  [27] provider ProviderId{user:0, app:10192, cmp:ComponentInfo{com.fomaxo.pos/com.fomaxo.pos.SalesWidget}}
+    min=(64001x28161)   minResize=(46081x28161) updatePeriodMillis=1800000 resizeMode=3 widgetCategory=1 autoAdvanceViewId=-1 initialLayout=#7f040000 initialKeyguardLayout=#0   zombie=false
+  [28] provider ProviderId{user:0, app:10156, cmp:ComponentInfo{com.google.android.apps.youtube.music/com.google.android.apps.youtube.music.player.widget.gm3.NowPlayingWidgetProvider}}
