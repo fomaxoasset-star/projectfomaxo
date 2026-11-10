@@ -1,0 +1,30 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Each GitHub build gets a higher number, so a new APK installs over the old one.
+def buildNo = (project.findProperty('vc') ?: '1') as Integer
+
+android {
+    namespace 'com.fomaxo.pos'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.fomaxo.pos'
+        minSdk 24
+        targetSdk 35
+        versionCode buildNo
+        versionName "1.0.${buildNo}"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

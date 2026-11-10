@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">FOMAXO Store</string>
+    <string name="widget_name">FOMAXO today</string>
+    <string name="widget_desc">Today\'s sales with Sell and Sales buttons</string>
+</resources>

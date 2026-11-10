@@ -1,4 +1,6 @@
 name: Android APK
+# Builds the FOMAXO Store Android app (unsigned). The APK is signed outside this public repo,
+# so the signing key never lives on GitHub.
 on:
   push:
     branches: [android-app]
@@ -10,16 +12,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Probe
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Build
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" | tee probe.txt
-          ls $ANDROID_HOME/platforms $ANDROID_HOME/build-tools | tee -a probe.txt
-          java -version 2>&1 | tee -a probe.txt
-          gradle --version 2>&1 | head -3 | tee -a probe.txt
-      - name: Save result to android-build branch
+          set -o pipefail
+          gradle -p android assembleRelease --no-daemon --stacktrace -Pvc=${{ github.run_number }} 2>&1 | tee build.log
+      - name: Send APK + log to the android-build branch
         if: always()
         run: |
-          mkdir -p /tmp/out && cp probe.txt /tmp/out/ 2>/dev/null || true
+          mkdir -p /tmp/out
+          cp build.log /tmp/out/ 2>/dev/null || true
+          cp android/app/build/outputs/apk/release/*.apk /tmp/out/ 2>/dev/null || true
+          echo "run ${{ github.run_number }} sha ${GITHUB_SHA::7} result ${{ job.status }}" > /tmp/out/result.txt
           cd /tmp/out && git init -q -b android-build && git add -A
-          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "build ${GITHUB_SHA::7}"
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "build ${{ github.run_number }} (${GITHUB_SHA::7})"
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" android-build
