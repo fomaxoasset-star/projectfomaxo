@@ -23,11 +23,23 @@ jobs:
         run: |
           set -o pipefail
           gradle -p android assembleRelease --no-daemon --stacktrace -Pvc=${{ github.run_number }} 2>&1 | tee build.log
+      - name: Check the signed APK with Android's own tools
+        if: always()
+        run: |
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          for f in signed/*.apk; do
+            [ -f "$f" ] || continue
+            echo "== $f" >> verify.txt
+            $BT/apksigner verify --verbose --print-certs "$f" >> verify.txt 2>&1 || echo "APKSIGNER FAILED" >> verify.txt
+            $BT/zipalign -c -P 16 -v 4 "$f" | tail -1 >> verify.txt 2>&1 || echo "ZIPALIGN FAILED" >> verify.txt
+            $BT/aapt2 dump badging "$f" | grep -E "^package|sdkVersion|targetSdk|application-label:" >> verify.txt 2>&1
+          done
+          cat verify.txt || true
       - name: Send APK + log to the android-build branch
         if: always()
         run: |
           mkdir -p /tmp/out
-          cp build.log /tmp/out/ 2>/dev/null || true
+          cp build.log verify.txt /tmp/out/ 2>/dev/null || true
           cp android/app/build/outputs/apk/release/*.apk /tmp/out/ 2>/dev/null || true
           echo "run ${{ github.run_number }} sha ${GITHUB_SHA::7} result ${{ job.status }}" > /tmp/out/result.txt
           cd /tmp/out && git init -q -b android-build && git add -A
