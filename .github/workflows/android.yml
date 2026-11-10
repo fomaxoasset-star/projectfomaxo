@@ -1,0 +1,25 @@
+name: Android APK
+on:
+  push:
+    branches: [android-app]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" | tee probe.txt
+          ls $ANDROID_HOME/platforms $ANDROID_HOME/build-tools | tee -a probe.txt
+          java -version 2>&1 | tee -a probe.txt
+          gradle --version 2>&1 | head -3 | tee -a probe.txt
+      - name: Save result to android-build branch
+        if: always()
+        run: |
+          mkdir -p /tmp/out && cp probe.txt /tmp/out/ 2>/dev/null || true
+          cd /tmp/out && git init -q -b android-build && git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "build ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" android-build
