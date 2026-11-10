@@ -597,6 +597,25 @@ switch ($action) {
         ziina_note_host($z['redirect_url']);
         json_out(['sale' => load_sale('id', $sale['id']), 'pay_url' => $z['redirect_url']]);
 
+    // ---------------- Android home-screen widget: today's sales ----------------
+    case 'widget':
+        $u = require_user();
+        $p = [date('Y-m-d') . ' 00:00:00', date('Y-m-d') . ' 23:59:59'];
+        $w = '';
+        if ($u['role'] !== 'manager') {
+            $w = ' AND user_id = ?';
+            $p[] = $u['id'];
+        }
+        $r = q1("SELECT COUNT(*) AS n, COALESCE(SUM(total), 0) AS t FROM sales WHERE status = 'paid' AND created_at BETWEEN ? AND ?$w", $p);
+        $wait = q1("SELECT COUNT(*) AS n FROM sales WHERE status = 'pending' AND created_at BETWEEN ? AND ?$w", $p);
+        json_out([
+            'total' => 'AED ' . money((int) $r['t']),
+            'orders' => (int) $r['n'],
+            'waiting' => (int) $wait['n'],
+            'label' => $u['role'] === 'manager' ? 'All stores' : $u['name'],
+            'time' => date('H:i'),
+        ]);
+
     // ---------------- Sales history ----------------
     case 'sales':
         $u = require_user();

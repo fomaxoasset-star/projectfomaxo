@@ -77,6 +77,7 @@
   function setTheme(t) { LS.set('fx_theme', t); applyTheme(); }
   if (darkQuery && darkQuery.addEventListener) darkQuery.addEventListener('change', applyTheme);
 
+  var AND = window.FxAndroid || null; // set inside the FOMAXO Android app
   // ---------------------------------------------------------------- state
   var S = {
     token: LS.get('fx_token', null),
@@ -136,6 +137,7 @@
           if (res.status === 401 && action !== 'login') sessionExpired();
           throw err;
         }
+        if (/^(sale|sale_pay|sale_cancel|void_sale|sale_delete|ziina_check|sale_get|reset_all)$/.test(action)) androidWidget();
         return data;
       });
     }, function () {
@@ -286,7 +288,7 @@
       '</div><div class="modal-body">' + html + '</div></div>';
     if (!opts.sticky) back.addEventListener('mousedown', function (e) { if (e.target === back) closeModal(); });
     document.body.appendChild(back);
-    modalState = { el: back, onClose: opts.onClose };
+    modalState = { el: back, onClose: opts.onClose, sticky: !!opts.sticky };
     placeSwitch(back);
     if (document.body.scrollTop) document.body.scrollTop = 0; // keep the sheet on the bottom edge
     var first = $('[autofocus]', back); if (first) setTimeout(function () { first.focus(); }, 50);
@@ -333,7 +335,7 @@
       btn.disabled = true; err.classList.add('hidden');
       api('login', { body: { username: f.username.value, password: f.password.value } }).then(function (d) {
         S.token = d.token; LS.set('fx_token', S.token);
-        applyMe(d); S.productsHash = null; // waiting offline sales stay on the device and upload under this login
+        applyMe(d); androidLogin(); S.productsHash = null; // waiting offline sales stay on the device and upload under this login
         return refreshProducts().then(function () { S.view = 'sell'; renderApp(); syncQueue(); });
       }).catch(function (e2) {
         btn.disabled = false;
@@ -1773,7 +1775,7 @@
     }
     closeModal();
     api('logout', { body: {} }).catch(function () { /* fine offline */ });
-    S.token = null; LS.del('fx_token');
+    S.token = null; LS.del('fx_token'); androidLogin();
     clearBag();
     renderLogin();
   }
@@ -1974,8 +1976,8 @@
       case 'confirm-pay': confirmPay(el.getAttribute('data-m'), el); break;
       case 'reset-open': resetModal(); break;
       // receipt
-      case 'r-print': $('#print-area').innerHTML = paperHtml(currentReceipt); window.print(); break;
-      case 'r-pdf': { var rf = $('#rframe'); try { rf.contentWindow.focus(); rf.contentWindow.print(); } catch (e) { window.open(currentReceipt.receipt_url, '_blank', 'noopener'); } break; }
+      case 'r-print': $('#print-area').innerHTML = paperHtml(currentReceipt); if (AND) AND.print(); else window.print(); break;
+      case 'r-pdf': if (AND) { AND.printUrl(new URL(currentReceipt.receipt_url, location.href).href); break; } { var rf = $('#rframe'); try { rf.contentWindow.focus(); rf.contentWindow.print(); } catch (e) { window.open(currentReceipt.receipt_url, '_blank', 'noopener'); } break; }
       case 'r-wa': {
         var s = currentReceipt, digits = (s.customer_phone || '').replace(/\D/g, '');
         window.open('https://wa.me/' + digits + '?text=' + encodeURIComponent(receiptText(s)), '_blank', 'noopener');
@@ -2101,12 +2103,53 @@
     syncQueue();
   }, 30000);
 
+  // ---------------------------------------------------------------- FOMAXO Android app
+  // Inside the Android app, window.FxAndroid comes from the app: it keeps the login for the home-screen widget,
+  // prints receipts, and opens WhatsApp, Ziina and email in their own apps.
+  function androidLogin() {
+    if (!AND) return;
+    try { AND.setLogin(S.token || '', S.user ? S.user.name : '', S.user ? S.user.role : ''); } catch (e) { /* older app */ }
+  }
+  var andTimer = null;
+  function androidWidget() {
+    if (!AND) return;
+    clearTimeout(andTimer);
+    andTimer = setTimeout(function () { try { AND.refreshWidget(); } catch (e) { /* older app */ } }, 1500);
+  }
+  if (AND) {
+    window.open = function (url) { try { AND.openExternal(new URL(url, location.href).href); } catch (e) { /* ignore */ } return null; };
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      var href = a.href || '';
+      if (a.target === '_blank' || /^(intent|mailto|tel|whatsapp):/i.test(href) || (/^https?:/i.test(href) && new URL(href).host !== location.host)) {
+        e.preventDefault(); AND.openExternal(href);
+      }
+    }, true);
+  }
+  /** The widget's Sell / Sales buttons. */
+  window.fxGo = function (view) {
+    if (!S.token || !S.user) return;
+    closeMenu(); if (modalState && !modalState.sticky) closeModal();
+    if (modalState) return;
+    S.view = view; S.cartOpen = false; renderView();
+    if (view === 'sell' || view === 'stock') refreshProducts();
+  };
+  /** The phone's Back button: close what is open, else go back to Sell. Returns false to leave the app. */
+  window.fxBack = function () {
+    if (modalState) { if (!modalState.sticky) closeModal(); return true; }
+    if ($('.menu')) { closeMenu(); return true; }
+    if (S.cartOpen) { setCartOpen(false); return true; }
+    if (S.token && S.user && S.view !== 'sell') { window.fxGo('sell'); return true; }
+    return false;
+  };
+
   applyTheme();
   setTimeout(function () { loadQr().catch(function () {}); }, 1500);
   document.addEventListener('visibilitychange', function () { if (!document.hidden && S.token && (S.view === 'sell' || S.view === 'stock')) refreshProducts(); });
   if (S.token && S.user && S.settings) {
-    renderApp();
-    refreshMe().then(function () { if (S.token) { updateNet(); } });
+    renderApp(); androidLogin();
+    refreshMe().then(function () { if (S.token) { updateNet(); androidLogin(); } });
     refreshProducts().then(syncQueue);
   } else {
     renderLogin();
