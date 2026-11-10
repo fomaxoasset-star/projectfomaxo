@@ -1,0 +1,23 @@
+== signed/FOMAXO-Store.apk
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v3.2 scheme (APK Signature Scheme v3.2): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+V3.0 Signer: certificate DN: C=AE, O=FOMAXO, CN=FOMAXO Store
+V3.0 Signer: certificate SHA-256 digest: 4fd458c14c23d6b6bf06a5f352299a0019bc643fc8a0cc5d3972ed09130a9071
+V3.0 Signer: certificate SHA-1 digest: 3d46e38710768e6aa8eeda66811e87c8df85598e
+V3.0 Signer: certificate MD5 digest: 5e19f4a75b0c3ba38762f08a12046bc4
+V3.0 Signer: key algorithm: RSA
+V3.0 Signer: key size (bits): 3072
+V3.0 Signer: public key SHA-256 digest: 74cf5ee9e62635379be944f128a1655e1cbdcb78cbfaa52ab649c07b1154bd9e
+V3.0 Signer: public key SHA-1 digest: 36d864f0b38337aec2c70b0cf934838cae1fddfb
+V3.0 Signer: public key MD5 digest: 63bb75ffb4cde1758f5037cd2a09fde2
+Verification successful
+package: name='com.fomaxo.pos' versionCode='2' versionName='1.0.2' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'
+targetSdkVersion:'35'
+application-label:'FOMAXO Store'
