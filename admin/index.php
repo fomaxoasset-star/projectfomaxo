@@ -3738,14 +3738,15 @@ if (isset($_GET['improve'])) try {   // a failure shows its reason instead of a 
       'Something on the phone page is harder: a button is low, a popup covers it, or it is slow.', ['Open the product page on your phone and add to bag yourself. Note anything slow or hidden.'], 'fix phone');
   $sp = $V['speed']['phone'] ?? null;   // how fast the site opens on phones (most visitors)
   if ($sp && $sp['n'] >= 10 && $pct($sp['slow'], $sp['n']) >= 30)
-    $tip((int)$sp['slow'], 'The site opens slowly on many phones', ['On phones the site took <b>' . number_format($sp['avg_ms'] / 1000, 1) . ' s</b> on average to open; <b>' . $nf($sp['slow']) . '</b> of ' . $nf($sp['n']) . ' (' . $pctT($pct($sp['slow'], $sp['n'])) . ') took more than 3 seconds.'],
+    $tip((int)$sp['slow'], 'The site opens slowly on many phones', ['On phones the site took <b>' . number_format($sp['avg_ms'] / 1000, 1) . ' s</b> on average to open; <b>' . $nf($sp['slow']) . '</b> of ' . $nf($sp['n']) . ' (' . $pctT($pct($sp['slow'], $sp['n'])) . ') took more than 3 seconds.']
+      + (($pt = $sp['parts'] ?? []) && isset($pt['w'], $pt['d'], $pt['j']) ? [1 => 'Where the time went, on average: waiting for our server <b>' . number_format($pt['w'] / 1000, 1) . ' s</b>, downloading the page <b>' . number_format($pt['d'] / 1000, 1) . ' s</b>, the phone drawing it <b>' . number_format($pt['j'] / 1000, 1) . ' s</b>.'] : []),   // key 1: a plain + with key 0 would drop this line
       'People from ads leave if the page is not ready within about 3 seconds.', ['Open the site on your phone with mobile data (Wi-Fi off) and count the seconds.'], 'make it faster');
   if (($er = $V['errors'][0] ?? null) && $er['people'] >= 2)
     $tip((int)$er['people'], 'An error happens on ' . h(fx_pg_name($er['pg'], $names)), ['<b>' . $nf($er['people']) . '</b> visits had this error ' . $nf($er['n']) . ' times: <span class="muted">' . h($er['label']) . '</span>'],
       'An error can stop a button from working, so people cannot add to bag or pay.', ['Nothing for you to do: we read the error and fix it.'], 'fix the error');
   /* fixes already built and live (reply word => day it went live): the tip leaves the list (nothing shown).
      It comes back only when a week has passed and the chosen dates start after the fix, so it is judged on new visits only */
-  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-11-09', 'fix landing page' => '2026-11-09', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-10-26', 'tap Photo' => '2026-10-26'];
+  $done = ['fix old money' => '2026-10-26', 'fix product page' => '2026-10-26', 'fix home' => '2026-11-09', 'fix landing page' => '2026-11-09', 'check ads' => '2026-10-26', 'fix bag' => '2026-10-26', 'fix checkout' => '2026-10-26', 'make it faster' => '2026-11-11', 'tap Photo' => '2026-10-26'];
   /* tips that need the same fix join into one: the one with the most people leads, the others add their numbers */
   usort($tips, fn($a, $b) => $b['people'] <=> $a['people']);
   $one = [];

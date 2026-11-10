@@ -3008,6 +3008,7 @@ window.STORE = {
   }
 };
 </script>
+<script>/* the headings' font (Cormorant) starts downloading now, while the shop's code below is still arriving, instead of after the code has drawn the page (same as fomaxo.in, 11/11/2026: product page from an ad ~0.2 s sooner on a slow phone). Not a preload in the head: that made the first picture ~0.15 s later */document.fonts&&document.fonts.load&&document.fonts.load('400 1em "Cormorant Garamond"')</script>
 <script>/* FOMAXO storefront — routing, rendering, cart, search */
 (function(){
 "use strict";
@@ -5840,7 +5841,9 @@ const FXT = (() => {
   setInterval(() => { if (trail.length) flush(); }, 15e3);
   addEventListener('pagehide', flush); document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
   // how long the website took to open on this phone or computer (once per visit to the site), and errors on the page (a button that breaks shows here)
-  addEventListener('load', () => setTimeout(() => { try { const n = performance.getEntriesByType('navigation')[0], ms = n && n.loadEventStart > 0 ? Math.round(n.loadEventStart) : 0; if (ms && !off) trail.push({k: 'l', p: pg(), ms: Math.min(ms, 60000)}); } catch(e) {} }, 0), {once: true});
+  addEventListener('load', () => setTimeout(() => { try { const n = performance.getEntriesByType('navigation')[0], ms = n && n.loadEventStart > 0 ? Math.round(n.loadEventStart) : 0;
+    const r = x => Math.max(0, Math.round(x)), w = r(n.responseStart), d = r(n.responseEnd - n.responseStart), lv = performance.getEntriesByName(new URL('products.php', location.href).href)[0];   // where the time went: waiting for the server, downloading the page, the phone drawing it, and the live data (products.php) server wait (Improve tip "opens slowly")
+    if (ms && !off) trail.push({k: 'l', p: pg(), ms: Math.min(ms, 60000), l: `w${w} d${d} j${r(ms - n.responseEnd)}` + (lv && lv.requestStart > 0 ? ` s${r(lv.responseStart - lv.requestStart)}` : '')}); } catch(e) {} }, 0), {once: true});
   let errN = 0; addEventListener('error', e => { if (off || !(e instanceof ErrorEvent) || errN++ >= 5) return; trail.push({k: 'e', p: pg(), l: String(e.message || 'Error').replace(/\d{6,}/g, '#').slice(0, 60)}); }, true);
   const trailPage = () => { flush(); tPage = pg(); setTimeout(() => { if (tPage === pg()) tMax = Math.max(tMax, seenPc()); }, 1500); };   // a short page counts as seen to its end
   return {
@@ -6075,12 +6078,13 @@ let vsPrev = false;   // one preview note per page visit (the row is drawn again
 function vsSend(how, steps, src){ try { const nc = navigator.connection, body = JSON.stringify({t: 'vtime', how, net: nc && nc.effectiveType || '', vf: String(src || '').split('/').pop().split('?')[0], vt: steps.map(([k, n]) => [k, Math.round(n)])});
   if (!navigator.sendBeacon || !navigator.sendBeacon('vlog.php', new Blob([body], {type: 'application/json'}))) fetch('vlog.php', {method: 'POST', body, keepalive: true}).catch(() => {}); } catch (e) {} }
 function vsWatch(v){ if (v._vs) return; v._vs = 1; const t0 = performance.now(); let st = v.paused || v.readyState < 3 ? -1 : 0, fr = 0, done = false;   // a full video in the player: start time and freezes in its first 15 s
-  const fin = () => { if (done) return; done = true; clearInterval(iv); const el = performance.now() - t0; if (st < 0 && el < 5000) return;   // closed or swiped on within 5 s before it started: not counted
+  const fin = () => { if (done) return; done = true; clearInterval(iv); v._vsEnd = null; const el = performance.now() - t0; if (st < 0 && (el < 5000 || document.hidden)) return;   // closed or swiped on within 5 s before it started, or the phone left the page: not counted
     vsSend('video', st < 0 ? [['none', el]] : [['start', st], ['freeze', fr]], v.currentSrc || v.dataset.src); };
+  v._vsEnd = fin;   // the player ends the note when the shopper swipes to another video (as fomaxo.in 11/11/2026: videos swiped past in 1 s were all counted as "did not play" when the player closed later)
   v.addEventListener('playing', () => { if (st < 0) st = performance.now() - t0; });
   v.addEventListener('waiting', () => { if (st >= 0 && !v.seeking && v.currentTime > .3) fr++; });   // stopped to load more while playing = froze
   const iv = setInterval(() => { if (!document.contains(v) || (v.paused && st >= 0) || performance.now() - t0 > 15000) fin(); }, 500);
-  addEventListener('pagehide', fin, {once: true}); }
+  addEventListener('pagehide', fin, {once: true}); document.addEventListener('visibilitychange', () => { if (document.hidden) fin(); }); }
 function bindVids(){
   const sec = $('#vidSec'), h = vidSecHTML();
   if (quietRoute && sec && vrSec && sec !== vrSec && h === vrHTML && !document.contains(vrSec)) { sec.replaceWith(vrSec); return; }   // the page drawn again in place with the same videos: the row that is already playing stays (it used to start every preview again, AJAY 28/10/2026)
@@ -6233,7 +6237,11 @@ function openReel(i){
       if (pic && !pic.src && Math.abs(n - k) <= 1) pic.src = pic.dataset.src;   // cover photos only for this video and the ones either side: all of them at once (one per video) held up the tapped video's start
       if (!v) { const f = $('iframe', s); if (f && !f.src && Math.abs(n - k) <= 1) f.src = f.dataset.src; return; }   // Instagram's player: loaded when near, played by a tap on it
       if (n === k) { if (!v.src) v.src = v.dataset.src; vsWatch(v); reelLog(v, s); v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
-      else { v.pause(); if (Math.abs(n - k) === 1 && !v.src) { if (!MAC_SAFARI) { v.preload = 'auto'; v.src = v.dataset.src; } else { const cv = $('video', slides[k]), near = () => { if (cur === k && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } }; cv && cv.readyState > 3 ? near() : (cv && cv.addEventListener('canplaythrough', near, {once: true}), setTimeout(near, 6000)); } } } });   // the next and previous videos load now, so a swipe plays at once
+      else { v.pause(); v._vsEnd && v._vsEnd();
+        if (Math.abs(n - k) > 1 && v.getAttribute('src') && !lent.some(x => x[1] === v)) { v.removeAttribute('src'); v.load(); s.classList.remove('shown'); }   // a video two or more away stops downloading, so the one on screen gets the whole connection (fomaxo.in Android Chrome 10/11/2026: after a few swipes 6-9 videos loaded at once and the new one never started); what came already stays in the browser's copy for a swipe back, and its cover photo shows until it plays again
+        if (Math.abs(n - k) === 1 && !v.src) { const cv = $('video', slides[k]), near = () => { if (cur === k && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } };
+          if (MAC_SAFARI) cv && cv.readyState > 3 ? near() : (cv && cv.addEventListener('canplaythrough', near, {once: true}), setTimeout(near, 6000));
+          else cv && cv.readyState < 3 ? (cv.addEventListener('canplay', near, {once: true}), cv.addEventListener('playing', near, {once: true})) : near(); } } });   // the next and previous videos load once the one on screen can play, so a swipe plays at once without taking the data the one on screen needs to start
       // Mac Safari downloads the whole next and previous videos at once, so the one on screen waited (its own report 2026-10-27: 5.5 s, stuck): there they load once it has enough to play to the end (or after 6 s)
     $$('.rl-nav button', el).forEach(b => b.disabled = (+b.dataset.rl < 0 && k === 0) || (+b.dataset.rl > 0 && k === slides.length - 1));
   };
