@@ -6060,7 +6060,10 @@ function loopRow(sc){ if (!sc || sc.dataset.loop) return; const ks = [...sc.chil
 function vidXO(u){ return /^https:/.test(u || '') ? ' crossorigin="anonymous"' : ''; }
 /* slow internet (or data saver): the player plays the small copy (vf) instead of the sharp 1080p one, so it doesn't stop and wait. iPhones don't tell, they keep the sharp one */
 function slowNet(){ const c = navigator.connection; return !!c && (!!c.saveData || /2g|3g/.test(c.effectiveType || '') || (c.downlink > 0 && c.downlink < 4)); }
-const vSrc = v => v.vf && slowNet() ? '/assets/' + v.vf : v.v.startsWith('vid/') ? 'assets/' + v.v : v.v;
+/* phones (and slow internet) play the lighter phone copy (vm: 540 px wide, about half the download; made once in Chrome by Make All Videos Again, AJAY 11/11/2026);
+   if it fails to load, the usual video plays instead (data-fbu) */
+const PHONE_V = matchMedia('(max-width:600px)').matches;
+const vSrc = v => v.vm && (PHONE_V || slowNet()) ? (v.vm.startsWith('vid/') ? 'assets/' + v.vm : v.vm) : v.vf && slowNet() ? '/assets/' + v.vf : v.v.startsWith('vid/') ? 'assets/' + v.v : v.v;
 document.addEventListener('error', e => { const v = e.target, u = v && v.tagName === 'VIDEO' && v.getAttribute('src') || ''; if (!/^https:\/\//.test(u) || v.dataset.fb) return;
   const f = v.dataset.fbu || '/assets/vid/' + u.split('/').pop(), go = v.autoplay || !v.paused; v.dataset.fb = 1; v.removeAttribute('crossorigin'); if (v.dataset.src === u) v.dataset.src = f; v.src = f; if (go) v.play().catch(() => {}); }, true);
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */

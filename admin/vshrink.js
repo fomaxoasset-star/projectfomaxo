@@ -73,15 +73,16 @@ window.fxPick = function (src, done) {
   var side = function (br) { return br < 350000 ? 720 : br < 700000 ? 960 : 1280; };   // longest side: fewer pixels when there are fewer bits, so it stays sharp instead of blocky
   /* fast: re-encode from the file itself, no playing; null = this browser can't, use the slow way */
   var HQ = 11.5 * MB * 8, hqRate = function (sec) { return Math.max(1500000, Math.min(3500000, Math.floor(HQ / Math.max(1, sec || 30)) - AB)); };   // the sharp copy (Cloudflare only): 1080p, at most 3.5 Mbit/s (AJAY 28/10/2026: lighter so it starts at once and doesn't freeze on slower 4G; short videos were 8 Mbit/s, up to 22 MB), about 11 MB at most
-  function fast(file, scale, hq) {
+  var MOB = 1.9 * MB * 8, mobRate = function (sec) { return Math.max(450000, Math.min(1100000, Math.floor(MOB / Math.max(1, sec || 30)) - AB)); };   // the phone copy (AJAY 11/11/2026): 540 px wide, about 2 MB, so phones start it sooner
+  function fast(file, scale, hq) {   // hq: true = the sharp 1080p copy, 'mob' = the phone copy, else the usual one
     if (!window.VideoEncoder) { why = 'no VideoEncoder'; return Promise.resolve(null); }
     var M = null, conv = null, src = null;
     return import(new URL('mediabunny.js?v=1.59.1', location.href).href).then(function (m) {
       M = m; src = new M.Input({source: new M.BlobSource(file), formats: M.ALL_FORMATS});
       return Promise.all([src.getPrimaryVideoTrack(), src.computeDuration().catch(function () { return 0; }), src.getPrimaryAudioTrack().catch(function () { return null; })]);
     }).then(function (r) {
-      var t = r[0], at = r[2], br = hq ? hqRate(r[1]) : Math.max(120000, Math.round(rate(r[1]) * (scale || 1))); if (!t) { why = 'no video track'; return null; }
-      var w = t.displayWidth, h = t.displayHeight, k = Math.min(1, (hq ? 1920 : side(br)) / Math.max(w, h));
+      var t = r[0], at = r[2], br = hq === 'mob' ? mobRate(r[1]) : hq ? hqRate(r[1]) : Math.max(120000, Math.round(rate(r[1]) * (scale || 1))); if (!t) { why = 'no video track'; return null; }
+      var w = t.displayWidth, h = t.displayHeight, k = Math.min(1, (hq === 'mob' ? 960 : hq ? 1920 : side(br)) / Math.max(w, h));
       w = Math.round(w * k / 2) * 2; h = Math.round(h * k / 2) * 2;
       return Promise.all([M.getFirstEncodableVideoCodec(['avc', 'hevc', 'vp9'], {width: w, height: h}), window.AudioEncoder ? M.getFirstEncodableAudioCodec(['aac', 'opus']).catch(function () { return null; }) : null]).then(function (cs) {
         if (!cs[0]) { why = 'no video encoder ' + w + 'x' + h; return null; }
@@ -92,7 +93,7 @@ window.fxPick = function (src, done) {
           audio: au}).then(function (c) {
           conv = stopNow = c; if (!c.isValid) { why = 'not valid ' + c.discardedTracks.map(function (d) { return d.reason; }).join(' '); return null; }
           if (at && c.discardedTracks.some(function (d) { return d.track.type === 'audio'; })) { why = 'sound would be lost'; return null; }
-          var lbl = hq ? 'Making the sharp 1080p copy for Cloudflare… ' : 'Making the video smaller… ';
+          var lbl = hq === 'mob' ? 'Making the phone copy… ' : hq ? 'Making the sharp 1080p copy for Cloudflare… ' : 'Making the video smaller… ';
           c.onProgress = function (p) { say(lbl + Math.min(99, Math.round(p * 100)) + '%. Keep this page open.'); };
           say(lbl + '0%. Keep this page open.');
           return c.execute().then(function () { var b = out.target.buffer; return b && b.byteLength ? new Blob([b], {type: 'video/mp4'}) : null; });
@@ -205,13 +206,17 @@ window.fxPick = function (src, done) {
     btn.disabled = true; btn.textContent = 'Uploading…'; f.dataset.go = 1;
     var hq = send.hq; send.hq = null;
     var orig = f.dataset.hq && file && !f.dataset.noOrig && keeps(inp.files[0]) && inp.files[0].size <= 4096 * MB ? inp.files[0] : null;   // made smaller: the original from the phone goes to Cloudflare too (Make All Videos Again starts from it)
-    if (src) return parts(src).then(function (p) {
+    /* the lighter phone copy: made here once (from the original when there is one), kept on Cloudflare; no copy (old browser, 3 minutes, small video) = phones play the usual one */
+    var mobP = f.dataset.hq && window.VideoEncoder && src && src.size > 2.5 * MB ? Promise.race([fast(inp.files[0] || src, 1, 'mob'), new Promise(function (ok) { setTimeout(function () { ok(null); }, 180000); })])
+      .then(function (m) { try { stopNow && stopNow.cancel(); } catch (e) {} stopNow = null; why = ''; return m && m.size && m.size < src.size ? m : null; }, function () { return null; }) : Promise.resolve(null);
+    if (src) return mobP.then(function (mob) { return parts(src).then(function (p) {
       var fd = new FormData(f); fd.delete('video'); fd.set('parts', p.up); fd.set('parts_n', p.n); fd.set('parts_size', src.size); fd.set('parts_type', src.type); fd.set('how', how + ', ' + p.n + ' pieces'); if (send.cover) fd.set('cover', send.cover, 'cover.jpg');
       var more = Promise.resolve(), hqOk = !hq;
       if (hq) more = more.then(function () { return parts(hq, 'the sharp copy').then(function (q) { fd.set('hq_parts', q.up); fd.set('hq_parts_n', q.n); fd.set('hq_parts_size', hq.size); hqOk = true; }, function () {}); });   // a piece that fails: the small one is up, it still goes on the website
+      if (mob) more = more.then(function () { return parts(mob, 'the phone copy').then(function (q) { fd.set('mob_parts', q.up); fd.set('mob_parts_n', q.n); fd.set('mob_parts_size', mob.size); }, function () {}); });
       if (orig) more = more.then(function () { return parts(orig, 'the original for Cloudflare').then(function (o) { fd.set('orig_parts', o.up); fd.set('orig_parts_n', o.n); fd.set('orig_parts_size', orig.size); }, function () {}); });
       more.then(function () { say(!hq ? 'Saving the video…' : hqOk ? 'Saving the video and sending the sharp copy to Cloudflare…' : 'Saving the video (the sharp copy did not upload)…'); post(fd); });
-    }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); });
+    }, function () { stop('The upload stopped. Check your internet, then tap Upload again.'); }); });
     var fd = new FormData(f); fd.set('how', how); if (send.cover) fd.set('cover', send.cover, 'cover.jpg'); post(fd);
   }
   /* the video is already on the server in pieces: this only saves it. The page then loads afresh (not written over),

@@ -63,8 +63,8 @@ function fx_video_inbox($pdo) {
       @chmod(fx_media('vid') . "/$f", 0644); @unlink($j); $prod = (string)($m['product'] ?? ''); $words = substr(trim((string)($m['words'] ?? '')), 0, 60);
       if ($hq !== '' && !(function_exists('r2_conf') && r2_conf() && @rename("$in/$hq", fx_media('vid') . "/$hq"))) { @unlink("$in/$hq"); $hq = ''; }   // the sharp copy: to Cloudflare at the next copy, then off Hostinger
       if ($at !== null) {
-        foreach (['file', 'prev', 'hq'] as $k) fx_media_delete($vids[$at][$k] ?? '');
-        unset($vids[$at]['prev'], $vids[$at]['hq'], $vids[$at]['hqk']);   // the shape picked here stays
+        foreach (['file', 'prev', 'mob', 'hq'] as $k) fx_media_delete($vids[$at][$k] ?? '');
+        unset($vids[$at]['prev'], $vids[$at]['mob'], $vids[$at]['hq'], $vids[$at]['hqk']);   // the shape picked here stays
         $vids[$at] = ['file' => "vid/$f"] + ($hq !== '' ? ['hq' => "vid/$hq"] : []) + ($hqk !== '' ? ['hqk' => $hqk] : []) + (preg_match('/^[a-f0-9]{32}$/', (string)($m['fp'] ?? '')) ? ['fp' => (string)$m['fp']] : []) + $vids[$at];
         $added++; continue;
       }
