@@ -68,7 +68,7 @@ function r2_put(array $c, string $f): string {
 /* every video file the list uses (the video and its small preview) */
 function r2_wanted($pdo): array {
   $w = []; $have = null;
-  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) foreach ([(string)($v['file'] ?? ''), (string)($v['prev'] ?? ''), (string)($v['mob'] ?? ''), (string)($v['hq'] ?? ''), (string)($v['orig'] ?? '')] as $f) {
+  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) foreach ([(string)($v['file'] ?? ''), (string)($v['prev'] ?? ''), (string)($v['hq'] ?? ''), (string)($v['orig'] ?? '')] as $f) {
     if (!preg_match('~^vid/[a-z0-9-]+\.(mp4|mov|webm)$~', $f)) continue;
     if (($p = fx_media_path($f)) && is_file($p)) $w[$f] = (int)filesize($p);
     elseif (in_array($f, [(string)($v['hq'] ?? ''), (string)($v['orig'] ?? '')], true) && isset(($have ??= r2_have())[$f])) $w[$f] = $have[$f];   // the sharp copy and the original leave Hostinger once they are on Cloudflare
@@ -109,7 +109,7 @@ function fx_video_tidy($pdo, bool $now = false): array {
   $st = fx_media() . '/tidy.json'; $last = json_decode((string)@file_get_contents($st), true);
   if (!$now && is_array($last) && time() - (int)($last['at'] ?? 0) < 3600) return $last;
   $keep = [];
-  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (is_array($v)) foreach (['file', 'prev', 'mob', 'hq', 'orig'] as $k)
+  foreach (json_decode((string)fomaxo_setting($pdo, 'videos'), true) ?: [] as $v) if (is_array($v)) foreach (['file', 'prev', 'hq', 'orig'] as $k)
     if (preg_match('~^vid/([a-z0-9-]+\.(?:mp4|mov|webm))$~', (string)($v[$k] ?? ''), $m)) $keep[$m[1]] = true;
   if (!$keep) return is_array($last) ? $last : [];   // an empty or unreadable list: never wipe everything
   try { if (r2_share_dedupe($pdo)) return fx_video_tidy($pdo, true); } catch (Throwable $e) {}   // the list changed: count again
