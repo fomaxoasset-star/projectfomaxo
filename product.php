@@ -119,6 +119,23 @@ $text = '<noscript><div style="max-width:720px;margin:40px auto;padding:0 16px">
       . implode('', array_map(fn($r) => '<blockquote><p>' . $h((string)$r['text']) . '</p><p>' . $h((string)$r['name']) . ($rvCity($r) !== '' ? ', ' . $h($rvCity($r)) : '') . (!empty($r['verified']) ? ($ar ? ' · مشترٍ موثّق' : ' · Verified Purchaser') : '') . ' · ' . (int)$r['rating'] . '/5</p></blockquote>', $top)) . '</div></noscript>';
 $html = preg_replace('#<body>#', '<body>' . strtr($text, ['\\' => '\\\\', '$' => '\$']), $html, 1);
 
+/* the big photo and the name show straight away, while the rest of the page (the shop's code, about two thirds of it) is still downloading:
+   before, a phone on slow internet saw only the top bar until the whole page had arrived (7.6 s on 3G in tests). The photo also starts
+   downloading with the first bytes (preload), not after the shop's code has run. Same classes and photo address as product() in index.html,
+   so the full page replaces it in place; route() then shows it without the fade-in. No price here: the shop works it out (offers, multi-buy). */
+$sizes0 = array_map('strval', (array)($p['sizes'] ?? []));
+$sz = $size !== '' ? $size : ($isSet ? (string)($sizes0[0] ?? '') : (in_array('50', $sizes0, true) ? '50' : (string)end($sizes0)));   // defaultSize in index.html
+$photo = $isSet && $size === '' ? (($p['images'] ?? [])[0] ?? '') : (($p['sizeImages'][$sz] ?? '') ?: ($sz === '10' && !empty($p['miniImage']) ? $p['miniImage'] : (($p['images'] ?? [])[0] ?? '')));   // imgFor
+$photo = is_string($photo) ? $photo : '';
+if ($photo !== '' && preg_match('#^[\w./-]+$#', $photo)) {
+  $src = '/assets/img/' . $photo . '.webp';
+  $html = preg_replace('#(<meta charset="utf-8">\n)#', '$1<link rel="preload" as="image" href="' . $h($src) . '" fetchpriority="high">' . "\n", $html, 1);
+  $early = '<div class="wrap pdp-early" aria-hidden="true" style="min-height:100vh"><div class="crumbs pdp-crumbs" style="padding-top:34px">&nbsp;</div><div class="pdp"><div class="gallery"><div class="thumbs"></div>'
+         . '<div class="stage"><img src="' . $h($src) . '" alt="" fetchpriority="high"></div></div><div class="buy"><div style="display:flex;flex-direction:column;gap:14px">'
+         . '<div class="pd-name"><h1>' . $h($name) . '</h1><span class="sub">' . $h($family) . '</span></div></div></div></div></div>';
+  $html = preg_replace('#<main id="app" tabindex="-1">#', '$0' . strtr($early, ['\\' => '\\\\', '$' => '\$']), $html, 1);
+}
+
 header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: no-cache');   /* asked again on every visit, so a name, photo or price saved on admin shows straight away (and the Arabic link never gets the English preview from a cache); a reload with nothing changed gets "not modified" (fomaxo_send_page) */
 header('X-LiteSpeed-Cache-Control: no-cache');
