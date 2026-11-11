@@ -6423,7 +6423,6 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
 /* premium cursor: gold dot + trailing ring */
 (function(){
   if (!matchMedia('(hover: hover) and (pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  if (/Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox/.test(navigator.userAgent)) return;   // Safari keeps the Mac's own arrow: the drawn dot and ring lagged and jumped there while previews played (AJAY 11/11/2026)
   const root = document.documentElement, dot = document.createElement('div'), ring = document.createElement('div');
   dot.className = 'cur-dot'; ring.className = 'cur-ring'; document.body.append(dot, ring); root.classList.add('cur-ready');
   let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y;
