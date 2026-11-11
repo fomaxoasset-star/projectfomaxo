@@ -1580,16 +1580,17 @@ if (isset($_GET['videos'])) {
         if ($ext !== '' && @rename($tmp, "$dir/$to")) $vids[0][$k] = "vid/$to"; else @unlink($tmp);
       };
       $join('hq', 'h', 500 * 1048576, ['video/mp4' => 'mp4']);
+      $join('mob', 'm', 100 * 1048576, ['video/mp4' => 'mp4']);   // the lighter phone copy (540 px wide, about half the size; AJAY 11/11/2026): phones play it, made once in Chrome, kept on Cloudflare and here
       $join('orig', 'o', 4096 * 1048576, ['video/mp4' => 'mp4', 'video/x-m4v' => 'mp4', 'video/quicktime' => 'mov', 'video/webm' => 'webm']);
       $syncNow = !empty($vids[0]['hq']) || !empty($vids[0]['orig']);
       if ($ri !== false) {   // keep the old video's product, words and place; only the files change (the old ones go, on Cloudflare at the next copy)
         $nv = array_shift($vids); $old = $vids[$ri];
-        foreach (['file', 'prev', 'hq'] as $k) fx_media_delete($old[$k] ?? '');
+        foreach (['file', 'prev', 'mob', 'hq'] as $k) fx_media_delete($old[$k] ?? '');
         if ($nv['cover'] !== '') fx_media_delete($old['cover'] ?? '');
         if (!empty($nv['orig'])) fx_media_delete($old['orig'] ?? ''); elseif (!empty($old['orig'])) $nv['orig'] = $old['orig'];   // made again from the original on Cloudflare: that original stays
         $was = (string)($old['fp'] ?? ''); $both = !empty($old['sent_in']) || ($old['from'] ?? '') === 'fomaxo.in';   // a video fomaxo.in has too: replaced there as well
-        unset($old['prev'], $old['hq'], $old['fp'], $old['orig']); if (!empty($nv['hq'])) unset($old['hqk']);   // its own new 1080p: fomaxo.in's file is no longer played   // the shape (9:16 / 16:9) stays as picked: Make All Videos Again flipped it (AJAY 28/10/2026)
-        $vids[$ri] = ['file' => $nv['file']] + ($nv['cover'] !== '' ? ['cover' => $nv['cover']] : []) + array_intersect_key($nv, ['hq' => 1, 'orig' => 1, 'fp' => 1]) + $old;
+        unset($old['prev'], $old['mob'], $old['hq'], $old['fp'], $old['orig']); if (!empty($nv['hq'])) unset($old['hqk']);   // its own new 1080p: fomaxo.in's file is no longer played   // the shape (9:16 / 16:9) stays as picked: Make All Videos Again flipped it (AJAY 28/10/2026)
+        $vids[$ri] = ['file' => $nv['file']] + ($nv['cover'] !== '' ? ['cover' => $nv['cover']] : []) + array_intersect_key($nv, ['mob' => 1, 'hq' => 1, 'orig' => 1, 'fp' => 1]) + $old;
         $inOk = $both && $was !== '' && fx_vid_to_in("$dir/$name", $vids[$ri], $was);
         flash('Video number ' . ($ri + 1) . ' replaced' . ($syncNow ? ' with the sharp one. It goes to Cloudflare in a minute' : '') . '. Same product, words and place in the list.' . ($inOk ? ' Replaced on fomaxo.in too.' : ($both ? ' On fomaxo.in it stays as before: replace it there too.' : '')), true);
       } else {
@@ -1626,6 +1627,7 @@ if (isset($_GET['videos'])) {
       if (!empty($v['ig'])) { $seen = json_decode((string)fomaxo_setting($pdo, 'ig_seen'), true) ?: []; $seen[] = $v['ig']; fomaxo_setting($pdo, 'ig_seen', json_encode(array_slice($seen, -300))); }   // Automatic never brings it back
       fx_media_delete($v['file'] ?? '');
       fx_media_delete($v['prev'] ?? '');
+      fx_media_delete($v['mob'] ?? '');
       fx_media_delete($v['hq'] ?? '');   // on Cloudflare, it goes at the next copy (r2_sync)
       fx_media_delete($v['orig'] ?? '');
       fx_media_delete($v['cover'] ?? '');
@@ -1650,6 +1652,7 @@ if (isset($_GET['videos'])) {
     $fsz = empty($v['embed']) && ($fp = fx_media_path($v['file'] ?? '')) && is_file($fp) ? (int)filesize($fp) : 0;   // 0 = the video file is not on the server
     $mb = fn($b) => $b >= 1048576 ? round($b / 1048576, $b >= 10485760 ? 0 : 1) . ' MB' : max(1, round($b / 1024)) . ' KB';
     $fnote = !empty($v['embed']) ? '' : ($fsz ? ' · ' . $mb($fsz) : ' · <b class="vbad">File missing, upload again</b>');
+    if (($v['mob'] ?? '') !== '') $fnote .= ' · phone copy' . (($mf = fx_media_path($v['mob'])) && is_file($mf) ? ' ' . $mb(filesize($mf)) : '');   // the lighter copy phones play
     if (($v['hq'] ?? '') !== '') $fnote .= isset(($r2hv ??= r2_have())[$v['hq']]) ? ' · 1080p ' . ($r2hv[$v['hq']] > 0 ? $mb($r2hv[$v['hq']]) . ' ' : '') . 'on Cloudflare' : ' · 1080p ' . (($hf = fx_media_path($v['hq'])) && is_file($hf) ? $mb(filesize($hf)) . ' ' : '') . 'waiting to copy';   // the sharp copy (only on Cloudflare), its size as copied
     $orig = ($v['orig'] ?? '') !== '' && $r2c && isset(($r2hv ??= r2_have())[$v['orig']]) ? rtrim((string)r2_conf()['url'], '/') . '/' . r2_key($v['orig']) : '';   // the original from the phone, kept on Cloudflare for Make All Videos Again
     $hqu = ($v['hq'] ?? '') !== '' && $r2c && isset(($r2hv ??= r2_have())[$v['hq']]) ? rtrim((string)r2_conf()['url'], '/') . '/' . r2_key($v['hq']) : (($v['hq'] ?? '') === '' && $r2c && in_key((string)($v['hqk'] ?? '')) !== '' ? rtrim((string)r2_conf()['url'], '/') . '/' . $v['hqk'] : '');
