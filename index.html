@@ -6074,13 +6074,7 @@ document.addEventListener('error', e => { const v = e.target; if (v && v.tagName
 ['loadstart', 'play'].forEach(t => document.addEventListener(t, e => { const v = e.target, u = v && v.tagName === 'VIDEO' && v.getAttribute('src') || ''; if (!/^https:\/\//.test(u) || v.dataset.fb || v.readyState > 1) return;
   setTimeout(() => { if (v.getAttribute('src') === u && v.readyState < 2 && (v.autoplay || !v.paused)) cfBack(v); }, 4000); }, true));
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
-function vidLit(v, done){ (v._litQ = v._litQ || []).push(done); if (v._lit) return; v._lit = 1;   // a video the player borrows from the row can be checked for both at once: each waiting cover goes when the check passes
-  const c = document.createElement('canvas'); c.width = c.height = 8; const g = c.getContext('2d', {willReadFrequently: true}); let n = 0, blank = 0;
-  const chk = () => { if (!v.getAttribute('src')) { v._lit = 0; v._litQ = []; return; } let ok = false; try { g.clearRect(0, 0, 8, 8); g.drawImage(v, 0, 0, 8, 8); const d = g.getImageData(0, 0, 8, 8).data; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 36) { ok = true; break; }
-      if (!ok && d.every(x => x === 0) && ++blank >= 8 && v.currentTime > 0) { ok = true; v._litWhy = 'blank'; } } catch (e) { ok = true; }   /* nothing at all came onto the test picture (not even a black one, see-through): this browser can't show us the frames (Safari with the 11/11/2026 previews: only the photo, AJAY), so it can't be checked: the video shows, as when the check fails */
-    if (ok) { v._lit = 0; const q = v._litQ; v._litQ = []; return q.forEach(f => f()); } if (++n < 150) next(); else { v._lit = 0; v._litQ = []; } };   // about 5 seconds of black frames: the photo stays
-  const next = () => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(chk) : setTimeout(chk, 200);
-  next(); }
+function vidLit(v, done){ done(); }   /* the cover photo goes the moment the preview or video is playing (AJAY 11/11/2026: "as soon as the preview and video playing remove photo and play"); the old wait for a non-black frame kept the photo on in Safari */
 /* Improve → Video speed (AJAY 28/10/2026): how fast this shopper's previews and full videos started, whether one froze or did not play.
    One small note per preview row and per video opened; it only measures, nothing about how videos play depends on it */
 let vsPrev = false;   // one preview note per page visit (the row is drawn again when stock or the page changes)
