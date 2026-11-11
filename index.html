@@ -193,7 +193,7 @@ section.sec{padding:clamp(56px,6vw,96px) 0}
 .sec-head .t{display:flex;flex-direction:column;gap:18px;max-width:720px}
 .sec-head.c{justify-content:center;text-align:center}.sec-head.c .t{align-items:center}
 .page-fade{animation:pagein .9s var(--ease)}
-.page-fade.no-fade{animation:none}
+.page-fade.no-fade,.no-fade .page-fade{animation:none}
 #app:empty{min-height:100vh}   /* until the page is drawn, the footer waits below the screen instead of jumping down */
 .hero-cine.hc-early{min-height:calc(100vh + 120px);max-height:none}   /* the early home banner keeps the footer off the screen too, until the full home page replaces it */
 @keyframes pagein{from{opacity:0;transform:translateY(14px)}}
@@ -2434,7 +2434,7 @@ section.sec+section.sec.story{padding-top:clamp(28px,3vw,48px)}
 .mbuy .mb-sm{display:block;font-style:normal;font-size:11px;letter-spacing:.06em;line-height:1.35;color:var(--fg,inherit);opacity:.85;margin:2px 0 1px}   /* smell notes wrap to a second line on narrow phones instead of being cut (AJAY 2026-10-27) */
 /* ===== Arabic (عربي) — the site turns right-to-left; English text is swapped by assets/i18n-ar.js ===== */
 html.i18n-wait body{visibility:hidden}
-html.i18n-wait .hc-early,html.i18n-wait #heroCine .hc-slides{visibility:visible}   /* the home banner picture has no words, so Arabic visitors see it while the Arabic text loads */
+html.i18n-wait .hc-early,html.i18n-wait #heroCine .hc-slides,html.i18n-wait .pdp-early .stage{visibility:visible}   /* the home banner picture has no words, so Arabic visitors see it while the Arabic text loads */
 html[lang=ar]{--serif:"Cormorant Garamond","Amiri","Times New Roman",serif;--display:"Jost","Tajawal","Helvetica Neue",Arial,sans-serif;--sans:"Jost","Tajawal","Helvetica Neue",Arial,sans-serif}
 html[lang=ar] [data-ar]{letter-spacing:0!important;font-style:normal!important;word-spacing:normal}
 html[lang=ar] body{line-height:1.75}
@@ -5961,7 +5961,7 @@ function route(){
   if (html === '') return;
   document.body.classList.toggle('home', !seg[0]);
   document.body.classList.toggle('co-page', seg[0] === 'checkout');
-  const early = quietRoute || $('.hc-early', app);   // first open of the home page: the banner is already showing, so no fade-in (same for a quiet redraw)
+  const early = quietRoute || $('.hc-early, .pdp-early', app);   // first open of the home page or a product address: the banner / photo is already showing, so no fade-in (same for a quiet redraw)
   app.innerHTML = `<div class="page-fade${early ? ' no-fade' : ''}"${/^(checkout|order-confirmed|thank-you|review|contact|franchise)$/.test(seg[0]) ? ' data-clarity-mask="true"' : ''}>${html}</div>`;   // typed and shown customer details stay hidden in Clarity recordings
   if (!quietRoute) FXT.view(seg);   // a quiet redraw is the same page, not a second visit to it
   $$('#menu a').forEach(a => a.classList.toggle('on', a.dataset.r === seg[0] || (a.dataset.r === 'fragrances' && seg[0] === 'product')));
