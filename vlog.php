@@ -9,7 +9,7 @@ $raw = (string)file_get_contents('php://input', false, null, 0, 4096);
 $d = json_decode($raw, true);
 /* Improve → Video speed (AJAY 28/10/2026): one line per preview row or video opened, how fast it started, froze or did not play.
    vid-speed.txt (private like vid-report.txt), newest half kept past 300 KB. Same lines as fomaxo.in's api/data/vtime.txt */
-if (is_array($d) && ($d['t'] ?? '') === 'vtime' && is_array($d['vt'] ?? null) && in_array($d['how'] ?? '', ['preview', 'video'], true)) {
+if (is_array($d) && ($d['t'] ?? '') === 'vtime' && is_array($d['vt'] ?? null) && in_array($d['how'] ?? '', ['preview', 'video', 'plit'], true)) {   // plit: 7 s after the first preview started, did its photo go (Safari check, 11/11/2026); Improve reads only preview/video
   $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? ''); if (preg_match('/bot|crawl|spider|headless|lighthouse|preview|python|curl/i', $ua)) exit;
   $st = []; foreach (array_slice($d['vt'], 0, 6) as $x) if (is_array($x) && preg_match('/^[a-z]{2,12}$/', (string)($x[0] ?? ''))) $st[] = $x[0] . ' ' . max(0, min(99999, (int)($x[1] ?? 0)));
   $br = preg_match('/Edg/', $ua) ? 'Edge' : (preg_match('/SamsungBrowser/', $ua) ? 'Samsung' : (preg_match('/CriOS|Chrome/', $ua) ? 'Chrome' : (preg_match('/FxiOS|Firefox/', $ua) ? 'Firefox' : (preg_match('/Safari/', $ua) ? 'Safari' : 'Other'))));
