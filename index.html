@@ -6473,12 +6473,21 @@ addEventListener('pointermove', e => { mouse.tx = e.clientX / innerWidth * 2 - 1
     }
     return false;
   };
-  let lastCheck = 0, cx = -1, cy = -1;
-  (function loop(){ rx += (x - rx) * .18; ry += (y - ry) * .18;
-    const now = performance.now();
-    if (root.dataset.mode === 'light' && now - lastCheck > 80 && (x !== cx || y !== cy || now - lastCheck > 600)) { lastCheck = now; cx = x; cy = y; root.classList.toggle('cur-gold', darkAt(x, y)); }
-    dot.style.transform = `translate3d(${x}px,${y}px,0)`; ring.style.transform = `translate3d(${rx}px,${ry}px,0)`;
-    requestAnimationFrame(loop); })();
+  /* smoother (AJAY 11/11/2026 "improve the mouse movement"): the dot moves on every pointer move, not one frame later; the ring follows
+     about twice as fast and by elapsed time, so it keeps up even when the browser is busy (video previews) instead of jumping;
+     the loop sleeps once the ring has caught up, so a still mouse costs nothing; the gold-over-dark check runs at most every 150 ms */
+  let lastCheck = 0, cx = -1, cy = -1, last = 0, run = false;
+  const place = () => { dot.style.transform = `translate3d(${x}px,${y}px,0)`; };
+  function loop(t){
+    const dt = last ? Math.min(t - last, 100) : 16.7; last = t;
+    const k = 1 - Math.pow(.65, dt / 16.7); rx += (x - rx) * k; ry += (y - ry) * k;
+    if (root.dataset.mode === 'light' && t - lastCheck > 150 && (x !== cx || y !== cy)) { lastCheck = t; cx = x; cy = y; root.classList.toggle('cur-gold', darkAt(x, y)); }
+    ring.style.transform = `translate3d(${rx}px,${ry}px,0)`;
+    if (Math.abs(x - rx) < .3 && Math.abs(y - ry) < .3 && (root.dataset.mode !== 'light' || (x === cx && y === cy))) { run = false; last = 0; return; }
+    requestAnimationFrame(loop);
+  }
+  const wake = () => { place(); if (!run) { run = true; requestAnimationFrame(loop); } };
+  addEventListener('pointermove', wake, {passive: true}); addEventListener('scroll', () => { cx = -1; wake(); }, {passive: true}); wake();
 })();
 
 /* light / dark mode */
