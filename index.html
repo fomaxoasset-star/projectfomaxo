@@ -2520,7 +2520,8 @@ html[dir="rtl"] .rl-s{direction:rtl}
 .rl-stage{position:relative;height:100%;width:100%;overflow:hidden;background:#000}
 .rl-stage video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .rl-s.wide .rl-stage video{object-fit:contain}   /* 16:9: the whole picture shows, the product card sits under it */
-.rl-pic{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;transition:opacity .3s}.rl-s.wide .rl-pic{object-fit:contain}.rl-s.shown .rl-pic{opacity:0}   /* the player shows the cover photo until the full video really shows moving pictures (never a black screen while it loads) */
+.rl-pic{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;transition:opacity .3s}.rl-s.wide .rl-pic{object-fit:contain}.rl-s.shown .rl-pic{opacity:0}
+.rl-pv{opacity:0;transition:opacity .2s}.rl-s.pvon .rl-pv{opacity:1}.rl-s.pvon .rl-pic{opacity:0}.rl-s.shown .rl-pv{opacity:0}   /* tapped video: its small preview (already in the browser from the row) shows at once, the full video with sound takes over as soon as it really shows pictures; the photo stays until one of them really moves, so never black */   /* the player shows the cover photo until the full video really shows moving pictures (never a black screen while it loads) */
 .rl-stage::after{content:"";position:absolute;inset:auto 0 0;height:45%;background:linear-gradient(to top,rgba(0,0,0,.75),rgba(0,0,0,0));pointer-events:none}
 .rl-pause{position:absolute;inset:0;margin:auto;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#f0d3a0;opacity:0;transition:opacity .3s;pointer-events:none;z-index:1}
 .rl-pause svg{width:22px;height:22px;margin-left:3px}
@@ -6059,7 +6060,10 @@ function loopRow(sc){ if (!sc || sc.dataset.loop) return; const ks = [...sc.chil
 function vidXO(u){ return /^https:/.test(u || '') ? ' crossorigin="anonymous"' : ''; }
 /* slow internet (or data saver): the player plays the small copy (vf) instead of the sharp 1080p one, so it doesn't stop and wait. iPhones don't tell, they keep the sharp one */
 function slowNet(){ const c = navigator.connection; return !!c && (!!c.saveData || /2g|3g/.test(c.effectiveType || '') || (c.downlink > 0 && c.downlink < 4)); }
-const vSrc = v => v.vf && slowNet() ? '/assets/' + v.vf : v.v.startsWith('vid/') ? 'assets/' + v.v : v.v;
+/* phones (and slow internet) play the lighter phone copy (vm: 540 px wide, about half the download; made once in Chrome by Make All Videos Again, AJAY 11/11/2026);
+   if it fails to load, the usual video plays instead (data-fbu) */
+const PHONE_V = matchMedia('(max-width:600px)').matches;
+const vSrc = v => v.vm && (PHONE_V || slowNet()) ? (v.vm.startsWith('vid/') ? 'assets/' + v.vm : v.vm) : v.vf && slowNet() ? '/assets/' + v.vf : v.v.startsWith('vid/') ? 'assets/' + v.v : v.v;
 document.addEventListener('error', e => { const v = e.target, u = v && v.tagName === 'VIDEO' && v.getAttribute('src') || ''; if (!/^https:\/\//.test(u) || v.dataset.fb) return;
   const f = v.dataset.fbu || '/assets/vid/' + u.split('/').pop(), go = v.autoplay || !v.paused; v.dataset.fb = 1; v.removeAttribute('crossorigin'); if (v.dataset.src === u) v.dataset.src = f; v.src = f; if (go) v.play().catch(() => {}); }, true);
 /* Safari can play a video and still show it black: the cover photo goes only once a real picture (not a black frame) is on the screen */
@@ -6203,7 +6207,7 @@ function reelCard(p){
 function reelSlide(v, k){
   const ps = vidProds(v).map(id => P[id]), name = ps.length ? ps[0].name : 'FOMAXO';
   return `<section class="rl-s${v.e ? ' emb' : ''}${v.wd ? ' wide' : ''}" data-k="${k}"><div class="rl-stage">
-    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" playsinline loop muted preload="none" poster="${vidPoster(v)}"${vidXO(vSrc(v))}${v.vf ? ` data-fbu="/assets/${esc(v.vf)}"` : ''} data-src="${esc(vSrc(v))}"></video>`}${!v.e && vidPoster(v) ? `<img class="rl-pic" data-src="${vidPoster(v)}" alt="">` : ''}
+    ${v.e ? `<iframe data-src="https://www.instagram.com/reel/${esc(v.e)}/embed/" title="${esc(name)} on Instagram" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<video disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" playsinline loop muted preload="none" poster="${vidPoster(v)}"${vidXO(vSrc(v))}${v.vf ? ` data-fbu="/assets/${esc(v.vf)}"` : ''} data-src="${esc(vSrc(v))}"></video>${v.pv && v.pv !== v.v && v.pv !== v.vf ? `<video class="rl-pv" disablepictureinpicture disableremoteplayback x-webkit-airplay="deny" playsinline loop muted preload="none"${vidXO(v.pv)} data-src="${esc(v.pv.startsWith('vid/') ? 'assets/' + v.pv : v.pv)}"></video>` : ''}`}${!v.e && vidPoster(v) ? `<img class="rl-pic" data-src="${vidPoster(v)}" alt="">` : ''}
     <span class="rl-pause" aria-hidden="true">${VI.play}</span>
     ${v.n && vidPage() ? `<span class="vt-by rl-by">${VI.by}<bdi>${esc(v.n)}</bdi></span>` : ''}
     ${!ps.length ? `<div class="rl-cards"><div class="rl-card rl-shop"><div class="rl-info"><span class="rl-n">${v.w ? esc(v.w) : 'FOMAXO'}</span><span class="rl-f">${v.w ? 'FOMAXO' : 'Eau de Parfum · Unisex'}</span></div><a class="btn sm" href="#/fragrances">Shop now</a></div></div>`
@@ -6224,7 +6228,12 @@ function openReel(i){
   const lent = [];   // the row's videos are already loaded: the player borrows them, so the tapped video plays at once (given back on close); a row tile playing its small preview (silent, first seconds) is not borrowed, the player loads the full video
   $$('#vrow .vt').forEach(t => { const rv = $('video', t), sv = slides[+t.dataset.vi] && $('video', slides[+t.dataset.vi]); if (!rv || !rv.src || rv.readyState < 2 || !sv || lent.some(x => x[1] === sv) || rv.dataset.src !== sv.dataset.src) return; const ph = document.createComment(''); rv.before(ph); sv.replaceWith(rv); lent.push([ph, rv]); });
   $$('#vrow video, #vStrip video').forEach(v => { if (!lent.some(x => x[1] === v) && v.getAttribute('src')) { v.removeAttribute('src'); v.load(); } });   // the row's small previews let go while the player is open (Safari showed the full video black with them all loaded); they come back from the browser's copy on close
-  slides.forEach(s => { const v = $('video', s); if (v) v.addEventListener('playing', () => vidLit(v, () => s.classList.add('shown'))); });   // the cover photo goes once real pictures show
+  const pvOff = s => { const p = $('.rl-pv', s); s.classList.remove('pvon'); if (p && p.getAttribute('src')) { p.pause(); p.removeAttribute('src'); p.load(); } };   // the preview lets go once the full video shows (or the video is swiped away)
+  const pvOn = (s, v) => { const p = $('.rl-pv', s); if (!p || MAC_SAFARI || s.classList.contains('shown') || v.readyState > 2) return;   /* Mac Safari: as before (its previews are kept exactly as they were) */ if (!p.getAttribute('src')) p.src = p.dataset.src; p.currentTime = 0;
+    p.play().then(() => vidLit(p, () => { if (cur === +s.dataset.k && !s.classList.contains('shown') && p.getAttribute('src')) s.classList.add('pvon'); })).catch(() => {}); };   // phones that block moving videos (Low Power Mode): the photo stays, as before
+  slides.forEach(s => { const v = $('video', s); if (v) v.addEventListener('playing', () => vidLit(v, () => { const p = $('.rl-pv', s);
+    if (p && s.classList.contains('pvon') && p.currentTime > .3) { const t = p.currentTime; for (let i = 0; i < v.buffered.length; i++) if (v.buffered.start(i) <= t && t < v.buffered.end(i) - .5) { v.currentTime = t; break; } }   // carries on from where the preview was, when that part is already in
+    s.classList.add('shown'); pvOff(s); })); });   // the cover photo goes once real pictures show
   let cur = -1;
   const go = k => { k = Math.max(0, Math.min(slides.length - 1, k)); track.scrollTo({left: k * track.clientWidth, behavior: 'smooth'}); };
   const act = k => { if (k === cur) return; cur = k;
@@ -6232,8 +6241,8 @@ function openReel(i){
     slides.forEach((s, n) => { const v = $('video', s), pic = $('.rl-pic', s);
       if (pic && !pic.src && Math.abs(n - k) <= 1) pic.src = pic.dataset.src;   // cover photos only for this video and the ones either side: all of them at once (one per video) held up the tapped video's start
       if (!v) { const f = $('iframe', s); if (f && !f.src && Math.abs(n - k) <= 1) f.src = f.dataset.src; return; }   // Instagram's player: loaded when near, played by a tap on it
-      if (n === k) { if (!v.src) v.src = v.dataset.src; vsWatch(v); reelLog(v, s); v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
-      else { v.pause(); if (Math.abs(n - k) === 1 && !v.src) { if (!MAC_SAFARI) { v.preload = 'auto'; v.src = v.dataset.src; } else { const cv = $('video', slides[k]), near = () => { if (cur === k && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } }; cv && cv.readyState > 3 ? near() : (cv && cv.addEventListener('canplaythrough', near, {once: true}), setTimeout(near, 6000)); } } } });   // the next and previous videos load now, so a swipe plays at once
+      if (n === k) { if (!v.src) v.src = v.dataset.src; vsWatch(v); reelLog(v, s); v.muted = reelMuted; if (!reelMuted) quiet(v); v.currentTime = 0; s.classList.remove('paused'); pvOn(s, v); v.play().catch(() => { v.muted = reelMuted = true; const sb = $('.rl-snd', el); if (sb) { sb.innerHTML = VI.off; sb.setAttribute('aria-label', 'Sound on'); } v.play().catch(() => s.classList.add('paused')); }); }
+      else { v.pause(); pvOff(s); if (Math.abs(n - k) === 1 && !v.src) { if (!MAC_SAFARI) { v.preload = 'auto'; v.src = v.dataset.src; } else { const cv = $('video', slides[k]), near = () => { if (cur === k && !v.src) { v.preload = 'auto'; v.src = v.dataset.src; } }; cv && cv.readyState > 3 ? near() : (cv && cv.addEventListener('canplaythrough', near, {once: true}), setTimeout(near, 6000)); } } } });   // the next and previous videos load now, so a swipe plays at once
       // Mac Safari downloads the whole next and previous videos at once, so the one on screen waited (its own report 2026-10-27: 5.5 s, stuck): there they load once it has enough to play to the end (or after 6 s)
     $$('.rl-nav button', el).forEach(b => b.disabled = (+b.dataset.rl < 0 && k === 0) || (+b.dataset.rl > 0 && k === slides.length - 1));
   };
@@ -6253,7 +6262,7 @@ function openReel(i){
   el.addEventListener('click', e => {
     const sl = e.target.closest('.rl-s'); if (!sl) return;
     const s = e.target.closest('.rl-card[data-id]');
-    if (!s) { if (e.target.closest('a,button,.rl-cards')) return; const v = $('video', sl); if (!v) return; if (v.paused) { v.play().catch(() => {}); sl.classList.remove('paused'); } else { v.pause(); sl.classList.add('paused'); } return; }   // tap the video: pause / play
+    if (!s) { if (e.target.closest('a,button,.rl-cards')) return; const v = $('video', sl); if (!v) return; if (v.paused) { v.play().catch(() => {}); sl.classList.remove('paused'); } else { v.pause(); pvOff(sl); sl.classList.add('paused'); } return; }   // tap the video: pause / play
     const p = P[s.dataset.id], chip = e.target.closest('[data-size]');
     if (chip) { const z = chip.dataset.size === 'set' ? 'set' : +chip.dataset.size; s.dataset.sel = z; $$('.chip', s).forEach(c => c.classList.toggle('on', c === chip)); $('[data-price]', s).innerHTML = priceHTML(p, z); $('.rl-pi img', s).src = SM(imgFor(p, z)); $('[data-stk]', s).innerHTML = stockHTML(p.id, z); $$('[data-add],[data-buy]', s).forEach(b => b.disabled = stockLeft(p.id, z) === 0); return; }
     const sel = s.dataset.sel === 'set' ? 'set' : +s.dataset.sel;
