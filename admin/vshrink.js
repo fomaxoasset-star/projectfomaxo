@@ -63,6 +63,18 @@ window.fxPick = function (src, done) {
     fetch(src, {credentials: 'same-origin'}).then(function (r) { return r.ok ? r.blob() : Promise.reject(); }).then(function (b) { msg.textContent = 'Play or slide to the moment you like, then tap Use this frame.'; go(b); }, function () { msg.textContent = 'The video could not be loaded. Please try again.'; });
   } else go(src);
 };
+/* every copy is made as a normal video picture (BT.709, studio range), the way phones and cameras make them (AJAY 11/11/2026: Safari played the
+   11 Nov copies black). Making a copy smaller went through a canvas, so the files came out marked "sRGB, full range": Chrome ignores that,
+   Safari drew them black. Each picture is now made smaller here and turned into a normal video picture before it is encoded */
+function sdr(M, w, h) {
+  var cv = new OffscreenCanvas(w, h), g = cv.getContext('2d', {willReadFrequently: true}), Y = w * h, cw = w >> 1, ch = h >> 1, C = cw * ch;
+  return function (s) { var buf = new Uint8Array(Y + 2 * C); s.draw(g, 0, 0, w, h); var d = g.getImageData(0, 0, w, h).data, p, i, x, y;
+    for (p = 0, i = 0; p < Y; p++, i += 4) buf[p] = 16 + ((0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) * 0.8588 + 0.5 | 0);
+    for (y = 0; y < ch; y++) for (x = 0; x < cw; x++) { var a = (2 * y * w + 2 * x) * 4, b = a + w * 4, j = y * cw + x,
+      r = (d[a] + d[a + 4] + d[b] + d[b + 4]) / 4, gg = (d[a + 1] + d[a + 5] + d[b + 1] + d[b + 5]) / 4, bl = (d[a + 2] + d[a + 6] + d[b + 2] + d[b + 6]) / 4;
+      buf[Y + j] = 128 + Math.round((-0.1146 * r - 0.3854 * gg + 0.5 * bl) * 0.8784); buf[Y + C + j] = 128 + Math.round((0.5 * r - 0.4542 * gg - 0.0458 * bl) * 0.8784); }
+    return new M.VideoSample(buf, {format: 'I420', codedWidth: w, codedHeight: h, timestamp: s.timestamp, duration: s.duration, colorSpace: {primaries: 'bt709', transfer: 'bt709', matrix: 'bt709', fullRange: false}}); };
+}
 (function () {
   var f = document.querySelector('form[data-vshrink]'); if (!f) return;
   var inp = f.querySelector('input[type=file][name=video]'), MB = 1048576, note = f.querySelector('.vsh'), btn = f.querySelector('.btn');
@@ -88,7 +100,7 @@ window.fxPick = function (src, done) {
         var au = cs[1] ? {codec: cs[1], bitrate: AB} : at ? {codec: at.codec} : undefined;   // no sound encoder (some Safari): the sound is copied as it is
         var out = new M.Output({format: new M.Mp4OutputFormat({fastStart: 'in-memory'}), target: new M.BufferTarget()});
         return M.Conversion.init({input: src, output: out, showWarnings: false,
-          video: {width: w, height: h, fit: 'contain', codec: cs[0], bitrate: br, forceTranscode: true},
+          video: {process: sdr(M, w, h), processedWidth: w, processedHeight: h, codec: cs[0], bitrate: br, forceTranscode: true},
           audio: au}).then(function (c) {
           conv = stopNow = c; if (!c.isValid) { why = 'not valid ' + c.discardedTracks.map(function (d) { return d.reason; }).join(' '); return null; }
           if (at && c.discardedTracks.some(function (d) { return d.track.type === 'audio'; })) { why = 'sound would be lost'; return null; }
@@ -418,7 +430,7 @@ setTimeout(function () {   // after the page has loaded (the list comes after th
         return M.canEncodeVideo('avc', {width: w, height: h}).then(function (ok) {
           if (!ok) return null;   // the row needs H.264 so every phone plays it
           var out = new M.Output({format: new M.Mp4OutputFormat({fastStart: 'in-memory'}), target: new M.BufferTarget()});
-          return M.Conversion.init({input: src, output: out, showWarnings: false, video: {width: w, height: h, fit: 'contain', codec: 'avc', bitrate: BR, forceTranscode: true}, audio: {discard: true}, trim: r[1] > SEC ? {start: 0, end: SEC} : undefined})
+          return M.Conversion.init({input: src, output: out, showWarnings: false, video: {process: sdr(M, w, h), processedWidth: w, processedHeight: h, codec: 'avc', bitrate: BR, forceTranscode: true}, audio: {discard: true}, trim: r[1] > SEC ? {start: 0, end: SEC} : undefined})
             .then(function (c) { conv = c; return c.isValid ? c.execute().then(function () { var b = out.target.buffer; return b && b.byteLength ? new Blob([b], {type: 'video/mp4'}) : null; }) : null; });
         });
       });
