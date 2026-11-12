@@ -26,16 +26,16 @@ function fx_receipt_words($ar) {
     'item' => 'Item', 'size' => 'Size', 'unit' => 'Unit price', 'qty' => 'Qty', 'amount' => 'Amount', 'free' => 'Free', 'gift' => 'Free gift', 'cgift' => 'Free with coupon',
     'sub' => 'Subtotal', 'multi' => 'Multi-buy discount', 'bt' => 'Bought together', 'coupon' => 'Coupon', 'disc' => 'Discount', 'codfee' => 'Cash on delivery fee',
     'delivery' => 'Delivery', 'sameday' => 'Same-day delivery', 'paid_total' => 'Total paid', 'due_total' => 'Amount to pay', 'total' => 'Total', 'saved' => 'You saved', 'saved2' => 'on this order',
-    'address' => 'Delivery address', 'ship' => 'Shipping', 'courier' => 'Courier', 'tracking' => 'Tracking no', 'payment' => 'Payment', 'cod' => 'Cash on delivery', 'card' => 'Card',
-    'paid' => 'Paid', 'unpaid' => 'Unpaid', 'cancelled' => 'Cancelled', 'refunded' => 'Refunded', 'thanks' => 'Thank you for your purchase',
+    'address' => 'Address', 'grand' => 'Grand total', 'apt' => 'Apartment', 'building' => 'Building', 'street' => 'Street', 'area' => 'Area', 'emirate' => 'Emirate', 'status' => 'Status', 'ship' => 'Shipping', 'courier' => 'Courier', 'tracking' => 'Tracking no', 'payment' => 'Payment', 'cod' => 'Cash on delivery', 'card' => 'Card',
+    'paid' => 'Paid', 'unpaid' => 'Unpaid', 'cancelled' => 'Cancelled', 'refunded' => 'Refunded', 'thanks' => 'Thank You For Your Purchase',
     'foot' => 'fomaxo.com · Dubai, United Arab Emirates', 'pdf' => 'Download PDF', 'page' => 'Page', 'sets' => 'Set of', 'vials' => 'vials', 'with' => 'Fragrances'];
   if (!$ar) return $en;
   return ['tag' => 'العطور والعناية الشخصية', 'title' => 'إيصال', 'to' => 'صادر إلى', 'no' => 'رقم الإيصال', 'date' => 'التاريخ', 'name' => 'الاسم', 'mobile' => 'الجوال', 'email' => 'البريد',
     'item' => 'المنتج', 'size' => 'الحجم', 'unit' => 'سعر الوحدة', 'qty' => 'الكمية', 'amount' => 'المبلغ', 'free' => 'مجاناً', 'gift' => 'هدية مجانية', 'cgift' => 'مجاناً مع الكوبون',
     'sub' => 'المجموع الفرعي', 'multi' => 'خصم الشراء المتعدد', 'bt' => 'خصم الشراء معاً', 'coupon' => 'كوبون', 'disc' => 'خصم', 'codfee' => 'رسوم الدفع عند الاستلام',
     'delivery' => 'التوصيل', 'sameday' => 'توصيل في نفس اليوم', 'paid_total' => 'المبلغ المدفوع', 'due_total' => 'المبلغ المستحق', 'total' => 'الإجمالي', 'saved' => 'وفّرت', 'saved2' => 'في هذا الطلب',
-    'address' => 'عنوان التوصيل', 'ship' => 'الشحن', 'courier' => 'شركة الشحن', 'tracking' => 'رقم التتبع', 'payment' => 'الدفع', 'cod' => 'الدفع عند الاستلام', 'card' => 'بطاقة',
-    'paid' => 'مدفوع', 'unpaid' => 'غير مدفوع', 'cancelled' => 'ملغي', 'refunded' => 'مسترد', 'thanks' => 'شكراً لشرائك من FOMAXO',
+    'address' => 'العنوان', 'grand' => 'الإجمالي الكلي', 'apt' => 'الشقة', 'building' => 'المبنى', 'street' => 'الشارع', 'area' => 'المنطقة', 'emirate' => 'الإمارة', 'status' => 'الحالة', 'ship' => 'الشحن', 'courier' => 'شركة الشحن', 'tracking' => 'رقم التتبع', 'payment' => 'الدفع', 'cod' => 'الدفع عند الاستلام', 'card' => 'بطاقة',
+    'paid' => 'مدفوع', 'unpaid' => 'غير مدفوع', 'cancelled' => 'ملغي', 'refunded' => 'مسترد', 'thanks' => 'شكراً لشرائك',
     'foot' => 'fomaxo.com · دبي، الإمارات العربية المتحدة', 'pdf' => 'تحميل PDF', 'page' => 'صفحة', 'sets' => 'مجموعة من', 'vials' => 'عينات', 'with' => 'العطور'];
 }
 
@@ -137,18 +137,27 @@ function fx_receipt_page($o, $ar = false) {
     $rows .= '<tr><td class="c-it"><b class="pn">' . $e($l['name']) . '</b>' . $tag . ($sub !== '' ? '<span class="pf">' . $e($sub) . '</span>' : '') . '</td>'
            . '<td class="c-sz">' . $e($size) . '</td><td class="c-un">' . $unit . '</td><td class="c-q">' . (int)$l['qty'] . '</td><td class="c-am">' . $amt . '</td></tr>';
   }
+  /* under the items, like AJAY's Excel invoice (12/11/2026): address on the left; subtotal, delivery, grand total (only with a discount), discounts in red and the big total on the right */
   $sum = '<div class="tr"><span>' . $e($w['sub']) . '</span>' . $M($d['sub']) . '</div>';
-  foreach ($d['disc'] as $x) $sum .= '<div class="tr dc"><span>' . $e($ar ? fx_receipt_disc_label($x['label'], $w) : $x['label']) . '</span><span class="m">−&nbsp;<small>AED</small>' . number_format($x['amt'], 2) . '</span></div>';
-  if ((float)$o['fee'] > 0) $sum .= '<div class="tr"><span>' . $e($w['codfee']) . '</span>' . $M($o['fee']) . '</div>';
   $sum .= '<div class="tr"><span>' . $e($d['sd'] !== null ? $w['sameday'] : $w['delivery']) . '</span>' . ($d['sd'] ? $M($d['sd']) : '<b class="fr">' . $e($w['free']) . '</b>') . '</div>';
+  if ((float)$o['fee'] > 0) $sum .= '<div class="tr"><span>' . $e($w['codfee']) . '</span>' . $M($o['fee']) . '</div>';
+  if ($d['disc']) {
+    $grand = (float)$o['total']; foreach ($d['disc'] as $x) $grand += $x['amt'];   // the total before the discounts, so the red lines take it down to the total
+    $sum .= '<div class="tr gt"><span>' . $e($w['grand']) . '</span>' . $M($grand) . '</div>';
+  }
+  foreach ($d['disc'] as $x) $sum .= '<div class="tr dc"><span>' . $e($ar ? fx_receipt_disc_label($x['label'], $w) : $x['label']) . '</span><span class="m">−&nbsp;<small>AED</small>' . number_format($x['amt'], 2) . '</span></div>';
   $sum .= '<div class="tt"><span>' . $e($d['pay'] === 'paid' ? $w['paid_total'] : ($d['pay'] === 'unpaid' ? $w['due_total'] : $w['total'])) . '</span>' . $M($o['total']) . '</div>';
-  if ($d['save'] > 0.009) $sum .= '<div class="sv">' . $e($w['saved']) . ' ' . $M($d['save']) . ' ' . $e($w['saved2']) . '</div>';
 
-  $addr = array_filter([trim((string)$o['name']), trim((string)$o['phone']), trim(implode(', ', array_filter([$o['room'] ?? '', $o['building'] ?? '']))), trim((string)($o['street'] ?? '')), trim((string)($o['area'] ?? '')), trim((string)$o['emirate'])], fn($x) => $x !== '');
-  if (count($addr) <= 3 && trim((string)$o['address']) !== '') $addr = array_filter([trim((string)$o['name']), trim((string)$o['phone']), trim((string)$o['address']), trim((string)$o['emirate'])], fn($x) => $x !== '');
+  $t = fn($x) => trim((string)$x);
+  $nameUp = mb_strtoupper($t($o['name']), 'UTF-8');
+  $addr = [[$w['name'], $nameUp], [$w['mobile'], $t($o['phone'])], [$w['apt'], $t($o['room'] ?? '')], [$w['building'], $t($o['building'] ?? '')],
+           [$w['street'], $t($o['street'] ?? '')], [$w['area'], $t($o['area'] ?? '')], [$w['emirate'], $t($o['emirate'])]];
+  if ($t($o['room'] ?? '') . $t($o['building'] ?? '') . $t($o['street'] ?? '') . $t($o['area'] ?? '') === '' && $t($o['address']) !== '')   // older orders keep the address as one line
+    array_splice($addr, 2, 4, [[$w['address'], $t($o['address'])]]);
+  $adl = ''; foreach ($addr as [$k, $v]) if ($v !== '') $adl .= '<dt>' . $e($k) . '</dt><dd>' . ($k === $w['mobile'] ? '<bdi dir="ltr">' . $e($v) . '</bdi>' : $e($v)) . '</dd>';
   $ship = '';
-  if (trim((string)($o['courier'] ?? '')) !== '') $ship .= '<div><span>' . $e($w['courier']) . '</span><b>' . $e($o['courier']) . '</b></div>';
-  if (trim((string)($o['tracking'] ?? '')) !== '') $ship .= '<div><span>' . $e($w['tracking']) . '</span><b class="trk">' . $e($o['tracking']) . '</b></div>';
+  if ($t($o['courier'] ?? '') !== '') $ship .= '<div><span>' . $e($w['courier']) . '</span><b>' . $e(mb_strtoupper($t($o['courier']), 'UTF-8')) . '</b></div>';
+  if ($t($o['tracking'] ?? '') !== '') $ship .= '<div><span>' . $e($w['tracking']) . '</span><b class="trk" dir="ltr">' . $e($o['tracking']) . '</b></div>';
   $payWord = $d['cod'] ? $w['cod'] : $w['card'];
   $no = (string)$o['order_no']; $date = date('d/m/Y', strtotime((string)$o['created_at']));
   $sw = '?n=' . rawurlencode($no) . '&t=' . fx_receipt_token($no);
@@ -161,14 +170,13 @@ function fx_receipt_page($o, $ar = false) {
     . '<main class="sheet">'
     . '<header class="hd"><svg class="em" viewBox="0 0 2507 2506" aria-hidden="true"><use href="#emblem"/></svg><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><use href="#wordmark"/></svg>'
     . '<p class="tg">' . $e($w['tag']) . '</p><h1><span>' . $e($w['title']) . '</span></h1></header>'
-    . '<section class="meta"><div><h2>' . $e($w['to']) . '</h2><dl><dt>' . $e($w['name']) . '</dt><dd>' . $e($o['name']) . '</dd>'
-    . ($o['phone'] !== '' ? '<dt>' . $e($w['mobile']) . '</dt><dd dir="ltr">' . $e($o['phone']) . '</dd>' : '') . ($o['email'] !== '' ? '<dt>' . $e($w['email']) . '</dt><dd>' . $e($o['email']) . '</dd>' : '') . '</dl></div>'
+    . '<section class="meta"><div><h2>' . $e($w['to']) . '</h2><dl><dt>' . $e($w['name']) . '</dt><dd>' . $e($nameUp) . '</dd>'
+    . ($o['phone'] !== '' ? '<dt>' . $e($w['mobile']) . '</dt><dd><bdi dir="ltr">' . $e($o['phone']) . '</bdi></dd>' : '') . ($o['email'] !== '' ? '<dt>' . $e($w['email']) . '</dt><dd>' . $e($o['email']) . '</dd>' : '') . '</dl></div>'
     . '<div class="rn"><h2>' . $e($w['no']) . '</h2><p class="no" dir="ltr">#' . $e($no) . '</p><p class="dt"><span>' . $e($w['date']) . '</span> ' . $e($date) . '</p></div></section>'
     . '<table class="it"><thead><tr><th class="c-it">' . $e($w['item']) . '</th><th class="c-sz">' . $e($w['size']) . '</th><th class="c-un">' . $e($w['unit']) . '</th><th class="c-q">' . $e($w['qty']) . '</th><th class="c-am">' . $e($w['amount']) . '</th></tr></thead><tbody>' . $rows . '</tbody></table>'
-    . '<section class="bt"><div class="lf"><h2>' . $e($w['address']) . '</h2><p class="ad">' . implode('<br>', array_map($e, $addr)) . '</p>'
-    . ($ship !== '' ? '<h2>' . $e($w['ship']) . '</h2><div class="sh">' . $ship . '</div>' : '')
-    . '<div class="py"><span>' . $e($w['payment']) . '</span><b>' . $e($payWord) . '</b><i class="st st-' . $d['pay'] . '">' . $e($w[$d['pay']]) . '</i></div></div>'
-    . '<div class="sm">' . $sum . '</div></section>'
+    . '<section class="bt"><div class="lf"><h3>' . $e($w['address']) . '</h3><dl class="ad">' . $adl . '</dl></div><div class="sm">' . $sum . '</div></section>'
+    . '<section class="bx">' . ($ship !== '' ? '<div class="box sh"><h4>' . $e($w['ship']) . '</h4>' . $ship . '</div>' : '')
+    . '<div class="box py"><h4>' . $e($w['payment']) . '</h4><div class="pr"><b>' . $e($payWord) . '</b><b class="st st-' . $d['pay'] . '">' . $e($w[$d['pay']]) . '</b></div></div></section>'
     . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si">' . $e($w['foot']) . '</p></footer>'
     . '</main><div class="wmk" aria-hidden="true"><svg viewBox="0 0 2507 2506"><use href="#emblem"/></svg></div><script>(function(){var s=document.querySelector(".sheet"),r=document.documentElement;addEventListener("beforeprint",function(){r.classList.add("pm");var mm=s.offsetWidth/186,n=Math.max(1,Math.ceil((s.offsetHeight+2*mm)/(271*mm)));r.classList.remove("pm");s.style.setProperty("--pages",n);r.classList.toggle("p1",n<2)})})();if(/[?&]print=1/.test(location.search))addEventListener("load",function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(print,200)})})</script><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
 }
@@ -241,31 +249,33 @@ s::after{content:"";position:absolute;left:-1px;right:-1px;top:52%;height:1.2px;
 .fr{color:var(--gold);letter-spacing:.14em;text-transform:uppercase;font-size:12px;font-weight:500}
 [dir=rtl] .fr{letter-spacing:0}
 .dash{color:var(--muted)}
-.bt{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:28px;margin-top:20px;break-inside:avoid;page-break-inside:avoid}
-.lf h2{margin-top:2px}.lf h2+*{margin-bottom:14px}
-.ad{margin:0;font-size:13px;line-height:1.55;color:var(--soft);overflow-wrap:anywhere}
-.sh{border:1px solid var(--line);border-inline-start:3px solid var(--gold2);padding:8px 12px;display:grid;gap:4px}
-.sh div{display:flex;justify-content:space-between;gap:12px;font-size:13px}.sh span{color:var(--muted)}.sh b{font-weight:500;text-align:end;overflow-wrap:anywhere}
-.sh .trk{font-family:'Charles Wright Singapore',Jost,sans-serif;letter-spacing:.06em}
-.py{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--ink);padding:10px 12px;font-size:13px}
-.py>span{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:10.5px}
-.py b{font-weight:500}
-.st{margin-inline-start:auto;padding:4px 12px;border-radius:999px;font-size:10.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase}
-[dir=rtl] .st,[dir=rtl] .py>span{letter-spacing:0}
-.st-paid{background:var(--gold);color:#fff}
-@media (prefers-color-scheme:dark){.st-paid{color:#0b0b0b}}
-.st-unpaid,.st-cancelled,.st-refunded{border:1px solid var(--red);color:var(--red)}
-.sm .tr{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:13.5px}
-.sm .tr>span:first-child{color:var(--soft)}
-.sm .dc>span{color:var(--gold)!important}
-.sm .tt{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:8px;padding:12px 0 10px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink)}
-.sm .tt>span:first-child{font:600 18px/1 'Cormorant Garamond',Tajawal,serif;letter-spacing:.14em;text-transform:uppercase}
-[dir=rtl] .sm .tt>span:first-child{letter-spacing:0}
-.sm .tt .m{font-size:28px;line-height:1}
-.sv{margin-top:10px;text-align:center;padding:8px 10px;background:var(--zebra);border:1px dashed var(--gold2);color:var(--gold);font-size:12.5px;letter-spacing:.04em}
-.ft{text-align:center;margin-top:26px;break-inside:avoid;page-break-inside:avoid}
-.ty{margin:0;font:500 26px/1.1 'Cormorant Garamond',Tajawal,serif;letter-spacing:.04em}
-.ty::after{content:"";display:block;width:60px;height:1px;background:var(--gold2);margin:12px auto 0}
+.bt{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;margin-top:22px;break-inside:avoid;page-break-inside:avoid}
+h3{margin:0 0 8px;font:500 19px/1.1 Jost,Tajawal,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.ad{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 16px;font-size:13px;line-height:1.45}
+.ad dt{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;line-height:1.7}
+.ad dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.sm .tr{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:baseline;padding:4px 0;font-size:13.5px}
+.sm .tr>span:first-child{text-align:end;font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.sm .gt>span:first-child{font-size:15px;color:var(--ink);letter-spacing:.1em}.sm .gt .m{font-size:16px}
+.sm .dc,.sm .dc>span:first-child{color:var(--red)}
+.sm .tt{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:baseline;margin-top:10px;padding-top:12px;border-top:2px solid var(--ink)}
+.sm .tt>span:first-child{text-align:end;white-space:nowrap;font:500 22px/1 Jost,Tajawal,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+[dir=rtl] .sm .tr>span:first-child,[dir=rtl] .sm .tt>span:first-child,[dir=rtl] h3,[dir=rtl] .ad dt,[dir=rtl] .box h4,[dir=rtl] .box span,[dir=rtl] .box b{letter-spacing:0}
+.sm .tt .m{font-size:30px;line-height:1}
+.bx{width:58%;margin:24px auto 0;display:grid;gap:12px;break-inside:avoid;page-break-inside:avoid}
+.box{border:1.5px solid var(--ink)}
+.box h4{margin:0;padding:7px 10px;text-align:center;font:500 11.5px/1.2 Jost,Tajawal,sans-serif;letter-spacing:.24em;text-transform:uppercase;border-bottom:1.5px solid var(--ink)}
+.sh div{display:flex;justify-content:space-between;gap:12px;padding:9px 16px;font-size:13px}.sh div+div{border-top:1px solid var(--line)}
+.sh span{color:var(--gold);font-weight:500;letter-spacing:.1em;text-transform:uppercase;font-size:12px}.sh b{font-weight:500;text-align:end;overflow-wrap:anywhere;letter-spacing:.06em}
+.sh .trk{font-family:'Charles Wright Singapore',Jost,sans-serif}
+.py .pr{display:grid;grid-template-columns:1fr 1fr}
+.py .pr b{padding:11px 10px;text-align:center;font-weight:500;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.py .pr b+b{border-inline-start:1.5px solid var(--ink)}
+.st-paid{color:var(--gold)}
+.st-unpaid,.st-cancelled,.st-refunded{color:var(--red)}
+.ft{text-align:center;margin-top:24px;break-inside:avoid;page-break-inside:avoid}
+.ty{margin:0;font:600 34px/1.15 Jost,Tajawal,sans-serif;letter-spacing:.01em}
+.ty::after{content:"";display:block;width:60px;height:1.5px;background:var(--gold2);margin:12px auto 0}
 .si{margin:10px 0 0;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 [dir=rtl] .si{letter-spacing:0}
 @media (max-width:640px){
@@ -275,8 +285,8 @@ s::after{content:"";position:absolute;left:-1px;right:-1px;top:52%;height:1.2px;
   .hd .em{width:42px;height:42px}.hd .wm{height:20px}.hd h1{font-size:21px;gap:10px}
   .meta{flex-direction:column;gap:14px;margin:18px 0 14px}.meta .rn{text-align:start}.meta .no{font-size:20px}
   .it .c-un{display:none}.it th{padding:7px 6px}.it td{padding:5px 6px}.it th{letter-spacing:.08em;font-size:9.5px}.pn{font-size:15px}
-  .bt{grid-template-columns:1fr;gap:18px}.bt .sm{order:-1}
-  .sm .tt .m{font-size:24px}.ty{font-size:22px}
+  .bt{grid-template-columns:1fr;gap:22px}.bt .sm{order:-1}.bx{width:100%;margin-top:20px}
+  .sm .tt>span:first-child{font-size:19px}.sm .tt .m{font-size:27px}.ty{font-size:24px}
 }
 /* .pm: the printed page's width and text size, used for a moment before printing to count the pages (so each page gets its watermark) */
 .pm .bar{display:none}.pm body{padding:0;font-size:12.5px}.pm .sheet{width:186mm;max-width:none;padding:6mm 6mm 4mm;border-width:4px}.pm .it .c-un{display:table-cell!important}
@@ -290,8 +300,9 @@ s::after{content:"";position:absolute;left:-1px;right:-1px;top:52%;height:1.2px;
   .sheet{max-width:none;box-shadow:none;padding:6mm 6mm 4mm;border-width:4px;min-height:calc(var(--pages,1) * 271mm - 20mm);background:var(--wmprint) center top/100% 271mm repeat-y;-webkit-print-color-adjust:exact;print-color-adjust:exact}   /* one watermark per A4 page: the picture is one page tall (297mm less the page margins) */
   .p1 .sheet{min-height:0;background-size:contain;background-position:center;background-repeat:no-repeat}   /* one page: no fixed height (some browsers, like Safari, print a shorter page), the watermark in the middle of the receipt */
   .it tbody tr:nth-child(even) td{background:rgba(120,100,50,.05)}
-  .st-paid{color:#fff!important}
   .it .c-un{display:table-cell!important}
+  .meta{margin:16px 0 12px}.bt{margin-top:14px}.bx{margin-top:16px;gap:9px}.box h4{padding:5px 10px}.sh div{padding:6px 14px}.py .pr b{padding:8px 10px}
+  .ft{margin-top:16px}.ty{font-size:30px}.ty::after{margin-top:8px}.sm .tt .m{font-size:30px}.sm .tt>span:first-child{font-size:22px}
 }
 CSS; }
 
