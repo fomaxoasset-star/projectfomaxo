@@ -28,7 +28,7 @@ function fx_receipt_words($ar) {
     'delivery' => 'Delivery', 'sameday' => 'Same-day delivery', 'paid_total' => 'Total paid', 'due_total' => 'Amount to pay', 'total' => 'Total', 'saved' => 'You saved', 'saved2' => 'on this order',
     'address' => 'Address', 'grand' => 'Grand total', 'apt' => 'Apartment', 'building' => 'Building', 'street' => 'Street', 'area' => 'Area', 'emirate' => 'Emirate', 'status' => 'Status', 'ship' => 'Shipping', 'courier' => 'Courier', 'tracking' => 'Tracking no', 'payment' => 'Payment', 'cod' => 'Cash on delivery', 'card' => 'Card',
     'paid' => 'Paid', 'unpaid' => 'Unpaid', 'cancelled' => 'Cancelled', 'refunded' => 'Refunded', 'thanks' => 'Thank You For Your Purchase',
-    'foot' => 'fomaxo.com · Dubai, United Arab Emirates', 'pdf' => 'Download PDF', 'page' => 'Page', 'sets' => 'Set of', 'vials' => 'vials', 'with' => 'Fragrances'];
+    'foot' => 'Dubai, United Arab Emirates', 'pdf' => 'Download PDF', 'page' => 'Page', 'sets' => 'Set of', 'vials' => 'vials', 'with' => 'Fragrances'];
   if (!$ar) return $en;
   return ['tag' => 'العطور والعناية الشخصية', 'title' => 'إيصال', 'to' => 'صادر إلى', 'no' => 'رقم الإيصال', 'date' => 'التاريخ', 'name' => 'الاسم', 'mobile' => 'الجوال', 'email' => 'البريد',
     'item' => 'المنتج', 'size' => 'الحجم', 'unit' => 'سعر الوحدة', 'qty' => 'الكمية', 'amount' => 'المبلغ', 'free' => 'مجاناً', 'gift' => 'هدية مجانية', 'cgift' => 'مجاناً مع الكوبون',
@@ -36,7 +36,7 @@ function fx_receipt_words($ar) {
     'delivery' => 'التوصيل', 'sameday' => 'توصيل في نفس اليوم', 'paid_total' => 'المبلغ المدفوع', 'due_total' => 'المبلغ المستحق', 'total' => 'الإجمالي', 'saved' => 'وفّرت', 'saved2' => 'في هذا الطلب',
     'address' => 'العنوان', 'grand' => 'الإجمالي الكلي', 'apt' => 'الشقة', 'building' => 'المبنى', 'street' => 'الشارع', 'area' => 'المنطقة', 'emirate' => 'الإمارة', 'status' => 'الحالة', 'ship' => 'الشحن', 'courier' => 'شركة الشحن', 'tracking' => 'رقم التتبع', 'payment' => 'الدفع', 'cod' => 'الدفع عند الاستلام', 'card' => 'بطاقة',
     'paid' => 'مدفوع', 'unpaid' => 'غير مدفوع', 'cancelled' => 'ملغي', 'refunded' => 'مسترد', 'thanks' => 'شكراً لشرائك',
-    'foot' => 'fomaxo.com · دبي، الإمارات العربية المتحدة', 'pdf' => 'تحميل PDF', 'page' => 'صفحة', 'sets' => 'مجموعة من', 'vials' => 'عينات', 'with' => 'العطور'];
+    'foot' => 'دبي، الإمارات العربية المتحدة', 'pdf' => 'تحميل PDF', 'page' => 'صفحة', 'sets' => 'مجموعة من', 'vials' => 'عينات', 'with' => 'العطور'];
 }
 
 /* Everything the receipt shows, worked out from the saved order: lines with their prices, each discount, the gifts and the totals.
@@ -177,7 +177,7 @@ function fx_receipt_page($o, $ar = false) {
     . '<section class="bt"><div class="lf"><h3>' . $e($w['address']) . '</h3><dl class="ad">' . $adl . '</dl></div><div class="sm">' . $sum . '</div></section>'
     . '<section class="bx">' . ($ship !== '' ? '<div class="box sh"><h4>' . $e($w['ship']) . '</h4>' . $ship . '</div>' : '')
     . '<div class="box py"><h4>' . $e($w['payment']) . '</h4><div class="pr"><b>' . $e($payWord) . '</b><b class="st st-' . $d['pay'] . '">' . $e($w[$d['pay']]) . '</b></div></div></section>'
-    . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si">' . $e($w['foot']) . '</p></footer>'
+    . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si"><span dir="ltr">fomaxo.com</span><br>' . $e($w['foot']) . '</p></footer>'
     . '</main><div class="wmk" aria-hidden="true"><svg viewBox="0 0 2507 2506"><use href="#emblem"/></svg></div><script>(function(){var s=document.querySelector(".sheet"),r=document.documentElement;addEventListener("beforeprint",function(){r.classList.add("pm");var mm=s.offsetWidth/186,n=Math.max(1,Math.ceil((s.offsetHeight+2*mm)/(271*mm)));r.classList.remove("pm");s.style.setProperty("--pages",n);r.classList.toggle("p1",n<2)})})();if(/[?&]print=1/.test(location.search))addEventListener("load",function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(print,200)})})</script><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
 }
 
@@ -274,9 +274,9 @@ h3{margin:0 0 8px;font:500 19px/1.1 Jost,Tajawal,sans-serif;letter-spacing:.08em
 .st-paid{color:var(--gold)}
 .st-unpaid,.st-cancelled,.st-refunded{color:var(--red)}
 .ft{text-align:center;margin-top:24px;break-inside:avoid;page-break-inside:avoid}
-.ty{margin:0;font:600 34px/1.15 Jost,Tajawal,sans-serif;letter-spacing:.01em}
+.ty{margin:0;font:600 24px/1.15 Jost,Tajawal,sans-serif;letter-spacing:.01em}
 .ty::after{content:"";display:block;width:60px;height:1.5px;background:var(--gold2);margin:12px auto 0}
-.si{margin:10px 0 0;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.si{margin:10px 0 0;font-size:11px;line-height:1.7;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 [dir=rtl] .si{letter-spacing:0}
 @media (max-width:640px){
   body{padding:10px 8px 24px;font-size:13px}
@@ -286,7 +286,7 @@ h3{margin:0 0 8px;font:500 19px/1.1 Jost,Tajawal,sans-serif;letter-spacing:.08em
   .meta{flex-direction:column;gap:14px;margin:18px 0 14px}.meta .rn{text-align:start}.meta .no{font-size:20px}
   .it .c-un{display:none}.it th{padding:7px 6px}.it td{padding:5px 6px}.it th{letter-spacing:.08em;font-size:9.5px}.pn{font-size:15px}
   .bt{grid-template-columns:1fr;gap:22px}.bt .sm{order:-1}.bx{width:100%;margin-top:20px}
-  .sm .tt>span:first-child{font-size:19px}.sm .tt .m{font-size:27px}.ty{font-size:24px}
+  .sm .tt>span:first-child{font-size:19px}.sm .tt .m{font-size:27px}.ty{font-size:21px}
 }
 /* .pm: the printed page's width and text size, used for a moment before printing to count the pages (so each page gets its watermark) */
 .pm .bar{display:none}.pm body{padding:0;font-size:12.5px}.pm .sheet{width:186mm;max-width:none;padding:6mm 6mm 4mm;border-width:4px}.pm .it .c-un{display:table-cell!important}
@@ -302,7 +302,7 @@ h3{margin:0 0 8px;font:500 19px/1.1 Jost,Tajawal,sans-serif;letter-spacing:.08em
   .it tbody tr:nth-child(even) td{background:rgba(120,100,50,.05)}
   .it .c-un{display:table-cell!important}
   .meta{margin:16px 0 12px}.bt{margin-top:14px}.bx{margin-top:16px;gap:9px}.box h4{padding:5px 10px}.sh div{padding:6px 14px}.py .pr b{padding:8px 10px}
-  .ft{margin-top:16px}.ty{font-size:30px}.ty::after{margin-top:8px}.sm .tt .m{font-size:30px}.sm .tt>span:first-child{font-size:22px}
+  .ft{margin-top:16px}.ty{font-size:22px}.ty::after{margin-top:8px}.sm .tt .m{font-size:30px}.sm .tt>span:first-child{font-size:22px}
 }
 CSS; }
 
