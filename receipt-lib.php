@@ -28,7 +28,7 @@ function fx_receipt_words($ar) {
     'delivery' => 'Delivery', 'sameday' => 'Same-day delivery', 'paid_total' => 'Total paid', 'due_total' => 'Amount to pay', 'total' => 'Total', 'saved' => 'You saved', 'saved2' => 'on this order',
     'address' => 'Address', 'grand' => 'Grand total', 'apt' => 'Apartment', 'building' => 'Building', 'street' => 'Street', 'area' => 'Area', 'emirate' => 'Emirate', 'status' => 'Status', 'ship' => 'Shipping', 'courier' => 'Courier', 'tracking' => 'Tracking no', 'payment' => 'Payment', 'cod' => 'Cash on delivery', 'card' => 'Card',
     'paid' => 'Paid', 'unpaid' => 'Unpaid', 'cancelled' => 'Cancelled', 'refunded' => 'Refunded', 'thanks' => 'Thank You For Your Purchase',
-    'foot' => 'Dubai, United Arab Emirates', 'pdf' => 'Download PDF', 'page' => 'Page', 'sets' => 'Set of', 'vials' => 'vials', 'with' => 'Fragrances'];
+    'foot' => 'Dubai, United Arab Emirates', 'pdf' => 'Download PDF', 'eco' => 'Print (less ink)', 'page' => 'Page', 'sets' => 'Set of', 'vials' => 'vials', 'with' => 'Fragrances'];
   if (!$ar) return $en;
   return ['tag' => 'العطور والعناية الشخصية', 'title' => 'إيصال', 'to' => 'صادر إلى', 'no' => 'رقم الإيصال', 'date' => 'التاريخ', 'name' => 'الاسم', 'mobile' => 'الجوال', 'email' => 'البريد',
     'item' => 'المنتج', 'size' => 'الحجم', 'unit' => 'سعر الوحدة', 'qty' => 'الكمية', 'amount' => 'المبلغ', 'free' => 'مجاناً', 'gift' => 'هدية مجانية', 'cgift' => 'مجاناً مع الكوبون',
@@ -36,7 +36,7 @@ function fx_receipt_words($ar) {
     'delivery' => 'التوصيل', 'sameday' => 'توصيل في نفس اليوم', 'paid_total' => 'المبلغ المدفوع', 'due_total' => 'المبلغ المستحق', 'total' => 'الإجمالي', 'saved' => 'وفّرت', 'saved2' => 'في هذا الطلب',
     'address' => 'العنوان', 'grand' => 'الإجمالي الكلي', 'apt' => 'الشقة', 'building' => 'المبنى', 'street' => 'الشارع', 'area' => 'المنطقة', 'emirate' => 'الإمارة', 'status' => 'الحالة', 'ship' => 'الشحن', 'courier' => 'شركة الشحن', 'tracking' => 'رقم التتبع', 'payment' => 'الدفع', 'cod' => 'الدفع عند الاستلام', 'card' => 'بطاقة',
     'paid' => 'مدفوع', 'unpaid' => 'غير مدفوع', 'cancelled' => 'ملغي', 'refunded' => 'مسترد', 'thanks' => 'شكراً لشرائك',
-    'foot' => 'دبي، الإمارات العربية المتحدة', 'pdf' => 'تحميل PDF', 'page' => 'صفحة', 'sets' => 'مجموعة من', 'vials' => 'عينات', 'with' => 'العطور'];
+    'foot' => 'دبي، الإمارات العربية المتحدة', 'pdf' => 'تحميل PDF', 'eco' => 'طباعة (حبر أقل)', 'page' => 'صفحة', 'sets' => 'مجموعة من', 'vials' => 'عينات', 'with' => 'العطور'];
 }
 
 /* Everything the receipt shows, worked out from the saved order: lines with their prices, each discount, the gifts and the totals.
@@ -166,7 +166,7 @@ function fx_receipt_page($o, $ar = false) {
     . '<meta name="robots" content="noindex,nofollow"><title>FOMAXO ' . $e($w['title']) . ' ' . $e($no) . '</title><link rel="icon" href="/assets/img/favicon-32.png">'
     . '<style>' . fx_receipt_css() . ':root{--wmprint:url("data:image/svg+xml,' . rawurlencode(fx_receipt_wm_svg()) . '")}</style></head><body>'
     . '<div class="bar"><a class="lng" href="' . $e($sw . ($ar ? '' : '&l=ar')) . '"' . ($ar ? '' : ' lang="ar"') . '>' . ($ar ? 'English' : 'عربي') . '</a>'
-    . '<button type="button" class="pdf" onclick="window.print()">' . $e($w['pdf']) . '</button></div>'
+    . '<button type="button" class="pdf" onclick="window.print()">' . $e($w['pdf']) . '</button><button type="button" class="eco-b" onclick="fxEco()">' . $e($w['eco']) . '</button></div>'
     . '<main class="sheet">'
     . '<header class="hd"><svg class="em" viewBox="0 0 2507 2506" aria-hidden="true"><use href="#emblem"/></svg><svg class="wm" viewBox="0 0 3196 481" role="img" aria-label="FOMAXO"><use href="#wordmark"/></svg>'
     . '<p class="tg">' . $e($w['tag']) . '</p><h1><span>' . $e($w['title']) . '</span></h1></header>'
@@ -178,7 +178,7 @@ function fx_receipt_page($o, $ar = false) {
     . '<section class="bx">' . ($ship !== '' ? '<div class="box sh"><h4>' . $e($w['ship']) . '</h4>' . $ship . '</div>' : '')
     . '<div class="box py"><h4>' . $e($w['payment']) . '</h4><div class="pr"><b>' . $e($payWord) . '</b><b class="st st-' . $d['pay'] . '">' . $e($w[$d['pay']]) . '</b></div></div></section>'
     . '<footer class="ft"><p class="ty">' . $e($w['thanks']) . '</p><p class="si"><span dir="ltr">fomaxo.com</span><br>' . $e($w['foot']) . '</p></footer>'
-    . '</main><div class="wmk" aria-hidden="true"><svg viewBox="0 0 2507 2506"><use href="#emblem"/></svg></div><script>(function(){var s=document.querySelector(".sheet"),r=document.documentElement;addEventListener("beforeprint",function(){r.classList.add("pm");var mm=s.offsetWidth/186,n=Math.max(1,Math.ceil((s.offsetHeight+2*mm)/(271*mm)));r.classList.remove("pm");s.style.setProperty("--pages",n);r.classList.toggle("p1",n<2)})})();if(/[?&]print=1/.test(location.search))addEventListener("load",function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(print,200)})})</script><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
+    . '</main><div class="wmk" aria-hidden="true"><svg viewBox="0 0 2507 2506"><use href="#emblem"/></svg></div><script>/* Print (less ink): the same receipt in black and white, thin lines and no filled areas (AJAY 12/11/2026); ?eco=1 shows it on screen */var fxR=document.documentElement,fxE=/[?&]eco=1/.test(location.search);if(fxE)fxR.classList.add("eco");function fxEco(){fxR.classList.add("eco");print()}addEventListener("afterprint",function(){if(!fxE)fxR.classList.remove("eco")});(function(){var s=document.querySelector(".sheet"),r=document.documentElement;addEventListener("beforeprint",function(){r.classList.add("pm");var mm=s.offsetWidth/186,n=Math.max(1,Math.ceil((s.offsetHeight+2*mm)/(271*mm)));r.classList.remove("pm");s.style.setProperty("--pages",n);r.classList.toggle("p1",n<2)})})();if(/[?&]print=1/.test(location.search))addEventListener("load",function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(print,200)})})</script><svg width="0" height="0" style="position:absolute" aria-hidden="true">' . FX_RECEIPT_SYMBOLS . '</svg></body></html>';
 }
 
 /* the watermark for the PDF, as a picture one A4 page tall (186 x 271 mm) with the logo in the middle */
@@ -204,6 +204,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.45 Jost,Taja
 .bar a,.bar button{font:500 13px/1 Jost,Tajawal,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:11px 18px;border-radius:999px;cursor:pointer;text-decoration:none}
 .bar .lng{border:1px solid var(--line);color:var(--ink);background:var(--paper)}
 .bar .pdf{border:0;background:var(--gold);color:#fff}
+.bar .eco-b{border:1px solid var(--ink);background:var(--paper);color:var(--ink)}
 @media (prefers-color-scheme:dark){.bar .pdf{color:#0b0b0b}}
 .sheet{max-width:794px;margin:0 auto;background:var(--paper);border-top:6px solid var(--band);border-bottom:6px solid var(--band);box-shadow:0 10px 40px rgba(0,0,0,.08);padding:30px 44px 26px;position:relative}
 .sheet::before,.sheet::after{content:"";position:absolute;left:0;right:0;height:1px;background:var(--gold2)}
@@ -280,7 +281,7 @@ h3{margin:0 0 8px;font:500 19px/1.1 Jost,Tajawal,sans-serif;letter-spacing:.08em
 [dir=rtl] .si{letter-spacing:0}
 @media (max-width:640px){
   body{padding:10px 8px 24px;font-size:13px}
-  .bar{justify-content:center}
+  .bar{justify-content:center;flex-wrap:wrap}
   .sheet{padding:22px 16px 20px}
   .hd .em{width:42px;height:42px}.hd .wm{height:20px}.hd h1{font-size:21px;gap:10px}
   .meta{flex-direction:column;gap:14px;margin:18px 0 14px}.meta .rn{text-align:start}.meta .no{font-size:20px}
@@ -288,6 +289,23 @@ h3{margin:0 0 8px;font:500 19px/1.1 Jost,Tajawal,sans-serif;letter-spacing:.08em
   .bt{grid-template-columns:1fr;gap:22px}.bt .sm{order:-1}.bx{width:100%;margin-top:20px}
   .sm .tt>span:first-child{font-size:19px}.sm .tt .m{font-size:27px}.ty{font-size:21px}
 }
+/* .eco: Print (less ink) — black and white, thin lines, nothing filled, no watermark; words (PAID / UNPAID, the minus sign) carry the meaning, not colours */
+html.eco{--bg:#fff;--paper:#fff;--ink:#000;--soft:#222;--muted:#555;--line:#bbb;--gold:#000;--gold2:#999;--band:#000;--zebra:#fff;--red:#000;color-scheme:light}
+.eco .sheet{border-top:1px solid #000;border-bottom:1px solid #000;box-shadow:none;background:#fff!important}
+.eco .sheet::before,.eco .sheet::after,.eco .wmk{display:none}
+.eco .hd .em{width:34px;height:34px;margin-bottom:6px}.eco .hd .wm{height:20px}
+.eco .hd h1{font-size:20px;color:#000}.eco .hd h1::before,.eco .hd h1::after{background:#bbb}
+.eco h2{color:#000}
+.eco .it th{background:none;color:#000;border-top:1px solid #000;border-bottom:1px solid #000;font-weight:600}
+.eco .it tbody tr td{background:none!important}
+.eco .gift{border-color:#999;color:#000}
+.eco .fr{color:#000}
+.eco .sm .gt>span:first-child,.eco .sm .tt>span:first-child{font-weight:500}
+.eco .sm .tt{border-top-width:1px;border-bottom-width:1px}.eco .sm .tt .m{font-size:26px}
+.eco .box,.eco .box h4,.eco .py .pr b+b{border-width:1px}
+.eco .sh span{color:#000}
+.eco .st-paid,.eco .st-unpaid,.eco .st-cancelled,.eco .st-refunded{color:#000;font-weight:600}
+.eco .ty{font-weight:500;font-size:20px}.eco .ty::after{background:#bbb}
 /* .pm: the printed page's width and text size, used for a moment before printing to count the pages (so each page gets its watermark) */
 .pm .bar{display:none}.pm body{padding:0;font-size:12.5px}.pm .sheet{width:186mm;max-width:none;padding:6mm 6mm 4mm;border-width:4px}.pm .it .c-un{display:table-cell!important}
 @page{size:A4;margin:12mm 12mm 14mm}
@@ -301,6 +319,7 @@ h3{margin:0 0 8px;font:500 19px/1.1 Jost,Tajawal,sans-serif;letter-spacing:.08em
   .p1 .sheet{min-height:0;background-size:contain;background-position:center;background-repeat:no-repeat}   /* one page: no fixed height (some browsers, like Safari, print a shorter page), the watermark in the middle of the receipt */
   .it tbody tr:nth-child(even) td{background:rgba(120,100,50,.05)}
   .it .c-un{display:table-cell!important}
+  .eco .sheet{background:none!important;border-width:1px}
   .meta{margin:16px 0 12px}.bt{margin-top:14px}.bx{margin-top:16px;gap:9px}.box h4{padding:5px 10px}.sh div{padding:6px 14px}.py .pr b{padding:8px 10px}
   .ft{margin-top:16px}.ty{font-size:22px}.ty::after{margin-top:8px}.sm .tt .m{font-size:30px}.sm .tt>span:first-child{font-size:22px}
 }
