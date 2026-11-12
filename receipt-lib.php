@@ -258,7 +258,7 @@ h3{margin:0 0 8px;font:500 19px/1.1 Jost,Tajawal,sans-serif;letter-spacing:.08em
 .sm .tr>span:first-child{text-align:end;font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
 .sm .gt>span:first-child{font-size:15px;color:var(--ink);letter-spacing:.1em}.sm .gt .m{font-size:16px}
 .sm .dc,.sm .dc>span:first-child{color:var(--red)}
-.sm .tt{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:baseline;margin-top:10px;padding-top:12px;border-top:2px solid var(--ink)}
+.sm .tt{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:baseline;margin-top:10px;padding-top:12px;border-top:2px solid var(--ink);padding-bottom:12px;border-bottom:2px solid var(--ink)}
 .sm .tt>span:first-child{text-align:end;white-space:nowrap;font:500 22px/1 Jost,Tajawal,sans-serif;letter-spacing:.06em;text-transform:uppercase}
 [dir=rtl] .sm .tr>span:first-child,[dir=rtl] .sm .tt>span:first-child,[dir=rtl] h3,[dir=rtl] .ad dt,[dir=rtl] .box h4,[dir=rtl] .box span,[dir=rtl] .box b{letter-spacing:0}
 .sm .tt .m{font-size:30px;line-height:1}
