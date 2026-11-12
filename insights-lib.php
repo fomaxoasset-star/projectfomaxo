@@ -47,6 +47,10 @@ function fx_visits_data($pdo, $from, $to, $not = '', $paths = 40) {
     $out['has_trail'] = (bool)$q("SELECT 1 FROM fx_trail LIMIT 1", []);
     /* how fast the website opened (seconds until the page was ready), by device, and errors on the page */
     foreach ($q("SELECT device, COUNT(*) n, ROUND(AVG(ms)) avg_ms, SUM(ms > 3000) slow FROM fx_trail WHERE k = 'l' AND ms > 0 AND at BETWEEN ? AND ?$not GROUP BY device ORDER BY n DESC") as $r) $out['speed'][$r['device']] = $r;
+    /* where the time went, averaged per device (w server wait, d page download, j phone drawing, s products.php server wait); page loads carry it since 11/11/2026 */
+    $pa = []; foreach ($q("SELECT device, label FROM fx_trail WHERE k = 'l' AND ms > 0 AND label <> '' AND at BETWEEN ? AND ?$not") as $r)
+      if (preg_match_all('/([wdjs])(\d+)/', (string)$r['label'], $pm, PREG_SET_ORDER)) foreach ($pm as $m) $pa[$r['device']][$m[1]][] = min(60000, (int)$m[2]);
+    foreach ($pa as $dv => $ps) if (isset($out['speed'][$dv])) $out['speed'][$dv]['parts'] = array_map(fn($a) => (int)round(array_sum($a) / count($a)), $ps);
     $out['errors'] = $q("SELECT $pg pg, label, COUNT(DISTINCT sid) people, COUNT(*) n FROM fx_trail WHERE k = 'e' AND at BETWEEN ? AND ?$not GROUP BY pg, label ORDER BY people DESC, n DESC LIMIT 20");
   } catch (Throwable $e) {}   // before the first tap makes fx_trail
   /* the newest visits, step by step */
@@ -106,7 +110,8 @@ function fx_insights_write($pdo) {
       $L[] = 'WHERE PEOPLE LEAVE (page | visits that saw it | left from it | % left | avg time | avg seen down the page | % reached the bottom)';
       foreach ($D['leave'] as $r) $L[] = sprintf('%s | %d | %d | %d%% | %s | %s | %s', fx_pg_name($r['pg'], $names), $r['seen'], $r['left_n'], $r['seen'] ? round(100 * $r['left_n'] / $r['seen']) : 0, fx_secs($r['secs']), $r['pc'] !== null ? $r['pc'] . '%' : '–', $r['bottom'] !== null ? $r['bottom'] . '%' : '–');
       $L[] = ''; $L[] = 'HOW FAST THE SITE OPENED (device | page loads | average | slower than 3 s)';
-      foreach ($D['speed'] as $dv => $r) $L[] = sprintf('%s | %d | %.1fs | %d%%', $dv, $r['n'], $r['avg_ms'] / 1000, round(100 * $r['slow'] / max(1, $r['n'])));
+      foreach ($D['speed'] as $dv => $r) $L[] = sprintf('%s | %d | %.1fs | %d%%', $dv, $r['n'], $r['avg_ms'] / 1000, round(100 * $r['slow'] / max(1, $r['n'])))
+        . (($pt = $r['parts'] ?? []) ? ' | ' . implode(' ', array_map(fn($k, $v) => $k . sprintf('%.1fs', $v / 1000), array_keys($pt), $pt)) . ' (w server, d download, j phone drawing, s products.php)' : '');
       if (!$D['speed']) $L[] = '(none)';
       $L[] = ''; $L[] = 'ERRORS ON THE PAGE (page | error | people | times)';
       foreach ($D['errors'] as $r) $L[] = sprintf('%s | %s | %d | %d', fx_pg_name($r['pg'], $names), $r['label'], $r['people'], $r['n']);
