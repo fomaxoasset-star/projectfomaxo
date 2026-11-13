@@ -4596,9 +4596,9 @@ if (isset($_GET['o'])) {
     . fx_tracker($o) . fx_tabs(['Items', 'Customer', 'Status', 'Receipt'], 'Order')
     . '<div class="odgrid fitbox ptw" data-t="1">'
     . '<div class="card" data-t="1"><h2 style="margin-top:0">Items</h2><ul class="items">' . implode('', array_map(fn($i) => '<li>' . h($i) . '</li>', $items)) . '</ul>'
-    . '<dl style="margin-top:14px">' . $row('Subtotal', $o['subtotal'] !== null ? money($o['subtotal']) : '') . $row(!empty($o['coupon']) ? 'Coupon ' . $o['coupon'] : 'Discount', $o['discount'] > 0 ? '-' . money($o['discount']) : '')
+    . '<dl style="margin-top:14px">' . $row('Ordered', h(date('d M Y, h:i A', strtotime($o['created_at'])))) . $row('Paid', $o['paid_at'] ? h(date('d M Y, h:i A', strtotime($o['paid_at']))) : '')   // date + time first, 12-hour with AM/PM (AJAY 12/11/2026)
+    . $row('Subtotal', $o['subtotal'] !== null ? money($o['subtotal']) : '') . $row(!empty($o['coupon']) ? 'Coupon ' . $o['coupon'] : 'Discount', $o['discount'] > 0 ? '-' . money($o['discount']) : '')
     . $row('COD fee', $o['fee'] > 0 ? money($o['fee']) : '') . $row('Total', '<b>' . money($o['total']) . '</b>') . $row('Payment', h($o['payment']) . ($o['test'] ? ' (test)' : ''))
-    . $row('Ordered', h(date('d M Y, H:i', strtotime($o['created_at'])))) . $row('Paid', $o['paid_at'] ? h(date('d M Y, H:i', strtotime($o['paid_at']))) : '')
     . $row('Card ref', h($o['ref'] ?? '')) . '</dl></div>'
     . '<div class="card" data-t="2"><h2 style="margin-top:0">Customer</h2><dl>'
     . $row('Name', hx($o['name'])) . $row('Mobile', h($o['phone']) . ' ' . fx_wa_btn_ph($o['phone'], (string)$o['name'], preg_match('/^FMX-\d+$/', $o['order_no']) ? $o['order_no'] : '', 'btn xs wag'))
