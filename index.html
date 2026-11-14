@@ -56,7 +56,7 @@ if(history.replaceState)try{history.replaceState(history.state,"",location.pathn
 (function(){var l=null,r=document.documentElement,q=location.search.match(/[?&]lang=(ar|en)\b/);try{if(q)localStorage.setItem("fomaxo_lang",q[1]);l=localStorage.getItem("fomaxo_lang")}catch(e){if(q)l=q[1]}
 if(!l){var nl=(navigator.languages&&navigator.languages[0])||navigator.language||"";l=/^ar\b/i.test(nl)?"ar":"en"}   /* first visit: follow the device language */
 if(l==="ar"){r.lang="ar";r.dir="rtl";if(!q&&history.replaceState)try{history.replaceState(history.state,"",location.pathname+(location.search?location.search+"&":"?")+"lang=ar"+location.hash)}catch(e){}   /* Arabic site: the address says ?lang=ar, so a copied or shared link opens in Arabic with an Arabic preview */
-r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=79";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
+r.classList.add("i18n-wait");window.FX_AR_JS="assets/i18n-ar.js?v=80";var pl=document.createElement("link");pl.rel="preload";pl.as="script";pl.href=window.FX_AR_JS;document.head.appendChild(pl);   /* Arabic words start downloading now, while the page loads */
 setTimeout(function(){r.classList.remove("i18n-wait")},2500);
 var f=document.createElement("style");f.textContent="@font-face{font-family:'Amiri';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/amiri-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Amiri';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/amiri-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:300;font-display:swap;src:url(/assets/fonts/tajawal-300-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/tajawal-400-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:500;font-display:swap;src:url(/assets/fonts/tajawal-500-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}@font-face{font-family:'Tajawal';font-style:normal;font-weight:700;font-display:swap;src:url(/assets/fonts/tajawal-700-arabic.woff2?v=1) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF0-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1}";document.head.appendChild(f)}})();   /* Arabic fonts (Tajawal, Amiri; Arabic letters only) from our own server, same files Google Fonts sends */</script>
 <style>/* FOMAXO brand typeface — used only for key display moments */
@@ -927,10 +927,45 @@ body.home header.nav:not(.solid){--ivory:#f6efe2;--muted:#d8ccb4;--champagne:#ec
 .track-lab span{position:absolute;top:0;transform:translateX(-50%);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);white-space:nowrap;transition:color .3s}
 .track-lab span:last-child{transform:translateX(-100%)}
 .track-lab span.on{color:var(--gold-hi)}
+html[dir=rtl] .track input[type=range]{direction:ltr}   /* Arabic: the slider knob moves the same way as the gold line and the level marks */
 .calc-head{display:grid;gap:10px}
 .calc .calc-head label{font-family:var(--hfont);font-weight:500;font-size:clamp(20px,1.9vw,28px);line-height:1.2;letter-spacing:.08em;text-transform:uppercase;color:var(--ivory);text-wrap:balance}
 .calc-sub{font-size:12px;line-height:1.5;letter-spacing:.04em;color:var(--muted);margin:0}
 @media(max-width:600px){.calc .calc-head label{font-size:20px;letter-spacing:.06em}}
+/* Check my level (FOMAXO Elite page): mobile → WhatsApp code → real spending and level (member.php) */
+.mlv{grid-column:1/-1;min-width:0;display:grid;gap:18px;border-top:1px solid var(--line);padding-top:30px;scroll-margin-top:90px}
+.mlv-h{font-family:var(--hfont);font-weight:500;font-size:clamp(20px,1.9vw,28px);line-height:1.2;letter-spacing:.08em;text-transform:uppercase;color:var(--ivory);margin:0}
+.mlv-f{display:grid;gap:10px;max-width:560px}
+.mlv-f>.mlv-row>input{flex:1 1 auto}
+.mlv-f label:not(:first-child){margin-top:6px}
+.mlv-f label{font-size:12px;letter-spacing:.06em;color:var(--muted);line-height:1.5}
+.mlv-f label b{color:var(--ivory);font-weight:600;white-space:nowrap}
+.mlv-row{display:flex;gap:8px;min-width:0}
+.mlv-row .cc-row{flex:1 1 auto}
+.mlv-row input{min-width:0;background:transparent;border:1px solid var(--line-2);padding:0 14px;height:48px;font-size:16px;color:var(--ivory);outline:none;border-radius:0;box-sizing:border-box}
+.mlv-row input:focus{border-color:var(--gold-hi)}
+.mlv-row .cc{height:48px;box-sizing:border-box}
+.mlv-row .btn{flex:none;min-width:200px;min-height:48px;margin:0;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.mlv .wa-btn{background:#25D366;border-color:#25D366;color:#fff}
+.mlv .wa-btn svg{width:17px;height:17px}
+.mlv .btn.busy{opacity:.6;pointer-events:none}
+.mlv-code{flex:1 1 auto;width:100%;max-width:220px;letter-spacing:.5em;font-variant-numeric:tabular-nums;text-align:center}
+.mlv-links{display:flex;gap:10px;align-items:center;margin:2px 0 0;font-size:13px;color:var(--muted)}
+.mlv-a{background:none;border:0;padding:4px 0;font:inherit;color:var(--gold);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.mlv-note{font-size:12.5px;line-height:1.6;color:var(--muted);margin:0}
+.mlv-note a{color:var(--gold)}
+.mlv-err{margin:4px 0 0;font-size:14px;line-height:1.5;color:#e0605a}
+.mlv-ok{margin:4px 0 0;font-size:14px;color:var(--champagne)}
+.mlv-wa{display:inline-flex;align-items:center;gap:8px;margin-top:10px;min-height:44px;padding:0 18px}
+.mlv-res{display:grid;gap:14px;max-width:560px}
+.mlv-hi{margin:0;font-size:15px;color:var(--muted)}.mlv-hi b{color:var(--ivory);font-weight:600}
+.mlv-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.mlv-tiles>div{background:var(--panel,var(--black));padding:16px 18px;display:grid;gap:6px}
+.mlv-tiles small{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.mlv-tiles b{font-family:var(--display);font-weight:400;font-size:clamp(22px,2.4vw,30px);letter-spacing:.06em;color:var(--ivory);font-variant-numeric:tabular-nums}
+.mlv-tiles b.gold{color:var(--gold-hi);text-transform:uppercase;letter-spacing:.16em}
+.mlv-tiles b span{font-family:var(--sans,inherit);font-size:14px;letter-spacing:.02em;text-transform:none;color:var(--muted)}
+@media(max-width:600px){.mlv-h{font-size:20px;letter-spacing:.06em}.mlv-row{flex-wrap:wrap}.mlv-row .cc-row,.mlv-row .mlv-code{flex:1 1 100%;max-width:none}.mlv-row .btn{flex:1 1 100%}}
 .calc-hint{font-size:11px;letter-spacing:.06em;color:var(--dim)}
 html[data-mode="light"] #el-spend::-webkit-slider-thumb{border-color:#fffaf1;box-shadow:0 0 0 1px var(--gold),0 4px 14px rgba(60,40,10,.3)}
 @media(max-width:600px){.track-lab span{font-size:8px;letter-spacing:.14em}}
@@ -4413,7 +4448,7 @@ function elite(){
       <span class="eyebrow rv-up">Elite membership</span>
       <h1 class="rv-up d1">FOMAXO <em class="metal">Elite</em></h1>
       <p class="el-quote rv-up d2">“For those chosen to experience beyond luxury.”</p>
-      <div class="ctas rv-up d3" style="justify-content:center"><a class="btn" href="#/fragrances">Shop FOMAXO</a><a class="btn line" href="#elite-how" data-scroll="elite-how">How it works</a></div>
+      <div class="ctas rv-up d3" style="justify-content:center"><a class="btn" href="#/fragrances">Shop FOMAXO</a><a class="btn line" href="#elite-how" data-scroll="elite-how">How it works</a><a class="btn line" href="#mlv" data-scroll="mlv">Check my level</a></div>
     </div>
   </section>
 
@@ -4448,6 +4483,10 @@ function elite(){
         </div>
         <p class="calc-out" id="el-out"></p>
       </div>
+      <div class="mlv" id="mlv" data-clarity-mask="true">
+        <div class="calc-head"><h3 class="mlv-h">Check my level</h3><p class="calc-sub">Type the name and mobile number you shop with to see your real FOMAXO spending this year.</p></div>
+        <div id="mlvBox"></div>
+      </div>
     </div>
   </div></section>
 
@@ -4479,6 +4518,47 @@ function bindElite(){
   };
   inp.addEventListener('input', () => { v = elVal(+inp.value / 10); upd(); });
   upd();
+  mlvBind(spend => { v = Math.max(0, Math.min(EL_MAX, Math.round(spend))); inp.value = elPct(v) * 10; upd(); });   // their real spending moves the slider too
+  if (/[?&]check=1/.test(location.hash)) setTimeout(() => { const m = $('#mlv'); m && m.scrollIntoView({behavior: 'smooth'}); }, 300);   // #/collections/elite?check=1 opens at the box
+}
+/* "Check my level" (member.php): name + mobile → their real spending this year (website + FOMAXO store) and level.
+   The name has to match the name on that mobile's orders (AJAY 15 Nov 2026: no WhatsApp code). */
+function mlvBind(onSpend){
+  const box = $('#mlvBox'); if (!box) return;
+  const wa = `https://wa.me/${S.checkout.whatsapp}?text=${encodeURIComponent('Hello FOMAXO, please tell me my FOMAXO Elite level.')}`;
+  const money = n => 'AED ' + Number(n).toLocaleString('en-US', {maximumFractionDigits: 0});
+  let phone = '', name = '';
+  const err = (t, waBtn) => `<p class="mlv-err" role="alert">${t}</p>${waBtn ? `<a class="btn wa-btn mlv-wa" href="${wa}" target="_blank" rel="noopener">${CO_ICON.whatsapp}<span>Message us on WhatsApp</span></a>` : ''}`;
+  const ERR = {phone: 'Please type a valid mobile number.', name: 'Please type your name.', many: 'Too many tries. Please wait an hour and try again.',
+    none: 'We could not find FOMAXO purchases for this name and mobile. Please use the name and number you shop with.', net: 'We could not reach our server. Please check your connection and try again, or contact us on WhatsApp.'};
+  const post = async body => { try { const r = await fetch('member.php', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}); return await r.json(); } catch(e) { return {ok: false, why: 'net'}; } };
+  const step1 = (msg = '') => {
+    box.innerHTML = `<form class="mlv-f" id="mlvF" novalidate>
+      <label for="mlvNm">Your name</label><div class="mlv-row"><input id="mlvNm" type="text" autocomplete="name" maxlength="60" placeholder="Name" data-cap="words" autocapitalize="words" aria-label="Your name"></div>
+      <label for="mlvPh">Your mobile number</label>
+      <div class="mlv-row"><span class="cc-row">${ccPick()}<input id="mlvPh" type="tel" inputmode="tel" autocomplete="tel" placeholder="50 123 4567" maxlength="20" aria-label="Your mobile number"></span></div>
+      <div class="mlv-row"><button class="btn mlv-go" type="submit">Show my level</button></div></form><div id="mlvMsg">${msg}</div>`;
+    const ph = $('#mlvPh'), nm = $('#mlvNm'); if (phone) { ph.value = phone; ccFit(ph); } if (name) nm.value = name;
+    $('#mlvF').onsubmit = async e => { e.preventDefault(); const v = ccVal(ph), n = nm.value.trim(), b = $('#mlvF .mlv-go');
+      if (!n) { $('#mlvMsg').innerHTML = err(ERR.name); nm.focus(); return; }
+      if (!phoneOk(v)) { $('#mlvMsg').innerHTML = err(ERR.phone); ph.focus(); return; }
+      b.disabled = true; b.classList.add('busy'); const r = await post({phone: v, name: n}); b.disabled = false; b.classList.remove('busy');
+      phone = v; name = n;
+      if (r.ok) step2(r); else $('#mlvMsg').innerHTML = err(ERR[r.why] || ERR.net, r.why === 'none' || r.why === 'net'); };
+  };
+  const step2 = r => {
+    box.innerHTML = `<div class="mlv-res">
+      ${r.name ? `<p class="mlv-hi"><span>Hello</span> <b>${esc(r.name)}</b></p>` : ''}
+      <div class="mlv-tiles"><div><small>Your level</small><b class="gold">${r.level ? esc(r.level) : '<span>Not a member level yet</span>'}</b></div>
+        <div><small>Spent this year</small><b>${money(r.spend)}</b></div></div>
+      <p class="calc-out">${r.next ? `${money(r.needed)} more this year to reach ${esc(r.next)}` : '<span>You are at the highest level</span>'}</p>
+      <p class="mlv-note"><span>Website orders</span> ${r.web_orders} · <span>Store purchases</span> ${r.store_visits}</p>
+      <p class="mlv-note">Counts your FOMAXO website and store purchases since 1 January.</p>
+      <p class="mlv-links"><button type="button" class="mlv-a" id="mlvNew">Check another number</button></p></div>`;
+    $('#mlvNew').onclick = () => { phone = ''; name = ''; step1(); };
+    onSpend && onSpend(r.spend);
+  };
+  step1();
 }
 /* PERSONAL CARE, GIFTS and COMBO pages (#/personal-care, #/gifts, #/combo): fomaxo.in's products in a Dubai boutique look.
    Personal care has no AED price yet (aed: null), so those cards read "Price coming soon" and are ordered on WhatsApp.

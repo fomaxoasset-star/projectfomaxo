@@ -159,6 +159,7 @@ $body = "New cash on delivery order $no\n\nCollect in cash: " . aed($totalFils) 
       . "\n\nSubtotal: " . aed($subFils) . ($discFils > 0 ? "\n$discLabel: -" . aed($discFils) : '')
       . ($COD_FEE > 0 ? "\nCash on delivery fee: " . aed($COD_FEE * 100) : '') . ($sd ? "\n{$sd['row']}" : '') . "\nTotal: " . aed($totalFils)
       . "\n\nName: " . fomaxo_en_both($cu['name']) . "\nMobile: {$cu['phone']}\nEmail: {$cu['email']}\nEmirate: {$cu['emirate']}\nAddress: " . fomaxo_en_both($cu['address']) . ($cu['note'] !== '' ? "\nNote: " . fomaxo_en_both($cu['note']) : '') . "\nWhatsApp offers: " . ($cu['wa'] ? 'Yes' : 'No') . $waLines;
+if ($inDb) { require_once __DIR__ . '/member-lib.php'; $body .= fx_member_email_line($no); }   // FOMAXO Elite: "this customer just reached GOLD" (AJAY 15 Nov 2026)
 $mailed = fomaxo_mail($to, ($sd ? 'SAME-DAY ' : '') . "FOMAXO cash on delivery order $no — " . aed($totalFils), $body,
                 "From: FOMAXO Orders <mail@fomaxo.com>\r\n" . ($cu['email'] !== '' ? "Reply-To: {$cu['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
 if ($early) exit;

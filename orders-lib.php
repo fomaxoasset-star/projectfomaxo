@@ -1196,6 +1196,11 @@ function fx_left_msg($l, $ar = null) {
   $link = 'https://fomaxo.com/?' . ($ar ? 'lang=ar&' : '') . 'utm_source=whatsapp&utm_campaign=left-checkout#/' . ($bag !== '' ? 'checkout?bag=' . $bag : 'checkout');
   $items = implode("\n", array_filter(array_map('trim', preg_split('/,\s*(?=\d+ ×)/u', (string)$l['items']))));
   $n2 = "\n\n";
+  if (($l['stage'] ?? '') === 'member') {   // checked their FOMAXO Elite level on the website: their level today and how much more to the next one (AJAY 15 Nov 2026)
+    require_once __DIR__ . '/member-lib.php';
+    static $all = null; $p9 = fx_member_p9($l['phone'] ?? ''); $all ??= fx_member_all(fomaxo_db(), fx_member_pos_db());   // read once for the whole list
+    return fx_member_msg($l['name'], fx_member_where($all[$p9]['year'] ?? 0), $ar);
+  }
   if (($l['stage'] ?? '') === 'invite') {   // their friend ordered through their Share link: the WhatsApp box adds their coupon (THANKS-, % off first)
     if ($ar) return [($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،') . $n2 . 'شكراً لدعوة صديقك إلى FOMAXO. لقد قام صديقك بطلب للتو.', $n2 . 'FOMAXO', true];
     return ['Hi' . ($first !== '' ? ' ' . $first : '') . ',' . $n2 . 'Thank you for inviting your friend to FOMAXO. They just placed an order.', $n2 . 'FOMAXO', false];

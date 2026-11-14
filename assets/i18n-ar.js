@@ -1219,7 +1219,25 @@
 "AED 20 OFF": "خصم AED 20",
 "your first order": "على طلبك الأول",
 "Get your coupon on WhatsApp": "احصل على الكوبون على واتساب",
-"Welcome offer": "عرض الترحيب"
+"Welcome offer": "عرض الترحيب",
+"Check my level": "اعرف مستواك",
+"Type the name and mobile number you shop with to see your real FOMAXO spending this year.": "اكتب الاسم ورقم الهاتف اللذين تتسوّق بهما لترى إنفاقك الفعلي في FOMAXO هذا العام.",
+"Your name": "اسمك",
+"Please type your name.": "يرجى كتابة اسمك.",
+"We could not find FOMAXO purchases for this name and mobile. Please use the name and number you shop with.": "لم نجد مشتريات من FOMAXO لهذا الاسم والرقم. يرجى استخدام الاسم والرقم اللذين تتسوّق بهما.",
+"Your mobile number": "رقم هاتفك المحمول",
+"Show my level": "اعرض مستواي",
+"Please type a valid mobile number.": "يرجى كتابة رقم هاتف صحيح.",
+"Too many tries. Please wait an hour and try again.": "محاولات كثيرة. يرجى الانتظار ساعة ثم المحاولة مرة أخرى.",
+"Hello": "مرحباً",
+"Your level": "مستواك",
+"Spent this year": "إنفاقك هذا العام",
+"Not a member level yet": "لم تصل إلى مستوى عضوية بعد",
+"You are at the highest level": "أنت في أعلى مستوى",
+"Website orders": "طلبات الموقع",
+"Store purchases": "مشتريات المتجر",
+"Counts your FOMAXO website and store purchases since 1 January.": "يشمل مشترياتك من موقع FOMAXO ومتجرها منذ 1 يناير.",
+"Check another number": "تحقّق من رقم آخر"
 };
   var hrAr = function(t){ var m = /^(\d+) ([AP]M)$/.exec(t), h = +m[1]; return h + ' ' + (m[2] === 'AM' ? (h === 12 ? 'منتصف الليل' : 'صباحاً') : (h === 12 || h < 5 ? 'ظهراً' : 'مساءً')); };   // "2 PM" → "2 ظهراً"
   var cnt = function(n, one, two, few, many){ n = +n; return n === 1 ? one : n === 2 ? two : n <= 10 ? n + ' ' + few : n + ' ' + many; };
@@ -1284,6 +1302,7 @@
     [/^Checkout · (AED [\d,.]+)$/, function(m){ return 'إتمام الشراء · ' + m[1]; }],
     [/^You save (AED [\d,.]+)$/, function(m){ return 'توفّر ' + m[1]; }],
     [/^Multi-buy discount \((\d+)%\)$/, function(m){ return 'خصم الشراء المتعدد (' + m[1] + '%)'; }],
+    [/^(AED [\d,.]+) more this year to reach (.+)$/, function(m){ return m[1] + ' إضافية هذا العام للوصول إلى ' + m[2]; }],
     [/^· (AED [\d,.]+) more this year to reach (.+)$/, function(m){ return '· ' + m[1] + ' إضافية هذا العام للوصول إلى ' + m[2]; }],
     [/^Set of (\d+)( ·)?$/, function(m){ return 'مجموعة من ' + m[1] + (m[2] || ''); }],
     [/^Select (\d+) more fragrances? to continue\.$/, function(m){ return +m[1] === 1 ? 'اختر عطراً واحداً آخر للمتابعة.' : 'اختر ' + m[1] + ' عطور أخرى للمتابعة.'; }],

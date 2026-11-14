@@ -110,6 +110,7 @@ function ziina_verify($id, $reply = false) {
     fomaxo_en_many([$c['name'], $c['address'], $c['note']]);   // Arabic typed by the customer: English in this email and in admin
     $body = "NEW PAID ORDER (Ziina)  {$rec['no']}$note\n" . date('d M Y, H:i') . " (Dubai)\nZiina payment: $id\n\n" . implode("\n", $rec['rows']) . "\n\n"
           . "TOTAL PAID: $total\n" . (!empty($rec['ship']) ? $rec['ship'] : 'Delivery: Free') . "\n\nName: " . fomaxo_en_both($c['name']) . "\nPhone: {$c['phone']}\n" . ($c['email'] !== '' ? "Email: {$c['email']}\n" : '') . 'Address: ' . fomaxo_en_both($c['address']) . ", {$c['emirate']}, UAE\n" . ($c['note'] ? 'Note: ' . fomaxo_en_both($c['note']) . "\n" : '') . $waLines;
+    require_once __DIR__ . '/member-lib.php'; $body .= fx_member_email_line($rec['no']);   // FOMAXO Elite: "this customer just reached GOLD" (AJAY 15 Nov 2026)
     fomaxo_mail(fomaxo_orders_email(ZIINA_STORE_EMAIL), '=?UTF-8?B?' . base64_encode((!empty($rec['ship']) ? 'SAME-DAY ' : '') . "New paid order {$rec['no']} — $total") . '?=', $body, "From: $from\r\n" . ($c['email'] !== '' ? "Reply-To: {$c['email']}\r\n" : '') . "Content-Type: text/plain; charset=UTF-8");
     $cb = "Thank you for your order, {$c['name']}.\n\nOrder number: {$rec['no']}\n\n" . implode("\n", $rec['rows']) . "\n\nTotal paid: $total\n" . (!empty($rec['ship']) ? $rec['ship'] . ', to ' : 'Delivery: Free, to ') . "{$c['address']}, {$c['emirate']}\n\n"
         . "We will call or WhatsApp you on {$c['phone']} to arrange your delivery.\n\n"
