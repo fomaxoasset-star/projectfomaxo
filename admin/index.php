@@ -4621,12 +4621,12 @@ if (isset($_GET['o'])) {
     $no = (string)$o['order_no']; $em = fx_wa_sent_day('rm:' . $no);
     page('Email ' . $no, '<div class="odhead"><a class="small" href="' . h(self_url(['o' => $no])) . '">← Back to ' . h($no) . '</a><h1>Check the email</h1></div>' . flash()
       . '<div class="card mprev"><dl><dt>To</dt><dd>' . h($o['email']) . '</dd><dt>From</dt><dd>FOMAXO &lt;' . h(FX_MAIL_FROM) . '&gt;</dd><dt>Subject</dt><dd>Your FOMAXO receipt #' . h($no) . '</dd></dl>'
-      . '<iframe class="mframe" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" title="Email preview" srcdoc="' . h(str_replace(['<a href=', 'https://fomaxo.com/assets/'], ['<a target="_blank" href=', '/assets/'], fx_receipt_email($o))) . '"></iframe>'
+      . '<iframe class="mframe" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" title="Email preview" onload="var f=this;function z(){try{f.style.height=f.contentDocument.documentElement.scrollHeight+\'px\'}catch(e){}}z();setTimeout(z,700);addEventListener(\'resize\',z)" srcdoc="' . h(str_replace(['<a href=', 'https://fomaxo.com/assets/'], ['<a target="_blank" href=', '/assets/'], fx_receipt_email($o))) . '"></iframe>'
       . '<form class="mbtn" method="post">' . csrf_field() . '<input type="hidden" name="rcpt" value="' . h($no) . '"><input type="hidden" name="courier" value="' . h($o['courier'] ?? '') . '"><input type="hidden" name="tracking" value="' . h($o['tracking'] ?? '') . '">'
       . '<a class="btn line" href="' . h(self_url(['o' => $no])) . '">Cancel</a><button class="btn" name="email" value="send">Send email</button></form>'
       . ($em !== '' ? '<p class="muted small" style="margin:0;text-align:center">Already emailed on ' . h($em) . '.</p>' : '') . '</div>'
-      . '<style>.mprev{max-width:720px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:10px;padding:14px 16px}.mprev dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}.mprev dt{color:var(--muted)}.mprev dd{margin:0;overflow-wrap:anywhere}'
-      . '.mframe{width:100%;height:60vh;min-height:360px;border:1px solid var(--line);border-radius:10px;background:#efebe3}.mbtn{display:flex;gap:10px;justify-content:center;margin:0}.mbtn .btn{flex:1 1 0;max-width:220px;text-align:center}</style>', true);
+      . '<style>.mprev{max-width:860px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:10px;padding:14px 16px}.mprev dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}.mprev dt{color:var(--muted)}.mprev dd{margin:0;overflow-wrap:anywhere}'
+      . '.mframe{width:100%;height:80vh;min-height:360px;border:1px solid var(--line);border-radius:10px;background:#efebe3}.mbtn{display:flex;gap:10px;justify-content:center;margin:0}.mbtn .btn{flex:1 1 0;max-width:220px;text-align:center}</style>', true);
   }
   $items = array_filter(array_map('trim', explode('|', (string)$o['items'])));
   /* every status in the dropdown with a clear name; picking one saves at once (with your note) */
