@@ -328,6 +328,15 @@ html[data-mode="light"] .best{color:#fff8ea}
 .phead::before{content:"";position:absolute;right:-10%;top:-60%;width:60%;aspect-ratio:1;background:radial-gradient(circle,rgba(215,170,105,.12),transparent 65%)}
 .phead .wrap{position:relative;display:flex;flex-direction:column;gap:18px}
 .phead h1{font-size:clamp(34px,5vw,76px)}
+/* page header: no FOMAXO / page line, less empty space above and below, and the line under the title in Capital Letters Each Word (AJAY 14 Nov 2026); Arabic has no capitals, so no change there */
+.phead{padding:clamp(26px,2.6vw,40px) 0 clamp(22px,2.2vw,32px)}
+.phead .wrap{gap:12px}
+.phead .lead{text-transform:capitalize}
+html[lang=ar] .phead .lead{text-transform:none}
+@media(min-width:900px){.phead .lead{max-width:none}}   /* laptop: the line under the title runs on one straight line across the page (AJAY 14 Nov) */
+.phead+section.sec{padding-top:clamp(32px,3.4vw,52px)}
+.el-in>.crumbs,.gf-copy>.crumbs,.co>.crumbs{display:none}
+@media(max-width:600px){.phead{padding:22px 0 18px!important}.phead .wrap{gap:10px}.phead+section.sec{padding-top:28px}}
 .crumbs{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--dim)}
 .crumbs a:hover{color:var(--gold-hi)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;padding:30px 0 40px}
@@ -3747,7 +3756,7 @@ app.addEventListener('click', e => {
   if (e.target.closest('[data-buy]')) buyNow({id:p.id, opt:sel, qty:1});
 });
 const secHead = (eyebrow, title, extra='', center) => `<div class="sec-head${center?' c':''}"><div class="t rv-up"><span class="eyebrow">${eyebrow}</span><h2>${title}</h2>${extra}</div></div>`;
-const pageHead = (crumb, title, lead='') => `<div class="phead"><div class="wrap"><div class="crumbs"><a href="#/">FOMAXO</a> &nbsp;/&nbsp; ${crumb}</div><h1>${title}</h1>${lead ? `<p class="lead">${lead}</p>` : ''}</div></div>`;
+const pageHead = (crumb, title, lead='') => `<div class="phead"><div class="wrap"><h1>${title}</h1>${lead ? `<p class="lead">${lead}</p>` : ''}</div></div>`;
 const finalCTA = () => `<section class="final"><div class="wrap">${emblem('fin-em rv-up')}<span class="eyebrow rv-up">Inspire greatness</span><h2 class="rv-up d1">Define your<br><span class="metal">signature luxury</span></h2><div class="ctas fin-ctas rv-up d2"><a class="btn" href="#/fragrances">Shop FOMAXO</a>${shown('discovery') ? '<a class="btn line" href="#/product/discovery">Try the Discovery Set</a>' : ''}</div></div></section>`;
 const pyramid = n => n.key ? `<div class="pyramid one"><div>Key notes<span>${esc(n.key)}</span></div></div>` : `<div class="pyramid"><div>Top<span>${esc(n.top)}</span></div><div>Heart<span>${esc(n.heart)}</span></div><div>Base<span>${esc(n.base)}</span></div></div>`;
 
