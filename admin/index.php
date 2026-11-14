@@ -996,7 +996,7 @@ function fx_receipt_card($o) {
     . '<p class="muted small rchelp">Shown on the receipt only when filled in.</p>'
     . '<div class="rcbtn"><button class="btn sm">Save</button><a class="btn line sm" href="' . h(fx_receipt_url($no)) . '" target="_blank" rel="noopener">View receipt</a><a class="btn line sm" href="' . h(fx_receipt_url($no) . '&print=1') . '" target="_blank" rel="noopener">Download PDF</a>'
     . str_replace('<span>WhatsApp</span>', '<span>Send on WhatsApp</span>', fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], $head, $ar ? fx_wa_bye($o['name'], true) : fx_wa_bye($o['name'], false), 'rc:' . $no, 'g', $ar, 'btn sm wag', true))
-    . '<button class="btn line sm" name="email" value="1"' . ($hasMail ? '' : ' disabled title="No email on this order"') . '>' . ($em !== '' ? 'Emailed ' . $em : 'Email') . '</button></div>'
+    . '<button class="btn line sm" name="email" value="view"' . ($hasMail ? '' : ' disabled title="No email on this order"') . '>' . ($em !== '' ? 'Emailed ' . $em : 'Email') . '</button></div>'
     . '<p class="muted small rchelp">' . ($hasMail ? 'Email goes to ' . h($o['email']) . '.' : 'No email on this order, so send it on WhatsApp.') . ' Send only when the customer asks.</p></form>';
 }
 
@@ -1270,6 +1270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rcpt'])) {
   if (!isset($_POST['email'])) { flash('Saved. The receipt shows the courier and tracking number only when they are filled in.', true); go(['o' => $no]); }
   $s->execute([$no]); $o = $s->fetch();
   if (!filter_var($o['email'], FILTER_VALIDATE_EMAIL)) { flash('This order has no email address. Send the receipt on WhatsApp instead.'); go(['o' => $no]); }
+  if ($_POST['email'] !== 'send') go(['o' => $no, 'mailview' => 1]);   // Email: first the preview, then Send email there sends it (AJAY 14 Nov 2026)
   $err = null;
   $ok = fomaxo_mail($o['email'], "Your FOMAXO receipt #$no", fx_receipt_email($o), "From: FOMAXO <" . FX_MAIL_FROM . ">\r\nReply-To: " . fomaxo_orders_email($STORE_EMAIL) . "\r\nContent-Type: text/html; charset=UTF-8", $err);
   if ($ok) {
@@ -4602,6 +4603,17 @@ if (isset($_GET['o'])) {
   $s = $pdo->prepare('SELECT * FROM fx_orders WHERE order_no = ?'); $s->execute([(string)$_GET['o']]); $o = $s->fetch();
   if (!$o) page('Not found', '<h1>Order not found</h1><p><a href="./?orders=1">Back to orders</a></p>');
   if (empty($o['seen_at'])) try { $pdo->prepare('UPDATE fx_orders SET seen_at = NOW() WHERE order_no = ? AND seen_at IS NULL')->execute([$o['order_no']]); } catch (Throwable $e) {}   // opened: it leaves the red count
+  if (isset($_GET['mailview']) && $o['status'] !== 'Awaiting payment' && filter_var($o['email'], FILTER_VALIDATE_EMAIL)) {   // the receipt email exactly as the customer gets it, with Send email
+    $no = (string)$o['order_no']; $em = fx_wa_sent_day('rm:' . $no);
+    page('Email ' . $no, '<div class="odhead"><a class="small" href="' . h(self_url(['o' => $no])) . '">← Back to ' . h($no) . '</a><h1>Check the email</h1></div>' . flash()
+      . '<div class="card mprev"><dl><dt>To</dt><dd>' . h($o['email']) . '</dd><dt>From</dt><dd>FOMAXO &lt;' . h(FX_MAIL_FROM) . '&gt;</dd><dt>Subject</dt><dd>Your FOMAXO receipt #' . h($no) . '</dd></dl>'
+      . '<iframe class="mframe" sandbox="allow-popups allow-popups-to-escape-sandbox" title="Email preview" srcdoc="' . h(str_replace('<a href=', '<a target="_blank" href=', fx_receipt_email($o))) . '"></iframe>'
+      . '<form class="mbtn" method="post">' . csrf_field() . '<input type="hidden" name="rcpt" value="' . h($no) . '"><input type="hidden" name="courier" value="' . h($o['courier'] ?? '') . '"><input type="hidden" name="tracking" value="' . h($o['tracking'] ?? '') . '">'
+      . '<a class="btn line" href="' . h(self_url(['o' => $no])) . '">Cancel</a><button class="btn" name="email" value="send">Send email</button></form>'
+      . ($em !== '' ? '<p class="muted small" style="margin:0;text-align:center">Already emailed on ' . h($em) . '.</p>' : '') . '</div>'
+      . '<style>.mprev{max-width:720px;margin:0 auto;width:100%;display:flex;flex-direction:column;gap:10px;padding:14px 16px}.mprev dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}.mprev dt{color:var(--muted)}.mprev dd{margin:0;overflow-wrap:anywhere}'
+      . '.mframe{width:100%;height:60vh;min-height:360px;border:1px solid var(--line);border-radius:10px;background:#efebe3}.mbtn{display:flex;gap:10px;justify-content:center;margin:0}.mbtn .btn{flex:1 1 0;max-width:220px;text-align:center}</style>', true);
+  }
   $items = array_filter(array_map('trim', explode('|', (string)$o['items'])));
   /* every status in the dropdown with a clear name; picking one saves at once (with your note) */
   $stLabel = ['New' => 'Pending · Unpaid', 'Paid' => 'Pending · Paid', 'Delivered' => 'Delivered', 'Undelivered' => 'Undelivered', 'Cancelled' => 'Cancelled', 'Refunded' => 'Refunded', 'Awaiting payment' => 'Card not paid'];

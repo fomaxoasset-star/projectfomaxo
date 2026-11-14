@@ -325,36 +325,108 @@ html.eco{--bg:#fff;--paper:#fff;--ink:#000;--soft:#222;--muted:#555;--line:#bbb;
 }
 CSS; }
 
-/* the email: a short note with the receipt in simple tables (email apps ignore most page styling) and the full receipt link */
+/* The receipt email: the same receipt as the receipt page (logo, Issued to, Receipt no, items, Address beside the totals,
+   Shipping and Payment boxes, Thank You For Your Purchase), built from tables with the styles written on each part, because email apps
+   (Gmail, Outlook, Apple Mail) drop page styles and fonts. Phones: the Unit price column hides and the Address comes above the totals. (AJAY 14 Nov 2026) */
+function fx_receipt_mail_html(array $r) {
+  $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+  $F = "font-family:Helvetica,Arial,sans-serif;"; $S = "font-family:Georgia,'Times New Roman',serif;";
+  $ink = '#0b0b0b'; $muted = '#6f685c'; $line = '#e6dfcf'; $gold = '#9a7a2c'; $gold2 = '#c9a64b'; $red = '#a3261b';
+  $lab = $F . 'font-size:11px;letter-spacing:1px;text-transform:uppercase;color:' . $muted . ';';
+  $h2 = $F . 'font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:' . $gold . ';font-weight:bold;';
+  $dl = function (array $rows, $w = 70) use ($e, $lab, $F, $ink) {
+    $h = '';
+    foreach ($rows as [$k, $v]) if ((string)$v !== '') $h .= '<tr><td style="' . $lab . 'padding:2px 14px 2px 0;vertical-align:top;white-space:nowrap;width:' . $w . 'px">' . $e($k) . '</td><td style="' . $F . 'font-size:14px;font-weight:bold;color:' . $ink . ';padding:2px 0;word-break:break-word">' . $e($v) . '</td></tr>';
+    return '<table role="presentation" cellpadding="0" cellspacing="0" border="0">' . $h . '</table>';
+  };
+  $th = $F . 'font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#ffffff;background:' . $ink . ';padding:8px 8px;font-weight:normal;';
+  $td = $F . 'font-size:13px;color:' . $ink . ';padding:7px 8px;border-bottom:1px solid ' . $line . ';vertical-align:middle;';
+  $rows = ''; $i = 0;
+  foreach ($r['rows'] as $l) {
+    $bg = $i++ % 2 ? 'background:#faf8f3;' : 'background:#ffffff;';
+    $rows .= '<tr><td style="' . $td . $bg . '"><span style="' . $S . 'font-size:15px;font-weight:bold;letter-spacing:1px;text-transform:uppercase">' . $e($l['name']) . '</span>'
+      . ($l['tag'] !== '' ? ' <span style="display:inline-block;border:1px solid ' . $gold2 . ';border-radius:999px;padding:0 6px;' . $F . 'font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:' . $gold . '">' . $e($l['tag']) . '</span>' : '')
+      . ($l['sub'] !== '' ? '<div style="' . $F . 'font-size:11px;color:' . $muted . ';margin-top:1px">' . $e($l['sub']) . '</div>' : '') . '</td>'
+      . '<td style="' . $td . $bg . 'text-align:center;white-space:nowrap">' . $e($l['size']) . '</td>'
+      . '<td class="fxun" style="' . $td . $bg . 'text-align:right;white-space:nowrap">' . $l['unit'] . '</td>'
+      . '<td style="' . $td . $bg . 'text-align:center">' . (int)$l['qty'] . '</td>'
+      . '<td style="' . $td . $bg . 'text-align:right;white-space:nowrap;font-weight:bold">' . $l['amt'] . '</td></tr>';
+  }
+  $sum = '';
+  foreach ($r['sum'] as [$k, $v, $kind]) {
+    $c = $kind === 'dc' ? $red : ($kind === 'gt' ? $ink : '#3d3a35'); $fs = $kind === 'gt' ? '15px' : '12px';
+    $sum .= '<tr><td style="' . $F . 'font-size:' . $fs . ';font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:' . $c . ';text-align:right;padding:4px 16px 4px 0">' . $e($k) . '</td>'
+      . '<td style="' . $F . 'font-size:' . ($kind === 'gt' ? '16px' : '14px') . ';color:' . ($kind === 'dc' ? $red : $ink) . ';text-align:right;white-space:nowrap;padding:4px 0">' . $v . '</td></tr>';
+  }
+  $sum .= '<tr><td style="' . $F . 'font-size:20px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:' . $ink . ';text-align:right;padding:12px 16px 12px 0;border-top:2px solid ' . $ink . ';border-bottom:2px solid ' . $ink . ';white-space:nowrap">' . $e($r['total_label']) . '</td>'
+    . '<td style="' . $F . 'font-size:26px;font-weight:bold;color:' . $ink . ';text-align:right;white-space:nowrap;padding:12px 0;border-top:2px solid ' . $ink . ';border-bottom:2px solid ' . $ink . '">' . $r['total'] . '</td></tr>';
+  $box = function ($title, $inner) use ($F, $ink) {
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1.5px solid ' . $ink . ';margin-top:12px"><tr><td colspan="2" style="' . $F . 'font-size:11px;letter-spacing:3px;text-transform:uppercase;text-align:center;padding:7px 10px;border-bottom:1.5px solid ' . $ink . ';color:' . $ink . '">' . $title . '</td></tr>' . $inner . '</table>';
+  };
+  $ship = '';
+  foreach ($r['ship'] as $j => [$k, $v]) $ship .= '<tr><td style="' . $F . 'font-size:12px;letter-spacing:1px;text-transform:uppercase;color:' . $gold . ';font-weight:bold;padding:9px 14px;' . ($j ? 'border-top:1px solid ' . $line . ';' : '') . '">' . $e($k) . '</td><td style="' . $F . 'font-size:13px;text-align:right;padding:9px 14px;color:' . $ink . ';' . ($j ? 'border-top:1px solid ' . $line . ';' : '') . '">' . $e($v) . '</td></tr>';
+  $pay = '<tr><td width="50%" style="' . $F . 'font-size:13px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding:11px 8px;color:' . $ink . ';border-right:1.5px solid ' . $ink . '">' . $e($r['pay']) . '</td>'
+    . '<td width="50%" style="' . $F . 'font-size:13px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding:11px 8px;font-weight:bold;color:' . ($r['paid'] ? $gold : $red) . '">' . $e($r['status']) . '</td></tr>';
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">'
+    . '<style>@media (max-width:600px){.fxun{display:none!important}.fxcol{display:block!important;width:100%!important;padding:0 0 18px!important}.fxpad{padding:22px 14px 20px!important}.fxbx{width:100%!important}.fxmeta td.fxcol{text-align:left!important}}</style></head>'
+    . '<body style="margin:0;padding:0;background:#efebe3">'
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#efebe3"><tr><td align="center" style="padding:20px 8px">'
+    . '<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:640px;background:#ffffff;border-top:6px solid ' . $ink . ';border-bottom:6px solid ' . $ink . '">'
+    . '<tr><td style="height:1px;line-height:1px;font-size:1px;background:' . $gold2 . '">&nbsp;</td></tr>'
+    . '<tr><td class="fxpad" style="padding:28px 34px 24px">'
+    // header: logo, tag, RECEIPT between two gold lines
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center"><img src="' . $e($r['logo']) . '" width="181" height="92" alt="FOMAXO" style="display:block;width:181px;height:92px;border:0"></td></tr>'
+    . '<tr><td align="center" style="' . $F . 'font-size:10px;letter-spacing:3.5px;text-transform:uppercase;color:' . $muted . ';padding-top:8px">Perfume &amp; Personal Care</td></tr>'
+    . '<tr><td style="padding-top:16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-bottom:1px solid ' . $gold2 . '">&nbsp;</td><td width="1" style="' . $S . 'font-size:24px;letter-spacing:9px;text-transform:uppercase;color:' . $gold . ';padding:0 14px 0 23px;white-space:nowrap">Receipt</td><td style="border-bottom:1px solid ' . $gold2 . '">&nbsp;</td></tr></table></td></tr></table>'
+    // Issued to | Receipt no
+    . '<table role="presentation" class="fxmeta" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 18px"><tr>'
+    . '<td class="fxcol" valign="top" style="padding-right:12px"><div style="' . $h2 . 'margin-bottom:6px">Issued to</div>' . $dl([['Name', $r['name']], ['Mobile', $r['phone']], ['Email', $r['email']]], 56) . '</td>'
+    . '<td class="fxcol" valign="top" align="right" style="text-align:right;white-space:nowrap"><div style="' . $h2 . 'margin-bottom:6px">Receipt no</div><div style="' . $F . 'font-size:22px;font-weight:bold;color:' . $ink . '">#' . $e($r['no']) . '</div>'
+    . '<div style="' . $F . 'font-size:14px;font-weight:bold;color:' . $ink . ';margin-top:6px"><span style="' . $lab . 'margin-right:6px">Date</span>' . $e($r['date']) . '</div></td></tr></table>'
+    // items
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="' . $th . 'text-align:left">Item</td><td style="' . $th . 'text-align:center">Size</td><td class="fxun" style="' . $th . 'text-align:right">Unit price</td><td style="' . $th . 'text-align:center">Qty</td><td style="' . $th . 'text-align:right">Amount</td></tr>' . $rows . '</table>'
+    // address | totals
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px"><tr>'
+    . '<td class="fxcol" valign="top" width="42%" style="padding-right:18px"><div style="' . $F . 'font-size:18px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:' . $ink . ';margin-bottom:8px">Address</div>' . $dl($r['addr'], 74) . '</td>'
+    . '<td class="fxcol" valign="top" width="58%"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' . $sum . '</table></td></tr></table>'
+    // shipping + payment boxes
+    . '<table role="presentation" class="fxbx" width="62%" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:12px auto 0"><tr><td>'
+    . ($ship !== '' ? $box('Shipping', $ship) : '') . $box('Payment', $pay) . '</td></tr></table>'
+    // button + thank you
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px"><tr><td align="center">'
+    . '<a href="' . $e($r['url']) . '" style="display:inline-block;background:' . $gold . ';color:#ffffff;text-decoration:none;' . $F . 'font-size:12px;font-weight:bold;letter-spacing:2px;padding:13px 24px;border-radius:999px">VIEW OR DOWNLOAD RECEIPT</a></td></tr>'
+    . '<tr><td align="center" style="' . $F . 'font-size:24px;font-weight:bold;color:' . $ink . ';padding-top:24px">Thank You For Your Purchase</td></tr>'
+    . '<tr><td align="center" style="padding-top:12px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="60" style="height:2px;line-height:2px;font-size:1px;background:' . $gold2 . '">&nbsp;</td></tr></table></td></tr>'
+    . '<tr><td align="center" style="' . $F . 'font-size:11px;line-height:1.7;letter-spacing:2.5px;text-transform:uppercase;color:' . $muted . ';padding-top:10px">' . $e($r['site']) . '<br>' . $e($r['foot']) . '</td></tr></table>'
+    . '</td></tr><tr><td style="height:1px;line-height:1px;font-size:1px;background:' . $gold2 . '">&nbsp;</td></tr></table>'
+    . '</td></tr></table></body></html>';
+}
 function fx_receipt_email($o) {
-  $d = fx_receipt_data($o); $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
-  $aed = fn($v) => 'AED ' . number_format((float)$v, 2);
-  $first = preg_split('/\s+/u', trim((string)$o['name']))[0] ?? '';
-  $td = 'padding:9px 6px;border-bottom:1px solid #e6dfcf;font:14px Arial,sans-serif;color:#0b0b0b';
-  $rows = '';
-  foreach ($d['lines'] as $l)
-    $rows .= '<tr><td style="' . $td . '"><b style="letter-spacing:1px;text-transform:uppercase">' . $e($l['name']) . '</b> ' . $e($l['set'] ? 'Set of ' . $l['opt'] : $l['opt'] . 'ml')
-           . ($l['free'] ? ' <span style="color:#9a7a2c">· Free gift</span>' : '') . '</td><td style="' . $td . ';text-align:center">' . (int)$l['qty'] . '</td>'
-           . '<td style="' . $td . ';text-align:right;white-space:nowrap">' . ($l['free'] ? '<span style="color:#9a7a2c">FREE</span>' : ($l['price'] !== null ? $aed($l['price'] * $l['qty']) : '')) . '</td></tr>';
-  $tr = fn($k, $v, $c = '#3d3a35') => '<tr><td style="padding:4px 6px;font:14px Arial,sans-serif;color:' . $c . '">' . $e($k) . '</td><td style="padding:4px 6px;font:14px Arial,sans-serif;text-align:right;color:' . $c . ';white-space:nowrap">' . $v . '</td></tr>';
-  $sum = $tr('Subtotal', $aed($d['sub']));
-  foreach ($d['disc'] as $x) $sum .= $tr($x['label'], '-' . $aed($x['amt']), '#9a7a2c');
-  if ((float)$o['fee'] > 0) $sum .= $tr('Cash on delivery fee', $aed($o['fee']));
-  $sum .= $d['sd'] !== null ? $tr('Same-day delivery', $d['sd'] ? $aed($d['sd']) : 'FREE') : $tr('Delivery', 'FREE');
-  $sum .= '<tr><td style="padding:10px 6px;border-top:1px solid #0b0b0b;font:bold 16px Arial,sans-serif;color:#0b0b0b">' . ($d['pay'] === 'paid' ? 'Total paid' : ($d['pay'] === 'unpaid' ? 'Amount to pay' : 'Total')) . '</td><td style="padding:10px 6px;border-top:1px solid #0b0b0b;font:bold 18px Arial,sans-serif;text-align:right;color:#0b0b0b;white-space:nowrap">' . $aed($o['total']) . '</td></tr>';
-  $ship = (trim((string)($o['courier'] ?? '')) !== '' ? 'Courier: <b>' . $e($o['courier']) . '</b><br>' : '') . (trim((string)($o['tracking'] ?? '')) !== '' ? 'Tracking no: <b>' . $e($o['tracking']) . '</b><br>' : '');
-  $url = fx_receipt_url((string)$o['order_no']);
-  return '<!doctype html><html><body style="margin:0;background:#efebe3;padding:20px 10px">'
-    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-top:6px solid #0b0b0b;border-bottom:6px solid #0b0b0b">'
-    . '<tr><td style="padding:28px 28px 8px;text-align:center"><div style="font:600 30px Georgia,serif;letter-spacing:10px;color:#0b0b0b">FOMAXO</div><div style="font:11px Arial,sans-serif;letter-spacing:4px;color:#6f685c;margin-top:6px">PERFUME &amp; PERSONAL CARE</div>'
-    . '<div style="font:20px Georgia,serif;letter-spacing:8px;color:#9a7a2c;margin-top:18px">RECEIPT</div></td></tr>'
-    . '<tr><td style="padding:10px 28px;font:15px Arial,sans-serif;color:#0b0b0b;line-height:1.5">Hi ' . $e($first !== '' ? $first : 'there') . ',<br><br>Thank you for your purchase. Here is your receipt for order <b>#' . $e($o['order_no']) . '</b> of ' . date('d/m/Y', strtotime((string)$o['created_at'])) . '.</td></tr>'
-    . '<tr><td style="padding:6px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $rows . '</table></td></tr>'
-    . '<tr><td style="padding:10px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $sum . '</table></td></tr>'
-    . '<tr><td style="padding:6px 28px;font:14px Arial,sans-serif;color:#3d3a35;line-height:1.6">Payment: <b>' . ($d['cod'] ? 'Cash on delivery' : 'Card') . ' · ' . ucfirst($d['pay']) . '</b><br>' . $ship . '</td></tr>'
-    . '<tr><td style="padding:16px 28px 26px;text-align:center"><a href="' . $e($url) . '" style="display:inline-block;background:#9a7a2c;color:#ffffff;text-decoration:none;font:bold 13px Arial,sans-serif;letter-spacing:2px;padding:14px 26px;border-radius:999px">VIEW OR DOWNLOAD RECEIPT</a>'
-    . '<div style="font:22px Georgia,serif;color:#0b0b0b;margin-top:22px">Thank you for your purchase</div><div style="font:11px Arial,sans-serif;letter-spacing:3px;color:#6f685c;margin-top:8px">FOMAXO.COM · DUBAI, UAE</div></td></tr>'
-    . '</table></td></tr></table></body></html>';
+  $w = fx_receipt_words(false); $d = fx_receipt_data($o); $t = fn($x) => trim((string)$x);
+  $M = fn($v) => '<span style="font-size:10px">AED</span>&nbsp;' . number_format((float)$v, 2);
+  $rows = [];
+  foreach ($d['lines'] as $l) {
+    if ($l['free']) { $unit = $l['price'] !== null ? '<s style="color:#555555;font-size:11px">' . $M($l['was'] ?? $l['price']) . '</s>' : ''; $amt = '<b style="letter-spacing:1.5px">FREE</b>'; }
+    else { $unit = $l['price'] === null ? '—' : ($l['was'] !== null ? '<s style="color:#555555;font-size:11px">' . $M($l['was']) . '</s> ' : '') . $M($l['price']); $amt = $l['price'] === null ? '—' : $M($l['price'] * $l['qty']); }
+    $rows[] = ['name' => $l['name'], 'tag' => $l['free'] ? ($l['free'] === 'coupon' ? $w['cgift'] : $w['gift']) : '', 'sub' => $l['set'] && $l['picks'] ? $w['with'] . ': ' . implode(', ', $l['picks']) : $l['family'],
+               'size' => $l['set'] ? $w['sets'] . ' ' . $l['opt'] : $l['opt'] . 'ml', 'unit' => $unit, 'qty' => $l['qty'], 'amt' => $amt];
+  }
+  $sum = [[$w['sub'], $M($d['sub']), '']];
+  $sum[] = [$d['sd'] !== null ? $w['sameday'] : $w['delivery'], $d['sd'] ? $M($d['sd']) : '<b style="letter-spacing:1.5px">FREE</b>', ''];
+  if ((float)$o['fee'] > 0) $sum[] = [$w['codfee'], $M($o['fee']), ''];
+  if ($d['disc']) { $grand = (float)$o['total']; foreach ($d['disc'] as $x) $grand += $x['amt']; $sum[] = [$w['grand'], $M($grand), 'gt']; }
+  foreach ($d['disc'] as $x) $sum[] = [$x['label'], '−&nbsp;' . $M($x['amt']), 'dc'];
+  $addr = [[$w['name'], mb_strtoupper($t($o['name']), 'UTF-8')], [$w['mobile'], $t($o['phone'])], [$w['apt'], $t($o['room'] ?? '')], [$w['building'], $t($o['building'] ?? '')],
+           [$w['street'], $t($o['street'] ?? '')], [$w['area'], $t($o['area'] ?? '')], [$w['emirate'], $t($o['emirate'])]];
+  if ($t($o['room'] ?? '') . $t($o['building'] ?? '') . $t($o['street'] ?? '') . $t($o['area'] ?? '') === '' && $t($o['address']) !== '') array_splice($addr, 2, 4, [[$w['address'], $t($o['address'])]]);
+  $ship = [];
+  if ($t($o['courier'] ?? '') !== '') $ship[] = [$w['courier'], mb_strtoupper($t($o['courier']), 'UTF-8')];
+  if ($t($o['tracking'] ?? '') !== '') $ship[] = [$w['tracking'], $t($o['tracking'])];
+  return fx_receipt_mail_html(['logo' => 'https://fomaxo.com/assets/img/receipt-logo.png', 'no' => (string)$o['order_no'], 'date' => date('d/m/Y', strtotime((string)$o['created_at'])),
+    'name' => mb_strtoupper($t($o['name']), 'UTF-8'), 'phone' => $t($o['phone']), 'email' => $t($o['email']), 'rows' => $rows, 'sum' => $sum,
+    'total_label' => $d['pay'] === 'paid' ? $w['paid_total'] : ($d['pay'] === 'unpaid' ? $w['due_total'] : $w['total']), 'total' => $M($o['total']),
+    'addr' => $addr, 'ship' => $ship, 'pay' => $d['cod'] ? $w['cod'] : $w['card'], 'status' => $w[$d['pay']], 'paid' => $d['pay'] === 'paid',
+    'url' => fx_receipt_url((string)$o['order_no']), 'site' => 'fomaxo.com', 'foot' => $w['foot']]);
 }
 
 const FX_RECEIPT_SYMBOLS = '<symbol id="emblem" viewBox="0 0 2507 2506"><path fill="currentColor" fill-rule="evenodd" d="M1186 0 1072 12 1049 17 1005 23 962 34 943 37 937 40 883 54 878 57 832 71 784 91 773 94 721 117 659 148 615 173 559 208 505 246 464 278 415 320 369 363 324 410 279 463 247 504 216 548 182 601 145 666 119 718 91 782 85 801 74 826 54 886 37 947 26 1001 23 1008 23 1016 20 1025 20 1033 12 1073 9 1108 6 1121 3 1176 1 1185 1 1319 6 1383 9 1396 12 1431 20 1471 23 1496 37 1558 54 1619 71 1667 71 1671 94 1731 125 1800 148 1845 180 1901 213 1953 253 2009 284 2048 332 2103 366 2139 417 2187 457 2221 510 2262 556 2295 610 2329 671 2363 717 2386 776 2412 834 2434 882 2449 893 2454 898 2454 945 2468 997 2480 1053 2489 1057 2491 1111 2497 1124 2500 1178 2503 1188 2505 1319 2505 1329 2503 1383 2500 1396 2497 1449 2491 1550 2471 1597 2457 1613 2454 1664 2437 1730 2412 1783 2389 1845 2358 1900 2327 1946 2298 1994 2264 2046 2224 2094 2183 2128 2151 2182 2095 2225 2045 2264 1995 2304 1937 2329 1897 2358 1846 2386 1791 2412 1732 2434 1675 2454 1614 2463 1577 2468 1564 2483 1499 2483 1492 2494 1436 2505 1328 2505 1177 2494 1068 2491 1059 2483 1006 2468 941 2451 881 2434 830 2412 773 2389 721 2358 659 2330 610 2298 559 2261 506 2221 455 2176 403 2096 324 2040 276 1999 244 1946 207 1888 171 1842 145 1790 119 1787 119 1726 91 1666 68 1563 37 1501 23 1439 14 1435 12 1321 0ZM546 439 550 442 1015 1081 1097 1194 1099 1200 508 2002 494 2018 453 1976 419 1937 359 1856 326 1804 300 1758 277 1712 255 1662 237 1615 220 1563 206 1512 192 1447 192 1439 186 1412 178 1342 175 1292 175 1213 178 1164 186 1094 192 1066 195 1041 206 993 223 932 226 927 240 882 280 787 326 701 357 652 393 602 453 529 511 470ZM1198 175 1309 175 1319 177 1353 178 1409 186 1419 186 1516 206 1613 235 1720 280 1766 303 1810 328 1893 384 1946 427 1945 430 1671 430 1280 956 1282 962 1421 1149 1426 1145 1947 438 1954 433 2007 481 2050 525 2109 596 2152 656 2178 697 2226 786 2251 842 2268 886 2285 937 2299 987 2311 1039 2320 1091 2327 1147 2328 1176 2331 1198 2331 1308 2322 1401 2311 1466 2308 1473 2302 1506 2285 1568 2268 1619 2231 1709 2203 1765 2177 1810 2149 1854 2118 1898 2052 1978 1974 2055 1897 2118 1850 2151 1799 2183 1760 2205 1708 2231 1678 2243 1663 2251 1610 2271 1606 2271 1567 2285 1504 2302 1498 2302 1462 2311 1420 2317 1416 2319 1383 2322 1370 2325 1302 2330 1204 2330 1137 2325 1124 2322 1091 2319 991 2299 940 2285 888 2268 830 2245 748 2206 653 2149 570 2087 524 2047 497 2020 498 2018 779 2018 1248 1399 1252 1399 1707 2017 1991 2017 805 432 802 430 561 429 561 426 572 416 616 382 656 354 707 322 746 300 793 277 880 240 930 223 934 223 939 220 984 209 990 206 1009 203 1039 195 1103 184 1153 178 1173 178Z"/></symbol><symbol id="wordmark" viewBox="0 0 3196 481"><path fill="currentColor" fill-rule="evenodd" d="M1068 147 1068 480 1135 480 1135 214ZM1778 123 1581 480 1672 479 1815 221 1823 204ZM0 480 68 480 69 257 377 257 377 189 69 189 68 105 0 105ZM2934 1 2911 4 2871 15 2837 31 2801 56 2768 90 2743 128 2726 168 2720 191 2716 218 2716 263 2723 303 2739 346 2750 366 2766 389 2776 401 2802 426 2837 450 2864 463 2890 472 2926 479 2973 480 3003 476 3023 471 3048 462 3069 452 3108 426 3141 393 3166 356 3185 311 3194 267 3194 215 3186 174 3178 151 3165 124 3154 106 3138 85 3110 57 3089 41 3069 29 3027 11 2998 4 2976 1ZM2933 70 2966 69 3005 76 3038 90 3064 108 3087 131 3105 157 3120 192 3126 222 3126 259 3120 289 3107 321 3092 344 3064 373 3039 390 3013 402 2976 411 2934 411 2902 404 2869 389 2847 374 2822 349 2803 321 2789 287 2784 262 2783 229 2790 191 2805 157 2823 131 2847 107 2872 90 2901 77ZM2623 1 2538 1 2431 145 2421 161 2463 217ZM2198 1 2366 233 2184 480 2269 480 2411 293 2417 299 2550 480 2635 480 2276 1ZM722 1 677 9 654 17 625 31 590 55 555 91 533 124 520 151 513 171 504 216 504 265 513 311 531 354 557 393 591 427 623 449 647 461 671 470 714 479 760 480 785 477 811 471 855 453 897 425 928 394 948 366 958 348 974 307 982 265 982 217 973 171 954 126 939 102 925 84 893 53 869 36 851 26 815 11 786 4 763 1ZM721 70 754 69 793 76 829 92 848 105 873 129 894 159 908 193 914 224 914 258 907 292 893 324 876 349 854 371 825 391 792 405 764 411 721 411 693 405 660 391 635 374 609 348 592 323 580 297 572 264 571 227 577 194 583 177 594 155 610 132 636 106 658 91 689 77ZM0 1 0 69 423 69 423 1ZM1847 0 1802 82 2022 480 2113 480ZM1068 0 1068 97 1282 311 1425 169 1426 170 1426 480 1494 480 1494 4 1282 215Z"/></symbol>';
