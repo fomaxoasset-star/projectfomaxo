@@ -1001,16 +1001,16 @@ function fx_receipt_card($o) {
     . '<p class="muted small rchelp">' . ($hasMail ? 'Email goes to ' . h($o['email']) . '.' : 'No email on this order, so send it on WhatsApp.') . ' Send only when the customer asks.</p></form>'
     /* typing a courier or tracking number puts it in the WhatsApp message straight away (same words as fx_rc_ship) */
     . '<script>(function(f){var b=f&&f.querySelector("[data-head0]");if(!b)return;var c=f.elements.courier,t=f.elements.tracking,ar=!!b.dataset.ar;'
-    . 'function u(){var cv=c.value.trim(),tv=t.value.trim(),x="";if(cv||tv){x=ar?"\n\nطلبك في الطريق إليك"+(cv?" مع *"+cv+"*":"")+".":"\n\nYour order is on its way"+(cv?" with *"+cv+"*":"")+".";'
-    . 'if(tv)x+=ar?"\nرقم التتبع: *"+tv+"*":"\nTracking no: *"+tv+"*"}b.dataset.head=b.dataset.head0+x}'
+    . 'function u(){var cv=c.value.trim(),tv=t.value.trim(),x="";if(cv||tv){x=ar?"\n\nطلبك في الطريق إليك"+(cv?" مع \""+cv+"\"":"")+".":"\n\nYour order is on its way"+(cv?" with \""+cv+"\"":"")+".";'
+    . 'if(tv)x+=ar?"\nرقم التتبع: \""+tv+"\"":"\nTracking no: \""+tv+"\""}b.dataset.head=b.dataset.head0+x}'
     . 'c.addEventListener("input",u);t.addEventListener("input",u)})(document.currentScript.previousElementSibling)</script>';
 }
 /* the shipping lines of the receipt WhatsApp message, only when a courier or tracking number is filled in */
 function fx_rc_ship($courier, $tracking, $ar) {
   $c = trim($courier); $t = trim($tracking);
   if ($c === '' && $t === '') return '';
-  $x = $ar ? "\n\nطلبك في الطريق إليك" . ($c !== '' ? ' مع *' . $c . '*' : '') . '.' : "\n\nYour order is on its way" . ($c !== '' ? ' with *' . $c . '*' : '') . '.';
-  if ($t !== '') $x .= $ar ? "\nرقم التتبع: *" . $t . '*' : "\nTracking no: *" . $t . '*';
+  $x = $ar ? "\n\nطلبك في الطريق إليك" . ($c !== '' ? ' مع "' . $c . '"' : '') . '.' : "\n\nYour order is on its way" . ($c !== '' ? ' with "' . $c . '"' : '') . '.';
+  if ($t !== '') $x .= $ar ? "\nرقم التتبع: \"" . $t . '"' : "\nTracking no: \"" . $t . '"';
   return $x;
 }
 
