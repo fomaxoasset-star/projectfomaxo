@@ -986,6 +986,7 @@ function fx_receipt_card($o) {
   $url = fx_receipt_url($no, $ar);
   $head = $ar ? 'مرحباً ' . $f . "،\n\nشكراً لتسوقك من FOMAXO. هذا إيصال طلبك *" . $no . "*:\n" . $url
               : 'Hi ' . ($f !== '' ? $f : 'there') . ",\n\nThank you for shopping with FOMAXO. Here is the receipt for your order *" . $no . "*:\n" . $url;
+  $head0 = $head; $head .= fx_rc_ship((string)($o['courier'] ?? ''), (string)($o['tracking'] ?? ''), $ar);   // + courier and tracking number when filled in
   $em = fx_wa_sent_day('rm:' . $no);
   $hasMail = filter_var($o['email'], FILTER_VALIDATE_EMAIL);
   return '<form class="card rcpt" method="post" data-t="4">' . csrf_field() . '<input type="hidden" name="rcpt" value="' . h($no) . '">'
@@ -995,9 +996,22 @@ function fx_receipt_card($o) {
     . '<datalist id="fxCouriers"><option value="Jeebly"><option value="Aramex"><option value="Emirates Post"><option value="DHL"><option value="Quiqup"></datalist>'
     . '<p class="muted small rchelp">Shown on the receipt only when filled in.</p>'
     . '<div class="rcbtn"><button class="btn sm">Save</button><a class="btn line sm" href="' . h(fx_receipt_url($no)) . '" target="_blank" rel="noopener">View receipt</a><a class="btn line sm" href="' . h(fx_receipt_url($no) . '&print=1') . '" target="_blank" rel="noopener">Download PDF</a>'
-    . str_replace('<span>WhatsApp</span>', '<span>Send on WhatsApp</span>', fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], $head, $ar ? fx_wa_bye($o['name'], true) : fx_wa_bye($o['name'], false), 'rc:' . $no, 'g', $ar, 'btn sm wag', true))
+    . str_replace(['<span>WhatsApp</span>', '<button type="button"'], ['<span>Send on WhatsApp</span>', '<button type="button" data-head0="' . h($head0) . '"'], fx_wa_btn($o['phone'], $o['name'] ?: $o['phone'], $head, $ar ? fx_wa_bye($o['name'], true) : fx_wa_bye($o['name'], false), 'rc:' . $no, 'g', $ar, 'btn sm wag', true))
     . '<button class="btn line sm" name="email" value="view"' . ($hasMail ? '' : ' disabled title="No email on this order"') . '>' . ($em !== '' ? 'Emailed ' . $em : 'Email') . '</button></div>'
-    . '<p class="muted small rchelp">' . ($hasMail ? 'Email goes to ' . h($o['email']) . '.' : 'No email on this order, so send it on WhatsApp.') . ' Send only when the customer asks.</p></form>';
+    . '<p class="muted small rchelp">' . ($hasMail ? 'Email goes to ' . h($o['email']) . '.' : 'No email on this order, so send it on WhatsApp.') . ' Send only when the customer asks.</p></form>'
+    /* typing a courier or tracking number puts it in the WhatsApp message straight away (same words as fx_rc_ship) */
+    . '<script>(function(f){var b=f&&f.querySelector("[data-head0]");if(!b)return;var c=f.elements.courier,t=f.elements.tracking,ar=!!b.dataset.ar;'
+    . 'function u(){var cv=c.value.trim(),tv=t.value.trim(),x="";if(cv||tv){x=ar?"\n\nطلبك في الطريق إليك"+(cv?" مع \""+cv+"\"":"")+".":"\n\nYour order is on its way"+(cv?" with \""+cv+"\"":"")+".";'
+    . 'if(tv)x+=ar?"\nرقم التتبع: \""+tv+"\"":"\nTracking no: \""+tv+"\""}b.dataset.head=b.dataset.head0+x}'
+    . 'c.addEventListener("input",u);t.addEventListener("input",u)})(document.currentScript.previousElementSibling)</script>';
+}
+/* the shipping lines of the receipt WhatsApp message, only when a courier or tracking number is filled in */
+function fx_rc_ship($courier, $tracking, $ar) {
+  $c = trim($courier); $t = trim($tracking);
+  if ($c === '' && $t === '') return '';
+  $x = $ar ? "\n\nطلبك في الطريق إليك" . ($c !== '' ? ' مع "' . $c . '"' : '') . '.' : "\n\nYour order is on its way" . ($c !== '' ? ' with "' . $c . '"' : '') . '.';
+  if ($t !== '') $x .= $ar ? "\nرقم التتبع: \"" . $t . '"' : "\nTracking no: \"" . $t . '"';
+  return $x;
 }
 
 /* ================= 1) first set-up: connect the database ================= */
