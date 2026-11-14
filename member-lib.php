@@ -93,6 +93,64 @@ function fx_member_view($f) {
     'tiers' => array_map(fn($t) => ['name' => $t['name'], 'min' => $t['min']], fx_member_tiers())];
 }
 
+/* the level a spend (AED) reaches: '' below the first level */
+function fx_member_tier($aed) { $n = ''; foreach (fx_member_tiers() as $t) if ($aed >= $t['min']) $n = $t['name']; return $n; }
+/* "Reached a level" for FOMAXO (AJAY 15 Nov 2026): did this website order take its customer to a new level?
+   Counts that order's year: website orders on the same mobile placed before it (and itself), plus paid store purchases before it.
+   $o = an fx_orders row (order_no, phone, total, status, test, created_at). Returns null when it can't tell, else
+   ['before' => level before, 'after' => level with this order, 'spend' => AED this year with this order, 'up' => true when it moved up]. */
+function fx_member_order_level($o, $web, $pos) {
+  if (!$o || !empty($o['test']) || in_array($o['status'] ?? '', ['Awaiting payment', 'Cancelled', 'Refunded'], true)) return null;
+  $p9 = fx_member_p9($o['phone'] ?? ''); $at = (string)($o['created_at'] ?? ''); if (!$p9 || $at === '') return null;
+  $start = substr($at, 0, 4) . '-01-01 00:00:00'; $before = 0;
+  if ($web) try {
+    $s = $web->prepare("SELECT order_no, phone, total, created_at FROM fx_orders WHERE test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')
+                        AND created_at >= ? AND created_at <= ? AND " . FX_MEMBER_DIGITS . " LIKE ?");
+    $s->execute([$start, $at, '%' . $p9]);
+    foreach ($s->fetchAll() as $x) if ($x['order_no'] !== $o['order_no'] && fx_member_p9($x['phone']) === $p9) $before += (int)round((float)$x['total'] * 100);
+  } catch (Throwable $e) { return null; }
+  if ($pos) try {
+    $s = $pos->prepare("SELECT c.phone, s.total FROM sales s JOIN customers c ON c.id = s.customer_id WHERE s.status = 'paid' AND s.created_at >= ? AND s.created_at < ? AND " . str_replace('phone', 'c.phone', FX_MEMBER_DIGITS) . " LIKE ?");
+    $s->execute([$start, $at, '%' . $p9]);
+    foreach ($s->fetchAll() as $x) if (fx_member_p9($x['phone']) === $p9) $before += (int)$x['total'];
+  } catch (Throwable $e) {}
+  $after = $before + (int)round((float)$o['total'] * 100);
+  $b = fx_member_tier(floor($before / 100)); $a = fx_member_tier(floor($after / 100));
+  return ['before' => $b, 'after' => $a, 'spend' => floor($after / 100), 'up' => $a !== '' && $a !== $b];
+}
+/* every website order that took its customer to a new level: [order_no => level], for the admin Orders list and order page (one pass over all orders) */
+function fx_member_levelups($web, $pos) {
+  $ev = [];   // p9 => [[time, fils, order_no or ''], …]
+  if ($web) try {
+    foreach ($web->query("SELECT order_no, phone, total, created_at FROM fx_orders WHERE test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded')") as $x)
+      if (($p = fx_member_p9($x['phone'])) !== '') $ev[$p][] = [(string)$x['created_at'], (int)round((float)$x['total'] * 100), (string)$x['order_no']];
+  } catch (Throwable $e) { return []; }
+  if ($pos && $ev) try {
+    foreach ($pos->query("SELECT c.phone, s.total, s.created_at FROM sales s JOIN customers c ON c.id = s.customer_id WHERE s.status = 'paid'") as $x)
+      if (($p = fx_member_p9($x['phone'])) !== '' && isset($ev[$p])) $ev[$p][] = [(string)$x['created_at'], (int)$x['total'], ''];
+  } catch (Throwable $e) {}
+  $up = [];
+  foreach ($ev as $list) {
+    usort($list, fn($a, $b) => strcmp($a[0], $b[0]));
+    $yr = ''; $sum = 0;
+    foreach ($list as [$t, $f, $no]) {
+      if (substr($t, 0, 4) !== $yr) { $yr = substr($t, 0, 4); $sum = 0; }
+      $b = fx_member_tier(floor($sum / 100)); $sum += $f; $a = fx_member_tier(floor($sum / 100));
+      if ($no !== '' && $a !== '' && $a !== $b) $up[$no] = $a;
+    }
+  }
+  return $up;
+}
+/* one line for FOMAXO's new-order email ('' when the order didn't reach a new level) */
+function fx_member_email_line($orderNo) {
+  try {
+    $web = fomaxo_db(); if (!$web) return '';
+    $s = $web->prepare('SELECT order_no, phone, total, status, test, created_at FROM fx_orders WHERE order_no = ?'); $s->execute([$orderNo]);
+    $l = fx_member_order_level($s->fetch() ?: null, $web, fx_member_pos_db());
+    return $l && $l['up'] ? "\n\nFOMAXO ELITE: this customer just reached " . strtoupper($l['after']) . " with this order (AED " . number_format($l['spend']) . " this year, website + store)." : '';
+  } catch (Throwable $e) { return ''; }
+}
+
 /* ---- tries ---- */
 function fx_member_file($key) { return rv_dir('member') . '/' . substr(hash_hmac('sha256', $key, rv_secret()), 0, 40) . '.json'; }
 function fx_member_read($f) { $j = is_file($f) ? json_decode((string)@file_get_contents($f), true) : null; return is_array($j) ? $j : []; }

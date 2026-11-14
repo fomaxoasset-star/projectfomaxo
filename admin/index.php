@@ -117,6 +117,7 @@ td.num,th.num{text-align:right;white-space:nowrap}
 tr.row{cursor:pointer}table:not(.stock):not(.exp) tr.row:hover td{background:rgba(143,107,55,.08)}.stock tr.row,.exp tr.row{cursor:default}
 .no{font-weight:500;white-space:nowrap}
 .tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;border:1px solid currentColor;white-space:nowrap}
+.tag.lvup{background:linear-gradient(135deg,#b8893f,#e6c27a);border-color:#b8893f;color:#1a1208;font-weight:600;letter-spacing:.04em}   /* Reached GOLD: this order took the customer to a new FOMAXO Elite level */
 .s-New{color:var(--warn)}.s-Paid{color:var(--gold)}.s-Delivered{color:var(--ok)}.s-Cancelled{color:var(--bad)}.s-Refunded{color:var(--bad)}.s-Awaiting{color:var(--muted)}
 .oacts{display:flex;gap:5px;flex-wrap:wrap;margin:0}.oacts form{margin:0}.oacts button{font:inherit;font-size:11px;font-weight:600;letter-spacing:.03em;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap}.oacts button:hover{border-color:var(--gold)}.oacts .a-paid{border-color:var(--gold);color:var(--gold)}.oacts .a-delivered{border-color:var(--ok);color:var(--ok)}.oacts .a-cancel,.oacts .a-refund{color:var(--bad)}.tag.p-Unpaid{color:var(--warn);border-style:dashed}.wait{display:block;font-size:11px;color:var(--muted);margin-top:3px}.wait.late{color:var(--bad);font-weight:600}.track{list-style:none;display:flex;margin:0 0 14px;padding:0;max-width:640px}.track li{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;font-size:12px;color:var(--muted)}.track li+li::before{content:'';position:absolute;top:13px;right:calc(50% + 16px);left:calc(-50% + 16px);height:2px;background:var(--line)}.track li.done+li.done::before{background:var(--gold)}.track li.bad::before{background:var(--bad)!important}.track i{font-style:normal;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:12px;color:var(--muted)}.track .done i{background:var(--gold);border-color:var(--gold);color:var(--gold-ink)}.track .bad i{background:var(--bad);border-color:var(--bad);color:#fff}.track b{color:var(--ink);font-size:12.5px;font-weight:600}.track .done span{color:var(--ink)}@media (min-width:760px){.olist.acts td:nth-child(8){white-space:nowrap;width:1%}.olist.acts .oacts{flex-wrap:nowrap}.olist.acts td:nth-child(6) .tags{flex-wrap:nowrap}}.tag.p-Paid{color:var(--gold)}.tags{display:inline-flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.oacts button:disabled{opacity:.35;cursor:default}.oacts button.done:disabled{opacity:1}.oacts .a-paid.done{background:var(--gold);color:var(--gold-ink)}.oacts .a-delivered.done{background:var(--ok);border-color:var(--ok);color:var(--gold-ink)}
 /* order buttons: three equal square buttons (Paid or Refund, Mark delivered, Cancel order); small on laptop, big enough to tap on phone */
@@ -1338,7 +1339,14 @@ function fx_tags($o, $wait = true) {
   $d = in_array($st, ['New', 'Paid'], true) ? '<span class="tag s-New">Pending</span>' : '<span class="tag s-' . h(strtok($st, ' ')) . '">' . h($st === 'Awaiting payment' ? 'Card not paid' : $st) . '</span>';
   $p = in_array($st, ['New', 'Paid', 'Delivered'], true) ? ($st === 'New' ? '<span class="tag p-Unpaid">Unpaid</span>' : '<span class="tag p-Paid">Paid</span>') : '';
   $days = in_array($st, ['New', 'Paid'], true) ? (int)floor((time() - strtotime($o['created_at'])) / 86400) : 0;
-  return '<span class="tags">' . $d . $p . '</span>' . ($wait && $days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '');
+  return '<span class="tags">' . $d . $p . fx_lvl_tag($o) . '</span>' . ($wait && $days >= 1 ? '<small class="wait' . ($days >= 3 ? ' late' : '') . '">Waiting ' . $days . ' day' . ($days > 1 ? 's' : '') . '</small>' : '');
+}
+/* FOMAXO Elite (AJAY 15 Nov 2026): the order that took its customer to a new level (website + store spending this year) gets a gold "Reached GOLD" tag */
+function fx_lvl_tag($o) {
+  static $up = null;
+  if ($up === null) { $up = []; try { require_once dirname(__DIR__) . '/member-lib.php'; $up = fx_member_levelups(fomaxo_db(), fx_member_pos_db()); } catch (Throwable $e) {} }
+  $l = $up[$o['order_no'] ?? ''] ?? '';
+  return $l !== '' ? '<span class="tag lvup" title="This order took the customer to FOMAXO ' . h($l) . ' (website + store spending this year)">Reached ' . h(strtoupper($l)) . '</span>' : '';
 }
 /* same-day delivery chosen at checkout: kept in the items as "Same-day delivery (Area, Emirate): AED 25.00" (or ": FREE"); null = standard delivery */
 function fx_sameday_of($o) {
@@ -4670,6 +4678,11 @@ if (isset($_GET['o'])) {
     . '<div class="card" data-t="2"><h2 style="margin-top:0">Customer</h2><dl>'
     . $row('Name', hx($o['name'])) . $row('Mobile', h($o['phone']) . ' ' . fx_wa_btn_ph($o['phone'], (string)$o['name'], preg_match('/^FMX-\d+$/', $o['order_no']) ? $o['order_no'] : '', 'btn xs wag'))
     . $row('Email', $o['email'] !== '' ? '<a href="mailto:' . h($o['email']) . '">' . h($o['email']) . '</a>' : '')
+    . $row('FOMAXO Elite', (function () use ($o, $pdo) {   // level with this order (website + store spending that year), AJAY 15 Nov 2026
+        require_once dirname(__DIR__) . '/member-lib.php'; $l = fx_member_order_level($o, $pdo, fx_member_pos_db()); if (!$l) return '';
+        return ($l['after'] !== '' ? '<b>' . h(strtoupper($l['after'])) . '</b>' : 'No level yet') . ' · ' . h(money($l['spend'])) . ' in ' . h(substr($o['created_at'], 0, 4))
+          . ($l['up'] ? ' <span class="tag lvup">Reached with this order</span>' : '');
+      })())
     . $row('WhatsApp offers', !empty($o['wa_optin']) ? '<span class="wtag" style="margin:0">Yes ✓</span>' : 'No')
     . $row('Address', hx($o['address'])) . $row('Emirate', h($o['emirate'])) . $row('Customer note', hx($o['note'], true)) . '</dl></div>'
     . '<form class="card" method="post" data-t="3">' . csrf_field() . '<input type="hidden" name="order" value="' . h($o['order_no']) . '">'
