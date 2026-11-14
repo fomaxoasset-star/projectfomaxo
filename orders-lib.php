@@ -1147,7 +1147,42 @@ function fomaxo_smtp_send($c, $to, $subject, $body, $headers) {
     if (($e = $cmd($line, $want)) !== null) { fclose($s); return ($i === 4 ? 'the mailbox password was not accepted: ' : '') . substr($e, 0, 160); }
   }
   $cmd('QUIT', 221); fclose($s);
+  fomaxo_imap_save_sent($c, $data);
   return null;
+}
+/* After an email is sent, put a copy in the mail@fomaxo.com "Sent" folder (Hostinger IMAP), so it shows in Hostinger Mail → Sent.
+   Never stops or breaks sending: any problem is only written to the error log. Uses the same mailbox password. */
+function fomaxo_imap_save_sent($c, $msg) {
+  $s = @stream_socket_client($c['imap'] ?? 'ssl://imap.hostinger.com:993', $no, $why, 8);
+  if (!$s) { error_log("FOMAXO Sent copy: could not reach IMAP ($why)"); return false; }
+  stream_set_timeout($s, 8);
+  $n = 0;
+  $cmd = function ($line) use ($s, &$n) {   // returns [ok, all lines]
+    $t = 'A' . (++$n); fwrite($s, "$t $line\r\n"); $all = [];
+    while (($l = fgets($s, 8192)) !== false) { $all[] = $l; if (strncmp($l, "$t ", strlen($t) + 1) === 0) return [stripos($l, "$t OK") === 0, $all]; }
+    return [false, $all];
+  };
+  $q = function ($v) { return '"' . addcslashes($v, "\\\"") . '"'; };
+  $done = function ($why) use ($s) { if ($why !== '') error_log("FOMAXO Sent copy: $why"); @fwrite($s, "Z LOGOUT\r\n"); fclose($s); return $why === ''; };
+  if (fgets($s, 8192) === false) return $done('no greeting');
+  if (!$cmd('LOGIN ' . $q(FX_MAIL_FROM) . ' ' . $q($c['pass']))[0]) return $done('login refused');
+  // the folder marked \Sent, else one called Sent / INBOX.Sent, else make "Sent"
+  [$ok, $lines] = $cmd('LIST "" "*"'); $box = null; $named = null;
+  foreach ($lines as $l) {
+    if (!preg_match('/^\* LIST \(([^)]*)\) (?:"[^"]*"|NIL) (?:"((?:[^"\\\\]|\\\\.)*)"|(\S+))/i', trim($l), $m)) continue;
+    $name = isset($m[3]) && $m[3] !== '' ? $m[3] : stripcslashes($m[2]);
+    if (stripos($m[1], '\\Sent') !== false) { $box = $name; break; }
+    if ($named === null && preg_match('/^(INBOX[.\/])?Sent$/i', $name)) $named = $name;
+  }
+  $box = $box ?? $named;
+  if ($box === null) { $box = 'Sent'; $cmd('CREATE "Sent"'); $cmd('SUBSCRIBE "Sent"'); }
+  $msg = rtrim($msg, "\r\n") . "\r\n";
+  fwrite($s, 'A' . (++$n) . ' APPEND ' . $q($box) . ' (\\Seen) {' . strlen($msg) . "}\r\n");
+  $l = fgets($s, 8192);
+  if ($l === false || $l[0] !== '+') return $done('folder ' . $box . ' refused the copy');
+  fwrite($s, $msg . "\r\n"); $t = "A$n ";
+  while (($l = fgets($s, 8192)) !== false) if (strncmp($l, $t, strlen($t)) === 0) return $done(stripos($l, "$t" . 'OK') === 0 ? '' : 'copy not saved');
+  return $done('no answer to the copy');
 }
 
 /* ---- Arabic → English for FOMAXO (admin, order emails, Excel). What the customer typed is never changed: the English is shown next to it.
