@@ -327,92 +327,100 @@ CSS; }
 
 /* The receipt email: the same receipt as the receipt page (logo, Issued to, Receipt no, items, Address beside the totals,
    Shipping and Payment boxes, Thank You For Your Purchase), built from tables with the styles written on each part, because email apps
-   (Gmail, Outlook, Apple Mail) drop page styles and fonts. Phones: the Unit price column hides and the Address comes above the totals. (AJAY 14 Nov 2026) */
+   (Gmail, Outlook, Apple Mail) drop page styles. Phones: the Unit price column hides and the Address comes above the totals. (AJAY 14 Nov 2026) */
 function fx_receipt_mail_html(array $r) {
   $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
-  $F = "font-family:Helvetica,Arial,sans-serif;"; $S = "font-family:Georgia,'Times New Roman',serif;";
-  $ink = '#0b0b0b'; $muted = '#6f685c'; $line = '#e6dfcf'; $gold = '#9a7a2c'; $gold2 = '#c9a64b'; $red = '#a3261b';
-  $lab = $F . 'font-size:11px;letter-spacing:1px;text-transform:uppercase;color:' . $muted . ';';
-  $h2 = $F . 'font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:' . $gold . ';font-weight:bold;';
-  $dl = function (array $rows, $w = 70) use ($e, $lab, $F, $ink) {
+  /* the receipt page's own fonts and sizes (Jost, Cormorant Garamond, and on fomaxo.com Charles Wright for numbers), loaded from the website.
+     Apple Mail and iPhone Mail show them; Gmail and Outlook do not load web fonts, so they show the nearest standard font in the same sizes. */
+  $J = "font-family:Jost,'Helvetica Neue',Helvetica,Arial,sans-serif;"; $C = "font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;";
+  $N = $r['num'] !== '' ? "font-family:'" . $r['num'] . "',Jost,'Helvetica Neue',Helvetica,Arial,sans-serif;" : $J;
+  $ink = '#0b0b0b'; $soft = '#3d3a35'; $muted = '#6f685c'; $line = '#e6dfcf'; $gold = '#9a7a2c'; $gold2 = '#c9a64b'; $red = '#a3261b';
+  $lab = $J . 'font-size:12px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;color:' . $muted . ';';
+  $h2 = $J . 'font-size:10.5px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:' . $gold . ';';
+  $dl = function (array $rows, $labCss, $valCss) use ($e) {
     $h = '';
-    foreach ($rows as [$k, $v]) if ((string)$v !== '') $h .= '<tr><td style="' . $lab . 'padding:2px 14px 2px 0;vertical-align:top;white-space:nowrap;width:' . $w . 'px">' . $e($k) . '</td><td style="' . $F . 'font-size:14px;font-weight:bold;color:' . $ink . ';padding:2px 0;word-break:break-word">' . $e($v) . '</td></tr>';
+    foreach ($rows as [$k, $v]) if ((string)$v !== '') $h .= '<tr><td style="' . $labCss . 'padding:1.5px 14px 1.5px 0;vertical-align:top;white-space:nowrap">' . $e($k) . '</td><td style="' . $valCss . 'padding:1.5px 0;word-break:break-word">' . $e($v) . '</td></tr>';
     return '<table role="presentation" cellpadding="0" cellspacing="0" border="0">' . $h . '</table>';
   };
-  $th = $F . 'font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#ffffff;background:' . $ink . ';padding:8px 8px;font-weight:normal;';
-  $td = $F . 'font-size:13px;color:' . $ink . ';padding:7px 8px;border-bottom:1px solid ' . $line . ';vertical-align:middle;';
+  $th = $J . 'font-size:10.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:#ffffff;background:' . $ink . ';padding:8px 10px;';
+  $td = $J . 'font-size:14px;color:' . $ink . ';padding:5px 10px;border-bottom:1px solid ' . $line . ';vertical-align:middle;';
   $rows = ''; $i = 0;
   foreach ($r['rows'] as $l) {
     $bg = $i++ % 2 ? 'background:#faf8f3;' : 'background:#ffffff;';
-    $rows .= '<tr><td style="' . $td . $bg . '"><span style="' . $S . 'font-size:15px;font-weight:bold;letter-spacing:1px;text-transform:uppercase">' . $e($l['name']) . '</span>'
-      . ($l['tag'] !== '' ? ' <span style="display:inline-block;border:1px solid ' . $gold2 . ';border-radius:999px;padding:0 6px;' . $F . 'font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:' . $gold . '">' . $e($l['tag']) . '</span>' : '')
-      . ($l['sub'] !== '' ? '<div style="' . $F . 'font-size:11px;color:' . $muted . ';margin-top:1px">' . $e($l['sub']) . '</div>' : '') . '</td>'
+    $rows .= '<tr><td style="' . $td . $bg . '"><span style="' . $C . 'font-size:15.5px;font-weight:600;line-height:1.15;letter-spacing:.06em;text-transform:uppercase">' . $e($l['name']) . '</span>'
+      . ($l['tag'] !== '' ? ' <span style="display:inline-block;margin-left:6px;border:1px solid ' . $gold2 . ';border-radius:999px;padding:1px 7px;' . $J . 'font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:' . $gold . ';vertical-align:2px">' . $e($l['tag']) . '</span>' : '')
+      . ($l['sub'] !== '' ? '<div style="' . $J . 'font-size:10.5px;line-height:1.2;color:' . $muted . ';margin-top:1px">' . $e($l['sub']) . '</div>' : '') . '</td>'
       . '<td style="' . $td . $bg . 'text-align:center;white-space:nowrap">' . $e($l['size']) . '</td>'
-      . '<td class="fxun" style="' . $td . $bg . 'text-align:right;white-space:nowrap">' . $l['unit'] . '</td>'
+      . '<td class="fxun" style="' . $td . $bg . $N . 'text-align:right;white-space:nowrap">' . $l['unit'] . '</td>'
       . '<td style="' . $td . $bg . 'text-align:center">' . (int)$l['qty'] . '</td>'
-      . '<td style="' . $td . $bg . 'text-align:right;white-space:nowrap;font-weight:bold">' . $l['amt'] . '</td></tr>';
+      . '<td style="' . $td . $bg . $N . 'text-align:right;white-space:nowrap;font-weight:500">' . $l['amt'] . '</td></tr>';
   }
   $sum = '';
   foreach ($r['sum'] as [$k, $v, $kind]) {
-    $c = $kind === 'dc' ? $red : ($kind === 'gt' ? $ink : '#3d3a35'); $fs = $kind === 'gt' ? '15px' : '12px';
-    $sum .= '<tr><td style="' . $F . 'font-size:' . $fs . ';font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:' . $c . ';text-align:right;padding:4px 16px 4px 0">' . $e($k) . '</td>'
-      . '<td style="' . $F . 'font-size:' . ($kind === 'gt' ? '16px' : '14px') . ';color:' . ($kind === 'dc' ? $red : $ink) . ';text-align:right;white-space:nowrap;padding:4px 0">' . $v . '</td></tr>';
+    $gt = $kind === 'gt'; $c = $kind === 'dc' ? $red : ($gt ? $ink : $soft);
+    $sum .= '<tr><td style="' . $J . 'font-size:' . ($gt ? '15px' : '12px') . ';font-weight:500;letter-spacing:' . ($gt ? '.1em' : '.12em') . ';text-transform:uppercase;color:' . $c . ';text-align:right;padding:4px 22px 4px 0">' . $e($k) . '</td>'
+      . '<td style="' . $N . 'font-size:' . ($gt ? '16px' : '13.5px') . ';color:' . ($kind === 'dc' ? $red : $ink) . ';text-align:right;white-space:nowrap;padding:4px 0">' . $v . '</td></tr>';
   }
-  $sum .= '<tr><td style="' . $F . 'font-size:20px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:' . $ink . ';text-align:right;padding:12px 16px 12px 0;border-top:2px solid ' . $ink . ';border-bottom:2px solid ' . $ink . ';white-space:nowrap">' . $e($r['total_label']) . '</td>'
-    . '<td style="' . $F . 'font-size:26px;font-weight:bold;color:' . $ink . ';text-align:right;white-space:nowrap;padding:12px 0;border-top:2px solid ' . $ink . ';border-bottom:2px solid ' . $ink . '">' . $r['total'] . '</td></tr>';
-  $box = function ($title, $inner) use ($F, $ink) {
-    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1.5px solid ' . $ink . ';margin-top:12px"><tr><td colspan="2" style="' . $F . 'font-size:11px;letter-spacing:3px;text-transform:uppercase;text-align:center;padding:7px 10px;border-bottom:1.5px solid ' . $ink . ';color:' . $ink . '">' . $title . '</td></tr>' . $inner . '</table>';
+  $tb = 'border-top:2px solid ' . $ink . ';border-bottom:2px solid ' . $ink . ';';
+  $sum .= '<tr><td class="fxtl" style="' . $J . 'font-size:22px;font-weight:500;line-height:1;letter-spacing:.06em;text-transform:uppercase;color:' . $ink . ';text-align:right;padding:12px 16px 12px 0;' . $tb . 'white-space:nowrap">' . $e($r['total_label']) . '</td>'
+    . '<td class="fxtv" style="' . $N . 'font-size:30px;line-height:1;color:' . $ink . ';text-align:right;white-space:nowrap;padding:12px 0;' . $tb . '">' . $r['total'] . '</td></tr>';
+  $box = function ($title, $inner) use ($J, $ink) {
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1.5px solid ' . $ink . ';margin-top:12px"><tr><td colspan="2" style="' . $J . 'font-size:11.5px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;text-align:center;padding:7px 10px;border-bottom:1.5px solid ' . $ink . ';color:' . $ink . '">' . $title . '</td></tr>' . $inner . '</table>';
   };
   $ship = '';
-  foreach ($r['ship'] as $j => [$k, $v]) $ship .= '<tr><td style="' . $F . 'font-size:12px;letter-spacing:1px;text-transform:uppercase;color:' . $gold . ';font-weight:bold;padding:9px 14px;' . ($j ? 'border-top:1px solid ' . $line . ';' : '') . '">' . $e($k) . '</td><td style="' . $F . 'font-size:13px;text-align:right;padding:9px 14px;color:' . $ink . ';' . ($j ? 'border-top:1px solid ' . $line . ';' : '') . '">' . $e($v) . '</td></tr>';
-  $pay = '<tr><td width="50%" style="' . $F . 'font-size:13px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding:11px 8px;color:' . $ink . ';border-right:1.5px solid ' . $ink . '">' . $e($r['pay']) . '</td>'
-    . '<td width="50%" style="' . $F . 'font-size:13px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding:11px 8px;font-weight:bold;color:' . ($r['paid'] ? $gold : $red) . '">' . $e($r['status']) . '</td></tr>';
+  foreach ($r['ship'] as $j => [$k, $v]) $ship .= '<tr><td style="' . $J . 'font-size:12px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:' . $gold . ';padding:9px 16px;' . ($j ? 'border-top:1px solid ' . $line . ';' : '') . '">' . $e($k) . '</td><td style="' . ($j ? $N : $J) . 'font-size:13px;font-weight:500;letter-spacing:.06em;text-align:right;padding:9px 16px;color:' . $ink . ';' . ($j ? 'border-top:1px solid ' . $line . ';' : '') . '">' . $e($v) . '</td></tr>';
+  $pb = $J . 'font-size:13px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:11px 10px;';
+  $pay = '<tr><td width="50%" style="' . $pb . 'color:' . $ink . ';border-right:1.5px solid ' . $ink . '">' . $e($r['pay']) . '</td><td width="50%" style="' . $pb . 'color:' . ($r['paid'] ? $gold : $red) . '">' . $e($r['status']) . '</td></tr>';
+  $fu = $e(rtrim($r['fonts'], '/')) . '/assets/fonts/';
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">'
-    . '<style>@media (max-width:600px){.fxun{display:none!important}.fxcol{display:block!important;width:100%!important;padding:0 0 18px!important}.fxpad{padding:22px 14px 20px!important}.fxbx{width:100%!important}.fxmeta td.fxcol{text-align:left!important}}</style></head>'
+    . '<style>@font-face{font-family:\'Jost\';font-style:normal;font-weight:300 500;src:url(' . $fu . 'jost-latin.woff2) format(\'woff2\')}@font-face{font-family:\'Cormorant Garamond\';font-style:normal;font-weight:300 600;src:url(' . $fu . 'cormorant-latin.woff2) format(\'woff2\')}'
+    . ($r['num'] !== '' ? '@font-face{font-family:\'' . $r['num'] . '\';src:url(' . $fu . 'CharlesWrightSingapore.woff2) format(\'woff2\')}' : '')
+    . '@media (max-width:640px){.fxun{display:none!important}.fxcol{display:block!important;width:100%!important;padding:0 0 18px!important}.fxpad{padding:22px 16px 20px!important}.fxbx{width:100%!important}.fxmeta td.fxcol{text-align:left!important}.fxtl{font-size:19px!important}.fxtv{font-size:27px!important}}</style></head>'
     . '<body style="margin:0;padding:0;background:#efebe3">'
-    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#efebe3"><tr><td align="center" style="padding:20px 8px">'
-    . '<table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:640px;background:#ffffff;border-top:6px solid ' . $ink . ';border-bottom:6px solid ' . $ink . '">'
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#efebe3"><tr><td align="center" style="padding:16px 8px 32px">'
+    . '<table role="presentation" width="794" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:794px;background:#ffffff;border-top:6px solid ' . $ink . ';border-bottom:6px solid ' . $ink . '">'
     . '<tr><td style="height:1px;line-height:1px;font-size:1px;background:' . $gold2 . '">&nbsp;</td></tr>'
-    . '<tr><td class="fxpad" style="padding:28px 34px 24px">'
+    . '<tr><td class="fxpad" style="padding:30px 44px 26px">'
     // header: logo, tag, RECEIPT between two gold lines
-    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center"><img src="' . $e($r['logo']) . '" width="181" height="92" alt="FOMAXO" style="display:block;width:181px;height:92px;border:0"></td></tr>'
-    . '<tr><td align="center" style="' . $F . 'font-size:10px;letter-spacing:3.5px;text-transform:uppercase;color:' . $muted . ';padding-top:8px">Perfume &amp; Personal Care</td></tr>'
-    . '<tr><td style="padding-top:16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-bottom:1px solid ' . $gold2 . '">&nbsp;</td><td width="1" style="' . $S . 'font-size:24px;letter-spacing:9px;text-transform:uppercase;color:' . $gold . ';padding:0 14px 0 23px;white-space:nowrap">Receipt</td><td style="border-bottom:1px solid ' . $gold2 . '">&nbsp;</td></tr></table></td></tr></table>'
+    . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center"><img src="' . $e($r['logo']) . '" width="177" height="90" alt="FOMAXO" style="display:block;width:177px;height:90px;border:0"></td></tr>'
+    . '<tr><td align="center" style="' . $J . 'font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:' . $muted . ';padding-top:8px">Perfume &amp; Personal Care</td></tr>'
+    . '<tr><td style="padding-top:16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-bottom:1px solid ' . $gold2 . ';font-size:1px;line-height:13px">&nbsp;</td><td width="1" style="' . $C . 'font-size:26px;font-weight:500;line-height:1;letter-spacing:.42em;text-transform:uppercase;color:' . $gold . ';padding:0 16px 0 27px;white-space:nowrap">Receipt</td><td style="border-bottom:1px solid ' . $gold2 . ';font-size:1px;line-height:13px">&nbsp;</td></tr></table></td></tr></table>'
     // Issued to | Receipt no
     . '<table role="presentation" class="fxmeta" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 18px"><tr>'
-    . '<td class="fxcol" valign="top" style="padding-right:12px"><div style="' . $h2 . 'margin-bottom:6px">Issued to</div>' . $dl([['Name', $r['name']], ['Mobile', $r['phone']], ['Email', $r['email']]], 56) . '</td>'
-    . '<td class="fxcol" valign="top" align="right" style="text-align:right;white-space:nowrap"><div style="' . $h2 . 'margin-bottom:6px">Receipt no</div><div style="' . $F . 'font-size:22px;font-weight:bold;color:' . $ink . '">#' . $e($r['no']) . '</div>'
-    . '<div style="' . $F . 'font-size:14px;font-weight:bold;color:' . $ink . ';margin-top:6px"><span style="' . $lab . 'margin-right:6px">Date</span>' . $e($r['date']) . '</div></td></tr></table>'
+    . '<td class="fxcol" valign="top" style="padding-right:16px"><div style="' . $h2 . 'margin-bottom:6px">Issued to</div>' . $dl([['Name', $r['name']], ['Mobile', $r['phone']], ['Email', $r['email']]], $lab, $J . 'font-size:14px;font-weight:500;color:' . $ink . ';') . '</td>'
+    . '<td class="fxcol" valign="top" align="right" style="text-align:right;white-space:nowrap"><div style="' . $h2 . 'margin-bottom:6px">Receipt no</div><div style="' . $N . 'font-size:24px;font-weight:500;line-height:1.1;letter-spacing:.02em;color:' . $ink . '">#' . $e($r['no']) . '</div>'
+    . '<div style="' . $J . 'font-size:14px;font-weight:500;color:' . $ink . ';margin-top:6px"><span style="' . $lab . 'margin-right:6px">Date</span>' . $e($r['date']) . '</div></td></tr></table>'
     // items
     . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td style="' . $th . 'text-align:left">Item</td><td style="' . $th . 'text-align:center">Size</td><td class="fxun" style="' . $th . 'text-align:right">Unit price</td><td style="' . $th . 'text-align:center">Qty</td><td style="' . $th . 'text-align:right">Amount</td></tr>' . $rows . '</table>'
     // address | totals
     . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px"><tr>'
-    . '<td class="fxcol" valign="top" width="42%" style="padding-right:18px"><div style="' . $F . 'font-size:18px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:' . $ink . ';margin-bottom:8px">Address</div>' . $dl($r['addr'], 74) . '</td>'
-    . '<td class="fxcol" valign="top" width="58%"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' . $sum . '</table></td></tr></table>'
+    . '<td class="fxcol" valign="top" width="43%" style="padding-right:24px"><div style="' . $J . 'font-size:19px;font-weight:500;line-height:1.1;letter-spacing:.08em;text-transform:uppercase;color:' . $ink . ';margin-bottom:8px">Address</div>'
+    . $dl($r['addr'], $J . 'font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:' . $muted . ';line-height:1.7;', $J . 'font-size:13px;font-weight:500;line-height:1.45;color:' . $ink . ';') . '</td>'
+    . '<td class="fxcol" valign="top" width="57%"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' . $sum . '</table></td></tr></table>'
     // shipping + payment boxes
-    . '<table role="presentation" class="fxbx" width="62%" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:12px auto 0"><tr><td>'
+    . '<table role="presentation" class="fxbx" width="58%" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:12px auto 0"><tr><td>'
     . ($ship !== '' ? $box('Shipping', $ship) : '') . $box('Payment', $pay) . '</td></tr></table>'
     // button + thank you
     . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px"><tr><td align="center">'
-    . '<a href="' . $e($r['url']) . '" style="display:inline-block;background:' . $gold . ';color:#ffffff;text-decoration:none;' . $F . 'font-size:12px;font-weight:bold;letter-spacing:2px;padding:13px 24px;border-radius:999px">VIEW OR DOWNLOAD RECEIPT</a></td></tr>'
-    . '<tr><td align="center" style="' . $F . 'font-size:24px;font-weight:bold;color:' . $ink . ';padding-top:24px">Thank You For Your Purchase</td></tr>'
-    . '<tr><td align="center" style="padding-top:12px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="60" style="height:2px;line-height:2px;font-size:1px;background:' . $gold2 . '">&nbsp;</td></tr></table></td></tr>'
-    . '<tr><td align="center" style="' . $F . 'font-size:11px;line-height:1.7;letter-spacing:2.5px;text-transform:uppercase;color:' . $muted . ';padding-top:10px">' . $e($r['site']) . '<br>' . $e($r['foot']) . '</td></tr></table>'
+    . '<a href="' . $e($r['url']) . '" style="display:inline-block;background:' . $gold . ';color:#ffffff;text-decoration:none;' . $J . 'font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:11px 18px;border-radius:999px">View or download receipt</a></td></tr>'
+    . '<tr><td align="center" style="' . $J . 'font-size:24px;font-weight:600;line-height:1.15;letter-spacing:.01em;color:' . $ink . ';padding-top:24px">Thank You For Your Purchase</td></tr>'
+    . '<tr><td align="center" style="padding-top:12px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="60" style="height:1.5px;line-height:1px;font-size:1px;background:' . $gold2 . '">&nbsp;</td></tr></table></td></tr>'
+    . '<tr><td align="center" style="' . $J . 'font-size:11px;line-height:1.7;letter-spacing:.18em;text-transform:uppercase;color:' . $muted . ';padding-top:10px">' . $e($r['site']) . '<br>' . $e($r['foot']) . '</td></tr></table>'
     . '</td></tr><tr><td style="height:1px;line-height:1px;font-size:1px;background:' . $gold2 . '">&nbsp;</td></tr></table>'
     . '</td></tr></table></body></html>';
 }
 function fx_receipt_email($o) {
   $w = fx_receipt_words(false); $d = fx_receipt_data($o); $t = fn($x) => trim((string)$x);
-  $M = fn($v) => '<span style="font-size:10px">AED</span>&nbsp;' . number_format((float)$v, 2);
+  $M = fn($v) => '<span style="font-size:.68em;margin-right:3px;letter-spacing:.04em">AED</span>' . number_format((float)$v, 2);
   $rows = [];
   foreach ($d['lines'] as $l) {
-    if ($l['free']) { $unit = $l['price'] !== null ? '<s style="color:#555555;font-size:11px">' . $M($l['was'] ?? $l['price']) . '</s>' : ''; $amt = '<b style="letter-spacing:1.5px">FREE</b>'; }
+    if ($l['free']) { $unit = $l['price'] !== null ? '<s style="color:#555555;font-size:11px">' . $M($l['was'] ?? $l['price']) . '</s>' : ''; $amt = '<span style="font-family:Jost,Helvetica,Arial,sans-serif;color:#9a7a2c;font-size:12px;font-weight:500;letter-spacing:.14em">FREE</span>'; }
     else { $unit = $l['price'] === null ? '—' : ($l['was'] !== null ? '<s style="color:#555555;font-size:11px">' . $M($l['was']) . '</s> ' : '') . $M($l['price']); $amt = $l['price'] === null ? '—' : $M($l['price'] * $l['qty']); }
     $rows[] = ['name' => $l['name'], 'tag' => $l['free'] ? ($l['free'] === 'coupon' ? $w['cgift'] : $w['gift']) : '', 'sub' => $l['set'] && $l['picks'] ? $w['with'] . ': ' . implode(', ', $l['picks']) : $l['family'],
                'size' => $l['set'] ? $w['sets'] . ' ' . $l['opt'] : $l['opt'] . 'ml', 'unit' => $unit, 'qty' => $l['qty'], 'amt' => $amt];
   }
   $sum = [[$w['sub'], $M($d['sub']), '']];
-  $sum[] = [$d['sd'] !== null ? $w['sameday'] : $w['delivery'], $d['sd'] ? $M($d['sd']) : '<b style="letter-spacing:1.5px">FREE</b>', ''];
+  $sum[] = [$d['sd'] !== null ? $w['sameday'] : $w['delivery'], $d['sd'] ? $M($d['sd']) : '<span style="font-family:Jost,Helvetica,Arial,sans-serif;color:#9a7a2c;font-size:12px;font-weight:500;letter-spacing:.14em">FREE</span>', ''];
   if ((float)$o['fee'] > 0) $sum[] = [$w['codfee'], $M($o['fee']), ''];
   if ($d['disc']) { $grand = (float)$o['total']; foreach ($d['disc'] as $x) $grand += $x['amt']; $sum[] = [$w['grand'], $M($grand), 'gt']; }
   foreach ($d['disc'] as $x) $sum[] = [$x['label'], '−&nbsp;' . $M($x['amt']), 'dc'];
@@ -422,7 +430,7 @@ function fx_receipt_email($o) {
   $ship = [];
   if ($t($o['courier'] ?? '') !== '') $ship[] = [$w['courier'], mb_strtoupper($t($o['courier']), 'UTF-8')];
   if ($t($o['tracking'] ?? '') !== '') $ship[] = [$w['tracking'], $t($o['tracking'])];
-  return fx_receipt_mail_html(['logo' => 'https://fomaxo.com/assets/img/receipt-logo.png', 'no' => (string)$o['order_no'], 'date' => date('d/m/Y', strtotime((string)$o['created_at'])),
+  return fx_receipt_mail_html(['fonts' => 'https://fomaxo.com', 'num' => 'Charles Wright Singapore', 'logo' => 'https://fomaxo.com/assets/img/receipt-logo.png', 'no' => (string)$o['order_no'], 'date' => date('d/m/Y', strtotime((string)$o['created_at'])),
     'name' => mb_strtoupper($t($o['name']), 'UTF-8'), 'phone' => $t($o['phone']), 'email' => $t($o['email']), 'rows' => $rows, 'sum' => $sum,
     'total_label' => $d['pay'] === 'paid' ? $w['paid_total'] : ($d['pay'] === 'unpaid' ? $w['due_total'] : $w['total']), 'total' => $M($o['total']),
     'addr' => $addr, 'ship' => $ship, 'pay' => $d['cod'] ? $w['cod'] : $w['card'], 'status' => $w[$d['pay']], 'paid' => $d['pay'] === 'paid',

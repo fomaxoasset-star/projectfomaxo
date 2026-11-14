@@ -7,7 +7,7 @@
 header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src 'self'; img-src 'self' blob: https://*.cdninstagram.com https://*.fbcdn.net" . (defined('FX_IG_API') ? ' ' . FX_IG_API : '') . "; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; media-src 'self' blob: https://v.fomaxo.com; connect-src 'self' https://v.fomaxo.com; worker-src 'self' blob:; form-action 'self'; frame-ancestors 'none'");   // v.fomaxo.com = Cloudflare: Make All Videos Again loads the kept originals from there
+header("Content-Security-Policy: default-src 'self'; img-src 'self' blob: https://*.cdninstagram.com https://*.fbcdn.net" . (defined('FX_IG_API') ? ' ' . FX_IG_API : '') . "; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; media-src 'self' blob: https://v.fomaxo.com; connect-src 'self' https://v.fomaxo.com; worker-src 'self' blob:; form-action 'self'; frame-ancestors 'none'");   // v.fomaxo.com = Cloudflare: Make All Videos Again loads the kept originals from there
 require dirname(__DIR__) . '/orders-lib.php';
 require_once dirname(__DIR__) . '/media-lib.php';
 date_default_timezone_set('Asia/Dubai');
@@ -4607,7 +4607,7 @@ if (isset($_GET['o'])) {
     $no = (string)$o['order_no']; $em = fx_wa_sent_day('rm:' . $no);
     page('Email ' . $no, '<div class="odhead"><a class="small" href="' . h(self_url(['o' => $no])) . '">← Back to ' . h($no) . '</a><h1>Check the email</h1></div>' . flash()
       . '<div class="card mprev"><dl><dt>To</dt><dd>' . h($o['email']) . '</dd><dt>From</dt><dd>FOMAXO &lt;' . h(FX_MAIL_FROM) . '&gt;</dd><dt>Subject</dt><dd>Your FOMAXO receipt #' . h($no) . '</dd></dl>'
-      . '<iframe class="mframe" sandbox="allow-popups allow-popups-to-escape-sandbox" title="Email preview" srcdoc="' . h(str_replace('<a href=', '<a target="_blank" href=', fx_receipt_email($o))) . '"></iframe>'
+      . '<iframe class="mframe" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" title="Email preview" srcdoc="' . h(str_replace(['<a href=', 'https://fomaxo.com/assets/'], ['<a target="_blank" href=', '/assets/'], fx_receipt_email($o))) . '"></iframe>'
       . '<form class="mbtn" method="post">' . csrf_field() . '<input type="hidden" name="rcpt" value="' . h($no) . '"><input type="hidden" name="courier" value="' . h($o['courier'] ?? '') . '"><input type="hidden" name="tracking" value="' . h($o['tracking'] ?? '') . '">'
       . '<a class="btn line" href="' . h(self_url(['o' => $no])) . '">Cancel</a><button class="btn" name="email" value="send">Send email</button></form>'
       . ($em !== '' ? '<p class="muted small" style="margin:0;text-align:center">Already emailed on ' . h($em) . '.</p>' : '') . '</div>'
