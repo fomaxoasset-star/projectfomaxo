@@ -3694,11 +3694,43 @@ function invAsk(href){
       if (t.hasAttribute('data-inv-x')) return d.close();
       if (t.hasAttribute('data-inv-go')) { const ph = $('#invPh').value.trim(), n = ph.replace(/\D/g, ''); if (n.length < 9 || n.length > 15) { $('.invd-err', d).hidden = false; $('#invPh').focus(); return; }
         try { localStorage.setItem('fomaxo_inviter', JSON.stringify({ph})); } catch(x) {} FXT.send('invite', {ph}); }
-      if (t.hasAttribute('data-inv-go') || t.hasAttribute('data-inv-skip')) { d.close(); window.open(d.dataset.href, '_blank', 'noopener'); }
+      if (t.hasAttribute('data-inv-go') || t.hasAttribute('data-inv-skip')) { d.close(); openWA(d.dataset.href); }
     });
   }
   d.dataset.href = href; $('.invd-err', d).hidden = true; d.showModal();
 }
+/* Every WhatsApp button opens the WhatsApp app itself (phone and laptop), not the WhatsApp website with its "Continue to chat" step.
+   If the app does not open (not installed), the usual WhatsApp page opens instead, so nobody is left stuck.
+   iPhone Safari/Chrome keep the normal link: it already opens the app by itself there. */
+const fxWA = (() => {
+  const UA = navigator.userAgent, AND = /Android/i.test(UA),
+    IOS = /iPhone|iPad|iPod/i.test(UA) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform)),
+    INAPP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram/i.test(UA);
+  const parse = h => { try { const u = new URL(h, location.href); if (!/^(wa\.me|api\.whatsapp\.com)$/.test(u.hostname)) return null;
+    return {ph: (u.hostname === 'wa.me' ? u.pathname : u.searchParams.get('phone') || '').replace(/\D/g, ''), text: u.searchParams.get('text') || ''}; } catch(e) { return null; } };
+  const mem = v => { try { return v ? localStorage.setItem('fomaxo_wa_app', '1') : localStorage.getItem('fomaxo_wa_app') === '1'; } catch(e) { return false; } };
+  // the app took over when this page loses focus or is hidden; if not within ms, fb() opens the WhatsApp page
+  const watch = (ms, fb) => { let gone = false; const off = () => { gone = true; }, vis = () => { if (document.hidden) gone = true; };
+    addEventListener('blur', off); addEventListener('pagehide', off); document.addEventListener('visibilitychange', vis);
+    setTimeout(() => { removeEventListener('blur', off); removeEventListener('pagehide', off); document.removeEventListener('visibilitychange', vis);
+      if (gone) mem(1); else if (!document.hidden) fb(); }, ms); };
+  return href => {
+    const w = parse(href); if (!w || (IOS && !INAPP)) return false;
+    const q = (w.ph ? 'phone=' + w.ph + '&' : '') + 'text=' + encodeURIComponent(w.text);
+    if (AND) { location.href = 'intent://send?' + q + '#Intent;scheme=whatsapp;S.browser_fallback_url=' + encodeURIComponent(href) + ';end';
+      if (INAPP) watch(2500, () => { location.href = href; }); return true; }
+    location.href = 'whatsapp://send?' + q;
+    if (IOS) watch(3000, () => { location.href = href; });
+    else if (!mem()) watch(3000, () => { const t = window.open(href, '_blank'); if (t) t.opener = null; else location.href = href; });
+    return true;
+  };
+})();
+document.addEventListener('click', e => {
+  if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const a = e.target.closest && e.target.closest('a[href*="wa.me/"],a[href*="api.whatsapp.com/"]');
+  if (a && fxWA(a.href)) e.preventDefault();
+});
+const openWA = href => { if (!fxWA(href)) { const t = window.open(href, '_blank'); if (t) t.opener = null; } };
 const slugOf = p => String(p.name || p.id).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || p.id;   // same as fomaxo_slug() in seo-lib.php: fomaxo.com/fomaxo-old-money (shows the product picture in WhatsApp)
 const stockHTML = (id, opt, long) => { const n = stockLeft(id, opt); return n === null ? '' : n <= 0 ? '<span class="stk out">Out of Stock — Restocking Soon</span>' : `<span class="stk${long ? ' low' : ''}">Only ${n} left${long ? ' in stock, order soon' : ''}</span>`; };   // only sizes really running low come from stock.php (admin → Stocks); long = the product page box
 function applyStock(){
@@ -4736,7 +4768,7 @@ function cbAdd(gid, buy){
 function bindCards(root){
   $$('[data-cbwa]', root).forEach(b => b.onclick = () => { const g = COMBO_SETS.find(x => x.id === b.dataset.cbwa); if (!g) return;
     const picks = cbPicks(g.id).map(([id, sz]) => `- ${cbName(cbP(id), sz)}`);
-    open(waTo(`Hello FOMAXO, I would like to order this combo: ${g.name}, with these products:\n${picks.join('\n')}\n\nPlease share the price and delivery details.`), '_blank', 'noopener'); });
+    openWA(waTo(`Hello FOMAXO, I would like to order this combo: ${g.name}, with these products:\n${picks.join('\n')}\n\nPlease share the price and delivery details.`)); });
   $$('[data-cbadd]', root).forEach(b => b.onclick = () => cbAdd(b.dataset.cbadd));
   $$('[data-cbbuy]', root).forEach(b => b.onclick = () => cbAdd(b.dataset.cbbuy, true));
 }
