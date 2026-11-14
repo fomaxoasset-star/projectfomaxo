@@ -13,5 +13,6 @@ $in = json_decode((string)file_get_contents('php://input'), true) ?: [];
 $phone = is_string($in['phone'] ?? null) ? mb_substr($in['phone'], 0, 30) : '';
 $web = fomaxo_db(); $pos = fx_member_pos_db();
 $r = fx_member_lookup($phone, is_string($in['name'] ?? null) ? mb_substr($in['name'], 0, 60) : '', substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45), $web, $pos);
+if ($r['ok'] || ($r['why'] ?? '') === 'none') fx_member_lead($web, $phone, (string)($in['name'] ?? ''), $r);   // shows in admin Analytics → Left at checkout
 if (!$r['ok'] && ($r['why'] ?? '') === 'many') http_response_code(429);
 echo json_encode($r, JSON_UNESCAPED_UNICODE);

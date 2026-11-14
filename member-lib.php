@@ -141,6 +141,61 @@ function fx_member_levelups($web, $pos) {
   }
   return $up;
 }
+/* everyone who spent this year (website orders + paid store purchases), by mobile: [p9 => ['name', 'phone', 'year' (fils), 'web', 'store']], for admin Members → Membership reminders */
+function fx_member_all($web, $pos, $year = null) {
+  $year = $year ?: date('Y'); $start = "$year-01-01 00:00:00"; $all = [];
+  if ($web) try {
+    $s = $web->prepare("SELECT name, phone, total FROM fx_orders WHERE test = 0 AND status NOT IN ('Awaiting payment', 'Cancelled', 'Refunded') AND created_at >= ? ORDER BY created_at");
+    $s->execute([$start]);
+    foreach ($s as $x) { if (($p = fx_member_p9($x['phone'])) === '') continue;
+      $all[$p] ??= ['name' => '', 'phone' => '', 'year' => 0, 'web' => 0, 'store' => 0];
+      $all[$p]['name'] = trim((string)$x['name']) ?: $all[$p]['name']; $all[$p]['phone'] = (string)$x['phone'];   // latest wins
+      $f = (int)round((float)$x['total'] * 100); $all[$p]['year'] += $f; $all[$p]['web']++; }
+  } catch (Throwable $e) {}
+  if ($pos) try {
+    $s = $pos->prepare("SELECT c.name, c.phone, s.total FROM sales s JOIN customers c ON c.id = s.customer_id WHERE s.status = 'paid' AND s.created_at >= ?");
+    $s->execute([$start]);
+    foreach ($s as $x) { if (($p = fx_member_p9($x['phone'])) === '' || strpos((string)$x['phone'], 'e:') === 0) continue;
+      $all[$p] ??= ['name' => trim((string)$x['name']), 'phone' => (string)$x['phone'], 'year' => 0, 'web' => 0, 'store' => 0];
+      if ($all[$p]['name'] === '') $all[$p]['name'] = trim((string)$x['name']);
+      $all[$p]['year'] += (int)$x['total']; $all[$p]['store']++; }
+  } catch (Throwable $e) {}
+  return $all;
+}
+/* level, next level and how much more, for a spend in fils */
+function fx_member_where($fils) {
+  $aed = floor($fils / 100); $cur = ''; $next = null;
+  foreach (fx_member_tiers() as $t) { if ($aed >= $t['min']) $cur = $t['name']; elseif (!$next) $next = $t; }
+  return ['level' => $cur, 'spend' => $aed, 'next' => $next ? $next['name'] : '', 'needed' => $next ? ceil($next['min'] - $aed) : 0];
+}
+/* the WhatsApp membership reminder (admin): [head, tail, arabic]. $w = fx_member_where() */
+function fx_member_msg($name, $w, $ar = false) {
+  $first = preg_split('/\s+/u', trim((string)$name))[0] ?? ''; $n2 = "\n\n"; $m = fn($v) => 'AED ' . number_format($v);
+  $link = 'https://fomaxo.com/?' . ($ar ? 'lang=ar&' : '') . 'utm_source=whatsapp&utm_campaign=membership#/collections/elite?check=1';
+  if ($ar) {
+    $lv = $w['level'] !== '' ? 'مستواك في FOMAXO Elite: *' . strtoupper($w['level']) . '*' . "\n" . 'إنفاقك هذا العام: ' . $m($w['spend']) : 'إنفاقك في FOMAXO هذا العام: ' . $m($w['spend']);
+    $go = $w['next'] !== '' ? 'باقي ' . $m($w['needed']) . ' فقط هذا العام للوصول إلى *' . strtoupper($w['next']) . '*.' : 'أنت في أعلى مستوى. شكراً لك!';
+    return [($first !== '' ? 'مرحباً ' . $first . '،' : 'مرحباً،') . $n2 . 'شكراً لكونك من عملاء FOMAXO.' . $n2 . $lv . $n2 . $go,
+      $n2 . "اعرف مستواك في أي وقت:\n" . $link . $n2 . 'FOMAXO', true];
+  }
+  $lv = $w['level'] !== '' ? 'Your FOMAXO Elite level: *' . strtoupper($w['level']) . '*' . "\n" . 'Spent this year: ' . $m($w['spend']) : 'Your FOMAXO spending this year: ' . $m($w['spend']);
+  $go = $w['next'] !== '' ? 'Only ' . $m($w['needed']) . ' more this year to reach *' . strtoupper($w['next']) . '*.' : 'You are at our highest level. Thank you!';
+  return ['Hi' . ($first !== '' ? ' ' . $first : '') . ',' . $n2 . 'Thank you for being a FOMAXO customer.' . $n2 . $lv . $n2 . $go,
+    $n2 . "Check your level anytime:\n" . $link . $n2 . 'FOMAXO', false];
+}
+/* a "Check my level" try goes to Left at checkout (stage 'member'): name, mobile and what they saw. One line per mobile per day. */
+function fx_member_lead($web, $phone, $name, $r) {
+  if (!$web) return;
+  $p9 = fx_member_p9($phone); if ($p9 === '') return;
+  $sid = substr(hash('sha256', 'member:' . $p9 . ':' . date('Y-m-d')), 0, 16);
+  $what = !empty($r['ok']) ? 'Checked level: ' . ($r['level'] !== '' ? strtoupper($r['level']) : 'no level yet') . ' · AED ' . number_format($r['spend']) . ' this year'
+        . ($r['next'] !== '' ? ' · AED ' . number_format($r['needed']) . ' more to ' . strtoupper($r['next']) : '') : 'Checked level: no purchases found for this name and mobile';
+  try { $web->prepare("INSERT INTO fx_leads (sid, vid, created_at, updated_at, stage, name, phone, items, total) VALUES (?, ?, NOW(), NOW(), 'member', ?, ?, ?, ?)
+                       ON DUPLICATE KEY UPDATE updated_at = NOW(), name = VALUES(name), items = VALUES(items), total = VALUES(total), hidden = 0")
+        ->execute([$sid, $sid, mb_substr(trim((string)$name), 0, 80), mb_substr(trim((string)$phone), 0, 25), mb_substr($what, 0, 600), !empty($r['ok']) ? $r['spend'] : null]);
+  } catch (Throwable $e) { error_log('FOMAXO member lead: ' . $e->getMessage()); }
+}
+
 /* one line for FOMAXO's new-order email ('' when the order didn't reach a new level) */
 function fx_member_email_line($orderNo) {
   try {
