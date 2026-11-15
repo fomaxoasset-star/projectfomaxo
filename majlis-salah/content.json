@@ -1,0 +1,19 @@
+{
+ "version": 1,
+ "hijriOffset": {
+  "default": 0,
+  "Asia/Dubai": 0,
+  "Asia/Riyadh": 0
+ },
+ "notice": {
+  "id": "welcome-2026",
+  "title_en": "Welcome to Majlis Salah",
+  "title_ar": "مرحباً بك في مجلس الصلاة",
+  "en": "May Allah accept your prayers. Ramadan 1448 is expected around 8 February 2027. We will confirm the date here after the official moon sighting.",
+  "ar": "تقبّل الله صلاتك. يُتوقع أن يبدأ رمضان ١٤٤٨ نحو ٨ فبراير ٢٠٢٧، وسنؤكد الموعد هنا بعد رؤية الهلال الرسمية."
+ },
+ "hadith": [],
+ "duas": [],
+ "intentions": [],
+ "updated": "2026-11-15"
+}

@@ -1,0 +1,8 @@
+# Majlis Salah app: the app reads content.json (moon-sighting dates, announcements) from here
+<FilesMatch "^content\.json$">
+  Require all granted
+  <IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Cache-Control "no-cache, max-age=0"
+  </IfModule>
+</FilesMatch>
